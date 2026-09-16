@@ -76,15 +76,22 @@ The initial clock reading is:
 
 `00:00:00`
 
-The default experiment duration may be:
+The duration control offers preset choices:
+
+* 5 seconds
+* 10 seconds
+* 20 seconds
+* 30 seconds
+
+The default experiment duration is:
 
 `10 seconds`
 
+Unless the learner changes the duration control, the experiment uses this default duration of 10 seconds.
+
+An "Other" option allows the learner to enter any duration from `1 second` through `60 seconds`.
+
 The learner should be able to change the duration before starting the experiment.
-
-For the first implementation, the allowed duration should be between:
-
-`1 second` and `60 seconds`
 
 ---
 
@@ -96,7 +103,11 @@ Example:
 
 > "The experiment will run for 10 seconds. What do you predict the clock will read when the experiment ends?"
 
-The learner should be able to submit a prediction.
+The learner enters a numeric prediction in seconds.
+
+Example: `[10]` seconds.
+
+The learner must submit a prediction before the experiment can be started.
 
 The prediction does not need to be mathematically sophisticated.
 
@@ -104,7 +115,7 @@ The purpose is to establish the learning cycle:
 
 **Predict → Experiment → Observe → Explain**
 
-The learner should be able to run the experiment even if the prediction is incorrect.
+The experiment can still be run regardless of whether the prediction is correct.
 
 ---
 
@@ -124,6 +135,16 @@ The experiment should not depend on the actual amount of real-world time require
 
 The simulation must remain deterministic.
 
+During the experiment, the visible clock ticks upward so the learner can watch elapsed time accumulate.
+
+The visual playback of the clock may be accelerated so the learner does not have to wait for the full real-world duration.
+
+The animation is a presentation detail only. It must not determine the physics result. The physics result remains deterministic and is based on the simulation duration, not on playback speed or real-world elapsed time.
+
+While the experiment is running, the duration controls and the START button are disabled.
+
+When the experiment completes, a "Run Again" control becomes available. Each run is a separate experiment with its own start and end events.
+
 ---
 
 ## 8. Experiment Results
@@ -135,6 +156,11 @@ After the experiment finishes, display:
 * Initial clock reading
 * Final clock reading
 * Elapsed time
+* The learner's prediction
+
+The visible clock uses `HH:MM:SS` format, such as `00:00:10`.
+
+Results display elapsed time in plain language, such as "10 seconds."
 
 Example:
 
@@ -146,9 +172,14 @@ Initial reading:   00:00:00
 Final reading:     00:00:10
 
 Elapsed time:      10 seconds
+
+Your prediction:   10 seconds
+Actual result:     10 seconds
 ```
 
-The learner should be able to repeat the experiment with a different duration.
+The learner is not scored on the accuracy of their prediction. The prediction and the actual result are shown side by side, and the AI tutor encourages the learner to compare the two and reflect on what they observed (see Section 11).
+
+The learner should be able to repeat the experiment with a different duration using the "Run Again" control.
 
 ---
 
@@ -220,6 +251,10 @@ Do not unnecessarily interrupt the experiment with explanations.
 Ask:
 
 > "What did you observe?"
+
+Encourage the learner to compare their prediction with the actual result, without scoring it as correct or incorrect. For example:
+
+> "You predicted 10 seconds, and the clock read 10 seconds. What does that tell you? What if they had been different?"
 
 Then ask a conceptual question such as:
 
