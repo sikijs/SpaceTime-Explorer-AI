@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { runClockExperiment } from '../physics/clockExperiment'
 import type { ClockExperimentResult } from '../physics/clockExperiment'
+import { ExperimentTutor } from './ExperimentTutor'
 
 type DurationOption = 5 | 10 | 20 | 30 | 'other'
 type ExperimentStatus = 'idle' | 'running' | 'complete'
@@ -264,6 +265,14 @@ export function Experiment1() {
               </p>
             </div>
           </div>
+        )}
+
+        {isComplete && result && submittedPrediction !== null && (
+          <ExperimentTutor
+            key={`${result.experimentDuration}-${result.elapsedTime}`}
+            predictionSeconds={submittedPrediction}
+            actualSeconds={result.elapsedTime}
+          />
         )}
       </div>
     </div>
