@@ -37,7 +37,6 @@ export function Experiment1() {
     setStatus('running')
     const experimentResult = runClockExperiment(selectedDuration)
     setResult(experimentResult)
-    setStatus('complete')
   }
 
   useEffect(() => {
@@ -55,6 +54,7 @@ export function Experiment1() {
 
       if (progress >= 1) {
         setDisplayedSeconds(result.finalClockReading)
+        setStatus('complete')
         return
       }
 
