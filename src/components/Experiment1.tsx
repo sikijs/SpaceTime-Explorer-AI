@@ -16,13 +16,14 @@ export function Experiment1() {
   const [duration, setDuration] = useState<DurationOption>(10)
   const [customDuration, setCustomDuration] = useState('')
   const [predictionInput, setPredictionInput] = useState('')
-  const [_submittedPrediction, setSubmittedPrediction] = useState<number | null>(null)
+  const [submittedPrediction, setSubmittedPrediction] = useState<number | null>(null)
   const [status, setStatus] = useState<ExperimentStatus>('idle')
   const [result, setResult] = useState<ClockExperimentResult | null>(null)
   const [displayedSeconds, setDisplayedSeconds] = useState(0)
 
   const selectedDuration = duration === 'other' ? parseInt(customDuration) || 0 : duration
   const isRunning = status === 'running'
+  const isComplete = status === 'complete'
   const predictionValue = predictionInput.trim() ? Number(predictionInput) : null
   const hasPrediction = predictionValue !== null && isFinite(predictionValue)
 
@@ -215,6 +216,55 @@ export function Experiment1() {
         >
           {isRunning ? 'Running...' : 'START'}
         </button>
+
+        {isComplete && result && submittedPrediction !== null && (
+          <div
+            style={{
+              marginTop: '2rem',
+              padding: '1.5rem',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              backgroundColor: '#fafafa',
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem' }}>
+              Results
+            </h2>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>Start event:</strong> {formatClockReading(result.startEvent.clockReading)}
+              </p>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>End event:</strong> {formatClockReading(result.endEvent.clockReading)}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>Initial reading:</strong> {formatClockReading(result.initialClockReading)}
+              </p>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>Final reading:</strong> {formatClockReading(result.finalClockReading)}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>Elapsed time:</strong> {result.elapsedTime} seconds
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '0', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>Your prediction:</strong> {submittedPrediction} seconds
+              </p>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>Actual result:</strong> {result.elapsedTime} seconds
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
