@@ -15,17 +15,24 @@ function formatClockReading(seconds: number): string {
 export function Experiment1() {
   const [duration, setDuration] = useState<DurationOption>(10)
   const [customDuration, setCustomDuration] = useState('')
+  const [predictionInput, setPredictionInput] = useState('')
+  const [_submittedPrediction, setSubmittedPrediction] = useState<number | null>(null)
   const [status, setStatus] = useState<ExperimentStatus>('idle')
   const [result, setResult] = useState<ClockExperimentResult | null>(null)
 
   const selectedDuration = duration === 'other' ? parseInt(customDuration) || 0 : duration
   const isRunning = status === 'running'
   const isComplete = status === 'complete'
+  const predictionValue = predictionInput.trim() ? Number(predictionInput) : null
+  const hasPrediction = predictionValue !== null && isFinite(predictionValue)
 
   const clockDisplay = isComplete && result ? formatClockReading(result.finalClockReading) : '00:00:00'
   const statusLabel = isRunning ? 'Running...' : 'At rest'
 
   const handleStart = () => {
+    if (!hasPrediction) return
+    setSubmittedPrediction(predictionValue)
+    setPredictionInput('')
     setStatus('running')
     const experimentResult = runClockExperiment(selectedDuration)
     setResult(experimentResult)
@@ -134,19 +141,49 @@ export function Experiment1() {
           </p>
         </div>
 
+        <div style={{ marginBottom: '2rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+            Make a prediction
+          </label>
+          <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
+            The experiment will run for {selectedDuration} seconds. What do you predict the clock will read
+            when the experiment ends?
+          </p>
+          <input
+            type="number"
+            value={predictionInput}
+            onChange={(e) => setPredictionInput(e.target.value)}
+            disabled={isRunning}
+            placeholder="Enter seconds"
+            style={{
+              padding: '0.5rem',
+              fontSize: '0.875rem',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              width: '200px',
+              opacity: isRunning ? 0.6 : 1,
+              cursor: isRunning ? 'not-allowed' : 'text',
+            }}
+          />
+          <p style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.5rem' }}>
+            {hasPrediction ? `Your prediction: ${predictionValue} seconds` : 'Enter a prediction to continue'}
+          </p>
+        </div>
+
         <button
           onClick={handleStart}
-          disabled={isRunning}
+          disabled={isRunning || !hasPrediction}
           style={{
             padding: '0.75rem 2rem',
             fontSize: '1rem',
             fontWeight: 'bold',
-            backgroundColor: isRunning ? '#6c757d' : '#28a745',
+            backgroundColor:
+              isRunning ? '#6c757d' : hasPrediction ? '#28a745' : '#ccc',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: isRunning ? 'not-allowed' : 'pointer',
-            opacity: isRunning ? 0.7 : 1,
+            cursor: isRunning || !hasPrediction ? 'not-allowed' : 'pointer',
+            opacity: isRunning || !hasPrediction ? 0.7 : 1,
           }}
         >
           {isRunning ? 'Running...' : 'START'}
