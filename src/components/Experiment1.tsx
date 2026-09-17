@@ -41,6 +41,13 @@ export function Experiment1() {
     setResult(experimentResult)
   }
 
+  const handleRunAgain = () => {
+    setStatus('idle')
+    setResult(null)
+    setSubmittedPrediction(null)
+    setDisplayedSeconds(0)
+  }
+
   useEffect(() => {
     if (status !== 'running' || !result) return
 
@@ -264,6 +271,118 @@ export function Experiment1() {
                 <strong>Actual result:</strong> {result.elapsedTime} seconds
               </p>
             </div>
+
+            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+              <button
+                onClick={handleRunAgain}
+                style={{
+                  padding: '0.5rem 1.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 'bold',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Run Again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isComplete && result && submittedPrediction !== null && (
+          <div
+            style={{
+              marginTop: '2rem',
+              padding: '1.5rem',
+              border: '1px solid #e8e8e8',
+              borderRadius: '8px',
+              backgroundColor: '#fefefe',
+            }}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1rem', color: '#333' }}>
+              Event Interval
+            </h3>
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '1rem',
+              }}
+            >
+              <div style={{ textAlign: 'center', flex: '1' }}>
+                <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem' }}>
+                  Event A
+                </p>
+                <p style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                  START
+                </p>
+                <div style={{ fontSize: '0.9rem', fontFamily: 'monospace', fontWeight: 'bold' }}>
+                  {formatClockReading(result.startEvent.clockReading)}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  flex: '2',
+                  height: '3px',
+                  backgroundColor: '#999',
+                  margin: '1.75rem 1rem 0',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '0',
+                    top: '-4px',
+                    width: '8px',
+                    height: '8px',
+                    backgroundColor: '#333',
+                    borderRadius: '50%',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: '0',
+                    top: '-4px',
+                    width: '8px',
+                    height: '8px',
+                    backgroundColor: '#333',
+                    borderRadius: '50%',
+                  }}
+                />
+              </div>
+
+              <div style={{ textAlign: 'center', flex: '1' }}>
+                <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem' }}>
+                  Event B
+                </p>
+                <p style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                  END
+                </p>
+                <div style={{ fontSize: '0.9rem', fontFamily: 'monospace', fontWeight: 'bold' }}>
+                  {formatClockReading(result.endEvent.clockReading)}
+                </div>
+              </div>
+            </div>
+
+            <p
+              style={{
+                textAlign: 'center',
+                fontSize: '0.875rem',
+                color: '#666',
+                marginTop: '1rem',
+                marginBottom: '0',
+              }}
+            >
+              <strong>elapsed time:</strong> {result.elapsedTime} seconds
+            </p>
           </div>
         )}
 
