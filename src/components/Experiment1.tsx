@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { runClockExperiment } from '../physics/clockExperiment'
 import type { ClockExperimentResult } from '../physics/clockExperiment'
 
@@ -19,25 +19,52 @@ export function Experiment1() {
   const [_submittedPrediction, setSubmittedPrediction] = useState<number | null>(null)
   const [status, setStatus] = useState<ExperimentStatus>('idle')
   const [result, setResult] = useState<ClockExperimentResult | null>(null)
+  const [displayedSeconds, setDisplayedSeconds] = useState(0)
 
   const selectedDuration = duration === 'other' ? parseInt(customDuration) || 0 : duration
   const isRunning = status === 'running'
-  const isComplete = status === 'complete'
   const predictionValue = predictionInput.trim() ? Number(predictionInput) : null
   const hasPrediction = predictionValue !== null && isFinite(predictionValue)
 
-  const clockDisplay = isComplete && result ? formatClockReading(result.finalClockReading) : '00:00:00'
+  const clockDisplay = formatClockReading(displayedSeconds)
   const statusLabel = isRunning ? 'Running...' : 'At rest'
 
   const handleStart = () => {
     if (!hasPrediction) return
     setSubmittedPrediction(predictionValue)
     setPredictionInput('')
+    setDisplayedSeconds(0)
     setStatus('running')
     const experimentResult = runClockExperiment(selectedDuration)
     setResult(experimentResult)
     setStatus('complete')
   }
+
+  useEffect(() => {
+    if (status !== 'running' || !result) return
+
+    const animationDurationMs = 2000
+    const startTime = performance.now()
+    let frameId: number
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / animationDurationMs, 1)
+      const newDisplayedSeconds = Math.floor(progress * result.finalClockReading)
+      setDisplayedSeconds(newDisplayedSeconds)
+
+      if (progress >= 1) {
+        setDisplayedSeconds(result.finalClockReading)
+        return
+      }
+
+      frameId = requestAnimationFrame(animate)
+    }
+
+    frameId = requestAnimationFrame(animate)
+
+    return () => cancelAnimationFrame(frameId)
+  }, [status, result])
 
   return (
     <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
