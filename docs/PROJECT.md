@@ -581,9 +581,11 @@ The project foundation uses:
 * Vite
 * Vitest
 
-Experiment 1 has an approved specification.
+Experiments 1 and 2 are implemented.
 
-The next major development task is to implement and test the Experiment 1 physics model before building the complete user interface and educational interaction around it.
+Experiment 3 (the moving clock) has an approved specification, a tested physics model, and an interface with the prediction step, results panel, and AI tutor. It has had its complete-flow test and final review, and its review items have been addressed.
+
+Experiment 4 (the light clock) has an approved specification and is implemented, with its complete-flow test and final review done. It explains why the effect shown in Experiment 3 happens. The next step is to propose the specification for the next experiment.
 
 This document defines the overall project vision.
 

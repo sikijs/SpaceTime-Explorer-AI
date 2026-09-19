@@ -452,9 +452,9 @@ Do not assume every experiment must use exactly these steps. The experiment spec
 
 # 22. Experiment 1
 
-Experiment 1 is the current implementation target.
+Experiment 1 is complete.
 
-Its approved specification is the authoritative source for Experiment 1 behavior.
+Its approved specification remains the authoritative source for Experiment 1 behavior.
 
 At a high level, Experiment 1 teaches:
 
@@ -471,7 +471,7 @@ Experiment 1 intentionally does not introduce:
 
 Its implementation should remain simple.
 
-The immediate development goal is to establish and test the independent physics model before building the complete UI and educational interaction.
+Its physics model, interface, prediction, results and tutor are implemented. See §27 for the current state of all experiments.
 
 ---
 
@@ -668,7 +668,7 @@ The general project rules are defined in:
 
 `AGENTS.md`
 
-The detailed requirements for Experiment 1 are defined in its experiment specification.
+The detailed requirements for each experiment are defined in its specification in `docs/experiments/`.
 
 The current technology foundation is:
 
@@ -679,10 +679,17 @@ The current technology foundation is:
 
 ## Current UI Layout
 
-Experiment 1 and Experiment 2 are displayed side by side in `src/App.tsx` using a two-column equal-width grid layout. Each experiment maintains fully independent physics models, UI components, prediction state, and AI tutor behavior. They are composed together for display purposes only; the underlying architecture remains that of separate, independent experiments.
+Experiments are displayed in `src/App.tsx` in pairs, side by side, using two-column equal-width grids: Experiment 1 with Experiment 2, and Experiment 3 with Experiment 4. Each experiment maintains fully independent physics models, UI components, prediction state, and AI tutor behavior. They are composed together for display purposes only; the underlying architecture remains that of separate, independent experiments.
+
+## Experiment Status
+
+* **Experiment 1 (one clock):** complete.
+* **Experiment 2 (two clocks at rest):** implemented.
+* **Experiment 3 (moving clock):** approved specification (`03-moving-clock.md`), tested physics model, interface, prediction, results panel, and tutor are built, and it has had its complete-flow test and final review. The review's items (the lab-observer diagram, the custom duration range, introductory text, and a zero-speed baseline) have been addressed; see the implementation notes in its specification.
+* **Experiment 4 (light clock):** approved specification (`04-light-clock.md`), tested physics model, interface, prediction, results, and tutor are built, and it has had its complete-flow test and final review. Its tutor refers to the time dilation factor, which Experiment 3's results panel now displays.
 
 The next approved implementation milestone is:
 
-**Experiment 1 — Step 1: Implement the independent physics model.**
+**Propose the specification for the next experiment (Experiment 5 in the planned progression, per §23), then stop for the project owner's review.**
 
 Do not proceed beyond that milestone without explicit authorization.
