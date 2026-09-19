@@ -475,24 +475,135 @@ The immediate development goal is to establish and test the independent physics 
 
 ---
 
-# 23. Future Experiments
+# 23. Future Experiment Workflow
 
-Do not invent future experiments.
+The project is intended to develop as a progressive sequence of experiments.
 
-Future experiments will be defined and approved separately.
+When an experiment has been completed, Claude Code should automatically look to the project definition and the completed work to determine what the next logical experiment should be.
 
-When a new experiment is introduced:
+Claude Code should not require the human to define every future experiment from scratch.
 
-1. Create or update its specification.
-2. Establish its educational objective.
-3. Define its physical assumptions.
-4. Define its learner interaction.
-5. Define required tests.
-6. Only then begin implementation.
+Claude may propose future experiments based on the project vision, but may not implement a future experiment until its specification has been reviewed and explicitly approved by the human.
 
-The existence of a long-term project vision does not authorize implementation of unspecified future experiments.
+For each new experiment, use the following process.
+
+### Stage 1 — Identify the Next Experiment
+
+After the current experiment has been completed, review:
+
+* `docs/PROJECT.md`
+* `AGENTS.md`
+* `CLAUDE.md`
+* the completed experiment specification
+* the completed experiment implementation
+
+Determine what the next experiment should teach and how it should build upon what the learner has already learned.
+
+If the project documentation already identifies the next experiment, use that direction.
+
+If the project documentation provides the overall learning progression but does not specify the exact details of the next experiment, Claude may propose those details.
+
+### Stage 2 — Propose the Experiment
+
+Before implementing anything, Claude should propose:
+
+* Experiment title
+* Learning objective
+* Physical situation
+* Physics model
+* Initial conditions
+* Learner controls
+* Prediction activity
+* Experiment behavior
+* Expected observations
+* Expected learner understanding
+* New concepts being introduced
+* Relationship to previous experiments
+* Relationship to later experiments
+* Required physics tests
+* AI tutor behavior, where appropriate
+
+Claude should use the existing project vision and scientific progression to develop the proposal.
+
+Claude may make reasonable educational and technical proposals, but must clearly identify important assumptions or decisions that require human review.
+
+### Stage 3 — Create the Specification
+
+After developing the proposal, Claude should create a draft specification in:
+
+`docs/experiments/`
+
+The specification should contain enough detail that the experiment can subsequently be implemented without having to rediscover its requirements.
+
+At this stage:
+
+**Do not implement the experiment.**
+
+### Stage 4 — Human Review and Approval
+
+After creating the proposed specification, Claude must stop and ask the human to review it.
+
+The human may:
+
+* approve it
+* request changes
+* change the physics
+* change the educational objective
+* change the learner interaction
+* reject the proposal
+
+Claude must not begin implementation until the human explicitly approves the specification.
+
+### Stage 5 — Implement the Approved Experiment
+
+Once the human approves the specification, follow the standard experiment development workflow in §21.
+
+Implement the experiment incrementally:
+
+1. Physics model
+2. Physics tests
+3. Basic UI
+4. Connect UI and physics
+5. Learner interaction
+6. Results
+7. AI tutor
+8. Complete-flow testing
+9. Final review
+
+Use the one-step-at-a-time rule in §6.
+
+Complete one logical step, test it, report the result, and stop.
+
+### Stage 6 — Completion and Transition
+
+When the experiment is complete:
+
+1. Verify it against its specification.
+2. Run the appropriate tests.
+3. Report completion.
+4. Treat the next experiment as the next project milestone.
+
+Claude may then begin Stage 1 for the next experiment by proposing the next logical learning experience.
+
+It must not skip the specification-review stage.
 
 ---
+
+## Important Principle
+
+The human does not need to design every experiment in advance.
+
+The intended collaboration is:
+
+**Human defines the overall educational vision.**
+
+**Claude develops proposed experiments that follow that vision.**
+
+**Human reviews and approves each experiment specification.**
+
+**Claude implements the approved specification.**
+
+This allows the project to evolve naturally while keeping the human in control of the physics, scientific assumptions, educational goals, and scope.
 
 # 24. Architecture Should Evolve Carefully
 
@@ -565,6 +676,10 @@ The current technology foundation is:
 * TypeScript
 * Vite
 * Vitest
+
+## Current UI Layout
+
+Experiment 1 and Experiment 2 are displayed side by side in `src/App.tsx` using a two-column equal-width grid layout. Each experiment maintains fully independent physics models, UI components, prediction state, and AI tutor behavior. They are composed together for display purposes only; the underlying architecture remains that of separate, independent experiments.
 
 The next approved implementation milestone is:
 
