@@ -7,7 +7,8 @@
       "Bash(npm test *)",
       "Bash(npx tsc *)",
       "Bash(kill 95712)",
-      "Bash(curl -s http://localhost:5173/)"
+      "Bash(curl -s http://localhost:5173/)",
+      "Artifact"
     ]
   }
 }
