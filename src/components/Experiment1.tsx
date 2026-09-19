@@ -92,10 +92,14 @@ export function Experiment1() {
           <p style={{ fontSize: '0.875rem', color: '#666' }}>{statusLabel}</p>
           <div
             style={{
-              fontSize: '3rem',
+              fontSize: '2.5rem',
               fontFamily: 'monospace',
               fontWeight: 'bold',
               marginBottom: '1rem',
+              padding: '1rem',
+              backgroundColor: '#d9ecff',
+              borderRadius: '6px',
+              textAlign: 'center',
             }}
           >
             {clockDisplay}
