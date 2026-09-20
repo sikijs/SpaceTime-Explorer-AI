@@ -269,8 +269,16 @@ export function Experiment4({ onComplete }: Experiment4Props) {
             <li>The moving clock travels sideways, at right angles to the line joining its mirrors.</li>
             <li>Both clocks start together: their pulses leave the bottom mirror at the same moment.</li>
             <li>
-              The lab has clocks at rest that are synchronized with each other, as in Experiment 2.
-              <strong> Lab time</strong> is time read on those lab clocks.
+              The lab is a <strong>reference frame</strong>, as in Experiment 2. Its clocks and
+              observers are all at rest relative to one another, and its clocks are synchronized.
+              <strong> Lab time</strong> is time read on those lab clocks. We watch both light
+              clocks from the lab.
+            </li>
+            <li>
+              The moving clock is not at rest relative to the lab clocks, so it is not part of the
+              lab's reference frame. It has a reference frame of its own, in which it is at rest,
+              and that frame moves relative to the lab. So two reference frames are involved: the
+              lab's and the moving clock's.
             </li>
           </ul>
         </div>

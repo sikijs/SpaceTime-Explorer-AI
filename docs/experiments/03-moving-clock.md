@@ -22,11 +22,18 @@ After completing Experiment 3, the learner should understand:
 
 ## Physical Situation
 
-### Reference Frame
+### Reference Frames
 
-There is one inertial reference frame (the lab frame) in which an observer is stationary.
+Two inertial reference frames are involved.
 
-A second clock is moving through the lab at a constant velocity.
+- **The lab frame.** An observer and the observer's clock are stationary in it, along with the lab's other synchronized clocks, all at rest relative to one another (as in Experiment 2).
+- **The moving clock's frame.** The moving clock is at rest in a reference frame of its own. This frame moves at constant velocity relative to the lab frame.
+
+A second clock is moving through the lab at a constant velocity. It is not at rest relative to the lab clocks, so it is not part of the lab frame.
+
+The physics model and the results are expressed in the lab frame (lab time and distance travelled). The moving clock's reading is the time measured by that clock itself, in its own frame.
+
+This experiment does not describe how the lab looks from the moving clock's frame. That belongs to later work.
 
 ### Initial State
 

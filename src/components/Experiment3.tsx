@@ -206,8 +206,15 @@ export function Experiment3({ onComplete }: Experiment3Props) {
             <li>There is no gravity, and the moving clock keeps a constant speed (no acceleration).</li>
             <li>Both clocks start together at the same place, and both are set to zero then.</li>
             <li>
-              The lab has clocks at rest that are synchronized with each other, as in Experiment 2.
+              The lab is a <strong>reference frame</strong>, as in Experiment 2. Its clocks and
+              observers are all at rest relative to one another, and its clocks are synchronized.
               <strong> Lab time</strong> is time read on those lab clocks.
+            </li>
+            <li>
+              The moving clock is not at rest relative to the lab clocks, so it is not part of the
+              lab's reference frame. It has a reference frame of its own, in which it is at rest,
+              and that frame moves relative to the lab. So two reference frames are involved: the
+              lab's and the moving clock's.
             </li>
             <li>
               Distances are given in <strong>light-seconds</strong>. One light-second is the

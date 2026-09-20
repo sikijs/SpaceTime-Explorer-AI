@@ -39,7 +39,8 @@ Each clock has two mirrors separated by a distance `L`. A light pulse starts at 
 - Mirrors are perpendicular to the direction of motion (the "transverse" light clock). The parallel orientation is not covered.
 - **Light travels at the same speed `c` in the lab frame for both clocks.** This is presented as an established physical fact (Einstein's postulate), not derived here. It is the key assumption of the experiment.
 - Both clocks start together at one lab event: same place, pulses emitted at the same moment.
-- The lab has synchronized clocks at rest (as established in Experiment 2), so lab time can be assigned to events at different places.
+- The lab has synchronized clocks at rest (as established in Experiment 2), so lab time can be assigned to events at different places. The lab is a reference frame: its clocks and observers are all at rest relative to one another.
+- The moving clock is not at rest relative to the lab clocks, so it is not part of the lab's reference frame. It has a reference frame of its own, in which it is at rest, and that frame moves relative to the lab. Two reference frames are involved: the lab's and the moving clock's.
 
 ### Not introduced
 
