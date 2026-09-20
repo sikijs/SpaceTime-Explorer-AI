@@ -232,12 +232,29 @@ export function Experiment4() {
       >
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>How a light clock works.</strong> A light clock keeps time with a pulse of light
-            bouncing between two mirrors. One round trip, from the bottom mirror to the top mirror
-            and back, is one <strong>tick</strong>. Here the mirrors are {MIRROR_SEPARATION}{' '}
-            light-seconds apart. A <strong>light-second</strong> is the distance light travels in
-            one second (about 300,000 km), so one tick of a clock at rest takes {REST_TICK_DURATION}{' '}
-            second.
+            <strong>The question.</strong> What is going on inside a clock that could make it
+            behave differently when it moves?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What a light clock is.</strong> A pulse of light bounces between two mirrors,
+            one above the other. One round trip, from the bottom mirror to the top mirror and back,
+            is one <strong>tick</strong>. Here the mirrors are {MIRROR_SEPARATION} light-seconds
+            apart. A <strong>light-second</strong> is the distance light travels in one second
+            (about 300,000 km), so one tick of a clock at rest takes {REST_TICK_DURATION} second.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> Two identical light clocks start together. One sits
+            still in the lab. The other moves sideways at a steady speed you choose. We watch one
+            tick of each clock from the lab and trace the path the light pulse takes.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> Predict how long, in lab seconds, one tick of the moving
+            clock takes.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>How this differs from Experiment 3.</strong> Experiment 3 compared two clocks
+            over a longer time and measured <em>how much</em> they differ. This experiment zooms in
+            on a single tick to look at <em>why</em>.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What we assume.</strong>

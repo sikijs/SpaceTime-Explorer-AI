@@ -178,10 +178,21 @@ export function Experiment3() {
       >
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What this experiment is about.</strong> A lab clock sits still in the lab. A
-            second clock, the moving clock, starts beside it and moves away at a steady speed. Both
-            clocks start at 00:00.0 at the same moment. You choose how long the lab clock runs and
-            how fast the moving clock goes, then predict what the moving clock will read at the end.
+            <strong>The question.</strong> If one clock stays still and another clock moves, do they
+            keep the same time?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> Two ordinary clocks start together at 00:00.0. One stays
+            in the lab. The other moves away in a straight line at a steady speed. You choose the
+            speed and how long the lab clock runs. When that time is up, we read both clocks.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> Predict what the moving clock will read at the end.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>How this differs from Experiment 4.</strong> This experiment measures{' '}
+            <em>how much</em> the two clocks differ. It does not explain why. Experiment 4 looks
+            inside a clock to find the reason.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What we assume.</strong>
