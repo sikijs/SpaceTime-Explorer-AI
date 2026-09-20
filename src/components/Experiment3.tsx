@@ -98,7 +98,11 @@ function MovingClockTrack({ experiment, distanceTravelled }: MovingClockTrackPro
   )
 }
 
-export function Experiment3() {
+interface Experiment3Props {
+  onComplete?: () => void
+}
+
+export function Experiment3({ onComplete }: Experiment3Props) {
   const [duration, setDuration] = useState<DurationOption>(10)
   const [customDuration, setCustomDuration] = useState('')
   const [velocity, setVelocity] = useState<VelocityOption>(0.5)
@@ -152,6 +156,7 @@ export function Experiment3() {
       if (progress >= 1) {
         setLabTime(result.labTimeDuration)
         setStatus('complete')
+        onComplete?.()
         return
       }
 

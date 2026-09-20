@@ -161,7 +161,11 @@ function LightClockPanel({ title, caption, geometry, state, moving }: LightClock
   )
 }
 
-export function Experiment4() {
+interface Experiment4Props {
+  onComplete?: () => void
+}
+
+export function Experiment4({ onComplete }: Experiment4Props) {
   const [velocity, setVelocity] = useState<VelocityOption>(0.5)
   const [customVelocity, setCustomVelocity] = useState('')
   const [predictionInput, setPredictionInput] = useState('')
@@ -206,6 +210,7 @@ export function Experiment4() {
       if (progress >= 1) {
         setLabTime(result.movingTickDuration)
         setStatus('complete')
+        onComplete?.()
         return
       }
 

@@ -13,7 +13,11 @@ function formatClockReading(seconds: number): string {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
-export function Experiment2() {
+interface Experiment2Props {
+  onComplete?: () => void
+}
+
+export function Experiment2({ onComplete }: Experiment2Props) {
   const [duration, setDuration] = useState<DurationOption>(10)
   const [customDuration, setCustomDuration] = useState('')
   const [predictionA, setPredictionA] = useState('')
@@ -78,6 +82,7 @@ export function Experiment2() {
         setDisplayedSecondsA(result.elapsedTimeA)
         setDisplayedSecondsB(result.elapsedTimeB)
         setStatus('complete')
+        onComplete?.()
         return
       }
 
