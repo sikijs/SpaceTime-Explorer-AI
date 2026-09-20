@@ -74,7 +74,7 @@ The AI must not replace the physics engine.
 
 The primary learning cycle is:
 
-Observe → Predict → Experiment → Analyze → Explain → Mathematics
+Predict → Experiment → Observe → Explain
 
 Whenever practical, learners should be encouraged to make a prediction
 before running an experiment.

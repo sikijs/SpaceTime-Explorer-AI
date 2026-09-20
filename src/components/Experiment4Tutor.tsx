@@ -105,7 +105,7 @@ export function Experiment4Tutor({
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             This experiment rests on one assumption: light travels at the same speed, c, in the lab
-            for both clocks. That is an established physical fact that we take as given here. With the
+            frame for both clocks. That is an established physical fact that we take as given here. With the
             same speed and a longer path, each tick takes longer in lab time.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>

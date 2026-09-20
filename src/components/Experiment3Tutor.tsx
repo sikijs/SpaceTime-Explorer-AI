@@ -135,7 +135,7 @@ export function Experiment3Tutor({
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             Now choose a speed above 0c and run it again. The clocks will no longer agree, and the
-            gap grows with speed. Experiment 4, next to this one, shows why.
+            gap grows with speed. Experiment 4, the next chapter, shows why.
           </p>
         </div>
       )}
@@ -168,7 +168,7 @@ export function Experiment3Tutor({
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             This is a fundamental property of relativity: the elapsed time between events depends
-            on the observer's reference frame and on motion. Experiment 4, next to this one, shows
+            on the observer's reference frame and on motion. Experiment 4, the next chapter, shows
             why it happens.
           </p>
         </div>
