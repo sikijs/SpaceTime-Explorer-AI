@@ -93,6 +93,32 @@ export function Experiment1({ onComplete }: Experiment1Props) {
           backgroundColor: '#f9f9f9',
         }}
       >
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> What does a clock measure?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> One clock sits still and reads 00:00:00. You choose how
+            long the experiment runs. When you press START, the clock begins to tick. The
+            experiment ends when the time you chose is up.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> Before you start, predict what the clock will read when the
+            experiment ends. Your prediction is not scored. It is a chance to think before you
+            look.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>There is one clock in one place. It does not move, and there is no gravity.</li>
+            <li>
+              The animation may play faster than real time so you do not have to wait. This does
+              not change the result.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '1rem' }}>
           <p style={{ fontSize: '0.875rem', color: '#666' }}>{statusLabel}</p>
           <div

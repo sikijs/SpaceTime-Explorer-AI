@@ -107,6 +107,68 @@ export function Experiment2({ onComplete }: Experiment2Props) {
           backgroundColor: '#f9f9f9',
         }}
       >
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In Experiment 1, one clock measured elapsed time. If we
+            use two clocks in two different places, will they agree?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> Clock A and Clock B sit at different places. Both are
+            still, and both read 00:00:00 when the experiment starts. You choose how long the
+            experiment runs. When the time is up, we read both clocks.
+          </p>
+          <div
+            style={{
+              marginBottom: '0.75rem',
+              padding: '0.75rem 1rem',
+              borderLeft: '4px solid #6a9fd8',
+              backgroundColor: '#eef4fb',
+            }}
+          >
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>New term: reference frame.</strong>
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              In everyday life we treat time as one thing. If you ask "what time is it?", we expect
+              one answer that holds for everyone, and we rarely notice that we are assuming it. In
+              these experiments we do not assume it. We check it, using clocks.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              To check it, we need to say who is doing the measuring. A <strong>reference frame</strong>{' '}
+              is a group of observers and clocks that are all at rest relative to one another. None
+              of them is moving with respect to the others, so the distances between them do not
+              change.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              For example, imagine a room. Some clocks are fixed at different places in the room,
+              and some people are sitting still in the room. None of them is moving relative to the
+              others, so together they make up one reference frame.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              Clock A and Clock B are like the clocks in that room. Neither one is moving relative
+              to the other, so both clocks are in one reference frame.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: 0 }}>
+              Later, when a clock moves, we will compare it with clocks in a frame like this one.
+            </p>
+          </div>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> Predict what each clock will read at the end. Your
+            predictions are not scored.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>Neither clock moves, and there is no gravity.</li>
+            <li>Both clocks start together, set to the same reading, and both are at rest.</li>
+            <li>
+              The animation may play faster than real time so you do not have to wait. This does
+              not change the result.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '2rem' }}>
           <p style={{ fontSize: '0.875rem', color: '#666' }}>{statusLabel}</p>
 
