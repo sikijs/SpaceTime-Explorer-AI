@@ -587,6 +587,8 @@ Experiment 3 (the moving clock) has an approved specification, a tested physics 
 
 Experiment 4 (the light clock) has an approved specification and is implemented, with its complete-flow test and final review done. It explains why the effect shown in Experiment 3 happens. The next step is to propose the specification for the next experiment.
 
+The application is presented as a guided journey: one experiment per screen, in order, with a sidebar showing the sequence and the learner's progress. This follows the progressive structure described in Section 7. Learners can revisit any chapter.
+
 This document defines the overall project vision.
 
 Individual experiment specification documents define the detailed behavior of each experiment.

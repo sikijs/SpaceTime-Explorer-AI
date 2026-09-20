@@ -679,7 +679,13 @@ The current technology foundation is:
 
 ## Current UI Layout
 
-Experiments are displayed in `src/App.tsx` in pairs, side by side, using two-column equal-width grids: Experiment 1 with Experiment 2, and Experiment 3 with Experiment 4. Each experiment maintains fully independent physics models, UI components, prediction state, and AI tutor behavior. They are composed together for display purposes only; the underlying architecture remains that of separate, independent experiments.
+The application is a guided journey, a format chosen by the project owner. `src/App.tsx` shows one experiment at a time, as a chapter, in order: Experiments 1 to 4. A sidebar lists the chapters and highlights the current one, and Previous and Next buttons move between them. Chapters are freely reachable; none is locked.
+
+Each experiment maintains fully independent physics models, UI components, prediction state, and AI tutor behavior. `App` only sequences them; the underlying architecture remains that of separate, independent experiments. Switching chapters remounts the experiment, so its prediction and results reset.
+
+Progress: each experiment takes an optional `onComplete` prop, called when its animation reaches the end. `App` then shows a check mark beside that chapter and saves the completed chapters and the current chapter in `localStorage` under `spacetime-explorer-progress`. Completion means the experiment ran to the end; the tutor conversation is optional.
+
+Each experiment opens with a short introduction (the question, what happens, the learner's job, and the assumptions). The Experiment 2 introduction also explains the term "reference frame", which Experiment 3 relies on.
 
 ## Experiment Status
 
