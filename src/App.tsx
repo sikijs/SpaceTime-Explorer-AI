@@ -8,13 +8,40 @@ import { Experiment4 } from './components/Experiment4'
 interface Chapter {
   title: string
   Component: ComponentType<{ onComplete?: () => void }>
+  // Shown below the experiment once the learner has run it to the end.
+  learned: string
+  next: string
 }
 
 const chapters: Chapter[] = [
-  { title: 'One clock', Component: Experiment1 },
-  { title: 'Two clocks at rest', Component: Experiment2 },
-  { title: 'A moving clock', Component: Experiment3 },
-  { title: 'A light clock', Component: Experiment4 },
+  {
+    title: 'One clock',
+    Component: Experiment1,
+    learned:
+      "A clock measures the time that passes between two events, here the start and the end of the experiment. That elapsed time is the difference between the clock's readings at those two events.",
+    next: 'You used one clock. Next, two clocks in two different places measure the same two events. Will they agree?',
+  },
+  {
+    title: 'Two clocks at rest',
+    Component: Experiment2,
+    learned:
+      'Two clocks at rest in the same reference frame, set to the same reading at the start, measured the same elapsed time between the same two events.',
+    next: 'So far, nothing has moved. Next, one clock moves relative to the lab. Will it still agree with the clocks at rest?',
+  },
+  {
+    title: 'A moving clock',
+    Component: Experiment3,
+    learned:
+      'When a clock moves relative to the lab, it measures less elapsed time than the lab clock between the same two events. The faster it moves, the bigger the difference. The moving clock is not broken: the elapsed time between events depends on the reference frame and on motion. (At speed 0 nothing moves, and the two clocks agree.)',
+    next: 'Why does the moving clock measure less time? Next, we look inside a clock to find the reason.',
+  },
+  {
+    title: 'A light clock',
+    Component: Experiment4,
+    learned:
+      "Light travels at the same speed in the lab frame for both light clocks. The moving clock's light pulse follows a longer, diagonal path in the lab frame, so each of its ticks takes longer in lab time. That is why the moving clock measures less time than the lab clock, by the same factor you saw in Experiment 3.",
+    next: 'These are all the experiments for now. You can go back to any chapter and run it again.',
+  },
 ]
 
 const STORAGE_KEY = 'spacetime-explorer-progress'
@@ -72,7 +99,8 @@ export function App() {
     setCompleted((previous) => (previous.includes(index) ? previous : [...previous, index]))
   }
 
-  const { Component } = chapters[currentChapter]
+  const { Component, learned, next } = chapters[currentChapter]
+  const isCurrentCompleted = completed.includes(currentChapter)
   const isFirst = currentChapter === 0
   const isLast = currentChapter === chapters.length - 1
 
@@ -128,6 +156,43 @@ export function App() {
 
           <main style={{ flex: '1 1 0', minWidth: 0 }}>
             <Component key={currentChapter} onComplete={() => markComplete(currentChapter)} />
+
+            {!isCurrentCompleted && (
+              <p
+                style={{
+                  maxWidth: '700px',
+                  margin: '1rem auto 0',
+                  padding: '0.75rem 1.5rem',
+                  borderLeft: '4px dashed #bbb',
+                  fontSize: '0.875rem',
+                  color: '#666',
+                }}
+              >
+                When you finish this experiment, a short summary of what you learned and what comes
+                next will appear here.
+              </p>
+            )}
+
+            {isCurrentCompleted && (
+              <section
+                aria-label="Chapter summary"
+                style={{
+                  maxWidth: '700px',
+                  margin: '1rem auto 0',
+                  padding: '1rem 1.5rem',
+                  borderLeft: '4px solid #2e7d32',
+                  backgroundColor: '#eef6ee',
+                  color: '#333',
+                }}
+              >
+                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                  <strong>What you learned.</strong> {learned}
+                </p>
+                <p style={{ marginTop: 0, marginBottom: 0 }}>
+                  <strong>What's next.</strong> {next}
+                </p>
+              </section>
+            )}
 
             <div
               style={{

@@ -704,8 +704,8 @@ Text is set larger and at a medium weight, using a system sans-serif font, throu
 ## Guided-Journey Work
 
 * **Done:** the chapter shell (sidebar, Previous/Next), saved progress with completion check marks, introductions for Experiments 1 and 2, and the reference frame wording in Experiments 2, 3 and 4.
-* **Planned, awaiting the project owner's go-ahead:** "what you learned / what's next" bridges between chapters. Start by showing the owner what the existing introductions already cover.
-* **Undecided:** whether Experiments 3 and 4 should also have a side-by-side compare view.
+* **Done:** a "What you learned / What's next" summary below each experiment, shown only after the learner has run that experiment to the end (so nothing is explained early). Until then, a short hint line says that a summary will appear there. The summaries live in the `chapters` list in `src/App.tsx`. Experiment 4's summary points to no further experiment, because none is approved yet.
+* **Decided against:** a side-by-side compare view of Experiments 3 and 4.
 
 ## Next Milestone
 
