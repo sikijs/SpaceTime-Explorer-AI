@@ -105,6 +105,7 @@ Experiment specifications should define:
 * Simulation rules
 * Visualization
 * User interaction
+* Learner-facing introduction, including any new terms it must define
 * AI tutor behavior
 * Tests
 * Explicit exclusions
@@ -147,6 +148,22 @@ Before coding a significant feature:
 
 Do not silently expand the scope of a task.
 
+After completing a step, report the result and stop. Do not begin the next
+step until the human authorizes it.
+
+Do not implement an experiment until the human has approved its
+specification. Do not change an approved specification without the human's
+approval.
+
+Learner-facing text (introductions, explanations, captions, tutor wording) is
+part of the educational design. Draft it from the approved specification, add
+no claims the specification does not contain, and let the human review it.
+
+Define every specialized term in plain language before it is used.
+
+Check user-interface changes in a browser, since tests do not cover
+appearance, and report anything that was not verified.
+
 ## Git
 
 Make small, meaningful commits.
@@ -156,10 +173,13 @@ if necessary, reverted independently.
 
 Do not make large unrelated changes in a single commit.
 
+Commit only when the human asks. Keep the human's own uncommitted changes in
+separate commits from the agent's changes.
+
 ## Current Development Rule
 
-At the beginning of the project, documentation and scientific design take
-priority over application code.
+Documentation and scientific design take priority over application code.
+Each new experiment is specified and approved by the human before it is
+implemented.
 
-Do not build the complete application architecture until the first experiment
-has been scientifically and educationally specified.
+Build the architecture only as far as the approved experiments require.

@@ -293,6 +293,10 @@ When specialized physics terminology is necessary, introduce it at an appropriat
 
 Do not assume that the learner already understands advanced terminology.
 
+Every specialized term must be defined in plain, everyday language before it is used, and at the point where the learner first needs it. For example, "reference frame" is defined in Experiment 2's introduction, before Experiment 3 depends on it.
+
+Learners bring everyday assumptions, such as time being the same for everyone. Where a term or experiment challenges such an assumption, start from the everyday idea and use a familiar example. Do not let the example bring in physics that a later experiment is meant to teach.
+
 ---
 
 # 16. Scope Control
@@ -521,6 +525,7 @@ Before implementing anything, Claude should propose:
 * Relationship to previous experiments
 * Relationship to later experiments
 * Required physics tests
+* Learner-facing introduction, including any new terms it must define
 * AI tutor behavior, where appropriate
 
 Claude should use the existing project vision and scientific progression to develop the proposal.
@@ -685,7 +690,9 @@ Each experiment maintains fully independent physics models, UI components, predi
 
 Progress: each experiment takes an optional `onComplete` prop, called when its animation reaches the end. `App` then shows a check mark beside that chapter and saves the completed chapters and the current chapter in `localStorage` under `spacetime-explorer-progress`. Completion means the experiment ran to the end; the tutor conversation is optional.
 
-Each experiment opens with a short introduction (the question, what happens, the learner's job, and the assumptions). The Experiment 2 introduction also explains the term "reference frame", which Experiment 3 relies on.
+Each experiment opens with a short introduction (the question, what happens, the learner's job, and the assumptions). The Experiment 2 introduction also explains the term "reference frame", which Experiment 3 relies on. The Experiment 3 and 4 introductions say that two reference frames are involved: the lab's and the moving clock's.
+
+Text is set larger and at a medium weight, using a system sans-serif font, through `src/index.css` (the base size scales all `rem` sizes). This was chosen by the project owner for readability; do not reduce it without asking.
 
 ## Experiment Status
 
@@ -694,8 +701,29 @@ Each experiment opens with a short introduction (the question, what happens, the
 * **Experiment 3 (moving clock):** approved specification (`03-moving-clock.md`), tested physics model, interface, prediction, results panel, and tutor are built, and it has had its complete-flow test and final review. The review's items (the lab-observer diagram, the custom duration range, introductory text, and a zero-speed baseline) have been addressed; see the implementation notes in its specification.
 * **Experiment 4 (light clock):** approved specification (`04-light-clock.md`), tested physics model, interface, prediction, results, and tutor are built, and it has had its complete-flow test and final review. Its tutor refers to the time dilation factor, which Experiment 3's results panel now displays.
 
+## Guided-Journey Work
+
+* **Done:** the chapter shell (sidebar, Previous/Next), saved progress with completion check marks, introductions for Experiments 1 and 2, and the reference frame wording in Experiments 2, 3 and 4.
+* **Planned, awaiting the project owner's go-ahead:** "what you learned / what's next" bridges between chapters. Start by showing the owner what the existing introductions already cover.
+* **Undecided:** whether Experiments 3 and 4 should also have a side-by-side compare view.
+
+## Next Milestone
+
 The next approved implementation milestone is:
 
 **Propose the specification for the next experiment (Experiment 5 in the planned progression, per §23), then stop for the project owner's review.**
 
 Do not proceed beyond that milestone without explicit authorization.
+
+---
+
+# 28. Working with the Project Owner
+
+These are the working agreements that have been established in practice.
+
+1. **Learner-facing wording is the owner's to approve.** Introductions, explanations, captions, and tutor wording are part of the educational design. Draft them from the approved specification, add no claims the specification does not contain, and do not reveal what an experiment shows before the learner has observed it (§12). Show the draft for review, then revise it.
+2. **Keep the specification and the interface in sync.** When approved wording or behavior changes, update the specification to match, but only with the owner's approval. If the two disagree, say so; do not quietly change either.
+3. **Every experiment opens with an introduction:** the question, what happens, the learner's job, any new term, and the assumptions. Follow the structure of the existing introductions.
+4. **Check user-interface changes in a browser.** Type checks and tests do not cover appearance. Tell the owner the local address where the change can be seen, and wait for their review before committing.
+5. **Commit only when asked.** Keep the owner's pre-existing uncommitted changes in separate commits from the agent's changes (stage by hunk when they share a file), and keep each commit focused.
+6. **Say what was not checked.** Report anything that was not run, not viewed, or not verified.

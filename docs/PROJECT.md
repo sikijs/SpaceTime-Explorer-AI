@@ -324,7 +324,7 @@ The important principle is that **the physics should be established and tested b
 
 ---
 
-## 14. Current Experiment: Experiment 1
+## 14. Experiment 1
 
 The first experiment establishes the most basic idea:
 
@@ -436,6 +436,10 @@ The learner should always be able to understand:
 * what happened when the experiment finished
 
 The interface should not require the learner to understand the underlying software architecture.
+
+### Plain language for new ideas
+
+Most learners have no everyday experience of ideas such as reference frames, and they take time for granted. Every specialized term should be explained in plain language, at the point where the learner first needs it and before an experiment relies on it. Each experiment opens with a short introduction that states the question, what will happen, what the learner is asked to do, any new term, and the assumptions being made.
 
 ---
 
