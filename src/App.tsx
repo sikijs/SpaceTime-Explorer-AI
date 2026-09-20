@@ -110,7 +110,7 @@ export function App() {
                         border: isCurrent ? '2px solid #333' : '1px solid #ccc',
                         borderRadius: '6px',
                         backgroundColor: isCurrent ? '#fff' : 'transparent',
-                        fontWeight: isCurrent ? 600 : 400,
+                        fontWeight: isCurrent ? 700 : 500,
                       }}
                     >
                       {index + 1}. {chapter.title}

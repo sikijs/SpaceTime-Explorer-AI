@@ -1,0 +1,16 @@
+/* Global text settings. Component sizes are in rem, so the base size scales them all. */
+html {
+  font-size: 112.5%;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 500;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
