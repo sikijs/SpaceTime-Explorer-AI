@@ -5,7 +5,11 @@ import {
   runLengthContractionExperiment,
 } from '../physics/lengthContractionExperiment'
 import { REST_TICK_DURATION } from '../physics/lightClockExperiment'
-import type { LengthContractionResult, PulseLeg } from '../physics/lengthContractionExperiment'
+import type {
+  ClockVersionResult,
+  LengthContractionResult,
+  PulseLeg,
+} from '../physics/lengthContractionExperiment'
 
 type VelocityOption = 0.1 | 0.3 | 0.5 | 0.8 | 'other'
 type ExperimentStatus = 'idle' | 'running' | 'complete'
@@ -174,6 +178,46 @@ function LightClockPanel({
         </svg>
       </div>
       <p style={{ fontSize: '0.8125rem', color: '#555', marginTop: '0.5rem' }}>{caption}</p>
+    </div>
+  )
+}
+
+const resultLineStyle = { margin: '0.5rem 0', fontSize: '0.875rem' }
+const resultBlockStyle = { paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid #ddd' }
+
+// Shows a difference in seconds with its sign; a difference below the shown precision reads 0.000.
+function formatDifference(seconds: number): string {
+  const text = seconds.toFixed(3)
+  if (text === '0.000' || text === '-0.000') return '0.000'
+  return seconds > 0 ? `+${text}` : `−${text.replace('-', '')}`
+}
+
+// Values only, as reported by the physics model; no explanation here (that comes from the tutor).
+function VersionResultBlock({ title, version }: { title: string; version: ClockVersionResult }) {
+  return (
+    <div style={resultBlockStyle}>
+      <p style={{ ...resultLineStyle, fontWeight: 'bold' }}>{title}</p>
+      <p style={resultLineStyle}>
+        Length seen from the lab: {version.lengthInLab.toFixed(3)} light-seconds (
+        {version.lengthRatio.toFixed(3)} of the length at rest)
+      </p>
+      <p style={resultLineStyle}>
+        Time for the pulse's trip forward: {version.forwardLegDuration.toFixed(3)} s
+      </p>
+      <p style={resultLineStyle}>
+        Time for the pulse's trip back: {version.returnLegDuration.toFixed(3)} s
+      </p>
+      <p style={resultLineStyle}>
+        Time for one tick, on the lab's clocks: {version.tickDuration.toFixed(3)} s
+      </p>
+      <p style={resultLineStyle}>
+        Light's speed, seen from the lab (distance ÷ time): {version.lightSpeedForward.toFixed(3)}c
+        going forward, {version.lightSpeedReturn.toFixed(3)}c coming back
+      </p>
+      <p style={resultLineStyle}>
+        Difference from the tick that time dilation gives:{' '}
+        {formatDifference(version.differenceFromTimeDilationTick)} s
+      </p>
     </div>
   )
 }
@@ -511,6 +555,62 @@ export function Experiment6({ onComplete }: Experiment6Props) {
             </p>
           )}
         </div>
+
+        {status === 'complete' && result && submittedPrediction !== null && (
+          <div
+            style={{
+              marginTop: '2rem',
+              padding: '1.5rem',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              backgroundColor: '#fafafa',
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem' }}>Results</h2>
+
+            <p style={resultLineStyle}>
+              <strong>Moving clock speed:</strong> {result.velocity}c
+            </p>
+            <p style={{ ...resultLineStyle, color: '#555' }}>
+              c is the speed of light. A light speed of 1.000c means exactly the speed of light. A
+              light-second is the distance light travels in one second.
+            </p>
+            <p style={resultLineStyle}>
+              <strong>The tick that time dilation gives (Experiments 3 and 4):</strong>{' '}
+              {result.timeDilationTick.toFixed(3)} s
+            </p>
+
+            <div style={resultBlockStyle}>
+              <p style={{ ...resultLineStyle, fontWeight: 'bold' }}>Rest clock</p>
+              <p style={resultLineStyle}>
+                Length (distance between the mirrors): {result.restLength.toFixed(3)} light-seconds
+              </p>
+              <p style={resultLineStyle}>
+                Time for one tick, on the lab's clocks: {result.restTickDuration.toFixed(3)} s
+              </p>
+              <p style={resultLineStyle}>Light's speed, seen from the lab: 1.000c</p>
+            </div>
+
+            <VersionResultBlock title="Moving clock, same length" version={result.sameLength} />
+            <VersionResultBlock title="Moving clock, shorter length" version={result.shorterLength} />
+
+            <div style={resultBlockStyle}>
+              <p style={{ ...resultLineStyle, fontWeight: 'bold' }}>Your prediction</p>
+              <p style={resultLineStyle}>
+                You guessed that the two mirrors must be {submittedPrediction} light-seconds apart,
+                seen from the lab.
+              </p>
+              <p style={resultLineStyle}>
+                Length of the same-length clock: {result.sameLength.lengthInLab.toFixed(3)}{' '}
+                light-seconds
+              </p>
+              <p style={resultLineStyle}>
+                Length of the shorter-length clock: {result.shorterLength.lengthInLab.toFixed(3)}{' '}
+                light-seconds
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
