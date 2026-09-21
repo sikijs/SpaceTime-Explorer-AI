@@ -5,6 +5,7 @@ import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
 import { Experiment4 } from './components/Experiment4'
 import { Experiment5 } from './components/Experiment5'
+import { Experiment6 } from './components/Experiment6'
 
 interface Chapter {
   title: string
@@ -48,6 +49,13 @@ const chapters: Chapter[] = [
     Component: Experiment5,
     learned:
       "We compared two rules for light. In the everyday rule, light gets the speed of the moving clock added to its own, like a ball thrown from a moving train. Then the moving clock would tick at the same rate as the clock standing still, but its light would travel faster than c. In light's actual rule, light always travels at c. The light has a longer path but cannot go faster, so the moving clock's tick takes longer. That is time dilation. In this model, time dilation happens because light always travels at c.",
+    next: 'So far, the light in our clocks went across the motion. Next, we turn the clock so that its mirrors are in a line with the motion. Does motion change how long a clock is?',
+  },
+  {
+    title: 'Does motion change length?',
+    Component: Experiment6,
+    learned:
+      "Time dilation says that a moving clock must tick slowly, whichever way it is turned. Light in the lab always goes at c, so a clock moving along its own length can only tick that slowly if it is shorter, as seen from the lab. It is shorter by the same factor as the time dilation factor. This effect is called length contraction. Only the length along the motion changes.",
     next: 'These are all the experiments for now. You can go back to any chapter and run it again.',
   },
 ]
