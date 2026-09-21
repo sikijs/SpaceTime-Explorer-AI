@@ -147,7 +147,7 @@ The physics lives in a new module independent of React (working name `src/physic
 ### Implementation notes (physics)
 
 - **Module.** `src/physics/lengthContractionExperiment.ts` provides `runLengthContractionExperiment(v)` and `lengthContractionStateAt(result, labTime)`. The time dilation tick is reused from `runLightClockExperiment(v)`, so the shorter length cannot drift away from Experiment 4.
-- **Result structure.** In addition to the proposed fields, the result holds `timeDilationFactor` (used for the own-time readouts).
+- **Result structure.** In addition to the proposed fields, the result holds `timeDilationFactor` (used for the own-time readouts) and, for each version, `ownClockReadingAtEnd` (what that moving clock's own display shows after its one tick, so the tutor can point it out without calculating).
 - **Range.** The physics accepts `0 <= v < c`, like Experiments 3 to 5. The 0.9c cap (Decision 5) is applied by the interface only.
 - **Playback state.** For each clock: own reading, which leg the pulse is on (`forward`, `return` or `finished`), tick progress, and the positions of the back mirror, front mirror and pulse in the lab. The rest clock keeps ticking; each moving clock is followed for its tick and then held.
 - **Tests.** The required tests, plus sweeps over every speed from 0.01c to 0.99c (physics) and from 0.01c to 0.9c (playback and playback limit).
@@ -213,7 +213,7 @@ Playback is slowed for viewing and is chosen so that no run lasts more than abou
 - **Prediction.** One number (light-seconds), not scored. START stays disabled until a speed and a number are entered; the input then clears and the submitted prediction is kept for the results and the tutor. Any finite number is accepted, as in Experiments 1 to 5, including zero and negative values.
 - **Playback.** 2 real seconds per lab second, limited so no run exceeds about 15 real seconds (the longest run, at 0.9c, takes about 11 seconds).
 - **Drawing.** All three panels share one scale. The forward and return legs are drawn at slightly different heights and the moving-clock caption says this is only so both legs can be seen (Decision 8). Dashed "start" markers show where the mirrors started.
-- **Own-time readouts.** Both moving clocks show "own time = lab time × time dilation factor", the Decision 6 default. After one tick the shorter-length clock shows 1.0 second and the same-length clock shows more (for example 1.7 seconds at 0.8c). The tutor does not currently explain this difference (see the open items).
+- **Own-time readouts.** Both moving clocks show "own time = lab time × time dilation factor", the Decision 6 default. After one tick the shorter-length clock shows 1.0 second and the same-length clock shows more (for example 1.7 seconds at 0.8c). The tutor's explanation (step 2) points out that the same-length clock's own display shows more than 1 second after one tick, which a clock built like the one standing still should not, and that the shorter-length clock shows exactly 1 second. The sentence is left out when the two displays agree to the shown precision (very low speeds).
 - **Introduction, in plain language.** In order: the question; a reminder of the light clock; how far apart the mirrors are (about 150,000 km, half a light-second, so a tick is exactly 1 second); the moving clock, in which the pulse chases the moving front mirror and meets the moving back mirror; what the length of a moving clock means (Decision 9); the assumed rule (time dilation applies to every clock, and light goes at `c` in both directions); what the learner will see; the learner's job (guesses are not scored); and the assumptions. The term "length contraction" is not used before the observation.
 - **Chapter summary.** Experiment 6's "What you learned" is in the `chapters` list in `src/App.tsx`, and Experiment 5's "What's next" now leads into Experiment 6. As in the other chapters, the summary appears after the tutor's explanation.
 
@@ -325,7 +325,7 @@ Follows the pattern of Experiments 3 to 5 and the plain-language style of all ch
 
 ### Open items after implementation
 
-- **The own-time readouts.** The same-length clock's own display reaches more than 1 second after one tick, while the introduction says one tick takes 1 second on a clock's own display. This is meant to show that this version cannot be right, but nothing in the tutor explains it. Owner to decide whether to add a sentence to the tutor's step 2, or to drop the own-time readouts from that clock (Decision 6).
+- **The own-time readouts.** Resolved: the tutor's step 2 now explains that the same-length clock's own display shows more than 1 second after one tick, so this version cannot be right (Decision 6).
 - **Length of the introduction.** About 780 words, against about 500 in Experiment 5. Owner to decide whether to trim it.
 - **Wording approval.** The learner-facing text, including the tutor's step 3 ("light cannot go faster or slower than c to fix this… the only thing left that can change is the distance between the mirrors") and the chapter summary, was drafted from this specification and has not had the owner's line-by-line approval.
 - **Label hint (Decision 3).** The names "same length" and "shorter length" hint at the answer. The default was kept.

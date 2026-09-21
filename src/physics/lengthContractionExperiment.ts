@@ -17,6 +17,8 @@ export interface ClockVersionResult {
   forwardLegDuration: number
   returnLegDuration: number
   tickDuration: number
+  // What the moving clock's own display shows after this one tick: lab time times the time dilation factor.
+  ownClockReadingAtEnd: number
   forwardLegPath: number
   returnLegPath: number
   lightSpeedForward: number
@@ -40,7 +42,8 @@ export interface LengthContractionResult {
 function runClockVersion(
   lengthInLab: number,
   velocity: number,
-  timeDilationTick: number
+  timeDilationTick: number,
+  timeDilationFactor: number
 ): ClockVersionResult {
   const c = SPEED_OF_LIGHT
   const forwardLegDuration = lengthInLab / (c - velocity)
@@ -56,6 +59,7 @@ function runClockVersion(
     forwardLegDuration,
     returnLegDuration,
     tickDuration,
+    ownClockReadingAtEnd: tickDuration * timeDilationFactor,
     forwardLegPath,
     returnLegPath,
     lightSpeedForward: forwardLegPath / forwardLegDuration / c,
@@ -77,11 +81,17 @@ export function runLengthContractionExperiment(velocity: number): LengthContract
     restTickDuration: REST_TICK_DURATION,
     timeDilationTick,
     timeDilationFactor: timeDilation.timeDilationFactor,
-    sameLength: runClockVersion(REST_LENGTH, velocity, timeDilationTick),
+    sameLength: runClockVersion(
+      REST_LENGTH,
+      velocity,
+      timeDilationTick,
+      timeDilation.timeDilationFactor
+    ),
     shorterLength: runClockVersion(
       REST_LENGTH * Math.sqrt(1 - (velocity * velocity) / (c * c)),
       velocity,
-      timeDilationTick
+      timeDilationTick,
+      timeDilation.timeDilationFactor
     ),
   }
 }

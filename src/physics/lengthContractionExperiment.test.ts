@@ -167,6 +167,30 @@ describe('Length Contraction Experiment Physics', () => {
   })
 })
 
+describe('Own display of the moving clocks after one tick', () => {
+  it('the shorter-length clock shows exactly one rest tick and the same-length clock shows more', () => {
+    ;[0.1, 0.3, 0.5, 0.6, 0.8, 0.9].forEach((v) => {
+      const r = runLengthContractionExperiment(v)
+      expect(r.shorterLength.ownClockReadingAtEnd).toBeCloseTo(r.restTickDuration, 10)
+      expect(r.sameLength.ownClockReadingAtEnd).toBeGreaterThan(r.restTickDuration)
+      // The same-length clock's own display reads the time dilation factor 1 / sqrt(1 - v^2) too much.
+      expect(r.sameLength.ownClockReadingAtEnd).toBeCloseTo(1 / Math.sqrt(1 - v * v), 10)
+    })
+    expect(runLengthContractionExperiment(0.6).sameLength.ownClockReadingAtEnd).toBeCloseTo(1.25, 12)
+  })
+
+  it('matches the playback state at the end of each tick and equals the rest tick at v = 0', () => {
+    const r = runLengthContractionExperiment(0.8)
+    ;(['sameLength', 'shorterLength'] as const).forEach((key) => {
+      const end = lengthContractionStateAt(r, r[key].tickDuration)[key]
+      expect(end.clockReading).toBeCloseTo(r[key].ownClockReadingAtEnd, 12)
+    })
+    const rest = runLengthContractionExperiment(0)
+    expect(rest.sameLength.ownClockReadingAtEnd).toBe(1)
+    expect(rest.shorterLength.ownClockReadingAtEnd).toBe(1)
+  })
+})
+
 describe('Length Contraction playback state', () => {
   it('starts with the pulse at the back mirror and every clock at zero', () => {
     const r = runLengthContractionExperiment(0.6)

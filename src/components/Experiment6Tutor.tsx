@@ -42,6 +42,9 @@ export function Experiment6Tutor({
   }
 
   const isResponseEmpty = responseInput.trim() === ''
+  // At very low speeds the two displays agree to the shown precision, so there is nothing to point out.
+  const showOwnDisplayNote =
+    sameLength.ownClockReadingAtEnd.toFixed(3) !== shorterLength.ownClockReadingAtEnd.toFixed(3)
 
   return (
     <div
@@ -121,6 +124,17 @@ export function Experiment6Tutor({
             {sameLength.tickDuration.toFixed(3)} seconds. But time dilation says that one tick of the
             moving clock takes {timeDilationTick.toFixed(3)} seconds. So this clock ticks too slowly
             to fit.
+            {showOwnDisplayNote && (
+              <>
+                {' '}
+                You may also have noticed that this clock's own display shows more than 1 second
+                after one tick: {sameLength.ownClockReadingAtEnd.toFixed(3)} seconds. A clock built
+                like the one standing still should show exactly 1 second for one tick on its own
+                display, so this is another sign that this version cannot be right. The
+                shorter-length clock's own display shows exactly{' '}
+                {shorterLength.ownClockReadingAtEnd.toFixed(3)} seconds.
+              </>
+            )}
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>3. What has to change.</strong> Light cannot go faster or slower than c to fix
