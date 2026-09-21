@@ -60,7 +60,7 @@ export interface LightClockState {
 }
 
 // Height of the pulse above the bottom mirror at a given phase (0..1) of one tick: up for the first half, down for the second.
-function pulseHeightAtPhase(mirrorSeparation: number, phase: number): number {
+export function pulseHeightAtPhase(mirrorSeparation: number, phase: number): number {
   return mirrorSeparation * (1 - Math.abs(2 * phase - 1))
 }
 
