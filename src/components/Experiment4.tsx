@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   lightClockStateAt,
   runLightClockExperiment,
@@ -173,6 +173,7 @@ export function Experiment4({ onComplete }: Experiment4Props) {
   const [status, setStatus] = useState<ExperimentStatus>('idle')
   const [result, setResult] = useState<LightClockExperimentResult | null>(null)
   const [labTime, setLabTime] = useState(0)
+  const displayRef = useRef<HTMLDivElement>(null)
 
   const selectedVelocity = velocity === 'other' ? parseFloat(customVelocity) || 0 : velocity
   const isRunning = status === 'running'
@@ -194,6 +195,8 @@ export function Experiment4({ onComplete }: Experiment4Props) {
     setLabTime(0)
     setResult(runLightClockExperiment(selectedVelocity))
     setStatus('running')
+    // Bring the two clocks fully into view so the learner can watch the run.
+    displayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   useEffect(() => {
@@ -204,7 +207,8 @@ export function Experiment4({ onComplete }: Experiment4Props) {
     let frameId: number
 
     const animate = (currentTime: number) => {
-      const progress = Math.min((currentTime - startTime) / animationDurationMs, 1)
+      // A frame timestamp can fall slightly before startTime; never let lab time go negative.
+      const progress = Math.min(Math.max((currentTime - startTime) / animationDurationMs, 0), 1)
       setLabTime(progress * result.movingTickDuration)
 
       if (progress >= 1) {
@@ -281,35 +285,6 @@ export function Experiment4({ onComplete }: Experiment4Props) {
               lab's and the moving clock's.
             </li>
           </ul>
-        </div>
-
-        <div style={{ marginBottom: '2rem' }}>
-          <p style={{ fontSize: '0.875rem', color: '#666' }}>
-            {statusLabel} · Lab time: <strong>{labTime.toFixed(2)} s</strong>
-          </p>
-
-          {geometry && clockState ? (
-            <div style={{ display: 'flex', justifyContent: 'space-around', gap: '1rem' }}>
-              <LightClockPanel
-                title="Rest Clock"
-                caption="At rest in the lab"
-                geometry={geometry}
-                state={clockState}
-                moving={false}
-              />
-              <LightClockPanel
-                title="Moving Clock"
-                caption={`Moving at ${shownVelocity}c (seen from the lab)`}
-                geometry={geometry}
-                state={clockState}
-                moving
-              />
-            </div>
-          ) : (
-            <p style={{ fontSize: '0.875rem', color: '#999' }}>
-              Choose a speed between 0.01c and 0.99c to see the clocks.
-            </p>
-          )}
         </div>
 
         <div style={{ marginBottom: '2rem' }}>
@@ -411,6 +386,36 @@ export function Experiment4({ onComplete }: Experiment4Props) {
         >
           {isRunning ? 'Running...' : 'START'}
         </button>
+
+        {/* Placed directly under START so the run is on screen the moment it begins. */}
+        <div ref={displayRef} style={{ marginTop: '2rem' }}>
+          <p style={{ fontSize: '0.875rem', color: '#666' }}>
+            {statusLabel} · Lab time: <strong>{labTime.toFixed(2)} s</strong>
+          </p>
+
+          {geometry && clockState ? (
+            <div style={{ display: 'flex', justifyContent: 'space-around', gap: '1rem' }}>
+              <LightClockPanel
+                title="Rest Clock"
+                caption="At rest in the lab"
+                geometry={geometry}
+                state={clockState}
+                moving={false}
+              />
+              <LightClockPanel
+                title="Moving Clock"
+                caption={`Moving at ${shownVelocity}c (seen from the lab)`}
+                geometry={geometry}
+                state={clockState}
+                moving
+              />
+            </div>
+          ) : (
+            <p style={{ fontSize: '0.875rem', color: '#999' }}>
+              Choose a speed between 0.01c and 0.99c to see the clocks.
+            </p>
+          )}
+        </div>
 
         {status === 'complete' && result && submittedPrediction !== null && (
           <div
