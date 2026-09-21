@@ -1,6 +1,6 @@
 # Experiment 6: Does Motion Change Length?
 
-**Status: DRAFT. Not approved. Do not implement until the project owner approves this specification.** Everything under "Decisions Needing Human Review" is a proposal, not a requirement. The title is a working title (see Decision 7).
+**Status: APPROVED by the project owner. The defaults proposed under "Decisions Needing Human Review" stand unless changed.** The title is a working title (see Decision 7).
 
 ## Overview
 
