@@ -259,3 +259,32 @@ describe('Length Contraction playback state', () => {
     expect(() => lengthContractionStateAt(r, Infinity)).toThrow(RangeError)
   })
 })
+
+describe('Length Contraction over the speeds the interface allows', () => {
+  // The interface allows 0.01c to 0.9c in steps of 0.01c.
+  const allowedSpeeds = Array.from({ length: 90 }, (_, i) => (i + 1) / 100)
+
+  it('a full playback ends with both moving clocks finished and the pulse back at the back mirror', () => {
+    allowedSpeeds.forEach((v) => {
+      const r = runLengthContractionExperiment(v)
+      const runDuration = Math.max(r.sameLength.tickDuration, r.shorterLength.tickDuration)
+      const end = lengthContractionStateAt(r, runDuration)
+      ;(['sameLength', 'shorterLength'] as const).forEach((key) => {
+        expect(end[key].leg).toBe('finished')
+        expect(end[key].pulsePosition).toBeCloseTo(end[key].backMirrorPosition, 9)
+        expect(end[key].frontMirrorPosition - end[key].backMirrorPosition).toBeCloseTo(
+          r[key].lengthInLab,
+          12
+        )
+      })
+      // The shorter-length clock reads exactly one rest tick on its own display at the end of its tick.
+      expect(end.shorterLength.clockReading).toBeCloseTo(r.restTickDuration, 9)
+    })
+  })
+
+  it('no run is longer than the playback limit at the fastest allowed speed', () => {
+    // Playback is 2 real seconds per lab second, so the slowest run at 0.9c must stay under 15 seconds.
+    const r = runLengthContractionExperiment(0.9)
+    expect(r.sameLength.tickDuration * 2).toBeLessThan(15)
+  })
+})
