@@ -40,7 +40,7 @@ const chapters: Chapter[] = [
     title: 'A light clock',
     Component: Experiment4,
     learned:
-      "Light travels at the same speed in the lab frame for both light clocks. The moving clock's light pulse follows a longer, diagonal path in the lab frame, so each of its ticks takes longer in lab time. That is why the moving clock measures less time than the lab clock, by the same factor you saw in Experiment 3.",
+      "In the lab, light travels at the same speed for both light clocks. The moving clock's pulse of light has a longer, slanted path to travel, so each of its ticks takes longer on the lab's clocks. That is why the moving clock measures less time than the lab clock, by the same factor you saw in Experiment 3.",
     next: 'In Experiment 4 we assumed that light always travels at the same speed, c. Next, we ask what would change if light did not work that way.',
   },
   {

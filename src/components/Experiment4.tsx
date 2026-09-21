@@ -247,13 +247,14 @@ export function Experiment4({ onComplete }: Experiment4Props) {
       >
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> What is going on inside a clock that could make it
-            behave differently when it moves?
+            <strong>The question.</strong> In Experiment 3, the moving clock measured less time than
+            the lab clock. But why? What is going on inside a clock that could make it behave
+            differently when it moves? To find out, we look inside the simplest clock we can build.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What a light clock is.</strong> A pulse of light bounces between two mirrors,
-            one above the other. One round trip, from the bottom mirror to the top mirror and back,
-            is one <strong>tick</strong>.
+            <strong>What a light clock is.</strong> A light clock is a clock made from a pulse of
+            light that bounces up and down between two mirrors, one above the other. One trip up
+            and back down is one <strong>tick</strong>, just like one tick of an ordinary clock.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>How far apart are the mirrors?</strong> Light travels about 300,000 km in one
@@ -267,41 +268,45 @@ export function Experiment4({ onComplete }: Experiment4Props) {
             half a light-second apart.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> Two identical light clocks start together. One sits
-            still in the lab. The other moves sideways at a steady speed you choose. We watch one
-            tick of each clock from the lab and trace the path the light pulse takes.
+            <strong>What happens.</strong> Two identical light clocks start at the same moment. One
+            stands still in the lab. The other moves sideways at a steady speed that you choose.
+            From the lab, we watch one tick of each clock and draw the path the pulse of light
+            takes.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Predict how long, in lab seconds, one tick of the moving
-            clock takes.
+            <strong>Your job.</strong> Before you press START, predict how long one tick of the
+            moving clock will take. Give your answer in <strong>lab seconds</strong>: seconds
+            counted by the clocks standing still in the lab. A wrong guess is fine. Guesses are not
+            scored.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>How this differs from Experiment 3.</strong> Experiment 3 compared two clocks
-            over a longer time and measured <em>how much</em> they differ. This experiment zooms in
-            on a single tick to look at <em>why</em>.
+            over a longer time, to see <em>how big</em> the difference is. This experiment looks at
+            just one tick, to see <em>why</em> the difference happens.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What we assume.</strong>
           </p>
           <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>There is no gravity, and the moving clock keeps a constant speed (no acceleration).</li>
-            <li>The moving clock travels sideways, at right angles to the line joining its mirrors.</li>
-            <li>Both clocks start together: their pulses leave the bottom mirror at the same moment.</li>
+            <li>There is no gravity, and the moving clock keeps a steady speed. It never speeds up or slows down.</li>
+            <li>The moving clock moves sideways, across the light's up-and-down path, not along it.</li>
+            <li>Both clocks start together: their pulses of light leave the bottom mirror at the same moment.</li>
             <li>
-              The lab is a <strong>reference frame</strong>, as in Experiment 2. Its clocks and
-              observers are all at rest relative to one another, and its clocks are synchronized.
-              <strong> Lab time</strong> is time read on those lab clocks. We watch both light
-              clocks from the lab.
+              We watch both clocks from the lab. The lab is a <strong>reference frame</strong>, as
+              in Experiment 2: a group of people and clocks that are all standing still relative to
+              one another, with their clocks set to agree. <strong>Lab time</strong> is the time
+              shown on those clocks.
             </li>
             <li>
-              The moving clock is not at rest relative to the lab clocks, so it is not part of the
-              lab's reference frame. It has a reference frame of its own, in which it is at rest,
-              and that frame moves relative to the lab. So two reference frames are involved: the
-              lab's and the moving clock's.
+              The moving clock is not standing still relative to the lab, so it is not part of the
+              lab's reference frame. It has its own reference frame: the point of view of someone
+              riding along with it. So two reference frames are involved: the lab's and the moving
+              clock's.
             </li>
             <li>
-              The moving clock's light source and both of its mirrors are part of the moving clock,
-              so, seen from the lab, they move together, sideways, at the same speed.
+              The light source (the small lamp that sends out the pulse) and both mirrors are parts
+              of the moving clock. Seen from the lab, they all move together, sideways, at the same
+              speed.
             </li>
           </ul>
         </div>
@@ -361,10 +366,10 @@ export function Experiment4({ onComplete }: Experiment4Props) {
             Make a prediction
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
-            Two identical light clocks. The rest clock ticks once every {REST_TICK_DURATION} second.
-            The other clock moves sideways at {selectedVelocity ? `${selectedVelocity}c` : '—'}. The lab observer
-            watches the light pulse in each clock. How long, in lab seconds, will one tick of the
-            moving clock take?
+            The clock standing still ticks once every {REST_TICK_DURATION} second. The other clock
+            moves sideways at {selectedVelocity ? `${selectedVelocity}c` : '—'}. Someone in the lab
+            watches the light pulse in each clock, timing it with the lab's clocks. How many lab
+            seconds will one tick of the moving clock take? Type a number.
           </p>
           <input
             type="number"
@@ -451,19 +456,23 @@ export function Experiment4({ onComplete }: Experiment4Props) {
             <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
               <strong>Moving clock speed:</strong> {result.velocity}c
             </p>
+            <p style={{ margin: '0.5rem 0', fontSize: '0.875rem', color: '#555' }}>
+              c is the speed of light. A light speed of 1.000c means exactly the speed of light. A
+              light-second is the distance light travels in one second.
+            </p>
 
             <div style={{ paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid #ddd' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem', fontWeight: 'bold' }}>
                 Rest clock
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                Light path per tick: {result.restLightPath.toFixed(3)} light-seconds
+                Distance the light travels in one tick: {result.restLightPath.toFixed(3)} light-seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                Tick duration (lab time): {result.restTickDuration.toFixed(3)} s
+                Time for one tick, on the lab's clocks: {result.restTickDuration.toFixed(3)} s
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                Light speed (path ÷ duration): {result.lightSpeedRest.toFixed(3)}c
+                Light's speed, seen from the lab (distance ÷ time): {result.lightSpeedRest.toFixed(3)}c
               </p>
             </div>
 
@@ -472,26 +481,27 @@ export function Experiment4({ onComplete }: Experiment4Props) {
                 Moving clock
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                Light path per tick: {result.movingLightPath.toFixed(3)} light-seconds
+                Distance the light travels in one tick: {result.movingLightPath.toFixed(3)} light-seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                Tick duration (lab time): {result.movingTickDuration.toFixed(3)} s
+                Time for one tick, on the lab's clocks: {result.movingTickDuration.toFixed(3)} s
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                Sideways distance per tick: {result.sidewaysDistancePerTick.toFixed(3)} light-seconds
+                Distance the clock moves sideways during one tick:{' '}
+                {result.sidewaysDistancePerTick.toFixed(3)} light-seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                Light speed (path ÷ duration): {result.lightSpeedMoving.toFixed(3)}c
+                Light's speed, seen from the lab (distance ÷ time): {result.lightSpeedMoving.toFixed(3)}c
               </p>
             </div>
 
             <div style={{ paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid #ddd' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Your prediction:</strong> {submittedPrediction} seconds
+                <strong>You guessed:</strong> {submittedPrediction} seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Actual moving-clock tick:</strong> {result.movingTickDuration.toFixed(3)}{' '}
-                seconds
+                <strong>The real time for one tick of the moving clock, on the lab's clocks:</strong>{' '}
+                {result.movingTickDuration.toFixed(3)} seconds
               </p>
             </div>
           </div>
