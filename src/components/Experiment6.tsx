@@ -5,6 +5,7 @@ import {
   runLengthContractionExperiment,
 } from '../physics/lengthContractionExperiment'
 import { REST_TICK_DURATION } from '../physics/lightClockExperiment'
+import { Experiment6Tutor } from './Experiment6Tutor'
 import type {
   ClockVersionResult,
   LengthContractionResult,
@@ -227,8 +228,7 @@ interface Experiment6Props {
   onTutorComplete?: () => void
 }
 
-// onTutorComplete is wired up in a later step, when the tutor exists.
-export function Experiment6({ onComplete }: Experiment6Props) {
+export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
   const [velocity, setVelocity] = useState<VelocityOption>(0.5)
   const [customVelocity, setCustomVelocity] = useState('')
   const [predictionInput, setPredictionInput] = useState('')
@@ -610,6 +610,19 @@ export function Experiment6({ onComplete }: Experiment6Props) {
               </p>
             </div>
           </div>
+        )}
+
+        {status === 'complete' && result && submittedPrediction !== null && (
+          <Experiment6Tutor
+            onExplained={onTutorComplete}
+            velocity={result.velocity}
+            prediction={submittedPrediction}
+            restLength={result.restLength}
+            timeDilationTick={result.timeDilationTick}
+            timeDilationFactor={result.timeDilationFactor}
+            sameLength={result.sameLength}
+            shorterLength={result.shorterLength}
+          />
         )}
       </div>
     </div>
