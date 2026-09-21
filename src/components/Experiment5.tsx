@@ -40,7 +40,11 @@ const PLAYBACK_MS_PER_LAB_SECOND = 2000
 const VIEW_SIZE = 200
 const MIRROR_WIDTH_LS = 0.4
 const MAX_PX_PER_LS = 280
-const MAX_DRAW_WIDTH = 170
+const DRAW_MARGIN = 15
+// When the moving clock travels far in one tick (high speeds), the drawing would become tiny in a
+// square box. Above this distance the panels are stacked and drawn in a wider box instead.
+const WIDE_THRESHOLD_LS = 2.5
+const WIDE_VIEW_WIDTH = 720
 
 const optionButtonStyle = (selected: boolean, disabled: boolean) => ({
   marginRight: '0.5rem',
@@ -82,13 +86,27 @@ function formatClockReading(seconds: number): string {
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${tenths % 10}`
 }
 
-// All three panels share one scale so the light paths can be compared by eye.
-function pixelsPerLightSecond(geometry: InvariantLightSpeedResult): number {
-  const widest = Math.max(
+function widestSideways(geometry: InvariantLightSpeedResult): number {
+  return Math.max(
     geometry.sidewaysDistancePerTick.everydayRule,
     geometry.sidewaysDistancePerTick.actualRule
   )
-  return Math.min(MAX_PX_PER_LS, MAX_DRAW_WIDTH / (widest + MIRROR_WIDTH_LS))
+}
+
+function isWideRun(geometry: InvariantLightSpeedResult): boolean {
+  return widestSideways(geometry) > WIDE_THRESHOLD_LS
+}
+
+function viewWidthFor(geometry: InvariantLightSpeedResult): number {
+  return isWideRun(geometry) ? WIDE_VIEW_WIDTH : VIEW_SIZE
+}
+
+// All three panels share one scale so the light paths can be compared by eye.
+function pixelsPerLightSecond(geometry: InvariantLightSpeedResult): number {
+  return Math.min(
+    MAX_PX_PER_LS,
+    (viewWidthFor(geometry) - 2 * DRAW_MARGIN) / (widestSideways(geometry) + MIRROR_WIDTH_LS)
+  )
 }
 
 interface LightClockPanelProps {
@@ -96,6 +114,8 @@ interface LightClockPanelProps {
   caption: string
   mirrorSeparation: number
   scale: number
+  viewWidth: number
+  wide: boolean
   sidewaysPerTick: number // 0 for the rest clock
   clockReading: number
   pulseHeight: number
@@ -109,6 +129,8 @@ function LightClockPanel({
   caption,
   mirrorSeparation: L,
   scale,
+  viewWidth,
+  wide,
   sidewaysPerTick: sideways,
   clockReading,
   pulseHeight,
@@ -119,7 +141,7 @@ function LightClockPanel({
   const bottomY = VIEW_SIZE / 2 + (L * scale) / 2
   const topY = VIEW_SIZE / 2 - (L * scale) / 2
   const drawWidth = (sideways + MIRROR_WIDTH_LS) * scale
-  const startX = (VIEW_SIZE - drawWidth) / 2 + (MIRROR_WIDTH_LS / 2) * scale
+  const startX = (viewWidth - drawWidth) / 2 + (MIRROR_WIDTH_LS / 2) * scale
   const currentX = startX + sidewaysOffset * scale
   const halfMirror = (MIRROR_WIDTH_LS / 2) * scale
   const pulseY = bottomY - pulseHeight * scale
@@ -129,17 +151,17 @@ function LightClockPanel({
   trace.push([currentX, pulseY])
 
   return (
-    <div style={{ textAlign: 'center', flex: '1 1 200px', minWidth: 0 }}>
+    <div style={{ textAlign: 'center', flex: wide ? 'none' : '1 1 200px', minWidth: 0 }}>
       <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem', minHeight: '2.5em' }}>
         {title}
       </p>
       <div style={clockBoxStyle}>{formatClockReading(clockReading)}</div>
       <div style={{ backgroundColor: '#d9ecff', borderRadius: '6px', padding: '0.5rem' }}>
         <svg
-          viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
+          viewBox={`0 0 ${viewWidth} ${VIEW_SIZE}`}
           role="img"
           aria-label={`${title}: light pulse travelling between two mirrors`}
-          style={{ width: '100%', maxWidth: '220px', height: 'auto' }}
+          style={{ width: '100%', maxWidth: wide ? '100%' : '220px', height: 'auto' }}
         >
           {moving && sideways * scale > 4 && (
             <>
@@ -506,12 +528,22 @@ export function Experiment5({ onComplete, onTutorComplete }: Experiment5Props) {
           </p>
 
           {geometry && clockState ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '1rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: isWideRun(geometry) ? 'column' : 'row',
+                flexWrap: 'wrap',
+                justifyContent: 'space-around',
+                gap: '1rem',
+              }}
+            >
               <LightClockPanel
                 title="Rest Clock"
                 caption="At rest in the lab"
                 mirrorSeparation={geometry.mirrorSeparation}
                 scale={pixelsPerLightSecond(geometry)}
+                viewWidth={viewWidthFor(geometry)}
+                wide={isWideRun(geometry)}
                 sidewaysPerTick={0}
                 {...clockState.restClock}
                 sidewaysOffset={0}
@@ -521,6 +553,8 @@ export function Experiment5({ onComplete, onTutorComplete }: Experiment5Props) {
                 caption={`Moving at ${shownSpeedLabel} (seen from the lab). Both mirrors move together. Dashed lines show where they started.`}
                 mirrorSeparation={geometry.mirrorSeparation}
                 scale={pixelsPerLightSecond(geometry)}
+                viewWidth={viewWidthFor(geometry)}
+                wide={isWideRun(geometry)}
                 sidewaysPerTick={geometry.sidewaysDistancePerTick.everydayRule}
                 {...clockState.everydayRule}
               />
@@ -529,6 +563,8 @@ export function Experiment5({ onComplete, onTutorComplete }: Experiment5Props) {
                 caption={`Moving at ${shownSpeedLabel} (seen from the lab). Both mirrors move together. Dashed lines show where they started.`}
                 mirrorSeparation={geometry.mirrorSeparation}
                 scale={pixelsPerLightSecond(geometry)}
+                viewWidth={viewWidthFor(geometry)}
+                wide={isWideRun(geometry)}
                 sidewaysPerTick={geometry.sidewaysDistancePerTick.actualRule}
                 {...clockState.actualRule}
               />

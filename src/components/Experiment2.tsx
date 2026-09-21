@@ -176,6 +176,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
           <div
             style={{
               display: 'flex',
+              flexWrap: 'wrap',
               justifyContent: 'space-around',
               gap: '2rem',
               marginBottom: '2rem',

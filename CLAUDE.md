@@ -707,7 +707,7 @@ Text is set larger and at a medium weight, using a system sans-serif font, throu
 * **Done:** the chapter shell (sidebar, Previous/Next), saved progress with completion check marks, introductions for Experiments 1 and 2, and the reference frame wording in Experiments 2, 3 and 4.
 * **Done:** a "What you learned / What's next" summary below each experiment, shown only after the learner has run that experiment and reached the tutor's explanation, so nothing is explained early and the summary never comes before the tutor's own explanation. Until then, a short hint line says that a summary will appear there. A learner who skips the tutor's questions does not see the summary. The summaries live in the `chapters` list in `src/App.tsx`. Experiment 5's summary points to no further experiment, because none is approved yet.
 * **Decided against:** a side-by-side compare view of Experiments 3 and 4.
-* **Open (owner to decide):** the fixed sidebar leaves the experiment very narrow in small windows; and the shared drawing scale makes the light clocks very small at high speeds such as 0.99c in Experiments 4 and 5.
+* **Done:** the chapter layout is responsive. Below 850px wide the sidebar becomes a row of chapter buttons above the experiment (CSS classes in `src/index.css`), and the clocks in Experiments 2, 4 and 5 wrap instead of overflowing. In Experiments 4 and 5, when the moving clock travels more than 2.5 light-seconds in one tick (about 0.93c and above), the clock panels stack and are drawn in a wider box so the mirrors stay readable. In a very narrow window at such speeds the drawing is still small, because it has to fit the window width.
 
 ## Next Milestone
 

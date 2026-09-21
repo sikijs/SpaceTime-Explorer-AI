@@ -130,17 +130,14 @@ export function App() {
           A short sequence of experiments on time. Each one builds on the one before it.
         </p>
 
-        <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-          <nav
-            aria-label="Experiments"
-            style={{ flex: '0 0 220px', position: 'sticky', top: '2rem' }}
-          >
-            <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        <div className="chapter-layout">
+          <nav aria-label="Experiments" className="chapter-nav">
+            <ol className="chapter-list">
               {chapters.map((chapter, index) => {
                 const isCurrent = index === currentChapter
                 const isCompleted = completed.includes(index)
                 return (
-                  <li key={chapter.title} style={{ marginBottom: '0.5rem' }}>
+                  <li key={chapter.title}>
                     <button
                       type="button"
                       onClick={() => setCurrentChapter(index)}
@@ -170,7 +167,7 @@ export function App() {
             </ol>
           </nav>
 
-          <main style={{ flex: '1 1 0', minWidth: 0 }}>
+          <main className="chapter-main">
             <Component
               key={currentChapter}
               onComplete={() => markComplete(currentChapter)}

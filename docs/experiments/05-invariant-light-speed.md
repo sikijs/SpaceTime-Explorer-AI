@@ -311,7 +311,7 @@ Follows the project's cycle and the pattern of Experiments 3 and 4. It has no pr
 - **Summary timing.** Resolved: at the owner's request, the chapter summary (for every chapter) now appears only after the learner reaches the tutor's explanation.
 - **Title versus content.** Resolved: the owner decided to keep the title "Why Can't Light Go Faster?" (Decision 1). The tutor still says plainly that the experiment does not explain why light behaves this way.
 - **Own-time readout.** Confirm the interpretation of "tick counter" (see the interface notes).
-- **Layout at extremes.** In narrow windows the fixed sidebar leaves the experiment very narrow, and the shared drawing scale makes the clocks very small at high speeds such as 0.99c. Experiment 4 behaves the same way.
+- **Layout at extremes.** Resolved: the chapter layout is responsive, and at high speeds (more than 2.5 light-seconds of sideways travel per tick, about 0.93c and above) the three clock panels stack and are drawn in a wider box so they stay readable. The shared scale is kept, so the light paths remain comparable. Experiment 4 uses the same approach. In a very narrow window at such speeds the drawing is still small.
 
 ---
 
