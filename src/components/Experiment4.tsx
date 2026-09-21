@@ -253,9 +253,18 @@ export function Experiment4({ onComplete }: Experiment4Props) {
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What a light clock is.</strong> A pulse of light bounces between two mirrors,
             one above the other. One round trip, from the bottom mirror to the top mirror and back,
-            is one <strong>tick</strong>. Here the mirrors are {MIRROR_SEPARATION} light-seconds
-            apart. A <strong>light-second</strong> is the distance light travels in one second
-            (about 300,000 km), so one tick of a clock at rest takes {REST_TICK_DURATION} second.
+            is one <strong>tick</strong>.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>How far apart are the mirrors?</strong> Light travels about 300,000 km in one
+            second. We place the mirrors about{' '}
+            {(MIRROR_SEPARATION * 300000).toLocaleString('en-US')} km apart, which is half of that
+            distance. So light needs half a second to get from one mirror to the other, and one
+            second for the whole trip up and back. That means one tick takes exactly{' '}
+            {REST_TICK_DURATION} second when the clock is standing still. Real clocks are much
+            smaller. We use a giant clock so that the numbers are easy to read. The distance light
+            travels in one second has a name: a <strong>light-second</strong>. So the mirrors are
+            half a light-second apart.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> Two identical light clocks start together. One sits
