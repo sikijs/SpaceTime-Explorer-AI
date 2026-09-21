@@ -129,6 +129,12 @@ function LightClockPanel({ title, caption, geometry, state, moving }: LightClock
                 strokeWidth="2"
                 strokeDasharray="4 3"
               />
+              <text x={startX} y={topY - 10} textAnchor="middle" fontSize="11" fill="#666">
+                start
+              </text>
+              <text x={startX} y={bottomY + 18} textAnchor="middle" fontSize="11" fill="#666">
+                start
+              </text>
             </>
           )}
           <polyline
@@ -284,6 +290,10 @@ export function Experiment4({ onComplete }: Experiment4Props) {
               and that frame moves relative to the lab. So two reference frames are involved: the
               lab's and the moving clock's.
             </li>
+            <li>
+              The moving clock's light source and both of its mirrors are part of the moving clock,
+              so, seen from the lab, they move together, sideways, at the same speed.
+            </li>
           </ul>
         </div>
 
@@ -404,7 +414,7 @@ export function Experiment4({ onComplete }: Experiment4Props) {
               />
               <LightClockPanel
                 title="Moving Clock"
-                caption={`Moving at ${shownVelocity}c (seen from the lab)`}
+                caption={`Moving at ${shownVelocity}c (seen from the lab). Both mirrors move together. Dashed lines show where they started.`}
                 geometry={geometry}
                 state={clockState}
                 moving
