@@ -295,6 +295,8 @@ Follows the project's cycle and the pattern of Experiments 3 and 4. It has no pr
 ## Decisions Needing Human Review
 
 1. **Does this answer the title question?** The title, "Why Can't Light Go Faster?", asks why light is limited to `c`. This draft shows what the *rule* does (it removes the everyday rule's faster-than-`c` light and produces time dilation), not why nature has it. Options: (a) keep the title and this framing; (b) rename to match the content (for example, "What If Light's Speed Just Added?"); (c) add a second part that shows a speed limit for objects, which needs relativistic velocity addition, which is new physics (see Decision 2).
+
+   **Decision (owner): keep the title and this framing (option a).**
 2. **Alternative directions.** (i) A speed-limit experiment that adds speeds relativistically: it needs the relativistic velocity-addition formula, not yet approved. (ii) Pushing an object faster and faster: it needs acceleration, energy and momentum, all currently excluded. This draft avoids both. Confirm that avoiding them is right.
 3. **Working labels.** "Everyday rule" and "light's actual rule" are my labels. Alternatives: "speeds add" and "light stays at `c`". Owner to choose or replace.
 4. **Layout.** Three clocks at once (rest, everyday, actual), or one moving clock with a rule switch and run once per rule? Three at once shows the contrast in a single run; a switch is simpler but asks the learner to remember the first result.
@@ -307,7 +309,7 @@ Follows the project's cycle and the pattern of Experiments 3 and 4. It has no pr
 ### Open items after implementation
 
 - **Summary timing.** Resolved: at the owner's request, the chapter summary (for every chapter) now appears only after the learner reaches the tutor's explanation.
-- **Title versus content.** The tutor says the experiment does not explain why light behaves this way, while the title asks "why". Owner to decide whether to keep or rename the title (Decision 1).
+- **Title versus content.** Resolved: the owner decided to keep the title "Why Can't Light Go Faster?" (Decision 1). The tutor still says plainly that the experiment does not explain why light behaves this way.
 - **Own-time readout.** Confirm the interpretation of "tick counter" (see the interface notes).
 - **Layout at extremes.** In narrow windows the fixed sidebar leaves the experiment very narrow, and the shared drawing scale makes the clocks very small at high speeds such as 0.99c. Experiment 4 behaves the same way.
 
