@@ -4,6 +4,7 @@ import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
 import { Experiment4 } from './components/Experiment4'
+import { Experiment5 } from './components/Experiment5'
 
 interface Chapter {
   title: string
@@ -40,6 +41,13 @@ const chapters: Chapter[] = [
     Component: Experiment4,
     learned:
       "Light travels at the same speed in the lab frame for both light clocks. The moving clock's light pulse follows a longer, diagonal path in the lab frame, so each of its ticks takes longer in lab time. That is why the moving clock measures less time than the lab clock, by the same factor you saw in Experiment 3.",
+    next: 'In Experiment 4 we assumed that light always travels at the same speed, c. Next, we ask what would change if light did not work that way.',
+  },
+  {
+    title: "Why can't light go faster?",
+    Component: Experiment5,
+    learned:
+      "We compared two rules for light. In the everyday rule, light gets the speed of the moving clock added to its own, like a ball thrown from a moving train. Then the moving clock would tick at the same rate as the clock standing still, but its light would travel faster than c. In light's actual rule, light always travels at c. The light has a longer path but cannot go faster, so the moving clock's tick takes longer. That is time dilation. In this model, time dilation happens because light always travels at c.",
     next: 'These are all the experiments for now. You can go back to any chapter and run it again.',
   },
 ]
