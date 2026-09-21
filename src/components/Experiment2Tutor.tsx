@@ -51,11 +51,11 @@ export function Experiment2Tutor({
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              'What did you observe? Did both clocks measure the same elapsed time?'}
+              'What did you notice? Did both clocks measure the same elapsed time?'}
             {tutorStep === 'compare' &&
-              `You predicted Clock A would read ${predictionA}s and Clock B would read ${predictionB}s. They both actually read ${actualA}s and ${actualB}s. What does that tell you?`}
+              `You guessed that Clock A would read ${predictionA}s and Clock B would read ${predictionB}s. They really read ${actualA}s and ${actualB}s. What do you notice when you compare them?`}
             {tutorStep === 'conceptual' &&
-              'Why do you think two independent clocks at rest next to each other measure the same elapsed time?'}
+              'Why do you think two separate clocks that both stand still measure the same elapsed time?'}
           </p>
 
           <textarea
@@ -98,13 +98,13 @@ export function Experiment2Tutor({
       {tutorStep === 'explained' && (
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            When two clocks are at rest relative to each other, they share the same reference frame.
-            All observers in the same reference frame measure time the same way.
+            When two clocks stand still relative to each other, they are in the same reference
+            frame. Everyone in the same reference frame measures time in the same way.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            Both clocks started synchronized and remained at rest. They therefore remained synchronized
-            throughout the experiment, measuring identical elapsed times. This is a fundamental property
-            of a reference frame—observers at rest in that frame agree on time measurements.
+            Both clocks started with the same reading and stayed still. So they stayed in agreement
+            all the way through, and they measured the same elapsed time. This is a basic property
+            of a reference frame: everyone standing still in that frame agrees about time.
           </p>
         </div>
       )}

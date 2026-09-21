@@ -43,11 +43,11 @@ export function ExperimentTutor({ predictionSeconds, actualSeconds }: Experiment
       {(tutorStep === 'observe' || tutorStep === 'compare' || tutorStep === 'conceptual') && (
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
-            {tutorStep === 'observe' && 'What did you observe?'}
+            {tutorStep === 'observe' && 'What did you notice while the clock was running, and when it stopped?'}
             {tutorStep === 'compare' &&
-              `You predicted ${predictionSeconds} seconds, and the clock read ${actualSeconds} seconds. What does that tell you? What if they had been different?`}
+              `You guessed ${predictionSeconds} seconds, and the clock really showed ${actualSeconds} seconds. What do you notice when you compare them? What if they had been different?`}
             {tutorStep === 'conceptual' &&
-              "What does the clock's final reading tell us about what happened between the start and end events?"}
+              "What does the clock's final reading tell us about the time that passed between the start and the end of the experiment?"}
           </p>
 
           <textarea
@@ -90,12 +90,12 @@ export function ExperimentTutor({ predictionSeconds, actualSeconds }: Experiment
       {tutorStep === 'explained' && (
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            A clock gives us a way to measure how much time has elapsed between events.
+            A clock is a way to measure how much time passes between two events.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            When the experiment started, the clock had one reading. When the experiment ended, it
-            had another reading. The difference between those readings tells us how much time
-            elapsed according to that clock.
+            When the experiment started, the clock showed one reading. When it ended, it showed
+            another. The difference between the two readings is how much time passed, according to
+            that clock.
           </p>
         </div>
       )}

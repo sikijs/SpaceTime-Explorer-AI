@@ -109,13 +109,13 @@ export function Experiment2({ onComplete }: Experiment2Props) {
       >
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> In Experiment 1, one clock measured elapsed time. If we
-            use two clocks in two different places, will they agree?
+            <strong>The question.</strong> In Experiment 1, one clock measured how much time passed
+            (the elapsed time). Now we use two clocks in two different places. Will they agree?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> Clock A and Clock B sit at different places. Both are
-            still, and both read 00:00:00 when the experiment starts. You choose how long the
-            experiment runs. When the time is up, we read both clocks.
+            <strong>What happens.</strong> Clock A and Clock B sit at different places. Both stand
+            still, and both show 00:00:00 when the experiment starts. You choose how long the
+            experiment lasts. When the time is up, we read both clocks.
           </p>
           <div
             style={{
@@ -129,42 +129,42 @@ export function Experiment2({ onComplete }: Experiment2Props) {
               <strong>New term: reference frame.</strong>
             </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-              In everyday life we treat time as one thing. If you ask "what time is it?", we expect
-              one answer that holds for everyone, and we rarely notice that we are assuming it. In
-              these experiments we do not assume it. We check it, using clocks.
+              In everyday life we treat time as one thing. If you ask "what time is it?", you expect
+              one answer that is the same for everyone. We hardly notice that we are assuming this.
+              In these experiments we do not just assume it. We check it, using clocks.
             </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               To check it, we need to say who is doing the measuring. A <strong>reference frame</strong>{' '}
-              is a group of observers and clocks that are all at rest relative to one another. None
-              of them is moving with respect to the others, so the distances between them do not
-              change.
+              is a group of people and clocks that are all standing still relative to one another.
+              That means none of them is moving compared with the others, so the distances between
+              them stay the same.
             </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               For example, imagine a room. Some clocks are fixed at different places in the room,
-              and some people are sitting still in the room. None of them is moving relative to the
-              others, so together they make up one reference frame.
+              and some people are sitting still in it. None of them moves compared with the others,
+              so together they make up one reference frame.
             </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-              Clock A and Clock B are like the clocks in that room. Neither one is moving relative
-              to the other, so both clocks are in one reference frame.
+              Clock A and Clock B are like the clocks in that room. Neither one moves compared with
+              the other, so both clocks are in one reference frame.
             </p>
             <p style={{ marginTop: 0, marginBottom: 0 }}>
               Later, when a clock moves, we will compare it with clocks in a frame like this one.
             </p>
           </div>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Predict what each clock will read at the end. Your
-            predictions are not scored.
+            <strong>Your job.</strong> Before you press START, predict what each clock will show at
+            the end. A wrong guess is fine. Guesses are not scored.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What we assume.</strong>
           </p>
           <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
             <li>Neither clock moves, and there is no gravity.</li>
-            <li>Both clocks start together, set to the same reading, and both are at rest.</li>
+            <li>Both clocks start together, are set to the same reading, and stand still.</li>
             <li>
-              The animation may play faster than real time so you do not have to wait. This does
-              not change the result.
+              To save you waiting, the animation may play faster than real life. This does not
+              change the result.
             </li>
           </ul>
         </div>
@@ -302,12 +302,12 @@ export function Experiment2({ onComplete }: Experiment2Props) {
             Make predictions
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '1rem' }}>
-            The experiment will run for {selectedDuration} seconds. What do you predict each clock will read?
+            The experiment will last {selectedDuration} seconds. What will each clock show when it ends? Type your guess for each clock, in seconds.
           </p>
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 'bold' }}>
-              Clock A prediction (seconds)
+              Your guess for Clock A (seconds)
             </label>
             <input
               type="number"
@@ -329,7 +329,7 @@ export function Experiment2({ onComplete }: Experiment2Props) {
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 'bold' }}>
-              Clock B prediction (seconds)
+              Your guess for Clock B (seconds)
             </label>
             <input
               type="number"
@@ -400,25 +400,25 @@ export function Experiment2({ onComplete }: Experiment2Props) {
 
             <div style={{ marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Your prediction for Clock A:</strong> {submittedPredictionA} seconds
+                <strong>You guessed for Clock A:</strong> {submittedPredictionA} seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Actual Clock A:</strong> {result.elapsedTimeA} seconds
+                <strong>The real elapsed time of Clock A:</strong> {result.elapsedTimeA} seconds
               </p>
             </div>
 
             <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Your prediction for Clock B:</strong> {submittedPredictionB} seconds
+                <strong>You guessed for Clock B:</strong> {submittedPredictionB} seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Actual Clock B:</strong> {result.elapsedTimeB} seconds
+                <strong>The real elapsed time of Clock B:</strong> {result.elapsedTimeB} seconds
               </p>
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Difference between clocks:</strong> {result.difference} seconds
+                <strong>Difference between the two clocks' elapsed times:</strong> {result.difference} seconds
               </p>
             </div>
 

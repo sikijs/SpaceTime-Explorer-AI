@@ -95,26 +95,28 @@ export function Experiment1({ onComplete }: Experiment1Props) {
       >
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> What does a clock measure?
+            <strong>The question.</strong> What does a clock actually measure?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> One clock sits still and reads 00:00:00. You choose how
-            long the experiment runs. When you press START, the clock begins to tick. The
-            experiment ends when the time you chose is up.
+            <strong>What happens.</strong> There is one clock, and it stands still. It starts by
+            showing 00:00:00. You choose how long the experiment lasts. When you press START, the
+            clock begins to tick. The experiment ends when the time you chose is up. Two moments
+            matter here: the moment the experiment starts and the moment it ends. We call each
+            of these moments an <strong>event</strong>.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Before you start, predict what the clock will read when the
-            experiment ends. Your prediction is not scored. It is a chance to think before you
-            look.
+            <strong>Your job.</strong> Before you press START, predict what the clock will show when
+            the experiment ends. A wrong guess is fine. Guesses are not scored. Guessing first
+            gives you a chance to think before you look.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What we assume.</strong>
           </p>
           <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>There is one clock in one place. It does not move, and there is no gravity.</li>
+            <li>There is only one clock, and it stays in one place. It does not move, and there is no gravity.</li>
             <li>
-              The animation may play faster than real time so you do not have to wait. This does
-              not change the result.
+              To save you waiting, the animation may play faster than real life. This does not
+              change the result.
             </li>
           </ul>
         </div>
@@ -217,8 +219,8 @@ export function Experiment1({ onComplete }: Experiment1Props) {
             Make a prediction
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
-            The experiment will run for {selectedDuration} seconds. What do you predict the clock will read
-            when the experiment ends?
+            The experiment will last {selectedDuration} seconds. When it ends, what will the clock
+            show? Type your guess in seconds.
           </p>
           <input
             type="number"
@@ -276,34 +278,34 @@ export function Experiment1({ onComplete }: Experiment1Props) {
 
             <div style={{ marginBottom: '1rem' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Start event:</strong> {formatClockReading(result.startEvent.clockReading)}
+                <strong>Start event (the moment the experiment begins):</strong> {formatClockReading(result.startEvent.clockReading)}
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>End event:</strong> {formatClockReading(result.endEvent.clockReading)}
-              </p>
-            </div>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Initial reading:</strong> {formatClockReading(result.initialClockReading)}
-              </p>
-              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Final reading:</strong> {formatClockReading(result.finalClockReading)}
+                <strong>End event (the moment the experiment ends):</strong> {formatClockReading(result.endEvent.clockReading)}
               </p>
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Elapsed time:</strong> {result.elapsedTime} seconds
+                <strong>Clock reading at the start:</strong> {formatClockReading(result.initialClockReading)}
+              </p>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>Clock reading at the end:</strong> {formatClockReading(result.finalClockReading)}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
+                <strong>Elapsed time (how much time passed):</strong> {result.elapsedTime} seconds
               </p>
             </div>
 
             <div style={{ marginBottom: '0', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Your prediction:</strong> {submittedPrediction} seconds
+                <strong>You guessed:</strong> {submittedPrediction} seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Actual result:</strong> {result.elapsedTime} seconds
+                <strong>The real elapsed time:</strong> {result.elapsedTime} seconds
               </p>
             </div>
 

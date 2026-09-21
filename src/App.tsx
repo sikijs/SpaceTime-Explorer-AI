@@ -19,21 +19,21 @@ const chapters: Chapter[] = [
     title: 'One clock',
     Component: Experiment1,
     learned:
-      "A clock measures the time that passes between two events, here the start and the end of the experiment. That elapsed time is the difference between the clock's readings at those two events.",
-    next: 'You used one clock. Next, two clocks in two different places measure the same two events. Will they agree?',
+      "A clock measures how much time passes between two events. Here, the two events were the start and the end of the experiment. The elapsed time is the difference between the clock's two readings.",
+    next: 'You used one clock. Next, two clocks in two different places will measure the same two events. Will they agree?',
   },
   {
     title: 'Two clocks at rest',
     Component: Experiment2,
     learned:
-      'Two clocks at rest in the same reference frame, set to the same reading at the start, measured the same elapsed time between the same two events.',
-    next: 'So far, nothing has moved. Next, one clock moves relative to the lab. Will it still agree with the clocks at rest?',
+      'Two clocks standing still in the same reference frame, set to the same reading at the start, measured the same elapsed time between the same two events.',
+    next: 'So far, nothing has moved. Next, one clock moves compared with the lab. Will it still agree with the clocks that stand still?',
   },
   {
     title: 'A moving clock',
     Component: Experiment3,
     learned:
-      'When a clock moves relative to the lab, it measures less elapsed time than the lab clock between the same two events. The faster it moves, the bigger the difference. The moving clock is not broken: the elapsed time between events depends on the reference frame and on motion. (At speed 0 nothing moves, and the two clocks agree.)',
+      'When a clock moves compared with the lab, it measures less elapsed time than the lab clock between the same two events. The faster it moves, the bigger the difference. The moving clock is not broken: the time that passes between two events depends on who is measuring (their reference frame) and how they are moving. (At speed 0 nothing moves, and the two clocks agree.)',
     next: 'Why does the moving clock measure less time? Next, we look inside a clock to find the reason.',
   },
   {

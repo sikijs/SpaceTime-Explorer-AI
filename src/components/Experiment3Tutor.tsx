@@ -81,13 +81,13 @@ export function Experiment3Tutor({
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              'What did you observe? Look at the two clock readings. Did the moving clock measure the same time as the lab clock?'}
+              'What did you notice? Look at the two clock readings. Did the moving clock show the same time as the lab clock?'}
             {tutorStep === 'compare' &&
-              `You predicted the moving clock would read ${secondsLabel(prediction)}. It actually read ${movingClockElapsedTime.toFixed(3)} seconds, while the lab clock read ${observerElapsedTime.toFixed(3)} seconds. Were you surprised?`}
+              `You guessed that the moving clock would read ${secondsLabel(prediction)}. It really read ${movingClockElapsedTime.toFixed(3)} seconds, while the lab clock read ${observerElapsedTime.toFixed(3)} seconds. Were you surprised?`}
             {tutorStep === 'conceptual' &&
               (isBaseline
                 ? "This clock wasn't moving at all. Why do you think the two clocks agree? Think back to Experiment 2."
-                : "Why do you think the moving clock measured a different amount of time? What could be different between a clock that's moving and a clock that's stationary?")}
+                : "Why do you think the moving clock measured a different amount of time? What could be different between a clock that is moving and a clock that stands still?")}
           </p>
 
           <textarea
@@ -130,12 +130,13 @@ export function Experiment3Tutor({
       {tutorStep === 'explained' && isBaseline && (
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            With no motion, the "moving" clock stays beside the lab clock, so the two clocks agree.
-            That matches what you found in Experiment 2 for clocks at rest. This is your baseline.
+            With no motion, the "moving" clock stays right beside the lab clock, so the two clocks
+            agree. That matches what you found in Experiment 2 for clocks that stand still. This is
+            your starting point, or baseline.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             Now choose a speed above 0c and run it again. The clocks will no longer agree, and the
-            gap grows with speed. Experiment 4, the next chapter, shows why.
+            gap gets bigger as the speed goes up. Experiment 4, the next chapter, shows why.
           </p>
         </div>
       )}
@@ -144,22 +145,22 @@ export function Experiment3Tutor({
         <div>
           {predictionKind === 'close-to-actual' && (
             <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-              Great! You intuited that motion and time are connected. Let's explore why that
+              Great! You sensed that motion and time are connected. Let's find out why that
               happens.
             </p>
           )}
           {predictionKind === 'close-to-lab' && (
             <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-              That's really interesting. Most people intuitively think both clocks measure the same
-              time, so you're not alone. But this experiment suggests something surprising about the
-              nature of time itself.
+              That's really interesting. Most people think both clocks would measure the same time,
+              so you're not alone. But this experiment shows something surprising about time
+              itself.
             </p>
           )}
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            This is one of the most counterintuitive ideas in relativity. A moving clock, a
-            perfectly good clock, measures less time than the lab measures between the same two
-            events: the start and the end of the run. It isn't broken. It's how time works when
-            things move fast relative to each other.
+            This is one of the most surprising ideas in relativity. A moving clock, a perfectly
+            good clock, measures less time than the lab measures between the same two events: the
+            start and the end of the run. It isn't broken. It is how time works when things move
+            fast relative to each other.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             At {velocity}c, the moving clock measured {movingClockElapsedTime.toFixed(3)} seconds
@@ -167,9 +168,9 @@ export function Experiment3Tutor({
             {timeDilationFactor.toFixed(3)} of the lab time.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            This is a fundamental property of relativity: the elapsed time between events depends
-            on the observer's reference frame and on motion. Experiment 4, the next chapter, shows
-            why it happens.
+            This is a basic fact of relativity: the time that passes between two events depends on
+            who is measuring (their reference frame) and how they are moving. Experiment 4, the next
+            chapter, shows why it happens.
           </p>
         </div>
       )}

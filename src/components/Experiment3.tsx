@@ -183,42 +183,45 @@ export function Experiment3({ onComplete }: Experiment3Props) {
       >
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> If one clock stays still and another clock moves, do they
-            keep the same time?
+            <strong>The question.</strong> In Experiment 2, two clocks that stood still agreed. What
+            if one of the clocks moves? Will the two clocks still show the same time?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> Two ordinary clocks start together at 00:00.0. One stays
-            in the lab. The other moves away in a straight line at a steady speed. You choose the
+            <strong>What happens.</strong> Two ordinary clocks start together, at the same place,
+            both showing 00:00.0. One stays in the lab, which is the place where the experiment is
+            set up. The other moves away in a straight line at a steady speed. You choose the
             speed and how long the lab clock runs. When that time is up, we read both clocks.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Predict what the moving clock will read at the end.
+            <strong>Your job.</strong> Before you press START, predict what the moving clock will
+            show at the end. A wrong guess is fine. Guesses are not scored.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>How this differs from Experiment 4.</strong> This experiment measures{' '}
-            <em>how much</em> the two clocks differ. It does not explain why. Experiment 4 looks
-            inside a clock to find the reason.
+            <em>how big</em> the difference between the two clocks is. It does not explain{' '}
+            <em>why</em> there is a difference. Experiment 4 looks inside a clock to find the
+            reason.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What we assume.</strong>
           </p>
           <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>There is no gravity, and the moving clock keeps a constant speed (no acceleration).</li>
-            <li>Both clocks start together at the same place, and both are set to zero then.</li>
+            <li>There is no gravity, and the moving clock keeps a steady speed. It never speeds up or slows down.</li>
+            <li>Both clocks start together at the same place, and both are set to zero at that moment.</li>
             <li>
-              The lab is a <strong>reference frame</strong>, as in Experiment 2. Its clocks and
-              observers are all at rest relative to one another, and its clocks are synchronized.
-              <strong> Lab time</strong> is time read on those lab clocks.
+              The lab is a <strong>reference frame</strong>, as in Experiment 2: a group of people
+              and clocks that are all standing still relative to one another, with their clocks set
+              to agree. <strong>Lab time</strong> is the time shown on those clocks.
             </li>
             <li>
-              The moving clock is not at rest relative to the lab clocks, so it is not part of the
-              lab's reference frame. It has a reference frame of its own, in which it is at rest,
-              and that frame moves relative to the lab. So two reference frames are involved: the
-              lab's and the moving clock's.
+              The moving clock is not standing still relative to the lab, so it is not part of the
+              lab's reference frame. It has its own reference frame: the point of view of someone
+              riding along with it. So two reference frames are involved: the lab's and the moving
+              clock's.
             </li>
             <li>
-              Distances are given in <strong>light-seconds</strong>. One light-second is the
-              distance light travels in one second (about 300,000 km).
+              We measure distances in <strong>light-seconds</strong>. One light-second is how far
+              light travels in one second, about 300,000 km.
             </li>
           </ul>
         </div>
@@ -313,8 +316,8 @@ export function Experiment3({ onComplete }: Experiment3Props) {
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
             Speeds are given as a fraction of <strong>c</strong>, the speed of light (about 300,000
-            km/s). For example, 0.5c means half the speed of light. 0c means the clock is not moving,
-            which gives a baseline to compare with.
+            km/s). For example, 0.5c means half the speed of light. 0c means the clock is not moving at all,
+            so you can use it as a starting point to compare with.
           </p>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -363,9 +366,9 @@ export function Experiment3({ onComplete }: Experiment3Props) {
             Make a prediction
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
-            The moving clock will travel at {speedText} relative to the lab, and the lab clock will
-            run for {selectedDuration || '—'} seconds.
-            What do you predict the moving clock will read when the experiment ends?
+            The moving clock will move at {speedText}, measured from the lab, and the lab clock will
+            run for {selectedDuration || '—'} seconds. When the experiment ends, what will the
+            moving clock show? Type your guess in seconds.
           </p>
           <input
             type="number"
@@ -420,24 +423,24 @@ export function Experiment3({ onComplete }: Experiment3Props) {
             <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem' }}>Results</h2>
 
             <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-              <strong>Duration (lab frame):</strong> {result.labTimeDuration} seconds
+              <strong>How long the experiment ran (on the lab's clocks):</strong> {result.labTimeDuration} seconds
             </p>
             <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
               <strong>Moving clock speed:</strong> {result.velocity}c (
               {parseFloat((result.velocity * 100).toFixed(2))}% of the speed of light)
             </p>
             <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-              <strong>Distance the moving clock travelled (lab frame):</strong>{' '}
+              <strong>Distance the moving clock travelled (measured in the lab):</strong>{' '}
               {result.distanceTravelled.toFixed(3)} light-seconds
             </p>
 
             <div style={{ paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid #ddd' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Lab clock's measurement:</strong> {result.observerElapsedTime.toFixed(3)}{' '}
+                <strong>What the lab clock measured:</strong> {result.observerElapsedTime.toFixed(3)}{' '}
                 seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Moving clock's reading:</strong> {result.movingClockElapsedTime.toFixed(3)}{' '}
+                <strong>What the moving clock measured:</strong> {result.movingClockElapsedTime.toFixed(3)}{' '}
                 seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
@@ -445,20 +448,21 @@ export function Experiment3({ onComplete }: Experiment3Props) {
                 {result.timeDifferential.toFixed(3) === '0.000'
                   ? '0.000'
                   : `−${result.timeDifferential.toFixed(3)}`}{' '}
-                seconds (moving clock minus lab clock)
+                seconds (the moving clock's time minus the lab clock's time)
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Time dilation factor:</strong> {result.timeDilationFactor.toFixed(3)} (√(1 −{' '}
-                {result.velocity}²) with speeds in units of c)
+                <strong>Time dilation factor (how much slower the moving clock runs):</strong>{' '}
+                {result.timeDilationFactor.toFixed(3)} (the moving clock's time divided by the lab
+                clock's time; it comes from √(1 − {result.velocity}²), with speeds in units of c)
               </p>
             </div>
 
             <div style={{ paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid #ddd' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Your prediction:</strong> {submittedPrediction} seconds
+                <strong>You guessed:</strong> {submittedPrediction} seconds
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Actual moving clock reading:</strong>{' '}
+                <strong>The real time the moving clock measured:</strong>{' '}
                 {result.movingClockElapsedTime.toFixed(3)} seconds
               </p>
             </div>
