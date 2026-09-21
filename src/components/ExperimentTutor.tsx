@@ -3,11 +3,16 @@ import { useState } from 'react'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface ExperimentTutorProps {
+  onExplained?: () => void
   predictionSeconds: number
   actualSeconds: number
 }
 
-export function ExperimentTutor({ predictionSeconds, actualSeconds }: ExperimentTutorProps) {
+export function ExperimentTutor({
+  predictionSeconds,
+  actualSeconds,
+  onExplained,
+}: ExperimentTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -20,6 +25,7 @@ export function ExperimentTutor({ predictionSeconds, actualSeconds }: Experiment
       setTutorStep('conceptual')
     } else if (tutorStep === 'conceptual') {
       setTutorStep('explained')
+      onExplained?.()
     }
     setResponseInput('')
   }

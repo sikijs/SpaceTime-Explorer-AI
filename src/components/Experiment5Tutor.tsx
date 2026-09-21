@@ -3,6 +3,7 @@ import { useState } from 'react'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface Experiment5TutorProps {
+  onExplained?: () => void
   velocity: number
   prediction: {
     choice: 'everyday' | 'actual' | 'same'
@@ -30,6 +31,7 @@ export function Experiment5Tutor({
   everydayLightSpeed,
   actualTick,
   actualTimeDilationFactor,
+  onExplained,
 }: Experiment5TutorProps) {
   const predictedWhich = PREDICTED_WHICH[prediction.choice]
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
@@ -44,6 +46,7 @@ export function Experiment5Tutor({
       setTutorStep('conceptual')
     } else if (tutorStep === 'conceptual') {
       setTutorStep('explained')
+      onExplained?.()
     }
     setResponseInput('')
   }

@@ -169,9 +169,10 @@ function LightClockPanel({ title, caption, geometry, state, moving }: LightClock
 
 interface Experiment4Props {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function Experiment4({ onComplete }: Experiment4Props) {
+export function Experiment4({ onComplete, onTutorComplete }: Experiment4Props) {
   const [velocity, setVelocity] = useState<VelocityOption>(0.5)
   const [customVelocity, setCustomVelocity] = useState('')
   const [predictionInput, setPredictionInput] = useState('')
@@ -509,6 +510,7 @@ export function Experiment4({ onComplete }: Experiment4Props) {
 
         {status === 'complete' && result && submittedPrediction !== null && (
           <Experiment4Tutor
+            onExplained={onTutorComplete}
             velocity={result.velocity}
             prediction={submittedPrediction}
             restTickDuration={result.restTickDuration}

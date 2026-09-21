@@ -306,7 +306,7 @@ Follows the project's cycle and the pattern of Experiments 3 and 4. It has no pr
 
 ### Open items after implementation
 
-- **Summary timing.** The chapter summary appears as soon as the run ends, so it can be read before the tutor's explanation. This is how Experiments 1 to 4 work. Owner to decide whether to hold it back.
+- **Summary timing.** Resolved: at the owner's request, the chapter summary (for every chapter) now appears only after the learner reaches the tutor's explanation.
 - **Title versus content.** The tutor says the experiment does not explain why light behaves this way, while the title asks "why". Owner to decide whether to keep or rename the title (Decision 1).
 - **Own-time readout.** Confirm the interpretation of "tick counter" (see the interface notes).
 - **Layout at extremes.** In narrow windows the fixed sidebar leaves the experiment very narrow, and the shared drawing scale makes the clocks very small at high speeds such as 0.99c. Experiment 4 behaves the same way.

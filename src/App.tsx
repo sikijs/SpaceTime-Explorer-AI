@@ -8,8 +8,8 @@ import { Experiment5 } from './components/Experiment5'
 
 interface Chapter {
   title: string
-  Component: ComponentType<{ onComplete?: () => void }>
-  // Shown below the experiment once the learner has run it to the end.
+  Component: ComponentType<{ onComplete?: () => void; onTutorComplete?: () => void }>
+  // Shown below the experiment once the learner has run it and finished the tutor's questions.
   learned: string
   next: string
 }
@@ -57,6 +57,8 @@ const STORAGE_KEY = 'spacetime-explorer-progress'
 interface Progress {
   currentChapter: number
   completed: number[]
+  // Chapters whose tutor conversation was finished; their summary is shown.
+  explained: number[]
 }
 
 function isChapterIndex(value: unknown): value is number {
@@ -71,12 +73,13 @@ function loadProgress(): Progress {
       return {
         currentChapter: isChapterIndex(parsed.currentChapter) ? parsed.currentChapter : 0,
         completed: Array.isArray(parsed.completed) ? parsed.completed.filter(isChapterIndex) : [],
+        explained: Array.isArray(parsed.explained) ? parsed.explained.filter(isChapterIndex) : [],
       }
     }
   } catch {
     // Storage unavailable or corrupt: start fresh.
   }
-  return { currentChapter: 0, completed: [] }
+  return { currentChapter: 0, completed: [], explained: [] }
 }
 
 function saveProgress(progress: Progress) {
@@ -98,17 +101,22 @@ export function App() {
   const [initialProgress] = useState(loadProgress)
   const [currentChapter, setCurrentChapter] = useState(initialProgress.currentChapter)
   const [completed, setCompleted] = useState<number[]>(initialProgress.completed)
+  const [explained, setExplained] = useState<number[]>(initialProgress.explained)
 
   useEffect(() => {
-    saveProgress({ currentChapter, completed })
-  }, [currentChapter, completed])
+    saveProgress({ currentChapter, completed, explained })
+  }, [currentChapter, completed, explained])
 
   const markComplete = (index: number) => {
     setCompleted((previous) => (previous.includes(index) ? previous : [...previous, index]))
   }
 
+  const markExplained = (index: number) => {
+    setExplained((previous) => (previous.includes(index) ? previous : [...previous, index]))
+  }
+
   const { Component, learned, next } = chapters[currentChapter]
-  const isCurrentCompleted = completed.includes(currentChapter)
+  const isCurrentExplained = explained.includes(currentChapter)
   const isFirst = currentChapter === 0
   const isLast = currentChapter === chapters.length - 1
 
@@ -163,9 +171,13 @@ export function App() {
           </nav>
 
           <main style={{ flex: '1 1 0', minWidth: 0 }}>
-            <Component key={currentChapter} onComplete={() => markComplete(currentChapter)} />
+            <Component
+              key={currentChapter}
+              onComplete={() => markComplete(currentChapter)}
+              onTutorComplete={() => markExplained(currentChapter)}
+            />
 
-            {!isCurrentCompleted && (
+            {!isCurrentExplained && (
               <p
                 style={{
                   maxWidth: '700px',
@@ -176,12 +188,12 @@ export function App() {
                   color: '#666',
                 }}
               >
-                When you finish this experiment, a short summary of what you learned and what comes
-                next will appear here.
+                When you have run the experiment and answered the questions that follow it, a short
+                summary of what you learned and what comes next will appear here.
               </p>
             )}
 
-            {isCurrentCompleted && (
+            {isCurrentExplained && (
               <section
                 aria-label="Chapter summary"
                 style={{

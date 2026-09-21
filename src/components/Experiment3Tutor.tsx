@@ -4,6 +4,7 @@ type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 type PredictionKind = 'close-to-actual' | 'close-to-lab' | 'other'
 
 interface Experiment3TutorProps {
+  onExplained?: () => void
   velocity: number
   prediction: number
   observerElapsedTime: number
@@ -36,6 +37,7 @@ export function Experiment3Tutor({
   movingClockElapsedTime,
   timeDilationFactor,
   timeDifferential,
+  onExplained,
 }: Experiment3TutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
@@ -49,6 +51,7 @@ export function Experiment3Tutor({
       setTutorStep('conceptual')
     } else if (tutorStep === 'conceptual') {
       setTutorStep('explained')
+      onExplained?.()
     }
     setResponseInput('')
   }

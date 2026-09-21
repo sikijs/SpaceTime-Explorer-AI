@@ -688,7 +688,7 @@ The application is a guided journey, a format chosen by the project owner. `src/
 
 Each experiment maintains fully independent physics models, UI components, prediction state, and AI tutor behavior. `App` only sequences them; the underlying architecture remains that of separate, independent experiments. Switching chapters remounts the experiment, so its prediction and results reset.
 
-Progress: each experiment takes an optional `onComplete` prop, called when its animation reaches the end. `App` then shows a check mark beside that chapter and saves the completed chapters and the current chapter in `localStorage` under `spacetime-explorer-progress`. Completion means the experiment ran to the end; the tutor conversation is optional.
+Progress: each experiment takes an optional `onComplete` prop, called when its animation reaches the end. `App` then shows a check mark beside that chapter and saves the completed chapters and the current chapter in `localStorage` under `spacetime-explorer-progress`. Completion means the experiment ran to the end; the tutor conversation is optional for the check mark. Each experiment also takes an optional `onTutorComplete` prop, called when the learner reaches the tutor's explanation (its last step); `App` saves those chapters as `explained` in the same `localStorage` entry.
 
 Each experiment opens with a short introduction (the question, what happens, the learner's job, and the assumptions). The Experiment 2 introduction also explains the term "reference frame", which Experiment 3 relies on. The Experiment 3, 4 and 5 introductions say that two reference frames are involved: the lab's and the moving clock's.
 
@@ -705,9 +705,9 @@ Text is set larger and at a medium weight, using a system sans-serif font, throu
 ## Guided-Journey Work
 
 * **Done:** the chapter shell (sidebar, Previous/Next), saved progress with completion check marks, introductions for Experiments 1 and 2, and the reference frame wording in Experiments 2, 3 and 4.
-* **Done:** a "What you learned / What's next" summary below each experiment, shown only after the learner has run that experiment to the end (so nothing is explained early). Until then, a short hint line says that a summary will appear there. The summaries live in the `chapters` list in `src/App.tsx`. Experiment 5's summary points to no further experiment, because none is approved yet.
+* **Done:** a "What you learned / What's next" summary below each experiment, shown only after the learner has run that experiment and reached the tutor's explanation, so nothing is explained early and the summary never comes before the tutor's own explanation. Until then, a short hint line says that a summary will appear there. A learner who skips the tutor's questions does not see the summary. The summaries live in the `chapters` list in `src/App.tsx`. Experiment 5's summary points to no further experiment, because none is approved yet.
 * **Decided against:** a side-by-side compare view of Experiments 3 and 4.
-* **Open (owner to decide):** the summary appears as soon as a run ends, so in Experiment 5 (and earlier chapters) it can be read before the tutor's explanation; the fixed sidebar leaves the experiment very narrow in small windows; and the shared drawing scale makes the light clocks very small at high speeds such as 0.99c in Experiments 4 and 5.
+* **Open (owner to decide):** the fixed sidebar leaves the experiment very narrow in small windows; and the shared drawing scale makes the light clocks very small at high speeds such as 0.99c in Experiments 4 and 5.
 
 ## Next Milestone
 

@@ -100,9 +100,10 @@ function MovingClockTrack({ experiment, distanceTravelled }: MovingClockTrackPro
 
 interface Experiment3Props {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function Experiment3({ onComplete }: Experiment3Props) {
+export function Experiment3({ onComplete, onTutorComplete }: Experiment3Props) {
   const [duration, setDuration] = useState<DurationOption>(10)
   const [customDuration, setCustomDuration] = useState('')
   const [velocity, setVelocity] = useState<VelocityOption>(0.5)
@@ -471,6 +472,7 @@ export function Experiment3({ onComplete }: Experiment3Props) {
 
         {status === 'complete' && result && submittedPrediction !== null && (
           <Experiment3Tutor
+            onExplained={onTutorComplete}
             velocity={result.velocity}
             prediction={submittedPrediction}
             observerElapsedTime={result.observerElapsedTime}

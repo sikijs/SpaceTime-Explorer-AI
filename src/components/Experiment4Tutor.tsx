@@ -3,6 +3,7 @@ import { useState } from 'react'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface Experiment4TutorProps {
+  onExplained?: () => void
   velocity: number
   prediction: number
   restTickDuration: number
@@ -16,6 +17,7 @@ export function Experiment4Tutor({
   restTickDuration,
   movingTickDuration,
   timeDilationFactor,
+  onExplained,
 }: Experiment4TutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
@@ -29,6 +31,7 @@ export function Experiment4Tutor({
       setTutorStep('conceptual')
     } else if (tutorStep === 'conceptual') {
       setTutorStep('explained')
+      onExplained?.()
     }
     setResponseInput('')
   }

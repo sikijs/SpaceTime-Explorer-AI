@@ -186,9 +186,10 @@ function RuleResultBlock({ title, rule }: { title: string; rule: RuleResult }) {
 
 interface Experiment5Props {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function Experiment5({ onComplete }: Experiment5Props) {
+export function Experiment5({ onComplete, onTutorComplete }: Experiment5Props) {
   const [velocity, setVelocity] = useState<VelocityOption>(0.5)
   const [customVelocity, setCustomVelocity] = useState('')
   const [choice, setChoice] = useState<RuleChoice | null>(null)
@@ -591,6 +592,7 @@ export function Experiment5({ onComplete }: Experiment5Props) {
 
         {status === 'complete' && result && submittedPrediction !== null && (
           <Experiment5Tutor
+            onExplained={onTutorComplete}
             velocity={result.velocity}
             prediction={submittedPrediction}
             restTickDuration={result.restTickDuration}

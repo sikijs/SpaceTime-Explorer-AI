@@ -15,9 +15,10 @@ function formatClockReading(seconds: number): string {
 
 interface Experiment1Props {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function Experiment1({ onComplete }: Experiment1Props) {
+export function Experiment1({ onComplete, onTutorComplete }: Experiment1Props) {
   const [duration, setDuration] = useState<DurationOption>(10)
   const [customDuration, setCustomDuration] = useState('')
   const [predictionInput, setPredictionInput] = useState('')
@@ -425,6 +426,7 @@ export function Experiment1({ onComplete }: Experiment1Props) {
 
         {isComplete && result && submittedPrediction !== null && (
           <ExperimentTutor
+            onExplained={onTutorComplete}
             key={`${result.experimentDuration}-${result.elapsedTime}`}
             predictionSeconds={submittedPrediction}
             actualSeconds={result.elapsedTime}

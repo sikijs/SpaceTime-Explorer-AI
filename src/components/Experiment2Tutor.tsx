@@ -3,6 +3,7 @@ import { useState } from 'react'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface Experiment2TutorProps {
+  onExplained?: () => void
   predictionA: number
   predictionB: number
   actualA: number
@@ -14,6 +15,7 @@ export function Experiment2Tutor({
   predictionB,
   actualA,
   actualB,
+  onExplained,
 }: Experiment2TutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
@@ -27,6 +29,7 @@ export function Experiment2Tutor({
       setTutorStep('conceptual')
     } else if (tutorStep === 'conceptual') {
       setTutorStep('explained')
+      onExplained?.()
     }
     setResponseInput('')
   }
