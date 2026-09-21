@@ -2,6 +2,8 @@
 
 **Status: APPROVED by the project owner. The defaults proposed under "Decisions Needing Human Review" stand unless changed.**
 
+**Implementation: built and reviewed.** The implementation notes below record how the specification was realised. Items still awaiting the owner's decision are listed at the end of "Decisions Needing Human Review".
+
 ## Overview
 
 Experiment 4 explained time dilation using one assumption, stated by the tutor afterwards: light travels at the same speed `c` in the lab, whatever the light source is doing. It was assumed, not examined.
@@ -125,6 +127,12 @@ interface InvariantLightSpeedResult {
 
 The physics lives in a new module, independent of React, like the other experiments (working name `src/physics/invariantLightSpeedExperiment.ts`).
 
+### Implementation notes (physics)
+
+- **Result structure.** In addition to the proposed fields, the result holds `restLightPath`, `lightSpeedRest` (in units of `c`), and `sidewaysDistancePerTick: { everydayRule, actualRule }`, which the drawings need.
+- **Playback state.** `invariantLightSpeedStateAt(result, labTime)` in the same module returns each clock's own reading, pulse height, phase and sideways offset at a lab time. The rest clock keeps ticking; each moving clock is followed for its one tick and then held. The run lasts until the actual-rule clock finishes its tick, which is never shorter than the everyday-rule tick. It reuses `pulseHeightAtPhase`, which is now exported from `lightClockExperiment.ts`.
+- **Tests.** Besides the required tests, a sweep checks every relationship at all 99 speeds the interface allows (0.01c to 0.99c in steps of 0.01c), and the playback state is checked against the Experiment 4 playback state.
+
 ---
 
 ## Learner Controls
@@ -179,6 +187,16 @@ All pulses start together at one lab moment. Each moving clock completes exactly
 
 Playback is slowed for viewing. The physical result is determined by the model, not by playback speed.
 
+### Implementation notes (interface)
+
+- **Layout.** The page shows the introduction, the speed controls, the prediction, START, and then the three clocks directly under START. When START is pressed, the page scrolls the clocks into view. The animation guard from Experiment 4 (progress kept between 0 and 1) is used.
+- **Prediction.** START stays disabled until a speed, a choice (*Everyday rule*, *Light's actual rule* or *Both the same*) and both tick durations are entered. After START the inputs clear, the submitted prediction is kept for the results and tutor, and a new prediction is needed for the next run. Nothing checks that the choice agrees with the numbers.
+- **Playback.** 2 real seconds per lab second, so a run at 0.99c lasts about 14.6 seconds. Playback speed never affects a result.
+- **Clock readouts.** "Its own tick counter" was implemented as the own-time readout used in Experiment 4 (the moving clocks' own reading is lab time times the time dilation factor, so both read 1.0 second at the end of the run). This interpretation is awaiting the owner's confirmation.
+- **Drawings.** All three panels share one scale so the light paths can be compared. The moving clocks show dashed "start" markers and the caption "Moving at [speed] (seen from the lab). Both mirrors move together. Dashed lines show where they started."
+- **Introduction, in plain language.** At the owner's request the learner-facing text is written as if for a new student. In order it gives: the question; a reminder of the light clock, including that the mirrors are about 150,000 km apart (half a light-second, so one tick is exactly 1 second) and that this giant clock is used so the numbers are easy to read; the light source as "a small lamp"; a car-and-headlights picture that only asks the question; the two rules, with the everyday rule explained by a ball thrown from a moving train and labelled a "what if"; what the learner will see; the learner's job (guesses are not scored); and the assumptions, including the definitions of reference frame and lab time and the statement that, under both rules, someone riding along with the moving clock sees the light go straight up at speed `c`.
+- **Chapter summary.** Experiment 5's "What you learned" is in the `chapters` list in `src/App.tsx`. Experiment 4's "What's next" line now leads into Experiment 5.
+
 ---
 
 ## Results Display
@@ -190,6 +208,12 @@ After the run, show the values only, neutrally (Predict → Experiment → Obser
 - The learner's prediction versus the actual values
 
 Explanation comes from the tutor, after the learner has observed and responded, not from the results panel. Values are shown to three decimal places, as in Experiments 3 and 4.
+
+### Implementation notes (results)
+
+- The results panel appears when the run ends and shows values only: the moving clock speed, a note that `c` is the speed of light and that a light-second is the distance light travels in one second, and the rest clock's and each rule's light path, tick duration on the lab's clocks, light speed seen from the lab, and (for the moving clocks) the time dilation factor, labelled "rest tick ÷ moving tick; 1 means no slowing". The light-speed readouts appear here, at the end of the run, not during it.
+- The learner's prediction is shown as "you guessed … the real time was …" for each rule. The panel gives no verdict on which rule gave the longer tick; the tutor handles that comparison.
+- The sideways distance per tick, shown in Experiment 4, is not shown here.
 
 ---
 
@@ -260,6 +284,12 @@ Follows the project's cycle and the pattern of Experiments 3 and 4. It has no pr
 - The tutor must not add physics beyond this specification. It must not claim experimental evidence unless the owner approves it (Decision 6).
 - The tutor must not answer the title question ("why can't light go faster?") with more than this specification supports (Decision 1).
 
+### Implementation notes (tutor)
+
+- The tutor appears after the run finishes and moves through the four steps above, each needing a typed answer before continuing. It has no pre-run step, matching Experiments 1 to 4, and it gives no reaction to the prediction, because the specification defines none.
+- Question wording: (1) "Look at the two moving clocks. What is different between them?" with a hint to look at the light's path and the tick lengths; (2) the learner's choice and guesses beside the real times, then "What do you notice…?"; (3) "Under the everyday rule, how fast was the light going… faster than c, slower than c, or exactly c?"
+- The explanation is a numbered walk-through using the run's real numbers: (1) what stayed the same, since both moving clocks show 1 second per tick on their own displays; (2) the everyday rule, with the light carried sideways and travelling faster than `c`, so the tick matches the rest tick and there is no time dilation; (3) light's actual rule, where the light stays at `c`, cannot make up the longer path by going faster, so the tick takes longer, with the factor shared with Experiments 3 and 4; (4) the big idea, that in this model time dilation follows from light always travelling at `c`; (5) two things to remember, that the everyday rule is only a "what if" and that constant light speed is the assumed rule, so the experiment shows what follows from it and does not explain why light behaves this way.
+
 ---
 
 ## Decisions Needing Human Review
@@ -272,7 +302,14 @@ Follows the project's cycle and the pattern of Experiments 3 and 4. It has no pr
 6. **Evidence.** Should the tutor or introduction mention that experiments support the constancy of the speed of light? The draft says no, to avoid claims the specification does not contain. Owner to decide.
 7. **Physical realism of Rule A.** In the everyday rule, the light's velocity in the lab is the clock's velocity combined with `c` relative to the clock. This is a simple, explicit hypothetical. Confirm that presenting it as "what everyday intuition would predict" is acceptable, and that no historical claim (for example, a named earlier theory) is added.
 8. **Mirror separation and single tick.** Reuse `L = 0.5` light-second and the one-tick run from Experiment 4. Confirm.
-9. **Chapter summary.** If approved and implemented, the "What's next" line for Experiment 4 in `src/App.tsx` (currently "These are all the experiments for now…") would need to point to Experiment 5, and Experiment 5 needs its own summary. Not to be changed until approval.
+9. **Chapter summary.** Done: the "What's next" line for Experiment 4 in `src/App.tsx` now points to Experiment 5, and Experiment 5 has its own summary, which says these are all the experiments for now.
+
+### Open items after implementation
+
+- **Summary timing.** The chapter summary appears as soon as the run ends, so it can be read before the tutor's explanation. This is how Experiments 1 to 4 work. Owner to decide whether to hold it back.
+- **Title versus content.** The tutor says the experiment does not explain why light behaves this way, while the title asks "why". Owner to decide whether to keep or rename the title (Decision 1).
+- **Own-time readout.** Confirm the interpretation of "tick counter" (see the interface notes).
+- **Layout at extremes.** In narrow windows the fixed sidebar leaves the experiment very narrow, and the shared drawing scale makes the clocks very small at high speeds such as 0.99c. Experiment 4 behaves the same way.
 
 ---
 

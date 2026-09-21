@@ -589,7 +589,9 @@ Experiments 1 and 2 are implemented.
 
 Experiment 3 (the moving clock) has an approved specification, a tested physics model, and an interface with the prediction step, results panel, and AI tutor. It has had its complete-flow test and final review, and its review items have been addressed.
 
-Experiment 4 (the light clock) has an approved specification and is implemented, with its complete-flow test and final review done. It explains why the effect shown in Experiment 3 happens. The next step is to propose the specification for the next experiment.
+Experiment 4 (the light clock) has an approved specification and is implemented, with its complete-flow test and final review done. It explains why the effect shown in Experiment 3 happens.
+
+Experiment 5 (why can't light go faster?) has an approved specification and is implemented, with its complete-flow test and final review done. It shows the light clock of Experiment 4 under two rules for light, an everyday rule in which speeds add and light's actual rule in which light always travels at `c` in the lab, so that the learner can see what the constancy of the speed of light is responsible for. The planned progression ends here, so the next step is to decide the direction of the next experiment with the project owner and propose its specification.
 
 The application is presented as a guided journey: one experiment per screen, in order, with a sidebar showing the sequence and the learner's progress. This follows the progressive structure described in Section 7. Learners can revisit any chapter.
 
