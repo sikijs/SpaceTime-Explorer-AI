@@ -15,3 +15,4 @@ Implemented models, each with its own `.test.ts` file:
 * `movingClockExperiment.ts` — Experiment 3, the moving clock (also defines the speed of light constant).
 * `lightClockExperiment.ts` — Experiment 4, the light clock.
 * `invariantLightSpeedExperiment.ts` — Experiment 5, the light clock under the everyday rule and light's actual rule. It reuses the Experiment 4 model for light's actual rule.
+* `lengthContractionExperiment.ts` — Experiment 6, the light clock with its mirrors along the direction of motion, with the rest length and with the shorter length. It reuses the Experiment 4 model for the tick that time dilation gives.

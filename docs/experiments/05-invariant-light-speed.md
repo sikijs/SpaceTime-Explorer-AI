@@ -252,7 +252,7 @@ New terms: none beyond "everyday rule" and "light's actual rule", which are work
 
 ## Relationship to Later Experiments
 
-None approved. Per `PROJECT.md` §7, later experiments must not be invented merely to fill out a roadmap. Candidate next topics (relativity of simultaneity, spacetime diagrams, the twin problem) are for the owner to raise or approve separately.
+Experiment 6 (`06-length-contraction.md`) was chosen by the owner after this experiment. Otherwise none approved. Per `PROJECT.md` §7, later experiments must not be invented merely to fill out a roadmap. Candidate next topics (relativity of simultaneity, spacetime diagrams, the twin problem) are for the owner to raise or approve separately.
 
 ---
 

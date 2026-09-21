@@ -684,13 +684,13 @@ The current technology foundation is:
 
 ## Current UI Layout
 
-The application is a guided journey, a format chosen by the project owner. `src/App.tsx` shows one experiment at a time, as a chapter, in order: Experiments 1 to 5. A sidebar lists the chapters and highlights the current one, and Previous and Next buttons move between them. Chapters are freely reachable; none is locked.
+The application is a guided journey, a format chosen by the project owner. `src/App.tsx` shows one experiment at a time, as a chapter, in order: Experiments 1 to 6. A sidebar lists the chapters and highlights the current one, and Previous and Next buttons move between them. Chapters are freely reachable; none is locked.
 
 Each experiment maintains fully independent physics models, UI components, prediction state, and AI tutor behavior. `App` only sequences them; the underlying architecture remains that of separate, independent experiments. Switching chapters remounts the experiment, so its prediction and results reset.
 
 Progress: each experiment takes an optional `onComplete` prop, called when its animation reaches the end. `App` then shows a check mark beside that chapter and saves the completed chapters and the current chapter in `localStorage` under `spacetime-explorer-progress`. Completion means the experiment ran to the end; the tutor conversation is optional for the check mark. Each experiment also takes an optional `onTutorComplete` prop, called when the learner reaches the tutor's explanation (its last step); `App` saves those chapters as `explained` in the same `localStorage` entry.
 
-Each experiment opens with a short introduction (the question, what happens, the learner's job, and the assumptions). The Experiment 2 introduction also explains the term "reference frame", which Experiment 3 relies on. The Experiment 3, 4 and 5 introductions say that two reference frames are involved: the lab's and the moving clock's.
+Each experiment opens with a short introduction (the question, what happens, the learner's job, and the assumptions). The Experiment 2 introduction also explains the term "reference frame", which Experiment 3 relies on. The Experiment 3, 4, 5 and 6 introductions say that two reference frames are involved: the lab's and the moving clock's.
 
 Text is set larger and at a medium weight, using a system sans-serif font, through `src/index.css` (the base size scales all `rem` sizes). This was chosen by the project owner for readability; do not reduce it without asking.
 
@@ -701,11 +701,12 @@ Text is set larger and at a medium weight, using a system sans-serif font, throu
 * **Experiment 3 (moving clock):** approved specification (`03-moving-clock.md`), tested physics model, interface, prediction, results panel, and tutor are built, and it has had its complete-flow test and final review. The review's items (the lab-observer diagram, the custom duration range, introductory text, and a zero-speed baseline) have been addressed; see the implementation notes in its specification.
 * **Experiment 4 (light clock):** approved specification (`04-light-clock.md`), tested physics model, interface, prediction, results, and tutor are built, and it has had its complete-flow test and final review. Its tutor refers to the time dilation factor, which Experiment 3's results panel now displays. The term "time dilation" is introduced in Experiment 3, after the learner has observed the effect (its tutor explanation and summary), and Experiment 4 is titled "The Light Clock: Why Time Dilation Happens".
 * **Experiment 5 (why can't light go faster?):** approved specification (`05-invariant-light-speed.md`), tested physics model (`src/physics/invariantLightSpeedExperiment.ts`), interface, prediction, results panel, and tutor are built, and it has had its complete-flow test and final review. It shows the Experiment 4 moving light clock under two rules for light, the everyday rule (speeds add) and light's actual rule (light travels at c in the lab). Its learner-facing text was rewritten in plain language at the owner's request. See the implementation notes and the open items in its specification.
+* **Experiment 6 (does motion change length?):** approved specification (`06-length-contraction.md`), tested physics model (`src/physics/lengthContractionExperiment.ts`), interface, prediction, results panel, and tutor are built, and it has had its complete-flow test and final review. It builds the light clock with its mirrors along the direction of motion and shows it with the rest length and with the shorter length, so that the learner sees that time dilation with light at c requires the clock to be shorter as seen from the lab. The effect is named length contraction only after the observation, and the speed is limited to 0.9c. See the implementation notes and the open items in its specification.
 
 ## Guided-Journey Work
 
 * **Done:** the chapter shell (sidebar, Previous/Next), saved progress with completion check marks, introductions for Experiments 1 and 2, and the reference frame wording in Experiments 2, 3 and 4.
-* **Done:** a "What you learned / What's next" summary below each experiment, shown only after the learner has run that experiment and reached the tutor's explanation, so nothing is explained early and the summary never comes before the tutor's own explanation. Until then, a short hint line says that a summary will appear there. A learner who skips the tutor's questions does not see the summary. The summaries live in the `chapters` list in `src/App.tsx`. Experiment 5's summary points to no further experiment, because none is approved yet.
+* **Done:** a "What you learned / What's next" summary below each experiment, shown only after the learner has run that experiment and reached the tutor's explanation, so nothing is explained early and the summary never comes before the tutor's own explanation. Until then, a short hint line says that a summary will appear there. A learner who skips the tutor's questions does not see the summary. The summaries live in the `chapters` list in `src/App.tsx`. Experiment 6's summary points to no further experiment, because none is approved yet.
 * **Decided against:** a side-by-side compare view of Experiments 3 and 4.
 * **Done:** the chapter layout is responsive. Below 850px wide the sidebar becomes a row of chapter buttons above the experiment (CSS classes in `src/index.css`), and the clocks in Experiments 2, 4 and 5 wrap instead of overflowing. In Experiments 4 and 5, when the moving clock travels more than 2.5 light-seconds in one tick (about 0.93c and above), the clock panels stack and are drawn in a wider box so the mirrors stay readable. In a very narrow window at such speeds the drawing is still small, because it has to fit the window width.
 
@@ -713,7 +714,7 @@ Text is set larger and at a medium weight, using a system sans-serif font, throu
 
 The next approved implementation milestone is:
 
-**Propose the specification for the next experiment (per §23), then stop for the project owner's review. The planned progression in `docs/experiments/01-clock.md` §18 ends at Experiment 5, so the direction of the next experiment needs the owner's input first.**
+**Propose the specification for the next experiment (per §23), then stop for the project owner's review. The planned progression in `docs/experiments/01-clock.md` §18 ends at Experiment 5, and Experiment 6 (length contraction) was chosen by the owner beyond it, so the direction of the next experiment needs the owner's input first (relativity of simultaneity and spacetime diagrams were the other candidates).**
 
 Do not proceed beyond that milestone without explicit authorization.
 
