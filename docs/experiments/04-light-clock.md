@@ -41,6 +41,7 @@ Each clock has two mirrors separated by a distance `L`. A light pulse starts at 
 - Both clocks start together at one lab event: same place, pulses emitted at the same moment.
 - The lab has synchronized clocks at rest (as established in Experiment 2), so lab time can be assigned to events at different places. The lab is a reference frame: its clocks and observers are all at rest relative to one another.
 - The moving clock is not at rest relative to the lab clocks, so it is not part of the lab's reference frame. It has a reference frame of its own, in which it is at rest, and that frame moves relative to the lab. Two reference frames are involved: the lab's and the moving clock's.
+- The moving clock's light source and both of its mirrors are part of the moving clock. Seen from the lab, they always move together, sideways, at the same speed. None of them moves before or after the others.
 
 ### Not introduced
 
@@ -156,6 +157,12 @@ Both pulses start at the same lab moment. The rest pulse keeps ticking (finishin
 
 Playback is slowed for viewing. The physical result is determined by the model, not by the playback speed.
 
+### Implementation notes (display and layout)
+
+- **Placement:** the two clocks are placed directly under the START button, below the speed and prediction controls, so the run is on screen the moment it begins. When START is pressed, the page scrolls the clocks into view, so this also holds on small windows.
+- **Moving-clock drawing:** both mirrors are drawn moving together with the clock. Dashed lines mark where the two mirrors were at the start, each labelled "start". The moving clock's caption reads: "Moving at [speed]c (seen from the lab). Both mirrors move together. Dashed lines show where they started." This clears up that the light's path begins at the starting position of the bottom mirror, not at a mirror that stayed still.
+- **Animation guard:** progress through the run is kept between 0 and 1, because the frame timestamp of the browser can fall slightly before the recorded start time, which would otherwise give a negative lab time and stop the page.
+
 ---
 
 ## Results Display
@@ -233,6 +240,17 @@ The learner should be able to say: "The moving clock's light has farther to go, 
   4. Explanation: the diagonal path is the hypotenuse of a right triangle; because light's speed is the same, the longer path means a longer tick; this is the same factor as in Experiment 3.
 - The tutor must state that constancy of light speed is the assumption on which this experiment rests, and must not present the result as derived without it.
 - The tutor must not add physics beyond this specification.
+
+### Implementation notes (tutor)
+
+The explanation (step 4) is shown in this order, in plain words, so the learner sees the view they watched before the contrasting view:
+
+1. **The clock itself:** the source and both mirrors are part of the same moving clock, so, seen from the lab, they always move together, side by side, at the same speed.
+2. **The lab's reference frame** (the view the learner just watched): the whole moving clock slides sideways. One tick is followed in steps: the pulse leaves the source; crossing the gap takes time, during which the source and the top mirror both keep moving sideways; so when the pulse reaches the top mirror, that mirror has moved and is no longer above the spot where the pulse started; the pulse must travel on a slant to reach it, which is why its path is diagonal; the same happens on the way back down.
+3. **The moving clock's own reference frame** (the view of someone riding along with the clock): the source and both mirrors are at rest next to that observer, so nothing slides sideways, and the pulse goes straight up and straight back down, like the rest clock.
+4. **Summary:** one pulse, one clock, two views, and both are correct. The lab's diagonal path is the long side of a right triangle, longer than the rest clock's straight path.
+5. The constancy-of-light-speed statement and the time dilation factor for the chosen speed follow, as specified above.
+6. **What this means for a traveller:** a spaceship coasting at a steady speed close to the speed of light has, as measured in the lab, a slow clock, and so does everything else on board, including the traveller's own aging. The closer the speed is to c, the bigger the gap, so a traveller who ages one year on the ship could find that many years have gone by on the lab's clocks. This deliberately does not describe a return trip: turning around involves acceleration, which this experiment excludes. The step from a slow light clock to slow aging goes beyond the clock-only physics above, and was approved by the project owner.
 
 ---
 
