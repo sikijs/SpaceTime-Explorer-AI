@@ -159,6 +159,8 @@ Playback is slowed for viewing. The physical result is determined by the model, 
 
 ### Implementation notes (display and layout)
 
+- **Title and term.** The experiment is displayed as "Experiment 4 — The Light Clock: Why Time Dilation Happens", with the sidebar title "Why time dilation happens". The introduction question names the effect from Experiment 3 ("This effect is called time dilation"), and the tutor's explanation calls the factor time dilation.
+
 - **Placement:** the two clocks are placed directly under the START button, below the speed and prediction controls, so the run is on screen the moment it begins. When START is pressed, the page scrolls the clocks into view, so this also holds on small windows.
 - **Moving-clock drawing:** both mirrors are drawn moving together with the clock. Dashed lines mark where the two mirrors were at the start, each labelled "start". The moving clock's caption reads: "Moving at [speed]c (seen from the lab). Both mirrors move together. Dashed lines show where they started." This clears up that the light's path begins at the starting position of the bottom mirror, not at a mirror that stayed still.
 - **Animation guard:** progress through the run is kept between 0 and 1, because the frame timestamp of the browser can fall slightly before the recorded start time, which would otherwise give a negative lab time and stop the page.

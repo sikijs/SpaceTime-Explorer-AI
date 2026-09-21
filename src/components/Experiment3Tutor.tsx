@@ -139,7 +139,8 @@ export function Experiment3Tutor({
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             Now choose a speed above 0c and run it again. The clocks will no longer agree, and the
-            gap gets bigger as the speed goes up. Experiment 4, the next chapter, shows why.
+            gap gets bigger as the speed goes up. This difference is called{' '}
+            <strong>time dilation</strong>. Experiment 4, the next chapter, shows why it happens.
           </p>
         </div>
       )}
@@ -160,10 +161,10 @@ export function Experiment3Tutor({
             </p>
           )}
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            This is one of the most surprising ideas in relativity. A moving clock, a perfectly
-            good clock, measures less time than the lab measures between the same two events: the
-            start and the end of the run. It isn't broken. It is how time works when things move
-            fast relative to each other.
+            This effect is called <strong>time dilation</strong>. It is one of the most surprising
+            ideas in relativity. A moving clock, a perfectly good clock, measures less time than
+            the lab measures between the same two events: the start and the end of the run. It
+            isn't broken. It is how time works when things move fast relative to each other.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             At {velocity}c, the moving clock measured {movingClockElapsedTime.toFixed(3)} seconds

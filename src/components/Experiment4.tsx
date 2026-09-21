@@ -250,7 +250,7 @@ export function Experiment4({ onComplete, onTutorComplete }: Experiment4Props) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>Experiment 4 — The Light Clock</h1>
+      <h1>Experiment 4 — The Light Clock: Why Time Dilation Happens</h1>
 
       <div
         style={{
@@ -264,8 +264,9 @@ export function Experiment4({ onComplete, onTutorComplete }: Experiment4Props) {
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The question.</strong> In Experiment 3, the moving clock measured less time than
-            the lab clock. But why? What is going on inside a clock that could make it behave
-            differently when it moves? To find out, we look inside the simplest clock we can build.
+            the lab clock. This effect is called <strong>time dilation</strong>. But why does it
+            happen? What is going on inside a clock that could make it behave differently when it
+            moves? To find out, we look inside the simplest clock we can build.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What a light clock is.</strong> A light clock is a clock made from a pulse of

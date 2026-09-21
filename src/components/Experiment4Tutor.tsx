@@ -160,8 +160,8 @@ export function Experiment4Tutor({
             At {velocity}c, one tick of the moving clock took {movingTickDuration.toFixed(3)} seconds
             on the lab's clocks, instead of {restTickDuration.toFixed(3)}. Its ticks are farther
             apart, so, seen from the lab, it counts only {timeDilationFactor.toFixed(3)} as much time
-            as the lab's clocks. This is the same factor you saw in Experiment 3 for this speed.
-            Here it comes from the right triangle.
+            as the lab's clocks. This is time dilation: the same effect, and the same factor, that
+            you saw in Experiment 3 for this speed. Here the factor comes from the right triangle.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>What this means for a traveller.</strong> Imagine a spaceship coasting at a

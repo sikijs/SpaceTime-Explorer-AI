@@ -33,14 +33,14 @@ const chapters: Chapter[] = [
     title: 'A moving clock',
     Component: Experiment3,
     learned:
-      'When a clock moves compared with the lab, it measures less elapsed time than the lab clock between the same two events. The faster it moves, the bigger the difference. The moving clock is not broken: the time that passes between two events depends on who is measuring (their reference frame) and how they are moving. (At speed 0 nothing moves, and the two clocks agree.)',
-    next: 'Why does the moving clock measure less time? Next, we look inside a clock to find the reason.',
+      'When a clock moves compared with the lab, it measures less elapsed time than the lab clock between the same two events. This effect is called time dilation. The faster the clock moves, the bigger the difference. The moving clock is not broken: the time that passes between two events depends on who is measuring (their reference frame) and how they are moving. (At speed 0 nothing moves, and the two clocks agree.)',
+    next: 'Why does time dilation happen? Next, we look inside a clock to find the reason.',
   },
   {
-    title: 'A light clock',
+    title: 'Why time dilation happens',
     Component: Experiment4,
     learned:
-      "In the lab, light travels at the same speed for both light clocks. The moving clock's pulse of light has a longer, slanted path to travel, so each of its ticks takes longer on the lab's clocks. That is why the moving clock measures less time than the lab clock, by the same factor you saw in Experiment 3.",
+      "In the lab, light travels at the same speed for both light clocks. The moving clock's pulse of light has a longer, slanted path to travel, so each of its ticks takes longer on the lab's clocks. That is why the moving clock measures less time than the lab clock (time dilation), by the same factor you saw in Experiment 3.",
     next: 'In Experiment 4 we assumed that light always travels at the same speed, c. Next, we ask what would change if light did not work that way.',
   },
   {

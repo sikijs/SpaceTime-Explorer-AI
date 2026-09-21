@@ -407,6 +407,7 @@ The tutor follows the observe-predict-compare-explain cycle:
 - The explanation is always shown at the end. The tutor cannot tell whether the learner "struggled".
 - The phrase "the same event pair" is worded as "between the same two events: the start and the end of the run", because the lab clock is not at the location of the run's end event; lab time at that event is read from synchronized lab clocks.
 - The explanation also states the key insight (elapsed time between events depends on the observer's reference frame and motion) and points to Experiment 4.
+- **Naming the effect.** The term **time dilation** is introduced after the learner has observed the effect, so nothing is given away before the prediction: the results panel shows the "Time dilation factor", the tutor's explanation opens with "This effect is called time dilation" (the 0c baseline text names it as the difference the learner will see at a speed above 0c), and the chapter summary repeats the name. The experiment's heading and introduction stay neutral.
 - At the `0c` baseline there is no effect to explain, so the tutor does not say the moving clock reads less. It says the clocks agree, as in Experiment 2, and invites the learner to try a speed above 0c.
 
 ---

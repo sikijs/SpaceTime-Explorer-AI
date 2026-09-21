@@ -302,8 +302,8 @@ export function Experiment5({ onComplete, onTutorComplete }: Experiment5Props) {
       >
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> In Experiment 4 we made one big assumption about how
-            light behaves. What would change if light behaved differently?
+            <strong>The question.</strong> In Experiment 4 we explained time dilation using one big
+            assumption about how light behaves. What would change if light behaved differently?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>A quick reminder: the light clock.</strong> A light clock is a clock made from a
