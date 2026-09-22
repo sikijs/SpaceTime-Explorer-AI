@@ -2,7 +2,7 @@
 
 **Status: APPROVED by the project owner. The defaults proposed under "Decisions Needing Human Review" stand unless changed.**
 
-**Implementation: built and complete-flow tested.** Physics model (`src/physics/relativityOfSimultaneityExperiment.ts`), interface (`src/components/Experiment7.tsx`), prediction, results panel, and tutor (`src/components/Experiment7Tutor.tsx`) are in place, following the design below. It has not yet had a final review against this specification (§21 Step 10) or the owner's line-by-line wording approval (§28.1).
+**Implementation: complete.** Physics model (`src/physics/relativityOfSimultaneityExperiment.ts`), interface (`src/components/Experiment7.tsx`), prediction, results panel, and tutor (`src/components/Experiment7Tutor.tsx`) are in place, following the design below. It has had its complete-flow test, its final review against this specification (§21 Step 10), and the owner's line-by-line wording approval (§28.1), including the "point of view" clarification added to the introduction after that review.
 
 The title is a working title.
 
@@ -257,13 +257,15 @@ Follows the pattern of Experiments 3–6. No pre-run step, silent during the run
 
 ## Decisions Needing Human Review
 
-1. **Confirm the physical setup.** A flash from the rod's exact center, reaching both ends, is the classic (Einstein's train) thought experiment. Confirm this is the intended situation, or propose an alternative (e.g., two independent light sources at the ends, or lit lamps at each end compared by an observer at the midpoint).
-2. **Confirm reuse of Experiment 6's length contraction.** The lab-frame event times depend on the rod's contracted length. This ties Experiment 7's correctness to Experiment 6 rather than deriving the rod's lab length independently. Confirm this dependency is acceptable, consistent with how Experiment 6 reused Experiment 3/4's time dilation.
-3. **Prediction form.** Proposed: an order choice (same time / back first / front first) plus a frame-agreement follow-up. Alternatives: a numeric time-gap guess (harder, given the learner hasn't seen the formula yet), or a single order choice without the frame-agreement follow-up.
-4. **Panel design.** Proposed: two panels (rod's own view, lab's view), plus a `v = 0` baseline. Confirm, or propose a single panel with a frame toggle instead.
-5. **Title.** Working title "At the Same Time... For Whom?" — confirm, or propose an alternative (e.g., "Relativity of Simultaneity" directly, though Experiment 6's pattern was to not name the effect until it is observed).
-6. **Evidence and scope.** As in Experiment 6, this draft says nothing about experimental evidence. Confirm this stays out of scope, consistent with Experiment 6.
-7. **Speed range.** Proposed to match Experiment 6 (0.01c–0.9c custom range, same presets). Confirm, or choose a different range appropriate to this experiment's own playback-time behavior.
+All resolved by the project owner; the built implementation reflects the defaults proposed above unless noted otherwise.
+
+1. **Physical setup — resolved.** The flash-from-center thought experiment was confirmed as proposed; no alternative setup was requested.
+2. **Reuse of Experiment 6's length contraction — resolved.** Confirmed acceptable; `runSimultaneityExperiment` calls `runLengthContractionExperiment` directly rather than recomputing the contracted length (see `src/physics/relativityOfSimultaneityExperiment.ts`).
+3. **Prediction form — resolved.** The proposed order choice plus frame-agreement follow-up was adopted, unchanged (`Experiment7.tsx`, "Make a prediction").
+4. **Panel design — resolved.** The proposed two-panel layout (rod's own view, lab's view) with a `v = 0` baseline reachable via preset was adopted; no single-panel toggle was requested.
+5. **Title — resolved.** Kept as "At the Same Time... For Whom?" (styled "At the same time... for whom?" in the chapter sidebar, matching the lowercase style of the other chapter titles).
+6. **Evidence and scope — resolved.** Confirmed out of scope, consistent with Experiment 6; the implementation makes no claims about experimental evidence.
+7. **Speed range — resolved.** Confirmed to match Experiment 6: presets 0.1c/0.3c/0.5c/0.8c, custom range 0.01c–0.9c.
 
 ---
 
