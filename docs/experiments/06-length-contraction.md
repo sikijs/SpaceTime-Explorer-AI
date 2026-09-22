@@ -168,7 +168,7 @@ Before running, the learner sees the scenario and the assumption:
 
 > The clock standing still has its mirrors 0.5 light-seconds apart, and one tick takes 1 second. Another identical clock moves along its own length at [speed]. Time dilation (Experiments 3 and 4) says one tick of the moving clock takes [time dilation tick] seconds on the lab's clocks. Light always goes at c in the lab. **How far apart, in light-seconds, must the two mirrors of the moving clock be, as seen from the lab, for its tick to take that long?**
 
-The learner enters a number of light-seconds. START is disabled until a prediction is entered, as in Experiments 1 to 5. The prediction is not scored.
+The prediction has two parts, both required (owner's decision after implementation, combining the alternatives in Decision 4): **Part 1**, a choice of *as far apart as at rest*, *closer together* or *farther apart*; **Part 2**, a number of light-seconds. START is disabled until both are entered, as in Experiments 1 to 5. The prediction is not scored.
 
 Many learners will predict 0.5, the rest length, which sets up the observation. (See Decision 4 for alternatives.)
 
@@ -193,8 +193,10 @@ Before the learner predicts, the interface explains in plain words (wording to b
 Three panels in the same design language as Experiments 4 and 5, with the mirrors drawn along a horizontal line:
 
 1. **Rest clock.**
-2. **Moving clock, same length.**
-3. **Moving clock, shorter length.**
+2. **Moving clock: mirrors as far apart as at rest** (the "same length" version).
+3. **Moving clock: mirrors closer together** (the "shorter length" version).
+
+The panel names were changed after implementation, at the owner's request, to describe the mirror distance in plain words rather than "length". The words "same length" and "shorter length" remain only in this specification and the code's variable names.
 
 Each panel shows the two mirrors, the pulse moving forward and back, the path of the pulse, and the clock's own-time readout in the Experiment 3 to 5 style. The moving clocks also show dashed "start" markers for where the mirrors started, as in Experiments 4 and 5. The forward and return legs are drawn on slightly different heights, only so both legs can be seen; the offset has no physical meaning and the caption must say so (see Decision 8). All panels share one scale so lengths can be compared by eye.
 
@@ -210,11 +212,11 @@ Playback is slowed for viewing and is chosen so that no run lasts more than abou
 
 - **Layout.** Introduction, speed controls, prediction, START, then the three clocks directly under START, stacked at full width because the clocks are drawn along a horizontal line. The animation guard from Experiments 4 and 5 (progress kept between 0 and 1) is used.
 - **Speeds.** Presets 0.1c, 0.3c, 0.5c, 0.8c, and Other from 0.01c to 0.9c, as proposed.
-- **Prediction.** One number (light-seconds), not scored. START stays disabled until a speed and a number are entered; the input then clears and the submitted prediction is kept for the results and the tutor. Any finite number is accepted, as in Experiments 1 to 5, including zero and negative values.
+- **Prediction.** Two parts, not scored: a choice (as far apart as at rest / closer together / farther apart) and a number (light-seconds). START stays disabled until a speed, a choice and a number are entered; both inputs then clear and the submitted prediction is kept for the results and the tutor. The two parts are not checked against each other. Any finite number is accepted, as in Experiments 1 to 5, including zero and negative values.
 - **Playback.** 2 real seconds per lab second, limited so no run exceeds about 15 real seconds (the longest run, at 0.9c, takes about 11 seconds).
 - **Drawing.** All three panels share one scale. The forward and return legs are drawn at slightly different heights and the moving-clock caption says this is only so both legs can be seen (Decision 8). Dashed "start" markers show where the mirrors started.
 - **Own-time readouts.** Both moving clocks show "own time = lab time × time dilation factor", the Decision 6 default. After one tick the shorter-length clock shows 1.0 second and the same-length clock shows more (for example 1.7 seconds at 0.8c). The tutor's explanation (step 2) points out that the same-length clock's own display shows more than 1 second after one tick, which a clock built like the one standing still should not, and that the shorter-length clock shows exactly 1 second. The sentence is left out when the two displays agree to the shown precision (very low speeds).
-- **Introduction, in plain language.** In order: the question; a reminder of the light clock; how far apart the mirrors are (about 150,000 km, half a light-second, so a tick is exactly 1 second); the moving clock, in which the pulse chases the moving front mirror and meets the moving back mirror; what the length of a moving clock means (Decision 9); the assumed rule (time dilation applies to every clock, and light goes at `c` in both directions); what the learner will see; the learner's job (guesses are not scored); and the assumptions. The term "length contraction" is not used before the observation.
+- **Introduction, in plain language.** Shortened at the owner's request (from about 780 words). In order: the question; a reminder of the light clock, including the light-second and how far apart the mirrors are (about 150,000 km, half a light-second, so a tick is exactly 1 second); what is different when it moves (the pulse chases the moving front mirror and meets the moving back mirror); the assumed rule (time dilation applies to every clock, and light goes at `c` in both directions); what the learner will see (the same moving clock drawn twice, differing only in the distance between the mirrors as the lab observers measure it, which stays constant during a run, Decision 9); the learner's two-part job (guesses are not scored); and five assumptions. The term "length contraction" is not used before the observation.
 - **Chapter summary.** Experiment 6's "What you learned" is in the `chapters` list in `src/App.tsx`, and Experiment 5's "What's next" now leads into Experiment 6. As in the other chapters, the summary appears after the tutor's explanation.
 
 ---
@@ -233,7 +235,7 @@ Neutral presentation first; the interpretation comes from the tutor after the le
 ### Implementation notes (results)
 
 - The results panel appears when the run ends and shows values only, with the plain labels used in Experiments 4 and 5: the moving clock speed, a note on `c` and the light-second, the tick that time dilation gives, the rest clock's length, tick and light speed, and for each moving clock the length seen from the lab (in light-seconds and as a fraction of the rest length), the time for the pulse's trip forward and trip back, the tick on the lab's clocks, the light speed on each leg, and the difference from the time dilation tick.
-- A difference below the shown precision reads 0.000 s. The learner's predicted length is shown beside the two lengths. The panel gives no verdict.
+- A difference below the shown precision reads 0.000 s. The learner's predicted choice and length are shown beside the two mirror distances, and the tutor's comparison step (step 2) quotes both. The panel gives no verdict.
 
 ---
 
@@ -326,9 +328,9 @@ Follows the pattern of Experiments 3 to 5 and the plain-language style of all ch
 ### Open items after implementation
 
 - **The own-time readouts.** Resolved: the tutor's step 2 now explains that the same-length clock's own display shows more than 1 second after one tick, so this version cannot be right (Decision 6).
-- **Length of the introduction.** About 780 words, against about 500 in Experiment 5. Owner to decide whether to trim it.
+- **Length of the introduction.** Trimmed at the owner's request. Owner to say whether it is now short enough.
 - **Wording approval.** The learner-facing text, including the tutor's step 3 ("light cannot go faster or slower than c to fix this… the only thing left that can change is the distance between the mirrors") and the chapter summary, was drafted from this specification and has not had the owner's line-by-line approval.
-- **Label hint (Decision 3).** The names "same length" and "shorter length" hint at the answer. The default was kept.
+- **Label hint (Decision 3).** The panel names "mirrors as far apart as at rest" and "mirrors closer together" still hint at the answer. The owner chose these names.
 - **Visual limits.** In narrow windows the drawings shrink to about 213×33 pixels; at high speeds the two "start" labels of the shorter clock nearly touch; at 0.01c the difference between the ticks is too small to show at three decimals.
 - **Zero or negative predictions** are accepted, as in earlier experiments.
 

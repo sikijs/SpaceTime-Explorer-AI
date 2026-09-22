@@ -3,8 +3,18 @@ import type { ClockVersionResult } from '../physics/lengthContractionExperiment'
 
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
+// The learner's first prediction: how the mirror distance seen from the lab compares with the distance at rest.
+export type MirrorDistanceChoice = 'same' | 'closer' | 'farther'
+
+const choiceWording: Record<MirrorDistanceChoice, string> = {
+  same: 'as far apart as at rest',
+  closer: 'closer together than at rest',
+  farther: 'farther apart than at rest',
+}
+
 interface Experiment6TutorProps {
   velocity: number
+  predictionChoice: MirrorDistanceChoice
   prediction: number
   restLength: number
   timeDilationTick: number
@@ -16,6 +26,7 @@ interface Experiment6TutorProps {
 
 export function Experiment6Tutor({
   velocity,
+  predictionChoice,
   prediction,
   restLength,
   timeDilationTick,
@@ -66,7 +77,7 @@ export function Experiment6Tutor({
             {tutorStep === 'observe' &&
               "Look at the two moving clocks. What is different between them? Think about how long each pulse's trip forward and back took."}
             {tutorStep === 'compare' &&
-              `You guessed that the two mirrors must be ${prediction} light-seconds apart, seen from the lab. In the same-length clock they were ${sameLength.lengthInLab.toFixed(3)} light-seconds apart, and in the shorter-length clock ${shorterLength.lengthInLab.toFixed(3)}. One tick took ${sameLength.tickDuration.toFixed(3)} s in the same-length clock and ${shorterLength.tickDuration.toFixed(3)} s in the shorter-length clock, while time dilation says ${timeDilationTick.toFixed(3)} s. What do you notice when you compare them?`}
+              `You guessed that the mirrors must be ${choiceWording[predictionChoice]}, ${prediction} light-seconds apart, seen from the lab. In the clock with the mirrors as far apart as at rest, they were ${sameLength.lengthInLab.toFixed(3)} light-seconds apart. In the clock with the mirrors closer together, they were ${shorterLength.lengthInLab.toFixed(3)}. One tick took ${sameLength.tickDuration.toFixed(3)} s in the first clock and ${shorterLength.tickDuration.toFixed(3)} s in the second, while time dilation says ${timeDilationTick.toFixed(3)} s. What do you notice when you compare them?`}
             {tutorStep === 'conceptual' &&
               `Time dilation says the tick of the moving clock should take ${timeDilationTick.toFixed(3)} seconds. Light goes at c in both clocks. What would have to change about the clock to fix its tick?`}
           </p>
@@ -114,12 +125,12 @@ export function Experiment6Tutor({
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>1. The two trips.</strong> In the lab, the pulse's trip forward is long, because
             the front mirror keeps moving away from it. Its trip back is short, because the back
-            mirror moves toward it. In the same-length clock, the trip forward took{' '}
+            mirror moves toward it. In the clock with the mirrors as far apart as at rest, the trip forward took{' '}
             {sameLength.forwardLegDuration.toFixed(3)} seconds and the trip back took{' '}
             {sameLength.returnLegDuration.toFixed(3)} seconds. Light went at c the whole time.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. A tick that is too long.</strong> With the length that the clock has at rest,
+            <strong>2. A tick that is too long.</strong> With the mirrors as far apart as at rest,
             {' '}{restLength} light-seconds, the two trips add up to{' '}
             {sameLength.tickDuration.toFixed(3)} seconds. But time dilation says that one tick of the
             moving clock takes {timeDilationTick.toFixed(3)} seconds. So this clock ticks too slowly
@@ -131,7 +142,7 @@ export function Experiment6Tutor({
                 after one tick: {sameLength.ownClockReadingAtEnd.toFixed(3)} seconds. A clock built
                 like the one standing still should show exactly 1 second for one tick on its own
                 display, so this is another sign that this version cannot be right. The
-                shorter-length clock's own display shows exactly{' '}
+                clock with the mirrors closer together shows exactly{' '}
                 {shorterLength.ownClockReadingAtEnd.toFixed(3)} seconds.
               </>
             )}
@@ -139,11 +150,11 @@ export function Experiment6Tutor({
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>3. What has to change.</strong> Light cannot go faster or slower than c to fix
             this, and time dilation has already fixed how long the tick must take. The only thing
-            left that can change is the distance between the mirrors, seen from the lab. It has to
-            be shorter. At {velocity}c, that distance is{' '}
+            left that can change is the distance between the mirrors, seen from the lab. The mirrors
+            have to be closer together. At {velocity}c, that distance is{' '}
             {shorterLength.lengthInLab.toFixed(3)} light-seconds, which is{' '}
-            {shorterLength.lengthRatio.toFixed(3)} of the length at rest. With that length, the two
-            trips took {shorterLength.forwardLegDuration.toFixed(3)} and{' '}
+            {shorterLength.lengthRatio.toFixed(3)} of the distance at rest. With the mirrors that
+            close, the two trips took {shorterLength.forwardLegDuration.toFixed(3)} and{' '}
             {shorterLength.returnLegDuration.toFixed(3)} seconds. They add up to{' '}
             {shorterLength.tickDuration.toFixed(3)} seconds, exactly the tick that time dilation
             gives. The number {shorterLength.lengthRatio.toFixed(3)} is the same as the time dilation
@@ -159,7 +170,7 @@ export function Experiment6Tutor({
             the distance between the mirrors does not change.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>Two things to remember.</strong> First, the clock with the same length is only a
+            <strong>Two things to remember.</strong> First, the clock with the mirrors as far apart as at rest is only a
             "what if". It is not something that happens. Second, this argument rests on one
             assumption: that time dilation works for every clock, however it is turned. This
             experiment shows what follows from that assumption.

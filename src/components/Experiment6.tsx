@@ -6,6 +6,7 @@ import {
 } from '../physics/lengthContractionExperiment'
 import { REST_TICK_DURATION } from '../physics/lightClockExperiment'
 import { Experiment6Tutor } from './Experiment6Tutor'
+import type { MirrorDistanceChoice } from './Experiment6Tutor'
 import type {
   ClockVersionResult,
   LengthContractionResult,
@@ -15,7 +16,7 @@ import type {
 type VelocityOption = 0.1 | 0.3 | 0.5 | 0.8 | 'other'
 type ExperimentStatus = 'idle' | 'running' | 'complete'
 
-// This experiment allows speeds up to 0.9c: the tick of the "same length" clock grows very quickly
+// This experiment allows speeds up to 0.9c: the tick of the clock whose mirrors stay as far apart as at rest grows very quickly
 // above that (about 50 seconds at 0.99c).
 const MIN_SPEED = 0.01
 const MAX_SPEED = 0.9
@@ -35,6 +36,12 @@ const RIGHT_MARGIN = 20
 const MIRROR_HALF_HEIGHT = 26
 const LEG_OFFSET = 8
 const MAX_PX_PER_LS = 280
+
+const mirrorDistanceChoices: Array<{ value: MirrorDistanceChoice; label: string }> = [
+  { value: 'same', label: 'As far apart as at rest' },
+  { value: 'closer', label: 'Closer together' },
+  { value: 'farther', label: 'Farther apart' },
+]
 
 const optionButtonStyle = (selected: boolean, disabled: boolean) => ({
   marginRight: '0.5rem',
@@ -205,8 +212,8 @@ function VersionResultBlock({ title, version }: { title: string; version: ClockV
     <div style={resultBlockStyle}>
       <p style={{ ...resultLineStyle, fontWeight: 'bold' }}>{title}</p>
       <p style={resultLineStyle}>
-        Length seen from the lab: {version.lengthInLab.toFixed(3)} light-seconds (
-        {version.lengthRatio.toFixed(3)} of the length at rest)
+        Distance between the mirrors, seen from the lab: {version.lengthInLab.toFixed(3)}{' '}
+        light-seconds ({version.lengthRatio.toFixed(3)} of the distance at rest)
       </p>
       <p style={resultLineStyle}>
         Time for the pulse's trip forward: {version.forwardLegDuration.toFixed(3)} s
@@ -237,7 +244,9 @@ interface Experiment6Props {
 export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
   const [velocity, setVelocity] = useState<VelocityOption>(0.5)
   const [customVelocity, setCustomVelocity] = useState('')
+  const [predictionChoice, setPredictionChoice] = useState<MirrorDistanceChoice | null>(null)
   const [predictionInput, setPredictionInput] = useState('')
+  const [submittedChoice, setSubmittedChoice] = useState<MirrorDistanceChoice | null>(null)
   const [submittedPrediction, setSubmittedPrediction] = useState<number | null>(null)
   const [status, setStatus] = useState<ExperimentStatus>('idle')
   const [result, setResult] = useState<LengthContractionResult | null>(null)
@@ -251,7 +260,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
   const statusLabel = isRunning ? 'Running...' : status === 'complete' ? 'Finished' : 'At rest'
   const predictionValue = predictionInput.trim() ? Number(predictionInput) : null
   const hasPrediction = predictionValue !== null && isFinite(predictionValue)
-  const canStart = isValid && hasPrediction && !isRunning
+  const canStart = isValid && predictionChoice !== null && hasPrediction && !isRunning
   // What time dilation says for the selected speed (Experiments 3 and 4), shown in the prediction text.
   const timeDilationTick = isValid ? runLengthContractionExperiment(selectedVelocity).timeDilationTick : null
 
@@ -262,7 +271,9 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
 
   const handleStart = () => {
     if (!canStart) return
+    setSubmittedChoice(predictionChoice)
     setSubmittedPrediction(predictionValue)
+    setPredictionChoice(null)
     setPredictionInput('')
     setLabTime(0)
     setResult(runLengthContractionExperiment(selectedVelocity))
@@ -274,7 +285,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
   useEffect(() => {
     if (status !== 'running' || !result) return
 
-    // The run lasts until the slower moving clock (the same-length clock) has finished its tick.
+    // The run lasts until the slower moving clock (mirrors as far apart as at rest) has finished its tick.
     const runDuration = Math.max(result.sameLength.tickDuration, result.shorterLength.tickDuration)
     const animationDurationMs =
       runDuration * Math.min(PLAYBACK_MS_PER_LAB_SECOND, MAX_RUN_MS / runDuration)
@@ -319,85 +330,65 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The question.</strong> In Experiment 4, the two mirrors of our light clock were
-            one above the other, across the direction the clock moved. What if we turn the clock
-            so that its mirrors are in a line with the direction it moves?
+            one above the other, across the direction the clock moved. What happens if we turn the
+            clock so that its mirrors are in a line with the direction it moves?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>A quick reminder: the light clock.</strong> A light clock is a clock made from
-            a pulse of light that bounces between two mirrors. One trip from the back mirror to the
-            front mirror and back is one <strong>tick</strong>, just like one tick of an ordinary
-            clock.
+            <strong>A quick reminder: the light clock.</strong> A light clock is a pulse of light
+            that bounces between two mirrors. One trip from the back mirror to the front mirror and
+            back is one <strong>tick</strong>. A <strong>light-second</strong> is the distance light
+            travels in one second, about 300,000 km. Our mirrors are half a light-second apart (about{' '}
+            {(REST_LENGTH * 300000).toLocaleString('en-US')} km), so one tick of a clock standing
+            still takes exactly {REST_TICK_DURATION} second. Real clocks are much smaller. We use a
+            giant clock so that the numbers are easy to read.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>How far apart are the mirrors?</strong> Light travels about 300,000 km in one
-            second. We place the mirrors about{' '}
-            {(REST_LENGTH * 300000).toLocaleString('en-US')} km apart, which is half of that
-            distance. So light needs half a second to get from one mirror to the other, and one
-            second for the whole trip there and back. That means one tick takes exactly{' '}
-            {REST_TICK_DURATION} second when the clock is standing still. Real clocks are much
-            smaller. We use a giant clock so that the numbers are easy to read. The distance light
-            travels in one second has a name: a <strong>light-second</strong>. So the mirrors are
-            half a light-second apart.
+            <strong>What is different when it moves.</strong> Now imagine the same clock moving
+            along its own length, front mirror first. Both mirrors move together at the same speed.
+            Seen from the lab, the front mirror runs away from the pulse, so the pulse has to chase
+            it. On the way back, the back mirror runs toward the pulse, so they meet sooner. The
+            trip forward is long, and the trip back is short.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The moving clock.</strong> Now imagine the same clock moving along its own
-            length, with its front mirror first. Seen from the lab, the pulse leaves the back mirror
-            and travels toward the front mirror. But the front mirror is moving away, so the pulse
-            has to chase it. On the way back, the back mirror is moving toward the pulse, so they
-            meet sooner. In the lab, the pulse's trip forward is long, and its trip back is short.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What is the length of a moving clock?</strong> The length of the moving clock,
-            seen from the lab, is the distance between its two mirrors as the lab observers measure
-            it. Both mirrors move together at the same speed, so this distance stays the same all
-            the way through a run. Someone riding along with the moving clock measures the same
-            length as for the clock standing still: half a light-second. But what do the lab
-            observers measure? That is what this experiment explores.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The rule we assume.</strong> In Experiments 3 and 4 you saw that a moving clock
+            <strong>The rule we keep.</strong> In Experiments 3 and 4 you saw that a moving clock
             ticks more slowly, as measured by the lab's clocks. That effect is called{' '}
             <strong>time dilation</strong>. We assume that it works for every moving clock, however
-            the clock is built and whichever way it is turned. We also keep the rule from
-            Experiments 4 and 5: in the lab, light always goes at the same speed, <strong>c</strong>,
-            in both directions. So the moving clock's tick must take the time that time dilation
-            gives.
+            it is turned. So one tick of the moving clock must take the time that time dilation
+            gives. We also keep the rule from Experiments 4 and 5: in the lab, light always goes at
+            the same speed, <strong>c</strong>, in both directions.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What you will see.</strong> Three clocks start at the same moment. One stands
-            still in the lab. The other two are the same moving clock, drawn twice: once where its
-            length seen from the lab is the same as at rest, and once where its length is shorter.
-            We watch one tick of each moving clock and draw the path the pulse takes.
+            still in the lab. The other two are the same moving clock, drawn twice. The only
+            difference is the distance between the mirrors, as the lab observers measure it. In one
+            drawing, the mirrors are as far apart as they are at rest. In the other, they are closer
+            together. Because the mirrors move together, that distance does not change during a
+            run. We watch one tick of each moving clock.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Before you press START, make a prediction. How far apart, in
-            light-seconds, must the two mirrors of the moving clock be, as seen from the lab, for its
-            tick to take the time that time dilation gives? The tick is measured in{' '}
-            <strong>lab seconds</strong>: seconds counted by the clocks standing still in the lab.
-            A wrong guess is fine. Guesses are not scored.
+            <strong>Your job.</strong> Before you press START, make a prediction in two parts.
+            First, choose whether the mirrors of the moving clock must be as far apart as at rest,
+            closer together, or farther apart, as seen from the lab, for its tick to take the time
+            that time dilation gives. Then say how far apart they must be, in light-seconds. A wrong
+            guess is fine. Guesses are not scored.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What we assume.</strong>
           </p>
           <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
             <li>There is no gravity, and the moving clock keeps a steady speed. It never speeds up or slows down.</li>
-            <li>The moving clock moves along the line that joins its mirrors, with the front mirror first.</li>
             <li>All the clocks start together: their pulses of light leave the back mirror at the same moment.</li>
             <li>
               We watch everything from the lab. The lab is a <strong>reference frame</strong>, as
               in Experiment 2: a group of people and clocks that are all standing still relative to
               one another, with their clocks set to agree. <strong>Lab time</strong> is the time
-              shown on those clocks.
+              shown on those clocks, and the tick is measured in <strong>lab seconds</strong>.
             </li>
             <li>
               The moving clock is not standing still relative to the lab, so it is not part of the
               lab's reference frame. It has its own reference frame: the point of view of someone
               riding along with it. So two reference frames are involved: the lab's and the moving
               clock's.
-            </li>
-            <li>
-              The light source and both mirrors are parts of the moving clock. Seen from the lab,
-              they all move together, at the same speed.
             </li>
             <li>
               Someone riding along with the moving clock sees the pulse leave at speed c, travel to
@@ -466,9 +457,26 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
             takes {REST_TICK_DURATION} second. Another identical clock moves along its own length at{' '}
             {speedLabel}. Time dilation says that one tick of the moving clock takes{' '}
             <strong>{timeDilationTick !== null ? timeDilationTick.toFixed(3) : '—'} seconds</strong>{' '}
-            on the lab's clocks. Light always goes at c in the lab. How far apart, in light-seconds,
-            must the two mirrors of the moving clock be, as seen from the lab, for its tick to take
-            that long? Type a number.
+            on the lab's clocks. Light always goes at c in the lab.
+          </p>
+          <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
+            <strong>Part 1.</strong> For its tick to take that long, the two mirrors of the moving
+            clock, as seen from the lab, must be:
+          </p>
+          <div style={{ marginBottom: '1rem' }}>
+            {mirrorDistanceChoices.map((choice) => (
+              <button
+                key={choice.value}
+                onClick={() => setPredictionChoice(choice.value)}
+                disabled={isRunning}
+                style={optionButtonStyle(predictionChoice === choice.value, isRunning)}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
+            <strong>Part 2.</strong> How far apart, in light-seconds, must they be? Type a number.
           </p>
           <input
             type="number"
@@ -484,11 +492,11 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
             }}
           />
           <p style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.5rem' }}>
-            {hasPrediction
-              ? `Your prediction: ${predictionValue} light-seconds`
-              : submittedPrediction !== null
-                ? `Your prediction: ${submittedPrediction} light-seconds`
-                : 'Enter a prediction to continue'}
+            {predictionChoice !== null && hasPrediction
+              ? `Your prediction: ${mirrorDistanceChoices.find((c) => c.value === predictionChoice)?.label.toLowerCase()}, ${predictionValue} light-seconds`
+              : submittedPrediction !== null && submittedChoice !== null
+                ? `Your prediction: ${mirrorDistanceChoices.find((c) => c.value === submittedChoice)?.label.toLowerCase()}, ${submittedPrediction} light-seconds`
+                : 'Choose an option and enter a number to continue'}
           </p>
         </div>
 
@@ -530,7 +538,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
                 pulsePosition={clockState.restClock.pulsePosition}
               />
               <LightClockPanel
-                title="Moving Clock, same length"
+                title="Moving clock: mirrors as far apart as at rest"
                 scale={pixelsPerLightSecond(geometry)}
                 clockReading={clockState.sameLength.clockReading}
                 leg={clockState.sameLength.leg}
@@ -541,7 +549,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
                 pulsePosition={clockState.sameLength.pulsePosition}
               />
               <LightClockPanel
-                title="Moving Clock, shorter length"
+                title="Moving clock: mirrors closer together"
                 scale={pixelsPerLightSecond(geometry)}
                 clockReading={clockState.shorterLength.clockReading}
                 leg={clockState.shorterLength.leg}
@@ -562,7 +570,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
           )}
         </div>
 
-        {status === 'complete' && result && submittedPrediction !== null && (
+        {status === 'complete' && result && submittedPrediction !== null && submittedChoice !== null && (
           <div
             style={{
               marginTop: '2rem',
@@ -589,7 +597,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
             <div style={resultBlockStyle}>
               <p style={{ ...resultLineStyle, fontWeight: 'bold' }}>Rest clock</p>
               <p style={resultLineStyle}>
-                Length (distance between the mirrors): {result.restLength.toFixed(3)} light-seconds
+                Distance between the mirrors: {result.restLength.toFixed(3)} light-seconds
               </p>
               <p style={resultLineStyle}>
                 Time for one tick, on the lab's clocks: {result.restTickDuration.toFixed(3)} s
@@ -597,31 +605,33 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
               <p style={resultLineStyle}>Light's speed, seen from the lab: 1.000c</p>
             </div>
 
-            <VersionResultBlock title="Moving clock, same length" version={result.sameLength} />
-            <VersionResultBlock title="Moving clock, shorter length" version={result.shorterLength} />
+            <VersionResultBlock title="Moving clock: mirrors as far apart as at rest" version={result.sameLength} />
+            <VersionResultBlock title="Moving clock: mirrors closer together" version={result.shorterLength} />
 
             <div style={resultBlockStyle}>
               <p style={{ ...resultLineStyle, fontWeight: 'bold' }}>Your prediction</p>
               <p style={resultLineStyle}>
-                You guessed that the two mirrors must be {submittedPrediction} light-seconds apart,
-                seen from the lab.
+                You guessed that the two mirrors must be{' '}
+                {mirrorDistanceChoices.find((c) => c.value === submittedChoice)?.label.toLowerCase()}
+                , {submittedPrediction} light-seconds apart, seen from the lab.
               </p>
               <p style={resultLineStyle}>
-                Length of the same-length clock: {result.sameLength.lengthInLab.toFixed(3)}{' '}
-                light-seconds
+                Distance between the mirrors, clock with the mirrors as far apart as at rest:{' '}
+                {result.sameLength.lengthInLab.toFixed(3)} light-seconds
               </p>
               <p style={resultLineStyle}>
-                Length of the shorter-length clock: {result.shorterLength.lengthInLab.toFixed(3)}{' '}
-                light-seconds
+                Distance between the mirrors, clock with the mirrors closer together:{' '}
+                {result.shorterLength.lengthInLab.toFixed(3)} light-seconds
               </p>
             </div>
           </div>
         )}
 
-        {status === 'complete' && result && submittedPrediction !== null && (
+        {status === 'complete' && result && submittedPrediction !== null && submittedChoice !== null && (
           <Experiment6Tutor
             onExplained={onTutorComplete}
             velocity={result.velocity}
+            predictionChoice={submittedChoice}
             prediction={submittedPrediction}
             restLength={result.restLength}
             timeDilationTick={result.timeDilationTick}
