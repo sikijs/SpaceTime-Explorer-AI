@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ComponentType } from 'react'
+import { Welcome } from './components/Welcome'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -77,8 +78,9 @@ interface Progress {
   explained: number[]
 }
 
+// -1 is the unnumbered Welcome screen, before chapter 0.
 function isChapterIndex(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) >= 0 && (value as number) < chapters.length
+  return Number.isInteger(value) && (value as number) >= -1 && (value as number) < chapters.length
 }
 
 function loadProgress(): Progress {
@@ -87,7 +89,7 @@ function loadProgress(): Progress {
     if (stored) {
       const parsed = JSON.parse(stored)
       return {
-        currentChapter: isChapterIndex(parsed.currentChapter) ? parsed.currentChapter : 0,
+        currentChapter: isChapterIndex(parsed.currentChapter) ? parsed.currentChapter : -1,
         completed: Array.isArray(parsed.completed) ? parsed.completed.filter(isChapterIndex) : [],
         explained: Array.isArray(parsed.explained) ? parsed.explained.filter(isChapterIndex) : [],
       }
@@ -95,7 +97,8 @@ function loadProgress(): Progress {
   } catch {
     // Storage unavailable or corrupt: start fresh.
   }
-  return { currentChapter: 0, completed: [], explained: [] }
+  // No saved progress means a first-ever visit: start on Welcome.
+  return { currentChapter: -1, completed: [], explained: [] }
 }
 
 function saveProgress(progress: Progress) {
@@ -131,9 +134,10 @@ export function App() {
     setExplained((previous) => (previous.includes(index) ? previous : [...previous, index]))
   }
 
-  const { Component, learned, next } = chapters[currentChapter]
-  const isCurrentExplained = explained.includes(currentChapter)
-  const isFirst = currentChapter === 0
+  const isWelcome = currentChapter === -1
+  const activeChapter = isWelcome ? null : chapters[currentChapter]
+  const isCurrentExplained = !isWelcome && explained.includes(currentChapter)
+  const isFirst = currentChapter === -1
   const isLast = currentChapter === chapters.length - 1
 
   return (
@@ -148,6 +152,25 @@ export function App() {
 
         <div className="chapter-layout">
           <nav aria-label="Experiments" className="chapter-nav">
+            <button
+              type="button"
+              onClick={() => setCurrentChapter(-1)}
+              aria-current={isWelcome ? 'step' : undefined}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                marginBottom: '0.5rem',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                border: isWelcome ? '2px solid #333' : '1px solid #ccc',
+                borderRadius: '6px',
+                backgroundColor: isWelcome ? '#fff' : 'transparent',
+                fontWeight: isWelcome ? 700 : 500,
+              }}
+            >
+              Welcome
+            </button>
             <ol className="chapter-list">
               {chapters.map((chapter, index) => {
                 const isCurrent = index === currentChapter
@@ -184,13 +207,17 @@ export function App() {
           </nav>
 
           <main className="chapter-main">
-            <Component
-              key={currentChapter}
-              onComplete={() => markComplete(currentChapter)}
-              onTutorComplete={() => markExplained(currentChapter)}
-            />
+            {activeChapter ? (
+              <activeChapter.Component
+                key={currentChapter}
+                onComplete={() => markComplete(currentChapter)}
+                onTutorComplete={() => markExplained(currentChapter)}
+              />
+            ) : (
+              <Welcome chapters={chapters} onSelectChapter={setCurrentChapter} />
+            )}
 
-            {!isCurrentExplained && (
+            {!isWelcome && !isCurrentExplained && (
               <p
                 style={{
                   maxWidth: '700px',
@@ -219,10 +246,10 @@ export function App() {
                 }}
               >
                 <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                  <strong>What you learned.</strong> {learned}
+                  <strong>What you learned.</strong> {activeChapter?.learned}
                 </p>
                 <p style={{ marginTop: 0, marginBottom: 0 }}>
-                  <strong>What's next.</strong> {next}
+                  <strong>What's next.</strong> {activeChapter?.next}
                 </p>
               </section>
             )}
