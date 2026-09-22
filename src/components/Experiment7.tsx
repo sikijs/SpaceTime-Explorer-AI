@@ -232,6 +232,15 @@ export function Experiment7({ onComplete, onTutorComplete }: Experiment7Props) {
             sees something different.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What "point of view" means here.</strong> Every observer in this experiment is
+            standing still relative to their own reference frame, just watching. "The rod's own
+            point of view" means what someone moving along with the rod — at the same speed, right
+            beside it — would see and measure with their own clocks. "The lab's point of view" means
+            what someone standing still in the lab, watching the rod go by, would see and measure
+            with the lab's clocks. Both viewpoints are equally real; the experiment asks whether they
+            agree on what "at the same time" means.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Your job.</strong> Before you press START, predict whether the flash reaches the
             two ends of the moving rod at the same moment, as measured by the lab's clocks, and if
             not, which end first. Also predict whether the rod's own point of view agrees or

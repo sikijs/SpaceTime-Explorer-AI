@@ -159,6 +159,7 @@ Before the learner predicts, the interface explains in plain words (wording to b
 - The question: if two things happen "at the same time," is that a fact everyone agrees on?
 - A reminder of the moving rod from Experiment 6 and its length as seen from the lab.
 - What is being done: a flash released from the exact middle of the rod, reaching both ends.
+- What "point of view" means here: it grounds the phrase in the reference frame concept already defined in Experiment 2, spelling out concretely what it means to measure the flash's arrival from the rod's own frame versus from the lab's frame, added after a learner found the two panel titles unclear without it.
 - What the learner will see and their job (guesses are not scored), then the simplifying assumptions, with "reference frame" and "lab time" already familiar from Experiments 2–6.
 - The term **simultaneity** / **relativity of simultaneity** is defined in plain language at first use here (e.g., "happening at the same time" and "different observers can disagree about which events happen at the same time").
 
