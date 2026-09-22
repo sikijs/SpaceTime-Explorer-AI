@@ -6,6 +6,7 @@ import { Experiment3 } from './components/Experiment3'
 import { Experiment4 } from './components/Experiment4'
 import { Experiment5 } from './components/Experiment5'
 import { Experiment6 } from './components/Experiment6'
+import { Experiment7 } from './components/Experiment7'
 
 interface Chapter {
   title: string
@@ -56,6 +57,13 @@ const chapters: Chapter[] = [
     Component: Experiment6,
     learned:
       "Time dilation says that a moving clock must tick slowly, whichever way it is turned. Light in the lab always goes at c, so a clock moving along its own length can only tick that slowly if it is shorter, as seen from the lab. It is shorter by the same factor as the time dilation factor. This effect is called length contraction. Only the length along the motion changes.",
+    next: "So far you compared elapsed time and length between the lab and a moving clock. Next, we ask about something else that felt certain: whether two events happen at the same time.",
+  },
+  {
+    title: 'At the same time... for whom?',
+    Component: Experiment7,
+    learned:
+      "Someone riding along with a moving rod sees a flash from its center reach both ends at the same time. The lab does not: the back end moves toward the flash and the front end moves away, so the lab sees the back end reached first. This is not a delay in either frame's own clocks. It is called relativity of simultaneity: two events that are simultaneous in one reference frame need not be simultaneous in another.",
     next: 'These are all the experiments for now. You can go back to any chapter and run it again.',
   },
 ]
