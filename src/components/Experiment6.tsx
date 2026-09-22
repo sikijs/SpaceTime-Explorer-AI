@@ -129,7 +129,7 @@ function LightClockPanel({
   if (leg !== 'forward') trace.push([x(turnPosition), forwardY], [x(turnPosition), returnY])
   trace.push([x(pulsePosition), pulseY])
 
-  const mirror = (position: number, key: string, color: string, dashed = false) => (
+  const mirror = (position: number, key: string, color: string, dashed = false, opacity = 1) => (
     <line
       key={key}
       x1={x(position)}
@@ -139,8 +139,14 @@ function LightClockPanel({
       stroke={color}
       strokeWidth={dashed ? 2 : 6}
       strokeDasharray={dashed ? '4 3' : undefined}
+      opacity={opacity}
     />
   )
+
+  // Once the pulse has turned round, leave a faint mark where the front mirror was at that moment,
+  // because the mirror itself has moved on. Only the moving clocks need it: the rest clock's mirror stays put.
+  const showTurnMark = startFrontPosition !== null && leg !== 'forward'
+  const turnLabelAnchor = x(turnPosition) > VIEW_WIDTH - 110 ? 'end' : 'middle'
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem' }}>
@@ -178,6 +184,20 @@ function LightClockPanel({
                 fill="#666"
               >
                 start
+              </text>
+            </>
+          )}
+          {showTurnMark && (
+            <>
+              {mirror(turnPosition, 'turn', '#333', false, 0.3)}
+              <text
+                x={x(turnPosition)}
+                y={AXIS_Y - MIRROR_HALF_HEIGHT - 5}
+                textAnchor={turnLabelAnchor}
+                fontSize="11"
+                fill="#666"
+              >
+                front mirror when the pulse hit it
               </text>
             </>
           )}
@@ -312,7 +332,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
     return () => cancelAnimationFrame(frameId)
   }, [status, result])
 
-  const clocksCaption = `The rest clock stands still in the lab. The moving clocks move at ${shownSpeedLabel} (seen from the lab), along their own length. Both mirrors of a moving clock move together, and dashed lines show where they started. The two legs of a pulse are drawn at slightly different heights only so that you can see both. The light really travels along one line.`
+  const clocksCaption = `The rest clock stands still in the lab. The moving clocks move at ${shownSpeedLabel} (seen from the lab), along their own length. Both mirrors of a moving clock move together, and dashed lines show where they started. Once the pulse has hit the front mirror, a faint mark shows where the mirror was at that moment. The two legs of a pulse are drawn at slightly different heights only so that you can see both. The light really travels along one line.`
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
