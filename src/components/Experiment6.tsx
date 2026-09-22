@@ -28,8 +28,8 @@ const MAX_RUN_MS = 15000
 // Drawing constants (SVG units). Distances from the model are in light-seconds. The clocks are drawn
 // along a horizontal line, the direction of motion, so the panels are wide.
 const VIEW_WIDTH = 720
-const VIEW_HEIGHT = 110
-const AXIS_Y = 55
+const VIEW_HEIGHT = 92
+const AXIS_Y = 42
 const LEFT_MARGIN = 20
 const RIGHT_MARGIN = 20
 const MIRROR_HALF_HEIGHT = 26
@@ -56,16 +56,15 @@ const inputStyle = {
   width: '200px',
 }
 
-// Same clock look as Experiments 3 to 5.
+// Same clock look as Experiments 3 to 5, smaller so that all three clocks fit on the screen at once.
 const clockBoxStyle = {
-  fontSize: '2.5rem',
+  fontSize: '1.6rem',
   fontFamily: 'monospace',
   fontWeight: 'bold' as const,
-  padding: '1rem 0.5rem',
+  padding: '0.4rem 0.25rem',
   backgroundColor: '#d9ecff',
   borderRadius: '6px',
   textAlign: 'center' as const,
-  marginBottom: '0.75rem',
 }
 
 function formatClockReading(seconds: number): string {
@@ -91,7 +90,6 @@ function pixelsPerLightSecond(geometry: LengthContractionResult): number {
 
 interface LightClockPanelProps {
   title: string
-  caption: string
   scale: number
   clockReading: number
   leg: PulseLeg
@@ -106,7 +104,6 @@ interface LightClockPanelProps {
 // The forward and return legs are drawn at slightly different heights only so both can be seen.
 function LightClockPanel({
   title,
-  caption,
   scale,
   clockReading,
   leg,
@@ -139,10 +136,20 @@ function LightClockPanel({
   )
 
   return (
-    <div style={{ textAlign: 'center', width: '100%', minWidth: 0 }}>
-      <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>{title}</p>
-      <div style={clockBoxStyle}>{formatClockReading(clockReading)}</div>
-      <div style={{ backgroundColor: '#d9ecff', borderRadius: '6px', padding: '0.5rem' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem' }}>
+      <div style={{ flex: '0 0 170px', textAlign: 'center' }}>
+        <p style={{ fontSize: '0.8125rem', color: '#666', margin: '0 0 0.25rem' }}>{title}</p>
+        <div style={clockBoxStyle}>{formatClockReading(clockReading)}</div>
+      </div>
+      <div
+        style={{
+          flex: '1 1 320px',
+          minWidth: 0,
+          backgroundColor: '#d9ecff',
+          borderRadius: '6px',
+          padding: '0.25rem 0.5rem',
+        }}
+      >
         <svg
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           role="img"
@@ -178,7 +185,6 @@ function LightClockPanel({
           <circle cx={x(pulsePosition)} cy={pulseY} r="5" fill="#e6a700" />
         </svg>
       </div>
-      <p style={{ fontSize: '0.8125rem', color: '#555', marginTop: '0.5rem' }}>{caption}</p>
     </div>
   )
 }
@@ -295,7 +301,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
     return () => cancelAnimationFrame(frameId)
   }, [status, result])
 
-  const movingCaption = `Moving at ${shownSpeedLabel} (seen from the lab), along its own length. Both mirrors move together. Dashed lines show where they started. The two legs of the pulse are drawn at slightly different heights only so that you can see both. The light really travels along one line.`
+  const clocksCaption = `The rest clock stands still in the lab. The moving clocks move at ${shownSpeedLabel} (seen from the lab), along their own length. Both mirrors of a moving clock move together, and dashed lines show where they started. The two legs of a pulse are drawn at slightly different heights only so that you can see both. The light really travels along one line.`
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
@@ -511,10 +517,9 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
           </p>
 
           {geometry && clockState ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <LightClockPanel
                 title="Rest Clock"
-                caption="At rest in the lab"
                 scale={pixelsPerLightSecond(geometry)}
                 clockReading={clockState.restClock.clockReading}
                 leg={clockState.restClock.phase < 0.5 ? 'forward' : 'return'}
@@ -526,7 +531,6 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
               />
               <LightClockPanel
                 title="Moving Clock, same length"
-                caption={movingCaption}
                 scale={pixelsPerLightSecond(geometry)}
                 clockReading={clockState.sameLength.clockReading}
                 leg={clockState.sameLength.leg}
@@ -538,7 +542,6 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
               />
               <LightClockPanel
                 title="Moving Clock, shorter length"
-                caption={movingCaption}
                 scale={pixelsPerLightSecond(geometry)}
                 clockReading={clockState.shorterLength.clockReading}
                 leg={clockState.shorterLength.leg}
@@ -548,6 +551,9 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
                 frontMirrorPosition={clockState.shorterLength.frontMirrorPosition}
                 pulsePosition={clockState.shorterLength.pulsePosition}
               />
+              <p style={{ fontSize: '0.8125rem', color: '#555', margin: '0.25rem 0 0' }}>
+                {clocksCaption}
+              </p>
             </div>
           ) : (
             <p style={{ fontSize: '0.875rem', color: '#999' }}>
