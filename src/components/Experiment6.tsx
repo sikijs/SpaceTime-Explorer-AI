@@ -336,7 +336,7 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>Experiment 6 — Does Motion Change Length?</h1>
+      <h2>Experiment 6 — Does Motion Change Length?</h2>
 
       <div
         style={{

@@ -97,18 +97,16 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
-      <h1>Experiment 2 — Two Clocks at Rest</h1>
+      <h2>Experiment 2 — Two Clocks at Rest</h2>
 
       <div
+        className="exp-card"
         style={{
           marginTop: '2rem',
           padding: '1.5rem',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
-          backgroundColor: '#f9f9f9',
         }}
       >
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The question.</strong> In Experiment 1, one clock measured how much time passed
             (the elapsed time). Now we use two clocks in two different places. Will they agree?
@@ -122,8 +120,8 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
             style={{
               marginBottom: '0.75rem',
               padding: '0.75rem 1rem',
-              borderLeft: '4px solid #6a9fd8',
-              backgroundColor: '#eef4fb',
+              borderLeft: '4px solid var(--accent-blue)',
+              backgroundColor: 'rgba(37, 99, 235, 0.06)',
             }}
           >
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -171,7 +169,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
         </div>
 
         <div style={{ marginBottom: '2rem' }}>
-          <p style={{ fontSize: '0.875rem', color: '#666' }}>{statusLabel}</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{statusLabel}</p>
 
           <div
             style={{
@@ -183,17 +181,16 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
             }}
           >
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                 Clock A
               </p>
               <div
+                className="clock-readout"
                 style={{
                   fontSize: '2.5rem',
                   fontFamily: 'monospace',
                   fontWeight: 'bold',
                   padding: '1rem',
-                  backgroundColor: '#d9ecff',
-                  borderRadius: '6px',
                   minWidth: '150px',
                   textAlign: 'center',
                 }}
@@ -203,17 +200,16 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
             </div>
 
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                 Clock B
               </p>
               <div
+                className="clock-readout"
                 style={{
                   fontSize: '2.5rem',
                   fontFamily: 'monospace',
                   fontWeight: 'bold',
                   padding: '1rem',
-                  backgroundColor: '#d9ecff',
-                  borderRadius: '6px',
                   minWidth: '150px',
                   textAlign: 'center',
                 }}
@@ -235,13 +231,10 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
                 key={preset}
                 onClick={() => setDuration(preset as DurationOption)}
                 disabled={isRunning}
+                className={`toggle-button${duration === preset ? ' is-selected' : ''}`}
                 style={{
                   marginRight: '0.5rem',
                   padding: '0.5rem 1rem',
-                  backgroundColor: duration === preset ? '#007bff' : '#f0f0f0',
-                  color: duration === preset ? 'white' : 'black',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
                   cursor: isRunning ? 'not-allowed' : 'pointer',
                   fontSize: '0.875rem',
                   opacity: isRunning ? 0.6 : 1,
@@ -256,12 +249,9 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
             <button
               onClick={() => setDuration('other')}
               disabled={isRunning}
+              className={`toggle-button${duration === 'other' ? ' is-selected' : ''}`}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: duration === 'other' ? '#007bff' : '#f0f0f0',
-                color: duration === 'other' ? 'white' : 'black',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
                 cursor: isRunning ? 'not-allowed' : 'pointer',
                 fontSize: '0.875rem',
                 opacity: isRunning ? 0.6 : 1,
@@ -281,11 +271,10 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
                 onChange={(e) => setCustomDuration(e.target.value)}
                 disabled={isRunning}
                 placeholder="Enter seconds (1-60)"
+                className="field-input"
                 style={{
                   padding: '0.5rem',
                   fontSize: '0.875rem',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
                   width: '200px',
                   opacity: isRunning ? 0.6 : 1,
                   cursor: isRunning ? 'not-allowed' : 'text',
@@ -294,7 +283,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
             </div>
           )}
 
-          <p style={{ fontSize: '0.875rem', color: '#666' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
             Selected duration: <strong>{selectedDuration || '—'} seconds</strong>
           </p>
         </div>
@@ -303,7 +292,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
             Make predictions
           </label>
-          <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
             The experiment will last {selectedDuration} seconds. What will each clock show when it ends? Type your guess for each clock, in seconds.
           </p>
 
@@ -317,11 +306,10 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
               onChange={(e) => setPredictionA(e.target.value)}
               disabled={isRunning}
               placeholder="Enter seconds"
+              className="field-input"
               style={{
                 padding: '0.5rem',
                 fontSize: '0.875rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
                 width: '200px',
                 opacity: isRunning ? 0.6 : 1,
                 cursor: isRunning ? 'not-allowed' : 'text',
@@ -339,11 +327,10 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
               onChange={(e) => setPredictionB(e.target.value)}
               disabled={isRunning}
               placeholder="Enter seconds"
+              className="field-input"
               style={{
                 padding: '0.5rem',
                 fontSize: '0.875rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
                 width: '200px',
                 opacity: isRunning ? 0.6 : 1,
                 cursor: isRunning ? 'not-allowed' : 'text',
@@ -351,7 +338,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
             />
           </div>
 
-          <p style={{ fontSize: '0.75rem', color: '#999' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {hasPredictions
               ? `Predictions: Clock A: ${predictionAValue}s, Clock B: ${predictionBValue}s`
               : 'Enter predictions for both clocks to continue'}
@@ -361,17 +348,10 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
         <button
           onClick={handleStart}
           disabled={isRunning || !hasPredictions}
+          className="action-button"
           style={{
             padding: '0.75rem 2rem',
             fontSize: '1rem',
-            fontWeight: 'bold',
-            backgroundColor:
-              isRunning ? '#6c757d' : hasPredictions ? '#28a745' : '#ccc',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: isRunning || !hasPredictions ? 'not-allowed' : 'pointer',
-            opacity: isRunning || !hasPredictions ? 0.7 : 1,
           }}
         >
           {isRunning ? 'Running...' : 'START'}
@@ -379,15 +359,13 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
 
         {isComplete && result && submittedPredictionA !== null && submittedPredictionB !== null && (
           <div
+            className="exp-card"
             style={{
               marginTop: '2rem',
               padding: '1.5rem',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              backgroundColor: '#fafafa',
             }}
           >
-            <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem' }}>
+            <h2 className="app-title" style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem' }}>
               Results
             </h2>
 
@@ -400,7 +378,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
               </p>
             </div>
 
-            <div style={{ marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+            <div style={{ marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
                 <strong>You guessed for Clock A:</strong> {submittedPredictionA} seconds
               </p>
@@ -409,7 +387,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
               </p>
             </div>
 
-            <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
+            <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
                 <strong>You guessed for Clock B:</strong> {submittedPredictionB} seconds
               </p>
@@ -424,18 +402,13 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
               </p>
             </div>
 
-            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
+            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
               <button
                 onClick={handleRunAgain}
+                className="secondary-button"
                 style={{
                   padding: '0.5rem 1.5rem',
                   fontSize: '0.875rem',
-                  fontWeight: 'bold',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
                 }}
               >
                 Run Again
@@ -446,15 +419,13 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
 
         {isComplete && result && submittedPredictionA !== null && submittedPredictionB !== null && (
           <div
+            className="exp-card"
             style={{
               marginTop: '2rem',
               padding: '1.5rem',
-              border: '1px solid #e8e8e8',
-              borderRadius: '8px',
-              backgroundColor: '#fefefe',
             }}
           >
-            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1rem', color: '#333' }}>
+            <h3 className="app-title" style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1rem' }}>
               Event Interval
             </h3>
 
@@ -467,7 +438,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
               }}
             >
               <div style={{ textAlign: 'center', flex: '1' }}>
-                <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
                   Event A
                 </p>
                 <p style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
@@ -485,37 +456,38 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
                 style={{
                   flex: '2',
                   height: '3px',
-                  backgroundColor: '#999',
+                  background: 'var(--gradient-primary)',
                   margin: '1.75rem 1rem 0',
                   position: 'relative',
+                  borderRadius: '2px',
                 }}
               >
                 <div
+                  className="event-dot"
                   style={{
                     position: 'absolute',
                     left: '0',
                     top: '-4px',
                     width: '8px',
                     height: '8px',
-                    backgroundColor: '#333',
                     borderRadius: '50%',
                   }}
                 />
                 <div
+                  className="event-dot"
                   style={{
                     position: 'absolute',
                     right: '0',
                     top: '-4px',
                     width: '8px',
                     height: '8px',
-                    backgroundColor: '#333',
                     borderRadius: '50%',
                   }}
                 />
               </div>
 
               <div style={{ textAlign: 'center', flex: '1' }}>
-                <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
                   Event B
                 </p>
                 <p style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
@@ -534,7 +506,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
               style={{
                 textAlign: 'center',
                 fontSize: '0.875rem',
-                color: '#666',
+                color: 'var(--text-muted)',
                 marginTop: '1rem',
                 marginBottom: '0',
               }}

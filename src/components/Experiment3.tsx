@@ -171,7 +171,7 @@ export function Experiment3({ onComplete, onTutorComplete }: Experiment3Props) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>Experiment 3 — Moving Clock</h1>
+      <h2>Experiment 3 — Moving Clock</h2>
 
       <div
         style={{

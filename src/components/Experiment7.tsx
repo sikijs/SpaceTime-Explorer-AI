@@ -208,7 +208,7 @@ export function Experiment7({ onComplete, onTutorComplete }: Experiment7Props) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>Experiment 7 — At the Same Time... For Whom?</h1>
+      <h2>Experiment 7 — At the Same Time... For Whom?</h2>
 
       <div
         style={{

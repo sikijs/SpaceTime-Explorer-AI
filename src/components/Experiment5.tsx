@@ -289,7 +289,7 @@ export function Experiment5({ onComplete, onTutorComplete }: Experiment5Props) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>Experiment 5 — Why Can't Light Go Faster?</h1>
+      <h2>Experiment 5 — Why Can't Light Go Faster?</h2>
 
       <div
         style={{

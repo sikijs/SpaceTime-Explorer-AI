@@ -250,7 +250,7 @@ export function Experiment4({ onComplete, onTutorComplete }: Experiment4Props) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>Experiment 4 — The Light Clock: Why Time Dilation Happens</h1>
+      <h2>Experiment 4 — The Light Clock: Why Time Dilation Happens</h2>
 
       <div
         style={{

@@ -88,24 +88,23 @@ export function Welcome({ chapters, onSelectChapter }: WelcomeProps) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '720px', margin: '0 auto' }}>
-      <h1>Welcome</h1>
+      <h2>Welcome</h2>
 
       <img
         src={relativityBanner}
         alt="An astronaut and spacecraft near Earth, Earth resting in a warped grid representing spacetime, and two black holes merging with rippling gravitational waves"
-        style={{ width: '100%', height: 'auto', borderRadius: '8px', marginTop: '1.5rem', display: 'block' }}
+        className="welcome-banner"
+        style={{ width: '100%', height: 'auto', marginTop: '1.5rem', display: 'block' }}
       />
 
       <div
+        className="welcome-card"
         style={{
           marginTop: '2rem',
           padding: '1.5rem',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
-          backgroundColor: '#f9f9f9',
         }}
       >
-        <div style={{ fontSize: '0.875rem', color: '#555' }}>
+        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The goal.</strong> This app is an interactive laboratory for building an
             intuitive understanding of relativity — why moving clocks tick differently, why moving
@@ -140,14 +139,14 @@ export function Welcome({ chapters, onSelectChapter }: WelcomeProps) {
       </div>
 
       <div style={{ marginTop: '1.5rem' }}>
-        <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.5rem' }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
           <strong>What you'll explore.</strong>
         </p>
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-            gap: '0.5rem',
+            gap: '0.625rem',
           }}
         >
           {visibleChapters.map((chapter, index) => (
@@ -155,21 +154,16 @@ export function Welcome({ chapters, onSelectChapter }: WelcomeProps) {
               key={chapter.title}
               type="button"
               onClick={() => onSelectChapter(index)}
+              className="preview-button"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
                 padding: '0.5rem 0.625rem',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                backgroundColor: '#fff',
                 fontSize: '0.8125rem',
-                color: '#333',
+                color: 'var(--text)',
                 textAlign: 'left',
                 cursor: 'pointer',
               }}
             >
-              <span style={{ flex: '0 0 20px', width: '20px', height: '20px' }}>{icons[index]}</span>
+              <span className={`icon-badge badge-${index % 4}`}>{icons[index]}</span>
               <span>
                 {index + 1}. {chapter.title}
               </span>
@@ -179,16 +173,11 @@ export function Welcome({ chapters, onSelectChapter }: WelcomeProps) {
             <button
               type="button"
               onClick={() => setExpanded((previous) => !previous)}
+              className="more-button"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 padding: '0.5rem 0.625rem',
-                border: '1px dashed #bbb',
-                borderRadius: '6px',
-                backgroundColor: 'transparent',
                 fontSize: '0.8125rem',
-                color: '#666',
+                color: 'var(--text-muted)',
                 cursor: 'pointer',
               }}
             >
@@ -198,8 +187,10 @@ export function Welcome({ chapters, onSelectChapter }: WelcomeProps) {
         </div>
       </div>
 
-      <p style={{ fontSize: '0.875rem', color: '#555', marginTop: '1.5rem' }}>
-        Press "Next" below, or a topic above, when you're ready to begin.
+      <p style={{ textAlign: 'center', marginTop: '2rem' }}>
+        <span className="cta-pill" style={{ padding: '0.625rem 1.25rem', fontSize: '0.875rem' }}>
+          Press "Next" below, or a topic above, when you're ready to begin.
+        </span>
       </p>
     </div>
   )

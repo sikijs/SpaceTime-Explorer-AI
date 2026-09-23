@@ -11,6 +11,8 @@ import { Experiment7 } from './components/Experiment7'
 
 interface Chapter {
   title: string
+  // The named group of experiments this chapter belongs to; shown once as the page heading.
+  group: string
   Component: ComponentType<{ onComplete?: () => void; onTutorComplete?: () => void }>
   // Shown below the experiment once the learner has run it and finished the tutor's questions.
   learned: string
@@ -20,6 +22,7 @@ interface Chapter {
 const chapters: Chapter[] = [
   {
     title: 'One clock',
+    group: 'Relativity of Time and Motion',
     Component: Experiment1,
     learned:
       "A clock measures how much time passes between two events. Here, the two events were the start and the end of the experiment. The elapsed time is the difference between the clock's two readings.",
@@ -27,6 +30,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Two clocks at rest',
+    group: 'Relativity of Time and Motion',
     Component: Experiment2,
     learned:
       'Two clocks standing still in the same reference frame, set to the same reading at the start, measured the same elapsed time between the same two events.',
@@ -34,6 +38,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'A moving clock',
+    group: 'Relativity of Time and Motion',
     Component: Experiment3,
     learned:
       'When a clock moves compared with the lab, it measures less elapsed time than the lab clock between the same two events. This effect is called time dilation. The faster the clock moves, the bigger the difference. The moving clock is not broken: the time that passes between two events depends on who is measuring (their reference frame) and how they are moving. (At speed 0 nothing moves, and the two clocks agree.)',
@@ -41,6 +46,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Why time dilation happens',
+    group: 'Relativity of Time and Motion',
     Component: Experiment4,
     learned:
       "In the lab, light travels at the same speed for both light clocks. The moving clock's pulse of light has a longer, slanted path to travel, so each of its ticks takes longer on the lab's clocks. That is why the moving clock measures less time than the lab clock (time dilation), by the same factor you saw in Experiment 3.",
@@ -48,6 +54,7 @@ const chapters: Chapter[] = [
   },
   {
     title: "Why can't light go faster?",
+    group: 'Relativity of Time and Motion',
     Component: Experiment5,
     learned:
       "We compared two rules for light. In the everyday rule, light gets the speed of the moving clock added to its own, like a ball thrown from a moving train. Then the moving clock would tick at the same rate as the clock standing still, but its light would travel faster than c. In light's actual rule, light always travels at c. The light has a longer path but cannot go faster, so the moving clock's tick takes longer. That is time dilation. In this model, time dilation happens because light always travels at c.",
@@ -55,6 +62,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Does motion change length?',
+    group: 'Relativity of Time and Motion',
     Component: Experiment6,
     learned:
       "Time dilation says that a moving clock must tick slowly, whichever way it is turned. Light in the lab always goes at c, so a clock moving along its own length can only tick that slowly if it is shorter, as seen from the lab. It is shorter by the same factor as the time dilation factor. This effect is called length contraction. Only the length along the motion changes.",
@@ -62,6 +70,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'At the same time... for whom?',
+    group: 'Relativity of Time and Motion',
     Component: Experiment7,
     learned:
       "Someone riding along with a moving rod sees a flash from its center reach both ends at the same time. The lab does not: the back end moves toward the flash and the front end moves away, so the lab sees the back end reached first. This is not a delay in either frame's own clocks. It is called relativity of simultaneity: two events that are simultaneous in one reference frame need not be simultaneous in another.",
@@ -109,13 +118,6 @@ function saveProgress(progress: Progress) {
   }
 }
 
-const navButtonStyle = (disabled: boolean) => ({
-  padding: '0.5rem 1rem',
-  fontSize: '1rem',
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  opacity: disabled ? 0.5 : 1,
-})
-
 export function App() {
   const [initialProgress] = useState(loadProgress)
   const [currentChapter, setCurrentChapter] = useState(initialProgress.currentChapter)
@@ -135,6 +137,12 @@ export function App() {
   }
 
   const isWelcome = currentChapter === -1
+  const [isChapterListOpen, setIsChapterListOpen] = useState(!isWelcome)
+
+  useEffect(() => {
+    if (!isWelcome) setIsChapterListOpen(true)
+  }, [currentChapter, isWelcome])
+
   const activeChapter = isWelcome ? null : chapters[currentChapter]
   const isCurrentExplained = !isWelcome && explained.includes(currentChapter)
   const isFirst = currentChapter === -1
@@ -143,12 +151,16 @@ export function App() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#fafafa' }}>
       <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          How Clocks Measure Time
-        </h1>
-        <p style={{ textAlign: 'center', color: '#666', maxWidth: '800px', margin: '0 auto 2rem' }}>
-          A short sequence of experiments on time. Each one builds on the one before it.
-        </p>
+        {isWelcome && (
+          <>
+            <h1 className="app-title" style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '3rem' }}>
+              SpaceTime Explorer
+            </h1>
+            <p className="app-subtitle" style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 2rem' }}>
+              A short sequence of experiments on relativity — space, time, and motion. Each one builds on the one before it.
+            </p>
+          </>
+        )}
 
         <div className="chapter-layout">
           <nav aria-label="Experiments" className="chapter-nav">
@@ -156,6 +168,7 @@ export function App() {
               type="button"
               onClick={() => setCurrentChapter(-1)}
               aria-current={isWelcome ? 'step' : undefined}
+              className={`nav-button${isWelcome ? ' is-active' : ''}`}
               style={{
                 width: '100%',
                 textAlign: 'left',
@@ -163,69 +176,80 @@ export function App() {
                 marginBottom: '0.5rem',
                 fontSize: '1rem',
                 cursor: 'pointer',
-                border: isWelcome ? '2px solid #333' : '1px solid #ccc',
-                borderRadius: '6px',
-                backgroundColor: isWelcome ? '#fff' : 'transparent',
                 fontWeight: isWelcome ? 700 : 500,
               }}
             >
               Welcome
             </button>
-            <ol className="chapter-list">
-              {chapters.map((chapter, index) => {
-                const isCurrent = index === currentChapter
-                const isCompleted = completed.includes(index)
-                return (
-                  <li key={chapter.title}>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentChapter(index)}
-                      aria-current={isCurrent ? 'step' : undefined}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.75rem 1rem',
-                        fontSize: '1rem',
-                        cursor: 'pointer',
-                        border: isCurrent ? '2px solid #333' : '1px solid #ccc',
-                        borderRadius: '6px',
-                        backgroundColor: isCurrent ? '#fff' : 'transparent',
-                        fontWeight: isCurrent ? 700 : 500,
-                      }}
-                    >
-                      {index + 1}. {chapter.title}
-                      {isCompleted && (
-                        <span aria-label="completed" style={{ float: 'right', color: '#2e7d32' }}>
-                          ✓
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                )
-              })}
-            </ol>
+            <button
+              type="button"
+              className="chapter-group-heading"
+              aria-expanded={isChapterListOpen}
+              onClick={() => setIsChapterListOpen((open) => !open)}
+            >
+              {chapters[0].group}
+              <span className={`chapter-group-chevron${isChapterListOpen ? ' is-open' : ''}`} aria-hidden="true">
+                ▾
+              </span>
+            </button>
+            {isChapterListOpen && (
+              <ol className="chapter-list">
+                {chapters.map((chapter, index) => {
+                  const isCurrent = index === currentChapter
+                  const isCompleted = completed.includes(index)
+                  return (
+                    <li key={chapter.title}>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentChapter(index)}
+                        aria-current={isCurrent ? 'step' : undefined}
+                        className={`nav-button${isCurrent ? ' is-active' : ''}`}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '0.75rem 1rem',
+                          fontSize: '1rem',
+                          cursor: 'pointer',
+                          fontWeight: isCurrent ? 700 : 500,
+                        }}
+                      >
+                        {index + 1}. {chapter.title}
+                        {isCompleted && (
+                          <span aria-label="completed" className="check" style={{ float: 'right' }}>
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
           </nav>
 
           <main className="chapter-main">
             {activeChapter ? (
-              <activeChapter.Component
-                key={currentChapter}
-                onComplete={() => markComplete(currentChapter)}
-                onTutorComplete={() => markExplained(currentChapter)}
-              />
+              <>
+                <h2 className="experiment-group-title">{activeChapter.group}</h2>
+                <activeChapter.Component
+                  key={currentChapter}
+                  onComplete={() => markComplete(currentChapter)}
+                  onTutorComplete={() => markExplained(currentChapter)}
+                />
+              </>
             ) : (
               <Welcome chapters={chapters} onSelectChapter={setCurrentChapter} />
             )}
 
             {!isWelcome && !isCurrentExplained && (
               <p
+                className="summary-card"
                 style={{
                   maxWidth: '700px',
                   margin: '1rem auto 0',
                   padding: '0.75rem 1.5rem',
-                  borderLeft: '4px dashed #bbb',
                   fontSize: '0.875rem',
-                  color: '#666',
+                  color: 'var(--text-muted)',
                 }}
               >
                 When you have run the experiment and answered the questions that follow it, a short
@@ -236,13 +260,11 @@ export function App() {
             {isCurrentExplained && (
               <section
                 aria-label="Chapter summary"
+                className="summary-card is-explained"
                 style={{
                   maxWidth: '700px',
                   margin: '1rem auto 0',
                   padding: '1rem 1.5rem',
-                  borderLeft: '4px solid #2e7d32',
-                  backgroundColor: '#eef6ee',
-                  color: '#333',
                 }}
               >
                 <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -265,7 +287,8 @@ export function App() {
                 type="button"
                 disabled={isFirst}
                 onClick={() => setCurrentChapter(currentChapter - 1)}
-                style={navButtonStyle(isFirst)}
+                className="primary-button"
+                style={{ padding: '0.6rem 1.4rem', fontSize: '1rem' }}
               >
                 ← Previous
               </button>
@@ -273,7 +296,8 @@ export function App() {
                 type="button"
                 disabled={isLast}
                 onClick={() => setCurrentChapter(currentChapter + 1)}
-                style={navButtonStyle(isLast)}
+                className="primary-button"
+                style={{ padding: '0.6rem 1.4rem', fontSize: '1rem' }}
               >
                 Next →
               </button>
