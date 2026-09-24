@@ -8,6 +8,10 @@ import { Experiment4 } from './components/Experiment4'
 import { Experiment5 } from './components/Experiment5'
 import { Experiment6 } from './components/Experiment6'
 import { Experiment7 } from './components/Experiment7'
+import { Experiment8 } from './components/Experiment8'
+import { Experiment9 } from './components/Experiment9'
+import { Experiment10 } from './components/Experiment10'
+import { Experiment11 } from './components/Experiment11'
 
 interface Chapter {
   title: string
@@ -74,6 +78,38 @@ const chapters: Chapter[] = [
     Component: Experiment7,
     learned:
       "Someone riding along with a moving rod sees a flash from its center reach both ends at the same time. The lab does not: the back end moves toward the flash and the front end moves away, so the lab sees the back end reached first. This is not a delay in either frame's own clocks. It is called relativity of simultaneity: two events that are simultaneous in one reference frame need not be simultaneous in another.",
+    next: 'Next, we look at the same rod and flash a different way: as a single picture, with position and time drawn together.',
+  },
+  {
+    title: 'Drawing Spacetime',
+    group: 'Relativity of Time and Motion',
+    Component: Experiment8,
+    learned:
+      "A spacetime diagram plots position and time together: a still object is a vertical line, a moving object is a slanted line (a worldline), and light is always drawn at the same slope. The same two events from Experiment 7 — the flash reaching the back end, then the front end — are just where the rod's worldlines cross the light's. The picture agrees with the numbers.",
+    next: "Next, we draw one more line on the same picture: one that shows what 'the same moment' looks like for someone riding along with the rod.",
+  },
+  {
+    title: 'Same Time, Different Line',
+    group: 'Relativity of Time and Motion',
+    Component: Experiment9,
+    learned:
+      "A flat line straight across the diagram shows what the lab calls \"the same moment.\" But the two events that Experiment 7 said were simultaneous for the rod are not on a flat line at all — they're on a tilted one. \"The same moment\" really does depend on who is watching: it isn't a trick of measurement, it's a different, real line on the same page.",
+    next: 'Next, we apply time dilation to a whole round trip: two twins, one who travels and one who stays home, and a famous puzzle about which one is older when they reunite.',
+  },
+  {
+    title: 'The Twin Paradox',
+    group: 'Relativity of Time and Motion',
+    Component: Experiment10,
+    learned:
+      "It looked like a contradiction at first: motion is relative, so each twin could argue the other one's clock should run slow. But the two twins aren't in the same situation — only the traveling twin turns around. That difference breaks the symmetry, and it's why, when they're back together comparing the same two clocks, they both agree the traveling twin aged less. It's not a matter of opinion. It's the same time dilation from Experiment 3, just added up over the whole trip.",
+    next: "Next, we complete the picture from Experiments 8 and 9: drawing the rod's own two axes on the diagram, and using the actual math that converts the lab's numbers into the rod's own.",
+  },
+  {
+    title: "The Rod's Own Axes",
+    group: 'Relativity of Time and Motion',
+    Component: Experiment11,
+    learned:
+      "The rod has its own two tilted axes on the same diagram as the lab's — its own \"straight up\" and \"straight across,\" just like the lab's vertical and horizontal lines, only tilted because it's moving. The Lorentz transformation is the actual mathematical rule for converting an event's lab-frame numbers into the numbers the rod's own frame would assign to it. Applying it to the two flash-arrival events gives the same time for both, in the rod's frame — confirming, by direct calculation, exactly what Experiments 7 and 9 already showed by other means. Nothing physically changed: it's the same rod, the same flash, the same two events, just described using the rod's own ruler-and-clock convention instead of the lab's.",
     next: 'These are all the experiments for now. You can go back to any chapter and run it again.',
   },
 ]
