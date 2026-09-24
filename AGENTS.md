@@ -1,5 +1,7 @@
 # SpaceTime Explorer AI — Project Instructions
 
+> All these concepts are complex. Use simple terms so that a user with just a basic knowledge of science should be able to understand. Make it as detailed as necessary to make the concept clear. Do not assume the user can understand these concepts easily. Explain with examples wherever possible.
+
 ## Project Purpose
 
 SpaceTime Explorer AI is an interactive educational laboratory for understanding
