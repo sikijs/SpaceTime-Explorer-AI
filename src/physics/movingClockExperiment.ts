@@ -1,6 +1,12 @@
 // Units: velocity is a fraction of the speed of light (c = 1); distances are in light-seconds.
 export const SPEED_OF_LIGHT = 1
 
+// Extracted so Experiment 11's Lorentz transformation can reuse this exact factor (by division)
+// instead of duplicating the formula. Behavior of runMovingClockExperiment is unchanged.
+export function timeDilationFactorFor(velocity: number): number {
+  return Math.sqrt(1 - (velocity * velocity) / (SPEED_OF_LIGHT * SPEED_OF_LIGHT))
+}
+
 export interface MovingClockExperimentResult {
   labTimeDuration: number
   velocity: number
@@ -22,7 +28,7 @@ export function runMovingClockExperiment(
     throw new RangeError('Velocity must satisfy 0 <= v < c')
   }
 
-  const timeDilationFactor = Math.sqrt(1 - (velocity * velocity) / (SPEED_OF_LIGHT * SPEED_OF_LIGHT))
+  const timeDilationFactor = timeDilationFactorFor(velocity)
   const observerElapsedTime = labDurationSeconds
   const movingClockElapsedTime = labDurationSeconds * timeDilationFactor
 
