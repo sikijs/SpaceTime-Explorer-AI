@@ -96,7 +96,7 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
   }, [status, result])
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
+    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
       <h2>Experiment 2 — Two Clocks at Rest</h2>
 
       <div
