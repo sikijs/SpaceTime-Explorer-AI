@@ -23,6 +23,11 @@ interface Chapter {
   next: string
 }
 
+// The order groups appear in the sidebar. A group with no chapters yet (its next
+// experiment's specification not yet approved) still gets a heading, so the learner can see
+// what's coming, but no chapter list beneath it.
+const groupOrder = ['Relativity of Time and Motion', 'Gravity and Curved Spacetime']
+
 const chapters: Chapter[] = [
   {
     title: 'One clock',
@@ -217,50 +222,80 @@ export function App() {
             >
               Welcome
             </button>
-            <button
-              type="button"
-              className="chapter-group-heading"
-              aria-expanded={isChapterListOpen}
-              onClick={() => setIsChapterListOpen((open) => !open)}
-            >
-              {chapters[0].group}
-              <span className={`chapter-group-chevron${isChapterListOpen ? ' is-open' : ''}`} aria-hidden="true">
-                ▾
-              </span>
-            </button>
-            {isChapterListOpen && (
-              <ol className="chapter-list">
-                {chapters.map((chapter, index) => {
-                  const isCurrent = index === currentChapter
-                  const isCompleted = completed.includes(index)
-                  return (
-                    <li key={chapter.title}>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentChapter(index)}
-                        aria-current={isCurrent ? 'step' : undefined}
-                        className={`nav-button${isCurrent ? ' is-active' : ''}`}
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '0.75rem 1rem',
-                          fontSize: '1rem',
-                          cursor: 'pointer',
-                          fontWeight: isCurrent ? 700 : 500,
-                        }}
-                      >
-                        {index + 1}. {chapter.title}
-                        {isCompleted && (
-                          <span aria-label="completed" className="check" style={{ float: 'right' }}>
-                            ✓
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ol>
-            )}
+            {groupOrder.map((groupName) => {
+              const groupChapters = chapters
+                .map((chapter, index) => ({ chapter, index }))
+                .filter(({ chapter }) => chapter.group === groupName)
+
+              if (groupChapters.length === 0) {
+                return (
+                  <div key={groupName}>
+                    <div className="chapter-group-heading" style={{ cursor: 'default' }}>
+                      {groupName}
+                    </div>
+                    <p
+                      style={{
+                        margin: '0 0 1rem',
+                        padding: '0 0.25rem',
+                        fontSize: '0.875rem',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      No experiments yet — coming after "Relativity of Time and Motion".
+                    </p>
+                  </div>
+                )
+              }
+
+              return (
+                <div key={groupName}>
+                  <button
+                    type="button"
+                    className="chapter-group-heading"
+                    aria-expanded={isChapterListOpen}
+                    onClick={() => setIsChapterListOpen((open) => !open)}
+                  >
+                    {groupName}
+                    <span className={`chapter-group-chevron${isChapterListOpen ? ' is-open' : ''}`} aria-hidden="true">
+                      ▾
+                    </span>
+                  </button>
+                  {isChapterListOpen && (
+                    <ol className="chapter-list">
+                      {groupChapters.map(({ chapter, index }) => {
+                        const isCurrent = index === currentChapter
+                        const isCompleted = completed.includes(index)
+                        return (
+                          <li key={chapter.title}>
+                            <button
+                              type="button"
+                              onClick={() => setCurrentChapter(index)}
+                              aria-current={isCurrent ? 'step' : undefined}
+                              className={`nav-button${isCurrent ? ' is-active' : ''}`}
+                              style={{
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: '0.75rem 1rem',
+                                fontSize: '1rem',
+                                cursor: 'pointer',
+                                fontWeight: isCurrent ? 700 : 500,
+                              }}
+                            >
+                              {index + 1}. {chapter.title}
+                              {isCompleted && (
+                                <span aria-label="completed" className="check" style={{ float: 'right' }}>
+                                  ✓
+                                </span>
+                              )}
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ol>
+                  )}
+                </div>
+              )
+            })}
           </nav>
 
           <main className="chapter-main">
