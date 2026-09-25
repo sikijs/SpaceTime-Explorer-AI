@@ -12,6 +12,8 @@ import { Experiment8 } from './components/Experiment8'
 import { Experiment9 } from './components/Experiment9'
 import { Experiment10 } from './components/Experiment10'
 import { Experiment11 } from './components/Experiment11'
+import { EquivalencePrincipleExperiment } from './components/EquivalencePrincipleExperiment'
+import { GravitationalTimeDilationExperiment } from './components/GravitationalTimeDilationExperiment'
 
 interface Chapter {
   title: string
@@ -115,7 +117,23 @@ const chapters: Chapter[] = [
     Component: Experiment11,
     learned:
       "The rod has its own two tilted axes on the same diagram as the lab's — its own \"straight up\" and \"straight across,\" just like the lab's vertical and horizontal lines, only tilted because it's moving. The Lorentz transformation is the actual mathematical rule for converting an event's lab-frame numbers into the numbers the rod's own frame would assign to it. Applying it to the two flash-arrival events gives the same time for both, in the rod's frame — confirming, by direct calculation, exactly what Experiments 7 and 9 already showed by other means. Nothing physically changed: it's the same rod, the same flash, the same two events, just described using the rod's own ruler-and-clock convention instead of the lab's.",
-    next: 'These are all the experiments for now. You can go back to any chapter and run it again.',
+    next: 'This completes "Relativity of Time and Motion." Next, a new chapter begins: Gravity and Curved Spacetime, starting from a sealed cabin and a dropped ball.',
+  },
+  {
+    title: 'The Equivalence Principle',
+    group: 'Gravity and Curved Spacetime',
+    Component: EquivalencePrincipleExperiment,
+    learned:
+      "A ball dropped in a cabin at rest under gravity, and a ball dropped in a cabin accelerating through empty space at the same rate, move in exactly the same way relative to their own cabin. Sealed inside, watching only the ball, there was no experiment that told you which cabin you were in. This is called the equivalence principle — it's the idea that first led Einstein to suspect gravity might not be an ordinary force, but something about the geometry of space and time itself.",
+    next: 'Next, we apply the same equivalence principle to clocks instead of a ball: does gravity make time itself run differently?',
+  },
+  {
+    title: 'Does Gravity Change Time?',
+    group: 'Gravity and Curved Spacetime',
+    Component: GravitationalTimeDilationExperiment,
+    learned:
+      "In an accelerating rocket, a clock at the ceiling ticks faster than a clock at the floor, because a light signal sent upward arrives redshifted — stretched to a lower frequency — since the cabin keeps speeding up while the signal is in transit. Because gravity and acceleration are locally indistinguishable, the same thing must happen in a real gravitational field: a clock closer to the ground runs slower than a clock higher up. This is gravitational time dilation, and it's real — GPS satellites have to correct for it.",
+    next: "This is the second experiment in this chapter. More will follow as they're designed and approved.",
   },
 ]
 
@@ -178,10 +196,14 @@ export function App() {
   }
 
   const isWelcome = currentChapter === -1
-  const [isChapterListOpen, setIsChapterListOpen] = useState(!isWelcome)
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(groupOrder.map((groupName) => [groupName, !isWelcome]))
+  )
 
   useEffect(() => {
-    if (!isWelcome) setIsChapterListOpen(true)
+    if (isWelcome) return
+    const activeGroup = chapters[currentChapter].group
+    setOpenGroups((previous) => (previous[activeGroup] ? previous : { ...previous, [activeGroup]: true }))
   }, [currentChapter, isWelcome])
 
   const activeChapter = isWelcome ? null : chapters[currentChapter]
@@ -247,22 +269,24 @@ export function App() {
                 )
               }
 
+              const isGroupOpen = Boolean(openGroups[groupName])
+
               return (
                 <div key={groupName}>
                   <button
                     type="button"
                     className="chapter-group-heading"
-                    aria-expanded={isChapterListOpen}
-                    onClick={() => setIsChapterListOpen((open) => !open)}
+                    aria-expanded={isGroupOpen}
+                    onClick={() => setOpenGroups((previous) => ({ ...previous, [groupName]: !previous[groupName] }))}
                   >
                     {groupName}
-                    <span className={`chapter-group-chevron${isChapterListOpen ? ' is-open' : ''}`} aria-hidden="true">
+                    <span className={`chapter-group-chevron${isGroupOpen ? ' is-open' : ''}`} aria-hidden="true">
                       ▾
                     </span>
                   </button>
-                  {isChapterListOpen && (
+                  {isGroupOpen && (
                     <ol className="chapter-list">
-                      {groupChapters.map(({ chapter, index }) => {
+                      {groupChapters.map(({ chapter, index }, position) => {
                         const isCurrent = index === currentChapter
                         const isCompleted = completed.includes(index)
                         return (
@@ -281,7 +305,7 @@ export function App() {
                                 fontWeight: isCurrent ? 700 : 500,
                               }}
                             >
-                              {index + 1}. {chapter.title}
+                              {position + 1}. {chapter.title}
                               {isCompleted && (
                                 <span aria-label="completed" className="check" style={{ float: 'right' }}>
                                   ✓
