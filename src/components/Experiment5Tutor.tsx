@@ -13,6 +13,9 @@ interface Experiment5TutorProps {
   restTickDuration: number
   everydayTick: number
   everydayLightSpeed: number
+  everydayLightPath: number
+  everydaySidewaysDistancePerTick: number
+  mirrorSeparation: number
   actualTick: number
   actualTimeDilationFactor: number
 }
@@ -29,6 +32,9 @@ export function Experiment5Tutor({
   restTickDuration,
   everydayTick,
   everydayLightSpeed,
+  everydayLightPath,
+  everydaySidewaysDistancePerTick,
+  mirrorSeparation,
   actualTick,
   actualTimeDilationFactor,
   onExplained,
@@ -133,6 +139,18 @@ export function Experiment5Tutor({
             slanted path in the same time as the clock at rest. One tick takes{' '}
             {everydayTick.toFixed(3)} seconds of lab time. So the moving clock ticks just like the
             clock standing still. With this rule, there is no time dilation.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>Working the numbers.</strong> At {velocity}c, going up, the light rises{' '}
+            {mirrorSeparation} light-seconds (straight up, in the clock's own view) while the clock
+            carries it {(everydaySidewaysDistancePerTick / 2).toFixed(3)} light-seconds sideways —
+            same as light's actual rule, since both rules move the clock the same way. Combining
+            those gives a diagonal length of {(everydayLightPath / 2).toFixed(3)} light-seconds for
+            the trip up, {everydayLightPath.toFixed(3)} for the round trip. But under this rule the
+            tick still takes exactly {everydayTick.toFixed(3)} second — so the light must have
+            covered that longer distance faster than usual:{' '}
+            {everydayLightPath.toFixed(3)} ÷ {everydayTick.toFixed(3)} ={' '}
+            {everydayLightSpeed.toFixed(3)}c.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>3. Light's actual rule.</strong> Now the light does not get the extra speed.

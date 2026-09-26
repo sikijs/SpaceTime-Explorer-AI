@@ -634,6 +634,9 @@ export function Experiment5({ onComplete, onTutorComplete }: Experiment5Props) {
             restTickDuration={result.restTickDuration}
             everydayTick={result.everydayRule.movingTickDuration}
             everydayLightSpeed={result.everydayRule.lightSpeedInLab}
+            everydayLightPath={result.everydayRule.lightPath}
+            everydaySidewaysDistancePerTick={result.sidewaysDistancePerTick.everydayRule}
+            mirrorSeparation={result.mirrorSeparation}
             actualTick={result.actualRule.movingTickDuration}
             actualTimeDilationFactor={result.actualRule.timeDilationFactor}
           />
