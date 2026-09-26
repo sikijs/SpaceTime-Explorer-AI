@@ -171,6 +171,42 @@ export function Experiment3Tutor({
             while the lab clock measured {observerElapsedTime.toFixed(3)} seconds. That is{' '}
             {timeDilationFactor.toFixed(3)} of the lab time.
           </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>About the formula.</strong> The rule is{' '}
+            <code>Δt_moving = Δt_lab × √(1 − v²)</code>. In plain words: take the lab time,
+            multiply it by a "shrinking factor," and you get the moving clock's time. Here,{' '}
+            <code>v</code> is the clock's speed written as a fraction of light speed — so a clock
+            at 60% of light speed is just <code>v = 0.6</code>. We write speed this way because
+            light speed is a universal limit, so every possible speed lands somewhere between 0
+            and 1.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            The shrinking factor, <code>√(1 − v²)</code>, works like a dial. At <code>v = 0</code>{' '}
+            (no motion at all), the factor is exactly 1 — nothing shrinks, and the moving clock
+            agrees with the lab clock, just like the two clocks you compared in Experiment 2. As{' '}
+            <code>v</code> climbs toward 1 (closer to light speed), <code>v²</code> climbs too, so{' '}
+            <code>1 − v²</code> shrinks toward 0 — and so does its square root. That means the
+            factor gets smaller and smaller the faster the clock moves, so the moving clock's
+            reading shrinks more and more compared to the lab's. It never quite reaches 0, because{' '}
+            <code>v</code> always stays below 1 — the clock never quite reaches light speed.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>Your numbers.</strong> At {velocity}c: first,{' '}
+            <code>
+              1 − v² = 1 − {(velocity * velocity).toFixed(2)} ={' '}
+              {(1 - velocity * velocity).toFixed(3)}
+            </code>
+            . Then take the square root:{' '}
+            <code>
+              √{(1 - velocity * velocity).toFixed(3)} = {timeDilationFactor.toFixed(3)}
+            </code>{' '}
+            — that's your shrinking factor. Multiply it by the lab time:{' '}
+            <code>
+              {observerElapsedTime.toFixed(3)} × {timeDilationFactor.toFixed(3)} ={' '}
+              {movingClockElapsedTime.toFixed(3)}
+            </code>{' '}
+            seconds — exactly what the moving clock read.
+          </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             This is a basic fact of relativity: the time that passes between two events depends on
             who is measuring (their reference frame) and how they are moving. Experiment 4, the next
