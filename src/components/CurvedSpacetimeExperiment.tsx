@@ -430,29 +430,7 @@ export function CurvedSpacetimeExperiment({ onComplete, onTutorComplete }: Curve
           )}
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '2rem',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            marginBottom: '2rem',
-          }}
-        >
-          <Scene label="Flat surface" result={previewResult} scene="flat" distanceMeters={shownDistance} />
-          <Scene label="Curved surface (sphere)" result={previewResult} scene="sphere" distanceMeters={shownDistance} />
-        </div>
-
-        {result && (
-          <div style={{ marginBottom: '2rem' }}>
-            <SeparationVsDistanceGraph
-              result={result}
-              revealUpToMeters={isComplete ? result.maxDistanceMeters : distanceMeters}
-            />
-          </div>
-        )}
-
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginBottom: '2rem' }}>
           <p style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Make a prediction</p>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
             Two travelers start the same fixed distance apart and both walk dead straight ahead. Do
@@ -476,6 +454,28 @@ export function CurvedSpacetimeExperiment({ onComplete, onTutorComplete }: Curve
             disabled={isRunning}
           />
         </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: '2rem',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            marginBottom: '2rem',
+          }}
+        >
+          <Scene label="Flat surface" result={previewResult} scene="flat" distanceMeters={shownDistance} />
+          <Scene label="Curved surface (sphere)" result={previewResult} scene="sphere" distanceMeters={shownDistance} />
+        </div>
+
+        {result && (
+          <div style={{ marginBottom: '2rem' }}>
+            <SeparationVsDistanceGraph
+              result={result}
+              revealUpToMeters={isComplete ? result.maxDistanceMeters : distanceMeters}
+            />
+          </div>
+        )}
 
         <button
           onClick={isComplete ? handleRunAgain : handleRun}
