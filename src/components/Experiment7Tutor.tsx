@@ -130,6 +130,16 @@ export function Experiment7Tutor({
             {result.labTimeGap.toFixed(3)} seconds, at {result.velocity}c.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>A familiar version of this.</strong> Imagine standing at the middle of a moving
+            train car and sending two friends running at the same speed, at the same moment — one
+            toward the back wall, one toward the front. Even though they run equally fast and start
+            together, the friend running toward the back reaches it sooner, because the back wall is
+            coming toward them as the train moves forward. The friend running toward the front takes
+            longer, because the front wall is running away from them. That's exactly what happens
+            with the flash and the rod's ends, seen from the lab: the back end comes to meet the
+            light, and the front end runs away from it.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>3. Not a delay.</strong> This is not because a signal took time to travel or
             arrive late. Both frames used their own working clocks and light moving at c in both
             directions. They simply disagree about which events happened at the same time.

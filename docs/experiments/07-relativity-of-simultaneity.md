@@ -267,6 +267,10 @@ All resolved by the project owner; the built implementation reflects the default
 6. **Evidence and scope — resolved.** Confirmed out of scope, consistent with Experiment 6; the implementation makes no claims about experimental evidence.
 7. **Speed range — resolved.** Confirmed to match Experiment 6: presets 0.1c/0.3c/0.5c/0.8c, custom range 0.01c–0.9c.
 
+### Implementation notes (tutor)
+
+- **Daily-life example (added 2026-09-26, at the owner's request, per `CLAUDE.md` §15).** A "A familiar version of this" paragraph was inserted into step 2 (the lab's view), after the sentence stating the lab-frame gap. It compares the back/front asymmetry to two friends running at equal speed from the middle of a moving train car toward its two ends — the one running toward the back arrives sooner because the back wall approaches them, the one running toward the front arrives later because the front wall recedes. This matches the mechanism already stated in step 2 (the back end moves toward the flash's release point, the front end moves away) and introduces no physics beyond this specification. The tutor already substituted real numbers throughout its explanation, so no further math addition was needed.
+
 ---
 
 ## Success Criteria
