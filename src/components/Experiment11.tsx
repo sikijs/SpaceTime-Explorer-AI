@@ -9,6 +9,7 @@ import {
 } from '../physics/spacetimeDiagramView'
 import type { WorldlinePoint } from '../physics/spacetimeDiagramView'
 import { lorentzTransform } from '../physics/lorentzTransform'
+import { timeDilationFactorFor } from '../physics/movingClockExperiment'
 import { Experiment11Tutor } from './Experiment11Tutor'
 
 type VelocityOption = 0 | 0.1 | 0.3 | 0.5 | 0.8 | 'other'
@@ -387,6 +388,10 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
 
         {submittedOutcome !== null && transformedBackEvent && transformedFrontEvent && (
           <Experiment11Tutor
+            velocity={result!.velocity}
+            timeDilationFactor={timeDilationFactorFor(result!.velocity)}
+            backEvent={diagram!.backEvent}
+            frontEvent={diagram!.frontEvent}
             transformedBackEvent={transformedBackEvent}
             transformedFrontEvent={transformedFrontEvent}
             predictionOutcome={submittedOutcome}

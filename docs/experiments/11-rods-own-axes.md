@@ -215,6 +215,10 @@ Resolved by the project owner during Stage 1/2 of this proposal (see `CLAUDE.md`
 4. **Keep Experiment 9's purple same-moment line — resolved.** It stays on screen alongside the two new axes, showing for free that it is parallel to the new rod-space-axis (same slope `v`, different position — both represent "the rod's now," at different moments).
 5. **The `movingClockExperiment.ts` refactor — resolved.** Extracting the `√(1 − v²)` formula into a small, additional exported helper (reused by both the existing `runMovingClockExperiment` and the new Lorentz transform) is approved. Experiment 3's own behavior, results, and tests remain unaffected.
 
+### Implementation notes (tutor)
+
+- **Simple math (added 2026-09-26, at the owner's request, per `CLAUDE.md` §15).** A "Working the numbers" paragraph was inserted into step 1, after the sentence stating this is a third, independent confirmation. It shows the Lorentz transformation's time formula in plain notation (`time' = (1 ÷ time dilation factor) × (time − v × position)`, reusing "time dilation factor" rather than naming γ, per Decision 2 above), then substitutes the learner's own run's numbers for both `backEvent` and `frontEvent`, showing both arrive at the same transformed time. No daily-life example was added, since there is no everyday analogue for converting an event's coordinates between frames with this specific formula. `velocity`, `timeDilationFactor` (via the existing `timeDilationFactorFor` helper), and the lab-frame `backEvent`/`frontEvent` were added to `Experiment11Tutor`'s props to support this.
+
 ---
 
 ## Success Criteria

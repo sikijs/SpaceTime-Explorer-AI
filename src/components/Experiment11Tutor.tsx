@@ -11,6 +11,10 @@ const timeChoiceLabels: Record<TimeChoice, string> = {
 }
 
 interface Experiment11TutorProps {
+  velocity: number
+  timeDilationFactor: number
+  backEvent: WorldlinePoint
+  frontEvent: WorldlinePoint
   transformedBackEvent: WorldlinePoint
   transformedFrontEvent: WorldlinePoint
   predictionOutcome: TimeChoice
@@ -18,6 +22,10 @@ interface Experiment11TutorProps {
 }
 
 export function Experiment11Tutor({
+  velocity,
+  timeDilationFactor,
+  backEvent,
+  frontEvent,
   transformedBackEvent,
   transformedFrontEvent,
   predictionOutcome,
@@ -117,6 +125,26 @@ export function Experiment11Tutor({
             This calculation isn't a new physical fact. It's a third, independent way of arriving
             at the same one, by actually doing the math instead of reasoning about it or drawing
             it.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>Working the numbers.</strong> The rule is:{' '}
+            <code>time' = (1 ÷ time dilation factor) × (time − v × position)</code>. At{' '}
+            {velocity}c, the time dilation factor is {timeDilationFactor.toFixed(3)}, so{' '}
+            <code>1 ÷</code> that is {(1 / timeDilationFactor).toFixed(3)}. For the back event —
+            lab time {backEvent.time.toFixed(3)} s, lab position {backEvent.position.toFixed(3)}{' '}
+            ls:{' '}
+            <code>
+              {(1 / timeDilationFactor).toFixed(3)} × ({backEvent.time.toFixed(3)} − {velocity} ×{' '}
+              {backEvent.position.toFixed(3)}) = {transformedBackEvent.time.toFixed(3)}
+            </code>{' '}
+            s. For the front event — lab time {frontEvent.time.toFixed(3)} s, lab position{' '}
+            {frontEvent.position.toFixed(3)} ls:{' '}
+            <code>
+              {(1 / timeDilationFactor).toFixed(3)} × ({frontEvent.time.toFixed(3)} − {velocity} ×{' '}
+              {frontEvent.position.toFixed(3)}) = {transformedFrontEvent.time.toFixed(3)}
+            </code>{' '}
+            s. Same number, from two different starting points — exactly the confirmation
+            Experiment 7 already promised.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>2. The two new tilted lines are the rod's own "straight up" and "straight
