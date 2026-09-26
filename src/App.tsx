@@ -15,6 +15,7 @@ import { Experiment11 } from './components/Experiment11'
 import { EquivalencePrincipleExperiment } from './components/EquivalencePrincipleExperiment'
 import { GravitationalTimeDilationExperiment } from './components/GravitationalTimeDilationExperiment'
 import { TidalEffectExperiment } from './components/TidalEffectExperiment'
+import { CurvedSpacetimeExperiment } from './components/CurvedSpacetimeExperiment'
 
 interface Chapter {
   title: string
@@ -142,7 +143,17 @@ const chapters: Chapter[] = [
     Component: TidalEffectExperiment,
     learned:
       "Two balls dropped side by side in a cabin resting on a planet drift slightly toward each other, because gravity pulls each one toward the planet's center, and that's a slightly different direction from two different spots. The same two balls dropped in an accelerating rocket stay exactly the same distance apart, because the rocket pushes every part of the cabin the same way. So a big enough cabin, or two balls far enough apart, actually can tell gravity and acceleration apart — the equivalence principle from Experiment 1 only holds exactly for a small enough cabin. This convergence is called a tidal effect, and it means something more than plain acceleration is going on with real gravity.",
-    next: "This is the third experiment in this chapter. More will follow as they're designed and approved.",
+    next: 'Next, we ask what that tidal effect actually means: why paths that start out parallel can still drift together.',
+  },
+  {
+    title: 'Curved Spacetime',
+    group: 'Gravity and Curved Spacetime',
+    Component: CurvedSpacetimeExperiment,
+    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1); to be written
+    // alongside this experiment's tutor step.
+    learned:
+      "Two travelers walking dead straight, starting the same fixed distance apart, stay exactly the same distance apart on a flat surface, but drift together on a curved surface (a sphere) — purely from the surface's shape, with nothing pushing them sideways. Experiment 3's converging balls are the same kind of thing: their free-falling paths are as straight as gravity allows, and they converge because spacetime itself is curved near a planet, not flat. This is what curved spacetime means.",
+    next: "This is the fourth experiment in this chapter. More will follow as they're designed and approved.",
   },
 ]
 
