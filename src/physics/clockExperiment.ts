@@ -1,5 +1,5 @@
 // Physics model for Experiment 1 — "What Does a Clock Measure?"
-// See docs/experiments/01-clock.md for the authoritative specification.
+// See docs/experiments/relativity-of-time-and-motion/01-clock.md for the authoritative specification.
 //
 // One simulation time unit corresponds to one second of clock time (spec §4).
 // Clock readings and durations are expressed in seconds; formatting to
