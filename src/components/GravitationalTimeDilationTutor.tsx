@@ -115,6 +115,58 @@ export function GravitationalTimeDilationTutor({
             your chosen strength of {result.strength}.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>Why does the acceleration cause this stretching?</strong> The key fact: light's
+            speed doesn't depend on how fast the thing that sent it was moving — light always
+            travels at the same speed, no matter what the floor was doing. That one fact is what
+            makes acceleration matter. Follow the logic:
+          </p>
+          <ol
+            style={{
+              marginBottom: '1rem',
+              paddingLeft: '1.5rem',
+              fontSize: '0.95rem',
+              color: '#333',
+              lineHeight: '1.6',
+            }}
+          >
+            <li style={{ marginBottom: '0.5rem' }}>
+              Picture the exact instant the floor sends a light pulse upward. Right at that
+              instant, let's say the whole cabin (floor and ceiling together) happens to be at
+              some speed — call it "resting," just for this one moment.
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              The pulse needs a little time to cross the gap <code>h</code> up to the ceiling:
+              roughly <code>t = h / c</code>.
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              But the rocket doesn't wait for the light — it keeps accelerating the entire time
+              the pulse is in flight. So by the time the pulse arrives, the cabin has sped up by{' '}
+              <code>v = a × t = a × (h / c)</code>.
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              That means the light was released when the cabin was at one speed, and it's being
+              received by a cabin now moving faster, in the same direction the light is traveling
+              — i.e., moving away from where it was launched. A receiver moving away from an
+              emission point stretches out an incoming wave: an ordinary Doppler redshift, with
+              fractional shift <code>v / c</code>.
+            </li>
+            <li>
+              Substitute step 3's <code>v</code>: fractional redshift ={' '}
+              <code>v / c = a × h / c²</code>. That's exactly the "strength" in this experiment's
+              formula.
+            </li>
+          </ol>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>A daily-life picture.</strong> Imagine floating in calm air next to a drone
+            that starts out sitting still, then flies upward, speeding up the whole time. You honk
+            a horn once every second, aimed at the drone. Sound travels through the air at a fixed
+            speed no matter how the drone moves, so each honk has to catch up to it — and since the
+            drone keeps getting faster, each honk takes a little longer to catch up than the one
+            before it. So the honks arrive at the drone spaced out more than one second apart: the
+            drone hears your steady horn drop in pitch, even though you never moved. That's the
+            same mismatch that stretches out the rocket's light ticks.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>A worked example.</strong> Picture a rocket accelerating at 1g, with the two
             clocks 10 meters apart. Say the floor sends a light tick, then another exactly 1
             second later. When the first tick was sent, the cabin's speed was, say, zero; a second
