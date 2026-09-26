@@ -206,6 +206,10 @@ Resolved by the project owner during Stage 1/2 of this proposal (see `CLAUDE.md`
 5. **Preset speed range — resolved.** 0.1c, 0.3c, 0.5c, 0.8c, Other (0.01c–0.9c), matching Experiments 6–9's range, minus the "0c (at rest)" option (see Learner Controls).
 6. **Title — resolved (final).** "The Twin Paradox" — not a working title, since it's the term's actual, standard name in physics.
 
+### Implementation notes (tutor)
+
+- **Daily-life example (added 2026-09-26, at the owner's request, per `CLAUDE.md` §15).** A "A familiar version of this" paragraph was inserted into step 2, after the sentence stating the traveling twin changes direction and the Earth twin doesn't. It compares the asymmetry to two friends starting at the same corner — one stays put, the other walks to a store and back — illustrating only the "who turned around" fact, not any physics of aging, Doppler shift, or acceleration. This stays within the spec's exclusion list. The tutor already substituted real numbers throughout step 1, so no further math addition was needed, consistent with the spec's note that "no mathematics beyond what Experiment 3 already introduced" belongs here.
+
 ---
 
 ## Success Criteria

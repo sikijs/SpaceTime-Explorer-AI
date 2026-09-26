@@ -121,6 +121,18 @@ export function Experiment10Tutor({ result, predictionOutcome, onExplained }: Ex
             watching from.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>A familiar version of this.</strong> Picture two friends starting at the same
+            corner. One just stands there the whole time. The other walks to the store down the
+            street and walks back. Both of them could say "I was moving at some point" — but only
+            one of them can honestly say "I never changed which way I was facing." The friend who
+            went to the store and back isn't in the same kind of situation as the one who stayed
+            put, even setting aside who was "really" moving at any given moment. Turning around is
+            something that happened to one friend and not the other — a fact both of them would
+            agree on, no matter who you ask. The traveling twin is in exactly that position:
+            turning around is something that happened to them, not to the Earth twin, and everyone
+            agrees on that.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>3. That difference is what resolves the paradox.</strong> The argument "each
             twin can say the other one is moving, so each should think the other's clock runs
             slow" only works while both twins keep moving at a constant velocity the whole time.
