@@ -289,30 +289,6 @@ export function GravitationalTimeDilationExperiment({
           </p>
         </div>
 
-        <div className="exp-card" style={{ padding: '1rem', marginBottom: '2rem', maxWidth: '260px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Ceiling clock</p>
-            <p style={{ fontSize: '0.8rem', margin: 0 }}>
-              Ticks: <strong>{ceilingTicks.toFixed(2)}</strong>
-            </p>
-          </div>
-          <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px dashed var(--border)' }}>
-            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Floor clock</p>
-            <p style={{ fontSize: '0.8rem', margin: 0 }}>
-              Ticks: <strong>{floorTicks.toFixed(2)}</strong>
-            </p>
-          </div>
-        </div>
-
-        {result && (
-          <div style={{ marginBottom: '2rem' }}>
-            <TickCountVsTimeGraph
-              result={result}
-              revealUpToFloorSeconds={isComplete ? RUN_DURATION_FLOOR_SECONDS : elapsedFloorSeconds}
-            />
-          </div>
-        )}
-
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
             Make a prediction
@@ -348,6 +324,30 @@ export function GravitationalTimeDilationExperiment({
                 : 'Choose an option to continue'}
           </p>
         </div>
+
+        <div className="exp-card" style={{ padding: '1rem', marginBottom: '2rem', maxWidth: '260px', marginLeft: 'auto', marginRight: 'auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Ceiling clock</p>
+            <p style={{ fontSize: '0.8rem', margin: 0 }}>
+              Ticks: <strong>{ceilingTicks.toFixed(2)}</strong>
+            </p>
+          </div>
+          <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px dashed var(--border)' }}>
+            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Floor clock</p>
+            <p style={{ fontSize: '0.8rem', margin: 0 }}>
+              Ticks: <strong>{floorTicks.toFixed(2)}</strong>
+            </p>
+          </div>
+        </div>
+
+        {result && (
+          <div style={{ marginBottom: '2rem' }}>
+            <TickCountVsTimeGraph
+              result={result}
+              revealUpToFloorSeconds={isComplete ? RUN_DURATION_FLOOR_SECONDS : elapsedFloorSeconds}
+            />
+          </div>
+        )}
 
         <button
           onClick={isComplete ? handleRunAgain : handleRun}

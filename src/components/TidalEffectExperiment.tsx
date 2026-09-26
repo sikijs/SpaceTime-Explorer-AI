@@ -443,6 +443,31 @@ export function TidalEffectExperiment({ onComplete, onTutorComplete }: TidalEffe
           )}
         </div>
 
+        <div style={{ marginBottom: '2rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Make a prediction</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+            Two balls are dropped side by side in each cabin, the same distance apart. As they fall,
+            do you think the two balls will drift closer together, drift farther apart, or stay
+            exactly the same distance apart?
+          </p>
+          <PredictionQuestion
+            label="Planet cabin"
+            prompt="What will the two balls do in the cabin resting on the planet?"
+            selected={planetPrediction}
+            submitted={submittedPlanetPrediction}
+            onSelect={setPlanetPrediction}
+            disabled={isRunning}
+          />
+          <PredictionQuestion
+            label="Rocket cabin"
+            prompt="What will the two balls do in the cabin accelerating through deep space?"
+            selected={rocketPrediction}
+            submitted={submittedRocketPrediction}
+            onSelect={setRocketPrediction}
+            disabled={isRunning}
+          />
+        </div>
+
         <div
           style={{
             display: 'flex',
@@ -474,31 +499,6 @@ export function TidalEffectExperiment({ onComplete, onTutorComplete }: TidalEffe
             />
           </div>
         )}
-
-        <div style={{ marginBottom: '1rem' }}>
-          <p style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Make a prediction</p>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-            Two balls are dropped side by side in each cabin, the same distance apart. As they fall,
-            do you think the two balls will drift closer together, drift farther apart, or stay
-            exactly the same distance apart?
-          </p>
-          <PredictionQuestion
-            label="Planet cabin"
-            prompt="What will the two balls do in the cabin resting on the planet?"
-            selected={planetPrediction}
-            submitted={submittedPlanetPrediction}
-            onSelect={setPlanetPrediction}
-            disabled={isRunning}
-          />
-          <PredictionQuestion
-            label="Rocket cabin"
-            prompt="What will the two balls do in the cabin accelerating through deep space?"
-            selected={rocketPrediction}
-            submitted={submittedRocketPrediction}
-            onSelect={setRocketPrediction}
-            disabled={isRunning}
-          />
-        </div>
 
         <button
           onClick={isComplete ? handleRunAgain : handleRun}

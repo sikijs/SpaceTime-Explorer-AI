@@ -335,28 +335,6 @@ export function EquivalencePrincipleExperiment({ onComplete, onTutorComplete }: 
           </p>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '2rem',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            marginBottom: '2rem',
-          }}
-        >
-          <Cabin label="Cabin A" height={height} />
-          <Cabin label="Cabin B" height={height} />
-        </div>
-
-        {result && (
-          <div style={{ marginBottom: '2rem' }}>
-            <HeightVsTimeGraph
-              result={result}
-              revealUpToSeconds={isComplete ? result.timeToFloorSeconds : elapsedSeconds}
-            />
-          </div>
-        )}
-
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
             Make a prediction
@@ -392,6 +370,28 @@ export function EquivalencePrincipleExperiment({ onComplete, onTutorComplete }: 
                 : 'Choose an option to continue'}
           </p>
         </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: '2rem',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            marginBottom: '2rem',
+          }}
+        >
+          <Cabin label="Cabin A" height={height} />
+          <Cabin label="Cabin B" height={height} />
+        </div>
+
+        {result && (
+          <div style={{ marginBottom: '2rem' }}>
+            <HeightVsTimeGraph
+              result={result}
+              revealUpToSeconds={isComplete ? result.timeToFloorSeconds : elapsedSeconds}
+            />
+          </div>
+        )}
 
         <button
           onClick={isComplete ? handleRunAgain : handleRun}
