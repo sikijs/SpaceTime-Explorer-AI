@@ -14,6 +14,7 @@ import { Experiment10 } from './components/Experiment10'
 import { Experiment11 } from './components/Experiment11'
 import { EquivalencePrincipleExperiment } from './components/EquivalencePrincipleExperiment'
 import { GravitationalTimeDilationExperiment } from './components/GravitationalTimeDilationExperiment'
+import { TidalEffectExperiment } from './components/TidalEffectExperiment'
 
 interface Chapter {
   title: string
@@ -133,7 +134,15 @@ const chapters: Chapter[] = [
     Component: GravitationalTimeDilationExperiment,
     learned:
       "In an accelerating rocket, a clock at the ceiling ticks faster than a clock at the floor, because a light signal sent upward arrives redshifted — stretched to a lower frequency — since the cabin keeps speeding up while the signal is in transit. Because gravity and acceleration are locally indistinguishable, the same thing must happen in a real gravitational field: a clock closer to the ground runs slower than a clock higher up. This is gravitational time dilation, and it's real — GPS satellites have to correct for it.",
-    next: "This is the second experiment in this chapter. More will follow as they're designed and approved.",
+    next: 'Next, we test the limits of the equivalence principle itself: does it hold no matter how big the cabin is?',
+  },
+  {
+    title: "Why Gravity Isn't Just Acceleration",
+    group: 'Gravity and Curved Spacetime',
+    Component: TidalEffectExperiment,
+    learned:
+      "Two balls dropped side by side in a cabin resting on a planet drift slightly toward each other, because gravity pulls each one toward the planet's center, and that's a slightly different direction from two different spots. The same two balls dropped in an accelerating rocket stay exactly the same distance apart, because the rocket pushes every part of the cabin the same way. So a big enough cabin, or two balls far enough apart, actually can tell gravity and acceleration apart — the equivalence principle from Experiment 1 only holds exactly for a small enough cabin. This convergence is called a tidal effect, and it means something more than plain acceleration is going on with real gravity.",
+    next: "This is the third experiment in this chapter. More will follow as they're designed and approved.",
   },
 ]
 
