@@ -130,6 +130,14 @@ export function Experiment6Tutor({
             {sameLength.returnLegDuration.toFixed(3)} seconds. Light went at c the whole time.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>A familiar version of this.</strong> It's like chasing a bus that has just
+            pulled away from the curb versus meeting a friend walking toward you from the other end
+            of the platform: catching up to something moving away from you takes longer, because
+            the gap keeps growing while you're closing it. Meeting something moving toward you is
+            quicker, because the gap closes from both sides at once. The light pulse's forward trip
+            is the "chasing" case; its trip back is the "meeting" case.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>2. A tick that is too long.</strong> With the mirrors as far apart as at rest,
             {' '}{restLength} light-seconds, the two trips add up to{' '}
             {sameLength.tickDuration.toFixed(3)} seconds. But time dilation says that one tick of the
