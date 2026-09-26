@@ -9,6 +9,9 @@ interface Experiment4TutorProps {
   restTickDuration: number
   movingTickDuration: number
   timeDilationFactor: number
+  mirrorSeparation: number
+  sidewaysDistancePerTick: number
+  movingLightPath: number
 }
 
 export function Experiment4Tutor({
@@ -17,6 +20,9 @@ export function Experiment4Tutor({
   restTickDuration,
   movingTickDuration,
   timeDilationFactor,
+  mirrorSeparation,
+  sidewaysDistancePerTick,
+  movingLightPath,
   onExplained,
 }: Experiment4TutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
@@ -106,6 +112,16 @@ export function Experiment4Tutor({
             parts of the same moving clock. So, seen from the lab, they always move together, side
             by side, at the same speed. None of them moves before or after the others.
           </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>A familiar version of this.</strong> Toss a ball straight up and catch it while
+            riding in a train moving at a steady speed. To you, sitting on the train, the ball goes
+            straight up and comes straight back down into your hand. But someone standing on the
+            platform, watching the train go by, sees something different: because the train carries
+            the ball forward the whole time it's in the air, the ball traces out a diagonal path —
+            forward and up, then forward and down. Same ball, same toss — just two different,
+            equally correct views, because the two of you are moving relative to each other. The
+            light clock works exactly the same way, just with a light pulse instead of a ball.
+          </p>
           <p style={{ marginBottom: '0.5rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>In the lab's reference frame,</strong> which is the view you just watched, the
             whole moving clock slides sideways. Follow one tick:
@@ -149,6 +165,18 @@ export function Experiment4Tutor({
             clock's own view, the path is straight up and down. In the lab's view, it is a slanted
             "V". The lab's slanted path is the long side of a right triangle, so it is longer than
             the straight path of the clock standing still.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>Working out the diagonal, with real numbers.</strong> At {velocity}c, here's the
+            actual trip: going up, the pulse rises {mirrorSeparation} light-seconds (straight up, in
+            the clock's own view) while the clock carries it {(sidewaysDistancePerTick / 2).toFixed(3)}{' '}
+            light-seconds sideways (in the lab's view). Combining those two distances — the same way
+            you'd measure the diagonal of a rectangle — gives a diagonal length of{' '}
+            {(movingLightPath / 2).toFixed(3)} light-seconds for the trip up alone. Double that for
+            the full round trip: {movingLightPath.toFixed(3)} light-seconds — and since light covers
+            exactly 1 light-second every second, that's why the tick takes{' '}
+            {movingTickDuration.toFixed(3)} seconds instead of the rest clock's{' '}
+            {restTickDuration.toFixed(3)}.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             This experiment rests on one assumption: in the lab, light travels at the same speed, c,

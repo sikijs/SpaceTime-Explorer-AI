@@ -540,6 +540,9 @@ export function Experiment4({ onComplete, onTutorComplete }: Experiment4Props) {
             restTickDuration={result.restTickDuration}
             movingTickDuration={result.movingTickDuration}
             timeDilationFactor={result.timeDilationFactor}
+            mirrorSeparation={result.mirrorSeparation}
+            sidewaysDistancePerTick={result.sidewaysDistancePerTick}
+            movingLightPath={result.movingLightPath}
           />
         )}
       </div>
