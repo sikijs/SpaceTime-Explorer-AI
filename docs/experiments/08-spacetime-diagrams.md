@@ -206,6 +206,10 @@ All resolved by the project owner; the implementation should follow the defaults
 5. **Title — resolved.** Kept as the working title, "Drawing Spacetime."
 6. **Prediction form — resolved.** A single three-way choice (back end / front end / same time), dropping Experiment 7's second prediction part (frame agreement), since the rod's own frame isn't shown here.
 
+### Implementation notes (tutor)
+
+- **Daily-life example (added 2026-09-26, at the owner's request, per `CLAUDE.md` §15).** A "A familiar version of this" paragraph was inserted before step 1, comparing the spacetime diagram to an ordinary distance-vs-time graph (e.g., two cars leaving the same spot at different speeds, where a steeper line means faster and where two lines cross tells you when and where they meet). It names the general graph-reading skill the learner is already using — steeper line, meeting point — before applying it to the rod-and-flash case, without touching relativity itself.
+
 ---
 
 ## Success Criteria

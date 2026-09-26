@@ -100,6 +100,15 @@ export function Experiment8Tutor({ result, predictionOrder, onExplained }: Exper
             Let's go through it one step at a time.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>A familiar version of this.</strong> If you've ever seen a graph of distance
+            over time — say, two cars leaving the same spot at different speeds — this works the
+            same way. A steeper line means faster. Draw both cars' journeys on one graph, and the
+            point where two lines cross tells you exactly when and where they meet. A spacetime
+            diagram is the same idea: instead of a car's distance from home, it's an object's
+            position in space, and instead of two cars, it's the rod's two ends and the flash of
+            light, all on one picture, so you can see exactly where and when they meet.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>1. Leaning toward the flash.</strong> The back end's worldline leans toward the
             spot where the flash was released, while the front end's worldline leans away from it.
             Picture the light's dashed line spreading outward from the release point: the back
