@@ -18,6 +18,7 @@ import { TidalEffectExperiment } from './components/TidalEffectExperiment'
 import { CurvedSpacetimeExperiment } from './components/CurvedSpacetimeExperiment'
 import { SpacetimeCurvatureSourceExperiment } from './components/SpacetimeCurvatureSourceExperiment'
 import { OrbitExperiment } from './components/OrbitExperiment'
+import { BlackHoleExperiment } from './components/BlackHoleExperiment'
 
 interface Chapter {
   title: string
@@ -173,7 +174,16 @@ const chapters: Chapter[] = [
     // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
       'An orbit is not a special force holding something up — it is just falling under gravity, curved by sideways motion. The same mass and the same starting distance can make an object fall in, fly away, or orbit forever, depending only on how fast it is moving sideways to start. This is the same geodesic idea as Experiment 4, now curving around a mass instead of converging with another path.',
-    next: "This is the sixth experiment in this chapter. More will follow as they're designed and approved.",
+    next: 'Next, we ask what happens if a mass is so concentrated that not even light could escape it.',
+  },
+  {
+    title: 'What Is a Black Hole?',
+    group: 'Gravity and Curved Spacetime',
+    Component: BlackHoleExperiment,
+    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
+    learned:
+      "A black hole isn't a mysterious, different kind of object — it's what a mass becomes once it's concentrated enough that its escape speed would need to exceed the speed of light. Since nothing can go faster than light, nothing can escape from inside that boundary, the event horizon. It's the exact same escape-speed idea from Experiment 6, pushed to its physical limit. Real black holes are real, too — astronomers have directly imaged the region around two of them, using the Event Horizon Telescope.",
+    next: "This is the seventh experiment in this chapter. More will follow as they're designed and approved.",
   },
 ]
 
