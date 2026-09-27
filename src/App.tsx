@@ -17,6 +17,7 @@ import { GravitationalTimeDilationExperiment } from './components/GravitationalT
 import { TidalEffectExperiment } from './components/TidalEffectExperiment'
 import { CurvedSpacetimeExperiment } from './components/CurvedSpacetimeExperiment'
 import { SpacetimeCurvatureSourceExperiment } from './components/SpacetimeCurvatureSourceExperiment'
+import { OrbitExperiment } from './components/OrbitExperiment'
 
 interface Chapter {
   title: string
@@ -163,7 +164,16 @@ const chapters: Chapter[] = [
     // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
       "Experiments 2 and 3's abstracted 'strength' sliders were standing in for a real mass at a real distance all along — both effects grow stronger closer to a mass and for a bigger mass, though at different rates.",
-    next: "This is the fifth experiment in this chapter. More will follow as they're designed and approved.",
+    next: 'Next, we ask why planets orbit instead of falling straight into the Sun or flying off into space.',
+  },
+  {
+    title: 'Why Do Planets Orbit Instead of Falling In?',
+    group: 'Gravity and Curved Spacetime',
+    Component: OrbitExperiment,
+    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
+    learned:
+      'An orbit is not a special force holding something up — it is just falling under gravity, curved by sideways motion. The same mass and the same starting distance can make an object fall in, fly away, or orbit forever, depending only on how fast it is moving sideways to start. This is the same geodesic idea as Experiment 4, now curving around a mass instead of converging with another path.',
+    next: "This is the sixth experiment in this chapter. More will follow as they're designed and approved.",
   },
 ]
 
