@@ -12,8 +12,10 @@ type StrengthPreset = 0.1 | 0.3 | 0.6 | 'other'
 type ExperimentStatus = 'idle' | 'running' | 'complete'
 export type PredictionChoice = 'converge' | 'same' | 'apart'
 
-const INITIAL_HEIGHT_METERS = 2
-const INITIAL_SEPARATION_METERS = 1
+// Exported so Experiment 5 can reuse the same fixed initial conditions, per the
+// specification's "leave Experiments 2 and 3 completely unchanged" decision.
+export const INITIAL_HEIGHT_METERS = 2
+export const INITIAL_SEPARATION_METERS = 1
 const CABIN_HEIGHT_PX = 220
 const CABIN_WIDTH_PX = 160
 const BALL_SIZE_PX = 16
@@ -91,7 +93,9 @@ function PredictionQuestion({
   )
 }
 
-function Cabin({
+// Exported so Experiment 5 (What Curves Spacetime?) can reuse this rendering unchanged,
+// fed a convergenceStrength derived from mass and distance instead of a learner-picked one.
+export function Cabin({
   label,
   result,
   scene,

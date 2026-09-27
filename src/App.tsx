@@ -16,6 +16,7 @@ import { EquivalencePrincipleExperiment } from './components/EquivalencePrincipl
 import { GravitationalTimeDilationExperiment } from './components/GravitationalTimeDilationExperiment'
 import { TidalEffectExperiment } from './components/TidalEffectExperiment'
 import { CurvedSpacetimeExperiment } from './components/CurvedSpacetimeExperiment'
+import { SpacetimeCurvatureSourceExperiment } from './components/SpacetimeCurvatureSourceExperiment'
 
 interface Chapter {
   title: string
@@ -153,7 +154,16 @@ const chapters: Chapter[] = [
     // alongside this experiment's tutor step.
     learned:
       "Two travelers walking dead straight, starting the same fixed distance apart, stay exactly the same distance apart on a flat surface, but drift together on a curved surface (a sphere) — purely from the surface's shape, with nothing pushing them sideways. Experiment 3's converging balls are the same kind of thing: their free-falling paths are as straight as gravity allows, and they converge because spacetime itself is curved near a planet, not flat. This is what curved spacetime means.",
-    next: "This is the fourth experiment in this chapter. More will follow as they're designed and approved.",
+    next: 'Next, we ask where that curvature actually comes from: a nearby mass, and how far away it is.',
+  },
+  {
+    title: 'What Curves Spacetime?',
+    group: 'Gravity and Curved Spacetime',
+    Component: SpacetimeCurvatureSourceExperiment,
+    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
+    learned:
+      "Experiments 2 and 3's abstracted 'strength' sliders were standing in for a real mass at a real distance all along — both effects grow stronger closer to a mass and for a bigger mass, though at different rates.",
+    next: "This is the fifth experiment in this chapter. More will follow as they're designed and approved.",
   },
 ]
 

@@ -18,7 +18,8 @@ interface GravitationalTimeDilationExperimentProps {
 // How much floor-clock time the run covers. The specification's physics model has no natural
 // stopping point (unlike Experiment 1's ball reaching the floor), so this is a UI choice, not a
 // physics one: 10 floor-seconds keeps tick counts readable across the whole strength range.
-const RUN_DURATION_FLOOR_SECONDS = 10
+// Exported so Experiment 5 can reuse the same fixed run duration for its own final results.
+export const RUN_DURATION_FLOOR_SECONDS = 10
 const ANIMATION_DURATION_MS = 3000
 
 export const predictionChoices: Array<{ value: PredictionChoice; label: string }> = [
@@ -35,6 +36,27 @@ export function actualOutcome(): PredictionChoice {
 
 export function labelFor(choice: PredictionChoice): string {
   return predictionChoices.find((c) => c.value === choice)!.label.toLowerCase()
+}
+
+// Exported so Experiment 5 (What Curves Spacetime?) can reuse this rendering unchanged,
+// fed a strength derived from mass and distance instead of a learner-picked one.
+export function RocketCabinClocks({ ceilingTicks, floorTicks }: { ceilingTicks: number; floorTicks: number }) {
+  return (
+    <div className="exp-card" style={{ padding: '1rem', maxWidth: '260px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Ceiling clock</p>
+        <p style={{ fontSize: '0.8rem', margin: 0 }}>
+          Ticks: <strong>{ceilingTicks.toFixed(2)}</strong>
+        </p>
+      </div>
+      <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px dashed var(--border)' }}>
+        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Floor clock</p>
+        <p style={{ fontSize: '0.8rem', margin: 0 }}>
+          Ticks: <strong>{floorTicks.toFixed(2)}</strong>
+        </p>
+      </div>
+    </div>
+  )
 }
 
 const GRAPH_WIDTH = 340
@@ -325,19 +347,8 @@ export function GravitationalTimeDilationExperiment({
           </p>
         </div>
 
-        <div className="exp-card" style={{ padding: '1rem', marginBottom: '2rem', maxWidth: '260px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Ceiling clock</p>
-            <p style={{ fontSize: '0.8rem', margin: 0 }}>
-              Ticks: <strong>{ceilingTicks.toFixed(2)}</strong>
-            </p>
-          </div>
-          <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px dashed var(--border)' }}>
-            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Floor clock</p>
-            <p style={{ fontSize: '0.8rem', margin: 0 }}>
-              Ticks: <strong>{floorTicks.toFixed(2)}</strong>
-            </p>
-          </div>
+        <div style={{ marginBottom: '2rem' }}>
+          <RocketCabinClocks ceilingTicks={ceilingTicks} floorTicks={floorTicks} />
         </div>
 
         {result && (
