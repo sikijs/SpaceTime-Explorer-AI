@@ -65,7 +65,7 @@ export function OrbitTutor({
             {tutorStep === 'observe' &&
               `What happened to the path this time — did it fall in, fly away, or come back around? (It ${outcomeText(result.outcome)}.)`}
             {tutorStep === 'compare' &&
-              `You predicted a very slow speed ${outcomeText(slowPrediction)}, and a very fast speed ${outcomeText(fastPrediction)}. In fact, a speed well below circular speed always falls in, and a speed well above escape speed always flies away and never returns. You also predicted ${inBetweenPrediction === 'yes' ? 'that there is' : 'that there is not'} a speed in between where something different happens — in fact, yes: at or near the circular-orbit speed, the object neither falls in nor escapes, it orbits. Comparing what you expected to what's actually true, what do you notice?`}
+              `You predicted a very weak push ${outcomeText(slowPrediction)}, and a very strong push ${outcomeText(fastPrediction)}. In fact, a push well below circular speed always falls in, and a push well above escape speed always flies away and never returns. You also predicted ${inBetweenPrediction === 'yes' ? 'that there is' : 'that there is not'} a push strength in between where something different happens — in fact, yes: at or near the circular-orbit speed, the object neither falls in nor escapes, it orbits. Comparing what you expected to what's actually true, what do you notice?`}
             {tutorStep === 'conceptual' &&
               'The mass and the starting distance were the same the whole time. What was the only thing that changed between falling in, escaping, and orbiting?'}
           </p>
@@ -111,19 +111,19 @@ export function OrbitTutor({
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>1. The object is always just falling under gravity</strong>, exactly like
-            Experiment 1's dropped ball. Nothing here is holding it up or pushing it sideways —
-            gravity is the only force acting on it.
+            Experiment 1's dropped ball. The only push it ever got was the one you gave it at the
+            very start — after that, gravity is the only force acting on it.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. The only difference between falling in, escaping, and orbiting is how much
-            sideways motion it started with.</strong> The mass and the starting distance never
-            changed — only the sideways speed did.
+            <strong>2. The only difference between falling in, escaping, and orbiting is how
+            strong that starting push was.</strong> The mass and the starting distance never
+            changed — only the push's strength did.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. Too little sideways motion, and it falls in before it can "miss" the
-            mass.</strong> Too much, and it flies past and never comes back. Just the right
-            amount, and it keeps "missing" the mass forever — which is what an orbit is. Think of
-            throwing a ball harder and harder, sideways, off a cliff: a gentle throw lands close
+            <strong>3. Too weak a push, and it falls in before it can "miss" the
+            mass.</strong> Too strong, and it flies past and never comes back. Just the right
+            strength, and it keeps "missing" the mass forever — which is what an orbit is. Think of
+            throwing a ball harder and harder off the edge of a cliff: a gentle throw lands close
             by, a hard throw lands far away — and if you could throw it hard enough, it would
             keep falling toward the ground while the ground itself curves away beneath it just as
             fast, so it never actually lands. That's an orbit.

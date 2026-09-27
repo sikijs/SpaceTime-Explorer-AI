@@ -293,9 +293,10 @@ export function BlackHoleExperiment({ onComplete, onTutorComplete }: BlackHoleEx
 
         <button
           type="button"
+          className="action-button"
           onClick={handleLaunch}
           disabled={!hasAllPredictions || isRunning}
-          style={{ marginTop: '1rem', cursor: hasAllPredictions && !isRunning ? 'pointer' : 'not-allowed' }}
+          style={{ marginTop: '1rem', padding: '0.6rem 1.5rem' }}
         >
           Launch
         </button>

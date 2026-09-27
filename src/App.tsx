@@ -173,7 +173,7 @@ const chapters: Chapter[] = [
     Component: OrbitExperiment,
     // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
-      'An orbit is not a special force holding something up — it is just falling under gravity, curved by sideways motion. The same mass and the same starting distance can make an object fall in, fly away, or orbit forever, depending only on how fast it is moving sideways to start. This is the same geodesic idea as Experiment 4, now curving around a mass instead of converging with another path.',
+      'An orbit is not a special force holding something up — it is just falling under gravity, curved by the one push the object got at the start. The same mass and the same starting distance can make an object fall in, fly away, or orbit forever, depending only on how strong that starting push was. This is the same geodesic idea as Experiment 4, now curving around a mass instead of converging with another path.',
     next: 'Next, we ask what happens if a mass is so concentrated that not even light could escape it.',
   },
   {

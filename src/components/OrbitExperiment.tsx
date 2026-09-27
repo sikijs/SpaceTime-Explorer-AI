@@ -9,7 +9,8 @@ interface OrbitExperimentProps {
 }
 
 // Mass and starting distance are held fixed (per the specification's confirmed decisions);
-// the learner varies only sideways speed, expressed as a fraction of the circular-orbit speed.
+// the learner varies only the push's strength, expressed as a fraction of the circular-orbit
+// speed. The push's direction never changes (see runOrbitExperiment).
 const GRAVITATIONAL_PARAMETER = 1
 const INITIAL_DISTANCE = 1
 const WORLD_HALF_EXTENT = 4 * INITIAL_DISTANCE
@@ -198,7 +199,9 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
     return `${cx},${cy}`
   })
   const currentPoint = visiblePoints[visiblePoints.length - 1]
-  const currentPosition = currentPoint ? pointToView(currentPoint.x, currentPoint.y) : null
+  const currentPosition = currentPoint
+    ? pointToView(currentPoint.x, currentPoint.y)
+    : pointToView(INITIAL_DISTANCE, 0)
 
   const massPoint = pointToView(0, 0)
 
@@ -213,11 +216,15 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
             straight into it, or flying off into space?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> You'll launch a small object near a fixed mass, moving
-            sideways at a speed you choose, and watch what its path looks like.
+            <strong>What happens.</strong> You'll watch this from directly above, like looking
+            down at two marbles on a table. A small object starts to the right of a fixed mass,
+            and you'll give it a single push — straight up on the screen — at the very start.
+            After that, gravity is the only thing acting on it, constantly pulling it back toward
+            the mass on the left. You choose how strong that starting push is, then watch what
+            path the object follows.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Try slow and fast sideways speeds, and see what happens to
+            <strong>Your job.</strong> Try a weak push and a strong push, and see what happens to
             the path.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
@@ -231,6 +238,10 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
             </li>
             <li>The central mass doesn't move; only the small object does.</li>
             <li>
+              The push always points the same way — straight up on the screen. Only how strong it
+              is changes; its direction never does.
+            </li>
+            <li>
               There's no friction, no air resistance, and no other mass nearby — just this one
               mass and the orbiting object.
             </li>
@@ -240,21 +251,21 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
         </div>
 
         <OutcomeQuestion
-          prompt="If the object starts moving very slowly sideways, what do you think happens?"
+          prompt="If the starting push is very weak, what do you think happens?"
           selected={slowPrediction}
           submitted={submittedSlowPrediction}
           onSelect={setSlowPrediction}
           disabled={hasSubmittedPredictions}
         />
         <OutcomeQuestion
-          prompt="If it starts moving very fast sideways instead, which of those three do you expect?"
+          prompt="If the starting push is very strong instead, which of those three do you expect?"
           selected={fastPrediction}
           submitted={submittedFastPrediction}
           onSelect={setFastPrediction}
           disabled={hasSubmittedPredictions}
         />
         <YesNoQuestion
-          prompt="Is there a speed in between where something different happens?"
+          prompt="Is there a push strength in between where something different happens?"
           selected={inBetweenPrediction}
           submitted={submittedInBetweenPrediction}
           onSelect={setInBetweenPrediction}
@@ -262,7 +273,7 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
         />
 
         <label htmlFor="orbit-speed" style={{ display: 'block', marginBottom: '0.5rem' }}>
-          Sideways speed: {Math.round(speedFraction * 100)}% of circular-orbit speed
+          Push strength: {Math.round(speedFraction * 100)}% of circular-orbit speed
         </label>
         <input
           id="orbit-speed"
@@ -277,9 +288,10 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
 
         <button
           type="button"
+          className="action-button"
           onClick={handleRun}
           disabled={!hasAllPredictions || isRunning}
-          style={{ marginTop: '1rem', cursor: hasAllPredictions && !isRunning ? 'pointer' : 'not-allowed' }}
+          style={{ marginTop: '1rem', padding: '0.6rem 1.5rem' }}
         >
           Run
         </button>
@@ -305,9 +317,7 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
               opacity={0.85}
             />
           )}
-          {result && currentPosition && isRunning && (
-            <circle cx={currentPosition.cx} cy={currentPosition.cy} r={4} fill="currentColor" />
-          )}
+          <circle cx={currentPosition.cx} cy={currentPosition.cy} r={4} fill="currentColor" />
         </svg>
 
         {isComplete && result && submittedSlowPrediction && submittedFastPrediction && submittedInBetweenPrediction && (
@@ -327,12 +337,12 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
               </strong>
             </p>
             <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Your prediction, slow speed:</strong> {outcomeLabel(submittedSlowPrediction)}. In
-              fact, a speed well below circular speed always falls in.
+              <strong>Your prediction, weak push:</strong> {outcomeLabel(submittedSlowPrediction)}. In
+              fact, a push well below circular speed always falls in.
             </p>
             <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Your prediction, fast speed:</strong> {outcomeLabel(submittedFastPrediction)}. In
-              fact, a speed well above escape speed always flies away and never returns.
+              <strong>Your prediction, strong push:</strong> {outcomeLabel(submittedFastPrediction)}. In
+              fact, a push well above escape speed always flies away and never returns.
             </p>
             <p style={{ marginBottom: 0 }}>
               <strong>Your prediction, in between:</strong>{' '}

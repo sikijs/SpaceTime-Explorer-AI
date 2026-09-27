@@ -15,6 +15,18 @@ No other gaps were found against `docs/PROJECT.md`, `AGENTS.md`, or this specifi
 
 During the owner's line-by-line wording review (§28.1), the owner asked for the tutor's explanation point 3 (too little/too much/just right sideways motion) to be supported with a daily-life analogy, per `CLAUDE.md` §15. Added: a Newton's-cannonball-style example (throwing a ball harder and harder off a cliff; thrown hard enough, it keeps falling while the ground curves away beneath it just as fast, so it never lands). All other wording was approved as drafted, with no further changes requested.
 
+**Revised 2026-09-27, after the owner returned to ask what "sideways speed" means:** the introduction's "What happens" line first tried a geometric definition alongside a daily-life example (a right angle to the line toward the mass, "like tossing a ball to the side"), which the owner found confusing — two descriptions competing rather than one clear picture. Replaced with a single consistent image: watching from directly above, like two marbles on a table, with "sideways" meaning a push that sends the object passing by the mass rather than toward or away from it. Per `CLAUDE.md` §15.
+
+**Further revised 2026-09-27**, after the owner asked whether the sideways push can be at an angle: confirmed it is always exactly perpendicular to the line toward the mass — `runOrbitExperiment` always launches in the fixed +y direction (see its own comment above `OrbitPoint`); the learner's slider changes only the push's speed, never its direction. Added a new assumption bullet to the introduction (and here) stating this explicitly, since it was previously implicit in the physics model but never told to the learner.
+
+**Further revised 2026-09-27**, after the owner said the word "sideways" itself was confusing throughout, independent of any one explanation of it: replaced it everywhere in learner-facing text with a concrete, indexical description tied to the fixed on-screen picture — the object always starts to the right of the mass and receives one push straight up on the screen at the very start, after which gravity alone acts on it. Learner-facing language now speaks of a "push" and its "strength" (weak/strong) rather than "sideways speed" or "sideways motion," in the introduction, predictions, results panel, slider label, tutor, and the chapter summary (`src/components/OrbitExperiment.tsx`, `src/components/OrbitTutor.tsx`, `src/App.tsx`). Internal, non-learner-facing physics/architecture language in this specification (e.g. "Required Physics Tests," "Relationship to Previous Experiments") still uses "sideways" as an accurate technical description of the launch direction and was left unchanged. Re-verified in a browser.
+
+**Bug found and fixed 2026-09-27**, while re-verifying the animation after the wording pass above: the owner reported the small orbiting object wasn't visible in the animation. The object's marker in `OrbitExperiment.tsx` was gated on `isRunning`, so it vanished the instant the animation finished, leaving only the central mass and the traced path — the object was correctly drawn during playback but disappeared right when the learner would look at the final result. Fixed by rendering the marker whenever a result exists (`result && currentPosition`), regardless of running/complete status, matching the pattern already used for `BlackHoleExperiment.tsx`'s probe marker. Re-verified in a browser.
+
+**Further bug found and fixed 2026-09-27**: the owner then noted the object still wasn't visible *before* Run is clicked — the marker was still gated on a `result` existing at all, so only the central mass showed in the idle state. Fixed by giving `currentPosition` a default value of the fixed launch point (`INITIAL_DISTANCE, 0`) when no result exists yet, and always rendering the marker (no longer conditional on `result`), so the object is visible at its starting point from the moment the scene loads, exactly as `BlackHoleExperiment.tsx`'s launch-point marker already is. Re-verified in a browser.
+
+**Further bug found and fixed 2026-09-27**: the owner reported the Run button "always stays grey even when all predictions are made." The button was a plain `<button>` with no `className`, so it never picked up this project's `.action-button` styling (the colored, disabled-vs-enabled pill style every other experiment's run/launch button uses) — it always rendered as an unstyled default button regardless of its actual `disabled` state, which looked grey either way. Fixed by adding `className="action-button"` to `OrbitExperiment.tsx`'s Run button. The same missing class was found and fixed in `BlackHoleExperiment.tsx`'s Launch button while checking for the same bug elsewhere. Re-verified in a browser: both buttons now show the disabled grey pill before predictions are complete and the active colored pill after.
+
 ## Overview
 
 Experiment 4 showed that a geodesic — a path that is "as straight as possible" — can converge with a nearby geodesic purely because the surface it is drawn on is curved, with nothing pushing either path sideways. This experiment shows the other half of that same idea: a geodesic can also curve *around* a mass instead of falling straight into it, if it starts out moving sideways. There is no new force at work and nothing pushes the orbiting body sideways to keep it up — its path is still "as straight as spacetime allows," exactly like Experiment 4's two travelers, only now traced out by one object with sideways motion near a mass instead of two travelers on a sphere.
@@ -99,7 +111,7 @@ export function runOrbitExperiment(
 
 ## Learner Controls
 
-- **Sideways speed**: a single slider or preset control, expressed relative to the circular-orbit speed at the fixed starting distance and mass (e.g. "0% to 200% of circular speed"), so the same control sensibly spans all three outcomes regardless of the chosen mass/distance. This is the experiment's one primary control, matching Experiment 3's pattern of one focused variable per scene.
+- **Push strength**: a single slider or preset control — the strength of the one push the object gets at the start, always in the same fixed direction — expressed relative to the circular-orbit speed at the fixed starting distance and mass (e.g. "0% to 200% of circular speed"), so the same control sensibly spans all three outcomes regardless of the chosen mass/distance. This is the experiment's one primary control, matching Experiment 3's pattern of one focused variable per scene.
 - Mass and starting distance are held fixed at reasonable constants for this experiment (not reusing Experiment 5's mass/distance presets as learner controls — see "Decisions Needing Human Review" item 1), so the learner's attention stays on the one variable that actually determines the outcome.
 
 ---
@@ -108,9 +120,9 @@ export function runOrbitExperiment(
 
 Before running, the learner is asked (draft wording, pending owner review, §28.1):
 
-1. "If the object starts moving very slowly sideways, what do you think happens: does it fall into the mass, fly away and never come back, or curve around and come back to where it started?"
-2. "If it starts moving very fast sideways instead, which of those three do you expect?"
-3. "Is there a speed in between where something different happens?"
+1. "If the starting push is very weak, what do you think happens: does it fall into the mass, fly away and never come back, or curve around and come back to where it started?"
+2. "If the starting push is very strong instead, which of those three do you expect?"
+3. "Is there a push strength in between where something different happens?"
 
 Each with the same three choices ("Falls in" / "Flies away and never returns" / "Curves around and comes back"). Not scored.
 
@@ -122,13 +134,14 @@ Each with the same three choices ("Falls in" / "Flies away and never returns" / 
 
 > **The question.** Why do planets go around the Sun instead of falling straight into it, or flying off into space?
 >
-> **What happens.** You'll launch a small object near a fixed mass, moving sideways at a speed you choose, and watch what its path looks like.
+> **What happens.** You'll watch this from directly above, like looking down at two marbles on a table. A small object starts to the right of a fixed mass, and you'll give it a single push — straight up on the screen — at the very start. After that, gravity is the only thing acting on it, constantly pulling it back toward the mass on the left. You choose how strong that starting push is, then watch what path the object follows.
 >
-> **Your job.** Try slow and fast sideways speeds, and see what happens to the path.
+> **Your job.** Try a weak push and a strong push, and see what happens to the path.
 >
 > **What we assume.**
 > - This uses ordinary gravity (the same rule used to predict real satellites and planets), not the exact general relativity from Experiment 4's curved-spacetime picture — a simplification also used in Experiments 2, 3, and 5.
 > - The central mass doesn't move; only the small object does.
+> - The push always points the same way — straight up on the screen. Only how strong it is changes; its direction never does.
 > - There's no friction, no air resistance, and no other mass nearby — just this one mass and the orbiting object.
 > - The mass and distance here are relative, made-up amounts, not real kilograms or meters.
 > - Nothing here moves anywhere close to the speed of light.
@@ -145,7 +158,7 @@ The path animates over a fixed real-world duration regardless of how much simula
 
 ## Results Display
 
-- The chosen sideways speed, and how it compares to the circular and escape speeds at the fixed mass and distance (e.g. "you launched at 65% of circular speed").
+- The chosen push strength, and how it compares to the circular and escape speeds at the fixed mass and distance (e.g. "you launched at 65% of circular speed").
 - The final outcome (fell in / escaped / orbited), stated in plain language.
 - The full traced path, left on screen after the run.
 - The learner's three predictions, shown beside what actually happened.
@@ -154,8 +167,8 @@ The path animates over a fixed real-world duration regardless of how much simula
 
 ## Expected Observations
 
-1. A very slow sideways speed (well below circular speed) results in falling in.
-2. A very fast sideways speed (well above escape speed) results in escaping.
+1. A very weak push (well below circular speed) results in falling in.
+2. A very strong push (well above escape speed) results in escaping.
 3. Speeds at or near the circular speed result in a closed orbit (circular or elliptical) that returns to its starting point.
 4. Exactly at the circular speed, the path is a circle at constant distance from the mass.
 
@@ -163,14 +176,14 @@ The path animates over a fixed real-world duration regardless of how much simula
 
 ## Expected Learner Understanding
 
-The learner should be able to say: "An orbit isn't a special force holding something up — it's just falling, curved by sideways motion. The same mass and the same starting distance can make an object fall in, fly away, or orbit forever, depending only on how fast it's moving sideways to start."
+The learner should be able to say: "An orbit isn't a special force holding something up — it's just falling, curved by the one push it got at the start. The same mass and the same starting distance can make an object fall in, fly away, or orbit forever, depending only on how strong that starting push was."
 
 ---
 
 ## New Concepts Introduced
 
 - **Orbit** as a geodesic under gravity alone, not a balance of forces.
-- The idea that a single starting condition (sideways speed) determines which of three qualitatively different outcomes occurs.
+- The idea that a single starting condition (the strength of the initial push) determines which of three qualitatively different outcomes occurs.
 
 ---
 
@@ -207,9 +220,9 @@ Follows the predict → observe → explain pattern of Experiments 1–5 in this
 - **During the run:** silent.
 - **After the run:**
   1. Observation: "What happened to the path this time — did it fall in, fly away, or come back around?"
-  2. Prediction comparison: the learner's three predicted outcomes beside what the simulation actually showed for their chosen speed.
+  2. Prediction comparison: the learner's three predicted outcomes beside what the simulation actually showed for their chosen push strength.
   3. Conceptual question: "The mass and the starting distance were the same the whole time. What was the only thing that changed between falling in, escaping, and orbiting?"
-  4. Explanation: (1) the object is always just falling under gravity, exactly like Experiment 1's dropped ball; (2) the only difference is how much sideways motion it started with; (3) too little sideways motion and it falls in before it can "miss" the mass; too much and it flies past and never comes back; just the right amount and it keeps "missing" the mass forever, which is what an orbit is — illustrated with a daily-life analogy (throwing a ball harder and harder, sideways, off a cliff: thrown hard enough, it keeps falling while the ground curves away beneath it just as fast, so it never lands); (4) this is the same idea as Experiment 4's geodesics — the path is as straight as spacetime allows, and it curves because spacetime near the mass is curved (Experiment 4), by an amount that depends on the mass and distance (Experiment 5); (5) this used ordinary, first-order gravity — the same rule used to predict real satellites and planets — not the exact general-relativistic calculation, the same simplification Experiments 2, 3, and 5 use.
+  4. Explanation: (1) the object is always just falling under gravity, exactly like Experiment 1's dropped ball — the only push it ever got was the one at the very start; (2) the only difference is how strong that starting push was; (3) too weak a push and it falls in before it can "miss" the mass; too strong and it flies past and never comes back; just the right strength and it keeps "missing" the mass forever, which is what an orbit is — illustrated with a daily-life analogy (throwing a ball harder and harder off the edge of a cliff: thrown hard enough, it keeps falling while the ground curves away beneath it just as fast, so it never lands); (4) this is the same idea as Experiment 4's geodesics — the path is as straight as spacetime allows, and it curves because spacetime near the mass is curved (Experiment 4), by an amount that depends on the mass and distance (Experiment 5); (5) this used ordinary, first-order gravity — the same rule used to predict real satellites and planets — not the exact general-relativistic calculation, the same simplification Experiments 2, 3, and 5 use.
   - The tutor must not introduce real astronomical values, elliptical-orbit mechanics beyond what the learner directly observed, light bending, black holes, or general-relativistic orbital effects — out of scope for this experiment.
 
 ---
