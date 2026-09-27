@@ -335,7 +335,7 @@ export function CurvedSpacetimeExperiment({ onComplete, onTutorComplete }: Curve
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Gravity and Curved Spacetime — Curved Spacetime</h2>
+      <h2>Experiment 4 — Curved Spacetime</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
