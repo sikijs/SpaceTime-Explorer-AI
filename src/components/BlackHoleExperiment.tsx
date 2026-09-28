@@ -389,6 +389,34 @@ export function BlackHoleExperiment({ onComplete, onTutorComplete }: BlackHoleEx
                 The launch point is currently{' '}
                 <strong>{evaluation.isInsideHorizon ? 'inside' : 'outside'}</strong> the event horizon.
               </p>
+              {evaluation.isInsideHorizon && result.outcome === 'falls-back' && (
+                <>
+                  <p>
+                    The probe started closer to the mass than the horizon line. Once launched, the
+                    mass's own gravity kept pulling on it the whole way — slowing it down as it
+                    moved out, until it stopped and gravity pulled it back down again, crossing the
+                    horizon line a second time on the way home. This is the same gravity that's
+                    always been acting; it's just strong enough here that even light-speed isn't
+                    fast enough to get away for good.
+                  </p>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                    A real black hole works differently, though — and it's worth pausing on, because
+                    it's not just "stronger gravity." Think of water draining from a sink. Above the
+                    drain, you can flick a droplet sideways and it might skim away across the
+                    surface. But once a droplet is close enough to the drain, every direction along
+                    the surface curves down into it — there's no direction left, however fast the
+                    droplet moves, that leads back away from the drain. A real black hole's horizon
+                    works the same way: farther from the mass than the horizon, "moving away" is
+                    still a real direction to travel in, so something fast enough (even light) can
+                    use it to escape, the way this experiment shows for smaller masses. But closer to
+                    the mass than the horizon, that direction simply doesn't exist anymore — every
+                    direction left to move in, even straight away from the mass, still leads closer
+                    to it. That's different from the probe here, which wasn't blocked from any
+                    direction — it just didn't have enough speed. A real horizon isn't about speed at
+                    all.
+                  </p>
+                </>
+              )}
               <p>
                 Outcome:{' '}
                 <strong>
