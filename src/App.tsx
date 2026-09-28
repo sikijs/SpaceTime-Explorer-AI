@@ -19,6 +19,7 @@ import { CurvedSpacetimeExperiment } from './components/CurvedSpacetimeExperimen
 import { SpacetimeCurvatureSourceExperiment } from './components/SpacetimeCurvatureSourceExperiment'
 import { OrbitExperiment } from './components/OrbitExperiment'
 import { BlackHoleExperiment } from './components/BlackHoleExperiment'
+import { LightBendingExperiment } from './components/LightBendingExperiment'
 
 interface Chapter {
   title: string
@@ -183,7 +184,16 @@ const chapters: Chapter[] = [
     // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
       "A black hole isn't a mysterious, different kind of object — it's what a mass becomes once it's concentrated enough that its escape speed would need to exceed the speed of light. Since nothing can go faster than light, nothing can escape from inside that boundary, the event horizon. It's the exact same escape-speed idea from Experiment 6, pushed to its physical limit. Real black holes are real, too — astronomers have directly imaged the region around two of them, using the Event Horizon Telescope.",
-    next: "This is the seventh experiment in this chapter. More will follow as they're designed and approved.",
+    next: 'Next, we ask whether gravity affects light in a different way: not just holding it back entirely, but bending its path when it only passes nearby.',
+  },
+  {
+    title: 'Does Gravity Bend Light?',
+    group: 'Gravity and Curved Spacetime',
+    Component: LightBendingExperiment,
+    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
+    learned:
+      "Light passing near a mass, even without being aimed at it, has its path bent — gravity affects paths themselves, not just things that can be pulled to a stop. This experiment's ordinary-gravity simulation calculates one bending angle, but the real universe bends light exactly twice as much, because real gravity also curves space itself. That doubling is exactly what a 1919 solar eclipse expedition, led by Arthur Eddington, measured — the first confirmation of general relativity over Newtonian gravity — and this same bending, gravitational lensing, is now a routine astronomical tool.",
+    next: "This is the eighth experiment in this chapter. More will follow as they're designed and approved.",
   },
 ]
 
