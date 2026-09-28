@@ -20,6 +20,7 @@ import { SpacetimeCurvatureSourceExperiment } from './components/SpacetimeCurvat
 import { OrbitExperiment } from './components/OrbitExperiment'
 import { BlackHoleExperiment } from './components/BlackHoleExperiment'
 import { LightBendingExperiment } from './components/LightBendingExperiment'
+import { GpsTimeDilationExperiment } from './components/GpsTimeDilationExperiment'
 
 interface Chapter {
   title: string
@@ -193,7 +194,17 @@ const chapters: Chapter[] = [
     // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
       "Light passing near a mass, even without being aimed at it, has its path bent — gravity affects paths themselves, not just things that can be pulled to a stop. This experiment's ordinary-gravity simulation calculates one bending angle, but the real universe bends light exactly twice as much, because real gravity also curves space itself. That doubling is exactly what a 1919 solar eclipse expedition, led by Arthur Eddington, measured — the first confirmation of general relativity over Newtonian gravity — and this same bending, gravitational lensing, is now a routine astronomical tool.",
-    next: "This is the eighth experiment in this chapter. More will follow as they're designed and approved.",
+    next: 'Next, and last, we bring both chapters together: a real satellite clock experiencing both kinds of time dilation at once.',
+  },
+  {
+    title: 'Real Clocks in Orbit (GPS and the Balance of Two Effects)',
+    group: 'Gravity and Curved Spacetime',
+    Component: GpsTimeDilationExperiment,
+    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1), except the Closing
+    // Synthesis section quoted within GpsTimeDilationExperiment.tsx, which is approved as written.
+    learned:
+      "A satellite's clock is pulled two ways at once: its speed slows it down (Experiment 3/4's effect), and its altitude speeds it up (Experiment 2's effect). Which one wins depends on altitude — below about 3,186 km the speed effect wins, above it the altitude effect wins. Real GPS satellites orbit well above that crossover, so their clocks really do run about 38 millionths of a second fast every day, a correction real GPS receivers apply. This is the first calculation in the whole project using real Earth numbers rather than an abstracted stand-in — and, in the closing section on this page, the two theories behind everything in this journey, special and general relativity, are named and explained in full for the first time.",
+    next: 'This is the last experiment in this two-chapter journey — see "Putting It All Together" on this page for the full picture.',
   },
 ]
 
