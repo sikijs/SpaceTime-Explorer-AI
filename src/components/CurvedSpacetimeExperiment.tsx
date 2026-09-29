@@ -156,8 +156,11 @@ function Scene({
               strokeWidth={1}
             />
           )}
-          <path d={guidePathFor(-1)} fill="none" stroke="#bbb" strokeWidth={1} strokeDasharray="4 3" />
-          <path d={guidePathFor(1)} fill="none" stroke="#bbb" strokeWidth={1} strokeDasharray="4 3" />
+          {/* Each traveler gets one consistent color, matching the Tidal Effect experiment's
+              two-balls pairing, so the same pair of colors means "two symmetric moving things"
+              across experiments. */}
+          <path d={guidePathFor(-1)} fill="none" stroke="#0d9488" strokeWidth={1} strokeDasharray="4 3" />
+          <path d={guidePathFor(1)} fill="none" stroke="#e11d48" strokeWidth={1} strokeDasharray="4 3" />
           {scene === 'sphere' && (
             <text x={SCENE_WIDTH_PX - 4} y={centerY - 6} fontSize="9" fill="#888" textAnchor="end">
               the pole
@@ -175,7 +178,7 @@ function Scene({
               width: `${DOT_SIZE_PX}px`,
               height: `${DOT_SIZE_PX}px`,
               borderRadius: '50%',
-              background: 'var(--gradient-primary)',
+              background: side === -1 ? '#0d9488' : '#e11d48',
             }}
           />
         ))}

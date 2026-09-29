@@ -65,6 +65,11 @@ const inputStyle = {
 const resultLineStyle = { margin: '0.5rem 0', fontSize: '0.875rem' }
 const resultBlockStyle = { paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid #ddd' }
 
+// Matches Experiment 8's front/back color pairing, so the same rod ends read consistently
+// across experiments that reuse them.
+const BACK_COLOR = '#2563eb'
+const FRONT_COLOR = '#7c3aed'
+
 interface SimultaneityPanelProps {
   title: string
   scale: number
@@ -94,10 +99,12 @@ function SimultaneityPanel({ title, scale, state, backEventTime, frontEventTime 
       <div style={{ flex: '0 0 170px' }}>
         <p style={{ fontSize: '0.8125rem', color: '#666', margin: '0 0 0.25rem' }}>{title}</p>
         <p style={{ fontSize: '0.8125rem', margin: '0 0 0.125rem' }}>
-          Back end reached: {state.backEventFired ? `${backEventTime.toFixed(3)} s` : '—'}
+          <strong style={{ color: BACK_COLOR }}>Back end</strong> reached:{' '}
+          {state.backEventFired ? `${backEventTime.toFixed(3)} s` : '—'}
         </p>
         <p style={{ fontSize: '0.8125rem', margin: 0 }}>
-          Front end reached: {state.frontEventFired ? `${frontEventTime.toFixed(3)} s` : '—'}
+          <strong style={{ color: FRONT_COLOR }}>Front end</strong> reached:{' '}
+          {state.frontEventFired ? `${frontEventTime.toFixed(3)} s` : '—'}
         </p>
       </div>
       <div
@@ -116,8 +123,8 @@ function SimultaneityPanel({ title, scale, state, backEventTime, frontEventTime 
           style={{ width: '100%', height: 'auto' }}
         >
           <line x1={x(0)} y1={4} x2={x(0)} y2={VIEW_HEIGHT - 4} stroke="#999" strokeWidth={1} strokeDasharray="2 3" />
-          {mirror(state.backMirrorPosition, 'back', '#333')}
-          {mirror(state.frontMirrorPosition, 'front', '#333')}
+          {mirror(state.backMirrorPosition, 'back', BACK_COLOR)}
+          {mirror(state.frontMirrorPosition, 'front', FRONT_COLOR)}
           <circle cx={x(state.leftPulsePosition)} cy={AXIS_Y} r="5" fill={state.backEventFired ? '#2e7d32' : '#e6a700'} />
           <circle cx={x(state.rightPulsePosition)} cy={AXIS_Y} r="5" fill={state.frontEventFired ? '#2e7d32' : '#e6a700'} />
         </svg>
@@ -461,10 +468,12 @@ export function Experiment7({ onComplete, onTutorComplete }: Experiment7Props) {
             <div style={resultBlockStyle}>
               <p style={{ ...resultLineStyle, fontWeight: 'bold' }}>In the lab's frame</p>
               <p style={resultLineStyle}>
-                Back end reached: {result.backEventLabTime.toFixed(3)} s
+                <strong style={{ color: BACK_COLOR }}>Back end</strong> reached:{' '}
+                {result.backEventLabTime.toFixed(3)} s
               </p>
               <p style={resultLineStyle}>
-                Front end reached: {result.frontEventLabTime.toFixed(3)} s
+                <strong style={{ color: FRONT_COLOR }}>Front end</strong> reached:{' '}
+                {result.frontEventLabTime.toFixed(3)} s
               </p>
               <p style={resultLineStyle}>Gap between the two events: {result.labTimeGap.toFixed(3)} s</p>
             </div>

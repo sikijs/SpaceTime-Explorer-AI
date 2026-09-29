@@ -124,7 +124,12 @@ export function Cabin({
           overflow: 'hidden',
         }}
       >
-        {[positions.leftBallOffset, positions.rightBallOffset].map((offsetMeters, i) => (
+        {/* The left and right ball each get one consistent color, so a learner can visually
+            track "which ball is which" as they drift together or stay apart. */}
+        {[
+          { offsetMeters: positions.leftBallOffset, color: '#0d9488' },
+          { offsetMeters: positions.rightBallOffset, color: '#e11d48' },
+        ].map(({ offsetMeters, color }, i) => (
           <div
             key={i}
             style={{
@@ -135,7 +140,7 @@ export function Cabin({
               width: `${BALL_SIZE_PX}px`,
               height: `${BALL_SIZE_PX}px`,
               borderRadius: '50%',
-              background: 'var(--gradient-primary)',
+              background: color,
             }}
           />
         ))}

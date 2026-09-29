@@ -50,7 +50,7 @@ export function Experiment9Tutor({ result, predictionShape, onExplained }: Exper
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              'Look at the new purple line. Does it run flat and level, straight across the page — like the sidewalk-watcher\'s own idea of "the same moment"? Or does it lean over?'}
+              'Look at the new magenta line. Does it run flat and level, straight across the page — like the sidewalk-watcher\'s own idea of "the same moment"? Or does it lean over?'}
             {tutorStep === 'compare' &&
               `You predicted the line would be ${predictionShape}. It is actually ${actualShape}${
                 actualShape === 'tilted' ? ', not flat' : ', matching the lab\'s own line exactly'

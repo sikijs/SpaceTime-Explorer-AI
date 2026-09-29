@@ -94,14 +94,14 @@ function SpacetimeDiagram({ diagram }: DiagramProps) {
     />
   )
 
-  const eventDot = (point: WorldlinePoint, key: string, labelSide: 'left' | 'right') => (
+  const eventDot = (point: WorldlinePoint, key: string, labelSide: 'left' | 'right', color: string) => (
     <g key={key}>
-      <circle cx={xPix(point.position)} cy={yPix(point.time)} r="5" fill="#2e7d32" />
+      <circle cx={xPix(point.position)} cy={yPix(point.time)} r="5" fill={color} />
       <text
         x={xPix(point.position) + (labelSide === 'left' ? -8 : 8)}
         y={yPix(point.time) + 4}
         fontSize="13"
-        fill="#2e7d32"
+        fill={color}
         textAnchor={labelSide === 'left' ? 'end' : 'start'}
       >
         {point.time.toFixed(3)} s
@@ -135,13 +135,15 @@ function SpacetimeDiagram({ diagram }: DiagramProps) {
       <line x1={xPix(0)} y1={MARGIN} x2={xPix(0)} y2={height - MARGIN} stroke="#ccc" strokeWidth={1} strokeDasharray="2 3" />
       <circle cx={xPix(0)} cy={yPix(0)} r="4" fill="#e6a700" />
 
-      {line(diagram.backWorldline[0], diagram.backWorldline[1], '#333', false, 'back')}
-      {line(diagram.frontWorldline[0], diagram.frontWorldline[1], '#333', false, 'front')}
-      {line(diagram.leftLightWorldline[0], diagram.leftLightWorldline[1], '#e6a700', true, 'left-light')}
-      {line(diagram.rightLightWorldline[0], diagram.rightLightWorldline[1], '#e6a700', true, 'right-light')}
+      {/* Back end (blue) and front end (purple) get one consistent color each, matching
+          Experiments 8 and 9, so the same rod ends read the same way across experiments. */}
+      {line(diagram.backWorldline[0], diagram.backWorldline[1], '#2563eb', false, 'back')}
+      {line(diagram.frontWorldline[0], diagram.frontWorldline[1], '#7c3aed', false, 'front')}
+      {line(diagram.leftLightWorldline[0], diagram.leftLightWorldline[1], '#2563eb', true, 'left-light')}
+      {line(diagram.rightLightWorldline[0], diagram.rightLightWorldline[1], '#7c3aed', true, 'right-light')}
 
-      {eventDot(diagram.backEvent, 'back-event', 'left')}
-      {eventDot(diagram.frontEvent, 'front-event', 'right')}
+      {eventDot(diagram.backEvent, 'back-event', 'left', '#2563eb')}
+      {eventDot(diagram.frontEvent, 'front-event', 'right', '#7c3aed')}
 
       {line(sameMomentStart, sameMomentEnd, '#8e24aa', false, 'same-moment')}
       {line(rodSpaceStart, rodSpaceEnd, '#e65100', true, 'rod-space-axis')}
@@ -319,9 +321,13 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
           <div style={{ marginTop: '2rem' }}>
             <SpacetimeDiagram diagram={diagram} />
             <p style={{ fontSize: '0.8125rem', color: '#555', margin: '0.25rem 0 0' }}>
-              Black lines: the rod's back and front ends. Gold dashed lines: the flash of light.
-              Purple line: Experiment 9's same-moment line, through the two events. Orange lines
-              (one dashed, one solid): the rod's own space axis and time axis, through the origin.
+              <strong style={{ color: '#2563eb' }}>Blue line</strong>: the rod's back end.{' '}
+              <strong style={{ color: '#7c3aed' }}>Purple line</strong>: its front end. The
+              matching dashed lines: the flash of light travelling toward each one.{' '}
+              <strong style={{ color: '#8e24aa' }}>Magenta line</strong>: Experiment 9's
+              same-moment line, through the two events.{' '}
+              <strong style={{ color: '#e65100' }}>Orange lines</strong> (one dashed, one solid):
+              the rod's own space axis and time axis, through the origin.
             </p>
           </div>
         )}

@@ -44,13 +44,13 @@ export function RocketCabinClocks({ ceilingTicks, floorTicks }: { ceilingTicks: 
   return (
     <div className="exp-card" style={{ padding: '1rem', maxWidth: '260px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Ceiling clock</p>
+        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#f59e0b' }}>Ceiling clock</p>
         <p style={{ fontSize: '0.8rem', margin: 0 }}>
           Ticks: <strong>{ceilingTicks.toFixed(2)}</strong>
         </p>
       </div>
       <div style={{ textAlign: 'center', paddingTop: '1rem', borderTop: '1px dashed var(--border)' }}>
-        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Floor clock</p>
+        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#4f46e5' }}>Floor clock</p>
         <p style={{ fontSize: '0.8rem', margin: 0 }}>
           Ticks: <strong>{floorTicks.toFixed(2)}</strong>
         </p>
@@ -387,10 +387,10 @@ export function GravitationalTimeDilationExperiment({
                 <strong>Strength:</strong> {result.strength} (frequency ratio: {result.frequencyRatio.toFixed(2)})
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Ceiling clock ticks:</strong> {ceilingTicks.toFixed(2)}
+                <strong style={{ color: '#f59e0b' }}>Ceiling clock ticks:</strong> {ceilingTicks.toFixed(2)}
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-                <strong>Floor clock ticks:</strong> {floorTicks.toFixed(2)}
+                <strong style={{ color: '#4f46e5' }}>Floor clock ticks:</strong> {floorTicks.toFixed(2)}
               </p>
             </div>
 
