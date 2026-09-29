@@ -273,6 +273,14 @@ export function SpacetimeCurvatureSourceExperiment({ onComplete, onTutorComplete
             from?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> Think of a trampoline. Set a bowling ball in the
+            middle and it sags a little; swap it for a much heavier weight, or push the same ball
+            closer to where you're standing, and the dip gets noticeably deeper. Mass and distance
+            are exactly the two knobs this experiment turns — how much "stuff" is nearby, and how
+            close it is — controlling how strongly they dent the same fabric of spacetime that
+            Experiments 2 and 3 already showed you the effects of.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> You'll pick how massive a nearby body is, and how far away
             it is, and watch Experiment 2's clocks and Experiment 3's balls respond together — both
             driven by the same two choices.

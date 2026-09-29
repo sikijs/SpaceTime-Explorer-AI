@@ -316,6 +316,13 @@ export function TidalEffectExperiment({ onComplete, onTutorComplete }: TidalEffe
             true no matter how big the cabin is?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> It's tempting to assume Experiment 1's result — that
+            gravity and acceleration are indistinguishable — must hold no matter how big your sealed
+            cabin is. But "idealized and small" was quietly doing a lot of work in that experiment.
+            This experiment puts that assumption under more strain: two balls, dropped side by side
+            instead of just one, watched closely for any change in how far apart they are.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> The same two cabins as before — one on the ground, one in
             deep space with a rocket — but now each cabin drops two balls side by side, the same
             distance apart, at the same time. We'll watch whether that distance changes as they fall.

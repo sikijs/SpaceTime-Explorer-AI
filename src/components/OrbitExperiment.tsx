@@ -216,6 +216,13 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
             straight into it, or flying off into space?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> It's easy to think of an orbit as some special,
+            different kind of motion from just "falling" — planets seem to glide around forever,
+            while a dropped ball simply falls straight down and stops. This experiment asks whether
+            that apparent difference is real, or whether an orbit might just be a particular kind
+            of falling, seen from the right angle.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> You'll watch this from directly above, like looking
             down at two marbles on a table. A small object starts to the right of a fixed mass,
             and you'll give it a single push — straight up on the screen — at the very start.

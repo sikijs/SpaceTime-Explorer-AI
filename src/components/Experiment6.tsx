@@ -354,6 +354,14 @@ export function Experiment6({ onComplete, onTutorComplete }: Experiment6Props) {
             clock so that its mirrors are in a line with the direction it moves?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> Imagine measuring the length of a car speeding
+            past you, versus measuring the same car parked in your driveway. In everyday life we
+            assume you'd get the same number either way — length feels like a fixed property of the
+            car, nothing that depends on whether it's moving. This experiment checks whether that
+            everyday assumption survives once "speeding past" means a meaningful fraction of the
+            speed of light.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>A quick reminder: the light clock.</strong> A light clock is a pulse of light
             that bounces between two mirrors. One trip from the back mirror to the front mirror and
             back is one <strong>tick</strong>. A <strong>light-second</strong> is the distance light

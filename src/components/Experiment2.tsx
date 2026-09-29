@@ -112,6 +112,14 @@ export function Experiment2({ onComplete, onTutorComplete }: Experiment2Props) {
             (the elapsed time). Now we use two clocks in two different places. Will they agree?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> It might seem obvious that two motionless clocks
+            would end up agreeing — nothing is pulling them apart, nothing is speeding one up. But
+            "obvious" isn't the same as "checked." This project's whole approach is to test
+            assumptions like this directly, with an actual measurement, rather than take them on
+            faith — because later, once one of the clocks starts moving, the answer will turn out to
+            be far less obvious than it looks right now.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> Clock A and Clock B sit at different places. Both stand
             still, and both show 00:00:00 when the experiment starts. You choose how long the
             experiment lasts. When the time is up, we read both clocks.

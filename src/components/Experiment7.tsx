@@ -225,6 +225,14 @@ export function Experiment7({ onComplete, onTutorComplete }: Experiment7Props) {
             everyone agrees on, no matter how they are moving?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> Imagine two lightning bolts strike, one at each
+            end of a train platform, at exactly the same instant as measured by someone standing on
+            the platform. Would a passenger riding past on a fast train, watching the same two
+            flashes, necessarily agree they happened at the same instant too? Ordinary experience
+            never puts this question to a real test, because nothing we deal with day to day moves
+            anywhere near fast enough for the answer to matter — but this experiment does.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> In Experiment 6, a rod moved along its own length, and
             its length, seen from the lab, was shorter than its length at rest. Here we use that
             same rod. A flash of light is released from its exact middle and travels out to both

@@ -18,6 +18,8 @@ After that review, the owner asked for four further fixes, made in the same pass
 
 A further owner request: the height-vs-time graph appeared only after the run finished, fully drawn, giving no sense of motion even though the cabin balls were (confirmed by direct DOM sampling) already animating smoothly. Fixed: the graph now draws progressively, in step with the falling ball, with a moving marker at the current point, and moved from the Results panel to the live display area (visible from the moment the ball is dropped, not just after landing) — closer to this specification's original Display section wording than the "Results panel only" choice made during the earlier review.
 
+A later, project-wide request (2026-09-29, following the addition of similar material to the Gravitational Waves experiment's introduction): a "daily-life picture" paragraph (the car-acceleration/seat-push analogy above) was added to this introduction, deepening the everyday intuition behind the equivalence principle before the cabins are shown. Approved by the owner as written (`CLAUDE.md` §28.1, 2026-09-29).
+
 ## Overview
 
 Phase 1, "Relativity of Time and Motion" (Experiments 1–11), built up special relativity — proper time, reference frames, time dilation, the invariant speed of light, length contraction, relativity of simultaneity, spacetime diagrams, and the Lorentz transformation — entirely without gravity or acceleration.
@@ -113,6 +115,8 @@ Choices: "Differently" / "The same way." Not scored. The run control is disabled
 ### Introductory text (plain-language draft — for the owner's approval, `CLAUDE.md` §28.1)
 
 > **The question.** Imagine you're sealed inside a windowless cabin — no windows, no way to look outside. You drop a ball. Could you tell, just from watching the ball fall, whether your cabin is sitting still on a planet, or racing through empty space with a rocket pushing it?
+>
+> **A daily-life picture.** When a car accelerates forward, you feel pressed back into your seat — almost as if an invisible hand were pushing you backward. If that car were a windowless cabin, that push would feel exactly like a weak sideways gravity, not like acceleration at all. This experiment sets up that same substitution more carefully — not for the feeling in your own body, but for a dropped ball, watched inside two sealed cabins side by side.
 >
 > **What happens.** We'll show you two cabins side by side. Cabin A sits on the ground, where gravity pulls the ball down. Cabin B is in deep space, far from any planet — nothing is pulling on it — but a rocket engine is pushing the cabin (and its floor) forward at a steady rate. In both cabins, someone drops a ball and we watch how it moves relative to the floor.
 >

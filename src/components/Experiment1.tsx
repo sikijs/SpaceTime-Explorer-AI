@@ -97,6 +97,20 @@ export function Experiment1({ onComplete, onTutorComplete }: Experiment1Props) {
             <strong>The question.</strong> What does a clock actually measure?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What a clock actually does.</strong> A clock isn't anything mysterious — it's
+            just something that repeats in a very regular way, like a pendulum swinging back and
+            forth, or a heart beating. "Elapsed time" between two moments is nothing more than how
+            many of those regular repeats happened in between. When a clock ends up reading
+            00:00:07, that means exactly seven of its own ticks happened between the moment it
+            started and the moment it stopped — nothing more.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> A stopwatch at a race doesn't know anything
+            about the runners — it just counts ticks from the moment you press start to the moment
+            you press stop, and that count is the elapsed time. The clock in this experiment works
+            exactly the same way.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> There is one clock, and it stands still. It starts by
             showing 00:00:00. You choose how long the experiment lasts. When you press START, the
             clock begins to tick. The experiment ends when the time you chose is up. Two moments

@@ -19,6 +19,8 @@ The owner's line-by-line wording approval (§28.1) is complete (2026-09-26). Two
 
 All other learner-facing text (the remaining introduction bullets, prediction prompts, results panel, and all four tutor steps including the five-point explanation and the analogy note) was approved as drafted, with no changes.
 
+A later, project-wide request (2026-09-29): a "Why even ask this" paragraph was added to the introduction (`src/components/CurvedSpacetimeExperiment.tsx`), framing the experiment's geometric question — deliberately without describing how the two travelers actually behave on the sphere, to avoid spoiling the prediction. Approved by the owner as written (`CLAUDE.md` §28.1, 2026-09-29).
+
 ## Overview
 
 Experiment 3 showed that two balls dropped side by side in a real planet's gravity drift together (a **tidal effect**), while two balls in an accelerating rocket cabin never do — because a rocket's push has no center to pull toward, but a planet's gravity does. That experiment stopped short of naming why: it held back the words "curvature" and "curved spacetime" deliberately.

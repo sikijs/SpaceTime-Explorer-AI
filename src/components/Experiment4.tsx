@@ -269,6 +269,13 @@ export function Experiment4({ onComplete, onTutorComplete }: Experiment4Props) {
             moves? To find out, we look inside the simplest clock we can build.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> Any steady, repeating process can work as a
+            clock — a heartbeat, a dripping faucet, a pendulum's swing. A light clock is the
+            simplest version physics can build: instead of a mechanical part swinging back and
+            forth, it's a flash of light itself bouncing between two mirrors, with one full round
+            trip counting as one tick.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What a light clock is.</strong> A light clock is a clock made from a pulse of
             light that bounces up and down between two mirrors, one above the other. One trip up
             and back down is one <strong>tick</strong>, just like one tick of an ordinary clock.

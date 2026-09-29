@@ -1,6 +1,6 @@
 # Gravitational Waves — Experiment 1: Ripples in Spacetime
 
-**Status: approved specification (`CLAUDE.md` §23 Stage 4, approved by the owner as written, 2026-09-29). Not yet implemented.** Numbering restarts within this new phase, following the pattern already used when "Gravity and Curved Spacetime" began (`CLAUDE.md` §27).
+**Status: built, complete-flow tested, and reviewed against this specification (`CLAUDE.md` §21 Steps 9–10, 2026-09-29; two gaps found and fixed — see "Implementation Notes"). Physics model, tests, interface, prediction, results panel, and tutor are implemented and wired into the guided journey (`src/physics/gravitationalWaveExperiment.ts`, `src/physics/gravitationalWaveExperiment.test.ts`, `src/components/GravitationalWaveExperiment.tsx`, `src/components/GravitationalWaveTutor.tsx`, `src/App.tsx`). The owner's line-by-line wording approval (`CLAUDE.md` §28.1) is complete (2026-09-29), approved as written, including two further introduction paragraphs added after an owner request for deeper theory and a daily-life picture — see "Implementation Notes."** Numbering restarts within this new phase, following the pattern already used when "Gravity and Curved Spacetime" began (`CLAUDE.md` §27).
 
 This specification was drafted per `CLAUDE.md` §23 Stage 3, following the proposal Claude Code made in conversation on 2026-09-29, in response to the milestone set after Gravity and Curved Spacetime's Experiment 9 (the project's confirmed closing experiment of its current two-chapter arc). All items under "Decisions Confirmed" below were settled with the owner in that conversation, before this file was written.
 
@@ -103,15 +103,19 @@ Choices are not scored. The controls are disabled until both predictions are ent
 
 ## Experiment Behavior
 
-### Introductory text (draft wording — pending the owner's line-by-line approval after implementation, `CLAUDE.md` §28.1, following the pattern used throughout this project)
+### Introductory text (as approved by the owner, `CLAUDE.md` §28.1)
 
 > **The question.** Experiment 4 showed that curved space can make two straight-as-possible paths drift together. But can spacetime's curvature itself move — can it travel somewhere, like a ripple on a pond? And if it did, could we ever actually detect it?
+>
+> **What "a ripple in spacetime" actually means.** Every experiment in the "Gravity and Curved Spacetime" chapter showed spacetime curving around a mass that just sits there — the curvature was always fixed in place, like a bowling ball resting in the middle of a stretched sheet. But if that mass suddenly moves — especially something as violent as two black holes spiraling into each other — the dent it makes in spacetime has to change too. And that change can't happen everywhere at once: Experiment 5 showed that nothing, including a change in spacetime's own shape, can spread faster than the speed of light. So the change ripples outward from the source at exactly that speed, carrying a real, physical distortion of space along with it — squeezing space in one direction while stretching it in the perpendicular direction, then swapping back and forth, over and over, as it passes by. That traveling distortion is a gravitational wave.
+>
+> **A daily-life picture.** Drop a stone into a still pond. The ripple that spreads outward isn't water traveling all the way across the pond — it's a changing shape traveling, while each bit of water mostly just bobs up and down in place as the ripple passes under it. A gravitational wave works the same way for space itself: nothing physically flies outward from the source, but the shape of space at any given point stretches and squeezes as the ripple washes through it — which is exactly what you're about to watch happen to the two arms below.
 >
 > **What happens.** You'll watch two perpendicular "arms" of free-floating points, set up the same way a real gravitational-wave detector is built. When a wave passes through, you'll see one arm stretch while the other squeezes, over and over, before both settle back to normal.
 >
 > **Your job.** Try different wave strengths and speeds — including a strength modeled on a real detected event — and watch what the two arms do, together and compared to each other.
 >
-> **What we assume.** The effect here is hugely exaggerated — a real gravitational wave changes a real detector's arms by about one-thousandth the width of a single proton, far too small to show at any visible scale. The wave here also arrives at one constant strength and speed for simplicity; real events (like two black holes spiraling together) actually build up in both strength and speed right until the moment of collision.
+> **What we assume.** The effect here is hugely exaggerated — a real gravitational wave changes a real detector's arms by about one-thousandth the width of a single proton, far too small to show at any visible scale. The wave here also arrives at one constant strength and speed for simplicity; real events (like two black holes spiraling together) actually build up in both strength and speed right until the moment of collision. This also shows only one pattern a gravitational wave can stretch and squeeze in (called a "polarization") — real gravitational waves can also stretch and squeeze along a second, diagonal pair of directions at the same time, which this experiment leaves out. And it shows the effect on two arms directly, not how a real detector actually measures such a tiny change (LIGO uses lasers bounced down each arm) — that measurement process itself isn't modeled here.
 >
 > **A real detection.** On September 14, 2015, two detectors called LIGO — built in the shape you're about to see, with arms 4 kilometers long — measured a real gravitational wave arriving from two black holes that had collided 1.3 billion light-years away. It was the first time anyone had directly detected one, confirming a prediction Einstein made a century earlier. LIGO has since detected dozens more, including one from two colliding neutron stars in 2017 that was also seen by ordinary telescopes moments later.
 
@@ -227,4 +231,25 @@ All items were confirmed by the owner in conversation on 2026-09-29.
 
 ## Implementation Notes
 
-Not yet implemented. To be filled in per `CLAUDE.md` §21 once physics, tests, interface, prediction, results, and tutor are built, and again after complete-flow testing and final review (§21 Step 10).
+Implemented per this specification: physics model and tests (`src/physics/gravitationalWaveExperiment.ts`, `src/physics/gravitationalWaveExperiment.test.ts`), interface, prediction, results panel, and tutor (`src/components/GravitationalWaveExperiment.tsx`, `src/components/GravitationalWaveTutor.tsx`), wired into the guided journey as a new "Gravitational Waves" phase (`src/App.tsx`).
+
+Complete-flow tested in a browser across every step (both predictions, the amplitude/frequency sliders and three presets, "Run" playing 5 oscillation cycles, the live readout and arm diagram, the results panel, and all three tutor reflection steps plus the explanation). One display bug was found and fixed during that test:
+
+1. **The live strain readout could show "-0.000."** Floating-point rounding sometimes left `strain` at a tiny negative value (e.g. `-2.4e-17`) instead of exactly `0` when simulated time landed near a multiple of a full period, which `toFixed(3)` then rendered as "-0.000." Fixed by rounding any `Math.abs(strain) < 1e-9` to `0` before display.
+
+The final review (§21 Step 10) against this specification, `docs/PROJECT.md`, `AGENTS.md`, and `CLAUDE.md` found two further gaps, both fixed:
+
+2. **The required "graph plots both arm lengths against simulated time as the run plays" (Experiment Behavior → Display) was missing entirely.** Added a live-updating SVG line graph below the arm diagram, tracking both arm lengths against simulated time as the run plays, with a dashed rest-length reference line and a color-keyed legend.
+3. **Two of the specification's four simplifying assumptions (Success Criterion 5) were missing from the introduction** — only the exaggeration and constant-frequency/amplitude assumptions were stated; the single-polarization and no-detection-hardware-modeling assumptions were absent from all learner-facing text. Added both as further bullets under "What we assume" in the introduction.
+
+Also added, as a minor polish following the same review: the results panel now states each arm's stretch/squeeze amount explicitly (e.g. "stretching by up to 0.099"), not just its min/max length, matching the Results Display section's "by how much each stretched/squeezed" requirement more literally.
+
+**A wording inconsistency in this specification's own "Required Physics Tests," found during the review:** item 6 asks for a test "at `amplitude = 0`," but `amplitude <= 0` is required to throw (item 9, matching the physics model's own validation) — so a literal `amplitude = 0` test is impossible to write. The implementation substitutes a reasonable equivalent instead (arm lengths equal `BASE_ARM_LENGTH` when `strain` is exactly zero, via a full-period return), which is tested and passing, but does not literally match item 6's wording. Flagging this rather than silently reinterpreting it; the owner may want to adjust the specification's wording to match.
+
+Following the review, the owner reported the prediction choice buttons' background was too faint to distinguish from the page's white card background. Fixed globally, not just for this experiment, since the affected style (`.toggle-button` in `src/index.css`) is shared by every experiment's choice buttons: the background was changed from `var(--surface)` (pure white) to a distinct light-lavender tint, darkened once more after the owner's follow-up ("a little more darker will be better") to `#e4e8f5` with a `#c9cee0` border. The owner then asked whether hovering over these buttons showed a hand cursor; it didn't, since `.toggle-button` never set `cursor: pointer` and browsers default `<button>` to an arrow cursor. Fixed globally, in the same rule: `cursor: pointer` when enabled, `cursor: not-allowed` when disabled.
+
+The owner then asked for more explanation of "ripples in spacetime" and some detailed theory at the top of the introduction. Added two paragraphs to the introduction, above — "What 'a ripple in spacetime' actually means" (explaining that a moving mass's changing curvature can't update everywhere at once, so it spreads outward at the speed of light, established in Experiment 5) and "A daily-life picture" (a stone dropped in a pond, where the ripple is a traveling shape, not traveling water) — approved by the owner ("that looks good") on first draft.
+
+The owner then asked for this same kind of deeper-theory/daily-life material to be added across every other experiment in the project. Both chapters ("Relativity of Time and Motion," 7 of 11 experiments touched, and "Gravity and Curved Spacetime," 6 of 9 experiments touched) were updated in the same session; each already-approved experiment's own specification records its own addition and approval individually. See `CLAUDE.md`'s per-experiment status entries for the full list.
+
+The owner's line-by-line wording approval (§28.1) — including the two new introduction paragraphs above — is complete (2026-09-29), approved as written.

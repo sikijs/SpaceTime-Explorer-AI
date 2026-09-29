@@ -188,6 +188,16 @@ export function Experiment3({ onComplete, onTutorComplete }: Experiment3Props) {
             if one of the clocks moves? Will the two clocks still show the same time?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What's really being tested.</strong> Both clocks are ordinary and identical —
+            neither is broken or built differently. What's being tested is stranger than that:
+            whether elapsed time itself — the plain tick-count Experiment 1 defined — depends on how
+            something moves between two events. In daily life we assume time is the same backdrop
+            for everyone: if two friends split up, one driving across town while the other stays
+            home, and meet up again for dinner, they assume their watches still agree. This
+            experiment checks whether that everyday assumption survives once the speeds involved get
+            extreme enough to matter.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> Two ordinary clocks start together, at the same place,
             both showing 00:00.0. One stays in the lab, which is the place where the experiment is
             set up. The other moves away in a straight line at a steady speed. You choose the

@@ -345,6 +345,14 @@ export function CurvedSpacetimeExperiment({ onComplete, onTutorComplete }: Curve
             mean?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> Experiment 3 found a real difference between a
+            planet's gravity and a rocket's push, but only showed <em>that</em> they behave
+            differently, not <em>why</em>. This experiment steps back from gravity and falling
+            balls entirely, to ask a purely geometric question first: on a surface that isn't flat,
+            does "walking as straight as you possibly can" even mean the same thing it does on a
+            flat floor?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> Picture two travelers standing side by side, a fixed
             small distance apart, both facing the same direction. Each one walks straight ahead —
             never turning, always at the same walking speed — and we watch how far apart they end

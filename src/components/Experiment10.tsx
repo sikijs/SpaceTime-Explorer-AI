@@ -107,6 +107,16 @@ export function Experiment10({ onComplete, onTutorComplete }: Experiment10Props)
             settles the question, and you're about to see it happen.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> You can feel the difference between the two
+            twins' situations directly, without doing any math. Think of the jolt you feel when a
+            car brakes hard, or the push you feel when it speeds up again — that felt push is what
+            physicists call <strong>acceleration</strong>. The traveling twin feels exactly that
+            kind of push during the turnaround. The twin who stays home never feels anything like
+            it at all, the whole trip. That felt difference is a real, physical mark of which
+            twin's path is actually different — it isn't just a matter of whichever twin you
+            personally choose to say is "moving."
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What you're about to do.</strong> Choose a speed for the traveling twin's
             trip. Before we calculate the result, make a prediction: when the twins are reunited,
             will they be the same age, will the Earth twin be older, or will the traveling twin be

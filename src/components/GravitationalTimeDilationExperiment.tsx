@@ -219,6 +219,13 @@ export function GravitationalTimeDilationExperiment({
             that same accelerating rocket, do they tick at the same rate?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> In everyday life, a clock on your kitchen counter
+            and a clock on a high shelf are assumed to tick at exactly the same rate — height seems
+            completely irrelevant to timekeeping. This experiment checks whether that assumption
+            survives once we apply Experiment 1's discovery — that gravity and acceleration are
+            indistinguishable — to clocks instead of a falling ball.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> The same rocket cabin from before, this time with one
             clock fixed to the floor and one fixed to the ceiling. As the rocket accelerates,
             we'll count how many ticks each clock registers.

@@ -27,6 +27,8 @@ During the owner's line-by-line wording review (§28.1), the owner asked for the
 
 **Further bug found and fixed 2026-09-27**: the owner reported the Run button "always stays grey even when all predictions are made." The button was a plain `<button>` with no `className`, so it never picked up this project's `.action-button` styling (the colored, disabled-vs-enabled pill style every other experiment's run/launch button uses) — it always rendered as an unstyled default button regardless of its actual `disabled` state, which looked grey either way. Fixed by adding `className="action-button"` to `OrbitExperiment.tsx`'s Run button. The same missing class was found and fixed in `BlackHoleExperiment.tsx`'s Launch button while checking for the same bug elsewhere. Re-verified in a browser: both buttons now show the disabled grey pill before predictions are complete and the active colored pill after.
 
+A later, project-wide request (2026-09-29): a "Why even ask this" paragraph was added to the introduction, deliberately without the Newton's-cannonball analogy already used in the tutor, to avoid spoiling the three push-strength predictions. Approved by the owner as written (`CLAUDE.md` §28.1, 2026-09-29).
+
 ## Overview
 
 Experiment 4 showed that a geodesic — a path that is "as straight as possible" — can converge with a nearby geodesic purely because the surface it is drawn on is curved, with nothing pushing either path sideways. This experiment shows the other half of that same idea: a geodesic can also curve *around* a mass instead of falling straight into it, if it starts out moving sideways. There is no new force at work and nothing pushes the orbiting body sideways to keep it up — its path is still "as straight as spacetime allows," exactly like Experiment 4's two travelers, only now traced out by one object with sideways motion near a mass instead of two travelers on a sphere.
@@ -133,6 +135,8 @@ Each with the same three choices ("Falls in" / "Flies away and never returns" / 
 ### Introductory text (draft — pending owner review, §28.1)
 
 > **The question.** Why do planets go around the Sun instead of falling straight into it, or flying off into space?
+>
+> **Why even ask this.** It's easy to think of an orbit as some special, different kind of motion from just "falling" — planets seem to glide around forever, while a dropped ball simply falls straight down and stops. This experiment asks whether that apparent difference is real, or whether an orbit might just be a particular kind of falling, seen from the right angle.
 >
 > **What happens.** You'll watch this from directly above, like looking down at two marbles on a table. A small object starts to the right of a fixed mass, and you'll give it a single push — straight up on the screen — at the very start. After that, gravity is the only thing acting on it, constantly pulling it back toward the mass on the left. You choose how strong that starting push is, then watch what path the object follows.
 >

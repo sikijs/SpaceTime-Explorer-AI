@@ -20,6 +20,8 @@ Two further corrections were made to this specification's own text, to keep it i
 - The Physical Situation section's "(relabeled as sitting in a real gravitational field for this experiment)" was dropped — the panel keeps Experiment 2's own "rocket cabin" framing and label, which the owner reviewed and approved as-is.
 - The "Decisions Needing Human Review" item about default values was corrected: Experiments 2 and 3 do each have a single default (`0.3`, from each component's own `useState`), so this experiment's constants were chosen to reproduce that default exactly, rather than there being "no default to reproduce."
 
+A later, project-wide request (2026-09-29): a "A daily-life picture" paragraph (the trampoline/bowling-ball analogy above) was added to the introduction. Approved by the owner as written (`CLAUDE.md` §28.1, 2026-09-29).
+
 This specification was drafted per `CLAUDE.md` §23 Stage 3, following the proposal Claude Code made in conversation on 2026-09-27, in response to the milestone set after Experiment 4 (curved spacetime: geodesics) was completed. Experiment 4's own "Relationship to Later Experiments" section named this direction: an experiment showing how a massive body's presence is what makes nearby spacetime curved, linking back to Experiment 2 (gravitational time dilation) and Experiment 3 (tidal effects) as two more consequences of the same curvature.
 
 The following were raised at proposal stage and confirmed by the owner (2026-09-27):
@@ -127,6 +129,8 @@ Each with choices "Get stronger" / "Get weaker" / "Stay the same". Not scored.
 ### Introductory text (as approved by the owner, `CLAUDE.md` §28.1)
 
 > **The question.** In Experiment 2, a "strength" slider controlled how much faster the ceiling clock ticked. In Experiment 3, a "convergence strength" slider controlled how much the two balls drifted together. Where do those numbers actually come from?
+>
+> **A daily-life picture.** Think of a trampoline. Set a bowling ball in the middle and it sags a little; swap it for a much heavier weight, or push the same ball closer to where you're standing, and the dip gets noticeably deeper. Mass and distance are exactly the two knobs this experiment turns — how much "stuff" is nearby, and how close it is — controlling how strongly they dent the same fabric of spacetime that Experiments 2 and 3 already showed you the effects of.
 >
 > **What happens.** You'll pick how massive a nearby body is, and how far away it is, and watch Experiment 2's clocks and Experiment 3's balls respond together — both driven by the same two choices.
 >

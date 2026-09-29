@@ -14,6 +14,8 @@ The final review against this specification (§21 Step 10) found and fixed three
 
 The introduction and tutor text below reflect these fixes and are what is currently implemented. The owner reviewed this wording line by line and approved it as written (2026-09-26), with no changes requested.
 
+A later, project-wide request (2026-09-29): a "Why even ask this" paragraph was added to the introduction, above, framing the question as testing the limits of Experiment 1's idealization. Approved by the owner as written (`CLAUDE.md` §28.1, 2026-09-29).
+
 ## Overview
 
 Experiment 1 of this phase showed that a ball dropped in a cabin at rest on a planet, and a ball dropped in a cabin accelerating through deep space, move identically — the equivalence principle. Experiment 2 extended that same idea to clocks, showing gravitational time dilation.
@@ -119,6 +121,8 @@ Choices: "They'll drift together" / "They'll stay the same distance apart" / "Th
 ### Introductory text (as implemented; not yet owner-approved line by line, `CLAUDE.md` §28.1)
 
 > **The question.** In Experiment 1, you saw that a ball falls the same way whether your cabin sits still under gravity or accelerates through space. Does that stay true no matter how big the cabin is?
+>
+> **Why even ask this.** It's tempting to assume Experiment 1's result — that gravity and acceleration are indistinguishable — must hold no matter how big your sealed cabin is. But "idealized and small" was quietly doing a lot of work in that experiment. This experiment puts that assumption under more strain: two balls, dropped side by side instead of just one, watched closely for any change in how far apart they are.
 >
 > **What happens.** The same two cabins as before — one on the ground, one in deep space with a rocket — but now each cabin drops two balls side by side, the same distance apart, at the same time. We'll watch whether that distance changes as they fall.
 >

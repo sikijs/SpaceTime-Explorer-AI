@@ -20,6 +20,8 @@ The owner then asked whether the tutor should distinguish this effect from Exper
 
 The owner then asked, after reading the explanation, why the redshift happens at all given that both clocks share the same acceleration, and asked for the answer with simple math and a daily-life example. Added: two further blocks, inserted between the existing redshift explanation and "A worked example" — "Why does the acceleration cause this stretching?" (a five-step numbered derivation of the fractional shift `a × h / c²` from light's transit time `h/c` and the speed the cabin gains during that transit, since light's speed doesn't depend on the emitter's speed) and "A daily-life picture" (a horn honked at an accelerating drone, where sound must keep catching up to a target that keeps getting faster). Approved by the owner and added to `src/components/GravitationalTimeDilationTutor.tsx`. The owner then asked for the five-step derivation verbatim as first drafted in conversation, rather than the condensed paragraph originally implemented; the paragraph was replaced with an ordered list using that exact wording.
 
+A later, project-wide request (2026-09-29): a "Why even ask this" paragraph was added to the introduction, above, grounding the question in the everyday assumption that height doesn't affect timekeeping. Approved by the owner as written (`CLAUDE.md` §28.1, 2026-09-29).
+
 ## Overview
 
 Experiment 1 of this phase ("The Equivalence Principle") showed the learner that a ball dropped in a cabin at rest under gravity, and a ball dropped in a cabin accelerating through deep space, move identically — so a sealed observer can't tell the two situations apart.
@@ -109,6 +111,8 @@ Choices: "The same rate" / "Different rates." Not scored. The run control is dis
 ### Introductory text (as approved by the owner, `CLAUDE.md` §28.1)
 
 > **The question.** In Experiment 1 you saw that a ball falls the same way whether you're sitting still under gravity or accelerating through empty space. Now let's ask about clocks instead of balls: if two clocks sit at different heights in that same accelerating rocket, do they tick at the same rate?
+>
+> **Why even ask this.** In everyday life, a clock on your kitchen counter and a clock on a high shelf are assumed to tick at exactly the same rate — height seems completely irrelevant to timekeeping. This experiment checks whether that assumption survives once we apply Experiment 1's discovery — that gravity and acceleration are indistinguishable — to clocks instead of a falling ball.
 >
 > **What happens.** The same rocket cabin from before, this time with one clock fixed to the floor and one fixed to the ceiling. As the rocket accelerates, we'll count how many ticks each clock registers.
 >

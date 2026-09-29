@@ -239,6 +239,13 @@ export function GpsTimeDilationExperiment({ onComplete, onTutorComplete }: GpsTi
             clock up. Which one wins for a real satellite?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> Think of a swimmer caught between a downstream
+            current and a headwind blowing the opposite way — which direction they actually end up
+            drifting depends on which push is stronger at that particular moment. A GPS satellite's
+            clock is caught in exactly this kind of tug-of-war, between the two relativistic effects
+            you've already met separately, in Experiments 2 and 3/4.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> You'll choose an orbital altitude. From that one
             number, we calculate the satellite's real orbital speed (as in Experiment 6), and
             from that, both relativistic effects on its clock — using real Earth numbers, not

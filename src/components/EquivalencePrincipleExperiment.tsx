@@ -246,6 +246,14 @@ export function EquivalencePrincipleExperiment({ onComplete, onTutorComplete }: 
             rocket pushing it?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> When a car accelerates forward, you feel pressed
+            back into your seat — almost as if an invisible hand were pushing you backward. If that
+            car were a windowless cabin, that push would feel exactly like a weak sideways gravity,
+            not like acceleration at all. This experiment sets up that same substitution more
+            carefully — not for the feeling in your own body, but for a dropped ball, watched inside
+            two sealed cabins side by side.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What happens.</strong> Cabin A sits on the ground, where gravity pulls the ball down.
             Cabin B is in deep space, far from any planet — nothing is pulling on it — but a rocket
             engine is pushing the cabin (and its floor) forward at a steady rate. In both cabins,
