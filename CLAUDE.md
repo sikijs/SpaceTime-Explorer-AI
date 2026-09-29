@@ -740,7 +740,7 @@ Gravity and Curved Spacetime's Experiment 9 ("Real Clocks in Orbit (GPS and the 
 
 This is the confirmed closing experiment of the "Gravity and Curved Spacetime" chapter and of the project's current two-chapter arc as a whole. Per §23 Stage 6, Experiment 9's final review against `docs/PROJECT.md`, `AGENTS.md`, and its own specification (§21 Step 10) is complete (2026-09-29): no gaps found. All of Experiment 9's spec, physics, UI, tutor, and App.tsx wiring were already committed to git (`265488d`, `438b71a`). A housekeeping pass also removed stale "draft placeholder, not yet approved" comments left over in `src/App.tsx`'s chapter-summary list on several already-approved experiments (4 through 9 of this chapter).
 
-Per §23 Stage 6, the remaining decision is, at the owner's discretion, whether to propose a further chapter (e.g. gravitational waves) or leave the project at its current two-chapter arc.
+Per §23 Stage 6, Claude proposed a further chapter (2026-09-29): a new "Gravitational Waves" phase, its Experiment 1 ("Ripples in Spacetime: Gravitational Waves"). Its "Decisions Needing Human Review" items were confirmed with the owner in conversation, and a specification was then written per §23 Stage 3: `docs/experiments/gravitational-waves/01-gravitational-waves.md`. **The owner approved this specification as written (§23 Stage 4, 2026-09-29). Nothing has been implemented yet.** Per §23 Stage 5 and §6 (one-step-at-a-time), implementation proceeds as: 1. physics model, 2. physics tests, 3. basic UI, 4. connect UI and physics, 5. learner interaction, 6. results, 7. AI tutor, 8. complete-flow testing, 9. final review — one step per authorization, starting with the physics model.
 
 Do not proceed beyond that milestone without explicit authorization.
 
