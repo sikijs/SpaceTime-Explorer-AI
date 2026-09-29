@@ -21,6 +21,7 @@ import { OrbitExperiment } from './components/OrbitExperiment'
 import { BlackHoleExperiment } from './components/BlackHoleExperiment'
 import { LightBendingExperiment } from './components/LightBendingExperiment'
 import { GpsTimeDilationExperiment } from './components/GpsTimeDilationExperiment'
+import { GravitationalWaveExperiment } from './components/GravitationalWaveExperiment'
 
 interface Chapter {
   title: string
@@ -35,7 +36,7 @@ interface Chapter {
 // The order groups appear in the sidebar. A group with no chapters yet (its next
 // experiment's specification not yet approved) still gets a heading, so the learner can see
 // what's coming, but no chapter list beneath it.
-const groupOrder = ['Relativity of Time and Motion', 'Gravity and Curved Spacetime']
+const groupOrder = ['Relativity of Time and Motion', 'Gravity and Curved Spacetime', 'Gravitational Waves']
 
 const chapters: Chapter[] = [
   {
@@ -197,6 +198,14 @@ const chapters: Chapter[] = [
     learned:
       "A satellite's clock is pulled two ways at once: its speed slows it down (Experiment 3/4's effect), and its altitude speeds it up (Experiment 2's effect). Which one wins depends on altitude — below about 3,186 km the speed effect wins, above it the altitude effect wins. Real GPS satellites orbit well above that crossover, so their clocks really do run about 38 millionths of a second fast every day, a correction real GPS receivers apply. This is the first calculation in the whole project using real Earth numbers rather than an abstracted stand-in — and, in the closing section on this page, the two theories behind everything in this journey, special and general relativity, are named and explained in full for the first time.",
     next: 'This is the last experiment in this two-chapter journey — see "Putting It All Together" on this page for the full picture.',
+  },
+  {
+    title: 'Ripples in Spacetime: Gravitational Waves',
+    group: 'Gravitational Waves',
+    Component: GravitationalWaveExperiment,
+    learned:
+      "A gravitational wave is a ripple of spacetime curvature traveling outward from a violently accelerating mass, like two colliding black holes. As it passes, it stretches space one way while squeezing the perpendicular way, then swaps back and forth — the same kind of curvature effect as Experiment 4's converging travelers, just moving instead of fixed in place. LIGO actually detected one in 2015, using detectors built in exactly this L-shape.",
+    next: 'This is currently the last experiment in the project.',
   },
 ]
 
