@@ -36,18 +36,123 @@ function armEndPoint(axis: 'x' | 'y', armLength: number) {
     : { x: CORNER.x, y: CORNER.y - pixels }
 }
 
+type DirectionChoice = 'same-way' | 'opposite-ways'
+type AfterChoice = 'longer' | 'shorter' | 'back-to-original'
+
+const directionChoices: Array<{ value: DirectionChoice; label: string }> = [
+  { value: 'same-way', label: 'Both arms do the same thing at the same time' },
+  { value: 'opposite-ways', label: 'The two arms do opposite things' },
+]
+
+const afterChoices: Array<{ value: AfterChoice; label: string }> = [
+  { value: 'longer', label: 'Longer than they started' },
+  { value: 'shorter', label: 'Shorter than they started' },
+  { value: 'back-to-original', label: 'Back to their original length' },
+]
+
+function DirectionQuestion({
+  selected,
+  submitted,
+  onSelect,
+  disabled,
+}: {
+  selected: DirectionChoice | null
+  submitted: DirectionChoice | null
+  onSelect: (choice: DirectionChoice) => void
+  disabled: boolean
+}) {
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+        When a gravitational wave passes through the two perpendicular arms, do you think both
+        arms stretch and squeeze together (the same way, at the same time), or do they do opposite
+        things?
+      </p>
+      <div style={{ marginBottom: '0.5rem' }}>
+        {directionChoices.map((choice) => (
+          <button
+            key={choice.value}
+            onClick={() => onSelect(choice.value)}
+            disabled={disabled}
+            className={`toggle-button${selected === choice.value ? ' is-selected' : ''}`}
+            style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+          >
+            {choice.label}
+          </button>
+        ))}
+      </div>
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        {selected || submitted
+          ? `Your prediction: ${directionChoices.find((c) => c.value === (selected ?? submitted))!.label}`
+          : 'Choose an option to continue'}
+      </p>
+    </div>
+  )
+}
+
+function AfterQuestion({
+  selected,
+  submitted,
+  onSelect,
+  disabled,
+}: {
+  selected: AfterChoice | null
+  submitted: AfterChoice | null
+  onSelect: (choice: AfterChoice) => void
+  disabled: boolean
+}) {
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+        After the wave has completely passed, do you think the arms end up longer than they
+        started, shorter, or back to their original length?
+      </p>
+      <div style={{ marginBottom: '0.5rem' }}>
+        {afterChoices.map((choice) => (
+          <button
+            key={choice.value}
+            onClick={() => onSelect(choice.value)}
+            disabled={disabled}
+            className={`toggle-button${selected === choice.value ? ' is-selected' : ''}`}
+            style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+          >
+            {choice.label}
+          </button>
+        ))}
+      </div>
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        {selected || submitted
+          ? `Your prediction: ${afterChoices.find((c) => c.value === (selected ?? submitted))!.label}`
+          : 'Choose an option to continue'}
+      </p>
+    </div>
+  )
+}
+
 export function GravitationalWaveExperiment(_props: GravitationalWaveExperimentProps) {
   const [amplitude, setAmplitude] = useState(0.2)
   const [frequency, setFrequency] = useState(1)
   const [status, setStatus] = useState<ExperimentStatus>('idle')
   const [simulatedTime, setSimulatedTime] = useState(0)
 
+  const [directionPrediction, setDirectionPrediction] = useState<DirectionChoice | null>(null)
+  const [afterPrediction, setAfterPrediction] = useState<AfterChoice | null>(null)
+  const [submittedDirectionPrediction, setSubmittedDirectionPrediction] = useState<DirectionChoice | null>(null)
+  const [submittedAfterPrediction, setSubmittedAfterPrediction] = useState<AfterChoice | null>(null)
+
+  const hasAllPredictions = directionPrediction !== null && afterPrediction !== null
+  const hasSubmittedPredictions = submittedDirectionPrediction !== null
+
   const isRunning = status === 'running'
   const displayedTime = isRunning || status === 'complete' ? simulatedTime : 0
   const state = gravitationalWaveStateAt(displayedTime, amplitude, frequency)
 
   const handleRun = () => {
-    if (isRunning) return
+    if (!hasAllPredictions || isRunning) return
+    if (!hasSubmittedPredictions) {
+      setSubmittedDirectionPrediction(directionPrediction)
+      setSubmittedAfterPrediction(afterPrediction)
+    }
     setStatus('running')
   }
 
@@ -118,6 +223,19 @@ export function GravitationalWaveExperiment(_props: GravitationalWaveExperimentP
           </ul>
         </div>
 
+        <DirectionQuestion
+          selected={directionPrediction}
+          submitted={submittedDirectionPrediction}
+          onSelect={setDirectionPrediction}
+          disabled={hasSubmittedPredictions}
+        />
+        <AfterQuestion
+          selected={afterPrediction}
+          submitted={submittedAfterPrediction}
+          onSelect={setAfterPrediction}
+          disabled={hasSubmittedPredictions}
+        />
+
         <label htmlFor="wave-amplitude" style={{ display: 'block', marginBottom: '0.5rem' }}>
           Wave amplitude: {amplitude.toFixed(2)}
         </label>
@@ -128,7 +246,7 @@ export function GravitationalWaveExperiment(_props: GravitationalWaveExperimentP
           max={0.4}
           step={0.01}
           value={amplitude}
-          disabled={isRunning}
+          disabled={!hasAllPredictions || isRunning}
           onChange={(event) => setAmplitude(Number(event.target.value))}
           style={{ width: '100%' }}
         />
@@ -146,7 +264,7 @@ export function GravitationalWaveExperiment(_props: GravitationalWaveExperimentP
           max={2}
           step={0.05}
           value={frequency}
-          disabled={isRunning}
+          disabled={!hasAllPredictions || isRunning}
           onChange={(event) => setFrequency(Number(event.target.value))}
           style={{ width: '100%' }}
         />
@@ -157,7 +275,7 @@ export function GravitationalWaveExperiment(_props: GravitationalWaveExperimentP
               key={preset.label}
               type="button"
               className="toggle-button"
-              disabled={isRunning}
+              disabled={!hasAllPredictions || isRunning}
               onClick={() => {
                 setAmplitude(preset.amplitude)
                 setFrequency(preset.frequency)
@@ -173,11 +291,16 @@ export function GravitationalWaveExperiment(_props: GravitationalWaveExperimentP
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={isRunning}
+          disabled={!hasAllPredictions || isRunning}
           style={{ marginTop: '1rem', padding: '0.6rem 1.5rem' }}
         >
           {isRunning ? 'Running...' : 'Run'}
         </button>
+        {!hasAllPredictions && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Answer both predictions above to try the controls.
+          </p>
+        )}
 
         <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.875rem' }}>
           Strain: {state.strain.toFixed(3)} &nbsp;|&nbsp; Arm X length: {state.armXLength.toFixed(3)}{' '}
