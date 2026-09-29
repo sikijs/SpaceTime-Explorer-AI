@@ -38,6 +38,15 @@ const TIME_STEP = 0.01
 // Specific orbital energy above this (in units of GM / initialDistance) counts as "unbound",
 // allowing for the integrator's small energy drift over many steps.
 const ENERGY_TOLERANCE_FACTOR = 1e-6
+// An unbound trajectory launched at periapsis has positive radial velocity from essentially
+// the very next integration step onward (radial velocity is exactly zero only at that starting
+// instant), so the energy/radial-velocity escape check alone can be satisfied after just one
+// step, well before the object has traveled far enough to visibly show it flying away. Requiring
+// it to also have reached this multiple of its starting distance keeps the escape classification
+// (based on the same physical criterion) but gives the trajectory enough length to animate —
+// chosen generously (not just past the minimum needed to confirm escape) so the display, which
+// zooms out to fit the whole computed trajectory, shows a fuller sweep of the escape curve.
+const ESCAPE_CONFIRMATION_DISTANCE_FACTOR = 8
 
 function accelerationAt(
   x: number,
@@ -111,7 +120,11 @@ export function runOrbitExperiment(
 
     const radialVelocity = (x * vx + y * vy) / r
     const energy = specificEnergy(x, y, vx, vy, gravitationalParameter)
-    if (energy > energyTolerance && radialVelocity > 0) {
+    if (
+      energy > energyTolerance &&
+      radialVelocity > 0 &&
+      r >= ESCAPE_CONFIRMATION_DISTANCE_FACTOR * initialDistance
+    ) {
       outcome = 'escapes'
       break
     }

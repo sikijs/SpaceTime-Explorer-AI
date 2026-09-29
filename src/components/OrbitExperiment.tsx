@@ -33,12 +33,30 @@ function outcomeLabel(choice: OutcomeChoice): string {
   return outcomeChoices.find((c) => c.value === choice)!.label.toLowerCase()
 }
 
-function pointToView(x: number, y: number): { cx: number; cy: number } {
-  const scale = VIEW_SIZE / 2 / WORLD_HALF_EXTENT
+function pointToView(x: number, y: number, worldHalfExtent: number): { cx: number; cy: number } {
+  const scale = VIEW_SIZE / 2 / worldHalfExtent
   return {
     cx: VIEW_SIZE / 2 + x * scale,
     cy: VIEW_SIZE / 2 - y * scale,
   }
+}
+
+// For a trajectory that's confirmed to escape (and so is deliberately stopped once that's
+// clear, rather than simulated forever), extends a straight ray from its last computed point,
+// in its last direction of travel, out to the edge of the world box — purely a visual cue that
+// the object keeps going forever, off-screen, not a further physics calculation.
+function escapeTrailEndpoint(
+  from: { x: number; y: number },
+  direction: { x: number; y: number },
+  worldHalfExtent: number
+): { x: number; y: number } {
+  const candidates: number[] = []
+  if (direction.x > 0) candidates.push((worldHalfExtent - from.x) / direction.x)
+  if (direction.x < 0) candidates.push((-worldHalfExtent - from.x) / direction.x)
+  if (direction.y > 0) candidates.push((worldHalfExtent - from.y) / direction.y)
+  if (direction.y < 0) candidates.push((-worldHalfExtent - from.y) / direction.y)
+  const t = Math.min(...candidates.filter((value) => value > 0))
+  return { x: from.x + t * direction.x, y: from.y + t * direction.y }
 }
 
 function OutcomeQuestion({
@@ -168,6 +186,18 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
     setRunCount((count) => count + 1)
   }
 
+  // Re-opens the three prediction questions for editing (keeping the learner's current choices
+  // visible) and clears the result/tutor, which are gated on the submitted predictions, without
+  // resetting the chosen push strength.
+  const handleChangePredictions = () => {
+    setSubmittedSlowPrediction(null)
+    setSubmittedFastPrediction(null)
+    setSubmittedInBetweenPrediction(null)
+    setStatus('idle')
+    setResult(null)
+    setVisiblePointCount(0)
+  }
+
   useEffect(() => {
     if (status !== 'running' || !result) return
 
@@ -193,17 +223,38 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
     return () => cancelAnimationFrame(frameId)
   }, [status, result, onComplete])
 
+  // Zoom out to fit the whole run's path (known upfront, before the animation reveals it
+  // point by point) so an escaping object never flies off the visible frame — while staying at
+  // least as tight as the default view for ordinary bound orbits, which stay close to the mass.
+  // A modest margin, so the computed path stops just short of the edge rather than appearing to
+  // be clipped by it — the dashed escape trail below (not more physics) then visually continues
+  // from there to the true edge, making clear the object keeps going forever, off-screen.
+  const trajectoryExtent = result
+    ? Math.max(...result.trajectory.map((point) => Math.max(Math.abs(point.x), Math.abs(point.y))))
+    : INITIAL_DISTANCE
+  const worldHalfExtent = Math.max(WORLD_HALF_EXTENT, trajectoryExtent * 1.08)
+
   const visiblePoints = result ? result.trajectory.slice(0, visiblePointCount) : []
   const pathPoints = visiblePoints.map((point) => {
-    const { cx, cy } = pointToView(point.x, point.y)
+    const { cx, cy } = pointToView(point.x, point.y, worldHalfExtent)
     return `${cx},${cy}`
   })
   const currentPoint = visiblePoints[visiblePoints.length - 1]
   const currentPosition = currentPoint
-    ? pointToView(currentPoint.x, currentPoint.y)
-    : pointToView(INITIAL_DISTANCE, 0)
+    ? pointToView(currentPoint.x, currentPoint.y, worldHalfExtent)
+    : pointToView(INITIAL_DISTANCE, 0, worldHalfExtent)
 
-  const massPoint = pointToView(0, 0)
+  const massPoint = pointToView(0, 0, worldHalfExtent)
+
+  const showEscapeTrail = isComplete && result && result.outcome === 'escapes' && result.trajectory.length >= 2
+  let escapeTrailViewPoint: { cx: number; cy: number } | null = null
+  if (showEscapeTrail && result) {
+    const last = result.trajectory[result.trajectory.length - 1]
+    const secondLast = result.trajectory[result.trajectory.length - 2]
+    const direction = { x: last.x - secondLast.x, y: last.y - secondLast.y }
+    const trailEnd = escapeTrailEndpoint(last, direction, worldHalfExtent)
+    escapeTrailViewPoint = pointToView(trailEnd.x, trailEnd.y, worldHalfExtent)
+  }
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
@@ -279,6 +330,29 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
           disabled={hasSubmittedPredictions}
         />
 
+        {hasSubmittedPredictions && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many different push
+              strengths as you like below — move the slider, then click "Run" again. Or, change
+              your predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePredictions}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
         <label htmlFor="orbit-speed" style={{ display: 'block', marginBottom: '0.5rem' }}>
           Push strength: {Math.round(speedFraction * 100)}% of circular-orbit speed
         </label>
@@ -309,10 +383,15 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
         )}
 
         <svg
-          width={VIEW_SIZE}
-          height={VIEW_SIZE}
           viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
-          style={{ marginTop: '1.5rem', border: '1px solid var(--border-color, #ccc)', overflow: 'hidden' }}
+          style={{
+            marginTop: '1.5rem',
+            border: '1px solid var(--border-color, #ccc)',
+            overflow: 'hidden',
+            width: '100%',
+            maxWidth: `${VIEW_SIZE}px`,
+            height: 'auto',
+          }}
         >
           <circle cx={massPoint.cx} cy={massPoint.cy} r={6} fill="currentColor" />
           {result && (
@@ -324,8 +403,25 @@ export function OrbitExperiment({ onComplete, onTutorComplete }: OrbitExperiment
               opacity={0.85}
             />
           )}
+          {escapeTrailViewPoint && (
+            <line
+              x1={currentPosition.cx}
+              y1={currentPosition.cy}
+              x2={escapeTrailViewPoint.cx}
+              y2={escapeTrailViewPoint.cy}
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+              opacity={0.5}
+            />
+          )}
           <circle cx={currentPosition.cx} cy={currentPosition.cy} r={4} fill="currentColor" />
         </svg>
+        {showEscapeTrail && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+            The dashed line shows the object continuing onward forever, off screen — not coming back.
+          </p>
+        )}
 
         {isComplete && result && submittedSlowPrediction && submittedFastPrediction && submittedInBetweenPrediction && (
           <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
