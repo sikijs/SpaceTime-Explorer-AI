@@ -118,14 +118,14 @@ function SpacetimeDiagram({ diagram, animTime }: DiagramProps) {
     />
   )
 
-  const eventDot = (point: WorldlinePoint, key: string, labelSide: 'left' | 'right') => (
+  const eventDot = (point: WorldlinePoint, key: string, labelSide: 'left' | 'right', color: string) => (
     <g key={key}>
-      <circle cx={xPix(point.position)} cy={yPix(point.time)} r="5" fill="#2e7d32" />
+      <circle cx={xPix(point.position)} cy={yPix(point.time)} r="5" fill={color} />
       <text
         x={xPix(point.position) + (labelSide === 'left' ? -8 : 8)}
         y={yPix(point.time) + 4}
         fontSize="13"
-        fill="#2e7d32"
+        fill={color}
         textAnchor={labelSide === 'left' ? 'end' : 'start'}
       >
         {point.time.toFixed(3)} s
@@ -144,13 +144,16 @@ function SpacetimeDiagram({ diagram, animTime }: DiagramProps) {
       <line x1={xPix(0)} y1={MARGIN} x2={xPix(0)} y2={height - MARGIN} stroke="#ccc" strokeWidth={1} strokeDasharray="2 3" />
       <circle cx={xPix(0)} cy={yPix(0)} r="4" fill="#e6a700" />
 
-      {line(diagram.backWorldline[0], pointAt(diagram.backWorldline[0], diagram.backWorldline[1], animTime), '#333', false, 'back')}
-      {line(diagram.frontWorldline[0], pointAt(diagram.frontWorldline[0], diagram.frontWorldline[1], animTime), '#333', false, 'front')}
-      {line(diagram.leftLightWorldline[0], pointAt(diagram.leftLightWorldline[0], diagram.leftLightWorldline[1], animTime), '#e6a700', true, 'left-light')}
-      {line(diagram.rightLightWorldline[0], pointAt(diagram.rightLightWorldline[0], diagram.rightLightWorldline[1], animTime), '#e6a700', true, 'right-light')}
+      {/* Back end (blue) and front end (purple) get one consistent color each, carried through
+          their worldline, the light ray that reaches them, and their arrival-time dot — so the
+          learner can visually track "which end is which" without reading labels. */}
+      {line(diagram.backWorldline[0], pointAt(diagram.backWorldline[0], diagram.backWorldline[1], animTime), '#2563eb', false, 'back')}
+      {line(diagram.frontWorldline[0], pointAt(diagram.frontWorldline[0], diagram.frontWorldline[1], animTime), '#7c3aed', false, 'front')}
+      {line(diagram.leftLightWorldline[0], pointAt(diagram.leftLightWorldline[0], diagram.leftLightWorldline[1], animTime), '#2563eb', true, 'left-light')}
+      {line(diagram.rightLightWorldline[0], pointAt(diagram.rightLightWorldline[0], diagram.rightLightWorldline[1], animTime), '#7c3aed', true, 'right-light')}
 
-      {animTime >= diagram.backEvent.time && eventDot(diagram.backEvent, 'back-event', 'left')}
-      {animTime >= diagram.frontEvent.time && eventDot(diagram.frontEvent, 'front-event', 'right')}
+      {animTime >= diagram.backEvent.time && eventDot(diagram.backEvent, 'back-event', 'left', '#2563eb')}
+      {animTime >= diagram.frontEvent.time && eventDot(diagram.frontEvent, 'front-event', 'right', '#7c3aed')}
     </svg>
   )
 }
@@ -249,13 +252,14 @@ export function Experiment8({ onComplete, onTutorComplete }: Experiment8Props) {
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>One rod, two worldlines.</strong> This experiment uses the same rigid rod as
             Experiment 7: it doesn't stretch or bend, and both of its ends move together at one
-            steady speed. But the rod still has two ends — a <strong>front end</strong> and a
-            {' '}<strong>back end</strong> — and they're never at the same position. Each end gets
-            traced separately, so the diagram shows two leaning lines, not one. They lean by the
-            same amount and stay the rod's own length apart, the whole time — just two "cruising
-            cars," side by side, at a fixed distance from each other. (The lean is about motion
-            through time, not the rod bending in space — freeze the diagram at any one moment and
-            the rod is still perfectly straight.)
+            steady speed. But the rod still has two ends — a{' '}
+            <strong style={{ color: '#7c3aed' }}>front end</strong> and a{' '}
+            <strong style={{ color: '#2563eb' }}>back end</strong> — and they're never at the same
+            position. Each end gets traced separately, in its own color below, so the diagram shows
+            two leaning lines, not one. They lean by the same amount and stay the rod's own length
+            apart, the whole time — just two "cruising cars," side by side, at a fixed distance
+            from each other. (The lean is about motion through time, not the rod bending in space —
+            freeze the diagram at any one moment and the rod is still perfectly straight.)
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Light's worldline.</strong> Light always travels at c, the same speed, in the
