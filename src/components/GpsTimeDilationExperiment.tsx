@@ -395,28 +395,6 @@ export function GpsTimeDilationExperiment({ onComplete, onTutorComplete }: GpsTi
                   dashed ring: crossover altitude (~{Math.round(CROSSOVER_ALTITUDE_KM).toLocaleString()} km)
                 </text>
               </svg>
-
-              <div style={{ fontSize: '0.875rem' }}>
-                <p style={{ margin: '0 0 0.4rem' }}>
-                  Orbital speed: <strong>{formatSpeed(liveResult.orbitalSpeedMetersPerSecond)}</strong>
-                </p>
-                <p style={{ margin: '0 0 0.4rem' }}>
-                  Speed effect: <strong>{formatMicrosecondsPerDay(liveResult.speedEffectFraction)}</strong>{' '}
-                  (slows the clock)
-                </p>
-                <p style={{ margin: '0 0 0.4rem' }}>
-                  Gravity effect: <strong>{formatMicrosecondsPerDay(liveResult.gravityEffectFraction)}</strong>{' '}
-                  (speeds up the clock)
-                </p>
-                <p style={{ margin: '0 0 0.4rem' }}>
-                  Net effect: <strong>{formatMicrosecondsPerDay(liveResult.netEffectFraction)}</strong> —{' '}
-                  {liveResult.netEffectFraction > 0
-                    ? 'the satellite clock runs fast'
-                    : liveResult.netEffectFraction < 0
-                      ? 'the satellite clock runs slow'
-                      : 'the two effects cancel'}
-                </p>
-              </div>
             </div>
 
             <button
