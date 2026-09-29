@@ -154,8 +154,6 @@ const chapters: Chapter[] = [
     title: 'Curved Spacetime',
     group: 'Gravity and Curved Spacetime',
     Component: CurvedSpacetimeExperiment,
-    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1); to be written
-    // alongside this experiment's tutor step.
     learned:
       "Two travelers walking dead straight, starting the same fixed distance apart, stay exactly the same distance apart on a flat surface, but drift together on a curved surface (a sphere) — purely from the surface's shape, with nothing pushing them sideways. Experiment 3's converging balls are the same kind of thing: their free-falling paths are as straight as gravity allows, and they converge because spacetime itself is curved near a planet, not flat. This is what curved spacetime means.",
     next: 'Next, we ask where that curvature actually comes from: a nearby mass, and how far away it is.',
@@ -164,7 +162,6 @@ const chapters: Chapter[] = [
     title: 'What Curves Spacetime?',
     group: 'Gravity and Curved Spacetime',
     Component: SpacetimeCurvatureSourceExperiment,
-    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
       "Experiments 2 and 3's abstracted 'strength' sliders were standing in for a real mass at a real distance all along — both effects grow stronger closer to a mass and for a bigger mass, though at different rates.",
     next: 'Next, we ask why planets orbit instead of falling straight into the Sun or flying off into space.',
@@ -173,7 +170,6 @@ const chapters: Chapter[] = [
     title: 'Why Do Planets Orbit Instead of Falling In?',
     group: 'Gravity and Curved Spacetime',
     Component: OrbitExperiment,
-    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
       'An orbit is not a special force holding something up — it is just falling under gravity, curved by the one push the object got at the start. The same mass and the same starting distance can make an object fall in, fly away, or orbit forever, depending only on how strong that starting push was. This is the same geodesic idea as Experiment 4, now curving around a mass instead of converging with another path.',
     next: 'Next, we ask what happens if a mass is so concentrated that not even light could escape it.',
@@ -182,7 +178,6 @@ const chapters: Chapter[] = [
     title: 'What Is a Black Hole?',
     group: 'Gravity and Curved Spacetime',
     Component: BlackHoleExperiment,
-    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
       "A black hole isn't a mysterious, different kind of object — it's what a mass becomes once it's concentrated enough that its escape speed would need to exceed the speed of light. Since nothing can go faster than light, nothing can escape from inside that boundary, the event horizon. It's the exact same escape-speed idea from Experiment 6, pushed to its physical limit. Real black holes are real, too — astronomers have directly imaged the region around two of them, using the Event Horizon Telescope.",
     next: 'Next, we ask whether gravity affects light in a different way: not just holding it back entirely, but bending its path when it only passes nearby.',
@@ -191,7 +186,6 @@ const chapters: Chapter[] = [
     title: 'Does Gravity Bend Light?',
     group: 'Gravity and Curved Spacetime',
     Component: LightBendingExperiment,
-    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1).
     learned:
       "Light passing near a mass, even without being aimed at it, has its path bent — gravity affects paths themselves, not just things that can be pulled to a stop. This experiment's ordinary-gravity simulation calculates one bending angle, but the real universe bends light exactly twice as much, because real gravity also curves space itself. That doubling is exactly what a 1919 solar eclipse expedition, led by Arthur Eddington, measured — the first confirmation of general relativity over Newtonian gravity — and this same bending, gravitational lensing, is now a routine astronomical tool.",
     next: 'Next, and last, we bring both chapters together: a real satellite clock experiencing both kinds of time dilation at once.',
@@ -200,8 +194,6 @@ const chapters: Chapter[] = [
     title: 'Real Clocks in Orbit (GPS and the Balance of Two Effects)',
     group: 'Gravity and Curved Spacetime',
     Component: GpsTimeDilationExperiment,
-    // Draft placeholder — not yet finalized or approved (CLAUDE.md §28.1), except the Closing
-    // Synthesis section quoted within GpsTimeDilationExperiment.tsx, which is approved as written.
     learned:
       "A satellite's clock is pulled two ways at once: its speed slows it down (Experiment 3/4's effect), and its altitude speeds it up (Experiment 2's effect). Which one wins depends on altitude — below about 3,186 km the speed effect wins, above it the altitude effect wins. Real GPS satellites orbit well above that crossover, so their clocks really do run about 38 millionths of a second fast every day, a correction real GPS receivers apply. This is the first calculation in the whole project using real Earth numbers rather than an abstracted stand-in — and, in the closing section on this page, the two theories behind everything in this journey, special and general relativity, are named and explained in full for the first time.",
     next: 'This is the last experiment in this two-chapter journey — see "Putting It All Together" on this page for the full picture.',
