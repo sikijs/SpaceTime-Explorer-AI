@@ -22,6 +22,7 @@ import { BlackHoleExperiment } from './components/BlackHoleExperiment'
 import { LightBendingExperiment } from './components/LightBendingExperiment'
 import { GpsTimeDilationExperiment } from './components/GpsTimeDilationExperiment'
 import { GravitationalWaveExperiment } from './components/GravitationalWaveExperiment'
+import { GravitationalWaveChirpExperiment } from './components/GravitationalWaveChirpExperiment'
 
 interface Chapter {
   title: string
@@ -205,6 +206,14 @@ const chapters: Chapter[] = [
     Component: GravitationalWaveExperiment,
     learned:
       "A gravitational wave is a ripple of spacetime curvature traveling outward from a violently accelerating mass, like two colliding black holes. As it passes, it stretches space one way while squeezing the perpendicular way, then swaps back and forth — the same kind of curvature effect as Experiment 4's converging travelers, just moving instead of fixed in place. LIGO actually detected one in 2015, using detectors built in exactly this L-shape.",
+    next: "Next, we model the wave the way a real inspiral actually produces it: building in both pitch and loudness right up to a final moment, instead of staying steady.",
+  },
+  {
+    title: 'The Chirp: A Wave That Builds',
+    group: 'Gravitational Waves',
+    Component: GravitationalWaveChirpExperiment,
+    learned:
+      "A real gravitational wave from an inspiraling pair \"chirps\": its pitch and loudness both rise as the two objects spiral closer together, right up to an idealized final moment, instead of arriving at one steady note. This happens because the pair orbits faster as it gets closer — the same \"closer and faster\" relationship the Orbit experiment already showed — and a faster orbit produces a faster-oscillating, stronger wave. A bigger mass pair follows this pattern on a shorter timescale, reaching its final moment sooner. LIGO's real 2015 detection, GW150914, was recognized as a chirp for exactly this reason, its pitch and loudness both rising over about two-tenths of a second before the two black holes merged.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
