@@ -223,6 +223,30 @@ export function GravitationalWaveEnergyExperiment({ onComplete, onTutorComplete 
             space itself, the same way the pond ripple handed off the splash's energy to the leaf.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why a wave, and not a straight line?</strong> A thrown ball carries its own
+            momentum in one direction, so it flies in a straight line, only toward wherever it was
+            aimed. A splash is different: the pond's water surrounds the source on every side, so the
+            disturbance has no single direction to follow — it spreads outward evenly in a widening
+            ring, not as one ray shot at a target. A gravitational wave spreads the same way, for the
+            same reason: spacetime surrounds the orbiting pair in every direction, so the disturbance
+            they create isn't aimed anywhere — it spreads outward through spacetime in all directions
+            at once, exactly as the pond's ripple spreads outward from the splash instead of shooting
+            off as a single beam.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why does it ripple instead of just pushing out evenly?</strong> Flick a rope once,
+            and a single hump travels down its length — a one-time pulse, not a wave. But shake the
+            rope back and forth, over and over, and a whole series of ripples travels down it instead,
+            because the far end keeps repeating whatever the near end just did, a moment later. A
+            gravitational wave ripples for the same reason: the orbiting pair isn't a one-time event —
+            they keep going around and around, over and over, in a repeating orbit. Each part of that
+            repeating orbit stretches and squeezes the nearby spacetime a little differently, and as
+            the pair keeps repeating its motion, the stretching and squeezing keeps repeating too,
+            carried outward one cycle at a time — an ongoing ripple, not a single push. (This is also
+            why the wave has a <em>pitch</em>, as Experiment 2 showed: one ripple per orbit, so a
+            faster orbit makes a higher-pitched wave.)
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             This experiment doesn't model the "leaf" end of that handoff — it just shows the source
             side: the orbiting pair's own energy draining away as the wave carries it off.
           </p>
