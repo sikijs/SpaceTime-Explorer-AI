@@ -23,6 +23,7 @@ import { LightBendingExperiment } from './components/LightBendingExperiment'
 import { GpsTimeDilationExperiment } from './components/GpsTimeDilationExperiment'
 import { GravitationalWaveExperiment } from './components/GravitationalWaveExperiment'
 import { GravitationalWaveChirpExperiment } from './components/GravitationalWaveChirpExperiment'
+import { GravitationalWaveEnergyExperiment } from './components/GravitationalWaveEnergyExperiment'
 
 interface Chapter {
   title: string
@@ -214,6 +215,14 @@ const chapters: Chapter[] = [
     Component: GravitationalWaveChirpExperiment,
     learned:
       "A real gravitational wave from an inspiraling pair \"chirps\": its pitch and loudness both rise as the two objects spiral closer together, right up to an idealized final moment, instead of arriving at one steady note. This happens because the pair orbits faster as it gets closer — the same \"closer and faster\" relationship the Orbit experiment already showed — and a faster orbit produces a faster-oscillating, stronger wave. A bigger mass pair follows this pattern on a shorter timescale, reaching its final moment sooner. LIGO's real 2015 detection, GW150914, was recognized as a chirp for exactly this reason, its pitch and loudness both rising over about two-tenths of a second before the two black holes merged.",
+    next: 'Next, we ask why the orbit shrinks at all: the wave itself drains the pair of real orbital energy.',
+  },
+  {
+    title: 'Where the Energy Comes From',
+    group: 'Gravitational Waves',
+    Component: GravitationalWaveEnergyExperiment,
+    learned:
+      "A gravitational wave is not a free side-effect of two objects orbiting each other — producing it costs the orbit real energy. Losing that orbital energy is what causes the pair to spiral closer together and orbit faster, which is why Experiment 2's chirp happens at all — this experiment shows the cause behind that already-observed effect. A bigger mass pair has more orbital energy to lose, which is part of why it produces a louder wave. LIGO's real GW150914 detection converted roughly 3 solar masses' worth of energy into gravitational waves in about two-tenths of a second, briefly releasing more power than the combined light of every star in the observable universe.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
