@@ -602,7 +602,7 @@ export function GravitationalWaveRealEventsExperiment({
             </p>
             {runSummary.presetId && (
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                {runSummary.presetId === 'gw170817'
+                {REAL_EVENT_PRESETS.find((preset) => preset.id === runSummary.presetId)!.hadLightCounterpart
                   ? 'GW170817 was also seen in light — a gamma-ray burst and a glowing afterglow — because neutron stars have surfaces and material that can radiate light when they collide.'
                   : 'GW150914 was not seen in light: merging black holes have no surface or material to radiate it.'}
               </p>
