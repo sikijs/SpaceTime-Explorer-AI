@@ -24,6 +24,7 @@ import { GpsTimeDilationExperiment } from './components/GpsTimeDilationExperimen
 import { GravitationalWaveExperiment } from './components/GravitationalWaveExperiment'
 import { GravitationalWaveChirpExperiment } from './components/GravitationalWaveChirpExperiment'
 import { GravitationalWaveEnergyExperiment } from './components/GravitationalWaveEnergyExperiment'
+import { GravitationalWaveRealEventsExperiment } from './components/GravitationalWaveRealEventsExperiment'
 
 interface Chapter {
   title: string
@@ -223,6 +224,14 @@ const chapters: Chapter[] = [
     Component: GravitationalWaveEnergyExperiment,
     learned:
       "A gravitational wave is not a free side-effect of two objects orbiting each other — producing it costs the orbit real energy. Losing that orbital energy is what causes the pair to spiral closer together and orbit faster, which is why Experiment 2's chirp happens at all — this experiment shows the cause behind that already-observed effect. A bigger mass pair has more orbital energy to lose, which is part of why it produces a louder wave. LIGO's real GW150914 detection converted roughly 3 solar masses' worth of energy into gravitational waves in about two-tenths of a second, briefly releasing more power than the combined light of every star in the observable universe.",
+    next: 'Next, we apply this same model to two real, named detections: a black-hole merger and a neutron-star merger.',
+  },
+  {
+    title: 'Comparing Two Real Events',
+    group: 'Gravitational Waves',
+    Component: GravitationalWaveRealEventsExperiment,
+    learned:
+      "The same chirp-and-energy-loss model from the last two experiments applies to any inspiraling pair — only the mass differs. GW150914's two black holes (tens of times the Sun's mass) produced a much louder, faster-rising, shorter chirp than GW170817's two neutron stars (each only a little heavier than the Sun). GW170817 was also seen in light — a gamma-ray burst and a glowing afterglow — because neutron stars have surfaces and material that can radiate light when they collide, while merging black holes do not. Seeing the same event through more than one channel, gravitational waves and light together, is called multi-messenger astronomy, and it let scientists pin down GW170817's location and distance far more precisely than the gravitational-wave signal alone could.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
