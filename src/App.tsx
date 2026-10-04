@@ -25,6 +25,7 @@ import { GravitationalWaveExperiment } from './components/GravitationalWaveExper
 import { GravitationalWaveChirpExperiment } from './components/GravitationalWaveChirpExperiment'
 import { GravitationalWaveEnergyExperiment } from './components/GravitationalWaveEnergyExperiment'
 import { GravitationalWaveRealEventsExperiment } from './components/GravitationalWaveRealEventsExperiment'
+import { GravitationalWaveRedshiftExperiment } from './components/GravitationalWaveRedshiftExperiment'
 
 interface Chapter {
   title: string
@@ -232,6 +233,14 @@ const chapters: Chapter[] = [
     Component: GravitationalWaveRealEventsExperiment,
     learned:
       "The same chirp-and-energy-loss model from the last two experiments applies to any inspiraling pair — only the mass differs. GW150914's two black holes (tens of times the Sun's mass) produced a much louder, faster-rising, shorter chirp than GW170817's two neutron stars (each only a little heavier than the Sun). GW170817 was also seen in light — a gamma-ray burst and a glowing afterglow — because neutron stars have surfaces and material that can radiate light when they collide, while merging black holes do not. Seeing the same event through more than one channel, gravitational waves and light together, is called multi-messenger astronomy, and it let scientists pin down GW170817's location and distance far more precisely than the gravitational-wave signal alone could.",
+    next: 'Next, we ask what happens if the source of a gravitational wave is moving away from the detector.',
+  },
+  {
+    title: 'Stretched by Motion',
+    group: 'Gravitational Waves',
+    Component: GravitationalWaveRedshiftExperiment,
+    learned:
+      "A source moving away from the detector stretches the wave it sends out to a lower frequency than it was emitted at — the Doppler effect, the same basic effect as a receding ambulance's siren dropping in pitch, now called a redshift. The real amount of stretching is somewhat more than that everyday Doppler effect alone would predict, because relativistic time dilation adds an extra stretch on top of it. This experiment only models that velocity-based piece; for a real, very distant detected event, the much larger contributor to its redshift is the separate cosmological expansion of space itself while the wave travels, not modeled here.",
     next: 'This is currently the last experiment in the project.',
   },
 ]

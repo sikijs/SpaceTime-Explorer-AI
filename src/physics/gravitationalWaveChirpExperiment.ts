@@ -16,6 +16,10 @@ export interface ChirpState {
   time: number
   frequency: number
   amplitude: number
+  // The accumulated phase (radians) used internally to compute strain, exposed so consumers can
+  // compare cycle counts between two different time inputs (e.g. Experiment 5's "beats behind"
+  // comparison) without duplicating accumulatedPhaseAt's own integration.
+  phase: number
   strain: number
   armXLength: number
   armYLength: number
@@ -96,5 +100,5 @@ export function chirpStateAt(
   const armXLength = BASE_ARM_LENGTH * (1 + strain / 2)
   const armYLength = BASE_ARM_LENGTH * (1 - strain / 2)
 
-  return { time, frequency, amplitude, strain, armXLength, armYLength }
+  return { time, frequency, amplitude, phase, strain, armXLength, armYLength }
 }
