@@ -27,6 +27,7 @@ import { GravitationalWaveEnergyExperiment } from './components/GravitationalWav
 import { GravitationalWaveRealEventsExperiment } from './components/GravitationalWaveRealEventsExperiment'
 import { GravitationalWaveRedshiftExperiment } from './components/GravitationalWaveRedshiftExperiment'
 import { GravitationalWaveTriangulationExperiment } from './components/GravitationalWaveTriangulationExperiment'
+import { GravitationalWaveStandardSirenExperiment } from './components/GravitationalWaveStandardSirenExperiment'
 
 interface Chapter {
   title: string
@@ -250,6 +251,14 @@ const chapters: Chapter[] = [
     Component: GravitationalWaveTriangulationExperiment,
     learned:
       "A single detector can tell you a gravitational wave arrived, but not which direction it came from. Because the wave travels at a fixed, finite speed and real detectors sit far apart on Earth, the same wave reaches the nearest detector first and the others slightly later — comparing those tiny arrival-time gaps across a network of detectors narrows down the direction, the same way a time gap between your two ears tells you which way a sound came from. This is how real discoveries like GW170817 (Experiment 4) could be matched to a patch of sky that telescopes could then point at.",
+    next: 'Next, we ask whether a gravitational wave can tell you how far away its source was.',
+  },
+  {
+    title: 'Standard Sirens',
+    group: 'Gravitational Waves',
+    Component: GravitationalWaveStandardSirenExperiment,
+    learned:
+      "A gravitational wave's amplitude weakens with distance, but the chirp's own shape depends only on mass, not distance — so comparing the two (a 'standard siren') reveals the distance to the source without any other distance measurement. Pairing that distance with a separately measured recession velocity gives an estimate of the Hubble constant, exactly as astronomers did with GW170817 (Experiment 4) in 2017 — the first-ever gravitational-wave measurement of cosmic expansion. GW150914 could not be used this way, since it had no light counterpart and so no host-galaxy recession velocity was ever measured for it.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
