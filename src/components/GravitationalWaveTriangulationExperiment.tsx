@@ -229,7 +229,10 @@ export function GravitationalWaveTriangulationExperiment({
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The question.</strong> A single detector can tell you that a gravitational wave
-            arrived. Can it tell you which direction it came from?
+            arrived. Can it tell you which direction it came from? This is exactly the problem
+            astronomers faced with GW170817 (Experiment 4) — knowing a signal had arrived wasn't
+            enough on its own. Working out roughly where it came from is what let telescopes
+            around the world point in the right direction and catch the matching light.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The everyday version of this idea.</strong> Imagine three friends standing far
