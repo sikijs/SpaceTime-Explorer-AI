@@ -26,6 +26,7 @@ import { GravitationalWaveChirpExperiment } from './components/GravitationalWave
 import { GravitationalWaveEnergyExperiment } from './components/GravitationalWaveEnergyExperiment'
 import { GravitationalWaveRealEventsExperiment } from './components/GravitationalWaveRealEventsExperiment'
 import { GravitationalWaveRedshiftExperiment } from './components/GravitationalWaveRedshiftExperiment'
+import { GravitationalWaveTriangulationExperiment } from './components/GravitationalWaveTriangulationExperiment'
 
 interface Chapter {
   title: string
@@ -241,6 +242,14 @@ const chapters: Chapter[] = [
     Component: GravitationalWaveRedshiftExperiment,
     learned:
       "A source moving away from the detector stretches the wave it sends out to a lower frequency than it was emitted at — the Doppler effect, the same basic effect as a receding ambulance's siren dropping in pitch, now called a redshift. The real amount of stretching is somewhat more than that everyday Doppler effect alone would predict, because relativistic time dilation adds an extra stretch on top of it. This experiment only models that velocity-based piece; for a real, very distant detected event, the much larger contributor to its redshift is the separate cosmological expansion of space itself while the wave travels, not modeled here.",
+    next: 'Next, we ask whether a single detector can tell you where a signal came from — or whether you need more than one.',
+  },
+  {
+    title: 'Triangulation',
+    group: 'Gravitational Waves',
+    Component: GravitationalWaveTriangulationExperiment,
+    learned:
+      "A single detector can tell you a gravitational wave arrived, but not which direction it came from. Because the wave travels at a fixed, finite speed and real detectors sit far apart on Earth, the same wave reaches the nearest detector first and the others slightly later — comparing those tiny arrival-time gaps across a network of detectors narrows down the direction, the same way a time gap between your two ears tells you which way a sound came from. This is how real discoveries like GW170817 (Experiment 4) could be matched to a patch of sky that telescopes could then point at.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
