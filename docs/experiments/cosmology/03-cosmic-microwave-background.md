@@ -1,6 +1,6 @@
 # Cosmology — Experiment 3: The Cosmic Microwave Background (The Afterglow of the Big Bang)
 
-**Status: approved (2026-10-06), per `CLAUDE.md` §23 Stages 1–4, following the completion of Cosmology Experiment 2 (The Big Bang). All four "Decisions Needing Human Review" items were confirmed by the owner in conversation; see "Decisions Confirmed." Not yet implemented.**
+**Status: approved (2026-10-06), per `CLAUDE.md` §23 Stages 1–4, following the completion of Cosmology Experiment 2 (The Big Bang). All four "Decisions Needing Human Review" items were confirmed by the owner in conversation; see "Decisions Confirmed." Implemented and approved (see "Implementation Notes").**
 
 This is the third experiment of the "Cosmology" chapter, proposed by Claude per `CLAUDE.md` §23 Stages 1–2 on 2026-10-06, following the completion of Experiment 2 (The Big Bang) and its subsequent horizon-problem/inflation addition.
 
@@ -176,4 +176,14 @@ This experiment closes the direct narrative thread Experiment 2's horizon-proble
 
 ## Implementation Notes
 
-Not yet implemented. Per `CLAUDE.md` §23 Stage 5 and §6, implementation proceeds one step at a time, starting with the physics model and its tests, once this specification is approved.
+Implemented one step at a time per `CLAUDE.md` §6, then complete-flow tested in a headless browser and finally reviewed against this specification, `docs/PROJECT.md`, and `AGENTS.md` (§21 Step 10, 2026-10-06). Committed to git (`b9bdd9b` physics and tests, `4c69d93` interface, predictions, results, tutor).
+
+- **Physics:** `src/physics/cosmicMicrowaveBackgroundExperiment.ts` exactly as specified (`cmbTemperatureKelvin`, `runCmbExperiment`, and the three constants). All five "Required Physics Tests" are covered, including the regression check that no import references `hubblesLawExperiment`.
+- **Interface:** `src/components/CosmicMicrowaveBackgroundExperiment.tsx` and `CosmicMicrowaveBackgroundTutor.tsx`, wired into `src/App.tsx` under "Cosmology". The Redshift control is two one-click presets (Today, Recombination) plus a Custom slider from 0 to 1089.8. The marker, temperature readout, and color swatch animate from Today back to the chosen redshift over a fixed 3 seconds (§11).
+- **Sky panel hidden until predictions are locked in.** The specification does not say when the sky panel appears, but showing it from the start would reveal the answer to the second prediction question (§12). It, and the "How to read this diagram" caption, appear once the first Run locks the predictions.
+- **First prediction is always checked against recombination,** not against the chosen moment. Otherwise a Today run (z = 0) would make the comparison meaningless.
+- **Final review found one gap, fixed:** the unit kelvin (K) and the symbol z were used without being defined (§15). One sentence for each was added to the introduction.
+- **Added at the owner's request, approved as written:** two introduction paragraphs ("Where this shows up in everyday life" and "Why it matters"). They state honestly that the CMB has no effect you can feel, and use the old analog TV static, the kitchen microwave oven contrast, and the 1965 accidental discovery. They also state roughly 400 CMB photons per cubic centimeter. The 400 figure and the TV-static claim (commonly cited as about 1% of the snow, worded here only as "a small part") are not in this specification's original text.
+- **A bug found during the complete-flow test:** the first build crashed to a blank page when the animation ended (`onTutorComplete` was referenced but missing from the component's destructured props). Fixed. The "chosen moment" label also overlapped the diagram title; the layout was moved down to fix it.
+- **Not verified:** a mid-animation frame (headless playback is throttled), and phone-width layout.
+- **Owner's line-by-line wording approval (§28.1): complete (2026-10-06),** approved as written, covering the introduction (including the added paragraphs), prediction prompts, caption, Results, tutor, and chapter summary.
