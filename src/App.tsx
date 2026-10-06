@@ -32,6 +32,7 @@ import { HubblesLawExperiment } from './components/HubblesLawExperiment'
 import { BigBangExperiment } from './components/BigBangExperiment'
 import { CosmicMicrowaveBackgroundExperiment } from './components/CosmicMicrowaveBackgroundExperiment'
 import { DarkMatterExperiment } from './components/DarkMatterExperiment'
+import { DarkEnergyExperiment } from './components/DarkEnergyExperiment'
 
 interface Chapter {
   title: string
@@ -300,6 +301,14 @@ const chapters: Chapter[] = [
     Component: DarkMatterExperiment,
     learned:
       "Orbit speed depends on the mass inside the orbit, so measuring how fast stars orbit weighs a galaxy. If only the visible matter counted, far-out stars should orbit more slowly, but their measured speeds stay high. The simplest explanation is unseen mass called dark matter, which pulls with gravity but gives off no light. It is inferred from its gravity alone, and what it is made of is still unknown.",
+    next: 'Next, back to the whole universe: has its expansion been speeding up or slowing down?',
+  },
+  {
+    title: 'Dark Energy',
+    group: 'Cosmology',
+    Component: DarkEnergyExperiment,
+    learned:
+      "Distant Type Ia supernovae, whose true brightness is known, look dimmer than a matter-only universe predicts, so they are farther away than expected: the expansion has been speeding up. Dark energy is the name for whatever drives this, estimated at about 70% of the universe's energy today. It is inferred from observations like this one, what it is remains unknown, and it is a different idea from dark matter.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
