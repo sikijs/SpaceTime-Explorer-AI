@@ -28,6 +28,8 @@ import { GravitationalWaveRealEventsExperiment } from './components/Gravitationa
 import { GravitationalWaveRedshiftExperiment } from './components/GravitationalWaveRedshiftExperiment'
 import { GravitationalWaveTriangulationExperiment } from './components/GravitationalWaveTriangulationExperiment'
 import { GravitationalWaveStandardSirenExperiment } from './components/GravitationalWaveStandardSirenExperiment'
+import { HubblesLawExperiment } from './components/HubblesLawExperiment'
+import { BigBangExperiment } from './components/BigBangExperiment'
 
 interface Chapter {
   title: string
@@ -42,7 +44,12 @@ interface Chapter {
 // The order groups appear in the sidebar. A group with no chapters yet (its next
 // experiment's specification not yet approved) still gets a heading, so the learner can see
 // what's coming, but no chapter list beneath it.
-const groupOrder = ['Relativity of Time and Motion', 'Gravity and Curved Spacetime', 'Gravitational Waves']
+const groupOrder = [
+  'Relativity of Time and Motion',
+  'Gravity and Curved Spacetime',
+  'Gravitational Waves',
+  'Cosmology',
+]
 
 const chapters: Chapter[] = [
   {
@@ -259,6 +266,22 @@ const chapters: Chapter[] = [
     Component: GravitationalWaveStandardSirenExperiment,
     learned:
       "A gravitational wave's amplitude weakens with distance, but the chirp's own shape depends only on mass, not distance — so comparing the two (a 'standard siren') reveals the distance to the source without any other distance measurement. Pairing that distance with a separately measured recession velocity gives an estimate of the Hubble constant, exactly as astronomers did with GW170817 (Experiment 4) in 2017 — the first-ever gravitational-wave measurement of cosmic expansion. GW150914 could not be used this way, since it had no light counterpart and so no host-galaxy recession velocity was ever measured for it.",
+    next: 'Next, a new chapter: Cosmology. If distant galaxies are all receding, what does that say about the universe as a whole?',
+  },
+  {
+    title: "Hubble's Law",
+    group: 'Cosmology',
+    Component: HubblesLawExperiment,
+    learned:
+      "Essentially every distant galaxy's light is redshifted, and the farther away a galaxy is, the more redshifted its light is — Hubble's Law. The cause is space itself expanding while the light travels, not a galaxy moving through space.",
+    next: "Next, we run that relationship backward in time: does every galaxy really point back to the same moment?",
+  },
+  {
+    title: 'The Big Bang',
+    group: 'Cosmology',
+    Component: BigBangExperiment,
+    learned:
+      "Running Hubble's Law backward in time, every galaxy's distance from us implies the same moment in the past — the 'Hubble time' — no matter how far away it is today. That naive, constant-speed estimate comes out close to the universe's real measured age, which is informative but not proof of the real expansion history.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
