@@ -1,6 +1,6 @@
 # Cosmology — Experiment 5: Dark Energy (Is the Expansion Speeding Up?)
 
-**Status: approved (2026-10-06), per `CLAUDE.md` §23 Stages 1–4, proposed by Claude following the completion of Cosmology Experiment 4. The topic was chosen by the owner from three options. The owner approved the specification as drafted; all eight former "Decisions Needing Human Review" items are confirmed as proposed (see "Further Decisions Confirmed"). Not yet implemented.**
+**Status: approved (2026-10-06), per `CLAUDE.md` §23 Stages 1–4, proposed by Claude following the completion of Cosmology Experiment 4. The topic was chosen by the owner from three options. The owner approved the specification as drafted; all eight former "Decisions Needing Human Review" items are confirmed as proposed (see "Further Decisions Confirmed"). Implemented; the owner approved the wording as written (2026-10-06). See "Implementation Notes."**
 
 This is the fifth experiment of the "Cosmology" chapter.
 
@@ -114,7 +114,7 @@ Values worked out from this model at H0 = 70 km/s/Mpc, for the specification and
 
 | Redshift | Distance, matter only (Mpc) | Distance, 70% dark energy (Mpc) | Brightness relative to matter-only |
 |---|---|---|---|
-| 0.2 | 896 | 980 | 0.84 |
+| 0.2 | 896 | 980 | 0.83 |
 | 0.5 | 2358 | 2833 | 0.69 |
 | 0.8 | 3926 | 5018 | 0.61 |
 
@@ -242,4 +242,16 @@ Possible further directions (none proposed here; each needs its own Stage 1–2 
 
 ## Implementation Notes
 
-Not yet implemented. The specification is approved. Per `CLAUDE.md` §23 Stage 5 and §6, implementation proceeds one step at a time, starting with the physics model and its tests.
+Implemented one step at a time per `CLAUDE.md` §6, then complete-flow tested in a headless browser (including mid-animation and phone-width checks) and finally reviewed against this specification, `docs/PROJECT.md`, and `AGENTS.md` (§21 Step 10, 2026-10-06). Committed to git (`f534da5` physics and tests, `98bfe56` interface, predictions, results, tutor).
+
+- **Physics:** `src/physics/darkEnergyExperiment.ts` as specified, with all nine "Required Physics Tests" covered by 10 tests. The numerical integral (Simpson's rule, 2000 steps) matches both closed-form cases (matter-only and all dark energy) to better than 1 part in 10⁹, and converges when the steps are doubled. It imports the Hubble constant and speed of light from `hubblesLawExperiment` unchanged.
+- **Correction to this specification (approved by the owner, 2026-10-06):** the table in "Physics Model" listed the brightness at redshift 0.2 as 0.84. That was worked out by hand from rounded distances; the model gives 0.835, so the table now reads 0.83. The other two rows were correct.
+- **Interface:** `src/components/DarkEnergyExperiment.tsx` and `DarkEnergyTutor.tsx`, wired into `src/App.tsx` under "Cosmology". Each supernova's glowing disk eases from the matter-only brightness to the chosen value over a fixed 4-second playback, so playback speed never changes the result (§11). The disk's area is drawn in proportion to brightness.
+- **Graph, matter-only rings, ring legend, and caption hidden until predictions are locked in,** so they do not reveal the answer to the second prediction (§12). "Change predictions" hides them again and keeps the chosen share. Before the lock, only plain glowing disks are shown.
+- **The "observed" curve is the best-fit model drawn as a reference line, not raw data,** as decided in "Further Decisions Confirmed" item 2. It is drawn on top of the learner's line so it stays visible when they coincide.
+- **Added or rewritten at the owner's request, approved as written:** the "How to read this diagram" caption was rewritten into a longer, step-by-step explanation (what each picture and each line shows, why dimmer means farther with a car-headlights example, why all lines meet at the left, and things to try), and the introduction gained a "More about Type Ia supernovae" paragraph (white dwarfs, the "Type Ia" label, why the explosions are standard candles, and the fade-speed correction).
+- **Final review found two gaps, fixed:** (1) the introduction used the term "flat" without defining it (§15); it now says space on the largest scales is not curved the way the sphere in Gravity and Curved Spacetime Experiment 4 was, so straight parallel paths stay parallel; (2) the Type Ia paragraph originally said the explosion shines "more than a whole galaxy of stars", which is wrong for large galaxies (about 4 billion Suns, comparable to a small galaxy); it now says "rivaling the light of an entire small galaxy of stars" (§8/§20).
+- **Found during the complete-flow test, fixed:** the first-prediction check in the Results panel read "gravity would slow it down the expansion"; it now reads that the learner was asked how gravity would affect the expansion and answered with the chosen option.
+- **Facts written from general knowledge and not checked against a source:** the Type Ia description (white dwarf size and mass, about 4 billion Suns at peak which was computed rather than looked up, brighter ones fading more slowly), the 1998–99 results and the 2011 Nobel Prize in Physics, and the 70% / 25% / 5% energy split. The owner approved the wording as written.
+- **Not verified:** the phone-width layout as an image (only the overflow was measured).
+- **Owner's line-by-line wording approval (§28.1): complete (2026-10-06),** approved as written, covering the introduction, prediction prompts, caption, Results, tutor, and chapter summary.
