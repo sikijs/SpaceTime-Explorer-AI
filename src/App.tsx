@@ -30,6 +30,7 @@ import { GravitationalWaveTriangulationExperiment } from './components/Gravitati
 import { GravitationalWaveStandardSirenExperiment } from './components/GravitationalWaveStandardSirenExperiment'
 import { HubblesLawExperiment } from './components/HubblesLawExperiment'
 import { BigBangExperiment } from './components/BigBangExperiment'
+import { CosmicMicrowaveBackgroundExperiment } from './components/CosmicMicrowaveBackgroundExperiment'
 
 interface Chapter {
   title: string
@@ -282,6 +283,14 @@ const chapters: Chapter[] = [
     Component: BigBangExperiment,
     learned:
       "Running Hubble's Law backward in time, every galaxy's distance from us implies the same moment in the past — the 'Hubble time' — no matter how far away it is today. That naive, constant-speed estimate comes out close to the universe's real measured age, which is informative but not proof of the real expansion history.",
+    next: 'Next, the oldest light there is: the Cosmic Microwave Background.',
+  },
+  {
+    title: 'The Cosmic Microwave Background',
+    group: 'Cosmology',
+    Component: CosmicMicrowaveBackgroundExperiment,
+    learned:
+      "About 380,000 years after the Big Bang, the universe became transparent, and that first light is still arriving today as the Cosmic Microwave Background. Stretched by the universe's expansion, it has cooled from about 3,000 K to 2.725 K, following the exact rule T = T0 × (1 + z). It looks almost the same temperature in every direction, the real observation behind the horizon problem.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
