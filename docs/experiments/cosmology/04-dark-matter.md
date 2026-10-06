@@ -1,6 +1,6 @@
 # Cosmology — Experiment 4: Dark Matter (Why Do Galaxies Spin Too Fast?)
 
-**Status: approved (2026-10-06), per `CLAUDE.md` §23 Stages 1–4, proposed by Claude following the completion of Cosmology Experiment 3. The owner approved the specification as drafted; all six former "Decisions Needing Human Review" items are confirmed as proposed (see "Decisions Confirmed"). Not yet implemented.**
+**Status: approved (2026-10-06), per `CLAUDE.md` §23 Stages 1–4, proposed by Claude following the completion of Cosmology Experiment 3. The owner approved the specification as drafted; all six former "Decisions Needing Human Review" items are confirmed as proposed (see "Decisions Confirmed"). Implemented; the owner approved the wording as written (2026-10-06). See "Implementation Notes."**
 
 This is the fourth experiment of the "Cosmology" chapter.
 
@@ -234,4 +234,16 @@ Possible further directions (none proposed here; each needs its own Stage 1–2 
 
 ## Implementation Notes
 
-Not yet implemented. The specification is approved. Per `CLAUDE.md` §23 Stage 5 and §6, implementation proceeds one step at a time, starting with the physics model and its tests.
+Implemented one step at a time per `CLAUDE.md` §6, then complete-flow tested in a headless browser and finally reviewed against this specification, `docs/PROJECT.md`, and `AGENTS.md` (§21 Step 10, 2026-10-06). Committed to git (`b6583e0` physics and tests, `ba76a74` interface, predictions, results, tutor).
+
+- **Physics:** `src/physics/darkMatterExperiment.ts` exactly as specified, with all nine "Required Physics Tests" covered by 10 tests. The gravitational constant was also checked independently by converting from SI units (4.3010×10⁻⁶ kpc (km/s)² per solar mass).
+- **Interface:** `src/components/DarkMatterExperiment.tsx` and `DarkMatterTutor.tsx`, wired into `src/App.tsx` under "Cosmology". Three marker stars orbit at the chosen model's speed for a fixed 1 billion years of simulated time, played back in 6 seconds, so playback speed never changes the result (§11). The tutor quotes its visible-only speeds from the physics module, not typed-in numbers.
+- **Graph and caption hidden until predictions are locked in,** so the graph does not reveal the answer to the first prediction (§12). "Change predictions" hides them again and keeps the chosen amount.
+- **The halo glow was made much stronger after owner feedback.** The first version (opacity about 27% at the matching amount, fading toward the edge) was too faint to see on the dark background. Any amount above zero is now clearly visible (opacity 45% rising to 100% at 2×), with a purple outline at the halo's edge. At zero the halo is drawn at opacity 0.
+- **Added at the owner's request, approved as written:** three introduction paragraphs ("Why even ask this", "A sealed-box picture", "How are the speeds measured?"). They deliberately avoid hinting at either prediction's answer. The Uranus and Neptune story (1846) and the "roughly five times as much as ordinary matter" figure were held back for the tutor, to avoid the same hint.
+- **Final review found two gaps, fixed:** (1) the introduction said the learner had "seen" in the Orbits experiment that orbit speed depends on mass, but that experiment held the mass fixed, so it never showed that; it now says what was actually found there (one "just right" speed for a given mass and distance) and states the mass dependence as a fact (§8/§20); (2) the orbiting stars were not labeled on the canvas, so a legend line was added (§14).
+- **Found during the complete-flow test, fixed:** the Results table was wider than a phone screen and pushed the page sideways by 72px; it is now in a horizontally scrolling box.
+- **Beyond the specification text, flagged and approved:** the tutor's Uranus and Neptune example (the specification's tutor outline did include the "about five times as much" figure).
+- **Facts written from general knowledge and not checked against a source:** Rubin and Ford's 1970s measurements (including Andromeda), the 1846 Uranus and Neptune story, Earth about 30 km/s and Neptune about 5.4 km/s, the MOND characterization, "roughly five times as much", and the Doppler measurement of orbit speeds. The owner approved the wording as written.
+- **Not verified:** a full-page phone-width layout as an image (only the overflow was measured), and the desktop look of the Results table on screen.
+- **Owner's line-by-line wording approval (§28.1): complete (2026-10-06),** approved as written, covering the introduction, prediction prompts, caption, Results, tutor, and chapter summary.
