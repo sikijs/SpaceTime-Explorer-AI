@@ -31,6 +31,7 @@ import { GravitationalWaveStandardSirenExperiment } from './components/Gravitati
 import { HubblesLawExperiment } from './components/HubblesLawExperiment'
 import { BigBangExperiment } from './components/BigBangExperiment'
 import { CosmicMicrowaveBackgroundExperiment } from './components/CosmicMicrowaveBackgroundExperiment'
+import { DarkMatterExperiment } from './components/DarkMatterExperiment'
 
 interface Chapter {
   title: string
@@ -291,6 +292,14 @@ const chapters: Chapter[] = [
     Component: CosmicMicrowaveBackgroundExperiment,
     learned:
       "About 380,000 years after the Big Bang, the universe became transparent, and that first light is still arriving today as the Cosmic Microwave Background. Stretched by the universe's expansion, it has cooled from about 3,000 K to 2.725 K, following the exact rule T = T0 × (1 + z). It looks almost the same temperature in every direction, the real observation behind the horizon problem.",
+    next: 'Next, we zoom in on a single galaxy: is the matter we can see all the matter there is?',
+  },
+  {
+    title: 'Dark Matter',
+    group: 'Cosmology',
+    Component: DarkMatterExperiment,
+    learned:
+      "Orbit speed depends on the mass inside the orbit, so measuring how fast stars orbit weighs a galaxy. If only the visible matter counted, far-out stars should orbit more slowly, but their measured speeds stay high. The simplest explanation is unseen mass called dark matter, which pulls with gravity but gives off no light. It is inferred from its gravity alone, and what it is made of is still unknown.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
