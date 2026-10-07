@@ -316,7 +316,6 @@ const chapters: Chapter[] = [
     title: 'The Age of the Universe',
     group: 'Cosmology',
     Component: UniverseAgeExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
     learned:
       "The age of the universe depends on its whole expansion history, not only today's rate. With matter only, the universe would be about two thirds of the Hubble time, too young. Dark energy makes it older, and about 70% gives an age close to the measured 13.8 billion years.",
     next: 'This is currently the last experiment in the project.',
