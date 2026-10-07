@@ -34,6 +34,7 @@ import { CosmicMicrowaveBackgroundExperiment } from './components/CosmicMicrowav
 import { DarkMatterExperiment } from './components/DarkMatterExperiment'
 import { DarkEnergyExperiment } from './components/DarkEnergyExperiment'
 import { UniverseAgeExperiment } from './components/UniverseAgeExperiment'
+import { GravitationalLensingExperiment } from './components/GravitationalLensingExperiment'
 
 interface Chapter {
   title: string
@@ -318,6 +319,15 @@ const chapters: Chapter[] = [
     Component: UniverseAgeExperiment,
     learned:
       "The age of the universe depends on its whole expansion history, not only today's rate. With matter only, the universe would be about two thirds of the Hubble time, too young. Dark energy makes it older, and about 70% gives an age close to the measured 13.8 billion years.",
+    next: 'Next, a second and independent way to find dark matter: weighing a galaxy cluster with light.',
+  },
+  {
+    title: 'Gravitational Lensing',
+    group: 'Cosmology',
+    Component: GravitationalLensingExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
+    learned:
+      "A mass between us and a distant galaxy bends its light into a ring, and the ring grows with the square root of the mass, so the ring weighs the cluster. The ring seen for a real cluster is about 2.6 times as wide as its visible matter could make, which needs about 6.7 times the visible mass. Most of the mass is unseen: dark matter, found without measuring any star's speed.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
