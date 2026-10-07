@@ -608,7 +608,9 @@ export function UniverseAgeExperiment({ onComplete, onTutorComplete }: UniverseA
               to say which is better. The grey line is a test every possible universe must pass, like a pot
               that cannot have been boiling for longer than the stove has existed. Look at where the blue
               dot lands compared with it. In the 1990s this clash between a matter-only universe and the
-              oldest stars was one of the clues that pointed toward dark energy. A dot to the right of the
+              oldest stars was one of the clues that pointed toward dark energy, and back then the cluster ages
+              were thought to be even higher (about 16 to 20 billion years) before being revised down to
+              about 12 to 13. A dot to the right of the
               grey line passes the test, but that only shows the universe is not too young, not that its age
               is exactly right. The 12.5 figure is a rounded value, so treat the line as a test, not a
               precise measurement.
@@ -717,7 +719,12 @@ export function UniverseAgeExperiment({ onComplete, onTutorComplete }: UniverseA
                 : 'That is a problem: the universe cannot be younger than the things inside it, so a universe like this one cannot be the real one.'}{' '}
               A matter-only universe is only {billions(result.matterOnlyAgeYears)} billion years old, younger
               than those clusters. In the 1990s that puzzle was one of the clues that pointed toward dark
-              energy, before the supernova results of Experiment 5 were announced.
+              energy, before the supernova results of Experiment 5 were announced. The puzzle was actually
+              sharper then: early-1990s estimates put the oldest clusters at about 16 to 20 billion years.
+              In 1995 the Hipparcos satellite's distance measurements showed the clusters were somewhat
+              farther away, and therefore brighter and younger, than thought, which lowered the estimates
+              to about 12 to 13 billion years. Even at that lower age, a matter-only universe is still too
+              young.
             </p>
             <p style={{ marginBottom: '0.5rem' }}>
               <strong>Why Experiment 2's estimate came out close.</strong> The constant-speed estimate was
