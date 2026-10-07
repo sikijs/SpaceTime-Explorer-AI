@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { UniverseAgeTutor } from './UniverseAgeTutor'
 import {
   BEST_FIT_DARK_ENERGY_FRACTION,
   GRAPH_MAX_YEARS,
@@ -41,7 +42,7 @@ const ACTUAL_MATTER_ONLY_AGE: MatterOnlyAgeChoice = 'shorter'
 const ACTUAL_DARK_ENERGY_AGE: DarkEnergyAgeChoice = 'older'
 
 // Fixed real-world playback duration (CLAUDE.md §11): playback speed never changes the result.
-const ANIMATION_DURATION_MS = 5000
+const ANIMATION_DURATION_MS = 9000
 
 // Graph geometry: relative size (vertical, today = 1) against time since the Big Bang (horizontal).
 const GRAPH_WIDTH = 560
@@ -68,12 +69,12 @@ function graphY(size: number): number {
 
 const billions = (years: number) => (years / 1e9).toFixed(2)
 
-export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
-  const { onComplete } = _props
+export function UniverseAgeExperiment({ onComplete, onTutorComplete }: UniverseAgeExperimentProps) {
   const [mode, setMode] = useState<ShareMode>('bestFit')
   const [customShare, setCustomShare] = useState(0.4)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [matterOnlyPrediction, setMatterOnlyPrediction] = useState<MatterOnlyAgeChoice | null>(null)
   const [darkEnergyPrediction, setDarkEnergyPrediction] = useState<DarkEnergyAgeChoice | null>(null)
@@ -103,6 +104,7 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((count) => count + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens both questions for editing without
@@ -465,17 +467,32 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
             x2={graphX(OLDEST_STARS_AGE_YEARS)}
             y2={GRAPH_BOTTOM}
             stroke={STARS_COLOR}
-            strokeDasharray="2 3"
-            opacity={0.7}
+            strokeWidth={1.5}
+            strokeDasharray="3 3"
           />
-          <text
-            x={graphX(OLDEST_STARS_AGE_YEARS) - 4}
-            y={GRAPH_BOTTOM - 8}
-            fill={STARS_COLOR}
-            fontSize="10"
-            textAnchor="end"
-          >
-            Oldest known star clusters (about {billions(OLDEST_STARS_AGE_YEARS)})
+          {/* The label sits to the right of the vertical line, joined to it by a short pointer, so it
+              reads as a label for that line and not for the time axis below. */}
+          <line
+            x1={graphX(OLDEST_STARS_AGE_YEARS)}
+            y1={graphY(0.45)}
+            x2={graphX(OLDEST_STARS_AGE_YEARS) + 12}
+            y2={graphY(0.45)}
+            stroke={STARS_COLOR}
+            strokeWidth={1.5}
+          />
+          <text fill={STARS_COLOR} fontSize="10">
+            <tspan x={graphX(OLDEST_STARS_AGE_YEARS) + 16} y={graphY(0.45) - 6}>
+              ◄ This vertical dotted line:
+            </tspan>
+            <tspan x={graphX(OLDEST_STARS_AGE_YEARS) + 16} y={graphY(0.45) + 7}>
+              age of the oldest known
+            </tspan>
+            <tspan x={graphX(OLDEST_STARS_AGE_YEARS) + 16} y={graphY(0.45) + 20}>
+              star clusters, about {(OLDEST_STARS_AGE_YEARS / 1e9).toFixed(1)}
+            </tspan>
+            <tspan x={graphX(OLDEST_STARS_AGE_YEARS) + 16} y={graphY(0.45) + 33}>
+              billion years
+            </tspan>
           </text>
 
           {/* The three versions of the universe's growth */}
@@ -489,8 +506,8 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
               <g key={m.key}>
                 <line x1={graphX(m.years)} y1={graphY(1)} x2={graphX(m.years)} y2={graphY(1) - m.lift + 4} stroke={m.color} strokeWidth={1} />
                 <circle cx={graphX(m.years)} cy={graphY(1)} r={5} fill={m.color} />
-                <text x={graphX(m.years)} y={graphY(1) - m.lift} fill={m.color} fontSize="10" fontWeight="600" textAnchor="middle">
-                  {m.name}: {billions(m.years)}
+                <text x={graphX(m.years)} y={graphY(1) - m.lift} fill={m.color} fontSize="10" fontWeight="600" textAnchor={graphX(m.years) > GRAPH_WIDTH - 110 ? 'end' : 'middle'}>
+                  {m.name}: {billions(m.years)} billion years
                 </text>
               </g>
             ) : null,
@@ -511,31 +528,106 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
         {hasSubmittedPrediction && (
         <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>How to read this diagram.</strong> The graph shows how big the universe was at each
-            moment since the Big Bang. "Size" here means the distances between galaxies compared with today,
-            so today's size is 1, and it is not the size of any physical object.
+            <strong>How to read this diagram.</strong> The graph tells the story of how big the universe has
+            been at each moment since the Big Bang, and asks one question of each version of the story: when
+            does it reach the size the universe has today? That moment is the age.
           </p>
-          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+
+          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
+            <strong>The two axes.</strong>
+          </p>
+          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
             <li>
-              Each line starts at size 0 at the Big Bang (left) and grows. The dot at the end of a line marks
-              the moment it reaches today's size, which is that version's age.
+              <strong>Across the bottom is time</strong>, counted from the Big Bang (on the far left) in
+              billions of years. Moving right means moving later in cosmic history.
             </li>
             <li>
-              <span style={{ color: CONSTANT_SPEED_COLOR }}>Purple dashed:</span> Experiment 2's picture, in
-              which the universe grew at one constant speed.
-            </li>
-            <li>
-              <span style={{ color: MATTER_ONLY_COLOR }}>Blue:</span> a universe containing only matter.
-            </li>
-            <li>
-              <span style={{ color: CHOSEN_COLOR }}>Gold:</span> a universe with the dark energy share you
-              chose. Move the control and watch its end dot move.
-            </li>
-            <li>
-              The faint grey dotted line marks the age of the oldest known star clusters (a rounded value). A
-              universe cannot be younger than the things inside it.
+              <strong>Up the side is the universe's relative size</strong>: how far apart galaxies were,
+              compared with today. The dashed line at 1 is "today's size". A height of 0.5 would mean galaxies
+              were half as far apart as now, and 0 is the Big Bang itself. It is not the size of any physical
+              object.
             </li>
           </ul>
+
+          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
+            <strong>The three lines.</strong> All three start at the same place, size 0 at the Big Bang, and
+            grow upward. They differ in how they grow.
+          </p>
+          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
+            <li>
+              <strong style={{ color: CONSTANT_SPEED_COLOR }}>Purple dashed line:</strong> Experiment 2's
+              picture, in which the universe grew at one constant speed. It is a perfectly straight line.
+            </li>
+            <li>
+              <strong style={{ color: MATTER_ONLY_COLOR }}>Blue line:</strong> a universe containing only
+              matter. Gravity slows its expansion, so it rises steeply at first and then flattens.
+            </li>
+            <li>
+              <strong style={{ color: CHOSEN_COLOR }}>Gold line:</strong> a universe with the dark energy
+              share you chose. Move the control and run again, and this line changes.
+            </li>
+          </ul>
+
+          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
+            <strong>The dots and their labels.</strong>
+          </p>
+          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
+            <li>
+              Each line stops at a dot on the dashed "today's size" line. The dot marks the moment that
+              version of the universe reaches today's size. <strong>The number in its label is that
+              version's age</strong>, in billions of years. The farther right the dot, the older the
+              universe.
+            </li>
+            <li>
+              The labels are stacked at different heights only so that they do not overlap when two ages are
+              close together.
+            </li>
+          </ul>
+
+          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
+            <strong>The grey dotted line.</strong>
+          </p>
+          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
+            <li>
+              It marks the age of the oldest known star clusters, about 12.5 billion years (a rounded value).
+              A universe cannot be younger than the things inside it, so any line whose dot sits{' '}
+              <em>to the left</em> of the grey line describes a universe that is too young to be the real
+              one.
+            </li>
+            <li>
+              <strong>Why it is there:</strong> without it, the graph shows three different ages and nothing
+              to say which is better. The grey line is a test every possible universe must pass, like a pot
+              that cannot have been boiling for longer than the stove has existed. Look at where the blue
+              dot lands compared with it. In the 1990s this clash between a matter-only universe and the
+              oldest stars was one of the clues that pointed toward dark energy. A dot to the right of the
+              grey line passes the test, but that only shows the universe is not too young, not that its age
+              is exactly right. The 12.5 figure is a rounded value, so treat the line as a test, not a
+              precise measurement.
+            </li>
+          </ul>
+
+          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
+            <strong>Things to try.</strong>
+          </p>
+          <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+            <li>
+              <strong>None (matter only):</strong> the gold line lies right on top of the blue line. Notice
+              where its dot lands compared with the purple dot, and with the grey line.
+            </li>
+            <li>
+              <strong>The best fit (about {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}%):</strong> the
+              gold dot moves far to the right of the blue dot. Compare it with the purple dot and with the
+              real measured age (13.8 billion years) in the readout above.
+            </li>
+            <li>
+              <strong>Custom:</strong> drag the slider and run again. As dark energy grows, does the gold
+              dot always move the same way?
+            </li>
+          </ul>
+          <p style={{ marginTop: '0.6rem', marginBottom: 0 }}>
+            The numbers in the labels and the readout are exact. The colors and the staggering of the labels
+            are there to help you compare.
+          </p>
         </div>
         )}
         {status === 'complete' && submittedMatterOnlyPrediction && submittedDarkEnergyPrediction && (
@@ -679,6 +771,15 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
           </div>
         )}
       </div>
+
+      {status === 'complete' && submittedMatterOnlyPrediction && submittedDarkEnergyPrediction && (
+        <UniverseAgeTutor
+          key={runCount}
+          predictedMatterOnly={submittedMatterOnlyPrediction}
+          predictedDarkEnergy={submittedDarkEnergyPrediction}
+          onExplained={onTutorComplete}
+        />
+      )}
     </div>
   )
 }
