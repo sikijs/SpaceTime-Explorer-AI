@@ -33,6 +33,7 @@ import { BigBangExperiment } from './components/BigBangExperiment'
 import { CosmicMicrowaveBackgroundExperiment } from './components/CosmicMicrowaveBackgroundExperiment'
 import { DarkMatterExperiment } from './components/DarkMatterExperiment'
 import { DarkEnergyExperiment } from './components/DarkEnergyExperiment'
+import { UniverseAgeExperiment } from './components/UniverseAgeExperiment'
 
 interface Chapter {
   title: string
@@ -309,6 +310,15 @@ const chapters: Chapter[] = [
     Component: DarkEnergyExperiment,
     learned:
       "Distant Type Ia supernovae, whose true brightness is known, look dimmer than a matter-only universe predicts, so they are farther away than expected: the expansion has been speeding up. Dark energy is the name for whatever drives this, estimated at about 70% of the universe's energy today. It is inferred from observations like this one, what it is remains unknown, and it is a different idea from dark matter.",
+    next: 'Next, we put the expansion history together to ask how old the universe really is.',
+  },
+  {
+    title: 'The Age of the Universe',
+    group: 'Cosmology',
+    Component: UniverseAgeExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
+    learned:
+      "The age of the universe depends on its whole expansion history, not only today's rate. With matter only, the universe would be about two thirds of the Hubble time, too young. Dark energy makes it older, and about 70% gives an age close to the measured 13.8 billion years.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
