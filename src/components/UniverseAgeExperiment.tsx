@@ -4,9 +4,12 @@ import {
   GRAPH_MAX_YEARS,
   MAX_DARK_ENERGY_FRACTION,
   OLDEST_STARS_AGE_YEARS,
+  PLANCK_LIKE_DARK_ENERGY_FRACTION,
+  PLANCK_LIKE_HUBBLE_CONSTANT_KM_PER_S_PER_MPC,
   constantSpeedRelativeSize,
   relativeSizeAtTime,
   runUniverseAgeExperiment,
+  universeAgeYears,
 } from '../physics/universeAgeExperiment'
 
 interface UniverseAgeExperimentProps {
@@ -31,6 +34,11 @@ const darkEnergyAgeChoices: Array<{ value: DarkEnergyAgeChoice; label: string }>
   { value: 'younger', label: 'Younger' },
   { value: 'same', label: 'The same age' },
 ]
+
+// Guaranteed by the model itself (see universeAgeExperiment.test.ts): matter only is two thirds of the
+// Hubble time (shorter), and any dark energy makes the universe older than matter only.
+const ACTUAL_MATTER_ONLY_AGE: MatterOnlyAgeChoice = 'shorter'
+const ACTUAL_DARK_ENERGY_AGE: DarkEnergyAgeChoice = 'older'
 
 // Fixed real-world playback duration (CLAUDE.md §11): playback speed never changes the result.
 const ANIMATION_DURATION_MS = 5000
@@ -529,6 +537,146 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
             </li>
           </ul>
         </div>
+        )}
+        {status === 'complete' && submittedMatterOnlyPrediction && submittedDarkEnergyPrediction && (
+          <div
+            style={{
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--border-color, #ccc)',
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p>
+              You chose <strong>{Math.round(share * 100)}% dark energy</strong>. This universe reaches
+              today's size after <strong>{billions(result.ageYears)} billion years</strong>, so that is its
+              age. For comparison:
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <tbody>
+                  {[
+                    ['Matter only (no dark energy)', result.matterOnlyAgeYears],
+                    ["Experiment 2's constant-speed estimate (the Hubble time)", result.hubbleTimeYears],
+                    ['Your universe', result.ageYears],
+                    ['The real measured age (a given value)', result.realAgeYears],
+                  ].map(([label, years]) => (
+                    <tr key={label as string}>
+                      <td style={{ padding: '0.25rem 1rem 0.25rem 0' }}>{label}</td>
+                      <td style={{ textAlign: 'right', padding: '0.25rem 0' }}>
+                        {billions(years as number)} billion years
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>A simple calculation.</strong> With no dark energy, the age works out to exactly two
+              thirds of the Hubble time: (2 ÷ 3) × {billions(result.hubbleTimeYears)} ≈{' '}
+              {billions(result.matterOnlyAgeYears)} billion years. With dark energy the formula is a little
+              longer, but the idea is the same: the age comes from adding up the whole expansion history,
+              moment by moment.
+            </p>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>Checking your first prediction:</strong> asked whether a matter-only universe would be
+              older or younger than Experiment 2's constant-speed estimate, you answered "
+              {matterOnlyAgeChoices.find((c) => c.value === submittedMatterOnlyPrediction)!.label}". The
+              matter-only age is {billions(result.matterOnlyAgeYears)} billion years against{' '}
+              {billions(result.hubbleTimeYears)}, so it comes out{' '}
+              {result.matterOnlyAgeYears < result.hubbleTimeYears ? 'shorter' : 'longer'} —{' '}
+              {submittedMatterOnlyPrediction === ACTUAL_MATTER_ONLY_AGE
+                ? 'so your prediction was right.'
+                : 'so your prediction was off this time.'}{' '}
+              Gravity slows the expansion, so in the past the universe was expanding faster than it is today,
+              and it reached today's size sooner than a constant speed would.
+            </p>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>Checking your second prediction:</strong> asked whether adding dark energy would make
+              the universe older, younger or the same age, you answered "
+              {darkEnergyAgeChoices.find((c) => c.value === submittedDarkEnergyPrediction)!.label}". In this
+              model, any dark energy makes it older: at the best-fit{' '}
+              {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}% it is{' '}
+              {billions(universeAgeYears(BEST_FIT_DARK_ENERGY_FRACTION))} billion years, against{' '}
+              {billions(result.matterOnlyAgeYears)} for matter only —{' '}
+              {submittedDarkEnergyPrediction === ACTUAL_DARK_ENERGY_AGE
+                ? 'so your prediction was right.'
+                : 'so your prediction was off this time.'}{' '}
+              {share === 0
+                ? 'You chose no dark energy this time, so try adding some to see the age grow.'
+                : 'The expansion was slower for longer in the past, so it took longer to reach today\'s size.'}
+            </p>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>The oldest star clusters.</strong> Your universe is{' '}
+              <strong>{result.isOlderThanOldestStars ? 'older' : 'younger'}</strong> than the oldest known
+              star clusters (about {billions(OLDEST_STARS_AGE_YEARS)} billion years, a rounded value).{' '}
+              {result.isOlderThanOldestStars
+                ? 'That is required: the universe cannot be younger than the things inside it.'
+                : 'That is a problem: the universe cannot be younger than the things inside it, so a universe like this one cannot be the real one.'}{' '}
+              A matter-only universe is only {billions(result.matterOnlyAgeYears)} billion years old, younger
+              than those clusters. In the 1990s that puzzle was one of the clues that pointed toward dark
+              energy, before the supernova results of Experiment 5 were announced.
+            </p>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>Why Experiment 2's estimate came out close.</strong> The constant-speed estimate was
+              about {billions(result.hubbleTimeYears)} billion years, and the real answer is about{' '}
+              {billions(result.realAgeYears)}. This was a happy coincidence, not a method. Gravity's early
+              slowdown makes the real age shorter than the Hubble time, and dark energy's later speed-up makes
+              it longer again. The two effects roughly cancel. Only the whole expansion history gives the
+              age.
+            </p>
+            <div
+              style={{
+                margin: '0.75rem 0',
+                padding: '0.75rem 1rem',
+                border: '2px solid #f59e0b',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              }}
+            >
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>Why not exactly 13.8?</strong> At 70 km/s/Mpc and {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}%
+                dark energy, this model gives {billions(universeAgeYears(BEST_FIT_DARK_ENERGY_FRACTION))}{' '}
+                billion years. The real measured age comes from a slightly different set of values, and both
+                changes matter:
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  Hubble constant 70 and dark energy {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}%:{' '}
+                  {billions(universeAgeYears(BEST_FIT_DARK_ENERGY_FRACTION))} billion years.
+                </li>
+                <li>
+                  Only the Hubble constant lowered to {PLANCK_LIKE_HUBBLE_CONSTANT_KM_PER_S_PER_MPC}:{' '}
+                  {billions(
+                    universeAgeYears(BEST_FIT_DARK_ENERGY_FRACTION, PLANCK_LIKE_HUBBLE_CONSTANT_KM_PER_S_PER_MPC),
+                  )}{' '}
+                  billion years (a lower Hubble constant means a slower expansion, so a longer age, which
+                  overshoots).
+                </li>
+                <li>
+                  Both lowered, to {PLANCK_LIKE_HUBBLE_CONSTANT_KM_PER_S_PER_MPC} and{' '}
+                  {(PLANCK_LIKE_DARK_ENERGY_FRACTION * 100).toFixed(1)}% dark energy:{' '}
+                  <strong>
+                    {billions(
+                      universeAgeYears(PLANCK_LIKE_DARK_ENERGY_FRACTION, PLANCK_LIKE_HUBBLE_CONSTANT_KM_PER_S_PER_MPC),
+                    )}{' '}
+                    billion years
+                  </strong>
+                  , matching the real measured age.
+                </li>
+              </ul>
+              <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+                The real Hubble constant is still debated (about 67 to 73, the Hubble tension from Experiment
+                1), so the simple 70 used here is only illustrative.
+              </p>
+            </div>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>Remember:</strong> this model treats the universe as flat, with only matter and a
+              constant dark energy. Radiation, inflation, and what happened at the Big Bang itself are left
+              out, and the Hubble constant is illustrative. The real measured age is a given value, not
+              worked out here.
+            </p>
+          </div>
         )}
       </div>
     </div>
