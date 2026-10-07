@@ -16,6 +16,22 @@ interface UniverseAgeExperimentProps {
 
 type ShareMode = 'none' | 'bestFit' | 'custom'
 
+// This experiment's two prediction questions, per its specification's "Prediction Activity".
+// Choices are not scored.
+type MatterOnlyAgeChoice = 'longer' | 'shorter' | 'same'
+const matterOnlyAgeChoices: Array<{ value: MatterOnlyAgeChoice; label: string }> = [
+  { value: 'longer', label: 'Longer' },
+  { value: 'shorter', label: 'Shorter' },
+  { value: 'same', label: 'The same' },
+]
+
+type DarkEnergyAgeChoice = 'older' | 'younger' | 'same'
+const darkEnergyAgeChoices: Array<{ value: DarkEnergyAgeChoice; label: string }> = [
+  { value: 'older', label: 'Older' },
+  { value: 'younger', label: 'Younger' },
+  { value: 'same', label: 'The same age' },
+]
+
 // Fixed real-world playback duration (CLAUDE.md §11): playback speed never changes the result.
 const ANIMATION_DURATION_MS = 5000
 
@@ -51,6 +67,17 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
 
+  const [matterOnlyPrediction, setMatterOnlyPrediction] = useState<MatterOnlyAgeChoice | null>(null)
+  const [darkEnergyPrediction, setDarkEnergyPrediction] = useState<DarkEnergyAgeChoice | null>(null)
+  const [submittedMatterOnlyPrediction, setSubmittedMatterOnlyPrediction] =
+    useState<MatterOnlyAgeChoice | null>(null)
+  const [submittedDarkEnergyPrediction, setSubmittedDarkEnergyPrediction] =
+    useState<DarkEnergyAgeChoice | null>(null)
+
+  const hasPrediction = matterOnlyPrediction !== null && darkEnergyPrediction !== null
+  const hasSubmittedPrediction =
+    submittedMatterOnlyPrediction !== null && submittedDarkEnergyPrediction !== null
+
   const share = mode === 'none' ? 0 : mode === 'bestFit' ? BEST_FIT_DARK_ENERGY_FRACTION : customShare
   const result = runUniverseAgeExperiment(share)
   const isActive = status === 'running' || status === 'complete'
@@ -61,9 +88,21 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
   }
 
   const handleRun = () => {
-    if (status === 'running') return
+    if (!hasPrediction || status === 'running') return
+    if (!hasSubmittedPrediction) {
+      setSubmittedMatterOnlyPrediction(matterOnlyPrediction)
+      setSubmittedDarkEnergyPrediction(darkEnergyPrediction)
+    }
     setStatus('running')
     setProgress(0)
+  }
+
+  // Matches the rest of the project's precedent: re-opens both questions for editing without
+  // resetting the chosen share.
+  const handleChangePrediction = () => {
+    setSubmittedMatterOnlyPrediction(null)
+    setSubmittedDarkEnergyPrediction(null)
+    setStatus('idle')
   }
 
   useEffect(() => {
@@ -123,6 +162,152 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
       <h2>Experiment 6 — How Old Is the Universe?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> How old is the universe, and was the estimate from the Big Bang
+            experiment (Experiment 2) really right?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> In Experiment 2 you ran the expansion backward at a constant speed
+            and got the <strong>Hubble time</strong>, about 14 billion years, remarkably close to the real
+            measured age of the universe, about 13.8 billion years. But that experiment also said the real
+            expansion has not been at a constant speed, and Experiment 5 showed it has slowed down and later
+            sped up. Here you put these together. You choose a share of <strong>dark energy</strong>, and the
+            graph shows how big the universe has been at every moment since the <strong>Big Bang</strong>,
+            in three versions: Experiment 2's constant-speed picture, a universe with only matter, and a
+            universe with the dark energy you chose. Each line reaches "today" at a different moment, and
+            that moment is that version's age.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A new term: the universe's relative size.</strong> This means the distances between
+            galaxies, compared with what they are today. Today's value is set to 1. A relative size of 0.5
+            means galaxies were half as far apart as they are now. It is not the size of any physical object,
+            and it says nothing about whether the universe has an edge.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>A daily-life picture.</strong> Suppose you walk into a bathroom and find the tub full.
+            How long has it been filling? If you know the water level now and the tap's flow, you might
+            divide one by the other. But that only works if the flow was the same the whole time. If the tap
+            was turned up or down along the way, you would need to know its whole history, not just its flow
+            right now.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make two predictions about how a universe's age depends on how
+            its expansion has changed. Then pick a share of dark energy and run it.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> Compare where the three lines reach today's size. Move the
+            dark energy share and watch how the gold line's end point moves. We reuse{' '}
+            <strong>dark energy</strong>, <strong>redshift</strong>, the <strong>Hubble time</strong> and the{' '}
+            <strong>Big Bang</strong> from earlier experiments, with the same meaning.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              The universe is the same simple model as in Experiment 5: "flat", containing only matter and a
+              constant dark energy, with matter's share being 100% minus dark energy's share. Light and other
+              radiation, which matters only very early on, are left out. For the age that is a good
+              approximation, but still an approximation.
+            </li>
+            <li>
+              The Hubble constant is the same illustrative value as in Experiment 1 (70 km/s per megaparsec),
+              with the same real caveat: published values range from about 67 to 73, the "Hubble tension."
+              The real measured age (13.8 billion years) comes from a slightly lower Hubble constant and a
+              slightly lower dark energy share, which the results will show.
+            </li>
+            <li>
+              The Big Bang is treated as an idealized starting moment, when the relative size was 0. What
+              happened at or before it, including cosmic inflation, is not modeled.
+            </li>
+            <li>
+              Experiment 2's constant-speed line is a simplified model shown for comparison, not a rival
+              theory.
+            </li>
+            <li>
+              The real measured age is a given value, not worked out here. The age of the oldest known star
+              clusters is a rounded value used only as a comparison marker.
+            </li>
+            <li>Nothing here claims to say what dark energy is.</li>
+          </ul>
+        </div>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            If the universe contained only matter, so gravity has been slowing the expansion all along, would
+            its age be longer than, shorter than, or the same as Experiment 2's constant-speed estimate
+            (about 14 billion years)?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {matterOnlyAgeChoices.map((choice) => (
+              <button
+                key={choice.value}
+                onClick={() => setMatterOnlyPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${matterOnlyPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            Dark energy speeds the expansion up in recent times. Compared with a matter-only universe, would
+            adding dark energy make the universe older, younger, or the same age?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {darkEnergyAgeChoices.map((choice) => (
+              <button
+                key={choice.value}
+                onClick={() => setDarkEnergyPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${darkEnergyPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {hasPrediction || hasSubmittedPrediction
+              ? `Your predictions: ${
+                  matterOnlyAgeChoices.find(
+                    (c) => c.value === (matterOnlyPrediction ?? submittedMatterOnlyPrediction),
+                  )!.label
+                }, ${
+                  darkEnergyAgeChoices.find(
+                    (c) => c.value === (darkEnergyPrediction ?? submittedDarkEnergyPrediction),
+                  )!.label
+                }`
+              : 'Answer both questions to continue'}
+          </p>
+        </div>
+
+        {hasSubmittedPrediction && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many shares as you like below. Or,
+              change your predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePrediction}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
             Share of the universe's energy that is dark energy:
@@ -130,7 +315,7 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
           <button
             type="button"
             onClick={() => handleModeChange('none')}
-            disabled={status === 'running'}
+            disabled={!hasPrediction || status === 'running'}
             className={`toggle-button${mode === 'none' ? ' is-selected' : ''}`}
             style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
           >
@@ -139,7 +324,7 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
           <button
             type="button"
             onClick={() => handleModeChange('bestFit')}
-            disabled={status === 'running'}
+            disabled={!hasPrediction || status === 'running'}
             className={`toggle-button${mode === 'bestFit' ? ' is-selected' : ''}`}
             style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
           >
@@ -148,7 +333,7 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
           <button
             type="button"
             onClick={() => handleModeChange('custom')}
-            disabled={status === 'running'}
+            disabled={!hasPrediction || status === 'running'}
             className={`toggle-button${mode === 'custom' ? ' is-selected' : ''}`}
             style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
           >
@@ -167,7 +352,7 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
                 max={MAX_DARK_ENERGY_FRACTION}
                 step={0.01}
                 value={customShare}
-                disabled={status === 'running'}
+                disabled={!hasPrediction || status === 'running'}
                 onChange={(event) => {
                   setCustomShare(Number(event.target.value))
                   if (status === 'complete') setStatus('idle')
@@ -182,11 +367,17 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={status === 'running'}
+          disabled={!hasPrediction || status === 'running'}
           style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
+
+        {!hasPrediction && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Answer the predictions above to try the controls.
+          </p>
+        )}
 
         {isActive && (
           <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -203,6 +394,7 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
           </p>
         )}
 
+        {hasSubmittedPrediction && (
         <svg
           width={GRAPH_WIDTH}
           height={GRAPH_HEIGHT}
@@ -306,7 +498,9 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
             <text x={GRAPH_LEFT + 340} y={37}>With your dark energy</text>
           </g>
         </svg>
+        )}
 
+        {hasSubmittedPrediction && (
         <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
             <strong>How to read this diagram.</strong> The graph shows how big the universe was at each
@@ -335,6 +529,7 @@ export function UniverseAgeExperiment(_props: UniverseAgeExperimentProps) {
             </li>
           </ul>
         </div>
+        )}
       </div>
     </div>
   )
