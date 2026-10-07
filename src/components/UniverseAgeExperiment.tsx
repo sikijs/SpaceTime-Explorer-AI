@@ -49,7 +49,7 @@ const GRAPH_WIDTH = 560
 const GRAPH_HEIGHT = 340
 const GRAPH_LEFT = 60
 const GRAPH_RIGHT = GRAPH_WIDTH - 20
-const GRAPH_TOP = 70
+const GRAPH_TOP = 84
 const GRAPH_BOTTOM = GRAPH_HEIGHT - 50
 const GRAPH_MAX_SIZE = 1.15
 const CURVE_POINTS = 120
@@ -193,6 +193,15 @@ export function UniverseAgeExperiment({ onComplete, onTutorComplete }: UniverseA
             galaxies, compared with what they are today. Today's value is set to 1. A relative size of 0.5
             means galaxies were half as far apart as they are now. It is not the size of any physical object,
             and it says nothing about whether the universe has an edge.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What "older" and "younger" mean here.</strong> Nothing in this experiment changes a real
+            universe. There is only one real universe, with one real age. Instead, we compare different
+            possible universes. Every one of them is set up to have the same expansion rate today, because
+            that is the thing we can measure. They differ only in what they contain: matter only, or matter
+            plus some dark energy. For each one, we work out how long it would have taken to grow from
+            nothing to today's size. "Older" means that calculation gives a longer time, and "younger"
+            means a shorter one. The real question is which contents give an age that fits what we observe.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>A daily-life picture.</strong> Suppose you walk into a bathroom and find the tub full.
@@ -456,7 +465,7 @@ export function UniverseAgeExperiment({ onComplete, onTutorComplete }: UniverseA
 
           {/* "Today" level */}
           <line x1={GRAPH_LEFT} y1={graphY(1)} x2={GRAPH_RIGHT} y2={graphY(1)} stroke="#475569" strokeDasharray="4 4" />
-          <text x={GRAPH_RIGHT} y={graphY(1) + 14} fill="#94a3b8" fontSize="10" textAnchor="end">
+          <text x={GRAPH_LEFT + 8} y={graphY(1) - 5} fill="#94a3b8" fontSize="10">
             today's size
           </text>
 
@@ -506,7 +515,7 @@ export function UniverseAgeExperiment({ onComplete, onTutorComplete }: UniverseA
               <g key={m.key}>
                 <line x1={graphX(m.years)} y1={graphY(1)} x2={graphX(m.years)} y2={graphY(1) - m.lift + 4} stroke={m.color} strokeWidth={1} />
                 <circle cx={graphX(m.years)} cy={graphY(1)} r={5} fill={m.color} />
-                <text x={graphX(m.years)} y={graphY(1) - m.lift} fill={m.color} fontSize="10" fontWeight="600" textAnchor={graphX(m.years) > GRAPH_WIDTH - 110 ? 'end' : 'middle'}>
+                <text x={graphX(m.years)} y={graphY(1) - m.lift} fill={m.color} stroke="#0b1020" strokeWidth={3} paintOrder="stroke" fontSize="10" fontWeight="600" textAnchor={graphX(m.years) > GRAPH_WIDTH - 110 ? 'end' : 'middle'}>
                   {m.name}: {billions(m.years)} billion years
                 </text>
               </g>
@@ -687,7 +696,8 @@ export function UniverseAgeExperiment({ onComplete, onTutorComplete }: UniverseA
               <strong>Checking your second prediction:</strong> asked whether adding dark energy would make
               the universe older, younger or the same age, you answered "
               {darkEnergyAgeChoices.find((c) => c.value === submittedDarkEnergyPrediction)!.label}". In this
-              model, any dark energy makes it older: at the best-fit{' '}
+              model, a universe with any dark energy comes out older than a matter-only universe with the same
+              expansion rate today: at the best-fit{' '}
               {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}% it is{' '}
               {billions(universeAgeYears(BEST_FIT_DARK_ENERGY_FRACTION))} billion years, against{' '}
               {billions(result.matterOnlyAgeYears)} for matter only —{' '}

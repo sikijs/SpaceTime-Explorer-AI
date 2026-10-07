@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { hubbleTimeYears } from '../physics/bigBangExperiment'
 import { BEST_FIT_DARK_ENERGY_FRACTION } from '../physics/darkEnergyExperiment'
 
 type MatterOnlyAgeChoice = 'longer' | 'shorter' | 'same'
@@ -42,6 +43,7 @@ export function UniverseAgeTutor({ predictedMatterOnly, predictedDarkEnergy, onE
   }
 
   const isResponseEmpty = responseInput.trim() === ''
+  const hubbleTimeBillions = (hubbleTimeYears() / 1e9).toFixed(2)
 
   return (
     <div
@@ -112,14 +114,58 @@ export function UniverseAgeTutor({ predictedMatterOnly, predictedDarkEnergy, onE
             the bathtub: knowing today's flow is not enough if the tap was turned up or down along the way.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. With matter only, the universe is young.</strong> Gravity slows the expansion, so in the
-            past the universe was expanding faster than it is today, and it reached today's size sooner. Its
-            age works out to only two thirds of the Hubble time. A car trip is the same: if you drove fast at
-            first and then slowed down, the trip took less time than today's slower speed alone would suggest.
+            <strong>2. With matter only, the universe comes out young.</strong> The "age" is simply how long
+            it took the universe to grow from nothing to its size today. To find it, you need to know how
+            fast it was growing at every moment along the way.
+          </p>
+          <p style={{ margin: '0 0 1rem 1.25rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <em>Why the speed changes.</em> Matter pulls on other matter with gravity, and that pull works
+            against the expansion, like a ball thrown upward that slows as it rises. So in a matter-only
+            universe the expansion has been slowing down all along. Run the film backward and the same
+            thing means that long ago the universe was expanding <em>faster</em> than it is today.
+          </p>
+          <p style={{ margin: '0 0 1rem 1.25rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <em>Why that makes it young.</em> Experiment 2's Hubble time (about {hubbleTimeBillions} billion years)
+            pretends the universe always grew at today's speed. But it actually grew faster at the start,
+            so it covered the distance in less time. The exact answer for a matter-only universe is two
+            thirds of the Hubble time: (2 ÷ 3) × {hubbleTimeBillions} ≈ 9.3 billion years.
+          </p>
+          <p style={{ margin: '0 0 1rem 1.25rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <em>A car trip.</em> Suppose you must drive 100 km, and your speed at the end of the trip is 50
+            km/h. If you had driven at that speed the whole way, the trip would take 2 hours. But suppose you
+            drove the first 50 km at 100 km/h and then slowed to 50 km/h for the second half. That takes 0.5
+            hours plus 1 hour, so 1.5 hours, which is less than 2. Driving faster early on made the trip
+            shorter than "distance ÷ today's speed" suggests. That is the matter-only universe.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. Dark energy makes the universe older.</strong> It speeds the expansion up in recent
-            times, so the expansion was slower for longer in the past. It took longer to reach today's size.
+            <strong>3. Adding dark energy gives an older universe.</strong> To be clear about the words:
+            there is only one real universe, and we are not changing it. We are comparing two possible
+            universes that have the same expansion rate today, one with matter only and one with matter plus
+            dark energy, and asking how long each would have needed to reach today's size. "Older" means the
+            longer time. Dark energy works the other way from matter: it
+            pushes the expansion to speed up. It has had its greatest effect in recent times, because as
+            space expands, matter thins out and its slowing pull weakens, while dark energy does not thin
+            out.
+          </p>
+          <p style={{ margin: '0 0 1rem 1.25rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <em>What that does to the past.</em> We keep today's expansion speed the same in every version,
+            because we can measure it. If the expansion has been speeding up toward today, then to arrive at
+            that same speed it must have been <em>slower</em> in the past than the matter-only universe was.
+            A slower early expansion means more time was needed to reach today's size. So the universe is
+            older.
+          </p>
+          <p style={{ margin: '0 0 1rem 1.25rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <em>The same car trip, the other way.</em> Again the trip is 100 km and your speed at the end is
+            50 km/h. This time you start slowly and speed up: the first 50 km at 25 km/h takes 2 hours, and
+            the second 50 km at 50 km/h takes 1 hour. That is 3 hours, longer than the 2 hours of driving at
+            50 km/h the whole way. Starting slowly made the trip longer. Adding dark energy does the same
+            to the universe, so more dark energy means an older universe.
+          </p>
+          <p style={{ margin: '0 0 1rem 1.25rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <em>The real universe is a mixture.</em> It was fast at first, slowing under gravity, and then
+            began speeding up. The early quickness shortens the trip and the later speeding up lengthens it,
+            and the two largely offset each other. With about 70% dark energy the result is about 13.5
+            billion years, close to the Hubble time of about 14. Point 5 returns to this.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>4. The real answer matches the measurements.</strong> With about{' '}
