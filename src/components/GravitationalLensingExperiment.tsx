@@ -263,9 +263,10 @@ export function GravitationalLensingExperiment({ onComplete, onTutorComplete }: 
             </li>
             <li>
               The three distances (to the cluster, to the source, and between them) are fixed, rounded values
-              for one real situation, a cluster like Abell 1689. They use the same illustrative Hubble constant
-              as Experiment 1 (70 km/s per megaparsec), with the same real caveat: published values range from
-              about 67 to 73, the "Hubble tension."
+              for one real situation, a cluster like Abell 1689. They are given in megaparsecs (Mpc), the unit
+              astronomers use for distances between galaxies; one Mpc is about 3.3 million light-years. They
+              use the same illustrative Hubble constant as Experiment 1 (70 km/s per megaparsec), with the same
+              real caveat: published values range from about 67 to 73, the "Hubble tension."
             </li>
             <li>
               The "observed" ring (about 47 arcseconds, measured for Abell 1689) and the visible share (about
