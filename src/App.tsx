@@ -35,6 +35,7 @@ import { DarkMatterExperiment } from './components/DarkMatterExperiment'
 import { DarkEnergyExperiment } from './components/DarkEnergyExperiment'
 import { UniverseAgeExperiment } from './components/UniverseAgeExperiment'
 import { GravitationalLensingExperiment } from './components/GravitationalLensingExperiment'
+import { ObservableUniverseExperiment } from './components/ObservableUniverseExperiment'
 
 interface Chapter {
   title: string
@@ -327,6 +328,14 @@ const chapters: Chapter[] = [
     Component: GravitationalLensingExperiment,
     learned:
       "A mass between us and a distant galaxy bends its light into a ring, and the ring grows with the square root of the mass, so the ring weighs the cluster. The ring seen for a real cluster is about 2.6 times as wide as its visible matter could make, which needs about 6.7 times the visible mass. Most of the mass is unseen: dark matter, found without measuring any star's speed.",
+    next: 'Next, back to the oldest light: how far away is its source, and how can that be more than the light could have travelled?',
+  },
+  {
+    title: 'The Observable Universe',
+    group: 'Cosmology',
+    Component: ObservableUniverseExperiment,
+    learned:
+      "The farthest light we can see has travelled about 13.5 billion years, yet its source is now about 45 billion light-years away, because space stretched while the light was on its way. The source was only about 41 million light-years away when the light left.",
     next: 'This is currently the last experiment in the project.',
   },
 ]
