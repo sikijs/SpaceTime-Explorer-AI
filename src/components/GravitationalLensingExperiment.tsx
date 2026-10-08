@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { GravitationalLensingTutor } from './GravitationalLensingTutor'
 import {
   LENS_DISTANCE_MPC,
   LENS_TO_SOURCE_DISTANCE_MPC,
@@ -92,11 +93,13 @@ function graphY(ring: number): number {
   return GRAPH_BOTTOM - (ring / GRAPH_MAX_RING) * (GRAPH_BOTTOM - GRAPH_TOP)
 }
 
-export function GravitationalLensingExperiment({ onComplete }: GravitationalLensingExperimentProps) {
+export function GravitationalLensingExperiment({ onComplete, onTutorComplete }: GravitationalLensingExperimentProps) {
   const [mode, setMode] = useState<MassMode>('observed')
   const [customMass, setCustomMass] = useState(1e14)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  // Remounts the tutor on each new run so its conversation starts over.
+  const [runCount, setRunCount] = useState(0)
 
   const [ringSizePrediction, setRingSizePrediction] = useState<RingSizeChoice | null>(null)
   const [fourTimesPrediction, setFourTimesPrediction] = useState<FourTimesChoice | null>(null)
@@ -124,6 +127,7 @@ export function GravitationalLensingExperiment({ onComplete }: GravitationalLens
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((count) => count + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens both questions for editing without
@@ -889,6 +893,15 @@ export function GravitationalLensingExperiment({ onComplete }: GravitationalLens
           </>
         )}
       </div>
+
+      {status === 'complete' && submittedRingSizePrediction && submittedFourTimesPrediction && (
+        <GravitationalLensingTutor
+          key={runCount}
+          predictedRingSize={submittedRingSizePrediction}
+          predictedFourTimes={submittedFourTimesPrediction}
+          onExplained={onTutorComplete}
+        />
+      )}
     </div>
   )
 }
