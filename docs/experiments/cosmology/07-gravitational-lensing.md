@@ -1,6 +1,6 @@
 # Cosmology — Experiment 7: Gravitational Lensing
 
-**Status: APPROVED by the owner on 2026-10-07 (proposed by Claude per `CLAUDE.md` §23 Stages 1–3 on 2026-10-07, following the completion of Cosmology Experiment 6; the topic was chosen by the owner from three candidates named in Experiment 6's specification). All eight "Decisions Needing Human Review" items are confirmed as proposed. Nothing is implemented.**
+**Status: APPROVED by the owner on 2026-10-07 (proposed by Claude per `CLAUDE.md` §23 Stages 1–3 on 2026-10-07, following the completion of Cosmology Experiment 6; the topic was chosen by the owner from three candidates named in Experiment 6's specification). All eight "Decisions Needing Human Review" items are confirmed as proposed. Built and finally reviewed (2026-10-08); the owner's line-by-line wording approval (`CLAUDE.md` §28.1) is pending. See "Implementation Notes".**
 
 This is the seventh experiment of the "Cosmology" chapter.
 
@@ -253,4 +253,17 @@ Possible further directions (none proposed here; each needs its own Stage 1–2 
 
 ## Implementation Notes
 
-Not yet implemented. Per `CLAUDE.md` §23 Stages 4–5 and §6, nothing is built until the owner approves this specification; implementation then proceeds one step at a time, starting with the physics model and its tests.
+Built one step at a time per `CLAUDE.md` §6: physics model and tests (`src/physics/gravitationalLensingExperiment.ts`, `.test.ts`), basic UI, introduction and prediction interaction, results panel, and tutor (`src/components/GravitationalLensingExperiment.tsx`, `GravitationalLensingTutor.tsx`), wired into `src/App.tsx`. Nothing from an earlier experiment was modified (checked from the commit history: only this experiment's own files and `App.tsx` changed).
+
+**Complete-flow test and final review (2026-10-08, §21 Step 10), in a headless browser from a fresh profile.** Checked the introduction, prediction gating, the three pictures (including a mid-animation frame), the results panel with right and wrong predictions, the tutor, saved progress, changing the mass after a run, the Custom slider at its maximum, "Change predictions", and phone width. Every Success Criterion and every Required Physics Test is covered. One gap was found and fixed:
+
+- The unit "Mpc" (megaparsec) was used in the introduction and the Results panel without being defined (`CLAUDE.md` §15). Fixed by defining it in the introduction's distances bullet, in the same words earlier experiments use (about 3.3 million light-years).
+
+Other findings, not changed:
+
+- At a 390-pixel-wide window the whole app's content column is only about 230 pixels wide, so the three pictures shrink and their labels become very small. Experiment 4 (dark matter) measures the same, so this is an app-wide layout matter, not specific to this experiment. Left for the owner to decide.
+- The tutor's point 4 reads "2.6 × 2.6 ≈ 6.7". That is true for the unrounded values (2.58²), but the rounded numbers multiply to 6.76.
+- "Before results" in the tutor section is met by the prediction questions themselves, as in earlier experiments; the tutor conversation starts after a run.
+- The chapter summary in `src/App.tsx` is still a draft, and its "next" line still says this is the last experiment.
+- Wording drafted by Claude that the specification does not contain, for the owner to approve: the square-garden comparison (Results and tutor point 2), the shelf-sag comparison (tutor point 3), and the sentence explaining why more mass makes a larger ring (Results).
+- The test file's `node:fs/promises` type error under `tsc -b` is the same as in six earlier experiments' tests.
