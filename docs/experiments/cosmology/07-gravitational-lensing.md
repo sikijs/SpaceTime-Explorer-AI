@@ -1,6 +1,6 @@
 # Cosmology — Experiment 7: Gravitational Lensing
 
-**Status: APPROVED by the owner on 2026-10-07 (proposed by Claude per `CLAUDE.md` §23 Stages 1–3 on 2026-10-07, following the completion of Cosmology Experiment 6; the topic was chosen by the owner from three candidates named in Experiment 6's specification). All eight "Decisions Needing Human Review" items are confirmed as proposed. Built and finally reviewed (2026-10-08); the owner's line-by-line wording approval (`CLAUDE.md` §28.1) is pending. See "Implementation Notes".**
+**Status: APPROVED by the owner on 2026-10-07 (proposed by Claude per `CLAUDE.md` §23 Stages 1–3 on 2026-10-07, following the completion of Cosmology Experiment 6; the topic was chosen by the owner from three candidates named in Experiment 6's specification). All eight "Decisions Needing Human Review" items are confirmed as proposed. Built and finally reviewed (2026-10-08); the owner's line-by-line wording approval (`CLAUDE.md` §28.1) is complete (2026-10-08), approved as written with no changes requested. See "Implementation Notes".**
 
 This is the seventh experiment of the "Cosmology" chapter.
 
@@ -265,5 +265,5 @@ Other findings, not changed:
 - The tutor's point 4 reads "2.6 × 2.6 ≈ 6.7". That is true for the unrounded values (2.58²), but the rounded numbers multiply to 6.76.
 - "Before results" in the tutor section is met by the prediction questions themselves, as in earlier experiments; the tutor conversation starts after a run.
 - The chapter summary in `src/App.tsx` is still a draft, and its "next" line still says this is the last experiment.
-- Wording drafted by Claude that the specification does not contain, for the owner to approve: the square-garden comparison (Results and tutor point 2), the shelf-sag comparison (tutor point 3), and the sentence explaining why more mass makes a larger ring (Results).
+- Wording drafted by Claude that the specification does not contain (approved by the owner as written, 2026-10-08, together with the rounding in tutor point 4 and the chapter summary): the square-garden comparison (Results and tutor point 2), the shelf-sag comparison (tutor point 3), and the sentence explaining why more mass makes a larger ring (Results).
 - The test file's `node:fs/promises` type error under `tsc -b` is the same as in six earlier experiments' tests.
