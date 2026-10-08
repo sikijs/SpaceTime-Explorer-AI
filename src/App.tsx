@@ -325,7 +325,6 @@ const chapters: Chapter[] = [
     title: 'Gravitational Lensing',
     group: 'Cosmology',
     Component: GravitationalLensingExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
     learned:
       "A mass between us and a distant galaxy bends its light into a ring, and the ring grows with the square root of the mass, so the ring weighs the cluster. The ring seen for a real cluster is about 2.6 times as wide as its visible matter could make, which needs about 6.7 times the visible mass. Most of the mass is unseen: dark matter, found without measuring any star's speed.",
     next: 'This is currently the last experiment in the project.',
