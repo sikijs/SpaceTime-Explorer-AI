@@ -1,4 +1,4 @@
-# Cosmology — Experiment 7: Weighing a Galaxy Cluster with Light (Gravitational Lensing)
+# Cosmology — Experiment 7: Gravitational Lensing
 
 **Status: APPROVED by the owner on 2026-10-07 (proposed by Claude per `CLAUDE.md` §23 Stages 1–3 on 2026-10-07, following the completion of Cosmology Experiment 6; the topic was chosen by the owner from three candidates named in Experiment 6's specification). All eight "Decisions Needing Human Review" items are confirmed as proposed. Nothing is implemented.**
 
@@ -212,7 +212,7 @@ All eight items below were confirmed as proposed.
 
 ## Decisions Needing Human Review (original proposals)
 
-1. **Title and placement.** Proposed: "Weighing a Galaxy Cluster with Light (Gravitational Lensing)" as Cosmology Experiment 7.
+1. **Title and placement.** Proposed: "Weighing a Galaxy Cluster with Light (Gravitational Lensing)" as Cosmology Experiment 7. **Changed by the owner (2026-10-07) to "Gravitational Lensing".**
 2. **Fixed distances.** Proposed: three fixed, rounded distances for one real situation (Abell 1689-like), stated as given. The alternative is to compute them from chosen redshifts using Experiment 5's distance function, which is richer and ties lensing to the expanding universe, but it is a second new idea. I propose the fixed distances.
 3. **The Einstein-radius formula and its source.** It is a standard textbook result, and I checked the identity with Experiment 8's bending angle and the real example's numbers (Abell 1689's mass inside about 45 arcseconds is about 1.9 × 10¹⁴ solar masses; my rounded numbers give about 2.0 × 10¹⁴ for 47 arcseconds). I have not checked the formula against a textbook, only against the real cluster's published values. The tests check the algebra, not the source.
 4. **The two reference values.** Proposed: an "observed" ring of 47 arcseconds (a real cluster, Abell 1689, for a source at redshift 2; published value 47.0 ± 1.2) and a visible share of 15% (published cluster averages are about 14–17% for stars plus hot gas). Both were checked against web sources on 2026-10-07. A caution: the 15% is a cluster-wide average, applied here to the mass inside the ring, which is approximate; the introduction says so.
