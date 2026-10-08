@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   LENS_DISTANCE_MPC,
+  LENS_TO_SOURCE_DISTANCE_MPC,
   MAX_LENS_MASS_SOLAR_MASSES,
   MIN_LENS_MASS_SOLAR_MASSES,
   OBSERVED_TOTAL_MASS_SOLAR_MASSES,
@@ -32,6 +33,11 @@ const fourTimesChoices: Array<{ value: FourTimesChoice; label: string }> = [
   { value: 'two', label: 'Twice as wide' },
   { value: 'same', label: 'About the same' },
 ]
+
+// What the model gives for each prediction question (not scored; used only to say whether the learner's
+// answer matched).
+const ACTUAL_RING_SIZE: RingSizeChoice = 'larger'
+const ACTUAL_FOUR_TIMES: FourTimesChoice = 'two'
 
 // Fixed real-world playback duration (CLAUDE.md §11): playback speed never changes the result.
 const ANIMATION_DURATION_MS = 8000
@@ -756,6 +762,130 @@ export function GravitationalLensingExperiment({ onComplete }: GravitationalLens
             ring are drawn to help you compare.
           </p>
         </div>
+
+        {status === 'complete' && (
+          <div
+            style={{
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--border-color, #ccc)',
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p>
+              You chose a cluster of <strong>{massLabel(mass)} solar masses</strong>. Its ring has a radius of{' '}
+              <strong>{result.ringArcseconds.toFixed(1)} arcseconds</strong>. For comparison:
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <tbody>
+                  {[
+                    [`The ring for your chosen mass (${massLabel(mass)} solar masses)`, result.ringArcseconds],
+                    [
+                      `The ring that visible matter alone would make (${massLabel(result.visibleOnlyMassSolarMasses)} solar masses)`,
+                      result.visibleOnlyRingArcseconds,
+                    ],
+                    ['The observed ring of the real cluster (a given value)', result.observedRingArcseconds],
+                  ].map(([label, arcseconds]) => (
+                    <tr key={label as string}>
+                      <td style={{ padding: '0.25rem 1rem 0.25rem 0' }}>{label}</td>
+                      <td style={{ textAlign: 'right', padding: '0.25rem 0', whiteSpace: 'nowrap' }}>
+                        {(arcseconds as number).toFixed(1)} arcseconds
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>Checking your first prediction:</strong> asked whether more mass would make the ring
+              larger, the same size, or smaller, you answered "
+              {ringSizeChoices.find((c) => c.value === submittedRingSizePrediction)!.label}". More mass bends
+              the light more strongly, so the light is pulled in from farther out and the ring is larger —{' '}
+              {submittedRingSizePrediction === ACTUAL_RING_SIZE
+                ? 'so your prediction was right.'
+                : 'so your prediction was off this time.'}{' '}
+              You can see it in the presets: the visible matter alone makes a ring of{' '}
+              {result.visibleOnlyRingArcseconds.toFixed(1)} arcseconds, and the full observed mass makes{' '}
+              {einsteinRingArcseconds(OBSERVED_TOTAL_MASS_SOLAR_MASSES).toFixed(1)}.
+            </p>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>Checking your second prediction:</strong> asked how wide the ring would be with four times
+              the mass, you answered "
+              {fourTimesChoices.find((c) => c.value === submittedFourTimesPrediction)!.label}". For your
+              chosen mass, the model gives a ring of {result.ringArcseconds.toFixed(1)} arcseconds, and four
+              times that mass ({massLabel(4 * mass)} solar masses{4 * mass > MAX_LENS_MASS_SOLAR_MASSES ? ', more than the slider allows' : ''}) gives{' '}
+              {einsteinRingArcseconds(4 * mass).toFixed(1)} arcseconds. That is exactly{' '}
+              <strong>twice as wide</strong>, because the ring grows as the square root of the mass, and the
+              square root of 4 is 2 —{' '}
+              {submittedFourTimesPrediction === ACTUAL_FOUR_TIMES
+                ? 'so your prediction was right.'
+                : 'so your prediction was off this time.'}{' '}
+              A familiar comparison: a square garden with four times the area is only twice as wide. The
+              ring works the same way, with the cluster's mass playing the part of the garden's area and the
+              ring's width the part of the garden's width. So each extra bit of mass buys a smaller gain in
+              the ring.
+            </p>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>A simple calculation.</strong> The real cluster's ring is{' '}
+              {result.observedRingArcseconds.toFixed(0)} arcseconds. Run the formula backward and that ring
+              needs about {massLabel(result.observedMassSolarMasses)} solar masses inside it. The visible matter
+              (stars and hot gas) is only about {Math.round(VISIBLE_MASS_FRACTION * 100)}% of that, which is{' '}
+              {massLabel(result.visibleOnlyMassSolarMasses)} solar masses, and it would make a ring of only{' '}
+              {result.visibleOnlyRingArcseconds.toFixed(1)} arcseconds. The observed total is{' '}
+              {(result.observedMassSolarMasses / result.visibleOnlyMassSolarMasses).toFixed(1)} times the visible
+              mass, and the ring grows as the square root of the mass, so the ring should be about{' '}
+              {Math.sqrt(result.observedMassSolarMasses / result.visibleOnlyMassSolarMasses).toFixed(1)} times as
+              wide: {result.visibleOnlyRingArcseconds.toFixed(1)} ×{' '}
+              {Math.sqrt(result.observedMassSolarMasses / result.visibleOnlyMassSolarMasses).toFixed(1)} ≈{' '}
+              {result.observedRingArcseconds.toFixed(0)} arcseconds, which matches the observed ring.
+            </p>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>In the real world.</strong> Real galaxy clusters make rings and bright arcs like these, and
+              astronomers routinely use them to weigh clusters. The cluster Abell 1689 is a well-known example,
+              and its ring is the one used here as the "observed" ring.
+            </p>
+            <p style={{ marginBottom: '0.5rem' }}>
+              <strong>A second line of evidence for dark matter.</strong> In Experiment 4 you saw that galaxies
+              spin too fast for their visible matter, which pointed to unseen mass. This experiment reaches the
+              same conclusion a completely different way, with no star's speed measured at all: the light's
+              bending says the cluster holds about {(result.observedMassSolarMasses / result.visibleOnlyMassSolarMasses).toFixed(1)}{' '}
+              times more mass than we can see. Two independent methods agreeing is what makes the case strong.
+              Lensing weighs the mass and shows where it is, but it does not say what the unseen mass is made
+              of.
+            </p>
+            <div
+              style={{
+                margin: '0.75rem 0',
+                padding: '0.75rem 1rem',
+                border: '2px solid #f59e0b',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              }}
+            >
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this model simplifies.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  The cluster is treated as perfectly round, with the source exactly behind its center. Real
+                  clusters are lumpy and rarely line up perfectly, so real rings are usually broken arcs.
+                </li>
+                <li>
+                  The three distances ({LENS_DISTANCE_MPC} Mpc to the cluster, {SOURCE_DISTANCE_MPC} Mpc to the
+                  source, and {LENS_TO_SOURCE_DISTANCE_MPC} Mpc between them) are fixed, rounded values for one
+                  real situation.
+                </li>
+                <li>
+                  The observed ring ({result.observedRingArcseconds.toFixed(0)} arcseconds) and the visible share
+                  ({Math.round(VISIBLE_MASS_FRACTION * 100)}%) are given values, not worked out here. The{' '}
+                  {Math.round(VISIBLE_MASS_FRACTION * 100)}% is an average for real clusters, applied here to the
+                  mass inside the ring, which is approximate.
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
           </>
         )}
       </div>
