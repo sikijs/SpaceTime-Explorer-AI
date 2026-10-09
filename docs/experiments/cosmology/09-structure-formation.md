@@ -234,3 +234,34 @@ Follows the predict → observe → explain pattern of the prior experiments:
 6. The model's limits (first-order picture, illustrative start, one region, a given head start, no radiation) are stated in the introduction, Results and tutor, and the experiment does not claim to say how real galaxies form in detail.
 7. "Density excess" and "growth" are defined in plain language at first use (`CLAUDE.md` §15).
 8. No existing experiment's physics is modified or recomputed.
+
+---
+
+## Implementation Notes
+
+Built one step at a time per `CLAUDE.md` §6: physics model and tests (`src/physics/structureFormationExperiment.ts`, `.test.ts`, 17 tests), basic interface, prediction interaction, introduction, results panel, and tutor (`src/components/StructureFormationExperiment.tsx`, `StructureFormationTutor.tsx`), wired into `src/App.tsx`. Nothing from an earlier experiment was modified (only this experiment's files and `App.tsx` changed; Experiment 8's chapter "next" line now points here).
+
+**Complete-flow test (2026-10-09, §21 Step 9) and final review (§21 Step 10), in a headless browser from a cleared `localStorage`.** Checked all eight combinations of kind of matter and preset starting size against the model (the table in "Learner Controls" holds), both ends of the Custom slider, the mid-run readout and glow timing, right and wrong predictions, the Results panel, the tutor, saved progress, changing predictions, and a 390-pixel window. Every Success Criterion and every Required Physics Test is covered. Gaps found and fixed:
+
+- The tutor's point 7 used "first-order" without a plain-language definition (`CLAUDE.md` §15). Reworded.
+- The introduction used "bound lump of matter". Reworded to "a lump held together by its own gravity".
+
+**Differences from the text above, and decisions made in the build**
+
+- The specification says the early-time end of the growth integral is "handled analytically". It needs no special handling (the integrand goes to zero there), so the code uses the same Simpson's rule as Experiment 5.
+- The specification lists `universeAgeExperiment` among the imports. The module does not need it (Experiment 8's `timeAfterBigBangYears` gives the time axis); the tests use `universeAgeYears` only to check that the curve ends at today's age. Test 11 checks the imports the module does use.
+- The 1-part-in-500 preset is stored as 0.002, which is also the slider's top end.
+- "The surrounding space shown stretching" is shown as a live "stretched N times" label and readout, not as drawing: the strip follows one fixed patch of matter.
+- In "ordinary plus dark matter" mode, alternate dots are violet (dark matter) and amber (ordinary). Both follow the same model density excess, and the split is not to scale with the real proportions.
+- The second prediction is not marked right or wrong for "small" or "decides" (both get "partly right"): the head start is only a factor of about 3.1, but at a start of 1 part in 1,000 it decides whether a clump forms. Only "No difference" is marked off. This needs the owner's confirmation.
+- The Results panel's daily-life comparison is a savings account with a small interest rate (one of the two options in "Results"), with a note that it is not exact.
+
+**Wording drafted by Claude that the specification does not contain** (for the owner's line-by-line review, `CLAUDE.md` §28.1): the "Why even ask this" paragraph's claims, the grains-of-matter example, the whole Results panel text, the tutor's worked examples in points 3 and 4, and the caption's step-by-step explanations of each picture.
+
+**Not changed or not checked**
+
+- At a 390-pixel-wide window the four pictures shrink to about 174 pixels and their labels become very small (the same app-wide layout matter as in Experiments 4, 7 and 8). Left for the owner.
+- With ordinary matter, the dashed no-dark-energy line sits almost on top of the solid line, because the two differ by about a fifth on a logarithmic axis; its end label gives the number.
+- The chapter summary in `src/App.tsx` is still a draft, and its "next" line says this is the last experiment.
+- Not checked: console warnings (only errors were captured), Custom slider positions between its two ends, keyboard use, and any browser other than headless Chrome.
+- The matter-radiation equality redshift (about 3,400) is a given value that has not been checked against a primary source.

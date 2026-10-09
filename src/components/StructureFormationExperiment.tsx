@@ -305,8 +305,8 @@ export function StructureFormationExperiment({ onComplete, onTutorComplete }: St
             than average a region is. A density excess of 0.1 means 10% denser: if an average patch of space
             holds 100 grains of matter, this one holds 110. The <strong>growth</strong> is how many times
             larger that density excess has become since the start. A <strong>clump</strong> is a region that
-            has become dense enough (a density excess of 1, which is twice the average) that it would collapse
-            into a bound lump of matter, such as a galaxy. The <strong>redshift</strong>, as in Experiments 1
+            has become dense enough (a density excess of 1, which is twice the average) that it would pull
+            itself together into a lump held together by its own gravity, such as a galaxy. The <strong>redshift</strong>, as in Experiments 1
             and 8, is a number that tells you how long ago something was: a bigger redshift means an earlier
             time.
           </p>

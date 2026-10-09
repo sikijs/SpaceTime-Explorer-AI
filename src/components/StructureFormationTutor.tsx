@@ -175,8 +175,8 @@ export function StructureFormationTutor({ predictedGrowth, predictedHeadStart, o
             needs physics this experiment does not model.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>7. The honest limits.</strong> This is a first-order picture of one region that is still
-            only slightly denser than average. The starting size is your own illustrative choice, and the dark
+            <strong>7. The honest limits.</strong> This is a simplified picture of one region that is still
+            only slightly denser than average (only the first, simple stage of growth). The starting size is your own illustrative choice, and the dark
             matter head start is a given real value, not something the model works out. The model also leaves
             out radiation, as in Experiments 5, 6 and 8.
           </p>
