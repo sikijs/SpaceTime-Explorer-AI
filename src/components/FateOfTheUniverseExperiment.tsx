@@ -12,6 +12,7 @@ import {
 } from '../physics/fateOfTheUniverseExperiment'
 import { universeAgeYears } from '../physics/universeAgeExperiment'
 import { FateOfTheUniverseTutor } from './FateOfTheUniverseTutor'
+import { CosmologySynthesis } from './CosmologySynthesis'
 
 interface FateOfTheUniverseExperimentProps {
   onComplete?: () => void
@@ -127,6 +128,8 @@ export function FateOfTheUniverseExperiment({ onComplete, onTutorComplete }: Fat
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
   const [runCount, setRunCount] = useState(0)
+  // The closing synthesis appears once the tutor's explanation is reached, and goes with the tutor.
+  const [explanationReached, setExplanationReached] = useState(false)
 
   const [farFuturePrediction, setFarFuturePrediction] = useState<FarFutureChoice | null>(null)
   const [nextDoublingPrediction, setNextDoublingPrediction] = useState<NextDoublingChoice | null>(null)
@@ -156,6 +159,7 @@ export function FateOfTheUniverseExperiment({ onComplete, onTutorComplete }: Fat
     setStatus('running')
     setProgress(0)
     setRunCount((count) => count + 1)
+    setExplanationReached(false)
   }
 
   // Matches the rest of the project's precedent: re-opens both questions for editing without resetting
@@ -366,6 +370,11 @@ export function FateOfTheUniverseExperiment({ onComplete, onTutorComplete }: Fat
               in Experiment 6.
             </li>
           </ul>
+          <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+            <strong>One more thing.</strong> This is the last experiment in this chapter. Once you have run it,
+            scroll down to "Putting It All Together" below. It steps back and shows how all ten experiments fit
+            into one story, and which parts of that story are still open.
+          </p>
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>
@@ -1177,9 +1186,14 @@ export function FateOfTheUniverseExperiment({ onComplete, onTutorComplete }: Fat
           key={runCount}
           predictedFarFuture={submittedFarFuturePrediction}
           predictedNextDoubling={submittedNextDoublingPrediction}
-          onExplained={onTutorComplete}
+          onExplained={() => {
+            setExplanationReached(true)
+            onTutorComplete?.()
+          }}
         />
       )}
+
+      {status === 'complete' && explanationReached && <CosmologySynthesis />}
     </div>
   )
 }
