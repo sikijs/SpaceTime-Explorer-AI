@@ -43,6 +43,9 @@ const headStartChoices: Array<{ value: HeadStartChoice; label: string }> = [
   { value: 'decides', label: 'It would decide the outcome' },
 ]
 
+// The starting size used in the Results to show that a head start can decide the outcome (one of the presets).
+const HEAD_START_EXAMPLE_DELTA = 1e-3
+
 const kindLabels: Record<KindOfMatter, string> = {
   ordinary: 'Ordinary matter only',
   'ordinary-plus-dark': 'Ordinary plus dark matter',
@@ -171,6 +174,8 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
   // Both kinds of matter, for the growth graph, which needs no starting size.
   const ordinaryResult = useMemo(() => runStructureFormationExperiment('ordinary', startDelta), [startDelta])
   const darkResult = useMemo(() => runStructureFormationExperiment('ordinary-plus-dark', startDelta), [startDelta])
+  const exampleOrdinary = useMemo(() => runStructureFormationExperiment('ordinary', HEAD_START_EXAMPLE_DELTA), [])
+  const exampleDark = useMemo(() => runStructureFormationExperiment('ordinary-plus-dark', HEAD_START_EXAMPLE_DELTA), [])
   // Growth with no dark energy, from the physics module, for the chosen kind (the thin reference line).
   const withoutDarkEnergy = useMemo(
     () => result.curve.map((point) => growthBetween(result.startRedshift, point.redshift, 0)),
@@ -999,6 +1004,141 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
             Experiments 5 to 8.
           </p>
         </div>
+
+            {status === 'complete' && (
+              <div
+                style={{
+                  marginTop: '1.5rem',
+                  paddingTop: '1rem',
+                  borderTop: '1px solid var(--border-color, #ccc)',
+                }}
+              >
+                <h3 style={{ marginTop: 0 }}>Results</h3>
+                <p>
+                  You chose <strong>{kindLabels[kind].toLowerCase()}</strong> and a starting size of{' '}
+                  <strong>{partsInLabel(startDelta)}</strong>. For that choice:
+                </p>
+                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                    <tbody>
+                      {[
+                        ['The ripple started growing at redshift', redshiftLabel(result.startRedshift)],
+                        ['How many times it grew by today', `about ${Math.round(result.growthSinceStart).toLocaleString('en-US')}`],
+                        [
+                          'Its density excess today',
+                          result.becameClump
+                            ? '1 or more (it became a clump)'
+                            : `about ${result.densityExcessToday.toPrecision(2)} (not a clump)`,
+                        ],
+                        ...(result.becameClump
+                          ? [['It reached a clump at redshift', `about ${redshiftLabel(result.redshiftOfClump ?? 0)}`]]
+                          : []),
+                        ['Starting size needed for a clump (this kind of matter)', partsInLabel(result.requiredStartDelta)],
+                        [
+                          'Starting size needed for a clump (the other kind)',
+                          partsInLabel(result.requiredStartDeltaOtherMatter),
+                        ],
+                      ].map(([label, value]) => (
+                        <tr key={label}>
+                          <td style={{ padding: '0.25rem 1rem 0.25rem 0' }}>{label}</td>
+                          <td style={{ textAlign: 'right', padding: '0.25rem 0', whiteSpace: 'nowrap' }}>{value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p style={{ marginBottom: '0.5rem' }}>
+                  <strong>A simple calculation.</strong> The density excess today is the starting size times
+                  the growth: {partsInLabel(startDelta)} × about{' '}
+                  {Math.round(result.growthSinceStart).toLocaleString('en-US')} ≈{' '}
+                  {result.densityExcessToday.toPrecision(2)}. The same reasoning works backward: to reach a
+                  density excess of 1, the ripple must start at 1 ÷ about{' '}
+                  {Math.round(result.growthSinceStart).toLocaleString('en-US')} ≈{' '}
+                  {partsInLabel(result.requiredStartDelta)}. For comparison, a ripple of 1 part in 100,000
+                  (the size of the oldest light's temperature ripples) with ordinary matter would reach only{' '}
+                  {partsInLabel(MIN_START_DELTA * ordinaryResult.growthSinceStart)}.
+                </p>
+                <p style={{ marginBottom: '0.5rem' }}>
+                  <strong>Checking your first prediction:</strong> asked about how many times denser a slightly
+                  denser region would become between the oldest light's release and today, you answered "
+                  {growthChoices.find((c) => c.value === submittedGrowthPrediction)!.label}". The model gives
+                  about {Math.round(ordinaryResult.growthSinceStart).toLocaleString('en-US')} times, for any
+                  starting size. While matter dominates, a ripple grows in step with the size of the universe,
+                  and the universe grew about {Math.round(1 + RECOMBINATION_REDSHIFT).toLocaleString('en-US')} times in size over that
+                  time; dark energy took part of that growth away, which is why the answer is a little lower.{' '}
+                  {submittedGrowthPrediction === 'thousand'
+                    ? 'So your prediction was right.'
+                    : 'So your prediction was off this time.'}
+                </p>
+                <p style={{ marginBottom: '0.5rem' }}>
+                  <strong>Checking your second prediction:</strong> asked whether starting earlier would change
+                  the answer, you answered "
+                  {headStartChoices.find((c) => c.value === submittedHeadStartPrediction)!.label}". The model
+                  gives a head start for dark matter: the growth rises from about{' '}
+                  {Math.round(ordinaryResult.growthSinceStart).toLocaleString('en-US')} times to about{' '}
+                  {Math.round(darkResult.growthSinceStart).toLocaleString('en-US')} times, a gain of about{' '}
+                  {(darkResult.growthSinceStart / ordinaryResult.growthSinceStart).toFixed(1)}. That is a small
+                  factor next to growth of thousands of times, but whether it decides the outcome depends on the
+                  starting size. For a region that starts at {partsInLabel(HEAD_START_EXAMPLE_DELTA)}, ordinary
+                  matter reaches only a density excess of about{' '}
+                  {exampleOrdinary.densityExcessToday.toPrecision(2)} (not a clump), but with the head start it
+                  reaches about {exampleDark.densityExcessToday.toPrecision(2)} (a clump).{' '}
+                  {submittedHeadStartPrediction === 'none'
+                    ? 'So your prediction was off this time: the head start does change the result.'
+                    : 'So your prediction was partly right: the head start is worth only a small factor, and for some starting sizes that factor decides the outcome.'}
+                </p>
+                <p style={{ marginBottom: '0.5rem' }}>
+                  <strong>A comparison from daily life.</strong> Think of a savings account that earns a small
+                  interest rate. In any one year the balance barely changes, but over many years it has grown
+                  many times over. A ripple in the early universe is similar: it does not suddenly explode, it
+                  grows steadily, and what matters is how long it has to grow. Like any comparison, it is not
+                  exact. A ripple's growth is set by how much the universe has expanded, not by a fixed rate.
+                </p>
+                <div
+                  style={{
+                    margin: '0.75rem 0',
+                    padding: '0.75rem 1rem',
+                    border: '2px solid #f59e0b',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                  }}
+                >
+                  <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                    <strong>What this model can and cannot tell you.</strong> It tells you how many times a
+                    small ripple grows, and so how big it must start to become a clump. The sizes needed here,
+                    about {partsInLabel(ordinaryResult.requiredStartDelta)} for ordinary matter and about{' '}
+                    {partsInLabel(darkResult.requiredStartDelta)} with the head start, are much larger than the
+                    oldest light's 1 part in 100,000. But that figure is a difference in <em>temperature</em>,
+                    which is not the same as how much denser a region of matter is, and how the two are related
+                    depends on the size of the region. So this model cannot say whether the real universe had
+                    enough, and it does not claim to.
+                  </p>
+                  <p style={{ marginTop: 0, marginBottom: 0 }}>
+                    The starting size here is your own illustrative choice, not a measurement. The dark matter
+                    head start (starting at redshift about 3,400) is a given real value, not something this
+                    model works out.
+                  </p>
+                </div>
+                <p style={{ marginBottom: '0.25rem' }}>
+                  <strong>What this model simplifies.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.5rem' }}>
+                  <li>
+                    It is the same simplified universe as Experiments 5, 6 and 8: flat, with matter and a
+                    constant dark energy, an illustrative Hubble constant of 70, and no radiation.
+                  </li>
+                  <li>
+                    Only the first, simple stage of growth is modelled, for a region that is still only
+                    slightly denser than average. Pressure, gas cooling, star formation and mergers of clumps
+                    are not.
+                  </li>
+                  <li>
+                    A single region is followed on its own, and the model says when it would become a clump,
+                    not what the clump looks like. The green glow is only an illustration.
+                  </li>
+                </ul>
+              </div>
+            )}
           </>
         )}
       </div>
