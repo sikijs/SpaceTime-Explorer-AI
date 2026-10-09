@@ -27,6 +27,22 @@ const DARK_COLOR = '#a78bfa'
 const NO_DARK_ENERGY_COLOR = '#cbd5e1'
 const CLUMP_COLOR = '#4ade80'
 
+// This experiment's two prediction questions, per its specification's "Prediction Activity". Choices are
+// not scored.
+type GrowthChoice = 'ten' | 'thousand' | 'million'
+const growthChoices: Array<{ value: GrowthChoice; label: string }> = [
+  { value: 'ten', label: 'About 10 times' },
+  { value: 'thousand', label: 'About 1,000 times' },
+  { value: 'million', label: 'About a million times' },
+]
+
+type HeadStartChoice = 'none' | 'small' | 'decides'
+const headStartChoices: Array<{ value: HeadStartChoice; label: string }> = [
+  { value: 'none', label: 'No difference' },
+  { value: 'small', label: 'A small difference' },
+  { value: 'decides', label: 'It would decide the outcome' },
+]
+
 const kindLabels: Record<KindOfMatter, string> = {
   ordinary: 'Ordinary matter only',
   'ordinary-plus-dark': 'Ordinary plus dark matter',
@@ -139,6 +155,14 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
 
+  const [growthPrediction, setGrowthPrediction] = useState<GrowthChoice | null>(null)
+  const [headStartPrediction, setHeadStartPrediction] = useState<HeadStartChoice | null>(null)
+  const [submittedGrowthPrediction, setSubmittedGrowthPrediction] = useState<GrowthChoice | null>(null)
+  const [submittedHeadStartPrediction, setSubmittedHeadStartPrediction] = useState<HeadStartChoice | null>(null)
+
+  const hasPrediction = growthPrediction !== null && headStartPrediction !== null
+  const hasSubmittedPrediction = submittedGrowthPrediction !== null && submittedHeadStartPrediction !== null
+
   const preset = START_SIZE_PRESETS.find((p) => p.id === presetId)!
   const startDelta = mode === 'preset' ? preset.startDelta : customDelta
   const result = runStructureFormationExperiment(kind, startDelta)
@@ -167,9 +191,21 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
     if (status === 'complete') setStatus('idle')
   }
   const handleRun = () => {
-    if (status === 'running') return
+    if (!hasPrediction || status === 'running') return
+    if (!hasSubmittedPrediction) {
+      setSubmittedGrowthPrediction(growthPrediction)
+      setSubmittedHeadStartPrediction(headStartPrediction)
+    }
     setStatus('running')
     setProgress(0)
+  }
+
+  // Matches the rest of the project's precedent: re-opens both questions for editing without resetting
+  // the chosen kind of matter or starting size.
+  const handleChangePrediction = () => {
+    setSubmittedGrowthPrediction(null)
+    setSubmittedHeadStartPrediction(null)
+    setStatus('idle')
   }
 
   useEffect(() => {
@@ -242,13 +278,87 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            Gravity pulls extra matter into a slightly denser region. Starting when the oldest light was
+            released and acting until today, about how many times denser than average (relative to its start)
+            will that region become?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {growthChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setGrowthPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${growthPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            Suppose the region could start gathering matter earlier, before the oldest light was released.
+            Would that change the answer?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {headStartChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setHeadStartPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${headStartPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {hasPrediction || hasSubmittedPrediction
+              ? `Your predictions: ${
+                  growthChoices.find((c) => c.value === (growthPrediction ?? submittedGrowthPrediction))!.label
+                }; ${
+                  headStartChoices.find((c) => c.value === (headStartPrediction ?? submittedHeadStartPrediction))!
+                    .label
+                }`
+              : 'Answer both questions to continue'}
+          </p>
+        </div>
+
+        {hasSubmittedPrediction && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many settings as you like below. Or,
+              change your predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePrediction}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
+        <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>What matter is gathering:</p>
           {(['ordinary', 'ordinary-plus-dark'] as const).map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => handleKindChange(option)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${kind === option ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -269,7 +379,7 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
               key={p.id}
               type="button"
               onClick={() => handlePresetChange(p.id)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${mode === 'preset' && presetId === p.id ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -279,7 +389,7 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
           <button
             type="button"
             onClick={handleCustom}
-            disabled={status === 'running'}
+            disabled={!hasPrediction || status === 'running'}
             className={`toggle-button${mode === 'custom' ? ' is-selected' : ''}`}
             style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
           >
@@ -297,7 +407,7 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
                 max={SLIDER_STEPS}
                 step={1}
                 value={deltaToSlider(customDelta)}
-                disabled={status === 'running'}
+                disabled={!hasPrediction || status === 'running'}
                 onChange={(event) => {
                   setCustomDelta(sliderToDelta(Number(event.target.value)))
                   if (status === 'complete') setStatus('idle')
@@ -314,12 +424,18 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
         <button
           type="button"
           onClick={handleRun}
-          disabled={status === 'running'}
+          disabled={!hasPrediction || status === 'running'}
           className="action-button"
           style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
+
+        {!hasPrediction && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Answer the predictions above to try the controls.
+          </p>
+        )}
 
         {isActive && (
           <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -333,6 +449,8 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
           </p>
         )}
 
+        {hasSubmittedPrediction && (
+          <>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
           {/* Picture 1: the growing ripple */}
           <svg
@@ -802,6 +920,8 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
             Experiments 5 to 8.
           </p>
         </div>
+          </>
+        )}
       </div>
     </div>
   )
