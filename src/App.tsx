@@ -37,6 +37,7 @@ import { UniverseAgeExperiment } from './components/UniverseAgeExperiment'
 import { GravitationalLensingExperiment } from './components/GravitationalLensingExperiment'
 import { ObservableUniverseExperiment } from './components/ObservableUniverseExperiment'
 import { StructureFormationExperiment } from './components/StructureFormationExperiment'
+import { FateOfTheUniverseExperiment } from './components/FateOfTheUniverseExperiment'
 
 interface Chapter {
   title: string
@@ -345,6 +346,15 @@ const chapters: Chapter[] = [
     Component: StructureFormationExperiment,
     learned:
       'A region that starts slightly denser than average grows only in step with the size of the universe while matter dominates, and dark energy slows it later. Dark matter can start growing earlier than ordinary matter, which gives it a head start.',
+    next: 'Next, we follow the expansion into the future: does it ever stop?',
+  },
+  {
+    title: 'The Fate of the Universe',
+    group: 'Cosmology',
+    Component: FateOfTheUniverseExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
+    learned:
+      'With only matter, the expansion slows down forever without quite stopping. With dark energy, each doubling of the universe takes about the same time as the one before, so the growth becomes steady and endless.',
     next: 'This is currently the last experiment in the project.',
   },
 ]
