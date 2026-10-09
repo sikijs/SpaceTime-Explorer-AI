@@ -36,6 +36,7 @@ import { DarkEnergyExperiment } from './components/DarkEnergyExperiment'
 import { UniverseAgeExperiment } from './components/UniverseAgeExperiment'
 import { GravitationalLensingExperiment } from './components/GravitationalLensingExperiment'
 import { ObservableUniverseExperiment } from './components/ObservableUniverseExperiment'
+import { StructureFormationExperiment } from './components/StructureFormationExperiment'
 
 interface Chapter {
   title: string
@@ -336,6 +337,15 @@ const chapters: Chapter[] = [
     Component: ObservableUniverseExperiment,
     learned:
       "The farthest light we can see has travelled about 13.5 billion years, yet its source is now about 45 billion light-years away, because space stretched while the light was on its way. The source was only about 41 million light-years away when the light left.",
+    next: 'Next, how a nearly smooth early universe grew into galaxies: tiny ripples, and how fast gravity can grow them.',
+  },
+  {
+    title: 'Structure Formation',
+    group: 'Cosmology',
+    Component: StructureFormationExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
+    learned:
+      'A region that starts slightly denser than average grows only in step with the size of the universe while matter dominates, and dark energy slows it later. Dark matter can start growing earlier than ordinary matter, which gives it a head start.',
     next: 'This is currently the last experiment in the project.',
   },
 ]
