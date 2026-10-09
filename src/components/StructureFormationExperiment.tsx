@@ -277,6 +277,85 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
       <h2>Experiment 9 — How Did Galaxies Form? Growing Structure from Tiny Ripples</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> The oldest light we can see (the cosmic microwave background, from
+            Experiment 3) shows an early universe that was almost perfectly smooth: its temperature differs by
+            only about 1 part in 100,000 from place to place. Yet today the universe is full of galaxies, with
+            huge empty spaces between them. How did a nearly smooth universe turn into a lumpy one?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> Picture a region of the early universe that is just a tiny bit
+            denser than average. Its extra gravity pulls in a little more matter, which makes it denser still.
+            But the universe is also expanding (Experiments 1 and 2), which keeps spreading everything out.
+            You choose what kind of matter is gathering, and how much denser than average the region starts.
+            You then run it, and watch how that region changes from the early universe until today.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Some words we will use.</strong> The <strong>density excess</strong> is how much denser
+            than average a region is. A density excess of 0.1 means 10% denser: if an average patch of space
+            holds 100 grains of matter, this one holds 110. The <strong>growth</strong> is how many times
+            larger that density excess has become since the start. A <strong>clump</strong> is a region that
+            has become dense enough (a density excess of 1, which is twice the average) that it would collapse
+            into a bound lump of matter, such as a galaxy. The <strong>redshift</strong>, as in Experiments 1
+            and 8, is a number that tells you how long ago something was: a bigger redshift means an earlier
+            time.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> Every galaxy, and every cluster of galaxies, started as a tiny
+            difference in density. Working out how fast those differences could grow tells us what the early
+            universe must have been like, and it brings together the oldest light (Experiment 3), dark matter
+            (Experiment 4) and dark energy (Experiment 5) from earlier in this chapter.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make two predictions. Then choose a kind of matter and a
+            starting size, and run it. Try different choices and see how the result changes.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> How many times the region's density excess grows, whether the
+            region ends up as a clump, and how big the region would have to start for that to happen. We reuse
+            the expanding universe from Experiments 1 and 2, the oldest light from Experiment 3, dark matter
+            from Experiment 4, and dark energy and the universe's age from Experiments 5 and 6.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              The same simplified universe as Experiments 5, 6 and 8: "flat" (space on the very largest scales
+              is not curved, so straight parallel paths stay parallel), with matter and a constant dark energy
+              (70%), and an illustrative Hubble constant of 70 km/s per megaparsec (a megaparsec is about 3.3 million light-years), with the same real caveat:
+              published values range from about 67 to 73, the "Hubble tension." <strong>Radiation</strong> (the
+              light and other very fast particles of the early universe) is left out, so the model cannot
+              describe the time before matter outweighed radiation. The redshift where that happened (about
+              3,400) is a given real value, not something we compute.
+            </li>
+            <li>
+              Only the first, simple stage of growth is modelled: a region that is still only slightly denser
+              than average. Real structure formation also involves pressure, gas cooling, the birth of stars,
+              and mergers of clumps, and none of these are modelled.
+            </li>
+            <li>
+              The starting size of the region is your own illustrative choice, not a measurement. The oldest
+              light's 1 part in 100,000 is a difference in <em>temperature</em>, which is not the same as how
+              much denser a region of matter is, and how the two are related depends on the size of the
+              region. This model does not capture that.
+            </li>
+            <li>
+              A single region is treated on its own. Real galaxies form where many ripples of many sizes
+              overlap.
+            </li>
+            <li>
+              Dark matter is assumed to be able to start gathering at a given earlier time, and what it is
+              made of is not specified, as in Experiment 4.
+            </li>
+            <li>
+              The model says <em>when</em> a region would become a clump. It does not say what the clump looks
+              like.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             Gravity pulls extra matter into a slightly denser region. Starting when the oldest light was
