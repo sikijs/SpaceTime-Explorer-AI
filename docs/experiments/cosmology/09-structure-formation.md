@@ -1,6 +1,6 @@
 # Cosmology — Experiment 9: How Did Galaxies Form? Growing Structure from Tiny Ripples
 
-**Status: APPROVED by the owner on 2026-10-09 (proposed by Claude per `CLAUDE.md` §23 Stages 1–3 on 2026-10-09, following the completion of Cosmology Experiment 8. The owner chose this topic, and chose to place it before "The Fate of the Universe", which becomes Experiment 10 and the chapter's closing experiment). Nothing is built. Decision 1 (the starting size of the ripple) was settled in conversation on 2026-10-09: options (a) and (c) are combined, and option (b) is left out. The specification was updated accordingly; the owner has not yet reviewed the full updated text.**
+**Status: APPROVED by the owner on 2026-10-09 (proposed by Claude per `CLAUDE.md` §23 Stages 1–3 on 2026-10-09, following the completion of Cosmology Experiment 8. The owner chose this topic, and chose to place it before "The Fate of the Universe", which becomes Experiment 10 and the chapter's closing experiment). Nothing is built. Decision 1 (the starting size of the ripple) was settled in conversation on 2026-10-09: options (a) and (c) are combined, and option (b) is left out. The specification was updated accordingly. Built and finally reviewed (2026-10-09); the owner's line-by-line wording approval (`CLAUDE.md` §28.1) is complete (2026-10-09), approved as written with no changes requested. See "Implementation Notes".**
 
 This is the ninth experiment of the "Cosmology" chapter.
 
@@ -253,10 +253,10 @@ Built one step at a time per `CLAUDE.md` §6: physics model and tests (`src/phys
 - The 1-part-in-500 preset is stored as 0.002, which is also the slider's top end.
 - "The surrounding space shown stretching" is shown as a live "stretched N times" label and readout, not as drawing: the strip follows one fixed patch of matter.
 - In "ordinary plus dark matter" mode, alternate dots are violet (dark matter) and amber (ordinary). Both follow the same model density excess, and the split is not to scale with the real proportions.
-- The second prediction is not marked right or wrong for "small" or "decides" (both get "partly right"): the head start is only a factor of about 3.1, but at a start of 1 part in 1,000 it decides whether a clump forms. Only "No difference" is marked off. This needs the owner's confirmation.
+- The second prediction is not marked right or wrong for "small" or "decides" (both get "partly right"): the head start is only a factor of about 3.1, but at a start of 1 part in 1,000 it decides whether a clump forms. Only "No difference" is marked off. Approved by the owner as written (2026-10-09).
 - The Results panel's daily-life comparison is a savings account with a small interest rate (one of the two options in "Results"), with a note that it is not exact.
 
-**Wording drafted by Claude that the specification does not contain** (for the owner's line-by-line review, `CLAUDE.md` §28.1): the "Why even ask this" paragraph's claims, the grains-of-matter example, the whole Results panel text, the tutor's worked examples in points 3 and 4, and the caption's step-by-step explanations of each picture.
+**Wording drafted by Claude that the specification does not contain** (approved by the owner as written, 2026-10-09, `CLAUDE.md` §28.1): the "Why even ask this" paragraph's claims, the grains-of-matter example, the whole Results panel text, the tutor's worked examples in points 3 and 4, and the caption's step-by-step explanations of each picture.
 
 **Not changed or not checked**
 

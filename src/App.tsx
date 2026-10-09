@@ -343,7 +343,6 @@ const chapters: Chapter[] = [
     title: 'Structure Formation',
     group: 'Cosmology',
     Component: StructureFormationExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
     learned:
       'A region that starts slightly denser than average grows only in step with the size of the universe while matter dominates, and dark energy slows it later. Dark matter can start growing earlier than ordinary matter, which gives it a head start.',
     next: 'This is currently the last experiment in the project.',
