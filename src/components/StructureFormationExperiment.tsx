@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { StructureFormationTutor } from './StructureFormationTutor'
 import {
   CLUMP_THRESHOLD,
   MATTER_RADIATION_EQUALITY_REDSHIFT,
@@ -150,13 +151,15 @@ function curveAt(result: StructureFormationResult, fraction: number) {
   }
 }
 
-export function StructureFormationExperiment({ onComplete }: StructureFormationExperimentProps) {
+export function StructureFormationExperiment({ onComplete, onTutorComplete }: StructureFormationExperimentProps) {
   const [kind, setKind] = useState<KindOfMatter>('ordinary-plus-dark')
   const [mode, setMode] = useState<StartMode>('preset')
   const [presetId, setPresetId] = useState('one-in-1000')
   const [customDelta, setCustomDelta] = useState(5e-4)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  // Remounts the tutor on each new run so its conversation starts over.
+  const [runCount, setRunCount] = useState(0)
 
   const [growthPrediction, setGrowthPrediction] = useState<GrowthChoice | null>(null)
   const [headStartPrediction, setHeadStartPrediction] = useState<HeadStartChoice | null>(null)
@@ -203,6 +206,7 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((count) => count + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens both questions for editing without resetting
@@ -1142,6 +1146,15 @@ export function StructureFormationExperiment({ onComplete }: StructureFormationE
           </>
         )}
       </div>
+
+      {status === 'complete' && submittedGrowthPrediction && submittedHeadStartPrediction && (
+        <StructureFormationTutor
+          key={runCount}
+          predictedGrowth={submittedGrowthPrediction}
+          predictedHeadStart={submittedHeadStartPrediction}
+          onExplained={onTutorComplete}
+        />
+      )}
     </div>
   )
 }
