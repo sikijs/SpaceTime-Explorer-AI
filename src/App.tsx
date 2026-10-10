@@ -40,6 +40,7 @@ import { StructureFormationExperiment } from './components/StructureFormationExp
 import { FateOfTheUniverseExperiment } from './components/FateOfTheUniverseExperiment'
 import { BlackHoleSizeExperiment } from './components/BlackHoleSizeExperiment'
 import { TimeNearBlackHoleExperiment } from './components/TimeNearBlackHoleExperiment'
+import { OrbitsNearBlackHoleExperiment } from './components/OrbitsNearBlackHoleExperiment'
 
 interface Chapter {
   title: string
@@ -376,7 +377,17 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-10 (CLAUDE.md §28.1).
     learned:
       'A clock held still near a black hole ticks more slowly than a clock far away, by the factor √(1 − r_s ÷ r). It depends only on how many horizon radii away the clock is, so it is the same for a small black hole and a giant one. The factor falls toward zero at the horizon. The simple formula from the earlier experiments is accurate far away and fails near the horizon.',
-    next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: orbits around a black hole, how it bends light, and what falling in is like.',
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 3.
+    next: 'Next, orbits near a black hole: is it safe to circle one at any distance?',
+  },
+  {
+    title: 'Orbits Near a Black Hole',
+    group: 'Black Holes and Strong Gravity',
+    Component: OrbitsNearBlackHoleExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not yet shown to learners: the tutor
+    // that unlocks the summary is not built.
+    learned: 'Draft placeholder: the summary for this experiment has not been written yet.',
+    next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: how a black hole bends light, and what falling in is like.',
   },
 ]
 
