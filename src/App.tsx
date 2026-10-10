@@ -363,7 +363,6 @@ const chapters: Chapter[] = [
     title: 'How Small Is a Black Hole?',
     group: 'Black Holes and Strong Gravity',
     Component: BlackHoleSizeExperiment,
-    // Draft, not yet approved by the owner (CLAUDE.md §28.1).
     learned:
       'Any mass becomes a black hole if all of it is squeezed inside its horizon radius, 2GM/c². That radius is proportional to the mass, about 3 kilometers for each Sun. Real objects are far from that limit: the Sun would have to shrink about 236,000 times and Earth about 720 million times, while a neutron star is only about 3 times too big.',
     next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: time near a black hole, orbits around one, how it bends light, and what falling in is like.',
