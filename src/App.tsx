@@ -39,6 +39,7 @@ import { ObservableUniverseExperiment } from './components/ObservableUniverseExp
 import { StructureFormationExperiment } from './components/StructureFormationExperiment'
 import { FateOfTheUniverseExperiment } from './components/FateOfTheUniverseExperiment'
 import { BlackHoleSizeExperiment } from './components/BlackHoleSizeExperiment'
+import { TimeNearBlackHoleExperiment } from './components/TimeNearBlackHoleExperiment'
 
 interface Chapter {
   title: string
@@ -365,7 +366,17 @@ const chapters: Chapter[] = [
     Component: BlackHoleSizeExperiment,
     learned:
       'Any mass becomes a black hole if all of it is squeezed inside its horizon radius, 2GM/c². That radius is proportional to the mass, about 3 kilometers for each Sun. Real objects are far from that limit: the Sun would have to shrink about 236,000 times and Earth about 720 million times, while a neutron star is only about 3 times too big.',
-    next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: time near a black hole, orbits around one, how it bends light, and what falling in is like.',
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 2.
+    next: 'Next, time near a black hole: how much does gravity slow a clock that is held close to the horizon?',
+  },
+  {
+    title: 'Time Near a Black Hole',
+    group: 'Black Holes and Strong Gravity',
+    Component: TimeNearBlackHoleExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not yet shown to learners: the tutor
+    // that unlocks the summary is not built.
+    learned: 'Draft placeholder: the summary for this experiment has not been written yet.',
+    next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: orbits around a black hole, how it bends light, and what falling in is like.',
   },
 ]
 
