@@ -39,6 +39,30 @@ const BLACK_HOLE_COLOR = '#e879f9'
 const DISTANCE_PRESETS = [100, 10, 3, 1.5, 1.1, 1.01]
 const AXIS_TICKS = [100, 10, 3, 1.5]
 
+// This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not
+// scored here; they are compared with the model's results later.
+type JustOutsideChoice = 'same' | 'half' | 'tenth' | 'stopped'
+const justOutsideChoices: Array<{ value: JustOutsideChoice; label: string }> = [
+  { value: 'same', label: 'About the same rate' },
+  { value: 'half', label: 'About half as fast' },
+  { value: 'tenth', label: 'About one tenth as fast' },
+  { value: 'stopped', label: 'It has stopped' },
+]
+
+type MassChoice = 'small' | 'giant' | 'same'
+const massChoices: Array<{ value: MassChoice; label: string }> = [
+  { value: 'small', label: 'The one near the small black hole' },
+  { value: 'giant', label: 'The one near the giant black hole' },
+  { value: 'same', label: 'They tick at the same relative rate' },
+]
+
+type ApproximationChoice = 'still-accurate' | 'worse-closer' | 'never-accurate'
+const approximationChoices: Array<{ value: ApproximationChoice; label: string }> = [
+  { value: 'still-accurate', label: 'Yes, it will still be about as accurate' },
+  { value: 'worse-closer', label: 'It will be accurate far from the horizon, but get worse the closer you get' },
+  { value: 'never-accurate', label: 'No, it will be wrong everywhere near a black hole, even far from the horizon' },
+]
+
 // Three significant figures, with no trailing zeros ("10", "2.95", "235,571").
 function formatNumber(value: number): string {
   if (value >= 1000) return Number(value.toPrecision(3)).toLocaleString('en-US')
@@ -131,6 +155,17 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
 
+  const [justOutsidePrediction, setJustOutsidePrediction] = useState<JustOutsideChoice | null>(null)
+  const [massPrediction, setMassPrediction] = useState<MassChoice | null>(null)
+  const [approximationPrediction, setApproximationPrediction] = useState<ApproximationChoice | null>(null)
+  const [submittedJustOutside, setSubmittedJustOutside] = useState<JustOutsideChoice | null>(null)
+  const [submittedMass, setSubmittedMass] = useState<MassChoice | null>(null)
+  const [submittedApproximation, setSubmittedApproximation] = useState<ApproximationChoice | null>(null)
+
+  const hasPrediction = justOutsidePrediction !== null && massPrediction !== null && approximationPrediction !== null
+  const hasSubmittedPrediction =
+    submittedJustOutside !== null && submittedMass !== null && submittedApproximation !== null
+
   const result = runTimeNearBlackHoleExperiment(presetId, distance)
   const readings = clockReadingsAt(result, progress * FAR_CLOCK_RUN_SECONDS)
 
@@ -147,8 +182,23 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
   }
 
   const handleRun = () => {
-    if (status === 'running') return
+    if (!hasPrediction || status === 'running') return
+    if (!hasSubmittedPrediction) {
+      setSubmittedJustOutside(justOutsidePrediction)
+      setSubmittedMass(massPrediction)
+      setSubmittedApproximation(approximationPrediction)
+    }
     setStatus('running')
+    setProgress(0)
+  }
+
+  // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
+  // chosen black hole or distance.
+  const handleChangePrediction = () => {
+    setSubmittedJustOutside(null)
+    setSubmittedMass(null)
+    setSubmittedApproximation(null)
+    setStatus('idle')
     setProgress(0)
   }
 
@@ -192,13 +242,107 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            A clock hovers just outside a black hole's horizon, only 1% farther from the center than the horizon
+            is. You watch it from far away. How fast does it tick compared with an identical clock next to you?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {justOutsideChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setJustOutsidePrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${justOutsidePrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            Two clocks each hover at twice the horizon radius: one near a small black hole (10 Suns), one near a
+            giant one (M87*, 650 million times as heavy). Which one ticks more slowly, compared with a clock far
+            away?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {massChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setMassPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${massPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            In Gravity and Curved Spacetime, Experiments 2 and 9, we used a simple formula for how gravity slows
+            clocks, and it worked well. Will that same simple formula still be accurate right next to a black
+            hole's horizon?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {approximationChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setApproximationPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${approximationPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {hasPrediction || hasSubmittedPrediction
+              ? `Your predictions: ${
+                  justOutsideChoices.find((c) => c.value === (justOutsidePrediction ?? submittedJustOutside))!.label
+                }; ${massChoices.find((c) => c.value === (massPrediction ?? submittedMass))!.label}; ${
+                  approximationChoices.find((c) => c.value === (approximationPrediction ?? submittedApproximation))!
+                    .label
+                }`
+              : 'Answer all three questions to continue'}
+          </p>
+        </div>
+
+        {hasSubmittedPrediction && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many black holes and distances as you
+              like below. Or, change your predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePrediction}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
+        <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Black hole:</p>
           {BLACK_HOLE_PRESETS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => handlePresetChange(p.id)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -216,7 +360,7 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
               key={d}
               type="button"
               onClick={() => handleDistanceChange(d)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${isPresetSelected(d) ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -234,7 +378,7 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
               max={logMax}
               step="any"
               value={Math.log10(distance)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               onChange={(event) =>
                 handleDistanceChange(
                   Math.min(
@@ -256,12 +400,20 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={status === 'running'}
+          disabled={!hasPrediction || status === 'running'}
           style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
 
+        {!hasPrediction && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Answer the predictions above to try the controls.
+          </p>
+        )}
+
+        {hasSubmittedPrediction && (
+          <>
         <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           {result.preset.label}: {formatMass(result.preset.massSolarMasses)}; horizon radius{' '}
           {formatDistance(result.horizonRadiusKm)}
@@ -402,6 +554,8 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
             </li>
           </ol>
         </div>
+          </>
+        )}
       </div>
     </div>
   )
