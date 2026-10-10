@@ -8,6 +8,7 @@ import {
   exactSlowingFactor,
   firstOrderSlowingFactor,
   runTimeNearBlackHoleExperiment,
+  surfaceSlowing,
 } from '../physics/timeNearBlackHoleExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
 
@@ -96,6 +97,30 @@ function formatLength(km: number): string {
 // Kilometers, with astronomical units added once that is the more natural unit.
 function formatDistance(km: number): string {
   return km >= 7.5e6 ? `${formatLength(km)}, about ${formatNumber(km / KM_PER_AU)} AU` : formatLength(km)
+}
+
+// Up to four significant figures, with no trailing zeros ("0.5", "0.000999").
+function formatSmall(value: number): string {
+  return String(Number(value.toPrecision(4)))
+}
+
+function formatPercent(percent: number): string {
+  return percent < 0.01 ? 'less than 0.01%' : `${Number(percent.toPrecision(2))}%`
+}
+
+// How much slower a clock at a real surface runs, in plain units.
+function formatSlowing(fraction: number): string {
+  if (fraction >= 0.01) return `about ${Math.round(fraction * 100)}% slower`
+  const perSecond =
+    fraction < 1e-6
+      ? `${Number((fraction * 1e9).toPrecision(2))} billionths of a second`
+      : `${Number((fraction * 1e6).toPrecision(2))} millionths of a second`
+  const perDaySeconds = fraction * 86400
+  const perDay =
+    perDaySeconds < 1e-3
+      ? `${Number((perDaySeconds * 1e6).toPrecision(2))} millionths of a second`
+      : `${Number(perDaySeconds.toPrecision(2))} seconds`
+  return `loses about ${perSecond} every second, about ${perDay} per day`
 }
 
 function formatMass(solarMasses: number): string {
@@ -258,6 +283,23 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
   // Picture 3: each clock's reading against the far-away clock's time, drawn up to the present moment of the run.
   const timeX = (seconds: number) => PLOT_LEFT + (seconds / FAR_CLOCK_RUN_SECONDS) * (PLOT_RIGHT - PLOT_LEFT)
   const readingY = (seconds: number) => PLOT_BOTTOM - (seconds / FAR_CLOCK_RUN_SECONDS) * (PLOT_BOTTOM - PLOT_TOP)
+
+  // Values for the Results panel.
+  const showResults = status === 'complete' && hasSubmittedPrediction
+  const factorOnePercentOut = exactSlowingFactor(1.01)
+  const holesAtTwo = BLACK_HOLE_PRESETS.map((p) => runTimeNearBlackHoleExperiment(p.id, 2))
+  const holesAtChosen = BLACK_HOLE_PRESETS.map((p) => runTimeNearBlackHoleExperiment(p.id, distance))
+  const surfaces = (
+    [
+      ['Earth', 'earth'],
+      ['The Sun', 'sun'],
+      ['A neutron star', 'neutron-star'],
+    ] as const
+  ).map(([label, id]) => ({ label, ...surfaceSlowing(id) }))
+  const percentTooHigh = ((result.firstOrderFactor - result.exactFactor) / result.exactFactor) * 100
+  const justOutsideRight = submittedJustOutside === 'tenth'
+  const massRight = submittedMass === 'same'
+  const approximationRight = submittedApproximation === 'worse-closer'
 
   const isPresetSelected = (d: number) => Math.abs(Math.log(d / distance)) < 1e-9
 
@@ -743,6 +785,204 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
             </li>
           </ol>
         </div>
+
+        {showResults && (
+          <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p>
+              You held a clock at <strong>{formatRadii(distance)} horizon radii</strong> (
+              {formatDistance(result.distanceKm)}) from the center of <strong>{result.preset.label}</strong> (
+              {formatMass(result.preset.massSolarMasses)}). The far-away clock ran for{' '}
+              {FAR_CLOCK_RUN_SECONDS} seconds of its own time. For this run:
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <tbody>
+                  {[
+                    ['The far-away clock read', `${result.farClockReadingSeconds.toFixed(2)} s`],
+                    ['The hovering clock read', `${result.hoveringClockReadingSeconds.toFixed(2)} s`],
+                    [
+                      'The slowing factor (hovering rate ÷ far-away rate)',
+                      `${result.exactFactor.toFixed(4)}, so the hovering clock ticks at ${formatPercent(result.exactFactor * 100)} of the far-away rate`,
+                    ],
+                    [
+                      'What the simple formula (Gravity Experiments 2 and 9) gives at this distance',
+                      `${result.firstOrderFactor.toFixed(4)}, which is ${formatPercent(percentTooHigh)} too high`,
+                    ],
+                  ].map(([label, value]) => (
+                    <tr key={label}>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
+                      <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                        <strong>{value}</strong>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p>
+              <strong>Checking your first prediction:</strong> asked how fast a clock ticks when it hovers only 1%
+              beyond the horizon, you answered "
+              {justOutsideChoices.find((c) => c.value === submittedJustOutside)!.label}". The exact factor at 1.01
+              horizon radii is {factorOnePercentOut.toFixed(4)}, so the clock ticks at about one tenth of the
+              far-away rate: about one tick for every ten of yours.{' '}
+              {justOutsideRight
+                ? 'So your prediction was right.'
+                : submittedJustOutside === 'stopped'
+                  ? 'So your prediction was off this time. The clock is slowed a great deal, but it has not stopped. The factor reaches zero only at the horizon itself.'
+                  : submittedJustOutside === 'half'
+                    ? 'So your prediction was off this time. Half as fast is what the simple formula from the earlier experiments gives here (about 0.5), but the exact answer is far smaller.'
+                    : 'So your prediction was off this time. The slowing is large this close to the horizon.'}
+            </p>
+            <p>
+              <strong>Checking your second prediction:</strong> asked which of two clocks at twice the horizon
+              radius ticks more slowly, one near a small black hole and one near a giant one, you answered "
+              {massChoices.find((c) => c.value === submittedMass)!.label}". At 2 horizon radii the factor is{' '}
+              {holesAtTwo[0].exactFactor.toFixed(4)} near the 10-Sun black hole and{' '}
+              {holesAtTwo[2].exactFactor.toFixed(4)} near {holesAtTwo[2].preset.label}: the same, even though
+              M87* is 650 million times as heavy.{' '}
+              {massRight
+                ? 'So your prediction was right.'
+                : 'So your prediction was off this time. The factor depends only on how many horizon radii away the clock is, not on the mass. Each clock is the same fraction of the way to its own black hole\'s edge.'}
+            </p>
+            <p>
+              <strong>Checking your third prediction:</strong> asked whether the simple formula from Gravity
+              Experiments 2 and 9 would still be accurate next to a horizon, you answered "
+              {approximationChoices.find((c) => c.value === submittedApproximation)!.label}". At 10 horizon radii the
+              exact factor is {exactSlowingFactor(10).toFixed(4)} and the simple formula gives{' '}
+              {firstOrderSlowingFactor(10).toFixed(4)}: they agree to within 0.2%. At 1.01 horizon radii they are{' '}
+              {factorOnePercentOut.toFixed(4)} and {firstOrderSlowingFactor(1.01).toFixed(4)}: far apart. At the
+              horizon itself the exact factor is 0 and the simple formula still gives 0.5.{' '}
+              {approximationRight
+                ? 'So your prediction was right.'
+                : submittedApproximation === 'still-accurate'
+                  ? 'So your prediction was off this time. The simple formula is a weak-gravity approximation, and near the horizon gravity is not weak.'
+                  : 'So your prediction was off this time. Far from the horizon the simple formula is accurate, which is why it worked for Earth and for GPS satellites.'}
+            </p>
+
+            <p style={{ marginBottom: '0.25rem' }}>
+              <strong>The simple math.</strong> The exact factor is <strong>√(1 − r_s ÷ r)</strong>, where r_s is
+              the horizon radius and r is the clock's distance from the center. This is given, not derived. Here
+              it is for your distance, {formatRadii(distance)} horizon radii:
+            </p>
+            <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+              <li>
+                r_s ÷ r is 1 ÷ {formatRadii(distance)} = {formatSmall(1 / distance)}.
+              </li>
+              <li>
+                1 − {formatSmall(1 / distance)} = {formatSmall(1 - 1 / distance)}.
+              </li>
+              <li>
+                The square root of {formatSmall(1 - 1 / distance)} is {result.exactFactor.toFixed(4)}. This is the
+                factor.
+              </li>
+              <li>
+                In {FAR_CLOCK_RUN_SECONDS} seconds on the far-away clock, the hovering clock registers{' '}
+                {result.exactFactor.toFixed(4)} × {FAR_CLOCK_RUN_SECONDS} = {result.hoveringClockReadingSeconds.toFixed(2)}{' '}
+                seconds.
+              </li>
+            </ol>
+            <p>
+              The factor depends only on r ÷ r_s, which is why a different black hole gives the same answer at
+              the same number of horizon radii. Here are all three at your distance:
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <thead>
+                  <tr>
+                    {['Black hole', 'Distance from its center', 'Factor', 'Hovering clock reads'].map((h) => (
+                      <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {holesAtChosen.map((r) => (
+                    <tr key={r.preset.id}>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{r.preset.label}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>
+                        {formatDistance(r.distanceKm)}
+                      </td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>
+                        <strong>{r.exactFactor.toFixed(4)}</strong>
+                      </td>
+                      <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                        <strong>{r.hoveringClockReadingSeconds.toFixed(2)} s</strong>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p>
+              <strong>The same effect on real objects.</strong> This is the effect from Gravity and Curved
+              Spacetime, Experiments 2 and 9 (gravitational time dilation: clocks lower down in a gravity field
+              tick more slowly), now at full strength. For a clock at rest on the surface of a real object,
+              compared with a clock far away, the same formula gives:
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <tbody>
+                  {surfaces.map((row) => (
+                    <tr key={row.label}>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{row.label}</td>
+                      <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                        <strong>{formatSlowing(row.fractionSlower)}</strong>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p>
+              The surface of Earth is about 700 million horizon radii from its center, so the slowing is tiny,
+              which is why the simple formula was enough for GPS. A neutron star's surface is only about 3
+              horizon radii out, and a clock there runs far slower. (The neutron star's radius is the rounded
+              value from Experiment 1 of this chapter.)
+            </p>
+
+            <p>
+              <strong>A comparison from daily life.</strong> Picture a swimmer holding their place in a river just
+              above a waterfall. The nearer they are to the edge, the faster the water pulls them toward it, so the
+              harder they must paddle to stay put. Holding a clock still near a horizon is like that: the push
+              needed grows larger and larger the closer it is, and has no limit. This is an analogy for the push
+              needed to hover, not for the slowing of time itself, which has a different cause.
+            </p>
+
+            <div
+              style={{
+                margin: '0.75rem 0',
+                padding: '0.75rem 1rem',
+                border: '2px solid #f59e0b',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              }}
+            >
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this model can and cannot tell you.</strong> This is a thought experiment about two
+                clocks, each held at rest. It does not say how the hovering clock is held in place. In real life
+                that would take engines whose push grows without limit as the clock nears the horizon. At exactly
+                the horizon the formula gives zero, but no clock can be held there.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                It compares a clock held still near the black hole with one far away. It does not tell you what a
+                traveler who falls toward the black hole experiences. That is different, and it is the subject of
+                a later experiment in this chapter. Nothing inside the horizon is modeled.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                The exact formula is given, not derived, and it is for the simplest kind of black hole: one that
+                does not spin and has no electric charge. Real black holes usually spin, and that changes the
+                picture. The far-away clock is treated as so far that gravity does not affect it at all. The
+                simple formula shown beside the exact one is an approximation for weak gravity. The neutron star's
+                size is a rounded value, and the stellar black hole's mass of 10 Suns is an illustrative round
+                value.
+              </p>
+            </div>
+          </div>
+        )}
           </>
         )}
       </div>
