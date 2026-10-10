@@ -323,7 +323,7 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
       <h2>Experiment 2 — Time Near a Black Hole: Does a Clock Ever Stop?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Draft wording, not yet approved by the owner (CLAUDE.md §28.1). It must not give away the answers to the
+        {/* Wording approved by the owner on 2026-10-10 (CLAUDE.md §28.1). It must not give away the answers to the
             three predictions below (§12): no mention of the factor reaching zero, of the mass not mattering, or of
             where the simple formula fails. */}
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>

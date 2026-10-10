@@ -366,14 +366,14 @@ const chapters: Chapter[] = [
     Component: BlackHoleSizeExperiment,
     learned:
       'Any mass becomes a black hole if all of it is squeezed inside its horizon radius, 2GM/c². That radius is proportional to the mass, about 3 kilometers for each Sun. Real objects are far from that limit: the Sun would have to shrink about 236,000 times and Earth about 720 million times, while a neutron star is only about 3 times too big.',
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 2.
+    // Wording approved by the owner on 2026-10-10 (CLAUDE.md §28.1): changed to point to Experiment 2.
     next: 'Next, time near a black hole: how much does gravity slow a clock that is held close to the horizon?',
   },
   {
     title: 'Time Near a Black Hole',
     group: 'Black Holes and Strong Gravity',
     Component: TimeNearBlackHoleExperiment,
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
+    // Wording approved by the owner on 2026-10-10 (CLAUDE.md §28.1).
     learned:
       'A clock held still near a black hole ticks more slowly than a clock far away, by the factor √(1 − r_s ÷ r). It depends only on how many horizon radii away the clock is, so it is the same for a small black hole and a giant one. The factor falls toward zero at the horizon. The simple formula from the earlier experiments is accurate far away and fails near the horizon.',
     next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: orbits around a black hole, how it bends light, and what falling in is like.',
