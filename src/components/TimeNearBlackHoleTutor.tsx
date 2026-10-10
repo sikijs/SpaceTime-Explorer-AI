@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  BLACK_HOLE_PRESETS,
   FAR_CLOCK_RUN_SECONDS,
   exactSlowingFactor,
   firstOrderSlowingFactor,
@@ -46,6 +47,11 @@ function fmt(value: number): string {
 function fmt2(value: number): string {
   return String(Number(value.toPrecision(2)))
 }
+
+// How many times heavier the giant black hole (M87*) is than the small one, in millions; from the presets.
+const MASS_RATIO_MILLIONS = Math.round(
+  BLACK_HOLE_PRESETS[BLACK_HOLE_PRESETS.length - 1].massSolarMasses / BLACK_HOLE_PRESETS[0].massSolarMasses / 1e6,
+)
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
@@ -108,7 +114,7 @@ export function TimeNearBlackHoleTutor({
             {tutorStep === 'compare' &&
               `You predicted that ${justOutsideClauses[predictedJustOutside]}; that ${massClauses[predictedMass]}; and that ${approximationClauses[predictedApproximation]}. Comparing that to what you saw, what do you notice?`}
             {tutorStep === 'conceptual' &&
-              'A clock at 2 horizon radii from a small black hole and one at 2 horizon radii from a giant one tick at the same relative rate, even though the giant one is 650 million times heavier. What do the two situations have in common?'}
+              `A clock at 2 horizon radii from a small black hole and one at 2 horizon radii from a giant one tick at the same relative rate, even though the giant one is ${MASS_RATIO_MILLIONS} million times heavier. What do the two situations have in common?`}
           </p>
 
           <textarea
@@ -187,7 +193,7 @@ export function TimeNearBlackHoleTutor({
             weak-gravity approximation. Far from the horizon it is very good: at 10 horizon radii it is{' '}
             {fmt2(tooHighAtTenPercent)}% too high. At 2 horizon radii it is {fmt2(tooHighAtTwoPercent)}% too high. At
             the horizon it still says 0.5, while the exact answer is 0. That is why the earlier results for Earth
-            and GPS satellites were accurate: Earth's surface is about 700 million horizon radii from its center,
+            and GPS satellites were accurate: Earth's surface is about {Math.round(1 / earth.rsOverR / 1e7) * 10} million horizon radii from its center,
             far inside the range where the simple formula is excellent.
           </p>
           <p style={paragraphStyle}>
@@ -195,7 +201,7 @@ export function TimeNearBlackHoleTutor({
             runs slower than one far away by about {fmt2(earth.fractionSlower * 1e9)} billionths of a second every
             second. On the Sun's surface it is about {fmt2(sun.fractionSlower * 1e6)} millionths. On the surface of
             a neutron star it is about {Math.round(neutronStar.fractionSlower * 100)}%. A neutron star's surface
-            is only about 3 horizon radii from its center, so this is no longer tiny.
+            is only about {Math.round(1 / neutronStar.rsOverR)} horizon radii from its center, so this is no longer tiny.
           </p>
           <p style={paragraphStyle}>
             <strong>6. What this does and does not say.</strong> This compares two clocks that are each held at

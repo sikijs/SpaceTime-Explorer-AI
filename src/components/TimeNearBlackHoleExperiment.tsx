@@ -44,6 +44,12 @@ const ANIMATION_DURATION_MS = 10000
 
 const KM_PER_AU = 149_597_870.7
 
+// How many times heavier the giant black hole (M87*) is than the small one, in millions; from the presets, so that
+// the text and the model cannot disagree.
+const MASS_RATIO_MILLIONS = Math.round(
+  BLACK_HOLE_PRESETS[BLACK_HOLE_PRESETS.length - 1].massSolarMasses / BLACK_HOLE_PRESETS[0].massSolarMasses / 1e6,
+)
+
 const FAR_COLOR = '#facc15'
 const HOVERING_COLOR = '#22d3ee'
 const HORIZON_COLOR = '#fb7185'
@@ -271,6 +277,11 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
   const xFor = (d: number) => AXIS_LEFT + (Math.log10(d) / logMax) * (AXIS_RIGHT - AXIS_LEFT)
   const hoveringX = xFor(distance)
   const horizonX = xFor(1)
+  // The kilometer label sits under the axis; it is kept clear of the black hole's box on the left and of the
+  // picture's right edge (the width is estimated from the text length, since SVG text is not measured here).
+  const distanceLabel = `= ${formatDistance(result.distanceKm)} from the center`
+  const distanceLabelWidth = distanceLabel.length * 5.8
+  const distanceLabelX = Math.min(Math.max(hoveringX - distanceLabelWidth / 2, horizonX + 10), VIEW_WIDTH - 8 - distanceLabelWidth)
   const hoveringLabelX = Math.min(Math.max(hoveringX, AXIS_LEFT + 120), AXIS_RIGHT - 100)
 
   // Picture 2: the factor against distance, from the horizon (1) out to 100 horizon radii. The curve starts at
@@ -379,7 +390,8 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
             </li>
             <li>
               <strong>Only two clocks, each held at rest, are compared.</strong> It does not describe a clock
-              that is falling, orbiting or moving, or a traveler.
+              that is falling, orbiting or moving, or a traveler. What a traveler who falls toward a black hole
+              experiences is different, and it is the subject of a later experiment in this chapter.
             </li>
             <li>
               <strong>Nothing inside the horizon is modeled.</strong> A clock cannot be held there, so the
@@ -429,7 +441,7 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
 
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             Two clocks each hover at twice the horizon radius: one near a small black hole (10 Suns), one near a
-            giant one (M87*, 650 million times as heavy). Which one ticks more slowly, compared with a clock far
+            giant one (M87*, {MASS_RATIO_MILLIONS} million times as heavy). Which one ticks more slowly, compared with a clock far
             away?
           </p>
           <div style={{ marginBottom: '0.5rem' }}>
@@ -556,7 +568,7 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
               style={{ width: '100%' }}
             />
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
-              The slider is logarithmic. A horizon radius is the size of the black hole's edge; 1 horizon
+              The slider is logarithmic: equal steps along it multiply the distance by the same amount. A horizon radius is the size of the black hole's edge; 1 horizon
               radius is the edge itself, and the slider stops just short of it.
             </p>
           </div>
@@ -589,7 +601,7 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
             <>
               <br />
               Far-away clock: {readings.far.toFixed(2)} s &nbsp;|&nbsp; Hovering clock:{' '}
-              {readings.hovering.toFixed(2)} s &nbsp;|&nbsp; Slowing factor: {result.exactFactor.toFixed(4)}
+              {readings.hovering.toFixed(2)} s &nbsp;|&nbsp; Slowing factor (hovering rate ÷ far-away rate): {result.exactFactor.toFixed(4)}
             </>
           )}
         </p>
@@ -654,7 +666,7 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
             1
           </text>
           <text x={horizonX + 6} y={AXIS_Y + 48} fill={HORIZON_COLOR} fontSize="11" textAnchor="start">
-            horizon (edge of the black hole)
+            horizon (edge of the black hole): {formatDistance(result.horizonRadiusKm)} from the center
           </text>
 
           <text x={(horizonX + AXIS_RIGHT) / 2} y={AXIS_Y + 66} fill="#94a3b8" fontSize="11" textAnchor="middle">
@@ -662,11 +674,14 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
           </text>
 
           {/* Where the hovering clock is held */}
-          <line x1={HOVERING_CLOCK_X} y1={CLOCK_Y + CLOCK_RADIUS + 42} x2={hoveringX} y2={AXIS_Y - 34} stroke={HOVERING_COLOR} strokeDasharray="3 4" strokeOpacity={0.6} />
-          <line x1={hoveringX} y1={AXIS_Y} x2={hoveringX} y2={AXIS_Y - 34} stroke={HOVERING_COLOR} />
+          <line x1={HOVERING_CLOCK_X} y1={CLOCK_Y + CLOCK_RADIUS + 42} x2={hoveringX} y2={AXIS_Y - 38} stroke={HOVERING_COLOR} strokeDasharray="3 4" strokeOpacity={0.6} />
+          <line x1={hoveringX} y1={AXIS_Y} x2={hoveringX} y2={AXIS_Y - 16} stroke={HOVERING_COLOR} />
           <circle cx={hoveringX} cy={AXIS_Y} r={7} fill={HOVERING_COLOR} />
           <text x={hoveringLabelX} y={AXIS_Y - 20} fill={HOVERING_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle">
             hovering clock: {formatRadii(distance)} horizon radii
+          </text>
+          <text x={distanceLabelX} y={AXIS_Y + 34} fill={HOVERING_COLOR} fontSize="11" textAnchor="start">
+            {distanceLabel}
           </text>
 
           {/* The far-away clock is much farther out than the ruler reaches */}
@@ -727,6 +742,15 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
 
           {/* The chosen distance on each line */}
           <line x1={graphXFor(distance)} y1={PLOT_TOP - 6} x2={graphXFor(distance)} y2={PLOT_BOTTOM} stroke="#e2e8f0" strokeDasharray="2 4" strokeOpacity={0.7} />
+          <text
+            x={Math.min(Math.max(graphXFor(distance), PLOT_LEFT + 45), PLOT_RIGHT - 45)}
+            y={PLOT_TOP - 10}
+            fill="#e2e8f0"
+            fontSize="11"
+            textAnchor="middle"
+          >
+            your distance: {formatRadii(distance)}
+          </text>
           <circle cx={graphXFor(distance)} cy={graphYFor(result.firstOrderFactor)} r={6} fill="#0b1020" stroke={FIRST_ORDER_COLOR} strokeWidth={3} />
           <circle cx={graphXFor(distance)} cy={graphYFor(result.exactFactor)} r={6} fill={HOVERING_COLOR} stroke="#0b1020" strokeWidth={2} />
 
@@ -798,6 +822,10 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
           <text x={132} y={PLOT_TOP + 38} fill={HOVERING_COLOR} fontSize="11">
             hovering clock
           </text>
+          <circle cx={111} cy={PLOT_TOP + 54} r={5} fill="#e2e8f0" />
+          <text x={132} y={PLOT_TOP + 58} fill="#e2e8f0" fontSize="11">
+            dots: the present moment of the run
+          </text>
         </svg>
 
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
@@ -820,6 +848,12 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
               runs for {FAR_CLOCK_RUN_SECONDS} seconds of its own time, shown in about{' '}
               {ANIMATION_DURATION_MS / 1000} seconds of real time. If the two clocks tick at the same rate, the
               two hands stay together. If they tick at different rates, the hands drift apart.
+            </li>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>Why the hovering clock can fall behind.</strong> It sits deeper in the black hole's
+              gravity than the far-away clock does. As you saw in Gravity and Curved Spacetime, Experiment 2, a
+              clock deeper in a gravity field ticks more slowly than one higher up. Here you can see how much
+              more slowly, and how that changes with distance.
             </li>
             <li style={{ marginBottom: '0.4rem' }}>
               <strong>The line at the bottom is a ruler for the hovering clock's distance.</strong> The
@@ -940,7 +974,7 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
               {massChoices.find((c) => c.value === submittedMass)!.label}". At 2 horizon radii the factor is{' '}
               {holesAtTwo[0].exactFactor.toFixed(4)} near the 10-Sun black hole and{' '}
               {holesAtTwo[2].exactFactor.toFixed(4)} near {holesAtTwo[2].preset.label}: the same, even though
-              M87* is 650 million times as heavy.{' '}
+              M87* is {MASS_RATIO_MILLIONS} million times as heavy.{' '}
               {massRight
                 ? 'So your prediction was right.'
                 : 'So your prediction was off this time. The factor depends only on how many horizon radii away the clock is, not on the mass. Each clock is the same fraction of the way to its own black hole\'s edge.'}
@@ -1037,9 +1071,9 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
               </table>
             </div>
             <p>
-              The surface of Earth is about 700 million horizon radii from its center, so the slowing is tiny,
-              which is why the simple formula was enough for GPS. A neutron star's surface is only about 3
-              horizon radii out, and a clock there runs far slower. (The neutron star's radius is the rounded
+              The surface of Earth is about {Math.round(1 / surfaces[0].rsOverR / 1e7) * 10} million horizon radii from its center, so the slowing is tiny,
+              which is why the simple formula was enough for GPS. A neutron star's surface is only about{' '}
+              {Math.round(1 / surfaces[2].rsOverR)} horizon radii out, and a clock there runs far slower. (The neutron star's radius is the rounded
               value from Experiment 1 of this chapter.)
             </p>
 
