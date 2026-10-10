@@ -312,6 +312,101 @@ export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: Tim
       <h2>Experiment 2 — Time Near a Black Hole: Does a Clock Ever Stop?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        {/* Draft wording, not yet approved by the owner (CLAUDE.md §28.1). It must not give away the answers to the
+            three predictions below (§12): no mention of the factor reaching zero, of the mass not mattering, or of
+            where the simple formula fails. */}
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In Gravity and Curved Spacetime, Experiments 2 and 9, you saw that a
+            clock lower down in a gravity field ticks more slowly than a clock higher up, and that for Earth the
+            difference is tiny. A black hole is a place where gravity is as strong as it ever gets. So how much
+            does it slow a clock? Is the slowing ever so great that a clock stops?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> In everyday life, time seems to pass at one steady rate for
+            everyone, everywhere. A clock at the bottom of a building and a clock at the top agree for all
+            practical purposes, because the difference is far too small to notice without extremely precise
+            equipment. That is why nobody thinks about it. But the earlier experiments left two things open. They
+            never went anywhere that gravity is strong. And they used a simple formula that was made for weak
+            gravity. This experiment goes to the strongest gravity there is, and asks what happens there.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> You pick one of three real black holes, and a distance from its
+            center at which to hold a clock at rest. A second, identical clock is far away. Both clocks start
+            together, and the far-away clock runs for {FAR_CLOCK_RUN_SECONDS} seconds of its own time. Three
+            pictures show what happens: the two clocks with a ruler for the distance, a graph of how fast the
+            held clock ticks at each distance, and a graph of what each clock reads as the run plays.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Some words we will use.</strong> The <strong>far-away clock</strong> is a clock held so far
+            from the black hole that the black hole's gravity does not affect it. We treat its rate as the normal
+            rate, and compare everything with it. The <strong>hovering clock</strong> is an identical clock held
+            still at a fixed distance from the black hole's center. It does not fall and it does not orbit. How
+            it is held in place is not described. The <strong>horizon</strong> is the edge of a black hole, the
+            one-way boundary you met in Experiment 1 of this chapter. The <strong>horizon radius</strong> is the
+            distance from the black hole's center to its horizon, and we measure distances in horizon radii: 10
+            horizon radii means ten times as far from the center as the edge is. For the biggest black holes
+            the distances in kilometers are huge, so we also give them in <strong>astronomical units</strong>{' '}
+            (AU): 1 AU is the distance from the Earth to the Sun, about 150 million kilometers.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The black holes.</strong> They are the three from Experiment 1: a stellar black hole of 10
+            Suns' worth of mass (a round, illustrative value), Sagittarius A*, the black hole at the center of
+            our galaxy, and M87*, the black hole imaged in the galaxy M87. Their masses are about 4.3 million and
+            6.5 billion Suns.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What this builds on.</strong> Experiment 1 of this chapter gave you the horizon radius. Gravity
+            and Curved Spacetime, Experiment 2 showed that gravity slows clocks, and Experiment 9 put in real
+            numbers for Earth using a simple formula. Here we use the exact formula from general relativity, the
+            exact theory of gravity, in place of that simple one.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make three predictions. Then choose a black hole and a distance, and
+            run it. Try other distances and other black holes too, and compare.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> How the two clocks' readings compare, and what changes when you move
+            the held clock nearer or farther, and when you change the black hole.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>This is a thought experiment.</strong> It does not describe how the hovering clock is held
+              in place, or model whatever would do it.
+            </li>
+            <li>
+              <strong>Only two clocks, each held at rest, are compared.</strong> It does not describe a clock
+              that is falling, orbiting or moving, or a traveler.
+            </li>
+            <li>
+              <strong>Nothing inside the horizon is modeled.</strong> A clock cannot be held there, so the
+              distance control stops just short of the horizon.
+            </li>
+            <li>
+              <strong>The formula for the slowing is given, not derived.</strong> Deriving it needs Einstein's
+              equations, which are outside this project. It is exact for the simplest kind of black hole: one
+              that does not spin and has no electric charge. Real black holes usually spin, and that changes the
+              picture. The simple formula from the earlier experiments is shown beside it, labeled as an
+              approximation for weak gravity.
+            </li>
+            <li>
+              The far-away clock is treated as being so far away that the black hole's gravity does not affect
+              it at all.
+            </li>
+            <li>
+              Distance is measured as in Experiment 1, as it would be measured around the black hole. The
+              experiment does not discuss how that differs from a distance measured straight inward.
+            </li>
+            <li>
+              The masses of Sagittarius A* and M87* are rounded values, and the stellar black hole's mass of 10
+              Suns is an illustrative round value, not a particular object.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             A clock hovers just outside a black hole's horizon, only 1% farther from the center than the horizon
