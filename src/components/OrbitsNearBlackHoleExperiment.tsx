@@ -43,6 +43,28 @@ const LAST_SAFE_COLOR = '#a78bfa'
 
 const DISTANCE_PRESETS = [20, 6, 3.5, 3, 2.5, 1.6]
 
+// This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
+// here; they are compared with the model's results later.
+type NudgeChoice = 'wobbles' | 'spirals-in' | 'flies-off'
+const nudgeChoices: Array<{ value: NudgeChoice; label: string }> = [
+  { value: 'wobbles', label: 'It wobbles a little and keeps circling' },
+  { value: 'spirals-in', label: 'It spirals in and crosses the horizon' },
+  { value: 'flies-off', label: 'It flies off' },
+]
+
+type LastSafeChoice = 'anywhere' | 'three' | 'ten'
+const lastSafeChoices: Array<{ value: LastSafeChoice; label: string }> = [
+  { value: 'anywhere', label: 'Anywhere outside the horizon' },
+  { value: 'three', label: 'About 3 horizon radii from the center' },
+  { value: 'ten', label: 'About 10 horizon radii from the center' },
+]
+
+type FarChoice = 'very-different' | 'nearly-same'
+const farChoices: Array<{ value: FarChoice; label: string }> = [
+  { value: 'very-different', label: 'Very different' },
+  { value: 'nearly-same', label: 'Nearly the same' },
+]
+
 // Three significant figures, with no trailing zeros ("10", "2.95", "235,571").
 function formatNumber(value: number): string {
   if (value >= 1000) return Number(value.toPrecision(3)).toLocaleString('en-US')
@@ -246,6 +268,16 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
 
+  const [nudgePrediction, setNudgePrediction] = useState<NudgeChoice | null>(null)
+  const [lastSafePrediction, setLastSafePrediction] = useState<LastSafeChoice | null>(null)
+  const [farPrediction, setFarPrediction] = useState<FarChoice | null>(null)
+  const [submittedNudge, setSubmittedNudge] = useState<NudgeChoice | null>(null)
+  const [submittedLastSafe, setSubmittedLastSafe] = useState<LastSafeChoice | null>(null)
+  const [submittedFar, setSubmittedFar] = useState<FarChoice | null>(null)
+
+  const hasPrediction = nudgePrediction !== null && lastSafePrediction !== null && farPrediction !== null
+  const hasSubmittedPrediction = submittedNudge !== null && submittedLastSafe !== null && submittedFar !== null
+
   const result = useMemo(() => runOrbitsNearBlackHoleExperiment(presetId, start), [presetId, start])
   const turnsReached = progress * MAX_TURNS
 
@@ -267,8 +299,23 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
   }
 
   const handleRun = () => {
-    if (status === 'running') return
+    if (!hasPrediction || status === 'running') return
+    if (!hasSubmittedPrediction) {
+      setSubmittedNudge(nudgePrediction)
+      setSubmittedLastSafe(lastSafePrediction)
+      setSubmittedFar(farPrediction)
+    }
     setStatus('running')
+    setProgress(0)
+  }
+
+  // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
+  // chosen black hole or start distance.
+  const handleChangePrediction = () => {
+    setSubmittedNudge(null)
+    setSubmittedLastSafe(null)
+    setSubmittedFar(null)
+    setStatus('idle')
     setProgress(0)
   }
 
@@ -308,13 +355,104 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            A probe is circling a black hole at 2 horizon radii from its center, at exactly the speed that gives a
+            circular orbit there. Then it gets a tiny nudge inward. What happens?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {nudgeChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setNudgePrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${nudgePrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            In ordinary gravity, a planet can circle at any distance. Close to a black hole, where is the last safe
+            place to circle?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {lastSafeChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setLastSafePrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${lastSafePrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            Far from the black hole, at 20 horizon radii, will an orbit under the exact theory of gravity look
+            different from the same orbit under ordinary gravity?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {farChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setFarPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${farPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {hasPrediction || hasSubmittedPrediction
+              ? `Your predictions: ${
+                  nudgeChoices.find((c) => c.value === (nudgePrediction ?? submittedNudge))!.label
+                }; ${lastSafeChoices.find((c) => c.value === (lastSafePrediction ?? submittedLastSafe))!.label}; ${
+                  farChoices.find((c) => c.value === (farPrediction ?? submittedFar))!.label
+                }`
+              : 'Answer all three questions to continue'}
+          </p>
+        </div>
+
+        {hasSubmittedPrediction && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many black holes and distances as you
+              like below. Or, change your predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePrediction}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
+        <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Black hole:</p>
           {BLACK_HOLE_PRESETS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => handlePresetChange(p.id)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -332,7 +470,7 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
               key={d}
               type="button"
               onClick={() => handleStartChange(d)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${isPresetSelected(d) ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -350,7 +488,7 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
               max={Math.log10(MAX_START_IN_HORIZON_RADII)}
               step="any"
               value={Math.log10(start)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               onChange={(event) =>
                 handleStartChange(
                   Math.min(Math.max(10 ** Number(event.target.value), MIN_START_IN_HORIZON_RADII), MAX_START_IN_HORIZON_RADII),
@@ -370,12 +508,20 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={status === 'running'}
+          disabled={!hasPrediction || status === 'running'}
           style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
 
+        {!hasPrediction && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Answer the predictions above to try the controls.
+          </p>
+        )}
+
+        {hasSubmittedPrediction && (
+          <>
         <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           {result.preset.label}: {formatMass(result.preset.massSolarMasses)}; horizon radius{' '}
           {formatDistance(result.horizonRadiusKm)}
@@ -463,6 +609,8 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
             </li>
           </ol>
         </div>
+          </>
+        )}
       </div>
     </div>
   )
