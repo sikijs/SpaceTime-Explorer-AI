@@ -5,6 +5,8 @@ import {
   MAX_DISTANCE_IN_HORIZON_RADII,
   MIN_DISTANCE_IN_HORIZON_RADII,
   clockReadingsAt,
+  exactSlowingFactor,
+  firstOrderSlowingFactor,
   runTimeNearBlackHoleExperiment,
 } from '../physics/timeNearBlackHoleExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
@@ -18,6 +20,14 @@ const VIEW_HEIGHT = 360
 const AXIS_LEFT = 90
 const AXIS_RIGHT = 600
 const AXIS_Y = 270
+
+// The two graphs below the clocks (Pictures 2 and 3).
+const GRAPH_HEIGHT = 290
+const PLOT_LEFT = 70
+const PLOT_RIGHT = 600
+const PLOT_TOP = 62
+const PLOT_BOTTOM = 232
+const FIRST_ORDER_COLOR = '#fb923c'
 
 const CLOCK_RADIUS = 52
 const CLOCK_Y = 112
@@ -233,6 +243,21 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
   const hoveringX = xFor(distance)
   const horizonX = xFor(1)
   const hoveringLabelX = Math.min(Math.max(hoveringX, AXIS_LEFT + 120), AXIS_RIGHT - 100)
+
+  // Picture 2: the factor against distance, from the horizon (1) out to 100 horizon radii. The curve starts at
+  // 1.001, so the horizon's own values (exact 0, first order 0.5) are added as the first point.
+  const graphXFor = (d: number) => PLOT_LEFT + (Math.log10(d) / logMax) * (PLOT_RIGHT - PLOT_LEFT)
+  const graphYFor = (factor: number) => PLOT_BOTTOM - factor * (PLOT_BOTTOM - PLOT_TOP)
+  const factorPath = (pick: (point: (typeof result.curve)[number]) => number, atHorizon: number) =>
+    [`M ${graphXFor(1)} ${graphYFor(atHorizon)}`]
+      .concat(result.curve.map((pt) => `L ${graphXFor(pt.distanceInHorizonRadii)} ${graphYFor(pick(pt))}`))
+      .join(' ')
+  const exactPath = factorPath((pt) => pt.exact, exactSlowingFactor(1))
+  const firstOrderPath = factorPath((pt) => pt.firstOrder, firstOrderSlowingFactor(1))
+
+  // Picture 3: each clock's reading against the far-away clock's time, drawn up to the present moment of the run.
+  const timeX = (seconds: number) => PLOT_LEFT + (seconds / FAR_CLOCK_RUN_SECONDS) * (PLOT_RIGHT - PLOT_LEFT)
+  const readingY = (seconds: number) => PLOT_BOTTOM - (seconds / FAR_CLOCK_RUN_SECONDS) * (PLOT_BOTTOM - PLOT_TOP)
 
   const isPresetSelected = (d: number) => Math.abs(Math.log(d / distance)) < 1e-9
 
@@ -509,11 +534,141 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
           </text>
         </svg>
 
+        {/* Picture 2: the exact slowing factor against the simple formula from Gravity Experiments 2 and 9 */}
+        <svg
+          viewBox={`0 0 ${VIEW_WIDTH} ${GRAPH_HEIGHT}`}
+          width="100%"
+          style={{
+            marginTop: '1rem',
+            display: 'block',
+            maxWidth: `${VIEW_WIDTH}px`,
+            border: '1px solid var(--border-color, #ccc)',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            backgroundColor: '#0b1020',
+          }}
+        >
+          <text x={12} y={20} fill="#e2e8f0" fontSize="12" fontWeight="bold">
+            Picture 2: how fast the hovering clock ticks, against its distance
+          </text>
+          <text x={12} y={38} fill="#94a3b8" fontSize="11">
+            Vertical: the hovering clock's rate compared with the far-away clock's (1 = the same rate)
+          </text>
+
+          {[0, 0.5, 1].map((f) => (
+            <g key={f}>
+              <line x1={PLOT_LEFT} y1={graphYFor(f)} x2={PLOT_RIGHT} y2={graphYFor(f)} stroke="#334155" />
+              <text x={PLOT_LEFT - 8} y={graphYFor(f) + 4} fill="#94a3b8" fontSize="10" textAnchor="end">
+                {f}
+              </text>
+            </g>
+          ))}
+          {[1, 1.5, 3, 10, 100].map((d) => (
+            <g key={d}>
+              <line x1={graphXFor(d)} y1={PLOT_BOTTOM} x2={graphXFor(d)} y2={PLOT_BOTTOM + 5} stroke="#94a3b8" />
+              <text x={graphXFor(d)} y={PLOT_BOTTOM + 18} fill="#94a3b8" fontSize="10" textAnchor={d === 1 ? 'start' : 'middle'}>
+                {d}
+              </text>
+            </g>
+          ))}
+          <text x={(PLOT_LEFT + PLOT_RIGHT) / 2} y={PLOT_BOTTOM + 38} fill="#94a3b8" fontSize="11" textAnchor="middle">
+            distance from the black hole's center, in horizon radii (logarithmic)
+          </text>
+
+          {/* The horizon, where the exact line reaches zero */}
+          <line x1={graphXFor(1)} y1={PLOT_TOP - 6} x2={graphXFor(1)} y2={PLOT_BOTTOM} stroke={HORIZON_COLOR} strokeWidth={2} />
+          <text x={graphXFor(1) + 6} y={PLOT_TOP + 8} fill={HORIZON_COLOR} fontSize="11">
+            horizon
+          </text>
+
+          <path d={firstOrderPath} fill="none" stroke={FIRST_ORDER_COLOR} strokeWidth={3} strokeDasharray="7 5" />
+          <path d={exactPath} fill="none" stroke={HOVERING_COLOR} strokeWidth={3} />
+
+          {/* The chosen distance on each line */}
+          <line x1={graphXFor(distance)} y1={PLOT_TOP - 6} x2={graphXFor(distance)} y2={PLOT_BOTTOM} stroke="#e2e8f0" strokeDasharray="2 4" strokeOpacity={0.7} />
+          <circle cx={graphXFor(distance)} cy={graphYFor(result.firstOrderFactor)} r={6} fill="#0b1020" stroke={FIRST_ORDER_COLOR} strokeWidth={3} />
+          <circle cx={graphXFor(distance)} cy={graphYFor(result.exactFactor)} r={6} fill={HOVERING_COLOR} stroke="#0b1020" strokeWidth={2} />
+
+          {/* Legend and the values at the chosen distance */}
+          <line x1={250} y1={PLOT_BOTTOM - 62} x2={280} y2={PLOT_BOTTOM - 62} stroke={HOVERING_COLOR} strokeWidth={3} />
+          <text x={286} y={PLOT_BOTTOM - 58} fill={HOVERING_COLOR} fontSize="11">
+            exact: {result.exactFactor.toFixed(4)} at {formatRadii(distance)}
+          </text>
+          <line x1={250} y1={PLOT_BOTTOM - 42} x2={280} y2={PLOT_BOTTOM - 42} stroke={FIRST_ORDER_COLOR} strokeWidth={3} strokeDasharray="7 5" />
+          <text x={286} y={PLOT_BOTTOM - 38} fill={FIRST_ORDER_COLOR} fontSize="11">
+            simple formula (Gravity Experiments 2 and 9): {result.firstOrderFactor.toFixed(4)}
+          </text>
+        </svg>
+
+        {/* Picture 3: both clocks' readings over the run */}
+        <svg
+          viewBox={`0 0 ${VIEW_WIDTH} ${GRAPH_HEIGHT}`}
+          width="100%"
+          style={{
+            marginTop: '1rem',
+            display: 'block',
+            maxWidth: `${VIEW_WIDTH}px`,
+            border: '1px solid var(--border-color, #ccc)',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            backgroundColor: '#0b1020',
+          }}
+        >
+          <text x={12} y={20} fill="#e2e8f0" fontSize="12" fontWeight="bold">
+            Picture 3: what each clock reads as the far-away clock runs
+          </text>
+          <text x={12} y={38} fill="#94a3b8" fontSize="11">
+            Drawn as the run plays. Horizontal: the far-away clock's reading. Vertical: each clock's own reading.
+          </text>
+
+          {[0, 20, 40, 60].map((t) => (
+            <g key={t}>
+              <line x1={PLOT_LEFT} y1={readingY(t)} x2={PLOT_RIGHT} y2={readingY(t)} stroke="#334155" />
+              <text x={PLOT_LEFT - 8} y={readingY(t) + 4} fill="#94a3b8" fontSize="10" textAnchor="end">
+                {t}
+              </text>
+              <line x1={timeX(t)} y1={PLOT_BOTTOM} x2={timeX(t)} y2={PLOT_BOTTOM + 5} stroke="#94a3b8" />
+              <text x={timeX(t)} y={PLOT_BOTTOM + 18} fill="#94a3b8" fontSize="10" textAnchor="middle">
+                {t}
+              </text>
+            </g>
+          ))}
+          <text x={(PLOT_LEFT + PLOT_RIGHT) / 2} y={PLOT_BOTTOM + 38} fill="#94a3b8" fontSize="11" textAnchor="middle">
+            far-away clock's reading (seconds)
+          </text>
+          <text x={PLOT_LEFT - 8} y={PLOT_TOP - 10} fill="#94a3b8" fontSize="10" textAnchor="end">
+            seconds
+          </text>
+
+          {progress > 0 && (
+            <>
+              <line x1={timeX(0)} y1={readingY(0)} x2={timeX(readings.far)} y2={readingY(readings.far)} stroke={FAR_COLOR} strokeWidth={3} />
+              <line x1={timeX(0)} y1={readingY(0)} x2={timeX(readings.far)} y2={readingY(readings.hovering)} stroke={HOVERING_COLOR} strokeWidth={3} />
+              <circle cx={timeX(readings.far)} cy={readingY(readings.far)} r={5} fill={FAR_COLOR} />
+              <circle cx={timeX(readings.far)} cy={readingY(readings.hovering)} r={5} fill={HOVERING_COLOR} />
+            </>
+          )}
+
+          <line x1={96} y1={PLOT_TOP + 14} x2={126} y2={PLOT_TOP + 14} stroke={FAR_COLOR} strokeWidth={3} />
+          <text x={132} y={PLOT_TOP + 18} fill={FAR_COLOR} fontSize="11">
+            far-away clock (reads the same as the horizontal axis)
+          </text>
+          <line x1={96} y1={PLOT_TOP + 34} x2={126} y2={PLOT_TOP + 34} stroke={HOVERING_COLOR} strokeWidth={3} />
+          <text x={132} y={PLOT_TOP + 38} fill={HOVERING_COLOR} fontSize="11">
+            hovering clock
+          </text>
+        </svg>
+
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
           <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
-            <strong>How to read this diagram.</strong> The picture compares two identical clocks. Both are
+            <strong>How to read these diagrams.</strong> The pictures compare two identical clocks. Both are
             held still. One is far away from the black hole, so far that its gravity does not affect it. The
-            other hovers close to the black hole.
+            other hovers close to the black hole. Picture 1 shows the two clocks, Picture 2 shows how the
+            hovering clock's rate depends on its distance, and Picture 3 shows what both clocks read over the
+            run.
+          </p>
+          <p style={{ marginTop: '0.6rem', marginBottom: '0.3rem' }}>
+            <strong>Picture 1, the two clocks (the top picture)</strong>
           </p>
           <ol style={{ margin: 0, paddingLeft: '1.1rem' }}>
             <li style={{ marginBottom: '0.4rem' }}>
@@ -551,6 +706,40 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
               <strong>What this picture is not.</strong> It compares two clocks that are each held at rest. It
               does not show a traveler falling toward the black hole, and it does not show how the clock is held
               in place.
+            </li>
+          </ol>
+
+          <p style={{ marginTop: '0.6rem', marginBottom: '0.3rem' }}>
+            <strong>Picture 2, the rate against distance (the middle picture)</strong>
+          </p>
+          <ol style={{ margin: 0, paddingLeft: '1.1rem' }}>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>The height of a line is how fast the hovering clock ticks compared with the far-away
+              clock.</strong> A height of 1 means the same rate. A height of 0.5 means half as fast, and 0
+              means not ticking at all. Along the bottom is the same distance ruler as in Picture 1, with the
+              horizon on the left.
+            </li>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>The solid blue line is the exact answer</strong>, the one this experiment uses for the
+              clock in Picture 1. The two dots mark the distance you chose.
+            </li>
+            <li style={{ marginBottom: '0.4rem' }}>
+              <strong>The dashed orange line is the simple formula from Gravity and Curved Spacetime,
+              Experiments 2 and 9.</strong> It is an approximation made for weak gravity. Look at where the two
+              lines lie on top of each other and where they pull apart, and what each says at the horizon, the
+              red line.
+            </li>
+          </ol>
+
+          <p style={{ marginTop: '0.6rem', marginBottom: '0.3rem' }}>
+            <strong>Picture 3, the readings over time (the bottom picture)</strong>
+          </p>
+          <ol style={{ margin: 0, paddingLeft: '1.1rem' }}>
+            <li style={{ marginBottom: 0 }}>
+              <strong>Each line shows what a clock reads, against the far-away clock's reading.</strong> It is
+              drawn as the run plays. The gold line is the far-away clock, which by definition reads the same as
+              the horizontal axis. The blue line is the hovering clock. A steeper line means a faster clock. The
+              dots show the present moment of the run.
             </li>
           </ol>
         </div>
