@@ -38,6 +38,7 @@ import { GravitationalLensingExperiment } from './components/GravitationalLensin
 import { ObservableUniverseExperiment } from './components/ObservableUniverseExperiment'
 import { StructureFormationExperiment } from './components/StructureFormationExperiment'
 import { FateOfTheUniverseExperiment } from './components/FateOfTheUniverseExperiment'
+import { BlackHoleSizeExperiment } from './components/BlackHoleSizeExperiment'
 
 interface Chapter {
   title: string
@@ -57,6 +58,7 @@ const groupOrder = [
   'Gravity and Curved Spacetime',
   'Gravitational Waves',
   'Cosmology',
+  'Black Holes and Strong Gravity',
 ]
 
 const chapters: Chapter[] = [
@@ -355,7 +357,16 @@ const chapters: Chapter[] = [
     // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
     learned:
       'With only matter, the expansion slows down forever without quite stopping. With dark energy, each doubling of the universe takes about the same time as the one before, so the growth becomes steady and endless.',
-    next: 'This is currently the last experiment in the project.',
+    next: 'Next, a new chapter, Black Holes and Strong Gravity, begins with a simple question: how small would an ordinary object have to be squeezed to become a black hole?',
+  },
+  {
+    title: 'How Small Is a Black Hole?',
+    group: 'Black Holes and Strong Gravity',
+    Component: BlackHoleSizeExperiment,
+    // Draft, not yet approved by the owner (CLAUDE.md §28.1).
+    learned:
+      'Any mass becomes a black hole if all of it is squeezed inside its horizon radius, 2GM/c². That radius is proportional to the mass, about 3 kilometers for each Sun. Real objects are far from that limit: the Sun would have to shrink about 236,000 times and Earth about 720 million times, while a neutron star is only about 3 times too big.',
+    next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: time near a black hole, orbits around one, how it bends light, and what falling in is like.',
   },
 ]
 
