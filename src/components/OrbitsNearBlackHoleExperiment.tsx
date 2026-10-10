@@ -16,13 +16,17 @@ interface OrbitsNearBlackHoleExperimentProps {
   onComplete?: () => void
 }
 
-// Each panel: a title strip, a square orbit area drawn at a fixed scale (the full radius is 20 horizon radii, the same
-// in both panels and for every start), and a legend strip.
+// Each panel: a title strip, a square orbit area, and a legend strip. Both panels share one scale, zoomed to the start so
+// that the interesting part fills the picture: the view reaches ZOOM_MARGIN times the start distance (and never less
+// than MIN_VIEW_RADIUS horizon radii). A scale bar says how long some number of horizon radii is.
 const PANEL_WIDTH = 400
 const PANEL_HEIGHT = 512
 const CENTER_X = 200
 const CENTER_Y = 248
-const PIXELS_PER_HORIZON_RADIUS = 8.5 // 20 horizon radii = 170 px
+const ORBIT_AREA_RADIUS_PX = 170
+const ZOOM_MARGIN = 1.25
+const MIN_VIEW_RADIUS = 4 // horizon radii, so the last safe orbit (3) always fits
+const SCALE_BAR_LENGTHS = [1, 2, 5, 10, 20] // horizon radii; the longest that fits is used
 const LEGEND_TOP = 438
 
 // Fixed real-world playback duration for the whole MAX_TURNS of the run, independent of the physics result
@@ -83,6 +87,8 @@ function OrbitPanel({
   color,
   path,
   startInHorizonRadii,
+  pixelsPerHorizonRadius,
+  scaleBarHorizonRadii,
   turnsReached,
   showLastSafeOrbit,
   showTrail,
@@ -92,14 +98,16 @@ function OrbitPanel({
   color: string
   path: OrbitPath
   startInHorizonRadii: number
+  pixelsPerHorizonRadius: number
+  scaleBarHorizonRadii: number
   turnsReached: number
   showLastSafeOrbit: boolean
   showTrail: boolean
 }) {
   const { index, point, ended } = pointAt(path, turnsReached)
   const plunged = path.outcome === 'plunges' && ended
-  const px = (x: number) => CENTER_X + x * PIXELS_PER_HORIZON_RADIUS
-  const py = (y: number) => CENTER_Y - y * PIXELS_PER_HORIZON_RADIUS
+  const px = (x: number) => CENTER_X + x * pixelsPerHorizonRadius
+  const py = (y: number) => CENTER_Y - y * pixelsPerHorizonRadius
 
   // The trail so far, thinned out to keep the drawing light.
   const trail: string[] = []
@@ -108,10 +116,10 @@ function OrbitPanel({
     trail.push(`${px(point.x)},${py(point.y)}`)
   }
 
-  const startRadius = startInHorizonRadii * PIXELS_PER_HORIZON_RADIUS
+  const startRadius = startInHorizonRadii * pixelsPerHorizonRadius
   // The label "start" sits beside the start point, inside the ring when the ring is near the picture's right edge.
   const startLabelAtLeft = px(startInHorizonRadii) > PANEL_WIDTH - 50
-  const lastSafeRadius = LAST_SAFE_ORBIT_IN_HORIZON_RADII * PIXELS_PER_HORIZON_RADIUS
+  const lastSafeRadius = LAST_SAFE_ORBIT_IN_HORIZON_RADII * pixelsPerHorizonRadius
 
   const rows: Array<{ key: string; draw: ReactNode; text: string; fill: string }> = [
     {
@@ -181,14 +189,21 @@ function OrbitPanel({
       {showLastSafeOrbit && (
         <g>
           <circle cx={CENTER_X} cy={CENTER_Y} r={lastSafeRadius} fill="none" stroke={LAST_SAFE_COLOR} strokeDasharray="4 3" />
-          <text x={CENTER_X - lastSafeRadius - 6} y={CENTER_Y + 4} fill={LAST_SAFE_COLOR} fontSize="10" textAnchor="end">
+          {/* At the bottom of the ring: just inside it when the ring is large, just below it when it is small. */}
+          <text
+            x={CENTER_X}
+            y={lastSafeRadius >= 60 ? CENTER_Y + lastSafeRadius - 6 : CENTER_Y + lastSafeRadius + 13}
+            fill={LAST_SAFE_COLOR}
+            fontSize="10"
+            textAnchor="middle"
+          >
             last safe orbit
           </text>
         </g>
       )}
 
       {/* The black hole and its horizon */}
-      <circle cx={CENTER_X} cy={CENTER_Y} r={PIXELS_PER_HORIZON_RADIUS} fill={BLACK_HOLE_COLOR} fillOpacity={0.35} stroke={HORIZON_COLOR} strokeWidth={2} />
+      <circle cx={CENTER_X} cy={CENTER_Y} r={pixelsPerHorizonRadius} fill={BLACK_HOLE_COLOR} fillOpacity={0.35} stroke={HORIZON_COLOR} strokeWidth={2} />
 
       {/* The path so far and the probe */}
       {trail.length > 1 && <polyline points={trail.join(' ')} fill="none" stroke={color} strokeWidth={1.5} strokeOpacity={0.9} />}
@@ -202,6 +217,16 @@ function OrbitPanel({
       >
         probe
       </text>
+
+      {/* The scale bar */}
+      <g>
+        <line x1={14} y1={LEGEND_TOP - 12} x2={14 + scaleBarHorizonRadii * pixelsPerHorizonRadius} y2={LEGEND_TOP - 12} stroke="#e2e8f0" strokeWidth={2} />
+        <line x1={14} y1={LEGEND_TOP - 16} x2={14} y2={LEGEND_TOP - 8} stroke="#e2e8f0" strokeWidth={2} />
+        <line x1={14 + scaleBarHorizonRadii * pixelsPerHorizonRadius} y1={LEGEND_TOP - 16} x2={14 + scaleBarHorizonRadii * pixelsPerHorizonRadius} y2={LEGEND_TOP - 8} stroke="#e2e8f0" strokeWidth={2} />
+        <text x={22 + scaleBarHorizonRadii * pixelsPerHorizonRadius} y={LEGEND_TOP - 8} fill="#e2e8f0" fontSize="10">
+          scale: {scaleBarHorizonRadii} horizon {scaleBarHorizonRadii === 1 ? 'radius' : 'radii'}
+        </text>
+      </g>
 
       {rows.map((row) => (
         <g key={row.key}>
@@ -223,6 +248,11 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
 
   const result = useMemo(() => runOrbitsNearBlackHoleExperiment(presetId, start), [presetId, start])
   const turnsReached = progress * MAX_TURNS
+
+  // The zoom shared by both panels.
+  const viewRadius = Math.max(ZOOM_MARGIN * start, MIN_VIEW_RADIUS)
+  const pixelsPerHorizonRadius = ORBIT_AREA_RADIUS_PX / viewRadius
+  const scaleBarHorizonRadii = [...SCALE_BAR_LENGTHS].reverse().find((n) => n <= viewRadius / 2.5) ?? 1
 
   const handlePresetChange = (id: ObjectPreset['id']) => {
     setPresetId(id)
@@ -367,6 +397,8 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
             color={ORDINARY_COLOR}
             path={result.ordinary}
             startInHorizonRadii={start}
+            pixelsPerHorizonRadius={pixelsPerHorizonRadius}
+            scaleBarHorizonRadii={scaleBarHorizonRadii}
             turnsReached={turnsReached}
             showLastSafeOrbit={false}
             showTrail={status !== 'idle'}
@@ -377,6 +409,8 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
             color={EXACT_COLOR}
             path={result.exact}
             startInHorizonRadii={start}
+            pixelsPerHorizonRadius={pixelsPerHorizonRadius}
+            scaleBarHorizonRadii={scaleBarHorizonRadii}
             turnsReached={turnsReached}
             showLastSafeOrbit
             showTrail={status !== 'idle'}
@@ -387,8 +421,9 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
           <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
             <strong>How to read these diagrams.</strong> Both pictures show the same thing from directly above: a
             small probe circling a black hole. The black hole is at the center. The two pictures use the same
-            scale, with the full width of each equal to 20 horizon radii, so a different start moves the starting
-            ring in or out.
+            scale. Each run is zoomed to fit its start, so that the part of the picture where something happens
+            fills it. The scale bar at the bottom shows how long some number of horizon radii is, and it changes
+            from one start to the next: the black hole is drawn larger for a close start and smaller for a far one.
           </p>
           <ol style={{ margin: 0, paddingLeft: '1.1rem' }}>
             <li style={{ marginBottom: '0.4rem' }}>
@@ -422,9 +457,9 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
             </li>
             <li style={{ marginBottom: 0 }}>
               <strong>What these pictures are not.</strong> They follow a small probe in a flat plane, not a
-              traveler falling into the black hole, and they do not show how the probe was put into orbit. Close to
-              the black hole the horizon and the probe are small in the drawing, because the whole width is 20
-              horizon radii.
+              traveler falling into the black hole, and they do not show how the probe was put into orbit. To compare
+              one start with another, use the scale bar and the distances in the readout above the pictures, not
+              the sizes of the drawings.
             </li>
           </ol>
         </div>
