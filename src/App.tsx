@@ -373,9 +373,9 @@ const chapters: Chapter[] = [
     title: 'Time Near a Black Hole',
     group: 'Black Holes and Strong Gravity',
     Component: TimeNearBlackHoleExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not yet shown to learners: the tutor
-    // that unlocks the summary is not built.
-    learned: 'Draft placeholder: the summary for this experiment has not been written yet.',
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
+    learned:
+      'A clock held still near a black hole ticks more slowly than a clock far away, by the factor √(1 − r_s ÷ r). It depends only on how many horizon radii away the clock is, so it is the same for a small black hole and a giant one. The factor falls toward zero at the horizon. The simple formula from the earlier experiments is accurate far away and fails near the horizon.',
     next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: orbits around a black hole, how it bends light, and what falling in is like.',
   },
 ]

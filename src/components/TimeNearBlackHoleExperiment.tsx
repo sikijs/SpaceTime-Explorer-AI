@@ -11,9 +11,11 @@ import {
   surfaceSlowing,
 } from '../physics/timeNearBlackHoleExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
+import { TimeNearBlackHoleTutor } from './TimeNearBlackHoleTutor'
 
 interface TimeNearBlackHoleExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
 const VIEW_WIDTH = 640
@@ -184,11 +186,12 @@ function ClockFace({
   )
 }
 
-export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExperimentProps) {
+export function TimeNearBlackHoleExperiment({ onComplete, onTutorComplete }: TimeNearBlackHoleExperimentProps) {
   const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
   const [distance, setDistance] = useState(10)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [justOutsidePrediction, setJustOutsidePrediction] = useState<JustOutsideChoice | null>(null)
   const [massPrediction, setMassPrediction] = useState<MassChoice | null>(null)
@@ -225,6 +228,7 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((count) => count + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
@@ -986,6 +990,16 @@ export function TimeNearBlackHoleExperiment({ onComplete }: TimeNearBlackHoleExp
           </>
         )}
       </div>
+
+      {status === 'complete' && submittedJustOutside && submittedMass && submittedApproximation && (
+        <TimeNearBlackHoleTutor
+          key={runCount}
+          predictedJustOutside={submittedJustOutside}
+          predictedMass={submittedMass}
+          predictedApproximation={submittedApproximation}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }
