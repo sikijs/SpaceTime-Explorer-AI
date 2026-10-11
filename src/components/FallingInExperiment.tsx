@@ -58,7 +58,7 @@ const HOLE_CURVE_COLORS: Record<ObjectPreset['id'], string> = {
 const START_PRESETS = [100, 20, 10, 5, 2]
 
 // This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
-// here; they are compared with the model's results later. The question wording is a draft for the owner's review.
+// here; they are compared with the model's results later. The question wording was approved by the owner on 2026-10-11.
 type EndChoice = 'finite' | 'never' | 'depends'
 const endChoices: Array<{ value: EndChoice; label: string }> = [
   { value: 'finite', label: 'Yes: it takes a finite time, and they get there' },
@@ -680,7 +680,7 @@ export function FallingInExperiment({ onComplete, onTutorComplete }: FallingInEx
       <h2>Experiment 5 — Falling In: What Does the Traveler Experience?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). It must not give away the answers to
+        {/* Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1). It must not give away the answers to
             the three predictions below (§12): not whether the traveler's own trip to the horizon ends, not what the
             far-away clock does, and not how the stretching depends on the size of the black hole. */}
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -798,7 +798,7 @@ export function FallingInExperiment({ onComplete, onTutorComplete }: FallingInEx
           </ul>
         </div>
 
-        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+        {/* Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1). */}
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             A traveler is dropped from rest near a black hole and falls straight toward it. On the traveler's own watch,
@@ -963,7 +963,7 @@ export function FallingInExperiment({ onComplete, onTutorComplete }: FallingInEx
                 pixelsPerHorizonRadius={pixelsPerHorizonRadius}
                 scaleBarHorizonRadii={scaleBarHorizonRadii}
               />
-              {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+              {/* Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1). */}
               <div style={CAPTION_STYLE}>
                 <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
                   <strong>How to read this picture: the fall.</strong>
@@ -1060,7 +1060,7 @@ export function FallingInExperiment({ onComplete, onTutorComplete }: FallingInEx
 
             {showResults && (
               <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-                {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+                {/* Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1). */}
                 <h3 style={{ marginTop: 0 }}>Results</h3>
                 <p>
                   You released the traveler from rest at <strong>{start} horizon radii</strong> (

@@ -399,14 +399,14 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1).
     learned:
       'Close to a black hole, light is bent far more than the simple formula from Gravity and Curved Spacetime says. There is a critical aim, about 2.6 horizon radii, the same for every black hole: light aimed closer than that is captured, even though it was aimed to miss the edge. Light aimed just outside it swings right round the black hole before it escapes, because light itself can circle at 1.5 horizon radii.',
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 5.
+    // Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1): changed to point to Experiment 5.
     next: 'Next, falling in: what does a traveler who falls into a black hole experience, and does a far-away observer agree?',
   },
   {
     title: 'Falling In',
     group: 'Black Holes and Strong Gravity',
     Component: FallingInExperiment,
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
+    // Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1).
     learned:
       "A traveler who falls straight into a black hole reaches the horizon after a finite time on their own watch, while a clock far away reads later and later, without limit, as the traveler nears the horizon. They are different clocks, and neither is the real time. What the traveler feels is the stretching, the difference in pull between head and feet. It grows very fast closer in, and at the horizon it is far larger for a small black hole than for a giant one, so crossing a giant black hole's horizon is, locally, unremarkable.",
     next: 'This is currently the last experiment in the project. No further experiment is planned in this chapter.',

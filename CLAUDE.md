@@ -785,7 +785,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 2 | Time near a black hole: does a clock ever stop? | `02-time-near-a-black-hole.md` | Complete (wording approved) |
 | 3 | Orbits near a black hole | `03-orbits-near-a-black-hole.md` | Built; wording review not recorded here (see `docs/STATUS.md`) |
 | 4 | Light near a black hole: can light be trapped? | `04-light-near-a-black-hole.md` | Complete (wording approved) |
-| 5 | Falling in: what does the traveler experience? | `05-falling-in.md` | Complete (§21 Step 10 review done); wording is draft, awaiting the owner's review |
+| 5 | Falling in: what does the traveler experience? | `05-falling-in.md` | Complete (wording approved) |
 
 **Recurring open items** (details in `docs/STATUS.md`): at a 390-pixel window the app's content column is only about 175 to 230 pixels wide, so several pictures' labels are very small (an app-wide layout matter, left for the owner); and several general-knowledge statements in Cosmology and Black Holes learner-facing text were not checked against a primary source (each experiment's specification lists them).
 
@@ -800,7 +800,7 @@ Every experiment below has an approved specification, a tested physics model, an
 
 ## What Remains
 
-Nothing is in progress. The overall project vision, the four completed chapters (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology) and the five experiments of the Black Holes and Strong Gravity group are built (Experiment 5's wording awaits the owner's review). This group's five planned experiments are done. For Cosmology, the specification of Experiment 10 names a recollapsing universe, dark energy that changes with time, the cosmic event horizon, and the far future of stars and black holes as natural candidates, but none is proposed. Any next experiment needs a proposal and an approved specification first (§23 Stages 1-4).
+Nothing is in progress. The overall project vision, the four completed chapters (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology) and the five experiments of the Black Holes and Strong Gravity group are built. This group's five planned experiments are done. For Cosmology, the specification of Experiment 10 names a recollapsing universe, dark energy that changes with time, the cosmic event horizon, and the far future of stars and black holes as natural candidates, but none is proposed. Any next experiment needs a proposal and an approved specification first (§23 Stages 1-4).
 
 Do not proceed beyond that milestone without explicit authorization.
 
