@@ -17,7 +17,7 @@ interface FallingInExperimentProps {
 
 // The picture of the fall: a title strip, a side view of the drop, the three live readouts, and a legend strip.
 const PANEL_WIDTH = 400
-const PANEL_HEIGHT = 576
+const PANEL_HEIGHT = 584
 const CENTER_X = 200
 const CENTER_Y = 340 // the center of the black hole
 const AREA_TOP = 66
@@ -26,7 +26,7 @@ const ZOOM_MARGIN = 1.08
 const SCALE_BAR_LENGTHS = [1, 2, 5, 10, 20, 50, 100]
 const SCALE_BAR_Y = 374
 const READOUT_TOP = 392
-const LEGEND_TOP = 496
+const LEGEND_TOP = 504
 
 // Fixed real-world playback duration for the whole fall, independent of the physics result (CLAUDE.md §11). The
 // playback runs steadily in the traveler's own time.
@@ -313,10 +313,13 @@ function FallPanel({
           </text>
         )}
         <text x={12} y={READOUT_TOP + 80} fill={STRETCH_COLOR} fontSize="10">
-          stretch across a {BODY_LENGTH_METERS}-meter body (Earth's surface gravity is 1 g)
+          stretch: the difference in pull from head to feet ({BODY_LENGTH_METERS}-meter body)
         </text>
-        <text x={12} y={READOUT_TOP + 94} fill={STRETCH_COLOR} fontSize="12" fontWeight="bold">
+        <text x={12} y={READOUT_TOP + 95} fill={STRETCH_COLOR} fontSize="12" fontWeight="bold">
           {formatG(stretch)}
+          <tspan fontSize="10" fontWeight="normal">
+            {'   '}(1 g = Earth's gravity at its surface)
+          </tspan>
         </text>
       </g>
 
@@ -648,6 +651,124 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
       <h2>Experiment 5 — Falling In: What Does the Traveler Experience?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). It must not give away the answers to
+            the three predictions below (§12): not whether the traveler's own trip to the horizon ends, not what the
+            far-away clock does, and not how the stretching depends on the size of the black hole. */}
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In Experiment 2 of this chapter you compared two clocks held at rest, one
+            far from a black hole and one hovering close to its horizon, and saw that the hovering clock ticks
+            differently. That experiment said nothing about a traveler who falls in. So what happens to a traveler who
+            falls straight toward a black hole? What does their own watch show, what does a clock far away show, and
+            what do they feel on the way?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> Picture yourself as the traveler. You let go, and a black hole waits
+            below you. There are no engines and no rope, nothing to hold you back, and once you cross the horizon
+            there is no way back. A friend stays far away, watching over the whole thing with a clock of their own,
+            while you carry a watch on your wrist. In everyday life this would not be a puzzle. Drop a stone and it
+            reaches the ground in a moment, and everyone watching agrees how long it took. We take for granted that
+            all clocks agree on how long something lasts. But in Experiment 2, two clocks near a black hole did not
+            agree about how fast they tick. So it is fair to ask whether you and your friend would tell the same story
+            of your fall: how long it lasts, and what you feel on the way down, with the pull on you growing stronger
+            at every step.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What happens.</strong> Here is the whole experiment, step by step.
+          </p>
+          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+            <li>You choose a black hole, and a release distance: how far from the black hole's center the traveler starts.</li>
+            <li>
+              The traveler is released <strong>from rest</strong>. That means they are not moving at the start. After
+              that, gravity pulls them straight toward the center. Nothing else acts on them: there are no engines.
+            </li>
+            <li>
+              Two clocks keep time for the whole fall. The traveler wears one, their own watch. The other sits at rest,
+              far from the black hole, and was started at the moment of release.
+            </li>
+            <li>
+              You press Run and watch for a few seconds. The first picture follows the traveler down and shows both
+              clocks and how much the traveler is stretched (explained just below).
+            </li>
+            <li>The experiment ends at the horizon: it does not show anything inside.</li>
+            <li>
+              A second picture is a graph of how near the horizon the traveler is, against each clock. A third is a
+              graph of the stretching at every distance, for all three black holes.
+            </li>
+          </ol>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            The path of the fall is worked out with the <strong>exact theory of gravity</strong> (general relativity,
+            the theory that gravity is curved spacetime), the same one used in the earlier experiments of this chapter.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Some words we will use.</strong> The <strong>traveler's clock</strong> is the watch the traveler
+            wears: it shows time as they experience it. The <strong>far-away clock</strong> is a clock at rest far from
+            the black hole. We read it at the moment the traveler passes each distance, so the two clocks are compared
+            at the same point in the fall. (This compares two clocks. It is not a picture of what a far-away observer
+            would see.) The <strong>horizon</strong> is the one-way boundary you met in Experiment 1 of this chapter, and
+            the <strong>horizon radius</strong> is the distance from the black hole's center to its horizon. We measure
+            distances in horizon radii: 10 horizon radii means ten times as far from the center as the edge is.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            Because the three black holes are so different in size, we measure time in a unit that scales with them: a{' '}
+            <strong>horizon light-time</strong> is the time light takes to travel across one horizon radius. For
+            example, light travels about 300,000 km each second, and the 10-Sun black hole's horizon radius is about
+            30 km, so one horizon light-time for it is about 30 ÷ 300,000 = 0.0001 seconds. For bigger black holes it
+            is longer. The picture also gives each time in ordinary units. For the biggest black holes the distances in
+            kilometers are huge, so we also give them in <strong>astronomical units</strong> (AU): 1 AU is the distance
+            from the Earth to the Sun, about 150 million kilometers.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            The <strong>stretch</strong> is what the traveler feels. Gravity pulls harder on whatever is nearer the
+            black hole. A traveler falling feet first has their feet slightly nearer than their head, so the feet are
+            pulled slightly harder, and the traveler is stretched. We measure the stretch as the difference in pull
+            between the two ends of a 2-meter body, in <strong>g</strong>: 1 g is the pull of Earth's gravity at its
+            surface. It is the same kind of effect as the tidal effect you met in Gravity and Curved Spacetime,
+            Experiment 3.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The black holes.</strong> They are the three from the earlier experiments of this chapter: a
+            stellar black hole of 10 Suns' worth of mass (a round, illustrative value), Sagittarius A*, the black hole
+            at the center of our galaxy, and M87*, the black hole imaged in the galaxy M87. Their masses are about 4.3
+            million and 6.5 billion Suns.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What this builds on.</strong> Experiment 1 gave you the horizon radius. Experiment 2 compared two
+            clocks at rest near a black hole. Experiments 3 and 4 showed where orbits and light stop being safe near a
+            black hole, and ended in a plunge and a capture. Here we follow a traveler who falls in.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make three predictions. Then choose a black hole and a release distance,
+            and run it. Try other black holes and other release distances too, and compare.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> What each clock reads as the traveler nears the horizon, how the
+            stretch changes as the traveler gets nearer, and how the stretch compares from one black hole to another.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>This is a thought experiment about a small traveler,</strong> 2 meters long, released from rest
+              and falling straight in with nothing else acting on them. How they got to the starting point is not
+              described, and their own gravity does not matter.
+            </li>
+            <li>
+              <strong>The equations are given, not derived.</strong> They are the standard ones for a black hole that
+              does not spin and has no electric charge. Real black holes usually spin, which changes the details.
+            </li>
+            <li>
+              <strong>The far-away clock is compared with the traveler's clock,</strong> not with a picture. What a
+              far-away observer would actually see is a different question, and is not modeled.
+            </li>
+            <li>
+              <strong>The experiment ends at the horizon.</strong> Nothing inside it is modeled, and this is not a
+              camera view.
+            </li>
+          </ul>
+        </div>
+
         {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
@@ -819,29 +940,42 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
                   <strong>How to read this picture: the fall.</strong>
                 </p>
                 <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>What you are looking at.</strong> A side view of a small traveler, 2 meters long, falling
-                  straight toward a black hole. The black hole is the dark disc at the bottom, and the rose-colored ring
-                  around it is the <em>horizon</em>. The short white bar at the top is where the traveler was released,
-                  from rest, and the dashed line is the path of the fall.
+                  <strong>1. What you are looking at.</strong> A side view of the fall. The purple disc at the bottom is
+                  the black hole, and the rose-colored ring around it is its <em>horizon</em>, the edge of the black hole. The
+                  blue dot is the traveler, falling straight down toward it. (The traveler is drawn as a dot, but in the
+                  experiment they are 2 meters long.)
                 </p>
                 <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>The two clocks.</strong> The blue one is the traveler's own watch, which goes with them. The
-                  orange one sits at rest far from the black hole and was started at the moment of release. Both are
-                  counted in <em>horizon light-times</em>: one horizon light-time is the time light takes to travel
-                  across one horizon radius. The time in ordinary units is shown beside each reading.
+                  <strong>2. Where the fall starts.</strong> The short white bar near the top, labeled "released here
+                  (at rest)", is where the traveler lets go. The dashed line under it is the path they will follow.
                 </p>
                 <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>The stretch.</strong> Gravity pulls the traveler's feet (nearer the black hole) slightly harder
-                  than their head, so the traveler is stretched. The readout is the difference in pull across their
-                  whole 2 meters, in <em>g</em>, where 1 g is the pull of Earth's gravity at its surface.
+                  <strong>3. The two clocks, under the picture.</strong> Two clocks run during the fall, and both read
+                  zero at the moment of release. The <em>blue</em> one is the traveler's own watch. The <em>orange</em>{' '}
+                  one is the far-away clock, sitting at rest far from the black hole. Each reading is given in{' '}
+                  <em>light-times</em>, with the time in ordinary units in brackets. One light-time is how long light
+                  takes to cross one horizon radius.
                 </p>
                 <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>Scale.</strong> The scale bar shows how long some number of horizon radii is. It changes from
-                  one run to the next, because each run is zoomed to fit its release distance.
+                  <strong>4. The stretch, under the clocks.</strong> Gravity pulls the traveler's feet (the nearer end)
+                  a little harder than their head, and that difference stretches them. The number says how big the
+                  difference is, in <em>g</em>, where 1 g is the pull of Earth's gravity on you as you stand on the
+                  ground. For example, "3 g" means the feet are pulled harder than the head by as much as three
+                  times Earth's gravity.
+                </p>
+                <p style={CAPTION_PARAGRAPH_STYLE}>
+                  <strong>5. The scale bar.</strong> The bar below the picture shows how long some number of horizon
+                  radii is. Each run is zoomed so the whole fall fits, so the black hole looks bigger or smaller from
+                  one run to the next. To compare runs, use the scale bar and the "distance from the center" number at
+                  the top of the picture, not the size of the drawing.
+                </p>
+                <p style={CAPTION_PARAGRAPH_STYLE}>
+                  <strong>6. What to watch.</strong> Compare the two clocks as the traveler gets close to the horizon,
+                  and watch how the stretch number changes as they fall.
                 </p>
                 <p style={{ margin: 0 }}>
-                  <strong>A limit.</strong> This follows one small traveler straight down. It is not what a camera would
-                  see, and it stops at the horizon: nothing inside is shown.
+                  <strong>A limit.</strong> This follows one small traveler falling straight down. It is not what a
+                  camera would see, and it stops at the horizon: nothing inside is shown.
                 </p>
               </div>
             </div>
