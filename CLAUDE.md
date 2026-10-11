@@ -777,13 +777,15 @@ Every experiment below has an approved specification, a tested physics model, an
 | 10 | The fate of the universe | `10-fate-of-the-universe.md` | Complete (wording approved); chapter summary text still carries a "draft placeholder" comment in `src/App.tsx` |
 | - | Closing synthesis ("Putting It All Together"), a section on Experiment 10's page, not an experiment | `closing-synthesis.md` | Complete (wording approved) |
 
-**Black Holes and Strong Gravity** (`docs/experiments/black-holes-and-strong-gravity/`). Planned as five experiments; Experiments 1 and 2 are approved.
+**Black Holes and Strong Gravity** (`docs/experiments/black-holes-and-strong-gravity/`). Planned as five experiments; Experiments 1 to 4 are built.
 
 | # | Title | Specification | Status |
 |---|---|---|---|
 | 1 | How small must something be to become a black hole? | `01-how-small-a-black-hole.md` | Complete (wording approved), with an optional "guide to black holes" |
 | 2 | Time near a black hole: does a clock ever stop? | `02-time-near-a-black-hole.md` | Complete (wording approved) |
-| 3-5 | Orbits, light bending, falling in | none | Planned, not approved |
+| 3 | Orbits near a black hole | `03-orbits-near-a-black-hole.md` | Built; wording review not recorded here (see `docs/STATUS.md`) |
+| 4 | Light near a black hole: can light be trapped? | `04-light-near-a-black-hole.md` | Complete (wording approved) |
+| 5 | Falling in | none | Planned, not approved |
 
 **Recurring open items** (details in `docs/STATUS.md`): at a 390-pixel window the app's content column is only about 175 to 230 pixels wide, so several pictures' labels are very small (an app-wide layout matter, left for the owner); and several general-knowledge statements in Cosmology and Black Holes learner-facing text were not checked against a primary source (each experiment's specification lists them).
 
@@ -793,12 +795,12 @@ Every experiment below has an approved specification, a tested physics model, an
 * **Done:** a "What you learned / What's next" summary below each experiment, shown only after the learner has run that experiment and reached the tutor's explanation, so nothing is explained early and the summary never comes before the tutor's own explanation. Until then, a short hint line says that a summary will appear there. A learner who skips the tutor's questions does not see the summary. The summaries live in the `chapters` list in `src/App.tsx`, grouped under phase headings (see below). Experiment 11's summary now points forward to the Gravity and Curved Spacetime chapter; that chapter's own Experiment 3 summary points to no further experiment, because none beyond it is approved yet.
 * **Decided against:** a side-by-side compare view of Experiments 3 and 4.
 * **Done:** the chapter layout is responsive. Below 850px wide the sidebar becomes a row of chapter buttons above the experiment (CSS classes in `src/index.css`), and the clocks in Experiments 2, 4 and 5 wrap instead of overflowing. In Experiments 4 and 5, when the moving clock travels more than 2.5 light-seconds in one tick (about 0.93c and above), the clock panels stack and are drawn in a wider box so the mirrors stay readable. In a very narrow window at such speeds the drawing is still small, because it has to fit the window width.
-* **Done:** the sidebar groups chapters under named phase headings (`groupOrder` in `src/App.tsx`). A phase with no chapters yet still shows its heading, with a "coming after..." placeholder instead of a chapter list, so the learner can see what's ahead. Currently: "Relativity of Time and Motion" (Experiments 1–11), "Gravity and Curved Spacetime" (Experiments 1–9), and "Gravitational Waves" (its own Experiment 1, ripples in spacetime). Later groups added: "Cosmology" and "Black Holes and Strong Gravity" (Experiments 1 and 2; the rest of that group is planned, not approved).
+* **Done:** the sidebar groups chapters under named phase headings (`groupOrder` in `src/App.tsx`). A phase with no chapters yet still shows its heading, with a "coming after..." placeholder instead of a chapter list, so the learner can see what's ahead. Currently: "Relativity of Time and Motion" (Experiments 1–11), "Gravity and Curved Spacetime" (Experiments 1–9), and "Gravitational Waves" (its own Experiment 1, ripples in spacetime). Later groups added: "Cosmology" and "Black Holes and Strong Gravity" (Experiments 1 to 4; the rest of that group is planned, not approved).
 * **Done:** the shared `.toggle-button` style (`src/index.css`, used by every experiment's prediction/choice buttons) was too faint against the page's white card background. Fixed in two passes at the owner's request: background changed from pure white to a light-lavender tint (`#e4e8f5`, `#c9cee0` border), and `cursor: pointer`/`cursor: not-allowed` added (native `<button>` defaults to an arrow cursor otherwise). Applies globally, across every experiment.
 
 ## What Remains
 
-Nothing is in progress. The overall project vision, the four completed chapters (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology) and the first two experiments of the Black Holes and Strong Gravity group are built and committed. The rest of the Black Holes group (orbits, light bending, falling in) is planned but not approved. For Cosmology, the specification of Experiment 10 names a recollapsing universe, dark energy that changes with time, the cosmic event horizon, and the far future of stars and black holes as natural candidates, but none is proposed. Any next experiment needs a proposal and an approved specification first (§23 Stages 1-4).
+Nothing is in progress. The overall project vision, the four completed chapters (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology) and the first four experiments of the Black Holes and Strong Gravity group are built. The rest of the Black Holes group (falling in) is planned but not approved. For Cosmology, the specification of Experiment 10 names a recollapsing universe, dark energy that changes with time, the cosmic event horizon, and the far future of stars and black holes as natural candidates, but none is proposed. Any next experiment needs a proposal and an approved specification first (§23 Stages 1-4).
 
 Do not proceed beyond that milestone without explicit authorization.
 
