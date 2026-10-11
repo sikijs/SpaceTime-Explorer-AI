@@ -384,9 +384,9 @@ const chapters: Chapter[] = [
     title: 'Orbits Near a Black Hole',
     group: 'Black Holes and Strong Gravity',
     Component: OrbitsNearBlackHoleExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not yet shown to learners: the tutor
-    // that unlocks the summary is not built.
-    learned: 'Draft placeholder: the summary for this experiment has not been written yet.',
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
+    learned:
+      'In ordinary gravity, a circular orbit that gets a small nudge only wobbles, at any distance. In the exact theory, there is a last safe circular orbit at 6GM/c², which is 3 horizon radii, the same number for every black hole. At or inside it, a small nudge sends the probe spiraling into the black hole. Far away, the two rules give nearly the same orbit.',
     next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: how a black hole bends light, and what falling in is like.',
   },
 ]

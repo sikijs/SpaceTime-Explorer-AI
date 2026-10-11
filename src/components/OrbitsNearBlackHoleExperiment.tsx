@@ -14,11 +14,13 @@ import {
   ordinaryCircularSpeedFractionOfLight,
   runOrbitsNearBlackHoleExperiment,
 } from '../physics/orbitsNearBlackHoleExperiment'
+import { OrbitsNearBlackHoleTutor } from './OrbitsNearBlackHoleTutor'
 import type { OrbitPath } from '../physics/orbitsNearBlackHoleExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
 
 interface OrbitsNearBlackHoleExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
 // Each panel: a title strip, a square orbit area, and a legend strip. Both panels share one scale, zoomed to the start so
@@ -410,11 +412,12 @@ function OrbitPanel({
   )
 }
 
-export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHoleExperimentProps) {
+export function OrbitsNearBlackHoleExperiment({ onComplete, onTutorComplete }: OrbitsNearBlackHoleExperimentProps) {
   const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
   const [start, setStart] = useState(6)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [nudgePrediction, setNudgePrediction] = useState<NudgeChoice | null>(null)
   const [lastSafePrediction, setLastSafePrediction] = useState<LastSafeChoice | null>(null)
@@ -475,6 +478,7 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((n) => n + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
@@ -1138,6 +1142,16 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
           </>
         )}
       </div>
+
+      {showResults && (
+        <OrbitsNearBlackHoleTutor
+          key={runCount}
+          predictedNudge={submittedNudge}
+          predictedLastSafe={submittedLastSafe}
+          predictedFar={submittedFar}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }
