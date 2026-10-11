@@ -49,7 +49,7 @@ const NO_GRAVITY_COLOR = '#e2e8f0'
 const AIM_PRESETS = [20, 10, 5, 3.5, 3, 2.7, 2.6, 2.5, 1.5]
 
 // This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
-// here; they are compared with the model's results later. The question wording is a draft for the owner's review.
+// here; they are compared with the model's results later. The question wording was approved by the owner on 2026-10-11.
 type BendChoice = 'straight' | 'bent' | 'captured'
 const bendChoices: Array<{ value: BendChoice; label: string }> = [
   { value: 'straight', label: 'It goes straight on, barely changed' },
@@ -160,6 +160,10 @@ function LightPanel({
   const px = (x: number) => CENTER_X + x * pixelsPerHorizonRadius
   const py = (y: number) => CENTER_Y - y * pixelsPerHorizonRadius
 
+  // The closest the light has come so far. Points before the view's first index are farther out than the view itself.
+  let closestSoFar = Infinity
+  for (let i = range.first; i <= index; i++) closestSoFar = Math.min(closestSoFar, path.points[i].distanceInHorizonRadii)
+
   const trail: string[] = []
   for (let i = range.first; i <= index; i += 4) trail.push(`${px(path.points[i].x)},${py(path.points[i].y)}`)
   trail.push(`${px(point.x)},${py(point.y)}`)
@@ -235,8 +239,8 @@ function LightPanel({
         The path of the light, seen from above
       </text>
       <text x={12} y={38} fill="#94a3b8" fontSize="11">
-        Angle swept: {formatNumber(toDegrees(point.phi))}° &nbsp;|&nbsp; distance:{' '}
-        {point.distanceInHorizonRadii.toFixed(2)} horizon radii
+        Angle swept: {formatNumber(toDegrees(point.phi))}° | distance: {point.distanceInHorizonRadii.toFixed(2)} |
+        closest: {closestSoFar.toFixed(2)} horizon radii
       </text>
       <text x={12} y={54} fill={captured ? HORIZON_COLOR : '#94a3b8'} fontSize="11" fontWeight={captured ? 'bold' : 'normal'}>
         {captured
@@ -554,7 +558,7 @@ export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: Li
       <h2>Experiment 4 — Light Near a Black Hole: Can Light Be Trapped?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). It must not give away the answers to
+        {/* Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1). It must not give away the answers to
             the three predictions below (§12): no mention of where light is captured, of light swinging around the
             black hole, or of how much larger the bend is than the simple formula says. */}
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -927,7 +931,7 @@ export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: Li
 
             {showResults && (
               <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-                {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+                {/* Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1). */}
                 <h3 style={{ marginTop: 0 }}>Results</h3>
                 <p>
                   You aimed the light to pass <strong>{formatRadii(aim)} horizon radii</strong> (
@@ -945,6 +949,14 @@ export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: Li
                               'The simple formula (Gravity Experiment 8) gives',
                               `${formatNumber(toDegrees(result.weakFieldBendRadians))}°, so the exact bend is ${formatLarger(result.path.bendRadians as number, result.weakFieldBendRadians)}`,
                             ],
+                            ...((result.path.bendRadians as number) > Math.PI
+                              ? [
+                                  [
+                                    'How far round the black hole it swept',
+                                    `${formatNumber(result.path.turnsAround)} turns around the center before it left (a beam that is not bent at all sweeps half a turn as it goes past)`,
+                                  ],
+                                ]
+                              : []),
                             [
                               'Closest the light came to the center',
                               `${formatNumber(result.path.closestInHorizonRadii)} horizon radii, nearer than the aim of ${formatRadii(aim)}`,
@@ -997,8 +1009,9 @@ export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: Li
                   <strong>Checking your second prediction:</strong> asked how close to the center light must be aimed
                   to be captured, you answered "{captureChoices.find((c) => c.value === submittedCapture)!.label}". The
                   critical aim is {CRITICAL_AIM_TEXT} horizon radii. In this model a beam
-                  aimed at 2.5 is captured, and so is one aimed at 2, even though both are aimed well outside the
-                  horizon (1 horizon radius). A beam aimed at 2.7 escapes, bent by{' '}
+                  aimed at 2.5 {checks.insideCritical.outcome === 'captured' ? 'is captured' : 'escapes'}, and one aimed
+                  at 2 {checks.two.outcome === 'captured' ? 'is captured' : 'escapes'}, though both are aimed outside
+                  the horizon (1 horizon radius). A beam aimed at 2.7 escapes, bent by{' '}
                   {formatNumber(toDegrees(checks.outsideCritical.bendRadians as number))}°, and one aimed at 10 escapes, bent by{' '}
                   {formatNumber(toDegrees(checks.ten.bendRadians as number))}°.{' '}
                   {submittedCapture === 'critical'
