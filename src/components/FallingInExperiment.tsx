@@ -11,11 +11,13 @@ import {
   stretchInMetersPerSecondSquared,
   travelerClock,
 } from '../physics/fallingInExperiment'
+import { FallingInTutor } from './FallingInTutor'
 import type { FallingInResult } from '../physics/fallingInExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
 
 interface FallingInExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
 // The picture of the fall: a title strip, a side view of the drop, the three live readouts, and a legend strip.
@@ -576,11 +578,12 @@ function StretchGraph({ presetId, currentR }: { presetId: ObjectPreset['id']; cu
   )
 }
 
-export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
+export function FallingInExperiment({ onComplete, onTutorComplete }: FallingInExperimentProps) {
   const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
   const [start, setStart] = useState(10)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [endPrediction, setEndPrediction] = useState<EndChoice | null>(null)
   const [farClockPrediction, setFarClockPrediction] = useState<FarClockChoice | null>(null)
@@ -629,6 +632,7 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((n) => n + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
@@ -1256,6 +1260,16 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
           </>
         )}
       </div>
+
+      {showResults && (
+        <FallingInTutor
+          key={runCount}
+          predictedEnd={submittedEnd}
+          predictedFarClock={submittedFarClock}
+          predictedStretch={submittedStretch}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }

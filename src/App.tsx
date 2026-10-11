@@ -406,9 +406,9 @@ const chapters: Chapter[] = [
     title: 'Falling In',
     group: 'Black Holes and Strong Gravity',
     Component: FallingInExperiment,
-    // Placeholder, not shown to learners until the tutor exists (the summary appears only after the tutor's explanation).
     // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
-    learned: 'Draft placeholder: the summary of what this experiment showed will be written with its tutor.',
+    learned:
+      "A traveler who falls straight into a black hole reaches the horizon after a finite time on their own watch, while a clock far away reads later and later, without limit, as the traveler nears the horizon. They are different clocks, and neither is the real time. What the traveler feels is the stretching, the difference in pull between head and feet. It grows very fast closer in, and at the horizon it is far larger for a small black hole than for a giant one, so crossing a giant black hole's horizon is, locally, unremarkable.",
     next: 'This is currently the last experiment in the project. No further experiment is planned in this chapter.',
   },
 ]
