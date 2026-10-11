@@ -533,16 +533,17 @@ export function OrbitsNearBlackHoleExperiment({ onComplete, onTutorComplete }: O
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The question.</strong> In Gravity and Curved Spacetime, Experiment 6, you saw that a planet
             stays in orbit because it moves sideways as it falls, so it keeps missing the thing it falls toward,
-            and that this works at any distance. A black hole pulls harder than anything else we know. So is it
+            and that this works at any distance. Close to a black hole, gravity is as strong as it ever gets (you saw that
+            in Experiment 2 of this chapter). So is it
             still safe to circle a black hole, at any distance outside its edge? Or is there a place where an
             orbit cannot last?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Why even ask this.</strong> In everyday life, orbits look dependable. The Moon has circled the
-            Earth for billions of years, and satellites circle it for years on end. Nothing seems to threaten
-            them, so it is natural to assume that if you can get into an orbit, you can stay there. But the
-            earlier experiments only used orbits in gravity that is gentle compared with a black hole's. This
-            experiment asks whether that dependable picture still holds where gravity is at its strongest.
+            <strong>Why even ask this.</strong> In the earlier chapters, planets and GPS satellites keep circling
+            steadily. Nothing seems to threaten them, so it is natural to assume that if you can get into an orbit,
+            you can stay there. But the earlier experiments only used orbits in gravity that is gentle compared with
+            a black hole's. This experiment asks whether that dependable picture still holds where gravity is at its
+            strongest.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What happens.</strong> Here is the whole experiment, step by step.
@@ -636,8 +637,7 @@ export function OrbitsNearBlackHoleExperiment({ onComplete, onTutorComplete }: O
               would carry a probe in by about 0.6% of its distance over one full turn.
             </li>
             <li>
-              <strong>"Plunges" means the probe reaches the horizon.</strong> Nothing past that is modeled, and the
-              time shown is the probe's own, not what a far-away observer would see.
+              <strong>"Plunges" means the probe reaches the horizon.</strong> Nothing past that is modeled.
             </li>
             <li>
               <strong>The ordinary-gravity probe is shown even where ordinary gravity is not a good description,</strong>{' '}
@@ -911,7 +911,8 @@ export function OrbitsNearBlackHoleExperiment({ onComplete, onTutorComplete }: O
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>The purple dashed ring.</strong> It marks the <em>last safe orbit</em> of the exact theory, at{' '}
-                {LAST_SAFE_ORBIT_IN_HORIZON_RADII} horizon radii from the center. Ordinary gravity has no such ring,
+                {LAST_SAFE_ORBIT_IN_HORIZON_RADII} horizon radii from the center. The last safe orbit is the closest
+                distance at which a circular orbit can still survive a small nudge. Ordinary gravity has no such ring,
                 which is why the other picture has no purple ring. Notice where the white start ring sits compared with
                 it.
               </p>
@@ -956,7 +957,7 @@ export function OrbitsNearBlackHoleExperiment({ onComplete, onTutorComplete }: O
           <p style={CAPTION_PARAGRAPH_STYLE}>
             <strong>The three dashed lines are distances to compare with.</strong> The rose line is the horizon (1
             horizon radius). The purple line is the last safe orbit of the exact theory ({LAST_SAFE_ORBIT_IN_HORIZON_RADII}{' '}
-            horizon radii). The white line is where the probe started.
+            horizon radii), the closest distance at which a circular orbit can still survive a small nudge. The white line is where the probe started.
           </p>
           <p style={CAPTION_PARAGRAPH_STYLE}>
             <strong>How to read a line.</strong> Think of a car driving round and round a ring road, with a graph of

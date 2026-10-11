@@ -178,13 +178,12 @@ export function OrbitsNearBlackHoleTutor({
           <p style={paragraphStyle}>
             <strong>3. Why this happens.</strong> The exact theory adds an extra pull toward the black hole to
             ordinary gravity's. Far away it is negligible. It grows quickly as the probe gets closer, and close in
-            it overwhelms the sideways motion's hold on the orbit. You can see a sign of this in the launch speeds.
-            At 20 horizon radii the circular-orbit speed is {fmt(speedOrdinaryAtTwenty)} of the speed of light in
-            ordinary gravity and {fmt(speedExactAtTwenty)} in the exact theory, only{' '}
+            it overwhelms the sideways motion's hold on the orbit. You can see the two rules drifting apart in the
+            launch speeds. At 20 horizon radii the circular-orbit speed is {fmt(speedOrdinaryAtTwenty)} of the speed of
+            light in ordinary gravity and {fmt(speedExactAtTwenty)} in the exact theory, only{' '}
             {fmt((speedExactAtTwenty / speedOrdinaryAtTwenty - 1) * 100)}% apart. At 2 horizon radii they are{' '}
             {fmt(speedOrdinaryAtTwo)} and {fmt(speedExactAtTwo)}, which is{' '}
-            {fmt((speedExactAtTwo / speedOrdinaryAtTwo - 1) * 100)}% apart. The exact theory needs a faster probe,
-            because the pull is stronger than ordinary gravity says, and closer in the gap widens quickly.
+            {fmt((speedExactAtTwo / speedOrdinaryAtTwo - 1) * 100)}% apart. Closer in, the gap widens quickly.
           </p>
           <p style={paragraphStyle}>
             <strong>4. Circular orbits that exist but do not last.</strong> Between 1.5 and{' '}
