@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import {
   BLACK_HOLE_PRESETS,
   LAST_SAFE_ORBIT_IN_HORIZON_RADII,
@@ -42,6 +42,18 @@ const BLACK_HOLE_COLOR = '#e879f9'
 const LAST_SAFE_COLOR = '#a78bfa'
 
 const DISTANCE_PRESETS = [20, 6, 3.5, 3, 2.5, 1.6]
+
+// The graph of distance against turns (the third picture).
+const GRAPH_WIDTH = 640
+
+// Caption blocks under each picture (small, muted text, like the other captions in this project).
+const CAPTION_STYLE: CSSProperties = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }
+const CAPTION_PARAGRAPH_STYLE: CSSProperties = { marginTop: 0, marginBottom: '0.4rem' }
+const GRAPH_HEIGHT = 352
+const PLOT_LEFT = 70
+const PLOT_RIGHT = 600
+const PLOT_TOP = 64
+const PLOT_BOTTOM = 270
 
 // This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
 // here; they are compared with the model's results later.
@@ -101,6 +113,127 @@ function formatMass(solarMasses: number): string {
 function pointAt(path: OrbitPath, turnsReached: number) {
   const index = Math.min(Math.floor(turnsReached * STEPS_PER_TURN), path.points.length - 1)
   return { index, point: path.points[index], ended: index >= path.points.length - 1 }
+}
+
+// The same two paths as a graph: each probe's distance from the black hole against the turns it has made, drawn up to
+// the present moment of the run, with the horizon, the last safe orbit and the start as horizontal lines.
+function DistanceGraph({
+  ordinary,
+  exact,
+  startInHorizonRadii,
+  turnsReached,
+  showLines,
+}: {
+  ordinary: OrbitPath
+  exact: OrbitPath
+  startInHorizonRadii: number
+  turnsReached: number
+  showLines: boolean
+}) {
+  const yMax = Math.max(1.1 * startInHorizonRadii, 4)
+  const xFor = (turns: number) => PLOT_LEFT + (turns / MAX_TURNS) * (PLOT_RIGHT - PLOT_LEFT)
+  const yFor = (distance: number) => PLOT_BOTTOM - (distance / yMax) * (PLOT_BOTTOM - PLOT_TOP)
+
+  // A round step for the vertical axis, giving at most about six ticks.
+  const step = [1, 2, 5, 10, 20].find((n) => yMax / n <= 6) ?? 20
+  const ticks: number[] = []
+  for (let v = 0; v <= yMax; v += step) ticks.push(v)
+
+  const linePoints = (path: OrbitPath) => {
+    const { index, point } = pointAt(path, turnsReached)
+    const pts: string[] = []
+    for (let i = 0; i <= index; i += 8) pts.push(`${xFor(path.points[i].turns)},${yFor(path.points[i].distanceInHorizonRadii)}`)
+    pts.push(`${xFor(point.turns)},${yFor(point.distanceInHorizonRadii)}`)
+    return { pts: pts.join(' '), point, ended: index >= path.points.length - 1 }
+  }
+  const ordinaryLine = linePoints(ordinary)
+  const exactLine = linePoints(exact)
+  const exactPlunged = exact.outcome === 'plunges' && exactLine.ended
+
+  const referenceLines = [
+    { value: 1, label: 'horizon (1)', color: HORIZON_COLOR, dy: -4 },
+    { value: LAST_SAFE_ORBIT_IN_HORIZON_RADII, label: 'last safe orbit (3)', color: LAST_SAFE_COLOR, dy: 12 },
+    { value: startInHorizonRadii, label: `start (${formatRadii(startInHorizonRadii)})`, color: '#e2e8f0', dy: -4 },
+  ]
+
+  return (
+    <svg
+      viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
+      width="100%"
+      style={{
+        marginTop: '1rem',
+        display: 'block',
+        maxWidth: `${GRAPH_WIDTH}px`,
+        border: '1px solid var(--border-color, #ccc)',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        backgroundColor: '#0b1020',
+      }}
+    >
+      <text x={12} y={20} fill="#e2e8f0" fontSize="12" fontWeight="bold">
+        The same two paths as a graph: distance from the black hole against turns
+      </text>
+      <text x={12} y={38} fill="#94a3b8" fontSize="11">
+        Drawn as the run plays. Horizontal: turns made around the black hole. Vertical: distance, in horizon radii.
+      </text>
+
+      {ticks.map((v) => (
+        <g key={v}>
+          <line x1={PLOT_LEFT} y1={yFor(v)} x2={PLOT_RIGHT} y2={yFor(v)} stroke="#334155" />
+          <text x={PLOT_LEFT - 8} y={yFor(v) + 4} fill="#94a3b8" fontSize="10" textAnchor="end">
+            {v}
+          </text>
+        </g>
+      ))}
+      {[0, 2, 4, 6, 8, 10].map((t) => (
+        <g key={t}>
+          <line x1={xFor(t)} y1={PLOT_BOTTOM} x2={xFor(t)} y2={PLOT_BOTTOM + 5} stroke="#94a3b8" />
+          <text x={xFor(t)} y={PLOT_BOTTOM + 18} fill="#94a3b8" fontSize="10" textAnchor="middle">
+            {t}
+          </text>
+        </g>
+      ))}
+      <text x={(PLOT_LEFT + PLOT_RIGHT) / 2} y={PLOT_BOTTOM + 38} fill="#94a3b8" fontSize="11" textAnchor="middle">
+        turns around the black hole
+      </text>
+
+      {referenceLines.map((line) => (
+        <g key={line.label}>
+          <line x1={PLOT_LEFT} y1={yFor(line.value)} x2={PLOT_RIGHT} y2={yFor(line.value)} stroke={line.color} strokeDasharray="5 4" strokeOpacity={0.8} />
+          <text x={PLOT_RIGHT - 4} y={yFor(line.value) + line.dy} fill={line.color} fontSize="10" textAnchor="end">
+            {line.label}
+          </text>
+        </g>
+      ))}
+
+      {showLines && (
+        <>
+          <polyline points={ordinaryLine.pts} fill="none" stroke={ORDINARY_COLOR} strokeWidth={3} />
+          <polyline points={exactLine.pts} fill="none" stroke={EXACT_COLOR} strokeWidth={3} />
+          <circle cx={xFor(ordinaryLine.point.turns)} cy={yFor(ordinaryLine.point.distanceInHorizonRadii)} r={5} fill={ORDINARY_COLOR} />
+          <circle cx={xFor(exactLine.point.turns)} cy={yFor(exactLine.point.distanceInHorizonRadii)} r={5} fill={EXACT_COLOR} />
+          {exactPlunged && (
+            <text x={xFor(exactLine.point.turns) + 8} y={yFor(1) - 18} fill={EXACT_COLOR} fontSize="11" fontWeight="bold">
+              plunged after {exactLine.point.turns.toFixed(1)} turns
+            </text>
+          )}
+        </>
+      )}
+
+      <line x1={96} y1={PLOT_BOTTOM + 62} x2={126} y2={PLOT_BOTTOM + 62} stroke={ORDINARY_COLOR} strokeWidth={3} />
+      <text x={132} y={PLOT_BOTTOM + 66} fill={ORDINARY_COLOR} fontSize="11">
+        ordinary gravity
+      </text>
+      <line x1={286} y1={PLOT_BOTTOM + 62} x2={316} y2={PLOT_BOTTOM + 62} stroke={EXACT_COLOR} strokeWidth={3} />
+      <text x={322} y={PLOT_BOTTOM + 66} fill={EXACT_COLOR} fontSize="11">
+        the exact theory
+      </text>
+      <circle cx={466} cy={PLOT_BOTTOM + 62} r={5} fill="#e2e8f0" />
+      <text x={478} y={PLOT_BOTTOM + 66} fill="#e2e8f0" fontSize="11">
+        dots: the present moment
+      </text>
+    </svg>
+  )
 }
 
 function OrbitPanel({
@@ -520,7 +653,8 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
           </p>
         )}
 
-        {hasSubmittedPrediction && (
+        {/* Shown only once the current settings have been run: changing the black hole or the start returns to idle and hides it again. */}
+        {hasSubmittedPrediction && status !== 'idle' && (
           <>
         <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           {result.preset.label}: {formatMass(result.preset.massSolarMasses)}; horizon radius{' '}
@@ -537,77 +671,143 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
         </p>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
-          <OrbitPanel
-            title="Ordinary gravity (Gravity Experiment 6)"
-            ruleName="ordinary gravity"
-            color={ORDINARY_COLOR}
-            path={result.ordinary}
-            startInHorizonRadii={start}
-            pixelsPerHorizonRadius={pixelsPerHorizonRadius}
-            scaleBarHorizonRadii={scaleBarHorizonRadii}
-            turnsReached={turnsReached}
-            showLastSafeOrbit={false}
-            showTrail={status !== 'idle'}
-          />
-          <OrbitPanel
-            title="The exact theory"
-            ruleName="the exact theory"
-            color={EXACT_COLOR}
-            path={result.exact}
-            startInHorizonRadii={start}
-            pixelsPerHorizonRadius={pixelsPerHorizonRadius}
-            scaleBarHorizonRadii={scaleBarHorizonRadii}
-            turnsReached={turnsReached}
-            showLastSafeOrbit
-            showTrail={status !== 'idle'}
-          />
+          <div style={{ flex: '1 1 280px', minWidth: 0, maxWidth: `${PANEL_WIDTH}px` }}>
+            <OrbitPanel
+              title="Ordinary gravity (Gravity Experiment 6)"
+              ruleName="ordinary gravity"
+              color={ORDINARY_COLOR}
+              path={result.ordinary}
+              startInHorizonRadii={start}
+              pixelsPerHorizonRadius={pixelsPerHorizonRadius}
+              scaleBarHorizonRadii={scaleBarHorizonRadii}
+              turnsReached={turnsReached}
+              showLastSafeOrbit={false}
+              showTrail
+            />
+            <div style={CAPTION_STYLE}>
+              <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
+                <strong>How to read this picture: ordinary gravity (the gold probe).</strong>
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>What you are looking at.</strong> A bird's-eye view of a small probe circling a black hole. The
+                black hole is the dark disc in the middle. The rose-colored ring around it is the <em>horizon</em>, the
+                point of no return. Anything that reaches the horizon cannot come back out.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>What the gold probe does.</strong> It starts on the dashed white ring, to the right of the
+                center, and moves around the black hole. It was launched at exactly the speed that makes a perfect
+                circle under <em>ordinary gravity</em>, the rule from the Gravity and Curved Spacetime chapter
+                (Experiment 6). Its trail shows where it has been.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>The tiny nudge.</strong> At the start, the probe gets a very small push toward the black hole.
+                Over one full turn it would carry the probe in by only about 0.6% of its distance. Think of lightly
+                tapping a ball that is rolling around the inside of a bowl. The tap stands for any small disturbance a
+                real orbit would get. Watch what this probe does with it.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>What to look for.</strong> Does the trail stay on the white ring, drift inward, or move
+                outward? The numbers above the picture count the turns and the distance.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Scale.</strong> The scale bar shows how long some number of horizon radii is. It changes from
+                one start to the next, because each run is zoomed to fit its start. To compare one start with another,
+                use the scale bar and the numbers in the readout, not the size of the drawing. This picture does not
+                show a traveler falling in, or how the probe was put into orbit.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ flex: '1 1 280px', minWidth: 0, maxWidth: `${PANEL_WIDTH}px` }}>
+            <OrbitPanel
+              title="The exact theory"
+              ruleName="the exact theory"
+              color={EXACT_COLOR}
+              path={result.exact}
+              startInHorizonRadii={start}
+              pixelsPerHorizonRadius={pixelsPerHorizonRadius}
+              scaleBarHorizonRadii={scaleBarHorizonRadii}
+              turnsReached={turnsReached}
+              showLastSafeOrbit
+              showTrail
+            />
+            <div style={CAPTION_STYLE}>
+              <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
+                <strong>How to read this picture: the exact theory (the blue probe).</strong>
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>What you are looking at.</strong> The same view, with the same black hole and the same scale as
+                the other picture. The only difference is the rule the probe follows. The blue probe follows the{' '}
+                <em>exact theory of gravity</em>, which treats gravity as curved spacetime.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>What the blue probe does.</strong> It starts at the same spot on the white ring, with the same
+                tiny inward nudge. It was launched at the speed that makes a perfect circle by <em>this</em> rule. That
+                speed can differ from the gold probe's. Both launch speeds are listed above the pictures, as fractions
+                of the speed of light.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>The purple dashed ring.</strong> It marks the <em>last safe orbit</em> of the exact theory, at{' '}
+                {LAST_SAFE_ORBIT_IN_HORIZON_RADII} horizon radii from the center. Ordinary gravity has no such ring,
+                which is why the other picture has no purple ring. Notice where the white start ring sits compared with
+                it.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>What to look for.</strong> Compare this trail with the gold one, turn by turn. Both probes got
+                the same nudge. Do they behave the same? If a probe reaches the rose horizon, its run ends there.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>A fair warning.</strong> The gold probe is drawn even very close to the black hole, where
+                ordinary gravity is not a good description. It is there so that the two rules can be compared, not
+                because ordinary gravity is right there.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+        <DistanceGraph
+          ordinary={result.ordinary}
+          exact={result.exact}
+          startInHorizonRadii={start}
+          turnsReached={turnsReached}
+          showLines
+        />
+
+        <div style={{ ...CAPTION_STYLE, maxWidth: `${GRAPH_WIDTH}px` }}>
           <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
-            <strong>How to read these diagrams.</strong> Both pictures show the same thing from directly above: a
-            small probe circling a black hole. The black hole is at the center. The two pictures use the same
-            scale. Each run is zoomed to fit its start, so that the part of the picture where something happens
-            fills it. The scale bar at the bottom shows how long some number of horizon radii is, and it changes
-            from one start to the next: the black hole is drawn larger for a close start and smaller for a far one.
+            <strong>How to read this graph: distance against turns.</strong>
           </p>
-          <ol style={{ margin: 0, paddingLeft: '1.1rem' }}>
-            <li style={{ marginBottom: '0.4rem' }}>
-              <strong>The probe starts on the dashed white ring, to the right of the center, moving around the black
-              hole.</strong> Each probe is launched at the speed that would give a perfectly circular orbit at
-              that distance <em>by its own rules</em>. The gold probe on the left follows ordinary gravity, from
-              Gravity and Curved Spacetime, Experiment 6. The blue probe on the right follows the exact theory of
-              gravity. The two launch speeds are listed above the pictures, as fractions of the speed of light.
-            </li>
-            <li style={{ marginBottom: '0.4rem' }}>
-              <strong>Each probe also gets the same tiny nudge inward at the start.</strong> It is so small that,
-              if nothing else acted, it would carry the probe in by only about 0.6% of its distance over one full
-              turn. It stands for any small disturbance a real orbit would have. The question is what each probe
-              does with it.
-            </li>
-            <li style={{ marginBottom: '0.4rem' }}>
-              <strong>The trail shows the path so far, and the numbers above each picture count the turns and the
-              distance.</strong> The experiment follows each probe for up to {MAX_TURNS} turns around the black
-              hole, or until it reaches the horizon, the rose ring around the black hole. The time of the run is
-              the probe's own, played at a fixed speed.
-            </li>
-            <li style={{ marginBottom: '0.4rem' }}>
-              <strong>The dashed purple ring in the right-hand picture is the last safe orbit of the exact theory</strong>,
-              at 3 horizon radii from the center. It is drawn only on the right, because ordinary gravity has no
-              such ring.
-            </li>
-            <li style={{ marginBottom: '0.4rem' }}>
-              <strong>The left-hand probe is shown at every distance, even close to the black hole,</strong> where
-              ordinary gravity is not a good description. It is there so that the two rules can be compared, not
-              because ordinary gravity is right there.
-            </li>
-            <li style={{ marginBottom: 0 }}>
-              <strong>What these pictures are not.</strong> They follow a small probe in a flat plane, not a
-              traveler falling into the black hole, and they do not show how the probe was put into orbit. To compare
-              one start with another, use the scale bar and the distances in the readout above the pictures, not
-              the sizes of the drawings.
-            </li>
-          </ol>
+          <p style={CAPTION_PARAGRAPH_STYLE}>
+            <strong>What you are looking at.</strong> The two pictures above show the paths as seen from above. This
+            graph shows the same two paths in a different way. It leaves out which direction the probe is in and keeps
+            only one fact: how far it is from the black hole.
+          </p>
+          <p style={CAPTION_PARAGRAPH_STYLE}>
+            <strong>The axes.</strong> Along the bottom: how many turns the probe has made around the black hole (0 to
+            10). Up the side: its distance from the center, in horizon radii, where 1 means it is on the horizon.
+          </p>
+          <p style={CAPTION_PARAGRAPH_STYLE}>
+            <strong>The lines.</strong> The gold line is the ordinary-gravity probe and the blue line is the
+            exact-theory probe. They are drawn as the run plays, and each dot marks the present moment.
+          </p>
+          <p style={CAPTION_PARAGRAPH_STYLE}>
+            <strong>The three dashed lines are distances to compare with.</strong> The rose line is the horizon (1
+            horizon radius). The purple line is the last safe orbit of the exact theory ({LAST_SAFE_ORBIT_IN_HORIZON_RADII}{' '}
+            horizon radii). The white line is where the probe started.
+          </p>
+          <p style={CAPTION_PARAGRAPH_STYLE}>
+            <strong>How to read a line.</strong> Think of a car driving round and round a ring road, with a graph of
+            its distance from home. A flat line means the car keeps the same distance and just goes round and round. A
+            line sloping down means it is getting closer to home. In the same way, a flat line here means a probe
+            circling at a steady distance, and a line sloping downward means a probe getting closer to the black hole.
+            If a line reaches the rose line, that probe has reached the horizon, and the graph says how many turns it
+            made first.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>A limit.</strong> The vertical scale is zoomed to the start, like the pictures above, so a very
+            small wobble would not show. The graph is good at telling a probe that keeps circling from one that falls
+            in.
+          </p>
         </div>
           </>
         )}
