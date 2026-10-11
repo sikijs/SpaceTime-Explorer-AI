@@ -1,6 +1,6 @@
 # Black Holes and Strong Gravity — Experiment 4: Light Near a Black Hole — Can Light Be Trapped?
 
-**Status: DRAFT, awaiting the owner's review. Proposed by Claude per `CLAUDE.md` §23 Stages 1–2 and drafted as a specification per Stage 3 on 2026-10-11, as the fourth of the five experiments planned for this group (see the group list in Experiment 1's specification). Nothing is implemented. Claude must not begin implementation until the owner approves this specification (Stage 4).**
+**Status: APPROVED by the owner on 2026-10-11, with all thirteen "Decisions Needing Human Review" items taken as Claude's recommended defaults. Proposed by Claude per `CLAUDE.md` §23 Stages 1–2 and drafted as a specification per Stage 3 on 2026-10-11, as the fourth of the five experiments planned for this group (see the group list in Experiment 1's specification). To be built one step at a time (§6); nothing is implemented yet. Learner-facing wording (introduction, prediction questions, captions, Results, tutor) is still subject to the owner's line-by-line review when it is drafted (§28.1).**
 
 ---
 
@@ -273,3 +273,5 @@ Each shows Claude's recommended default as used above.
 ## Implementation Notes
 
 Nothing has been built. A feasibility check was run in a scratch script outside the project on 2026-10-11 (not part of the application): stepping `d²u/dφ² = −u + 1.5u²` with a fourth-order Runge-Kutta method reproduced the table above, the critical aim at 2.598, and a closest approach of about 1.53 at an aim of 2.6. The weak-field first term (`2 ÷ b`) is approached from above as the aim grows (1.16° against 1.15° at 100).
+
+- **Approval (2026-10-11):** the owner approved this specification, taking all thirteen "Decisions Needing Human Review" items as Claude's recommended defaults. Next step, when authorized: the physics model and its tests (§21 Steps 2 and 3).
