@@ -220,9 +220,14 @@ describe('the experiment as run', () => {
     expect(result.path.outcome).toBe('escapes')
   })
 
-  it('swings around more than half a turn when it escapes close to the critical aim', () => {
-    expect(lightPath(20).turnsAround).toBeGreaterThan(0.5)
-    expect(lightPath(2.6).turnsAround).toBeGreaterThan(1.5)
+  it('sweeps half a turn plus the bend, so a beam bent by more than 180 degrees swings right round', () => {
+    for (const aim of [20, 5, 3, 2.7, 2.6]) {
+      const path = lightPath(aim)
+      expect(path.turnsAround).toBeCloseTo(0.5 + (path.bendRadians as number) / (2 * Math.PI), 10)
+    }
+    expect(toDegrees(lightPath(2.7).bendRadians as number)).toBeLessThan(180)
+    expect(toDegrees(lightPath(2.62).bendRadians as number)).toBeGreaterThan(180)
+    expect(toDegrees(lightPath(2.6).bendRadians as number)).toBeGreaterThan(360)
   })
 
   it('rejects an aim outside the controls\' range and an unknown black hole', () => {

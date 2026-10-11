@@ -41,7 +41,7 @@ export interface LightPoint {
 export interface LightPath {
   outcome: LightOutcome
   bendRadians: number | null // the total bend if it escapes; null if captured
-  turnsAround: number // turns swept around the black hole (more than 0.5 if it swings)
+  turnsAround: number // the angle swept around the black hole in turns: 0.5 plus the bend, in turns, if it escapes
   closestInHorizonRadii: number // closest approach, or 1 if captured
   // From the first step after "very far away" to the end. The first point is already many horizon radii away; the
   // picture draws the part inside its view.

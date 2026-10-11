@@ -7,6 +7,7 @@ import {
   MIN_AIM_IN_HORIZON_RADII,
   PHOTON_SPHERE_IN_HORIZON_RADII,
   bendCurve,
+  lightPath,
   runLightNearBlackHoleExperiment,
   weakFieldBendRadians,
 } from '../physics/lightNearBlackHoleExperiment'
@@ -64,7 +65,7 @@ const captureChoices: Array<{ value: CaptureChoice; label: string }> = [
 type JustOutsideChoice = 'small-bend' | 'swings' | 'captured-anyway'
 const justOutsideChoices: Array<{ value: JustOutsideChoice; label: string }> = [
   { value: 'small-bend', label: 'It passes with only a small bend' },
-  { value: 'swings', label: 'It swings around the black hole, more than half a turn, and then escapes' },
+  { value: 'swings', label: 'It swings right around the black hole, turning by more than 180°, and then escapes' },
   { value: 'captured-anyway', label: 'It is captured anyway' },
 ]
 
@@ -82,6 +83,15 @@ const CAPTION_STYLE: CSSProperties = { fontSize: '0.75rem', color: 'var(--text-m
 const CAPTION_PARAGRAPH_STYLE: CSSProperties = { marginTop: 0, marginBottom: '0.4rem' }
 
 const toDegrees = (radians: number) => (radians * 180) / Math.PI
+
+// The critical aim to four digits, so that it can be told apart from an aim of 2.6.
+const CRITICAL_AIM_TEXT = CRITICAL_AIM_IN_HORIZON_RADII.toFixed(3)
+
+// How the exact bend compares with the simple formula's: "X% larger" up to twice as large, "X times as large" beyond.
+function formatLarger(exactRadians: number, simpleRadians: number): string {
+  const ratio = exactRadians / simpleRadians
+  return ratio < 2 ? `${formatNumber((ratio - 1) * 100)}% larger` : `${formatNumber(ratio)} times as large`
+}
 
 // Three significant figures, with no trailing zeros ("10", "2.95", "235,571").
 function formatNumber(value: number): string {
@@ -394,7 +404,7 @@ function BendGraph({ aim, outcome, exactDegrees }: { aim: number; outcome: Light
       </text>
       <line x1={xFor(CRITICAL_AIM_IN_HORIZON_RADII)} y1={PLOT_TOP} x2={xFor(CRITICAL_AIM_IN_HORIZON_RADII)} y2={PLOT_BOTTOM} stroke={CRITICAL_COLOR} strokeDasharray="5 4" />
       <text x={xFor(CRITICAL_AIM_IN_HORIZON_RADII) + 5} y={PLOT_TOP + 12} fill={CRITICAL_COLOR} fontSize="10">
-        critical aim ({formatNumber(CRITICAL_AIM_IN_HORIZON_RADII)})
+        critical aim ({CRITICAL_AIM_TEXT})
       </text>
 
       <g clipPath="url(#bend-plot)">
@@ -450,6 +460,22 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
   const hasSubmittedPrediction = submittedBend !== null && submittedCapture !== null && submittedJustOutside !== null
 
   const result = useMemo(() => runLightNearBlackHoleExperiment(presetId, aim), [presetId, aim])
+  const showResults = status === 'complete' && hasSubmittedPrediction
+  const holes = useMemo(() => BLACK_HOLE_PRESETS.map((p) => runLightNearBlackHoleExperiment(p.id, aim)), [aim])
+
+  // The numbers the three prediction checks need. They do not depend on the black hole or aim the learner chose, so
+  // they are computed once, from the same physics module (CLAUDE.md §9).
+  const checks = useMemo(
+    () => ({
+      five: lightPath(5),
+      ten: lightPath(10),
+      two: lightPath(2),
+      insideCritical: lightPath(2.5),
+      outsideCritical: lightPath(2.7),
+      justOutside: lightPath(2.6),
+    }),
+    []
+  )
 
   // The zoom of the path picture.
   const viewRadius = Math.max(ZOOM_MARGIN * Math.max(aim, CRITICAL_AIM_IN_HORIZON_RADII), MIN_VIEW_RADIUS)
@@ -515,6 +541,7 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
 
   const isPresetSelected = (d: number) => Math.abs(Math.log(d / aim)) < 1e-9
   const exactDegrees = result.path.bendRadians === null ? null : toDegrees(result.path.bendRadians)
+  const holeInSentence = result.preset.label.replace(/^A /, 'a ')
   const outcomeSoFar =
     status === 'idle' ? '—' : progress < 1 ? 'on its way' : result.path.outcome === 'captured' ? 'captured' : 'escaped'
 
@@ -812,7 +839,7 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
               {formatDistance(result.horizonRadiusKm)}
               <br />
               Aim: {formatRadii(aim)} horizon radii ({formatDistance(result.aimKm)}); the critical aim is{' '}
-              {formatNumber(CRITICAL_AIM_IN_HORIZON_RADII)} horizon radii ({formatDistance(result.criticalAimKm)}); light
+              {CRITICAL_AIM_TEXT} horizon radii ({formatDistance(result.criticalAimKm)}); light
               can circle at {PHOTON_SPHERE_IN_HORIZON_RADII} horizon radii ({formatDistance(result.photonSphereKm)})
               <br />
               The light: {outcomeSoFar}
@@ -893,6 +920,202 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
                 graph near the green line.
               </p>
             </div>
+
+            {showResults && (
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
+                {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+                <h3 style={{ marginTop: 0 }}>Results</h3>
+                <p>
+                  You aimed the light to pass <strong>{formatRadii(aim)} horizon radii</strong> (
+                  {formatDistance(result.aimKm)}) from the center of <strong>{holeInSentence}</strong> (
+                  {formatMass(result.preset.massSolarMasses)}). For this run:
+                </p>
+                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                    <tbody>
+                      {(result.path.outcome === 'escapes'
+                        ? [
+                            ['What happened to the light', 'It escaped.'],
+                            ['The bend (exact theory)', `${formatNumber(exactDegrees as number)}°`],
+                            [
+                              'The simple formula (Gravity Experiment 8) gives',
+                              `${formatNumber(toDegrees(result.weakFieldBendRadians))}°, so the exact bend is ${formatLarger(result.path.bendRadians as number, result.weakFieldBendRadians)}`,
+                            ],
+                            [
+                              'Closest the light came to the center',
+                              `${formatNumber(result.path.closestInHorizonRadii)} horizon radii, nearer than the aim of ${formatRadii(aim)}`,
+                            ],
+                          ]
+                        : [
+                            ['What happened to the light', 'It was captured: it reached the horizon.'],
+                            ['The bend', 'None to measure: the light did not get away.'],
+                            [
+                              'The simple formula (Gravity Experiment 8) would have given',
+                              `${formatNumber(toDegrees(result.weakFieldBendRadians))}°, and had no way to say the light is captured`,
+                            ],
+                          ]
+                      ).concat([
+                        [
+                          'The critical aim',
+                          `${CRITICAL_AIM_TEXT} horizon radii, which is ${formatDistance(result.criticalAimKm)} from the center of ${holeInSentence}`,
+                        ],
+                        [
+                          'Where light can circle',
+                          `${PHOTON_SPHERE_IN_HORIZON_RADII} horizon radii, which is ${formatDistance(result.photonSphereKm)} from the center`,
+                        ],
+                      ]).map(([label, value]) => (
+                        <tr key={label}>
+                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
+                          <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                            <strong>{value}</strong>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <p>
+                  <strong>Checking your first prediction:</strong> asked what happens to a beam aimed to pass 5 horizon
+                  radii from the center, you answered "{bendChoices.find((c) => c.value === submittedBend)!.label}". In
+                  the exact theory, a beam aimed at 5 horizon radii is bent by{' '}
+                  {formatNumber(toDegrees(checks.five.bendRadians as number))}° and then escapes. The simple formula
+                  gives {formatNumber(toDegrees(weakFieldBendRadians(5)))}°.{' '}
+                  {submittedBend === 'bent'
+                    ? 'So your prediction was right.'
+                    : submittedBend === 'straight'
+                      ? `So your prediction was off this time. A bend of ${formatNumber(toDegrees(checks.five.bendRadians as number))}° is a clear turn, not "barely changed".`
+                      : 'So your prediction was off this time. At 5 horizon radii the light comes no closer than about ' +
+                        formatNumber(checks.five.closestInHorizonRadii) +
+                        ' horizon radii, and it gets away.'}
+                </p>
+                <p>
+                  <strong>Checking your second prediction:</strong> asked how close to the center light must be aimed
+                  to be captured, you answered "{captureChoices.find((c) => c.value === submittedCapture)!.label}". The
+                  critical aim is {CRITICAL_AIM_TEXT} horizon radii. In this model a beam
+                  aimed at 2.5 is captured, and so is one aimed at 2, even though both are aimed well outside the
+                  horizon (1 horizon radius). A beam aimed at 2.7 escapes, bent by{' '}
+                  {formatNumber(toDegrees(checks.outsideCritical.bendRadians as number))}°, and one aimed at 10 escapes, bent by{' '}
+                  {formatNumber(toDegrees(checks.ten.bendRadians as number))}°.{' '}
+                  {submittedCapture === 'critical'
+                    ? 'So your prediction was right.'
+                    : submittedCapture === 'horizon'
+                      ? 'So your prediction was off this time. The black hole captures light aimed well outside its edge.'
+                      : 'So your prediction was off this time. The capture distance is much closer in than 10 horizon radii: a beam aimed at 10 gets away.'}
+                </p>
+                <p>
+                  <strong>Checking your third prediction:</strong> asked what happens to light aimed only a little
+                  farther out than the capture distance, you answered "
+                  {justOutsideChoices.find((c) => c.value === submittedJustOutside)!.label}". A beam aimed at 2.6, just
+                  outside the critical aim, escapes, but its direction is turned by{' '}
+                  {formatNumber(toDegrees(checks.justOutside.bendRadians as number))}°, which is more than a full circle
+                  (360°). It comes as near as {formatNumber(checks.justOutside.closestInHorizonRadii)} horizon radii, close
+                  to the {PHOTON_SPHERE_IN_HORIZON_RADII} horizon radii where light can circle.{' '}
+                  {submittedJustOutside === 'swings'
+                    ? 'So your prediction was right.'
+                    : submittedJustOutside === 'small-bend'
+                      ? 'So your prediction was off this time. Just outside the critical aim the bend is not small. It is huge, and it grows without limit as the aim gets closer to the critical aim.'
+                      : 'So your prediction was off this time. Just outside the critical aim the light does get away, after swinging right round.'}
+                </p>
+
+                <p style={{ marginBottom: '0.25rem' }}>
+                  <strong>The simple math.</strong> The critical aim is <strong>3√3 ÷ 2</strong> horizon radii, which in other
+                  units is 3√3 GM/c² (G is the strength of gravity, M the black hole's mass and c the speed of light).
+                  This is given, not derived. Worked out:
+                </p>
+                <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                  <li>√3 is about 1.732.</li>
+                  <li>3 × 1.732 = 5.196.</li>
+                  <li>5.196 ÷ 2 = {CRITICAL_AIM_TEXT} horizon radii.</li>
+                  <li>
+                    One horizon radius for {holeInSentence} is {formatDistance(result.horizonRadiusKm)}, so the critical aim is{' '}
+                    {CRITICAL_AIM_TEXT} × {formatDistance(result.horizonRadiusKm)} ={' '}
+                    {formatDistance(result.criticalAimKm)}.
+                  </li>
+                </ol>
+                <p style={{ marginBottom: '0.25rem' }}>
+                  The simple formula from Experiment 8, written in horizon radii, says the bend is <strong>2 ÷ b</strong>,
+                  in radians, where b is the aim distance. For your aim, b = {formatRadii(aim)}:
+                </p>
+                <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                  <li>
+                    2 ÷ {formatRadii(aim)} = {formatNumber(result.weakFieldBendRadians)} radians.
+                  </li>
+                  <li>
+                    A radian is about 57.3°, so that is {formatNumber(result.weakFieldBendRadians)} × 57.3 ={' '}
+                    {formatNumber(toDegrees(result.weakFieldBendRadians))}°.
+                  </li>
+                  <li>
+                    {result.path.outcome === 'escapes'
+                      ? `The exact theory gives ${formatNumber(exactDegrees as number)}° for this aim.`
+                      : 'The exact theory says that, at this aim, the light is captured.'}
+                  </li>
+                </ol>
+                <p>
+                  The simple formula is only the first step of the exact answer. Far from the black hole the two agree
+                  closely. Closer in, the exact bend grows much faster, without limit as the aim approaches the
+                  critical aim. Here are the critical aims for all three black holes, which are the same number of
+                  horizon radii for each:
+                </p>
+                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                    <thead>
+                      <tr>
+                        {['Black hole', 'Horizon radius', 'Critical aim'].map((h) => (
+                          <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {holes.map((r) => (
+                        <tr key={r.preset.id}>
+                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{r.preset.label}</td>
+                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>
+                            {formatDistance(r.horizonRadiusKm)}
+                          </td>
+                          <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                            <strong>{formatDistance(r.criticalAimKm)}</strong>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <p>
+                  <strong>A comparison from daily life.</strong> Picture a ball rolling across a hillside toward a deep
+                  funnel. A ball that passes the funnel far away is only slightly turned aside. A ball that passes
+                  close swings right round the funnel's rim before rolling off. And a ball that passes closer than a
+                  certain distance drops in, even though it was not rolled straight at the hole. This is an analogy for
+                  "the circle the black hole captures is wider than the hole itself", not for how gravity works.
+                </p>
+
+                <div
+                  style={{
+                    margin: '0.75rem 0',
+                    padding: '0.75rem 1rem',
+                    border: '2px solid #f59e0b',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                  }}
+                >
+                  <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                    <strong>What this model can and cannot tell you.</strong> This is a thought experiment about a
+                    thin beam of light. It does not say how the light got there. It follows the beam in a flat plane
+                    until it has gone past the black hole and is far away again, or has reached the horizon. Nothing
+                    inside the horizon is modeled, and this is not the picture a camera or telescope would make.
+                  </p>
+                  <p style={{ marginTop: 0, marginBottom: 0 }}>
+                    The exact equation is given, not derived, and is for a black hole that does not spin and has no
+                    electric charge. Real black holes usually spin, which changes where light is captured. The
+                    simple formula is for weak gravity and is shown only for comparison. The stellar black hole's
+                    mass of 10 Suns is an illustrative round value.
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
