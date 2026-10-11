@@ -51,6 +51,29 @@ const HOLE_CURVE_COLORS: Record<ObjectPreset['id'], string> = {
 
 const START_PRESETS = [100, 20, 10, 5, 2]
 
+// This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
+// here; they are compared with the model's results later. The question wording is a draft for the owner's review.
+type EndChoice = 'finite' | 'never' | 'depends'
+const endChoices: Array<{ value: EndChoice; label: string }> = [
+  { value: 'finite', label: 'Yes: it takes a finite time, and they get there' },
+  { value: 'never', label: 'No: it never finishes, and they never get there' },
+  { value: 'depends', label: 'It ends for some black holes and not for others' },
+]
+
+type FarClockChoice = 'same' | 'settles' | 'no-limit'
+const farClockChoices: Array<{ value: FarClockChoice; label: string }> = [
+  { value: 'same', label: 'About the same as the traveler\'s watch' },
+  { value: 'settles', label: 'Somewhat more, and then it settles' },
+  { value: 'no-limit', label: 'Later and later, without limit, as the traveler nears the horizon' },
+]
+
+type StretchChoice = 'small' | 'same' | 'giant'
+const stretchChoices: Array<{ value: StretchChoice; label: string }> = [
+  { value: 'small', label: 'Much stronger at the small black hole' },
+  { value: 'same', label: 'About the same' },
+  { value: 'giant', label: 'Much stronger at the giant black hole' },
+]
+
 // The graph of the gap above the horizon against time (the second picture).
 const TIME_GRAPH_WIDTH = 640
 const TIME_GRAPH_HEIGHT = 420
@@ -543,6 +566,16 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
 
+  const [endPrediction, setEndPrediction] = useState<EndChoice | null>(null)
+  const [farClockPrediction, setFarClockPrediction] = useState<FarClockChoice | null>(null)
+  const [stretchPrediction, setStretchPrediction] = useState<StretchChoice | null>(null)
+  const [submittedEnd, setSubmittedEnd] = useState<EndChoice | null>(null)
+  const [submittedFarClock, setSubmittedFarClock] = useState<FarClockChoice | null>(null)
+  const [submittedStretch, setSubmittedStretch] = useState<StretchChoice | null>(null)
+
+  const hasPrediction = endPrediction !== null && farClockPrediction !== null && stretchPrediction !== null
+  const hasSubmittedPrediction = submittedEnd !== null && submittedFarClock !== null && submittedStretch !== null
+
   const result = useMemo(() => runFallingInExperiment(presetId, start), [presetId, start])
 
   // The zoom of the fall picture: from the center up to a little beyond the release point.
@@ -563,8 +596,23 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
   }
 
   const handleRun = () => {
-    if (status === 'running') return
+    if (!hasPrediction || status === 'running') return
+    if (!hasSubmittedPrediction) {
+      setSubmittedEnd(endPrediction)
+      setSubmittedFarClock(farClockPrediction)
+      setSubmittedStretch(stretchPrediction)
+    }
     setStatus('running')
+    setProgress(0)
+  }
+
+  // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
+  // chosen black hole or release distance.
+  const handleChangePrediction = () => {
+    setSubmittedEnd(null)
+    setSubmittedFarClock(null)
+    setSubmittedStretch(null)
+    setStatus('idle')
     setProgress(0)
   }
 
@@ -600,6 +648,96 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
       <h2>Experiment 5 — Falling In: What Does the Traveler Experience?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            A traveler is dropped from rest near a black hole and falls straight toward it. On the traveler's own watch,
+            does the trip to the horizon come to an end?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {endChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setEndPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${endPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            A clock sits at rest far away and keeps time for the whole fall. As the traveler nears the horizon, what
+            does that far-away clock read?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {farClockChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setFarClockPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${farClockPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            At the moment a traveler reaches the horizon, how does the stretching (the difference in pull between their
+            head and their feet) compare between a small black hole (10 Suns) and a giant one (Sagittarius A*)?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {stretchChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setStretchPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${stretchPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {hasPrediction || hasSubmittedPrediction
+              ? `Your predictions: ${endChoices.find((c) => c.value === (endPrediction ?? submittedEnd))!.label}; ${
+                  farClockChoices.find((c) => c.value === (farClockPrediction ?? submittedFarClock))!.label
+                }; ${stretchChoices.find((c) => c.value === (stretchPrediction ?? submittedStretch))!.label}`
+              : 'Answer all three questions to continue'}
+          </p>
+        </div>
+
+        {hasSubmittedPrediction && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many black holes and release distances as you
+              like below. Or, change your predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePrediction}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Black hole:</p>
           {BLACK_HOLE_PRESETS.map((p) => (
@@ -607,7 +745,7 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
               key={p.id}
               type="button"
               onClick={() => handlePresetChange(p.id)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -625,7 +763,7 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
               key={d}
               type="button"
               onClick={() => handleStartChange(d)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${start === d ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -642,14 +780,20 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={status === 'running'}
+          disabled={!hasPrediction || status === 'running'}
           style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
 
+        {!hasPrediction && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Answer the predictions above to try the controls.
+          </p>
+        )}
+
         {/* Shown only once the current settings have been run: changing the black hole or the release distance returns to idle and hides it again. */}
-        {status !== 'idle' && (
+        {hasSubmittedPrediction && status !== 'idle' && (
           <>
             <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               {result.preset.label}: {formatMass(result.preset.massSolarMasses)}; horizon radius{' '}
