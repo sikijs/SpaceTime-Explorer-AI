@@ -11,6 +11,7 @@ import {
   runFallingInExperiment,
   stretchCurve,
   stretchInG,
+  stretchInMetersPerSecondSquared,
   travelerClock,
 } from './fallingInExperiment'
 
@@ -148,6 +149,18 @@ describe('the stretch', () => {
         expect(stretchInG(preset.massSolarMasses, r) / stretchInGFromScratch(preset.massSolarMasses, r * horizon)).toBeCloseTo(1, 2)
       }
     }
+  })
+
+  it('gives the stretch in meters per second squared that, divided by 9.80665, is the stretch in g', () => {
+    for (const preset of BLACK_HOLE_PRESETS) {
+      for (const r of [1, 3, 50]) {
+        expect(stretchInMetersPerSecondSquared(preset.massSolarMasses, r) / 9.80665).toBeCloseTo(stretchInG(preset.massSolarMasses, r), 12)
+      }
+    }
+    // 2GM h / r^3 for the 10-Sun black hole at its horizon, written out: about 2.06e8 m/s^2.
+    const horizonMeters = horizonRadiusKm(10) * 1000
+    expect(stretchInMetersPerSecondSquared(10, 1) / ((2 * G * 10 * SOLAR_MASS_KG * BODY_LENGTH_METERS) / horizonMeters ** 3)).toBeCloseTo(1, 2)
+    expect(() => stretchInMetersPerSecondSquared(-1, 1)).toThrow(RangeError)
   })
 
   it('is eight times larger at half the distance, and proportional to the mass at the same kilometer distance', () => {

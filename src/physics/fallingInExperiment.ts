@@ -81,14 +81,19 @@ export function farAwayClock(startInHorizonRadii: number, rInHorizonRadii: numbe
   return energy * Math.abs((step / 3) * sum)
 }
 
-// The stretch across the body, in g, at a distance r (horizon radii) from a black hole of the given mass: the
-// difference between the pull on the two ends, 2GM h / r^3 = c^2 h / (r_s^2 r^3).
-export function stretchInG(massSolarMasses: number, rInHorizonRadii: number): number {
+// The stretch across the body, in meters per second squared, at a distance r (horizon radii) from a black hole of the
+// given mass: the difference between the pull on the two ends, 2GM h / r^3 = c^2 h / (r_s^2 r^3).
+export function stretchInMetersPerSecondSquared(massSolarMasses: number, rInHorizonRadii: number): number {
   if (!(massSolarMasses > 0) || !Number.isFinite(massSolarMasses)) throw new RangeError('The mass must be greater than zero.')
   if (!(rInHorizonRadii > 0) || !Number.isFinite(rInHorizonRadii)) throw new RangeError('The distance must be greater than zero.')
   const speedOfLight = REAL_SPEED_OF_LIGHT_KM_PER_S * 1000 // m/s
   const horizonMeters = horizonRadiusKm(massSolarMasses) * 1000
-  return (speedOfLight ** 2 * BODY_LENGTH_METERS) / (horizonMeters ** 2 * rInHorizonRadii ** 3) / GRAVITY_AT_EARTH_SURFACE
+  return (speedOfLight ** 2 * BODY_LENGTH_METERS) / (horizonMeters ** 2 * rInHorizonRadii ** 3)
+}
+
+// The same, in g (Earth's gravity at the surface).
+export function stretchInG(massSolarMasses: number, rInHorizonRadii: number): number {
+  return stretchInMetersPerSecondSquared(massSolarMasses, rInHorizonRadii) / GRAVITY_AT_EARTH_SURFACE
 }
 
 export interface FallPoint {

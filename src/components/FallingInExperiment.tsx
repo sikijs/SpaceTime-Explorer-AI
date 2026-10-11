@@ -4,9 +4,12 @@ import {
   BLACK_HOLE_PRESETS,
   BODY_LENGTH_METERS,
   MAX_START_IN_HORIZON_RADII,
+  farAwayClock,
   runFallingInExperiment,
   stretchCurve,
   stretchInG,
+  stretchInMetersPerSecondSquared,
+  travelerClock,
 } from '../physics/fallingInExperiment'
 import type { FallingInResult } from '../physics/fallingInExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
@@ -136,18 +139,28 @@ function formatSeconds(seconds: number): string {
 
 const SUPERSCRIPT: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' }
 
-// A stretch in g: plain for moderate values, a power of ten for very large or very small ones.
-function formatG(g: number): string {
-  if (g === 0) return '0 g'
-  if (g >= 0.01 && g < 1000) return `${formatNumber(g)} g`
-  const exponent = Math.floor(Math.log10(g))
-  const mantissa = Number((g / 10 ** exponent).toPrecision(2))
+// A number in plain form when it is moderate, as a power of ten when it is very large or very small.
+function formatBig(value: number): string {
+  if (value === 0) return '0'
+  if (value >= 0.01 && value < 1000) return formatNumber(value)
+  const exponent = Math.floor(Math.log10(value))
+  const mantissa = Number((value / 10 ** exponent).toPrecision(2))
   const power = String(exponent)
     .split('')
     .map((ch) => SUPERSCRIPT[ch])
     .join('')
-  return `${mantissa} × 10${power} g`
+  return `${mantissa} × 10${power}`
 }
+
+// A stretch in g.
+const formatG = (g: number) => `${formatBig(g)} g`
+
+// A clock reading in horizon light-times, with the time in ordinary units in brackets.
+const formatClock = (horizonLightTimes: number, lightTimeSeconds: number) =>
+  `${formatNumber(horizonLightTimes)} light-times (${formatSeconds(horizonLightTimes * lightTimeSeconds)})`
+
+// Four significant figures, for the steps of a worked calculation.
+const formatFour = (value: number) => String(Number(value.toPrecision(4)))
 
 // Where the fall has got to when the traveler's own clock reads the given time, from the points the physics module gave.
 function stateAt(result: FallingInResult, travelerTime: number) {
@@ -580,6 +593,15 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
   const hasSubmittedPrediction = submittedEnd !== null && submittedFarClock !== null && submittedStretch !== null
 
   const result = useMemo(() => runFallingInExperiment(presetId, start), [presetId, start])
+  const showResults = status === 'complete' && hasSubmittedPrediction
+
+  // The numbers the Results and the prediction checks need, from the physics module (CLAUDE.md §9): the three black
+  // holes for the chosen release distance, and both clocks close to the horizon.
+  const holes = useMemo(() => BLACK_HOLE_PRESETS.map((p) => runFallingInExperiment(p.id, start)), [start])
+  const nearHorizon = useMemo(
+    () => [1.01, 1.001, 1.0001].map((r) => ({ r, traveler: travelerClock(start, r), far: farAwayClock(start, r) })),
+    [start],
+  )
 
   // The zoom of the fall picture: from the center up to a little beyond the release point.
   const viewRadius = ZOOM_MARGIN * start
@@ -1028,6 +1050,209 @@ export function FallingInExperiment({ onComplete }: FallingInExperimentProps) {
                 outside the horizon.
               </p>
             </div>
+
+            {showResults && (
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
+                {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+                <h3 style={{ marginTop: 0 }}>Results</h3>
+                <p>
+                  You released the traveler from rest at <strong>{start} horizon radii</strong> (
+                  {formatDistance(start * result.horizonRadiusKm)}) from the center of{' '}
+                  <strong>{result.preset.label.replace(/^A /, 'a ')}</strong> ({formatMass(result.preset.massSolarMasses)}).
+                  For this run:
+                </p>
+                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                    <tbody>
+                      {[
+                        [
+                          "The traveler's clock when they reach the horizon",
+                          formatClock(result.travelerClockAtHorizon, result.lightTimeSeconds),
+                        ],
+                        [
+                          'The far-away clock when the traveler is 0.0001 horizon radii from the horizon',
+                          `${formatClock(result.farAwayClockAtCutoff, result.lightTimeSeconds)}, and still rising: it has no limit`,
+                        ],
+                        [`The stretch at the release distance (${start} horizon radii)`, formatG(result.stretchAtStartInG)],
+                        ['The stretch at the horizon', formatG(result.stretchAtHorizonInG)],
+                        [
+                          'Where the stretch reaches 1 g',
+                          result.stretchOneGRadiusInHorizonRadii === null
+                            ? 'Only inside the horizon, which this experiment does not model'
+                            : `${formatNumber(result.stretchOneGRadiusInHorizonRadii)} horizon radii from the center (${formatDistance(
+                                result.stretchOneGRadiusInHorizonRadii * result.horizonRadiusKm,
+                              )}), far outside the horizon`,
+                        ],
+                      ].map(([label, value]) => (
+                        <tr key={label}>
+                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
+                          <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                            <strong>{value}</strong>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <p>
+                  <strong>Checking your first prediction:</strong> asked whether the trip to the horizon comes to an end
+                  on the traveler's own watch, you answered "{endChoices.find((c) => c.value === submittedEnd)!.label}". In
+                  the model it does: from {start} horizon radii the traveler's clock reaches the horizon after{' '}
+                  {formatNumber(result.travelerClockAtHorizon)} light-times. That is the same for every black hole. Only
+                  the ordinary time differs, because a light-time is longer for a bigger black hole:{' '}
+                  {holes
+                    .map((h) => `${formatSeconds(h.travelerSecondsAtHorizon)} for ${h.preset.label.replace(/^A /, 'a ')}`)
+                    .join(', ')}
+                  .{' '}
+                  {submittedEnd === 'finite'
+                    ? 'So your prediction was right.'
+                    : submittedEnd === 'never'
+                      ? "So your prediction was off this time. The traveler's own watch shows an ordinary, finite trip."
+                      : 'So your prediction was off this time. The trip ends for all three black holes: only its length in ordinary units differs.'}
+                </p>
+                <p>
+                  <strong>Checking your second prediction:</strong> asked what the far-away clock reads as the traveler
+                  nears the horizon, you answered "{farClockChoices.find((c) => c.value === submittedFarClock)!.label}".
+                  In the model, with the traveler released at {start} horizon radii, the far-away clock reads{' '}
+                  {nearHorizon.map((n) => `${formatNumber(n.far)}`).join(', ')} light-times when the traveler is{' '}
+                  {nearHorizon.map((n) => formatNumber(n.r - 1)).join(', ')} horizon radii from the horizon. Each time the
+                  gap shrinks to a tenth, it reads about 2.3 light-times more, and it never settles. The traveler's own
+                  watch, at the same three moments, reads {nearHorizon.map((n) => String(Number(n.traveler.toPrecision(5)))).join(', ')}:
+                  it has almost stopped changing.{' '}
+                  {submittedFarClock === 'no-limit'
+                    ? 'So your prediction was right.'
+                    : submittedFarClock === 'same'
+                      ? "So your prediction was off this time. The far-away clock reads more than the traveler's watch, and the difference keeps growing."
+                      : 'So your prediction was off this time. The far-away clock does not settle: it keeps rising, without limit.'}
+                </p>
+                <p>
+                  <strong>Checking your third prediction:</strong> asked how the stretching at the horizon compares
+                  between a small black hole (10 Suns) and a giant one (Sagittarius A*), you answered "
+                  {stretchChoices.find((c) => c.value === submittedStretch)!.label}". In the model, the stretch at the
+                  horizon is {formatG(holes[0].stretchAtHorizonInG)} for {holes[0].preset.label.replace(/^A /, 'a ')} and{' '}
+                  {formatG(holes[1].stretchAtHorizonInG)} for {holes[1].preset.label}, so it is about{' '}
+                  {formatBig(holes[0].stretchAtHorizonInG / holes[1].stretchAtHorizonInG)} times stronger at the small
+                  one.{' '}
+                  {submittedStretch === 'small'
+                    ? 'So your prediction was right.'
+                    : submittedStretch === 'same'
+                      ? 'So your prediction was off this time. The two are not close to the same.'
+                      : 'So your prediction was off this time. It is the small black hole that stretches the traveler far more.'}
+                </p>
+
+                <p style={{ marginBottom: '0.25rem' }}>
+                  <strong>The simple math: the traveler's clock.</strong> For a fall from rest at {start} horizon radii,
+                  the traveler's clock at the horizon is <strong>½ × {start}<sup>1.5</sup> × (η + sin η)</strong> light-times,
+                  where η is an angle, in radians, given by cos η = 2 ÷ {start} − 1. This is given, not derived. Worked
+                  out:
+                </p>
+                <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                  <li>
+                    {start}<sup>1.5</sup> = {formatFour(start ** 1.5)}.
+                  </li>
+                  <li>
+                    cos η = 2 ÷ {start} − 1 = {formatFour(2 / start - 1)}, so η = {formatFour(Math.acos(2 / start - 1))} radians.
+                  </li>
+                  <li>sin η = {formatFour(Math.sin(Math.acos(2 / start - 1)))}.</li>
+                  <li>
+                    ½ × {formatFour(start ** 1.5)} × ({formatFour(Math.acos(2 / start - 1))} +{' '}
+                    {formatFour(Math.sin(Math.acos(2 / start - 1)))}) = {formatNumber(result.travelerClockAtHorizon)}{' '}
+                    light-times.
+                  </li>
+                  <li>
+                    One light-time for {result.preset.label.replace(/^A /, 'a ')} is {formatSeconds(result.lightTimeSeconds)},
+                    so the trip takes {formatNumber(result.travelerClockAtHorizon)} × {formatSeconds(result.lightTimeSeconds)}{' '}
+                    = {formatSeconds(result.travelerSecondsAtHorizon)} on the traveler's own watch.
+                  </li>
+                </ol>
+                <p style={{ marginBottom: '0.25rem' }}>
+                  <strong>The simple math: the stretch.</strong> The difference in pull across a body of length h, at a
+                  distance r from the center of a mass M, is <strong>2GM × h ÷ r³</strong> (G is the strength of gravity).
+                  This is given, not derived. Worked out for the horizon of {result.preset.label.replace(/^A /, 'a ')}:
+                </p>
+                <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                  <li>
+                    The distance r is one horizon radius: {formatDistance(result.horizonRadiusKm)}, which is{' '}
+                    {formatNumber(result.horizonRadiusKm * 1000)} meters. The length h is {BODY_LENGTH_METERS} meters.
+                  </li>
+                  <li>
+                    Putting in G and the mass ({formatMass(result.preset.massSolarMasses)}) gives a stretch of{' '}
+                    {formatBig(stretchInMetersPerSecondSquared(result.preset.massSolarMasses, 1))} meters per second,
+                    every second (m/s²).
+                  </li>
+                  <li>
+                    Earth's gravity at its surface is 9.81 m/s², so that is{' '}
+                    {formatBig(stretchInMetersPerSecondSquared(result.preset.massSolarMasses, 1))} ÷ 9.81 ={' '}
+                    {formatG(result.stretchAtHorizonInG)}.
+                  </li>
+                  <li>
+                    Because r is cubed, the stretch grows very fast as the traveler falls: from {start} horizon radii to
+                    1, the distance is {start} times smaller, so the stretch is {start}³ = {formatNumber(start ** 3)} times
+                    larger ({formatG(result.stretchAtStartInG)} to {formatG(result.stretchAtHorizonInG)}).
+                  </li>
+                </ol>
+                <p>Here is how the three black holes compare for the release distance you chose, {start} horizon radii:</p>
+                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                    <thead>
+                      <tr>
+                        {['Black hole', 'Horizon radius', "The traveler's trip to the horizon", 'Stretch at the horizon'].map((h) => (
+                          <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {holes.map((h) => (
+                        <tr key={h.preset.id}>
+                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{h.preset.label}</td>
+                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{formatDistance(h.horizonRadiusKm)}</td>
+                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>
+                            {formatSeconds(h.travelerSecondsAtHorizon)}
+                          </td>
+                          <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                            <strong>{formatG(h.stretchAtHorizonInG)}</strong>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <p>
+                  <strong>A comparison from daily life.</strong> Picture a long rubber band with one end tied to a post and
+                  the other end pulled by a hand. It stretches, because its two ends are not being pulled equally. In a
+                  similar way, gravity does not pull the traveler's two ends equally (it pulls the nearer end harder), so
+                  the traveler is stretched. This is an analogy for "the two ends are pulled by different amounts", not for
+                  how gravity works.
+                </p>
+
+                <div
+                  style={{
+                    margin: '0.75rem 0',
+                    padding: '0.75rem 1rem',
+                    border: '2px solid #f59e0b',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                  }}
+                >
+                  <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                    <strong>What this model can and cannot tell you.</strong> This is a thought experiment about a small
+                    traveler, 2 meters long, released from rest and falling straight in. It stops at the horizon: nothing
+                    inside is modeled, and this is not the picture a camera or telescope would make. The far-away clock is
+                    the time on a clock at rest far away when the traveler passes each distance. It is a comparison of two
+                    clocks, not what a far-away observer would see.
+                  </p>
+                  <p style={{ marginTop: 0, marginBottom: 0 }}>
+                    The equations are given, not derived, and are for a black hole that does not spin and has no electric
+                    charge. Real black holes usually spin, which changes the details. The stellar black hole's mass of 10
+                    Suns is an illustrative round value.
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
