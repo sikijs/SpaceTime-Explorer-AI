@@ -45,6 +45,29 @@ const NO_GRAVITY_COLOR = '#e2e8f0'
 
 const AIM_PRESETS = [20, 10, 5, 3.5, 3, 2.7, 2.6, 2.5, 1.5]
 
+// This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
+// here; they are compared with the model's results later. The question wording is a draft for the owner's review.
+type BendChoice = 'straight' | 'bent' | 'captured'
+const bendChoices: Array<{ value: BendChoice; label: string }> = [
+  { value: 'straight', label: 'It goes straight on, barely changed' },
+  { value: 'bent', label: 'It is bent noticeably and then escapes' },
+  { value: 'captured', label: 'It is captured' },
+]
+
+type CaptureChoice = 'horizon' | 'critical' | 'ten'
+const captureChoices: Array<{ value: CaptureChoice; label: string }> = [
+  { value: 'horizon', label: 'Only if aimed at the horizon itself, 1 horizon radius' },
+  { value: 'critical', label: 'About 2.6 horizon radii' },
+  { value: 'ten', label: 'About 10 horizon radii' },
+]
+
+type JustOutsideChoice = 'small-bend' | 'swings' | 'captured-anyway'
+const justOutsideChoices: Array<{ value: JustOutsideChoice; label: string }> = [
+  { value: 'small-bend', label: 'It passes with only a small bend' },
+  { value: 'swings', label: 'It swings around the black hole, more than half a turn, and then escapes' },
+  { value: 'captured-anyway', label: 'It is captured anyway' },
+]
+
 // The graph of the total bend against the aim (the second picture).
 const GRAPH_WIDTH = 640
 const GRAPH_HEIGHT = 400
@@ -416,6 +439,16 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
 
+  const [bendPrediction, setBendPrediction] = useState<BendChoice | null>(null)
+  const [capturePrediction, setCapturePrediction] = useState<CaptureChoice | null>(null)
+  const [justOutsidePrediction, setJustOutsidePrediction] = useState<JustOutsideChoice | null>(null)
+  const [submittedBend, setSubmittedBend] = useState<BendChoice | null>(null)
+  const [submittedCapture, setSubmittedCapture] = useState<CaptureChoice | null>(null)
+  const [submittedJustOutside, setSubmittedJustOutside] = useState<JustOutsideChoice | null>(null)
+
+  const hasPrediction = bendPrediction !== null && capturePrediction !== null && justOutsidePrediction !== null
+  const hasSubmittedPrediction = submittedBend !== null && submittedCapture !== null && submittedJustOutside !== null
+
   const result = useMemo(() => runLightNearBlackHoleExperiment(presetId, aim), [presetId, aim])
 
   // The zoom of the path picture.
@@ -436,8 +469,23 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
   }
 
   const handleRun = () => {
-    if (status === 'running') return
+    if (!hasPrediction || status === 'running') return
+    if (!hasSubmittedPrediction) {
+      setSubmittedBend(bendPrediction)
+      setSubmittedCapture(capturePrediction)
+      setSubmittedJustOutside(justOutsidePrediction)
+    }
     setStatus('running')
+    setProgress(0)
+  }
+
+  // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
+  // chosen black hole or aim.
+  const handleChangePrediction = () => {
+    setSubmittedBend(null)
+    setSubmittedCapture(null)
+    setSubmittedJustOutside(null)
+    setStatus('idle')
     setProgress(0)
   }
 
@@ -476,13 +524,102 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            A beam of light is aimed to pass a black hole at 5 horizon radii from its center, well outside the edge.
+            What happens to its path?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {bendChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setBendPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${bendPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            How close to a black hole's center must light be aimed to be captured?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {captureChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setCapturePrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${capturePrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            Light is aimed only a tiny bit farther out than the capture distance. What happens?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {justOutsideChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setJustOutsidePrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${justOutsidePrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {hasPrediction || hasSubmittedPrediction
+              ? `Your predictions: ${
+                  bendChoices.find((c) => c.value === (bendPrediction ?? submittedBend))!.label
+                }; ${captureChoices.find((c) => c.value === (capturePrediction ?? submittedCapture))!.label}; ${
+                  justOutsideChoices.find((c) => c.value === (justOutsidePrediction ?? submittedJustOutside))!.label
+                }`
+              : 'Answer all three questions to continue'}
+          </p>
+        </div>
+
+        {hasSubmittedPrediction && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many black holes and aims as you like
+              below. Or, change your predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePrediction}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
+        <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Black hole:</p>
           {BLACK_HOLE_PRESETS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => handlePresetChange(p.id)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -500,7 +637,7 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
               key={d}
               type="button"
               onClick={() => handleAimChange(d)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${isPresetSelected(d) ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -518,7 +655,7 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
               max={Math.log10(MAX_AIM_IN_HORIZON_RADII)}
               step="any"
               value={Math.log10(aim)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               onChange={(event) =>
                 handleAimChange(
                   Math.min(Math.max(10 ** Number(event.target.value), MIN_AIM_IN_HORIZON_RADII), MAX_AIM_IN_HORIZON_RADII),
@@ -537,14 +674,20 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={status === 'running'}
+          disabled={!hasPrediction || status === 'running'}
           style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
 
+        {!hasPrediction && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Answer the predictions above to try the controls.
+          </p>
+        )}
+
         {/* Shown only once the current settings have been run: changing the black hole or the aim returns to idle and hides it again. */}
-        {status !== 'idle' && (
+        {hasSubmittedPrediction && status !== 'idle' && (
           <>
             <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               {result.preset.label}: {formatMass(result.preset.massSolarMasses)}; horizon radius{' '}
