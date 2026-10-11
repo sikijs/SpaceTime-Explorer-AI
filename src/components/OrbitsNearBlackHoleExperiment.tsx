@@ -487,6 +487,104 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
       <h2>Experiment 3 — Orbits Near a Black Hole: Is There a Point of No Safe Orbit?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). It must not give away the answers to
+            the three predictions below (§12): no mention of where the last safe orbit is, of a probe plunging for
+            certain, or of far orbits looking alike. */}
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In Gravity and Curved Spacetime, Experiment 6, you saw that a planet
+            stays in orbit because it moves sideways as it falls, so it keeps missing the thing it falls toward,
+            and that this works at any distance. A black hole pulls harder than anything else we know. So is it
+            still safe to circle a black hole, at any distance outside its edge? Or is there a place where an
+            orbit cannot last?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> In everyday life, orbits look dependable. The Moon has circled the
+            Earth for billions of years, and satellites circle it for years on end. Nothing seems to threaten
+            them, so it is natural to assume that if you can get into an orbit, you can stay there. But the
+            earlier experiments only used orbits in gravity that is gentle compared with a black hole's. This
+            experiment asks whether that dependable picture still holds where gravity is at its strongest.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> You pick one of three real black holes and a distance from its center.
+            Two small probes are launched from that distance. Each one is given the sideways speed that makes a
+            perfect circle <em>by its own rule of gravity</em>: the left probe by ordinary gravity (the rule from
+            Experiment 6), the right probe by the <strong>exact theory of gravity</strong> (general relativity,
+            the theory that gravity is curved spacetime). Then both get the same tiny push inward. You watch up to
+            ten turns around the black hole. Three pictures show what happens: the left probe's path, the right
+            probe's path, and a graph of each probe's distance from the black hole, turn by turn.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Some words we will use.</strong> A <strong>circular orbit</strong> is an orbit that stays at one
+            distance from the center the whole way round, like a stone swung steadily on a string, except that
+            here gravity is the string. A <strong>nudge</strong> is a tiny extra push, here inward. Real orbits
+            always get small disturbances, for example from a passing grain of dust, so we ask whether an orbit
+            survives one. To <strong>plunge</strong> is to spiral inward and cross the black hole's edge. The{' '}
+            <strong>horizon</strong> is that edge, the one-way boundary you met in Experiment 1 of this chapter.
+            The <strong>horizon radius</strong> is the distance from the black hole's center to its horizon, and
+            we measure distances in horizon radii: 10 horizon radii means ten times as far from the center as the
+            edge is. The probes' speeds are given as a fraction of the speed of light: 0.5 means half as fast as
+            light. For the biggest black holes the distances in kilometers are huge, so we also give them in{' '}
+            <strong>astronomical units</strong> (AU): 1 AU is the distance from the Earth to the Sun, about 150
+            million kilometers.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The black holes.</strong> They are the three from Experiments 1 and 2: a stellar black hole of
+            10 Suns' worth of mass (a round, illustrative value), Sagittarius A*, the black hole at the center of
+            our galaxy, and M87*, the black hole imaged in the galaxy M87. Their masses are about 4.3 million and
+            6.5 billion Suns.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What this builds on.</strong> Gravity and Curved Spacetime, Experiment 6 gave you orbits as
+            sideways motion. Experiment 1 of this chapter gave you the horizon radius, and Experiment 2 showed
+            that gravity close to a horizon is strong enough to change how clocks tick. Here we ask what that
+            strong gravity does to an orbit.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make three predictions. Then choose a black hole and a starting
+            distance, and run it. Try other distances and other black holes too, and compare.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> What each probe does after the nudge, turn by turn, and how that
+            changes when you start nearer or farther, and when you change the black hole.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>This is a thought experiment about a small probe.</strong> The probe is so light that its own
+              gravity does not matter. How it got into orbit is not described.
+            </li>
+            <li>
+              <strong>The exact theory's equation is given, not derived.</strong> It is the standard equation for
+              a small object near a black hole that does not spin and has no electric charge. Real black holes
+              usually spin, which changes the details.
+            </li>
+            <li>
+              <strong>The orbit lies in a flat plane,</strong> seen from above, and the probe loses no energy as
+              it goes. A real orbit near a black hole loses some energy as gravitational waves (see the
+              Gravitational Waves chapter), which is left out here.
+            </li>
+            <li>
+              <strong>Both probes get the same tiny nudge,</strong> small but not zero: if nothing else acted, it
+              would carry a probe in by about 0.6% of its distance over one full turn.
+            </li>
+            <li>
+              <strong>"Plunges" means the probe reaches the horizon.</strong> Nothing past that is modeled, and the
+              time shown is the probe's own, not what a far-away observer would see.
+            </li>
+            <li>
+              <strong>The ordinary-gravity probe is shown even where ordinary gravity is not a good description,</strong>{' '}
+              only so that the two rules can be compared.
+            </li>
+            <li>
+              <strong>The distance control stops at 1.6 horizon radii,</strong> because closer in than 1.5 no
+              circular orbit exists for anything slower than light.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             A probe is circling a black hole at 2 horizon radii from its center, at exactly the speed that gives a
