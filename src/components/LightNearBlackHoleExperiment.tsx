@@ -11,11 +11,13 @@ import {
   runLightNearBlackHoleExperiment,
   weakFieldBendRadians,
 } from '../physics/lightNearBlackHoleExperiment'
+import { LightNearBlackHoleTutor } from './LightNearBlackHoleTutor'
 import type { LightPath } from '../physics/lightNearBlackHoleExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
 
 interface LightNearBlackHoleExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
 // The path picture: a title strip, a square area seen from above, and a legend strip. The view is zoomed to the aim: it
@@ -443,11 +445,12 @@ function BendGraph({ aim, outcome, exactDegrees }: { aim: number; outcome: Light
   )
 }
 
-export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleExperimentProps) {
+export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: LightNearBlackHoleExperimentProps) {
   const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
   const [aim, setAim] = useState(5)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [bendPrediction, setBendPrediction] = useState<BendChoice | null>(null)
   const [capturePrediction, setCapturePrediction] = useState<CaptureChoice | null>(null)
@@ -503,6 +506,7 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((n) => n + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
@@ -1119,6 +1123,16 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
           </>
         )}
       </div>
+
+      {showResults && (
+        <LightNearBlackHoleTutor
+          key={runCount}
+          predictedBend={submittedBend}
+          predictedCapture={submittedCapture}
+          predictedJustOutside={submittedJustOutside}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }

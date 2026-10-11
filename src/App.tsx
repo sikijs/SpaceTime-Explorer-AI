@@ -395,9 +395,9 @@ const chapters: Chapter[] = [
     title: 'Light Near a Black Hole',
     group: 'Black Holes and Strong Gravity',
     Component: LightNearBlackHoleExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not yet shown to learners: the tutor
-    // that unlocks the summary is not built.
-    learned: 'Draft placeholder: the summary for this experiment has not been written yet.',
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
+    learned:
+      'Close to a black hole, light is bent far more than the simple formula from Gravity and Curved Spacetime says. There is a critical aim, about 2.6 horizon radii, the same for every black hole: light aimed closer than that is captured, even though it was aimed to miss the edge. Light aimed just outside it swings right round the black hole before it escapes, because light itself can circle at 1.5 horizon radii.',
     next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: what falling into a black hole is like.',
   },
 ]
