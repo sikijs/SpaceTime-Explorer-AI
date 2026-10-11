@@ -10,6 +10,7 @@ import {
   stretchInG,
   stretchInMetersPerSecondSquared,
   travelerClock,
+  travelerClockSteps,
 } from '../physics/fallingInExperiment'
 import { FallingInTutor } from './FallingInTutor'
 import type { FallingInResult } from '../physics/fallingInExperiment'
@@ -601,6 +602,8 @@ export function FallingInExperiment({ onComplete, onTutorComplete }: FallingInEx
   // The numbers the Results and the prediction checks need, from the physics module (CLAUDE.md §9): the three black
   // holes for the chosen release distance, and both clocks close to the horizon.
   const holes = useMemo(() => BLACK_HOLE_PRESETS.map((p) => runFallingInExperiment(p.id, start)), [start])
+  const clockSteps = useMemo(() => travelerClockSteps(start), [start])
+  const stretchGrowth = result.stretchAtHorizonInG / result.stretchAtStartInG
   const nearHorizon = useMemo(
     () => [1.01, 1.001, 1.0001].map((r) => ({ r, traveler: travelerClock(start, r), far: farAwayClock(start, r) })),
     [start],
@@ -1153,16 +1156,15 @@ export function FallingInExperiment({ onComplete, onTutorComplete }: FallingInEx
                 </p>
                 <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
                   <li>
-                    {start}<sup>1.5</sup> = {formatFour(start ** 1.5)}.
+                    {start}<sup>1.5</sup> = {formatFour(clockSteps.startPower)}.
                   </li>
                   <li>
-                    cos η = 2 ÷ {start} − 1 = {formatFour(2 / start - 1)}, so η = {formatFour(Math.acos(2 / start - 1))} radians.
+                    cos η = 2 ÷ {start} − 1 = {formatFour(clockSteps.cosEta)}, so η = {formatFour(clockSteps.etaRadians)} radians.
                   </li>
-                  <li>sin η = {formatFour(Math.sin(Math.acos(2 / start - 1)))}.</li>
+                  <li>sin η = {formatFour(clockSteps.sinEta)}.</li>
                   <li>
-                    ½ × {formatFour(start ** 1.5)} × ({formatFour(Math.acos(2 / start - 1))} +{' '}
-                    {formatFour(Math.sin(Math.acos(2 / start - 1)))}) = {formatNumber(result.travelerClockAtHorizon)}{' '}
-                    light-times.
+                    ½ × {formatFour(clockSteps.startPower)} × ({formatFour(clockSteps.etaRadians)} +{' '}
+                    {formatFour(clockSteps.sinEta)}) = {formatNumber(clockSteps.clockAtHorizon)} light-times.
                   </li>
                   <li>
                     One light-time for {result.preset.label.replace(/^A /, 'a ')} is {formatSeconds(result.lightTimeSeconds)},
@@ -1192,7 +1194,7 @@ export function FallingInExperiment({ onComplete, onTutorComplete }: FallingInEx
                   </li>
                   <li>
                     Because r is cubed, the stretch grows very fast as the traveler falls: from {start} horizon radii to
-                    1, the distance is {start} times smaller, so the stretch is {start}³ = {formatNumber(start ** 3)} times
+                    1, the distance is {start} times smaller, so the stretch is {start}³ = {formatNumber(stretchGrowth)} times
                     larger ({formatG(result.stretchAtStartInG)} to {formatG(result.stretchAtHorizonInG)}).
                   </li>
                 </ol>

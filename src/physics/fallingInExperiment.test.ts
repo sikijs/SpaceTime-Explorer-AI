@@ -13,6 +13,7 @@ import {
   stretchInG,
   stretchInMetersPerSecondSquared,
   travelerClock,
+  travelerClockSteps,
 } from './fallingInExperiment'
 
 // ---- independent descriptions of the exact theory, in horizon radii (r_s = 1, c = 1) ----
@@ -80,6 +81,19 @@ describe('the traveler\'s clock', () => {
     for (const [r, expected] of [[3, 45.8], [2, 47.7], [1.5, 48.4], [1.1, 48.88]]) {
       expect(Math.abs(travelerClock(10, r) - expected)).toBeLessThan(0.1)
     }
+  })
+
+  it('gives the steps of the closed form for the Results\' worked example, and they agree with the clock', () => {
+    const steps = travelerClockSteps(10)
+    expect(steps.startPower).toBeCloseTo(31.6228, 4)
+    expect(steps.cosEta).toBeCloseTo(-0.8, 12)
+    expect(steps.etaRadians).toBeCloseTo(2.4981, 4)
+    expect(steps.sinEta).toBeCloseTo(0.6, 12)
+    expect(steps.clockAtHorizon).toBeCloseTo(48.985, 3)
+    for (const r0 of [2, 5, 10, 20, 100]) {
+      expect(travelerClockSteps(r0).clockAtHorizon).toBeCloseTo(travelerClock(r0, 1), 9)
+    }
+    expect(() => travelerClockSteps(1)).toThrow(RangeError)
   })
 
   it('settles: from 1.01 to 1.0001 horizon radii it changes by only about 0.01', () => {
@@ -171,12 +185,11 @@ describe('the stretch', () => {
   })
 
   it('matches the specification\'s table at the horizon, to within 2%', () => {
-    expect(stretchInG(stellar.massSolarMasses, 1) / 2.1e7).toBeGreaterThan(0.98)
-    expect(stretchInG(stellar.massSolarMasses, 1) / 2.1e7).toBeLessThan(1.02)
-    expect(stretchInG(sgr.massSolarMasses, 1) / 1.1e-4).toBeGreaterThan(0.98)
-    expect(stretchInG(sgr.massSolarMasses, 1) / 1.1e-4).toBeLessThan(1.04)
-    expect(stretchInG(m87.massSolarMasses, 1) / 5.0e-11).toBeGreaterThan(0.98)
-    expect(stretchInG(m87.massSolarMasses, 1) / 5.0e-11).toBeLessThan(1.02)
+    for (const [preset, expected] of [[stellar, 2.1e7], [sgr, 1.14e-4], [m87, 5.0e-11]] as const) {
+      const ratio = stretchInG(preset.massSolarMasses, 1) / expected
+      expect(ratio).toBeGreaterThan(0.98)
+      expect(ratio).toBeLessThan(1.02)
+    }
   })
 
   it('is smaller for a bigger black hole at the same number of horizon radii, in proportion to 1 / mass^2', () => {
@@ -213,7 +226,7 @@ describe('the experiment as run', () => {
       expect(run.lightTimeSeconds / ((horizonRadiusKm(preset.massSolarMasses) * 1000) / SPEED_OF_LIGHT)).toBeCloseTo(1, 3)
       expect(run.travelerSecondsAtHorizon).toBeCloseTo(run.travelerClockAtHorizon * run.lightTimeSeconds, 9)
     }
-    expect(runFallingInExperiment('stellar-black-hole', 10).travelerSecondsAtHorizon / 4.8e-3).toBeCloseTo(1, 1)
+    expect(Math.abs(runFallingInExperiment('stellar-black-hole', 10).travelerSecondsAtHorizon / 4.8e-3 - 1)).toBeLessThan(0.01)
     expect(Math.abs(runFallingInExperiment('sgr-a-star', 10).travelerSecondsAtHorizon / 2075 - 1)).toBeLessThan(0.01)
     expect(Math.abs(runFallingInExperiment('m87-star', 10).travelerSecondsAtHorizon / 3.14e6 - 1)).toBeLessThan(0.01)
   })

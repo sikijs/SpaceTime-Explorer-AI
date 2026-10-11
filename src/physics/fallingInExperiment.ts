@@ -49,6 +49,26 @@ export function travelerClock(startInHorizonRadii: number, rInHorizonRadii: numb
   return 0.5 * startInHorizonRadii ** 1.5 * (eta + Math.sin(eta))
 }
 
+// The steps of the closed form for the traveler's clock at the horizon, for the Results' worked example, so that the
+// interface shows the module's numbers and does not repeat the calculation: tau = (r0^1.5 / 2)(eta + sin(eta)) with
+// cos(eta) = 2 / r0 - 1.
+export interface TravelerClockSteps {
+  startPower: number // r0^1.5
+  cosEta: number // 2 / r0 - 1
+  etaRadians: number
+  sinEta: number
+  clockAtHorizon: number // in horizon light-times
+}
+
+export function travelerClockSteps(startInHorizonRadii: number): TravelerClockSteps {
+  checkStart(startInHorizonRadii)
+  const cosEta = 2 / startInHorizonRadii - 1
+  const etaRadians = Math.acos(cosEta)
+  const sinEta = Math.sin(etaRadians)
+  const startPower = startInHorizonRadii ** 1.5
+  return { startPower, cosEta, etaRadians, sinEta, clockAtHorizon: 0.5 * startPower * (etaRadians + sinEta) }
+}
+
 // The far-away clock at the same moment, in horizon light-times. Requires r strictly outside the horizon: it has no
 // limit as r approaches 1. In the parameter eta the integrand is smooth except at the horizon:
 //   t = E * integral from 0 to eta(r) of  r0 cos(eta/2) sqrt(x) / (1 - 1/x) d(eta),   x = (r0/2)(1 + cos(eta)).
