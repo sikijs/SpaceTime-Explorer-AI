@@ -41,6 +41,7 @@ import { FateOfTheUniverseExperiment } from './components/FateOfTheUniverseExper
 import { BlackHoleSizeExperiment } from './components/BlackHoleSizeExperiment'
 import { TimeNearBlackHoleExperiment } from './components/TimeNearBlackHoleExperiment'
 import { OrbitsNearBlackHoleExperiment } from './components/OrbitsNearBlackHoleExperiment'
+import { LightNearBlackHoleExperiment } from './components/LightNearBlackHoleExperiment'
 
 interface Chapter {
   title: string
@@ -387,7 +388,17 @@ const chapters: Chapter[] = [
     // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
     learned:
       'In ordinary gravity, a circular orbit that gets a small nudge only wobbles, at any distance. In the exact theory, there is a last safe circular orbit at 6GM/c², which is 3 horizon radii, the same number for every black hole. At or inside it, a small nudge sends the probe spiraling into the black hole. Far away, the two rules give nearly the same orbit.',
-    next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: how a black hole bends light, and what falling in is like.',
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 4.
+    next: 'Next, light near a black hole: how much does it bend light, and can light be trapped?',
+  },
+  {
+    title: 'Light Near a Black Hole',
+    group: 'Black Holes and Strong Gravity',
+    Component: LightNearBlackHoleExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not yet shown to learners: the tutor
+    // that unlocks the summary is not built.
+    learned: 'Draft placeholder: the summary for this experiment has not been written yet.',
+    next: 'This is currently the last experiment in the project. The rest of this chapter is planned but not yet built: what falling into a black hole is like.',
   },
 ]
 
