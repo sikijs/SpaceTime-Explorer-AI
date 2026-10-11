@@ -7,6 +7,11 @@ import {
   MAX_TURNS,
   MIN_START_IN_HORIZON_RADII,
   STEPS_PER_TURN,
+  exactCircularSpeedFractionOfLight,
+  modelEdgeInHorizonRadii,
+  NUDGE,
+  orbitPath,
+  ordinaryCircularSpeedFractionOfLight,
   runOrbitsNearBlackHoleExperiment,
 } from '../physics/orbitsNearBlackHoleExperiment'
 import type { OrbitPath } from '../physics/orbitsNearBlackHoleExperiment'
@@ -100,6 +105,16 @@ function formatLength(km: number): string {
 // Kilometers, with astronomical units added once that is the more natural unit.
 function formatDistance(km: number): string {
   return km >= 7.5e6 ? `${formatLength(km)}, about ${formatNumber(km / KM_PER_AU)} AU` : formatLength(km)
+}
+
+// One probe's outcome in a sentence, for the Results table.
+function pathSummary(path: OrbitPath, startInHorizonRadii: number): string {
+  if (path.outcome === 'plunges') return `Plunged: reached the horizon after about ${path.turnsCompleted.toFixed(1)} turns`
+  const wobble = Math.max(
+    1 - path.closestInHorizonRadii / startInHorizonRadii,
+    path.farthestInHorizonRadii / startInHorizonRadii - 1
+  )
+  return `Kept circling for all ${MAX_TURNS} turns, never more than ${formatNumber(wobble * 100)}% away from its starting distance`
 }
 
 function formatMass(solarMasses: number): string {
@@ -413,6 +428,26 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
 
   const result = useMemo(() => runOrbitsNearBlackHoleExperiment(presetId, start), [presetId, start])
   const turnsReached = progress * MAX_TURNS
+  const showResults = status === 'complete' && hasSubmittedPrediction
+  const holeInSentence = result.preset.label.replace(/^A /, 'a ')
+
+  // The numbers the three prediction checks need. They do not depend on the black hole or start the learner chose, so
+  // they are computed once, from the same physics module (CLAUDE.md §9).
+  const checks = useMemo(
+    () => ({
+      twoExact: orbitPath('exact', 2),
+      twoOrdinary: orbitPath('ordinary', 2),
+      threeExact: orbitPath('exact', LAST_SAFE_ORBIT_IN_HORIZON_RADII),
+      aboveEdgeExact: orbitPath('exact', 3.5),
+      tenExact: orbitPath('exact', 10),
+      farExact: orbitPath('exact', 20),
+      farOrdinary: orbitPath('ordinary', 20),
+      farExactSpeed: exactCircularSpeedFractionOfLight(20),
+      farOrdinarySpeed: ordinaryCircularSpeedFractionOfLight(20),
+      edge: modelEdgeInHorizonRadii(),
+    }),
+    []
+  )
 
   // The zoom shared by both panels.
   const viewRadius = Math.max(ZOOM_MARGIN * start, MIN_VIEW_RADIUS)
@@ -933,6 +968,173 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
             in.
           </p>
         </div>
+
+        {showResults && (
+          <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
+            {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p>
+              You started both probes at <strong>{formatRadii(start)} horizon radii</strong> (
+              {formatDistance(result.startKm)}) from the center of <strong>{holeInSentence}</strong> (
+              {formatMass(result.preset.massSolarMasses)}), and gave each a tiny inward nudge. For this run:
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <tbody>
+                  {[
+                    [
+                      'The ordinary-gravity probe (gold)',
+                      pathSummary(result.ordinary, start),
+                    ],
+                    ['The exact-theory probe (blue)', pathSummary(result.exact, start)],
+                    [
+                      'Launch speed, ordinary gravity',
+                      `${result.ordinarySpeedFractionOfLight.toFixed(3)} of the speed of light`,
+                    ],
+                    [
+                      'Launch speed, exact theory',
+                      `${result.exactSpeedFractionOfLight.toFixed(3)} of the speed of light, which is ${formatNumber((result.exactSpeedFractionOfLight / result.ordinarySpeedFractionOfLight - 1) * 100)}% faster`,
+                    ],
+                    [
+                      'The last safe orbit of the exact theory',
+                      `${LAST_SAFE_ORBIT_IN_HORIZON_RADII} horizon radii, which is ${formatDistance(result.lastSafeOrbitKm)} from the center of ${holeInSentence}`,
+                    ],
+                    [
+                      'The edge found in this model, with this nudge',
+                      `${checks.edge.toFixed(2)} horizon radii, which is ${formatDistance(checks.edge * result.horizonRadiusKm)}`,
+                    ],
+                  ].map(([label, value]) => (
+                    <tr key={label}>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
+                      <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                        <strong>{value}</strong>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Why is the model's edge ({checks.edge.toFixed(2)}) a little above the exact theory's last safe orbit (
+              {LAST_SAFE_ORBIT_IN_HORIZON_RADII})? The exact theory's number is for a nudge that is vanishingly
+              small. Our nudge is small but not zero, and an orbit that starts very close to the edge needs only a
+              little push to be sent over it. So in this model the probes that start between{' '}
+              {LAST_SAFE_ORBIT_IN_HORIZON_RADII} and {checks.edge.toFixed(2)} also plunge.
+            </p>
+
+            <p>
+              <strong>Checking your first prediction:</strong> asked what happens to a probe circling at 2 horizon
+              radii when it gets a tiny nudge inward, you answered "
+              {nudgeChoices.find((c) => c.value === submittedNudge)!.label}". In this model the exact-theory probe
+              crosses the horizon after about {checks.twoExact.turnsCompleted.toFixed(1)} turns, while the
+              ordinary-gravity probe starting at the same place keeps circling, staying within{' '}
+              {formatNumber(Math.max(1 - checks.twoOrdinary.closestInHorizonRadii / 2, checks.twoOrdinary.farthestInHorizonRadii / 2 - 1) * 100)}%
+              of its starting distance.{' '}
+              {submittedNudge === 'spirals-in'
+                ? 'So your prediction was right, for the exact theory.'
+                : submittedNudge === 'wobbles'
+                  ? 'So your prediction was right for ordinary gravity, and off this time for the exact theory, whose probe does not survive the nudge at 2 horizon radii.'
+                  : 'So your prediction was off this time. Neither probe flew away. One kept circling and the other fell in.'}
+            </p>
+            <p>
+              <strong>Checking your second prediction:</strong> asked where the last safe place to circle is, you
+              answered "{lastSafeChoices.find((c) => c.value === submittedLastSafe)!.label}". In the exact theory it
+              is at {LAST_SAFE_ORBIT_IN_HORIZON_RADII} horizon radii. In this model, a probe starting at 3.5 keeps
+              circling for all {MAX_TURNS} turns, while one starting at {LAST_SAFE_ORBIT_IN_HORIZON_RADII} plunges
+              after about {checks.threeExact.turnsCompleted.toFixed(1)} turns.{' '}
+              {submittedLastSafe === 'three'
+                ? 'So your prediction was right.'
+                : submittedLastSafe === 'anywhere'
+                  ? 'So your prediction was off this time. That is true of ordinary gravity, where the probe never plunged, but in the exact theory an orbit close in cannot last.'
+                  : 'So your prediction was off this time. The edge is much closer in than 10 horizon radii: a probe starting at 10 keeps circling too.'}
+            </p>
+            <p>
+              <strong>Checking your third prediction:</strong> asked whether, 20 horizon radii out, the exact
+              theory's orbit would look different from ordinary gravity's, you answered "
+              {farChoices.find((c) => c.value === submittedFar)!.label}". At 20 horizon radii both probes keep
+              circling, and their launch speeds are {checks.farOrdinarySpeed.toFixed(3)} and{' '}
+              {checks.farExactSpeed.toFixed(3)} of the speed of light, which differ by only{' '}
+              {formatNumber((checks.farExactSpeed / checks.farOrdinarySpeed - 1) * 100)}%.{' '}
+              {submittedFar === 'nearly-same'
+                ? 'So your prediction was right. This is why ordinary gravity worked so well for planets, satellites and GPS in the earlier chapters: they are very far from their masses, measured in horizon radii.'
+                : 'So your prediction was off this time. Far from the black hole the two rules agree closely, which is why ordinary gravity worked so well for planets, satellites and GPS in the earlier chapters.'}
+            </p>
+
+            <p style={{ marginBottom: '0.25rem' }}>
+              <strong>The simple math.</strong> The last safe orbit is at 6GM/c² from the center, which is{' '}
+              {LAST_SAFE_ORBIT_IN_HORIZON_RADII} horizon radii. (G is the strength of gravity, M the black hole's
+              mass and c the speed of light. This is given, not derived.) For {holeInSentence}:
+            </p>
+            <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+              <li>
+                One horizon radius is about {formatNumber(result.horizonRadiusKm / result.preset.massSolarMasses)} km
+                for each Sun's worth of mass.
+              </li>
+              <li>
+                {LAST_SAFE_ORBIT_IN_HORIZON_RADII} × {formatNumber(result.horizonRadiusKm / result.preset.massSolarMasses)}{' '}
+                km = {formatNumber((LAST_SAFE_ORBIT_IN_HORIZON_RADII * result.horizonRadiusKm) / result.preset.massSolarMasses)} km
+                for each Sun's worth of mass.
+              </li>
+              <li>
+                {formatMass(result.preset.massSolarMasses)} × that = {formatDistance(result.lastSafeOrbitKm)}.
+              </li>
+            </ol>
+            <p style={{ marginBottom: '0.25rem' }}>
+              The launch speeds come from two given formulas, with x the starting distance in horizon radii:
+              ordinary gravity gives √(1 ÷ 2x), and the exact theory gives √(1 ÷ 2(x − 1)). For your start, x ={' '}
+              {formatRadii(start)}:
+            </p>
+            <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+              <li>
+                Ordinary gravity: 1 ÷ (2 × {formatRadii(start)}) = {(1 / (2 * start)).toFixed(4)}, and its square
+                root is {result.ordinarySpeedFractionOfLight.toFixed(3)}.
+              </li>
+              <li>
+                Exact theory: 1 ÷ (2 × {formatRadii(start - 1)}) = {(1 / (2 * (start - 1))).toFixed(4)}, and its
+                square root is {result.exactSpeedFractionOfLight.toFixed(3)}.
+              </li>
+            </ol>
+            <p>
+              The only difference is the "− 1". It makes no real difference far away, where x − 1 is nearly x, and
+              a large one close in. At x = 1.5 the exact speed would reach 1, the speed of light, which is why no
+              circular orbit exists closer in than that.
+            </p>
+
+            <p>
+              <strong>A comparison from daily life.</strong> Picture a marble at the bottom of a bowl. Give it a
+              small nudge and it rolls up the side, then comes back and keeps rolling around the bottom. Now picture
+              a marble balanced on top of an upside-down bowl. The slightest nudge and it rolls off for good. An
+              orbit outside the last safe orbit is like the first marble: a small nudge only makes it wobble. An
+              orbit at or inside the last safe orbit is like the second: a small nudge ends it. This is an analogy
+              for "survives a nudge or does not", not for how gravity works.
+            </p>
+
+            <div
+              style={{
+                margin: '0.75rem 0',
+                padding: '0.75rem 1rem',
+                border: '2px solid #f59e0b',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              }}
+            >
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this model can and cannot tell you.</strong> This is a thought experiment about a
+                small probe. It does not say how the probe got into orbit, or what could give it a nudge. It follows
+                the probe in a flat plane for up to {MAX_TURNS} turns, or until it reaches the horizon. Nothing
+                inside the horizon is modeled, and the experiment does not show what a traveler who falls in would
+                feel.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                The exact equation is given, not derived, and is for a black hole that does not spin and has no
+                electric charge. Real black holes usually spin, which moves the last safe orbit. A real orbit this
+                close would also lose energy as gravitational waves, which is left out. The nudge, {NUDGE} of the
+                distance for each radian swept, is a choice we made, and it sets where the model's edge falls. The
+                stellar black hole's mass of 10 Suns is an illustrative round value.
+              </p>
+            </div>
+          </div>
+        )}
           </>
         )}
       </div>
