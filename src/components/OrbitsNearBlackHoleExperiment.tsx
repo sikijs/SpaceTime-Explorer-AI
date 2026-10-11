@@ -505,14 +505,40 @@ export function OrbitsNearBlackHoleExperiment({ onComplete }: OrbitsNearBlackHol
             earlier experiments only used orbits in gravity that is gentle compared with a black hole's. This
             experiment asks whether that dependable picture still holds where gravity is at its strongest.
           </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What happens.</strong> Here is the whole experiment, step by step.
+          </p>
+          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+            <li>You choose a black hole and a starting distance from its center.</li>
+            <li>
+              Two small probes (think of tiny spacecraft) are placed at that distance, one in each picture.
+            </li>
+            <li>
+              <strong>Each probe is launched sideways at a "just right" speed.</strong> In Experiment 6 you saw
+              that sideways speed decides what an orbiting object does. Too slow, and it falls in. Too fast, and
+              it flies away. At one speed in between, it goes round in a perfect circle, always the same distance
+              from the center. Think of swinging a stone on a string: too slow and the stone drops, too fast and
+              the string pulls out of your hand, but at the right speed the stone swings in a steady circle. The
+              trouble is that the "just right" speed depends on which rule of gravity you use. The{' '}
+              <strong>left probe</strong> uses <strong>ordinary gravity</strong>, the rule from Experiment 6. The{' '}
+              <strong>right probe</strong> uses the <strong>exact theory of gravity</strong> (general relativity,
+              the theory that gravity is curved spacetime). So each probe gets the "just right" speed from its own
+              rule, and each one starts out as a perfect circle by that rule.
+            </li>
+            <li>
+              Both probes get the same tiny push inward. It is too small to see in the picture.
+            </li>
+            <li>
+              You press Run and watch for up to ten turns around the black hole. A probe that reaches the black
+              hole's edge stops there.
+            </li>
+            <li>
+              Three pictures show the result: each probe's path, and a graph of how far each is from the black
+              hole.
+            </li>
+          </ol>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> You pick one of three real black holes and a distance from its center.
-            Two small probes are launched from that distance. Each one is given the sideways speed that makes a
-            perfect circle <em>by its own rule of gravity</em>: the left probe by ordinary gravity (the rule from
-            Experiment 6), the right probe by the <strong>exact theory of gravity</strong> (general relativity,
-            the theory that gravity is curved spacetime). Then both get the same tiny push inward. You watch up to
-            ten turns around the black hole. Three pictures show what happens: the left probe's path, the right
-            probe's path, and a graph of each probe's distance from the black hole, turn by turn.
+            The question each picture answers is the same: after the tiny push, does the probe stay in its orbit?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Some words we will use.</strong> A <strong>circular orbit</strong> is an orbit that stays at one
