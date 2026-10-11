@@ -523,6 +523,124 @@ export function LightNearBlackHoleExperiment({ onComplete }: LightNearBlackHoleE
       <h2>Experiment 4 — Light Near a Black Hole: Can Light Be Trapped?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). It must not give away the answers to
+            the three predictions below (§12): no mention of where light is captured, of light swinging around the
+            black hole, or of how much larger the bend is than the simple formula says. */}
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In Gravity and Curved Spacetime, Experiment 8, you saw that gravity bends
+            the path of light that passes near a mass, and you met a simple formula for how much. Close to a black
+            hole, gravity is as strong as it ever gets (you saw that in Experiment 2 of this chapter). So how much
+            does a black hole bend light that passes by? And what happens to light that passes very close?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> In everyday life, light seems to travel in perfectly straight lines.
+            A torch beam, a laser pointer and sunlight all go straight, and nothing we can see bends them. The
+            bending in Experiment 8 was small, because the gravity there was gentle. But that experiment used a
+            simple formula made for gentle gravity. This experiment asks what happens to light where gravity is at
+            its strongest.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What happens.</strong> Here is the whole experiment, step by step.
+          </p>
+          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+            <li>You choose a black hole, and an aim distance (explained just below).</li>
+            <li>
+              <strong>The aim distance is how close to the black hole's center a beam of light would pass if gravity
+              did nothing.</strong> Think of rolling a ball in a straight line past a post: the aim distance is how
+              far from the post the ball's straight path goes. A small aim distance means the ball would pass close
+              to the post. A large one means it would pass far away.
+            </li>
+            <li>
+              A thin beam of light comes in from very far away, from the right, along that straight line. The first
+              picture draws the line as a dashed white line, so you can see where the light would go with no
+              gravity.
+            </li>
+            <li>
+              But gravity does act. The picture also draws the path the light really takes, worked out with the{' '}
+              <strong>exact theory of gravity</strong> (general relativity, the theory that gravity is curved
+              spacetime).
+            </li>
+            <li>
+              You press Run and watch for a few seconds. Either the light gets past the black hole and goes on its
+              way, or it reaches the black hole's edge and goes no further.
+            </li>
+            <li>
+              If the light gets away, its direction has been turned. The angle it has been turned through is called
+              the <strong>bend</strong>. A bend of 0° would mean no bend at all. A bend of 180° would mean the light
+              ends up heading back the way it came.
+            </li>
+            <li>
+              A second picture is a graph of the bend for every aim distance from 1 to 20 horizon radii, so you can
+              see how the bend changes as the aim gets closer. It also shows the simple formula from Experiment 8,
+              for comparison.
+            </li>
+          </ol>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            The question each picture answers is the same: what does the black hole do to the light?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Some words we will use.</strong> The <strong>aim distance</strong> is the distance described
+            above. The <strong>bend</strong> is the angle the light's direction is turned through, as above. Light
+            that reaches the black hole's edge and goes no further is <strong>captured</strong>. The{' '}
+            <strong>horizon</strong> is that edge, the one-way boundary you met in Experiment 1 of this chapter. The{' '}
+            <strong>horizon radius</strong> is the distance from the black hole's center to its horizon, and we
+            measure distances in horizon radii: 10 horizon radii means ten times as far from the center as the edge
+            is. For the biggest black holes the distances in kilometers are huge, so we also give them in{' '}
+            <strong>astronomical units</strong> (AU): 1 AU is the distance from the Earth to the Sun, about 150
+            million kilometers.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The black holes.</strong> They are the three from Experiments 1, 2 and 3: a stellar black hole of
+            10 Suns' worth of mass (a round, illustrative value), Sagittarius A*, the black hole at the center of
+            our galaxy, and M87*, the black hole imaged in the galaxy M87. Their masses are about 4.3 million and
+            6.5 billion Suns.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What this builds on.</strong> Gravity and Curved Spacetime, Experiment 8 gave you the bending of
+            light by a mass. Experiment 1 of this chapter gave you the horizon radius, Experiment 2 showed that
+            gravity close to a horizon is strong enough to change how clocks tick, and Experiment 3 asked what that
+            strong gravity does to the orbit of a small probe. Here we ask what it does to light.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make three predictions. Then choose a black hole and an aim distance,
+            and run it. Try other aim distances and other black holes too, and compare.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> How the light's real path differs from the dashed straight line, how
+            the bend changes as you aim closer, and what happens to the light when you aim very close.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>This is a thought experiment about a thin beam of light.</strong> The beam's own gravity does
+              not matter. How it got there is not described.
+            </li>
+            <li>
+              <strong>The exact theory's equation is given, not derived.</strong> It is the standard equation for
+              light passing a black hole that does not spin and has no electric charge. Real black holes usually
+              spin, which changes the details.
+            </li>
+            <li>
+              <strong>The light moves in a flat plane,</strong> seen from above, and nothing else (no gas, no dust,
+              no other star) is in the way.
+            </li>
+            <li>
+              <strong>"Captured" means the light reaches the horizon.</strong> Nothing past that is modeled.
+            </li>
+            <li>
+              <strong>The simple formula in the graph is only a comparison.</strong> It comes from Experiment 8 and
+              was made for weak gravity, far from a mass.
+            </li>
+            <li>
+              <strong>This is not a camera view.</strong> It follows one thin beam, not the picture a telescope would
+              make.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             A beam of light is aimed to pass a black hole at 5 horizon radii from its center, well outside the edge.
