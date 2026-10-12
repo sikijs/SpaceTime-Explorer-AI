@@ -787,7 +787,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 4 | Light near a black hole: can light be trapped? | `04-light-near-a-black-hole.md` | Complete (wording approved) |
 | 5 | Falling in: what does the traveler experience? | `05-falling-in.md` | Complete (wording approved) |
 | 6 | Seeing the fall from far away: does anyone see the traveler cross? | `06-seeing-the-fall.md` | Complete (wording approved); four differences from the spec await the owner (see its "Implementation Notes") |
-| 7 | The color of the fall: what color does the falling traveler's light have? | `07-color-of-the-fall.md` | Specification approved 2026-10-12; not yet built |
+| 7 | The color of the fall: what color does the falling traveler's light have? | `07-color-of-the-fall.md` | Specification approved 2026-10-12; physics model and basic interface built, the rest not yet |
 
 **Recurring open items** (details in `docs/STATUS.md`): at a 390-pixel window the app's content column is only about 175 to 230 pixels wide, so several pictures' labels are very small (an app-wide layout matter, left for the owner); and several general-knowledge statements in Cosmology and Black Holes learner-facing text were not checked against a primary source (each experiment's specification lists them).
 
@@ -802,7 +802,7 @@ Every experiment below has an approved specification, a tested physics model, an
 
 ## What Remains
 
-Black Holes Experiment 7 (the color of the fall) has an approved specification and is not yet built; its next step is the physics model and tests (§21 Steps 2 and 3). Otherwise nothing is in progress. The overall project vision, the four completed chapters (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology) and the first six experiments of the Black Holes and Strong Gravity group are built. For Cosmology, the specification of Experiment 10 names a recollapsing universe, dark energy that changes with time, the cosmic event horizon, and the far future of stars and black holes as natural candidates, but none is proposed. Any next experiment needs a proposal and an approved specification first (§23 Stages 1-4).
+Black Holes Experiment 7 (the color of the fall) has an approved specification, a tested physics model and a basic interface; its next steps are the introduction, predictions, Results and tutor (§21 Steps 5 to 8). Otherwise nothing is in progress. The overall project vision, the four completed chapters (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology) and the first six experiments of the Black Holes and Strong Gravity group are built. For Cosmology, the specification of Experiment 10 names a recollapsing universe, dark energy that changes with time, the cosmic event horizon, and the far future of stars and black holes as natural candidates, but none is proposed. Any next experiment needs a proposal and an approved specification first (§23 Stages 1-4).
 
 Do not proceed beyond that milestone without explicit authorization.
 

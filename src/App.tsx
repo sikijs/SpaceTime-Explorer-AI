@@ -44,6 +44,7 @@ import { OrbitsNearBlackHoleExperiment } from './components/OrbitsNearBlackHoleE
 import { LightNearBlackHoleExperiment } from './components/LightNearBlackHoleExperiment'
 import { FallingInExperiment } from './components/FallingInExperiment'
 import { SeeingTheFallExperiment } from './components/SeeingTheFallExperiment'
+import { ColorOfTheFallExperiment } from './components/ColorOfTheFallExperiment'
 
 interface Chapter {
   title: string
@@ -420,6 +421,16 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A far-away observer receives a falling traveler's flashes further and further apart, even though the traveler sent them at equal steps of their own watch. The stretching comes from two effects that multiply: gravity slowing the traveler's watch, and the traveler moving away. It has no limit near the horizon, so the flash sent at the horizon never arrives. The observer never sees the traveler cross, yet the traveler's own watch reaches the horizon in a finite time. These are two descriptions of the same event, and neither is the real time.",
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 7.
+    next: 'Next, the color of the fall: what color does the traveler\'s light have when it reaches the far-away observer?',
+  },
+  {
+    title: 'The Color of the Fall',
+    group: 'Black Holes and Strong Gravity',
+    Component: ColorOfTheFallExperiment,
+    // Placeholder, not shown to learners until the tutor exists (the summary appears only after the tutor's explanation).
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
+    learned: 'Draft placeholder: the summary of what this experiment showed will be written with its tutor.',
     next: 'This is currently the last experiment in the project. No further experiment is planned in this chapter.',
   },
 ]
