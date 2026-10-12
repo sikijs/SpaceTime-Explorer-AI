@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { BLACK_HOLE_PRESETS, runSpinningBlackHoleExperiment } from '../physics/spinningBlackHoleExperiment'
+import { BLACK_HOLE_PRESETS, energyReleasedSteps, runSpinningBlackHoleExperiment } from '../physics/spinningBlackHoleExperiment'
 import type { SpinningBlackHoleResult } from '../physics/spinningBlackHoleExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
 
@@ -456,6 +456,21 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
   const result = useMemo(() => runSpinningBlackHoleExperiment(presetId, spin), [presetId, spin])
   const now = pointAt(result, progress)
   const km = result.referenceRadiusKm
+  const showResults = status === 'complete' && hasSubmittedPrediction
+
+  // The numbers the Results need, all from the physics module (CLAUDE.md §9). The predictions are about a black hole that
+  // spins, so if the chosen spin is 0 (where nothing differs from Experiment 3) they are checked against spin 0.9.
+  const compareSpin = spin > 0 ? spin : 0.9
+  const compare = useMemo(() => runSpinningBlackHoleExperiment(presetId, compareSpin), [presetId, compareSpin])
+  const withSteps = useMemo(() => energyReleasedSteps(compareSpin, 'with'), [compareSpin])
+  const againstSteps = useMemo(() => energyReleasedSteps(compareSpin, 'against'), [compareSpin])
+  const noSpinSteps = useMemo(() => energyReleasedSteps(0, 'with'), [])
+  // The same for every black hole, so any one of them gives the rows of the comparison table.
+  const spinRows = useMemo(() => SPIN_PRESETS.map((sp) => runSpinningBlackHoleExperiment('stellar-black-hole', sp)), [])
+  const modelWith: EdgeChoice = compare.lastSafeWith < compare.noSpinLastSafe ? 'closer' : compare.lastSafeWith > compare.noSpinLastSafe ? 'farther' : 'same'
+  const modelAgainst: EdgeChoice = compare.lastSafeAgainst < compare.noSpinLastSafe ? 'closer' : compare.lastSafeAgainst > compare.noSpinLastSafe ? 'farther' : 'same'
+  const modelHorizon: HorizonChoice = compare.horizon < 1 ? 'smaller' : compare.horizon > 1 ? 'bigger' : 'same'
+  const modelEnergy: EnergyChoice = compare.energyReleasedWith > compare.energyReleasedAgainst ? 'with' : compare.energyReleasedWith < compare.energyReleasedAgainst ? 'against' : 'same'
 
   const handlePresetChange = (id: ObjectPreset['id']) => {
     setPresetId(id)
@@ -913,6 +928,226 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
                 not say where the energy goes or how a real black hole's surroundings behave.
               </p>
             </div>
+
+            {showResults && (() => {
+              const holeLabel = result.preset.label.replace(/^A /, 'a ')
+              const four = (v: number) => v.toFixed(4)
+              const sp = compare.spin
+              const verdict = (right: boolean, wrongText: string) => (right ? 'So your prediction was right.' : `So your prediction was off this time. ${wrongText}`)
+              return (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
+                  {/* Draft wording, for the owner's review (CLAUDE.md §28.1). */}
+                  <h3 style={{ marginTop: 0 }}>Results</h3>
+                  <p>
+                    You spun <strong>{holeLabel}</strong> ({formatMass(result.preset.massSolarMasses)}) up to a spin of{' '}
+                    <strong>{result.spin}</strong>. One reference radius is {formatDistance(km)}. For this run:
+                  </p>
+                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                      <thead>
+                        <tr>
+                          {['', 'In reference radii', 'In kilometers', 'Energy given up on the way down'].map((h) => (
+                            <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          ['The horizon', result.horizon, '—'],
+                          ['Last safe orbit, circling with the spin', result.lastSafeWith, formatPercent(result.energyReleasedWith)],
+                          ['Last safe orbit, circling against the spin', result.lastSafeAgainst, formatPercent(result.energyReleasedAgainst)],
+                          ['Last safe orbit with no spin (Experiment 3)', result.noSpinLastSafe, formatPercent(result.noSpinEnergyReleased)],
+                        ].map(([label, radii, energy]) => (
+                          <tr key={label as string}>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>
+                              <strong>{formatRadii(radii as number)}</strong>
+                            </td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>
+                              <strong>{formatDistance((radii as number) * km)}</strong>
+                            </td>
+                            <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                              <strong>{energy}</strong>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {spin === 0 && (
+                    <p>
+                      You ran a spin of 0, where nothing differs from Experiment 3, so the four checks below use a spin of 0.9
+                      instead. Choose a spin above 0 and run again to see your own numbers.
+                    </p>
+                  )}
+                  <p>
+                    <strong>Checking your first prediction:</strong> asked where the last safe orbit is for a probe circling
+                    with the spin, compared with no spin, you answered "{edgeChoices.find((c) => c.value === submittedWith)!.label}
+                    ". In the model, at a spin of {sp}, it is at {formatRadii(compare.lastSafeWith)} reference radii, where with
+                    no spin it is at {formatRadii(compare.noSpinLastSafe)}.{' '}
+                    {verdict(
+                      submittedWith === modelWith,
+                      submittedWith === 'same' ? 'The last safe orbit does move.' : 'With the spin, the last safe orbit is closer to the black hole, not farther out.',
+                    )}
+                  </p>
+                  <p>
+                    <strong>Checking your second prediction:</strong> asked the same for a probe circling against the spin, you
+                    answered "{edgeChoices.find((c) => c.value === submittedAgainst)!.label}". In the model, at a spin of {sp},
+                    it is at {formatRadii(compare.lastSafeAgainst)} reference radii.{' '}
+                    {verdict(
+                      submittedAgainst === modelAgainst,
+                      submittedAgainst === 'same' ? 'The last safe orbit does move.' : 'Against the spin, the last safe orbit is farther from the black hole, not closer in.',
+                    )}
+                  </p>
+                  <p>
+                    <strong>Checking your third prediction:</strong> asked what happens to the horizon as the black hole spins
+                    faster, you answered "{horizonChoices.find((c) => c.value === submittedHorizon)!.label}". In the model, at a
+                    spin of {sp}, the horizon is at {formatRadii(compare.horizon)} reference radii, where with no spin it is at 1.{' '}
+                    {verdict(
+                      submittedHorizon === modelHorizon,
+                      submittedHorizon === 'same' ? 'The horizon does change: it gets smaller.' : 'The horizon gets smaller, not bigger.',
+                    )}
+                  </p>
+                  <p>
+                    <strong>Checking your fourth prediction:</strong> asked which probe gives up more energy on the way down,
+                    you answered "{energyChoices.find((c) => c.value === submittedEnergy)!.label}". In the model, at a spin of{' '}
+                    {sp}, the probe circling with the spin gives up {formatPercent(compare.energyReleasedWith)} of its
+                    rest-mass energy, the one circling against it gives up {formatPercent(compare.energyReleasedAgainst)}, and
+                    with no spin it is {formatPercent(compare.noSpinEnergyReleased)}.{' '}
+                    {verdict(
+                      submittedEnergy === modelEnergy,
+                      submittedEnergy === 'same' ? 'They differ: the probe circling with the spin gives up more.' : 'The probe circling with the spin gives up more, not less.',
+                    )}
+                  </p>
+
+                  <p style={{ marginBottom: '0.25rem' }}>
+                    <strong>The simple math: how far apart the two edges are.</strong> The map's distances are in reference
+                    radii, so to get kilometers, multiply by the length of one reference radius ({formatLength(km)} for{' '}
+                    {holeLabel}). At a spin of {sp}:
+                  </p>
+                  <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                    <li>
+                      With the spin: about {formatRadii(compare.lastSafeWith)} × {formatLength(km)} ={' '}
+                      <strong>{formatDistance(compare.lastSafeWith * km)}</strong> from the center.
+                    </li>
+                    <li>
+                      Against the spin: about {formatRadii(compare.lastSafeAgainst)} × {formatLength(km)} ={' '}
+                      <strong>{formatDistance(compare.lastSafeAgainst * km)}</strong> from the center.
+                    </li>
+                    <li>
+                      How many times farther out the second is: {four(compare.lastSafeAgainst)} ÷{' '}
+                      {four(compare.lastSafeWith)} = <strong>{formatNumber(compare.lastSafeAgainst / compare.lastSafeWith)}</strong>.
+                    </li>
+                  </ol>
+
+                  <p style={{ marginBottom: '0.25rem' }}>
+                    <strong>The simple math: the energy given up.</strong> The formulas work in a unit M, which is half a
+                    reference radius (the horizon of a black hole that does not spin is at 2M). A probe in a circular orbit at
+                    distance r (in units of M) has an energy E, as a share of its rest-mass energy, of{' '}
+                    <strong>(1 − 2/r + a/r^(3/2)) ÷ √(1 − 3/r + 2a/r^(3/2))</strong>, where a is the spin. This is given, not
+                    derived. For a probe circling against the spin, the sign of the a terms is minus. The probe gives up{' '}
+                    <strong>1 − E</strong> on its way down from far away, where E is 1 (it has given up nothing). Worked out
+                    at the last safe orbit, with the spin, at a spin of {sp}:
+                  </p>
+                  <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                    <li>
+                      The last safe orbit: {formatRadii(compare.lastSafeWith)} reference radii = r = {four(withSteps.lastSafeInM)} M.
+                    </li>
+                    <li>
+                      The spin term: a/r^(3/2) = {four(withSteps.spinTerm)}.
+                    </li>
+                    <li>
+                      The top: 1 − 2/{four(withSteps.lastSafeInM)} + {four(withSteps.spinTerm)} ={' '}
+                      {four(withSteps.numerator)}.
+                    </li>
+                    <li>
+                      The bottom: √(1 − 3/{four(withSteps.lastSafeInM)} + 2 × {four(withSteps.spinTerm)}) ={' '}
+                      {four(withSteps.denominator)}.
+                    </li>
+                    <li>
+                      E = {four(withSteps.numerator)} ÷ {four(withSteps.denominator)} = <strong>{four(withSteps.energy)}</strong>.
+                    </li>
+                    <li>
+                      The share given up: 1 − {four(withSteps.energy)} = <strong>{four(withSteps.released)}</strong>, which is{' '}
+                      <strong>{formatPercent(withSteps.released)}</strong>.
+                    </li>
+                  </ol>
+                  <p>
+                    For comparison, with no spin the last safe orbit is at 6M, E = {four(noSpinSteps.numerator)} ÷{' '}
+                    {four(noSpinSteps.denominator)} = {four(noSpinSteps.energy)}, and the share given up is{' '}
+                    {formatPercent(noSpinSteps.released)}. So with the spin, the probe gives up{' '}
+                    {four(withSteps.released)} ÷ {four(noSpinSteps.released)} ={' '}
+                    <strong>{formatNumber(withSteps.released / noSpinSteps.released)} times</strong> as much. Against the spin, the
+                    last safe orbit is at {four(againstSteps.lastSafeInM)} M, E = {four(againstSteps.energy)}, and the share
+                    given up is {formatPercent(againstSteps.released)}.
+                  </p>
+
+                  <p>The spins compare like this. The numbers are the same for all three black holes:</p>
+                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                      <thead>
+                        <tr>
+                          {['Spin', 'Horizon', 'Last safe orbit, with the spin', 'Last safe orbit, against the spin', 'Energy given up, with / against'].map((h) => (
+                            <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {spinRows.map((row) => (
+                          <tr key={row.spin} style={row.spin === result.spin ? { fontWeight: 'bold' } : undefined}>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{row.spin}</td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatRadii(row.horizon)}</td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatRadii(row.lastSafeWith)}</td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatRadii(row.lastSafeAgainst)}</td>
+                            <td style={{ padding: '0.3rem 0' }}>
+                              {formatPercent(row.energyReleasedWith)} / {formatPercent(row.energyReleasedAgainst)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p>
+                    <strong>A comparison from daily life.</strong> A ball rolling down a hill gives up more of its stored
+                    energy the farther down it goes before it stops. A last safe orbit that is closer in is like a stopping
+                    point farther down the hill, so a probe that gets there has given up more energy. This is only a
+                    comparison for how the size of the energy depends on how far in the probe gets: the actual numbers come
+                    from the formulas above. It does not explain why the last safe orbit moves.
+                  </p>
+
+                  <div
+                    style={{
+                      margin: '0.75rem 0',
+                      padding: '0.75rem 1rem',
+                      border: '2px solid #f59e0b',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                    }}
+                  >
+                    <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                      <strong>What this model can and cannot tell you.</strong> This is a thought experiment about a small
+                      probe circling in the flat sheet through the black hole's equator. It places the horizon and the two
+                      last safe orbits using given formulas. It does not follow a probe's path, it does not show how a probe
+                      could be put into such an orbit, and it does not cover orbits tilted away from the equator. The energy
+                      figure is for a probe that slowly spirals down through safe circular orbits from far away. It does not
+                      say where that energy goes, or how a real black hole's surroundings behave.
+                    </p>
+                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                      The equations are given, not derived, and are for a spinning black hole with no electric charge. The
+                      spin is kept below 1, because the equations describe spins up to, but not including, 1. The stellar
+                      black hole's mass of 10 Suns is an illustrative round value. The experiment stops at the horizon:
+                      nothing inside is modeled.
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
           </>
         )}
       </div>

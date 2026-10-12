@@ -43,13 +43,6 @@ function lastSafeOrbitInM(spin: number, direction: Direction): number {
   return direction === 'with' ? 3 + z2 - root : 3 + z2 + root
 }
 
-// In units of M, the energy per unit rest-mass energy of a circular orbit at r.
-function circularOrbitEnergy(spin: number, rInM: number, direction: Direction): number {
-  const sign = direction === 'with' ? 1 : -1
-  const spinTerm = (sign * spin) / rInM ** 1.5
-  return (1 - 2 / rInM + spinTerm) / Math.sqrt(1 - 3 / rInM + 2 * spinTerm)
-}
-
 // All radii returned below are in reference radii (r_s = 2M of the same black hole with no spin).
 export function horizonRadius(spin: number): number {
   checkSpin(spin)
@@ -61,10 +54,30 @@ export function lastSafeOrbitRadius(spin: number, direction: Direction): number 
   return lastSafeOrbitInM(spin, direction) / 2
 }
 
+// The energy released, worked step by step for the Results (so the interface does no physics, CLAUDE.md §9). Here r is the
+// last safe orbit in units of M, which is half a reference radius.
+export interface EnergyReleasedSteps {
+  lastSafeInM: number // r, in units of M
+  spinTerm: number // +a/r^(3/2) with the spin, -a/r^(3/2) against it
+  numerator: number // 1 - 2/r + spinTerm
+  denominator: number // sqrt(1 - 3/r + 2 spinTerm)
+  energy: number // E = numerator / denominator
+  released: number // 1 - E
+}
+
+export function energyReleasedSteps(spin: number, direction: Direction): EnergyReleasedSteps {
+  checkSpin(spin)
+  const r = lastSafeOrbitInM(spin, direction)
+  const spinTerm = ((direction === 'with' ? 1 : -1) * spin) / r ** 1.5
+  const numerator = 1 - 2 / r + spinTerm
+  const denominator = Math.sqrt(1 - 3 / r + 2 * spinTerm)
+  const energy = numerator / denominator
+  return { lastSafeInM: r, spinTerm, numerator, denominator, energy, released: 1 - energy }
+}
+
 // 1 - E at the last safe orbit: the fraction of its rest-mass energy that a probe gives up on a gradual descent from far away.
 export function energyReleasedFraction(spin: number, direction: Direction): number {
-  checkSpin(spin)
-  return 1 - circularOrbitEnergy(spin, lastSafeOrbitInM(spin, direction), direction)
+  return energyReleasedSteps(spin, direction).released
 }
 
 export interface CurvePoint {

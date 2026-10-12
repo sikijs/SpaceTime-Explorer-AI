@@ -5,6 +5,7 @@ import {
   MAX_SPIN,
   MIN_SPIN,
   energyReleasedFraction,
+  energyReleasedSteps,
   horizonRadius,
   lastSafeOrbitRadius,
   runSpinningBlackHoleExperiment,
@@ -152,6 +153,53 @@ describe('the energy released on the way down', () => {
   it('is larger the closer in the last safe orbit is (with the spin)', () => {
     expect(energyReleasedFraction(0.9, 'with')).toBeGreaterThan(energyReleasedFraction(0, 'with'))
     expect(energyReleasedFraction(0.9, 'against')).toBeLessThan(energyReleasedFraction(0, 'against'))
+  })
+})
+
+describe('the energy released, worked step by step', () => {
+  it('has a last safe orbit in units of M that is twice the one in reference radii', () => {
+    for (const a of [0, 0.5, 0.9]) {
+      for (const d of ['with', 'against'] as const) {
+        expect(energyReleasedSteps(a, d).lastSafeInM).toBeCloseTo(2 * lastSafeOrbitRadius(a, d), 12)
+      }
+    }
+  })
+
+  it('gives E as the numerator over the denominator, and the share released as 1 - E, matching the fraction', () => {
+    for (const a of [0, 0.3, 0.9, 0.99]) {
+      for (const d of ['with', 'against'] as const) {
+        const steps = energyReleasedSteps(a, d)
+        expect(steps.energy).toBeCloseTo(steps.numerator / steps.denominator, 12)
+        expect(steps.released).toBeCloseTo(1 - steps.energy, 12)
+        expect(steps.released).toBe(energyReleasedFraction(a, d))
+      }
+    }
+  })
+
+  it('matches the separately written circular-orbit energy at the last safe orbit', () => {
+    for (const a of [0, 0.5, 0.9, 0.99]) {
+      expect(energyReleasedSteps(a, 'with').energy).toBeCloseTo(energyAt(a, 2 * lastSafeOrbitRadius(a, 'with'), 1), 12)
+      expect(energyReleasedSteps(a, 'against').energy).toBeCloseTo(energyAt(a, 2 * lastSafeOrbitRadius(a, 'against'), -1), 12)
+    }
+  })
+
+  it('gives E = sqrt(8/9) = 0.9428 at r = 6M with no spin, and 0.8442 at spin 0.9 with the spin', () => {
+    const none = energyReleasedSteps(0, 'with')
+    expect(none.lastSafeInM).toBeCloseTo(6, 9)
+    expect(none.numerator).toBeCloseTo(2 / 3, 9)
+    expect(none.denominator).toBeCloseTo(Math.sqrt(0.5), 9)
+    expect(none.energy).toBeCloseTo(Math.sqrt(8 / 9), 9)
+    expect(energyReleasedSteps(0.9, 'with').energy).toBeCloseTo(0.8442, 4)
+  })
+
+  it('has a spin term that is positive with the spin, negative against it, and zero with no spin', () => {
+    expect(energyReleasedSteps(0.9, 'with').spinTerm).toBeGreaterThan(0)
+    expect(energyReleasedSteps(0.9, 'against').spinTerm).toBeLessThan(0)
+    expect(energyReleasedSteps(0, 'with').spinTerm).toBe(0)
+  })
+
+  it('throws a RangeError for a spin outside 0 up to, not including, 1', () => {
+    for (const bad of [-0.1, 1, NaN]) expect(() => energyReleasedSteps(bad, 'with')).toThrow(RangeError)
   })
 })
 
