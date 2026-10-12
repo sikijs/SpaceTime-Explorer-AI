@@ -14,9 +14,11 @@ import {
   whiteDwarfRadiusSteps,
 } from '../physics/blackHoleFormationExperiment'
 import type { CoreOutcome, CoreResult } from '../physics/blackHoleFormationExperiment'
+import { BlackHoleFormationTutor } from './BlackHoleFormationTutor'
 
 interface BlackHoleFormationExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
 // Fixed real-world playback duration for the whole run, independent of the physics result (CLAUDE.md §11). The "squeeze"
@@ -413,10 +415,11 @@ function WhiteDwarfGraph({ result }: { result: CoreResult }) {
   )
 }
 
-export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationExperimentProps) {
+export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: BlackHoleFormationExperimentProps) {
   const [mass, setMass] = useState(1.4)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [sizePrediction, setSizePrediction] = useState<SizeChoice | null>(null)
   const [holdPrediction, setHoldPrediction] = useState<HoldChoice | null>(null)
@@ -459,6 +462,7 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((n) => n + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the chosen
@@ -1048,6 +1052,17 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
           </>
         )}
       </div>
+
+      {showResults && (
+        <BlackHoleFormationTutor
+          key={runCount}
+          predictedSize={submittedSize}
+          predictedHold={submittedHold}
+          predictedLimit={submittedLimit}
+          matches={{ size: submittedSize === sizeModel, hold: submittedHold === holdModel, limit: submittedLimit === limitModel }}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }

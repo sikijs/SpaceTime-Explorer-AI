@@ -458,9 +458,9 @@ const chapters: Chapter[] = [
     title: 'How a Black Hole Forms',
     group: 'Black Holes and Strong Gravity',
     Component: BlackHoleFormationExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not shown to learners until the tutor exists.
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
-      "A dead star's core is held up only by pushes that run out at certain masses: electrons up to 1.44 Suns (a white dwarf, which gets smaller as it gets heavier) and neutrons up to about 2 to 3 Suns (a neutron star, about 12 km across). Above that, nothing known holds the core up, so it collapses inside its horizon: a black hole.",
+      "A dead star's core is held up only by pushes that run out at certain masses. Electrons hold up a white dwarf, which gets smaller as it gets heavier, up to 1.44 Suns (the Chandrasekhar limit). Neutrons hold up a neutron star, about 12 km across, up to somewhere between about 2 and 3 Suns, which is not known exactly. Above that, nothing known holds the core up, so it collapses until it is inside its horizon: a black hole. The heavier the core, the closer it gets to its own horizon before that happens.",
     next: 'This is currently the last experiment in the project. No further experiment is approved in this chapter.',
   },
 ]
