@@ -146,15 +146,15 @@ function Ladder({ result }: { result: CoreResult }) {
   }
   const ticks = [0.3, 0.5, 1, 2, 3, 5, 10]
   const edges: Array<{ mass: number; text: string; anchor: 'end' | 'middle' | 'start' }> = [
-    { mass: CHANDRASEKHAR_LIMIT_SOLAR_MASSES, text: 'limit: 1.44', anchor: 'end' },
-    { mass: SURE_NEUTRON_STAR_TOP_SOLAR_MASSES, text: 'about 2', anchor: 'middle' },
-    { mass: SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES, text: 'about 3', anchor: 'start' },
+    { mass: CHANDRASEKHAR_LIMIT_SOLAR_MASSES, text: `limit: ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES}`, anchor: 'end' },
+    { mass: SURE_NEUTRON_STAR_TOP_SOLAR_MASSES, text: `about ${SURE_NEUTRON_STAR_TOP_SOLAR_MASSES}`, anchor: 'middle' },
+    { mass: SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES, text: `about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES}`, anchor: 'start' },
   ]
   const legend: Array<[CoreOutcome, string]> = [
-    ['white-dwarf', 'White dwarf: below 1.44 Suns, held up by the push of electrons. About as wide as the Earth or smaller.'],
-    ['neutron-star', 'Neutron star: from 1.44 up to about 2 Suns, held up by the push of neutrons. About 12 km across.'],
-    ['uncertain', 'Not known: between about 2 and 3 Suns, a neutron star might hold, or nothing might. This is not settled.'],
-    ['black-hole', 'Black hole: above about 3 Suns, no known pressure holds the core up, so it collapses inside its horizon.'],
+    ['white-dwarf', `White dwarf: below ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns, held up by the push of electrons. Roughly the size of the Earth.`],
+    ['neutron-star', `Neutron star: from ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} up to about ${SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} Suns, held up by the push of neutrons. About ${NEUTRON_STAR_RADIUS_KM} km in radius.`],
+    ['uncertain', `Not known: between about ${SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} and ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, a neutron star might hold, or nothing might. This is not settled.`],
+    ['black-hole', `Black hole: above about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, no known pressure holds the core up, so it collapses inside its horizon.`],
   ]
 
   return (
@@ -519,7 +519,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The question.</strong> In Experiment 1 you squeezed objects until they became black holes, and found how
-            small each one would have to be. You also found that a neutron star, a dead star only about 12 km across, is only
+            small each one would have to be. You also found that a neutron star, a dead star only about {NEUTRON_STAR_RADIUS_KM} km in radius, is only
             about 3 times too big. But in nature there is no hand doing the squeezing. When a star runs out of fuel, its own
             gravity squeezes its core, the middle of the star. So what does the squeezing, and what can stop it?
           </p>
@@ -591,8 +591,8 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
             <strong>Some words we will use.</strong> A <strong>dead star's core</strong> is the central part of a star that has
             used up its fuel. A star's fuel is what makes it push outward against its own gravity, so once the fuel is gone,
             only a push that comes from squeezing particles together is left. A <strong>white dwarf</strong> is a dead star
-            roughly the size of the Earth, and a <strong>neutron star</strong> is a dead star only about 12 km across,
-            about the size of a city. Atoms are made of particles. An <strong>electron</strong> is a tiny particle that moves
+            roughly the size of the Earth, and a <strong>neutron star</strong> is a dead star only about {NEUTRON_STAR_RADIUS_KM} km in
+            radius (about {2 * NEUTRON_STAR_RADIUS_KM} km across), about the size of a city. Atoms are made of particles. An <strong>electron</strong> is a tiny particle that moves
             around the outside of an atom, and a <strong>neutron</strong> is a particle that sits in the middle of an atom, in
             its nucleus. Both can hold a dead star up, in a way that has a name: <strong>degeneracy pressure</strong>. Here is a
             comparison. In a theatre, every seat holds one person, and you cannot put two people in the same seat, however hard
@@ -781,12 +781,12 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
                 <strong>1. What is drawn.</strong> A dead star's core has used up its fuel, so nothing is left to push outward
                 against its own gravity, except a push that comes from squeezing particles together. The bar is a scale of the
                 core's mass, in Suns, and it is divided into zones by what can hold the core up. A <em>white dwarf</em> is a
-                dead star held up by electrons, and is about as wide as the Earth or smaller. A <em>neutron star</em> is held
-                up by neutrons, and is only about 12 km across. The white marker shows the mass you chose.
+                dead star held up by electrons, and is roughly the size of the Earth. A <em>neutron star</em> is held
+                up by neutrons, and is only about {NEUTRON_STAR_RADIUS_KM} km in radius (about {2 * NEUTRON_STAR_RADIUS_KM} km across). The white marker shows the mass you chose.
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>2. What is really happening.</strong> The limits between the zones are standard results that are given
-                here and not derived. The white dwarf's limit, 1.44 Suns, is called the <em>Chandrasekhar limit</em>, after the physicist who worked it out in the 1930s, and it is well established. The neutron star's limit is not
+                here and not derived. The white dwarf's limit, {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns, is called the <em>Chandrasekhar limit</em>, after the physicist who worked it out in the 1930s, and it is well established. The neutron star's limit is not
                 known exactly: neutron stars of about 2 Suns are known, and the theory says the limit is at most about 3. That
                 is why the hatched zone between about 2 and 3 is marked as not known.
               </p>
@@ -831,7 +831,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>2. What is really happening.</strong> The core is squeezed by its own gravity until something holds it
-                up. The ball stops where it is held up: the white dwarf's radius, or the neutron star's 12 km. The horizon
+                up. The ball stops where it is held up: the white dwarf's radius, or the neutron star's {NEUTRON_STAR_RADIUS_KM} km radius. The horizon
                 radius is given by the formula from Experiment 1. The squeeze is only a way of showing the result: it does not
                 model how long a real collapse takes.
               </p>
@@ -876,7 +876,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
               <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>1. What is drawn.</strong> Across the bottom is the core's mass, in Suns. Up the side is the radius of a
                 white dwarf of that mass, in km. The blue curve is the white dwarf's radius. The dashed violet line is the
-                neutron star's 12 km, which is too small to show at this scale. The dashed white line is the limit, 1.44 Suns.
+                neutron star's {NEUTRON_STAR_RADIUS_KM} km, which is too small to show at this scale. The dashed white line is the limit, {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns.
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>2. What is really happening.</strong> The curve comes from a formula for white dwarfs that is given, and

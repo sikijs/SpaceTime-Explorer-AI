@@ -173,9 +173,9 @@ export function BlackHoleFormationTutor({ predictedSize, predictedThreshold, pre
           <p style={paragraphStyle}>
             <strong>5. Neutrons take over, and they have a limit too.</strong> Squeezed harder still, electrons and protons are
             pushed together into neutrons. Neutrons cannot all be in the same state either, so they push back in the same way,
-            and they can hold up a much smaller, denser core: a neutron star, about {NEUTRON_STAR_RADIUS_KM} km across. But its
+            and they can hold up a much smaller, denser core: a neutron star, about {NEUTRON_STAR_RADIUS_KM} km in radius (about {2 * NEUTRON_STAR_RADIUS_KM} km across). But its
             push also gives out. Its largest mass is not known exactly, because the matter inside a neutron star is not fully
-            understood: neutron stars of about 2 Suns are known, and the theory says the limit is at most about 3. That is why
+            understood: neutron stars of about 2 Suns are known, and the theory says the limit is at most about {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES}. That is why
             the model shows a stretch between about {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} and {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns as
             not known.
           </p>
