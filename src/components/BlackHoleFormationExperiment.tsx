@@ -22,6 +22,30 @@ const ANIMATION_DURATION_MS = 10_000
 
 const MASS_PRESETS = [0.6, 1.0, 1.4, 1.8, 2.5, 3.5, 10]
 
+// This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not marked
+// here; they are compared with the model's results later (the Results step). Draft wording, for the owner's review
+// (CLAUDE.md §28.1).
+type SizeChoice = 'bigger' | 'same' | 'smaller'
+const sizeChoices: Array<{ value: SizeChoice; label: string }> = [
+  { value: 'bigger', label: 'It gets bigger' },
+  { value: 'same', label: 'It stays the same size' },
+  { value: 'smaller', label: 'It gets smaller' },
+]
+
+type HoldChoice = 'always' | 'no-limit-known' | 'depends-on-size'
+const holdChoices: Array<{ value: HoldChoice; label: string }> = [
+  { value: 'always', label: 'Yes, something always can' },
+  { value: 'no-limit-known', label: 'No, past some mass nothing known can' },
+  { value: 'depends-on-size', label: "Only up to a limit that depends on the star's size" },
+]
+
+type LimitChoice = 'higher' | 'same' | 'lower'
+const limitChoices: Array<{ value: LimitChoice; label: string }> = [
+  { value: 'higher', label: 'Higher' },
+  { value: 'same', label: 'The same' },
+  { value: 'lower', label: 'Lower' },
+]
+
 const WHITE_DWARF_COLOR = '#60a5fa'
 const NEUTRON_STAR_COLOR = '#a78bfa'
 const UNCERTAIN_COLOR = '#f59e0b'
@@ -391,6 +415,16 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
 
+  const [sizePrediction, setSizePrediction] = useState<SizeChoice | null>(null)
+  const [holdPrediction, setHoldPrediction] = useState<HoldChoice | null>(null)
+  const [limitPrediction, setLimitPrediction] = useState<LimitChoice | null>(null)
+  const [submittedSize, setSubmittedSize] = useState<SizeChoice | null>(null)
+  const [submittedHold, setSubmittedHold] = useState<HoldChoice | null>(null)
+  const [submittedLimit, setSubmittedLimit] = useState<LimitChoice | null>(null)
+
+  const hasPrediction = sizePrediction !== null && holdPrediction !== null && limitPrediction !== null
+  const hasSubmittedPrediction = submittedSize !== null && submittedHold !== null && submittedLimit !== null
+
   const result = useMemo(() => runBlackHoleFormationExperiment(mass), [mass])
 
   const handleMassChange = (value: number) => {
@@ -400,8 +434,23 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
   }
 
   const handleRun = () => {
-    if (status === 'running') return
+    if (!hasPrediction || status === 'running') return
+    if (!hasSubmittedPrediction) {
+      setSubmittedSize(sizePrediction)
+      setSubmittedHold(holdPrediction)
+      setSubmittedLimit(limitPrediction)
+    }
     setStatus('running')
+    setProgress(0)
+  }
+
+  // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the chosen
+  // core mass.
+  const handleChangePrediction = () => {
+    setSubmittedSize(null)
+    setSubmittedHold(null)
+    setSubmittedLimit(null)
+    setStatus('idle')
     setProgress(0)
   }
 
@@ -435,6 +484,94 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            A white dwarf is a dead star held up by the push of its electrons. If you add more mass to a white dwarf, what do
+            you think happens to its size?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {sizeChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setSizePrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${sizePrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            If you keep adding mass to a dead star's core, can something always hold it up?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {holdChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setHoldPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${holdPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            A neutron star is held up by neutrons instead of electrons. Do you think the largest mass a neutron star can have
+            is higher than, the same as, or lower than a white dwarf's?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {limitChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setLimitPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${limitPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {hasPrediction || hasSubmittedPrediction
+              ? `Your predictions: ${sizeChoices.find((c) => c.value === (sizePrediction ?? submittedSize))!.label}; ${
+                  holdChoices.find((c) => c.value === (holdPrediction ?? submittedHold))!.label
+                }; ${limitChoices.find((c) => c.value === (limitPrediction ?? submittedLimit))!.label}`
+              : 'Answer all three questions to continue'}
+          </p>
+        </div>
+
+        {hasSubmittedPrediction && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many core masses as you like below. Or, change your
+              predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePrediction}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
+        <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
             The mass of the dead star's core, in Suns (the Sun's mass is 1):
           </p>
@@ -443,7 +580,7 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
               key={m}
               type="button"
               onClick={() => handleMassChange(m)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${mass === m ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -459,14 +596,18 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={status === 'running'}
+          disabled={!hasPrediction || status === 'running'}
           style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
 
+        {!hasPrediction && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Answer the predictions above to try the controls.</p>
+        )}
+
         {/* Shown only once the current settings have been run: changing the mass returns to idle and hides it again. */}
-        {status !== 'idle' && (
+        {hasSubmittedPrediction && status !== 'idle' && (
           <>
             <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               A core of {formatNumber(result.coreMassSolarMasses)} Suns is {OUTCOME_NAME[result.outcome]}. Its horizon radius is{' '}
