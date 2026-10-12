@@ -46,6 +46,7 @@ import { FallingInExperiment } from './components/FallingInExperiment'
 import { SeeingTheFallExperiment } from './components/SeeingTheFallExperiment'
 import { ColorOfTheFallExperiment } from './components/ColorOfTheFallExperiment'
 import { SpinningBlackHoleExperiment } from './components/SpinningBlackHoleExperiment'
+import { BlackHoleFormationExperiment } from './components/BlackHoleFormationExperiment'
 
 interface Chapter {
   title: string
@@ -442,6 +443,16 @@ const chapters: Chapter[] = [
     // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A black hole can spin, and the space around it is dragged around in the direction of the spin (frame dragging). That moves the last safe orbit: closer in for a probe circling with the spin, farther out for one circling against it. At a spin of 0.9 they are at 1.16 and 4.36 reference radii, where a black hole that does not spin has 3. The horizon gets smaller, and the closer in the last safe orbit is, the more of its rest-mass energy a probe gives up on the way down (15.6% with the spin, against 5.7% with no spin and 3.9% against it). In reference radii, all of this is the same for every black hole.",
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 9.
+    next: 'Next, how a black hole forms: what can hold up a dead star\'s core, and what happens when nothing can?',
+  },
+  {
+    title: 'How a Black Hole Forms',
+    group: 'Black Holes and Strong Gravity',
+    Component: BlackHoleFormationExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not shown to learners until the tutor exists.
+    learned:
+      "A dead star's core is held up only by pushes that run out at certain masses: electrons up to 1.44 Suns (a white dwarf, which gets smaller as it gets heavier) and neutrons up to about 2 to 3 Suns (a neutron star, about 12 km across). Above that, nothing known holds the core up, so it collapses inside its horizon: a black hole.",
     next: 'This is currently the last experiment in the project. No further experiment is approved in this chapter.',
   },
 ]
