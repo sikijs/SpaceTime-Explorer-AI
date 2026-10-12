@@ -77,12 +77,15 @@ export function stretchFactor(startInHorizonRadii: number, rInHorizonRadii: numb
 }
 
 // The pieces of the stretch factor at one distance, for the worked calculation shown to the learner, so the screen does
-// no physics of its own (CLAUDE.md §9): E, the square roots in the formula, the stretch factor and the wavelength.
+// no physics of its own (CLAUDE.md §9): E, the square roots in the formula, the two parts of the stretch factor (gravity
+// slowing the traveler's clock, as in Experiment 2, and the traveler moving away) and the wavelength.
 export interface StretchFactorSteps {
   energy: number // E = sqrt(1 - 1/r0)
   speedTerm: number // sqrt(1/r - 1/r0)
   rootGravity: number // sqrt(1 - 1/r)
-  stretch: number // (E + speedTerm) / rootGravity^2
+  gravity: number // gravity part = 1 / rootGravity
+  motion: number // motion part = (E + speedTerm) / rootGravity
+  stretch: number // gravity part x motion part = (E + speedTerm) / rootGravity^2
   wavelengthNm: number // the lamp's wavelength times the stretch factor
 }
 
@@ -92,7 +95,15 @@ export function stretchFactorSteps(startInHorizonRadii: number, rInHorizonRadii:
   const speedTerm = Math.sqrt(1 / rInHorizonRadii - 1 / startInHorizonRadii)
   const rootGravity = Math.sqrt(1 - 1 / rInHorizonRadii)
   const stretch = (energy + speedTerm) / (1 - 1 / rInHorizonRadii)
-  return { energy, speedTerm, rootGravity, stretch, wavelengthNm: LAMP_WAVELENGTH_NM * stretch }
+  return {
+    energy,
+    speedTerm,
+    rootGravity,
+    gravity: 1 / rootGravity,
+    motion: (energy + speedTerm) / rootGravity,
+    stretch,
+    wavelengthNm: LAMP_WAVELENGTH_NM * stretch,
+  }
 }
 
 // The wavelength the observer receives from the lamp when the traveler is at r.

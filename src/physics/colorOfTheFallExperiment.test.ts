@@ -69,6 +69,17 @@ describe('the worked steps of the stretch factor', () => {
     }
   })
 
+  it('splits into a gravity part and a motion part that multiply to the stretch factor, with the motion part 1 at the release', () => {
+    closeTo(stretchFactorSteps(10, 5).gravity, 1.118, 0.001)
+    closeTo(stretchFactorSteps(10, 5).motion, 1.414, 0.001)
+    for (const [r0, r] of [[10, 5], [100, 1.5], [2, 1.5], [20, 1.0001]]) {
+      const steps = stretchFactorSteps(r0, r)
+      closeTo(steps.gravity * steps.motion, steps.stretch, 1e-12)
+      expect(steps.gravity).toBeCloseTo(1 / Math.sqrt(1 - 1 / r), 9)
+    }
+    expect(stretchFactorSteps(10, 10).motion).toBeCloseTo(1, 12)
+  })
+
   it('rejects a distance at the horizon or beyond the release distance', () => {
     expect(() => stretchFactorSteps(10, 1)).toThrow(RangeError)
     expect(() => stretchFactorSteps(10, 11)).toThrow(RangeError)
