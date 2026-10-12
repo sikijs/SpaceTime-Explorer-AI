@@ -788,7 +788,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 5 | Falling in: what does the traveler experience? | `05-falling-in.md` | Complete (wording approved) |
 | 6 | Seeing the fall from far away: does anyone see the traveler cross? | `06-seeing-the-fall.md` | Complete (wording approved); differences from the spec approved 2026-10-12 |
 | 7 | The color of the fall: what color does the falling traveler's light have? | `07-color-of-the-fall.md` | Specification approved 2026-10-12; Complete (wording approved); differences from the spec approved 2026-10-12 |
-| 8 | Spinning black holes: does spin change where orbits are safe? (with the energy released as a second idea) | `08-spinning-black-holes.md` | Specification approved 2026-10-12; not yet built |
+| 8 | Spinning black holes: does spin change where orbits are safe? (with the energy released as a second idea) | `08-spinning-black-holes.md` | Specification approved 2026-10-12; physics model and basic interface built (Steps 1 and 2); the rest not yet built |
 
 **Recurring open items** (details in `docs/STATUS.md`): at a 390-pixel window the app's content column is only about 175 to 230 pixels wide, so several pictures' labels are very small (an app-wide layout matter, left for the owner); and several general-knowledge statements in Cosmology and Black Holes learner-facing text were not checked against a primary source (each experiment's specification lists them).
 

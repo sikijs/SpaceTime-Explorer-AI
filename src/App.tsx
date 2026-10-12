@@ -45,6 +45,7 @@ import { LightNearBlackHoleExperiment } from './components/LightNearBlackHoleExp
 import { FallingInExperiment } from './components/FallingInExperiment'
 import { SeeingTheFallExperiment } from './components/SeeingTheFallExperiment'
 import { ColorOfTheFallExperiment } from './components/ColorOfTheFallExperiment'
+import { SpinningBlackHoleExperiment } from './components/SpinningBlackHoleExperiment'
 
 interface Chapter {
   title: string
@@ -431,7 +432,17 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "The crests of a light wave are stretched apart just as the flashes in Experiment 6 were, by the same stretch factor, so the wavelength the observer receives is the lamp's wavelength times that factor. A falling traveler's green lamp turns redder (this is called redshift), leaves visible light well before the horizon, and goes on into infrared and then microwaves, with no limit near the horizon. Two effects multiply to give the stretching: gravity slowing the traveler's clock, and the traveler moving away. The color depends only on the distance in horizon radii, not on the mass of the black hole.",
-    next: 'This is currently the last experiment in the project. No further experiment is planned in this chapter.',
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 8.
+    next: 'Next, spinning black holes: does the direction a probe circles, and how fast the black hole spins, change where orbits are safe?',
+  },
+  {
+    title: 'Spinning Black Holes',
+    group: 'Black Holes and Strong Gravity',
+    Component: SpinningBlackHoleExperiment,
+    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not shown to learners until the tutor exists.
+    learned:
+      'A spinning black hole moves the last safe orbit: closer in for a probe circling the same way as the spin, farther out for one circling against it. Its horizon shrinks, and a probe gives up more of its energy on the way down the closer in the last safe orbit is.',
+    next: 'This is currently the last experiment in the project. No further experiment is approved in this chapter.',
   },
 ]
 
