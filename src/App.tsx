@@ -428,9 +428,9 @@ const chapters: Chapter[] = [
     title: 'The Color of the Fall',
     group: 'Black Holes and Strong Gravity',
     Component: ColorOfTheFallExperiment,
-    // Placeholder, not shown to learners until the tutor exists (the summary appears only after the tutor's explanation).
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
-    learned: 'Draft placeholder: the summary of what this experiment showed will be written with its tutor.',
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    learned:
+      "The crests of a light wave are stretched apart just as the flashes in Experiment 6 were, by the same stretch factor, so the wavelength the observer receives is the lamp's wavelength times that factor. A falling traveler's green lamp turns redder (this is called redshift), leaves visible light well before the horizon, and goes on into infrared and then microwaves, with no limit near the horizon. Two effects multiply to give the stretching: gravity slowing the traveler's clock, and the traveler moving away. The color depends only on the distance in horizon radii, not on the mass of the black hole.",
     next: 'This is currently the last experiment in the project. No further experiment is planned in this chapter.',
   },
 ]

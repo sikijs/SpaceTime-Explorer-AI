@@ -14,6 +14,7 @@ import {
 } from '../physics/colorOfTheFallExperiment'
 import type { ColorOfTheFallResult } from '../physics/colorOfTheFallExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
+import { ColorOfTheFallTutor } from './ColorOfTheFallTutor'
 
 interface ColorOfTheFallExperimentProps {
   onComplete?: () => void
@@ -465,11 +466,12 @@ function WavelengthGraph({ result, progress }: { result: ColorOfTheFallResult; p
   )
 }
 
-export function ColorOfTheFallExperiment({ onComplete }: ColorOfTheFallExperimentProps) {
+export function ColorOfTheFallExperiment({ onComplete, onTutorComplete }: ColorOfTheFallExperimentProps) {
   const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
   const [start, setStart] = useState(10)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [colorPrediction, setColorPrediction] = useState<ColorChoice | null>(null)
   const [visiblePrediction, setVisiblePrediction] = useState<VisibleChoice | null>(null)
@@ -524,6 +526,7 @@ export function ColorOfTheFallExperiment({ onComplete }: ColorOfTheFallExperimen
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((n) => n + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
@@ -1139,6 +1142,16 @@ export function ColorOfTheFallExperiment({ onComplete }: ColorOfTheFallExperimen
           </>
         )}
       </div>
+
+      {showResults && (
+        <ColorOfTheFallTutor
+          key={runCount}
+          predictedColor={submittedColor}
+          predictedVisible={submittedVisible}
+          predictedMass={submittedMass}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }
