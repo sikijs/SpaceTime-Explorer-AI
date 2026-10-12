@@ -4,13 +4,18 @@ import {
   BLACK_HOLE_PRESETS,
   FLASH_COUNT,
   SMALLEST_GAP_IN_HORIZON_RADII,
+  arrivalTime,
   runSeeingTheFallExperiment,
+  stretchFactor,
+  stretchFactorSteps,
 } from '../physics/seeingTheFallExperiment'
+import { SeeingTheFallTutor } from './SeeingTheFallTutor'
 import type { SeeingTheFallResult } from '../physics/seeingTheFallExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
 
 interface SeeingTheFallExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
 // Fixed real-world playback duration for the whole run, independent of the physics result (CLAUDE.md §11). The flashes
@@ -30,7 +35,7 @@ const REFERENCE_COLOR = '#e2e8f0'
 const START_PRESETS = [100, 20, 10, 5, 2]
 
 // This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
-// here; they are compared with the model's results later. The question wording is a draft for the owner's review.
+// here; they are compared with the model's results later. The question wording was approved by the owner on 2026-10-12.
 type SpacingChoice = 'same' | 'closer' | 'further'
 const spacingChoices: Array<{ value: SpacingChoice; label: string }> = [
   { value: 'same', label: 'At the same spacing as they were sent' },
@@ -535,11 +540,12 @@ function ClockGraph({ result, progress }: { result: SeeingTheFallResult; progres
   )
 }
 
-export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentProps) {
+export function SeeingTheFallExperiment({ onComplete, onTutorComplete }: SeeingTheFallExperimentProps) {
   const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
   const [start, setStart] = useState(10)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [spacingPrediction, setSpacingPrediction] = useState<SpacingChoice | null>(null)
   const [lastFlashPrediction, setLastFlashPrediction] = useState<LastFlashChoice | null>(null)
@@ -574,6 +580,7 @@ export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentP
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((n) => n + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
@@ -610,6 +617,19 @@ export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentP
     return () => cancelAnimationFrame(frameId)
   }, [status, onComplete])
 
+  const showResults = status === 'complete' && hasSubmittedPrediction
+
+  // The numbers the Results need, all from the physics module (CLAUDE.md §9). Worked at 2 horizon radii as in the
+  // specification, or at 1.5 when the traveler is released at 2 (where 2 would be the release point itself).
+  const demoDistance = start > 2 ? 2 : 1.5
+  const demoSteps = useMemo(() => stretchFactorSteps(start, demoDistance), [start, demoDistance])
+  const lastFlashBeforeHorizon = result.flashes[FLASH_COUNT - 1]
+  const lastFlashSteps = useMemo(() => stretchFactorSteps(start, lastFlashBeforeHorizon.distance), [start, lastFlashBeforeHorizon])
+  const nearHorizon = useMemo(
+    () => [0.01, 0.001, 0.0001].map((gap) => ({ gap, factor: stretchFactor(start, 1 + gap), arrival: arrivalTime(start, 1 + gap) })),
+    [start],
+  )
+
   const current = result.flashes[Math.min(Math.floor(progress * (FLASH_COUNT + 1)), FLASH_COUNT)]
   const outcomeSoFar = status === 'idle' ? '—' : progress < 1 ? 'sending flashes' : 'all 21 flashes sent'
 
@@ -618,7 +638,106 @@ export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentP
       <h2>Experiment 6 — Seeing the Fall From Far Away: Does Anyone See the Traveler Cross?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+        {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). The introduction must not give away
+            the answers to the three predictions below (§12): not how the flashes' spacing changes, not whether the
+            last flash arrives, and not what causes the change. */}
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In Experiment 5 you followed a traveler falling into a black hole and
+            compared two clocks: the traveler's watch and a clock at rest far away. That was a comparison of clocks. It
+            was not what a far-away observer would actually <em>receive</em>, because light takes time to travel, and
+            Experiment 5 left that out. This time we put it back. What does an observer far away actually receive from
+            the falling traveler, and do they ever see the traveler cross the horizon?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> Picture yourself as the observer, far from the black hole, watching a
+            friend fall in. You cannot reach them, so all you have is the light that comes to you from them. In
+            everyday life, watching is the same as knowing: if a friend drops over a cliff edge, you see them go at
+            the moment they go, give or take a blink. So ask yourself: when your friend reaches the horizon, do you
+            see it happen? And if you do, when?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What happens.</strong> Here is the whole experiment, step by step.
+          </p>
+          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+            <li>You choose a black hole and a release distance, as in Experiment 5.</li>
+            <li>
+              The traveler is released from rest and falls straight in, as in Experiment 5, until they reach the
+              horizon.
+            </li>
+            <li>
+              As they fall, the traveler sends a short <strong>flash</strong> of light straight outward, at equal steps
+              of <strong>their own watch</strong>: one at the moment of release, then {FLASH_COUNT - 1} more at equal
+              steps, and a last one, number {FLASH_COUNT}, at the moment they reach the horizon. That is{' '}
+              {FLASH_COUNT + 1} flashes in all.
+            </li>
+            <li>
+              The <strong>observer</strong>, who is at rest far from the black hole, receives each flash and writes down
+              the time on their own clock when it arrives.
+            </li>
+            <li>
+              You press Run. The first picture shows the flashes twice: <strong>as sent</strong> (the traveler's watch
+              when each was sent) and <strong>as received</strong> (the observer's clock when each arrives), with a line
+              joining each flash to its arrival.
+            </li>
+            <li>
+              A second picture is a graph of how much the spacing between flashes changes, and a third compares the
+              observer's clock with the traveler's watch.
+            </li>
+          </ol>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Some words we will use.</strong> The <strong>horizon</strong> is the one-way boundary from
+            Experiment 1 of this chapter, and the <strong>horizon radius</strong> is the distance from the black hole's
+            center to its horizon. A <strong>horizon light-time</strong> is the time light takes to cross one horizon
+            radius (the unit of Experiment 5). <strong>Light travel time</strong> is how long light takes to get from
+            one place to another. It is never zero. Sunlight, for example, takes about 8 minutes to reach us, so we
+            see the Sun as it was 8 minutes ago. The time between two flashes <em>as sent</em> is the gap between them
+            on the traveler's watch, and <em>as received</em> is the gap between their arrivals on the observer's
+            clock. The <strong>stretch factor</strong> compares the two: the gap as received divided by the gap as
+            sent. For example, flashes sent 5 seconds apart and received 5 seconds apart have a stretch factor of 1;
+            received 10 seconds apart, 2; received 2.5 seconds apart, 0.5. (This is a different thing from the "stretch"
+            of Experiment 5, which was a pull on the traveler's body.)
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What this builds on.</strong> Experiment 2 showed a clock near a black hole ticking differently
+            from one far away. Experiment 5 followed the fall. Gravitational Waves, Experiment 5, dealt with the light
+            from a source that is moving away from you. Here we put these together with the light's journey.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make three predictions. Then choose a black hole and a release distance,
+            and run it. Try other black holes and release distances too, and compare.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> How far apart the flashes arrive compared with how far apart they were
+            sent, how that changes as the traveler nears the horizon, and what happens to the last flash.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>This is a thought experiment about thin flashes of light,</strong> sent straight outward from a
+              small traveler who falls straight in from rest. The flashes' own gravity does not matter.
+            </li>
+            <li>
+              <strong>The observer is at rest, very far away,</strong> and arrival times are counted from the arrival
+              of the first flash.
+            </li>
+            <li>
+              <strong>The equations are given, not derived.</strong> They are the standard ones for a black hole that
+              does not spin and has no electric charge. Real black holes usually spin, which changes the details.
+            </li>
+            <li>
+              <strong>Only the timing of the flashes is modeled.</strong> How bright they are, what color they become,
+              and what a camera or telescope would show are not. Nothing here says the last flashes could be detected
+              in practice.
+            </li>
+            <li>
+              <strong>The experiment stops at the horizon.</strong> Nothing inside it is modeled.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             A traveler falls toward a black hole, sending a flash of light once every few seconds of their own watch. A
@@ -778,7 +897,7 @@ export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentP
 
             <div style={{ marginTop: '1rem', maxWidth: `${ROW_WIDTH}px` }}>
               <FlashRows result={result} progress={progress} />
-              {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+              {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
               <div style={CAPTION_STYLE}>
                 <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
                   <strong>How to read this picture: the flashes as sent and as received.</strong>
@@ -796,7 +915,7 @@ export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentP
                 </p>
                 <p style={CAPTION_PARAGRAPH_STYLE}>
                   <strong>3. The bottom row.</strong> This is the observer's clock. Each orange dot is the same flash at the
-                  moment it arrives, with the same number. Both rows use the same scale, so you can compare gaps directly.
+                  moment it arrives, with the same number. Both rows use the same scale, so you can compare the time gaps between neighbouring dots directly.
                   The observer's clock is counted from the arrival of flash 0.
                 </p>
                 <p style={CAPTION_PARAGRAPH_STYLE}>
@@ -805,10 +924,27 @@ export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentP
                 </p>
                 <p style={CAPTION_PARAGRAPH_STYLE}>
                   <strong>5. The gap readout.</strong> Under the title, the picture gives the gap between the current flash
-                  and the one before, as sent and as received, and how many times as long the second is.
+                  and the one before, as sent and as received, and how many times as long the second is. A gap here is a
+                  length of time: the time between one flash and the next, on the traveler's watch (as sent) or on the
+                  observer's clock (as received).
                 </p>
                 <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>6. What to watch.</strong> Compare the gaps between neighbouring dots on the two rows, flash by
+                  <strong>6. What is really happening.</strong> Two things push the flashes apart on their way to the
+                  observer. First, gravity slows the traveler's watch as seen from far away (Experiment 2), so a step of the
+                  watch that is the same length each time is longer and longer on the observer's clock. Second, the traveler
+                  is falling away from the observer, so each flash starts a little farther away than the one before and has
+                  a little farther to travel (like the friend tossing balls, in the Results). The nearer the traveler is to
+                  the horizon, the stronger both effects are.
+                </p>
+                <p style={CAPTION_PARAGRAPH_STYLE}>
+                  <strong>7. How the picture shows it.</strong> The blue dots are evenly spaced because the watch steps are
+                  equal. The orange dots are not: the time gaps between them are small at the start, where gravity is weak and the
+                  traveler is slow, and grow toward the right, where both effects are strong. The lines slant more and more
+                  because each flash is delayed more than the one before. Flash 20 runs off the end because its delay has no
+                  limit: it would need an observer's clock reading that never arrives.
+                </p>
+                <p style={CAPTION_PARAGRAPH_STYLE}>
+                  <strong>8. What to watch.</strong> Compare the time gaps between neighbouring dots on the two rows, flash by
                   flash, and see what happens to flash 20.
                 </p>
                 <p style={{ margin: 0 }}>
@@ -831,14 +967,36 @@ export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentP
                 traveler starts at the left and falls to the right, so the gap above the horizon shrinks.
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>The gap above the horizon.</strong> This is the horizontal axis. It means how far the traveler is
+                above the horizon, measured in horizon radii. It is the traveler's distance from the center of the black
+                hole, minus 1 (the horizon is 1 horizon radius from the center). For example, a traveler 10 horizon radii
+                from the center is 9 horizon radii above the horizon; at 1.5 from the center the gap is 0.5; at 1.0001 from
+                the center the gap is 0.0001; and at the horizon itself it is 0. This is a distance. It is not the time
+                between two flashes, which the other pictures and the stretch factor also call a gap.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>The three curves.</strong> The violet curve is the part of the stretching caused by gravity slowing
                 the traveler's watch, as seen from far away (Experiment 2). The green curve is the part caused by the
                 traveler moving away, which gives each flash a little farther to travel than the one before. The amber
                 curve is the stretch factor itself: the two parts multiplied together.
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>The dots.</strong> Each white dot marks a flash, at the traveler's gap when it was sent. The flash
-                sent at the horizon is at a gap of zero, which a log scale cannot show, so it has no dot.
+                <strong>The dots.</strong> Each white dot marks a flash, at the traveler's gap above the horizon when it
+                was sent. The flash sent at the horizon is at a gap of zero, which a log scale cannot show, so it has no dot.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>What is really happening.</strong> The stretch factor is the product of two separate effects. Gravity
+                slows the traveler's watch as seen from far away, and the traveler's motion away makes each flash start
+                farther back. Because the two multiply, they do not just add: if gravity alone doubled the gaps and motion
+                alone tripled them, together they would make them six times as long. Both effects keep growing as the
+                traveler nears the horizon, so the product grows even faster.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>How the picture shows it.</strong> On the left, at the release, the traveler is not yet moving, so
+                the green curve starts at 1 and only gravity (violet) lifts the amber curve above the dashed line. Moving
+                right, the green curve climbs too, and the amber curve, which is the two multiplied, rises above both. Near
+                the right edge each step to a gap ten times smaller multiplies each part by about 3.2 and the amber curve by
+                about 10. The curves do not level off.
               </p>
               <p style={{ margin: 0 }}>
                 <strong>A limit.</strong> The curves are drawn down to a gap of 0.0001 horizon radii, but that is only where
@@ -862,14 +1020,234 @@ export function SeeingTheFallExperiment({ onComplete }: SeeingTheFallExperimentP
                 at every moment. The dots are the flashes of the first picture, sent so far. The rose dashed line is the
                 moment the traveler's watch reaches the horizon.
               </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>What is really happening.</strong> The traveler's own watch reaches the horizon after a finite time.
+                But each flash sent later is stretched more (the previous picture), so each additional step of the
+                traveler's watch costs the observer a longer and longer wait. Add up those ever-longer waits and the
+                observer's clock has no limit, even though the traveler's watch does. So the observer never sees the
+                traveler's watch reach the horizon reading. This is the far-away clock of Experiment 5 again, now with the
+                light's journey included.
+              </p>
+              <p style={CAPTION_PARAGRAPH_STYLE}>
+                <strong>How the picture shows it.</strong> The curve starts on the dashed line, where both clocks read 0, and
+                then bends upward. How steeply it climbs at any point is the stretch factor there (how many times as long the gap between flashes becomes on arrival, from the second picture): a slope of 1 would be the
+                dashed line, and the steeper the curve, the more the flashes are stretched. As the watch nears the rose line
+                the curve turns almost straight up. It runs alongside the rose line but never reaches it, so no flash from
+                the horizon ever lands on the observer's clock.
+              </p>
               <p style={{ margin: 0 }}>
-                <strong>A limit.</strong> The curve is drawn to a gap of 0.0001 horizon radii above the horizon and then
-                stops, but that is only where the drawing ends.
+                <strong>A limit.</strong> The curve is drawn until the traveler is 0.0001 horizon radii above the horizon (a
+                tiny distance, explained under the second picture) and then stops, but that is only where the drawing
+                ends.
               </p>
             </div>
+
+            {showResults && (() => {
+              const lt = result.lightTimeSeconds
+              const first = result.flashes[1]
+              const last = lastFlashBeforeHorizon
+              const tail = result.curve[result.curve.length - 1]
+              const holeLabel = result.preset.label.replace(/^A /, 'a ')
+              const withSeconds = (lightTimes: number) => `${formatNumber(lightTimes)} light-times (${formatSeconds(lightTimes * lt)})`
+              const four = (v: number) => v.toFixed(4)
+              return (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
+                  {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
+                  <h3 style={{ marginTop: 0 }}>Results</h3>
+                  <p>
+                    The traveler was released from rest at <strong>{start} horizon radii</strong> (
+                    {formatDistance(start * result.horizonRadiusKm)}) from the center of <strong>{holeLabel}</strong> (
+                    {formatMass(result.preset.massSolarMasses)}), and sent {FLASH_COUNT + 1} flashes at equal steps of their
+                    own watch. For this run:
+                  </p>
+                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                      <tbody>
+                        {[
+                          ['The gap between flashes, as sent (the same for every pair)', withSeconds(first.spacingAsSent as number)],
+                          ['The gap between flashes 0 and 1, as received', withSeconds(first.spacingAsReceived as number)],
+                          [
+                            `The gap between flashes ${FLASH_COUNT - 2} and ${FLASH_COUNT - 1}, as received`,
+                            withSeconds(last.spacingAsReceived as number),
+                          ],
+                          [
+                            'The stretch factor between flashes 0 and 1',
+                            `${formatNumber(first.stretchFactor as number)} (the gap as received divided by the gap as sent)`,
+                          ],
+                          [`The stretch factor between flashes ${FLASH_COUNT - 2} and ${FLASH_COUNT - 1}`, formatNumber(last.stretchFactor as number)],
+                          [
+                            `The observer's clock when flash ${FLASH_COUNT - 1} arrives (the last flash sent before the horizon)`,
+                            withSeconds(last.arrival as number),
+                          ],
+                          [
+                            `The stretch factor when the traveler is ${formatGap(tail.gap)} horizon radii from the horizon`,
+                            formatBig(tail.total),
+                          ],
+                          [
+                            `The observer's clock when the flash sent ${formatGap(tail.gap)} horizon radii from the horizon arrives`,
+                            `${withSeconds(tail.arrival)}, and still rising`,
+                          ],
+                          [
+                            `Flash ${FLASH_COUNT}, sent as the traveler reaches the horizon`,
+                            `Never arrives (it is sent when the traveler's watch reads ${withSeconds(result.travelerWatchAtHorizon)})`,
+                          ],
+                        ].map(([label, value]) => (
+                          <tr key={label}>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
+                            <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                              <strong>{value}</strong>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p>
+                    <strong>Checking your first prediction:</strong> asked how the flashes arrive as the traveler nears the
+                    horizon, you answered "{spacingChoices.find((c) => c.value === submittedSpacing)!.label}". In the model,
+                    the flashes were sent {formatNumber(first.spacingAsSent as number)} light-times apart, but the first two
+                    arrived {formatNumber(first.spacingAsReceived as number)} apart and the last two before the horizon{' '}
+                    {formatNumber(last.spacingAsReceived as number)} apart, so they arrive further and further apart.{' '}
+                    {submittedSpacing === 'further'
+                      ? 'So your prediction was right.'
+                      : submittedSpacing === 'same'
+                        ? 'So your prediction was off this time. The gaps as received are longer than the gaps as sent, and they keep growing.'
+                        : 'So your prediction was off this time. The gaps as received are longer than the gaps as sent, not shorter.'}
+                  </p>
+                  <p>
+                    <strong>Checking your second prediction:</strong> asked whether the observer ever receives the flash sent
+                    as the traveler crosses the horizon, you answered "
+                    {lastFlashChoices.find((c) => c.value === submittedLastFlash)!.label}". In the model it never arrives.
+                    Look at how the arrival time grows as the traveler gets closer to the horizon: from a gap of{' '}
+                    {nearHorizon.map((n) => n.gap).join(', ')} horizon radii the flash arrives at{' '}
+                    {nearHorizon.map((n) => formatNumber(n.arrival)).join(', ')} light-times. Each time the gap shrinks to a
+                    tenth, the arrival is about 4.6 light-times later, and this never settles at a number. The flash sent at
+                    the horizon would be at a gap of zero, so there is no number at which it arrives.{' '}
+                    {submittedLastFlash === 'never'
+                      ? 'So your prediction was right.'
+                      : submittedLastFlash === 'long-wait'
+                        ? 'So your prediction was off this time. A long wait is a wait that ends, and this one does not: no wait, however long, is enough.'
+                        : 'So your prediction was off this time. The flash does not arrive soon, or ever.'}
+                  </p>
+                  <p>
+                    <strong>Checking your third prediction:</strong> asked which effect changes how far apart the flashes
+                    arrive, you answered "{causeChoices.find((c) => c.value === submittedCause)!.label}". In the model, when
+                    flash {FLASH_COUNT - 1} is sent the gravity part is {formatNumber(lastFlashSteps.gravity)} and the
+                    motion part is {formatNumber(lastFlashSteps.motion)}, and the two multiply to give{' '}
+                    {formatNumber(lastFlashSteps.total)}. Picture 2 shows the same for every distance.{' '}
+                    {submittedCause === 'both'
+                      ? 'So your prediction was right.'
+                      : submittedCause === 'gravity'
+                        ? `So your prediction was off this time. Gravity alone would give a stretch factor of ${formatNumber(lastFlashSteps.gravity)} there; the traveler's motion multiplies that by ${formatNumber(lastFlashSteps.motion)} more.`
+                        : "So your prediction was off this time. Even before the traveler is moving, gravity alone stretches the gaps: the gravity part is above 1 at every distance."}
+                  </p>
+
+                  <p style={{ marginBottom: '0.25rem' }}>
+                    <strong>The simple math: the stretch factor.</strong> For a fall from rest at {start} horizon radii, the
+                    stretch factor at a distance r is <strong>(gravity part) × (motion part)</strong>, where the gravity
+                    part is 1 ÷ √(1 − 1/r) and the motion part is [E + √(1/r − 1/{start})] ÷ √(1 − 1/r), with E = √(1 − 1/
+                    {start}). This is given, not derived. Worked out at r = {demoDistance}:
+                  </p>
+                  <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                    <li>
+                      E = √(1 − 1/{start}) = {four(demoSteps.energy)}.
+                    </li>
+                    <li>
+                      √(1 − 1/{demoDistance}) = {four(demoSteps.rootGravity)}, so the gravity part is 1 ÷{' '}
+                      {four(demoSteps.rootGravity)} = {four(demoSteps.gravity)}.
+                    </li>
+                    <li>
+                      √(1/{demoDistance} − 1/{start}) = {four(demoSteps.speedTerm)}, so the motion part is (
+                      {four(demoSteps.energy)} + {four(demoSteps.speedTerm)}) ÷ {four(demoSteps.rootGravity)} ={' '}
+                      {four(demoSteps.motion)}.
+                    </li>
+                    <li>
+                      The stretch factor is {four(demoSteps.gravity)} × {four(demoSteps.motion)} = {four(demoSteps.total)}.
+                    </li>
+                  </ol>
+                  <p>
+                    <strong>Closer and closer.</strong> The stretch factor grows without limit as the gap above the horizon
+                    shrinks. From the release distance you chose, for {holeLabel}:
+                  </p>
+                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                      <thead>
+                        <tr>
+                          {['Gap above the horizon (horizon radii)', 'Stretch factor', "The observer's clock at arrival (light-times)"].map((h) => (
+                            <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {nearHorizon.map((n) => (
+                          <tr key={n.gap}>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{n.gap}</td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>
+                              <strong>{formatBig(n.factor)}</strong>
+                            </td>
+                            <td style={{ padding: '0.3rem 0' }}>
+                              <strong>{formatNumber(n.arrival)}</strong>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p>
+                    Each row has a gap ten times smaller than the one above. Each time, the stretch factor is about ten times
+                    larger, and the arrival time is about 4.6 light-times later. This keeps going for every smaller gap.
+                  </p>
+
+                  <p>
+                    <strong>A comparison from daily life.</strong> Picture a friend walking steadily away from you, tossing
+                    you a ball once every second. Each ball has a little further to travel than the one before, so the
+                    balls reach you slightly more than a second apart, even though they were tossed exactly a second apart.
+                    The further away the thrower, the longer each toss takes to arrive. This is an analogy for the effect of
+                    the traveler <em>moving away</em> (the motion part) only. There is no everyday comparison for the
+                    gravity part, which comes from the slowing of clocks near a black hole that you met in Experiment 2.
+                  </p>
+
+                  <div
+                    style={{
+                      margin: '0.75rem 0',
+                      padding: '0.75rem 1rem',
+                      border: '2px solid #f59e0b',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                    }}
+                  >
+                    <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                      <strong>What this model can and cannot tell you.</strong> This is a thought experiment about thin
+                      flashes of light sent straight outward by a small traveler who falls straight in from rest. It follows
+                      only the <em>timing</em> of the flashes. It does not model how bright they are, what color they
+                      become, or what a camera or telescope would show, and it does not say the last flashes could be
+                      detected in practice. It stops at the horizon: nothing inside is modeled.
+                    </p>
+                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                      The equations are given, not derived, and are for a black hole that does not spin and has no electric
+                      charge. Real black holes usually spin, which changes the details. The stellar black hole's mass of 10
+                      Suns is an illustrative round value.
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
           </>
         )}
       </div>
+
+      {showResults && (
+        <SeeingTheFallTutor
+          key={runCount}
+          predictedSpacing={submittedSpacing}
+          predictedLastFlash={submittedLastFlash}
+          predictedCause={submittedCause}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }

@@ -410,16 +410,16 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1).
     learned:
       "A traveler who falls straight into a black hole reaches the horizon after a finite time on their own watch, while a clock far away reads later and later, without limit, as the traveler nears the horizon. They are different clocks, and neither is the real time. What the traveler feels is the stretching, the difference in pull between head and feet. It grows very fast closer in, and at the horizon it is far larger for a small black hole than for a giant one, so crossing a giant black hole's horizon is, locally, unremarkable.",
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 6.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 6.
     next: 'Next, seeing the fall from far away: what does an observer far from the black hole actually receive, and do they ever see the traveler cross?',
   },
   {
     title: 'Seeing the Fall From Far Away',
     group: 'Black Holes and Strong Gravity',
     Component: SeeingTheFallExperiment,
-    // Placeholder, not shown to learners until the tutor exists (the summary appears only after the tutor's explanation).
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
-    learned: 'Draft placeholder: the summary of what this experiment showed will be written with its tutor.',
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    learned:
+      "A far-away observer receives a falling traveler's flashes further and further apart, even though the traveler sent them at equal steps of their own watch. The stretching comes from two effects that multiply: gravity slowing the traveler's watch, and the traveler moving away. It has no limit near the horizon, so the flash sent at the horizon never arrives. The observer never sees the traveler cross, yet the traveler's own watch reaches the horizon in a finite time. These are two descriptions of the same event, and neither is the real time.",
     next: 'This is currently the last experiment in the project. No further experiment is planned in this chapter.',
   },
 ]
