@@ -439,9 +439,9 @@ const chapters: Chapter[] = [
     title: 'Spinning Black Holes',
     group: 'Black Holes and Strong Gravity',
     Component: SpinningBlackHoleExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1). Not shown to learners until the tutor exists.
+    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
-      'A spinning black hole moves the last safe orbit: closer in for a probe circling the same way as the spin, farther out for one circling against it. Its horizon shrinks, and a probe gives up more of its energy on the way down the closer in the last safe orbit is.',
+      "A black hole can spin, and the space around it is dragged around in the direction of the spin (frame dragging). That moves the last safe orbit: closer in for a probe circling with the spin, farther out for one circling against it. At a spin of 0.9 they are at 1.16 and 4.36 reference radii, where a black hole that does not spin has 3. The horizon gets smaller, and the closer in the last safe orbit is, the more of its rest-mass energy a probe gives up on the way down (15.6% with the spin, against 5.7% with no spin and 3.9% against it). In reference radii, all of this is the same for every black hole.",
     next: 'This is currently the last experiment in the project. No further experiment is approved in this chapter.',
   },
 ]

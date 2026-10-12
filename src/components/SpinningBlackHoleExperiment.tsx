@@ -3,9 +3,11 @@ import type { CSSProperties } from 'react'
 import { BLACK_HOLE_PRESETS, energyReleasedSteps, runSpinningBlackHoleExperiment } from '../physics/spinningBlackHoleExperiment'
 import type { SpinningBlackHoleResult } from '../physics/spinningBlackHoleExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
+import { SpinningBlackHoleTutor } from './SpinningBlackHoleTutor'
 
 interface SpinningBlackHoleExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
 // Fixed real-world playback duration for the whole run, independent of the physics result (CLAUDE.md §11). The black hole
@@ -434,11 +436,12 @@ function EnergyPicture({ result, progress }: { result: SpinningBlackHoleResult; 
   )
 }
 
-export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExperimentProps) {
+export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: SpinningBlackHoleExperimentProps) {
   const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
   const [spin, setSpin] = useState(0.9)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
 
   const [withPrediction, setWithPrediction] = useState<EdgeChoice | null>(null)
   const [againstPrediction, setAgainstPrediction] = useState<EdgeChoice | null>(null)
@@ -494,6 +497,7 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
     }
     setStatus('running')
     setProgress(0)
+    setRunCount((n) => n + 1)
   }
 
   // Matches the rest of the project's precedent: re-opens all four questions for editing without resetting the chosen
@@ -1151,6 +1155,23 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
           </>
         )}
       </div>
+
+      {showResults && (
+        <SpinningBlackHoleTutor
+          key={runCount}
+          predictedWith={submittedWith}
+          predictedAgainst={submittedAgainst}
+          predictedHorizon={submittedHorizon}
+          predictedEnergy={submittedEnergy}
+          matches={{
+            with: submittedWith === modelWith,
+            against: submittedAgainst === modelAgainst,
+            horizon: submittedHorizon === modelHorizon,
+            energy: submittedEnergy === modelEnergy,
+          }}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }
