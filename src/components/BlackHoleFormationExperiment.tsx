@@ -514,13 +514,55 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
             <strong>The question.</strong> In Experiment 1 you squeezed objects until they became black holes, and found how
             small each one would have to be. You also found that a neutron star, a dead star only about 12 km across, is only
             about 3 times too big. But in nature there is no hand doing the squeezing. When a star runs out of fuel, its own
-            gravity squeezes its core. So what does the squeezing, and what can stop it?
+            gravity squeezes its core, the middle of the star. So what does the squeezing, and what can stop it?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Why even ask this.</strong> The Sun will never become a black hole. Some stars do. What decides the
             difference? It comes down to what is left at the center when the fuel is gone, and whether anything can hold it
             up.
           </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>How a star ends, and where a black hole comes in.</strong> Six short ideas.
+          </p>
+          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>A star is a balance.</strong> A star is a huge ball of hot gas. Its own gravity pulls every part of it
+              toward the center. What stops it from collapsing is a push outward, from the heat inside. Think of a balloon: the
+              air inside pushes out, the rubber pulls in, and the balloon keeps its shape for as long as the two balance. The
+              Sun has kept this balance for about 4.6 billion years.
+            </li>
+            <li>
+              <strong>The heat comes from fuel.</strong> Deep in the middle of a star, the heat and the squeeze are so great that
+              the tiny particles at the center of atoms, their nuclei, are forced to join together, and each time they do, they
+              release energy. This is called <strong>nuclear fusion</strong>. It is what keeps the gas hot, and the hot gas is
+              what pushes outward. The star's "fuel" is whatever can still be fused.
+            </li>
+            <li>
+              <strong>The fuel runs out.</strong> A star does not have an endless supply. Like a campfire, once the wood is used
+              up, the heat is no longer made, and it fades. When the middle of the star has no fuel left that it can use, the
+              push that came from the heat fades with it.
+            </li>
+            <li>
+              <strong>Gravity then squeezes the core.</strong> The middle part of the star, where the fuel was used up, is its{' '}
+              <strong>core</strong>. With the push of the heat gone, gravity squeezes the core, packing the same matter into less
+              and less room. (What happens to the star's outer layers is a different story, and this experiment leaves it out.)
+              The more mass a core has, the harder gravity pulls it in.
+            </li>
+            <li>
+              <strong>Squeezing brings in a different kind of push.</strong> Particles do not like being crowded together, and
+              when a core is squeezed hard enough, they push back. This push has nothing to do with heat, so it can still be
+              there when the core has cooled. You will meet the details below. The question is whether this push is enough to
+              balance gravity and hold the core up. If it is, the core stops shrinking, at a size where the push and gravity
+              balance, just as the balloon does. If it is not, nothing stops the squeeze.
+            </li>
+            <li>
+              <strong>What is left depends on what holds the core up.</strong> Three things can be left behind. A{' '}
+              <strong>white dwarf</strong> is a dead core held up by one kind of particle. A <strong>neutron star</strong> is a
+              dead core held up by another, much more tightly squeezed. And if nothing can hold the core up, it keeps shrinking
+              until it is inside its own horizon, and that is a <strong>black hole</strong>. So a black hole forms when a
+              dead core is squeezed past anything that can hold it up. The experiment asks how that depends on the core's mass.
+            </li>
+          </ol>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
             <strong>What happens.</strong> Here is the whole experiment, step by step.
           </p>
