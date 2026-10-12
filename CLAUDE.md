@@ -777,7 +777,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 10 | The fate of the universe | `10-fate-of-the-universe.md` | Complete (wording approved); chapter summary text still carries a "draft placeholder" comment in `src/App.tsx` |
 | - | Closing synthesis ("Putting It All Together"), a section on Experiment 10's page, not an experiment | `closing-synthesis.md` | Complete (wording approved) |
 
-**Black Holes and Strong Gravity** (`docs/experiments/black-holes-and-strong-gravity/`). Planned as five experiments, with a sixth added on 2026-10-11 and a seventh on 2026-10-12; all seven are built.
+**Black Holes and Strong Gravity** (`docs/experiments/black-holes-and-strong-gravity/`). Planned as five experiments, with a sixth added on 2026-10-11, a seventh on 2026-10-12 and an eighth (spinning black holes) approved on 2026-10-12; Experiments 1 to 7 are built. A ninth (Hawking radiation) is expected but not yet proposed.
 
 | # | Title | Specification | Status |
 |---|---|---|---|
@@ -788,6 +788,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 5 | Falling in: what does the traveler experience? | `05-falling-in.md` | Complete (wording approved) |
 | 6 | Seeing the fall from far away: does anyone see the traveler cross? | `06-seeing-the-fall.md` | Complete (wording approved); differences from the spec approved 2026-10-12 |
 | 7 | The color of the fall: what color does the falling traveler's light have? | `07-color-of-the-fall.md` | Specification approved 2026-10-12; Complete (wording approved); differences from the spec approved 2026-10-12 |
+| 8 | Spinning black holes: does spin change where orbits are safe? (with the energy released as a second idea) | `08-spinning-black-holes.md` | Specification approved 2026-10-12; not yet built |
 
 **Recurring open items** (details in `docs/STATUS.md`): at a 390-pixel window the app's content column is only about 175 to 230 pixels wide, so several pictures' labels are very small (an app-wide layout matter, left for the owner); and several general-knowledge statements in Cosmology and Black Holes learner-facing text were not checked against a primary source (each experiment's specification lists them).
 
@@ -802,7 +803,7 @@ Every experiment below has an approved specification, a tested physics model, an
 
 ## What Remains
 
-Black Holes Experiment 7 (the color of the fall) is built, tested and reviewed, and its wording is approved. Otherwise nothing is in progress. The overall project vision, the four completed chapters (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology) and the seven experiments of the Black Holes and Strong Gravity group are built. For Cosmology, the specification of Experiment 10 names a recollapsing universe, dark energy that changes with time, the cosmic event horizon, and the far future of stars and black holes as natural candidates, but none is proposed. Any next experiment needs a proposal and an approved specification first (§23 Stages 1-4).
+Black Holes Experiment 7 (the color of the fall) is built, tested and reviewed, and its wording is approved. Black Holes Experiment 8 (spinning black holes) has an approved specification (2026-10-12) but nothing is built; its Step 1 (the physics model and its tests) needs the owner's go-ahead. Otherwise nothing is in progress. The overall project vision, the four completed chapters (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology) and the seven experiments of the Black Holes and Strong Gravity group are built. For Cosmology, the specification of Experiment 10 names a recollapsing universe, dark energy that changes with time, the cosmic event horizon, and the far future of stars and black holes as natural candidates, but none is proposed. Any next experiment needs a proposal and an approved specification first (§23 Stages 1-4).
 
 Do not proceed beyond that milestone without explicit authorization.
 
