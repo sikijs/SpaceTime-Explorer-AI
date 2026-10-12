@@ -74,6 +74,30 @@ export function stretchFactor(startInHorizonRadii: number, rInHorizonRadii: numb
   return (energyAt(startInHorizonRadii) + speedTerm(startInHorizonRadii, rInHorizonRadii)) / (1 - 1 / rInHorizonRadii)
 }
 
+// The pieces of the stretch factor at one distance, for the worked calculation shown to the learner, so the screen does
+// no physics of its own (CLAUDE.md §9): E, the square roots in the formula, the two parts and their product.
+export interface StretchFactorSteps {
+  energy: number // E = sqrt(1 - 1/r0)
+  speedTerm: number // sqrt(1/r - 1/r0)
+  rootGravity: number // sqrt(1 - 1/r)
+  gravity: number // gravity part = 1 / rootGravity
+  motion: number // motion part = (E + speedTerm) / rootGravity
+  total: number // gravity part x motion part
+}
+
+export function stretchFactorSteps(startInHorizonRadii: number, rInHorizonRadii: number): StretchFactorSteps {
+  checkBetween(startInHorizonRadii, rInHorizonRadii)
+  const rootGravity = Math.sqrt(1 - 1 / rInHorizonRadii)
+  return {
+    energy: energyAt(startInHorizonRadii),
+    speedTerm: speedTerm(startInHorizonRadii, rInHorizonRadii),
+    rootGravity,
+    gravity: gravityPart(rInHorizonRadii),
+    motion: motionPart(startInHorizonRadii, rInHorizonRadii),
+    total: gravityPart(rInHorizonRadii) * motionPart(startInHorizonRadii, rInHorizonRadii),
+  }
+}
+
 // The cycloid parameter at a distance r, for a fall from rest at r0.
 const etaAt = (r0: number, r: number) => Math.acos(Math.min(1, Math.max(-1, (2 * r) / r0 - 1)))
 

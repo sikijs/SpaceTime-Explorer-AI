@@ -12,6 +12,7 @@ import {
   motionPart,
   runSeeingTheFallExperiment,
   stretchFactor,
+  stretchFactorSteps,
   travelerWatch,
 } from './seeingTheFallExperiment'
 
@@ -84,6 +85,31 @@ describe('the two parts of the stretch factor', () => {
     expect(() => stretchFactor(10, 10.5)).toThrow(RangeError)
     expect(() => motionPart(1, 1.5)).toThrow(RangeError)
     expect(() => stretchFactor(10, 1)).toThrow(RangeError)
+  })
+})
+
+describe('the worked steps of the stretch factor', () => {
+  it('reproduces the specification\'s figures at 2 horizon radii from a release at 10 (1.414 x 2.236 = 3.162)', () => {
+    const steps = stretchFactorSteps(10, 2)
+    expect(steps.gravity).toBeCloseTo(1.414, 3)
+    expect(steps.motion).toBeCloseTo(2.236, 3)
+    expect(steps.total).toBeCloseTo(3.162, 3)
+  })
+
+  it('has the steps agree with the formula written in one piece, and with the energy and roots they show', () => {
+    for (const [r0, r] of [[10, 5], [100, 1.5], [2, 1.5], [20, 1.0001]]) {
+      const steps = stretchFactorSteps(r0, r)
+      expect(steps.total / stretchFactor(r0, r)).toBeCloseTo(1, 12)
+      expect(steps.energy).toBeCloseTo(Math.sqrt(1 - 1 / r0), 12)
+      expect(steps.speedTerm).toBeCloseTo(Math.sqrt(1 / r - 1 / r0), 12)
+      expect(steps.gravity * steps.rootGravity).toBeCloseTo(1, 12)
+      expect(steps.motion * steps.rootGravity).toBeCloseTo(steps.energy + steps.speedTerm, 12)
+    }
+  })
+
+  it('rejects a distance at the horizon or beyond the release distance', () => {
+    expect(() => stretchFactorSteps(10, 1)).toThrow(RangeError)
+    expect(() => stretchFactorSteps(10, 11)).toThrow(RangeError)
   })
 })
 
