@@ -35,7 +35,7 @@ const TRAVELER_COLOR = '#22d3ee' // the traveler, cyan as the traveler's watch i
 const START_PRESETS = [100, 20, 10, 5, 2]
 
 // This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
-// here; they are compared with the model's results later. The question wording is a draft for the owner's review.
+// here; they are compared with the model's results later. The question wording was approved by the owner on 2026-10-12.
 type ColorChoice = 'same' | 'bluer' | 'limit' | 'no-limit'
 const colorChoices: Array<{ value: ColorChoice; label: string }> = [
   { value: 'same', label: 'It stays green' },
@@ -568,7 +568,7 @@ export function ColorOfTheFallExperiment({ onComplete, onTutorComplete }: ColorO
       <h2>Experiment 7 — The Color of the Fall: What Color Does the Falling Traveler's Light Have?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). The introduction must not give away the
+        {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). The introduction must not give away the
             answers to the three predictions below (§12): not that the light turns red, not that its wavelength has no
             limit, not that it leaves the visible range, and not that the black hole's mass does not matter. For that
             reason it does not name "redshift", which the tutor introduces. */}
@@ -816,7 +816,7 @@ export function ColorOfTheFallExperiment({ onComplete, onTutorComplete }: ColorO
 
             <div style={{ marginTop: '1rem', maxWidth: `${STRIP_WIDTH}px` }}>
               <ColorStrip result={result} progress={progress} />
-              {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+              {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
               <div style={CAPTION_STYLE}>
                 <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
                   <strong>How to read this picture: the color of the lamp, as received.</strong>
@@ -920,7 +920,7 @@ export function ColorOfTheFallExperiment({ onComplete, onTutorComplete }: ColorO
               const periodEmitted = lightPeriodSeconds(LAMP_WAVELENGTH_NM)
               return (
                 <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-                  {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+                  {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
                   <h3 style={{ marginTop: 0 }}>Results</h3>
                   <p>
                     The traveler was released from rest at <strong>{start} horizon radii</strong> (

@@ -421,14 +421,14 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A far-away observer receives a falling traveler's flashes further and further apart, even though the traveler sent them at equal steps of their own watch. The stretching comes from two effects that multiply: gravity slowing the traveler's watch, and the traveler moving away. It has no limit near the horizon, so the flash sent at the horizon never arrives. The observer never sees the traveler cross, yet the traveler's own watch reaches the horizon in a finite time. These are two descriptions of the same event, and neither is the real time.",
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 7.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 7.
     next: 'Next, the color of the fall: what color does the traveler\'s light have when it reaches the far-away observer?',
   },
   {
     title: 'The Color of the Fall',
     group: 'Black Holes and Strong Gravity',
     Component: ColorOfTheFallExperiment,
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "The crests of a light wave are stretched apart just as the flashes in Experiment 6 were, by the same stretch factor, so the wavelength the observer receives is the lamp's wavelength times that factor. A falling traveler's green lamp turns redder (this is called redshift), leaves visible light well before the horizon, and goes on into infrared and then microwaves, with no limit near the horizon. Two effects multiply to give the stretching: gravity slowing the traveler's clock, and the traveler moving away. The color depends only on the distance in horizon radii, not on the mass of the black hole.",
     next: 'This is currently the last experiment in the project. No further experiment is planned in this chapter.',
