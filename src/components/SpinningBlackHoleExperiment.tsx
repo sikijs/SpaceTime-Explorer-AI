@@ -21,6 +21,30 @@ const HORIZON_COLOR = '#e2e8f0'
 
 const SPIN_PRESETS = [0, 0.5, 0.9, 0.99]
 
+// This experiment's four prediction questions, per its specification's "Prediction Activity". Choices are not marked
+// here; they are compared with the model's results later (the Results step). Draft wording, for the owner's review
+// (CLAUDE.md §28.1). The wording avoids the word "dragging", which would give away the first two answers.
+type EdgeChoice = 'closer' | 'same' | 'farther'
+const edgeChoices: Array<{ value: EdgeChoice; label: string }> = [
+  { value: 'closer', label: 'Closer to the black hole' },
+  { value: 'same', label: 'The same place' },
+  { value: 'farther', label: 'Farther from the black hole' },
+]
+
+type HorizonChoice = 'bigger' | 'same' | 'smaller'
+const horizonChoices: Array<{ value: HorizonChoice; label: string }> = [
+  { value: 'bigger', label: 'Bigger' },
+  { value: 'same', label: 'The same size' },
+  { value: 'smaller', label: 'Smaller' },
+]
+
+type EnergyChoice = 'with' | 'against' | 'same'
+const energyChoices: Array<{ value: EnergyChoice; label: string }> = [
+  { value: 'with', label: 'The one circling with the spin' },
+  { value: 'against', label: 'The one circling against the spin' },
+  { value: 'same', label: 'They give up the same' },
+]
+
 // The map (the first picture): seen from above, distances to scale, in reference radii.
 const MAP_WIDTH = 700
 const MAP_HEIGHT = 540
@@ -416,6 +440,19 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
 
+  const [withPrediction, setWithPrediction] = useState<EdgeChoice | null>(null)
+  const [againstPrediction, setAgainstPrediction] = useState<EdgeChoice | null>(null)
+  const [horizonPrediction, setHorizonPrediction] = useState<HorizonChoice | null>(null)
+  const [energyPrediction, setEnergyPrediction] = useState<EnergyChoice | null>(null)
+  const [submittedWith, setSubmittedWith] = useState<EdgeChoice | null>(null)
+  const [submittedAgainst, setSubmittedAgainst] = useState<EdgeChoice | null>(null)
+  const [submittedHorizon, setSubmittedHorizon] = useState<HorizonChoice | null>(null)
+  const [submittedEnergy, setSubmittedEnergy] = useState<EnergyChoice | null>(null)
+
+  const hasPrediction = withPrediction !== null && againstPrediction !== null && horizonPrediction !== null && energyPrediction !== null
+  const hasSubmittedPrediction =
+    submittedWith !== null && submittedAgainst !== null && submittedHorizon !== null && submittedEnergy !== null
+
   const result = useMemo(() => runSpinningBlackHoleExperiment(presetId, spin), [presetId, spin])
   const now = pointAt(result, progress)
   const km = result.referenceRadiusKm
@@ -433,8 +470,25 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
   }
 
   const handleRun = () => {
-    if (status === 'running') return
+    if (!hasPrediction || status === 'running') return
+    if (!hasSubmittedPrediction) {
+      setSubmittedWith(withPrediction)
+      setSubmittedAgainst(againstPrediction)
+      setSubmittedHorizon(horizonPrediction)
+      setSubmittedEnergy(energyPrediction)
+    }
     setStatus('running')
+    setProgress(0)
+  }
+
+  // Matches the rest of the project's precedent: re-opens all four questions for editing without resetting the chosen
+  // black hole or spin.
+  const handleChangePrediction = () => {
+    setSubmittedWith(null)
+    setSubmittedAgainst(null)
+    setSubmittedHorizon(null)
+    setSubmittedEnergy(null)
+    setStatus('idle')
     setProgress(0)
   }
 
@@ -468,13 +522,122 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            Suppose the black hole spins and a probe circles the same way as the spin. Compared with a black hole that does
+            not spin (where the last safe orbit is at 3 horizon radii), where do you think the last safe orbit is?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {edgeChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setWithPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${withPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            Now the probe circles against the spin. Where do you think the last safe orbit is, compared with no spin?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {edgeChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setAgainstPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${againstPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            As the black hole spins faster, does its horizon (the point of no return) get bigger, stay the same size, or get
+            smaller?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {horizonChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setHorizonPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${horizonPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+            A probe slowly spirals down to its last safe orbit, giving up some of its energy on the way. Which probe do you
+            think gives up more, when the black hole spins fast?
+          </p>
+          <div style={{ marginBottom: '0.5rem' }}>
+            {energyChoices.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setEnergyPrediction(choice.value)}
+                disabled={hasSubmittedPrediction}
+                className={`toggle-button${energyPrediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {hasPrediction || hasSubmittedPrediction
+              ? `Your predictions: ${edgeChoices.find((c) => c.value === (withPrediction ?? submittedWith))!.label}; ${
+                  edgeChoices.find((c) => c.value === (againstPrediction ?? submittedAgainst))!.label
+                }; ${horizonChoices.find((c) => c.value === (horizonPrediction ?? submittedHorizon))!.label}; ${
+                  energyChoices.find((c) => c.value === (energyPrediction ?? submittedEnergy))!.label
+                }`
+              : 'Answer all four questions to continue'}
+          </p>
+        </div>
+
+        {hasSubmittedPrediction && (
+          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Your predictions are locked in above. You can still try as many black holes and spins as you like below. Or,
+              change your predictions and start over:
+            </p>
+            <button
+              type="button"
+              onClick={handleChangePrediction}
+              className="secondary-button"
+              style={{
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(124, 58, 237, 0.22)',
+              }}
+            >
+              Change predictions
+            </button>
+          </div>
+        )}
+
+        <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Black hole:</p>
           {BLACK_HOLE_PRESETS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => handlePresetChange(p.id)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -493,7 +656,7 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
               key={s}
               type="button"
               onClick={() => handleSpinChange(s)}
-              disabled={status === 'running'}
+              disabled={!hasPrediction || status === 'running'}
               className={`toggle-button${spin === s ? ' is-selected' : ''}`}
               style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
             >
@@ -506,14 +669,18 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={status === 'running'}
+          disabled={!hasPrediction || status === 'running'}
           style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
 
+        {!hasPrediction && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Answer the predictions above to try the controls.</p>
+        )}
+
         {/* Shown only once the current settings have been run: changing the black hole or the spin returns to idle and hides it again. */}
-        {status !== 'idle' && (
+        {hasSubmittedPrediction && status !== 'idle' && (
           <>
             <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               {result.preset.label}: {formatMass(result.preset.massSolarMasses)}. One reference radius (the horizon radius it
