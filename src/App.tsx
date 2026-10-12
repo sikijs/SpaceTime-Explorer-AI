@@ -69,6 +69,14 @@ const groupOrder = [
   'Black Holes and Strong Gravity',
 ]
 
+// A one-sentence overview of a group, shown under its title on every chapter page of that group. Only groups that have one
+// are listed. Draft wording, not yet approved by the owner (CLAUDE.md §28.1). It names only what is built, so a later
+// experiment (the planned end of a black hole's story) is added to it when that experiment is approved.
+const groupOverviews: Record<string, string> = {
+  'Black Holes and Strong Gravity':
+    'This group follows black holes from several sides: how small something must be to become one, what happens to time, orbits, light and a falling traveler near one, what spin changes, and where black holes come from.',
+}
+
 const chapters: Chapter[] = [
   {
     title: 'One clock',
@@ -646,6 +654,7 @@ export function App() {
             {activeChapter ? (
               <>
                 <h2 className="experiment-group-title">{activeChapter.group}</h2>
+                {groupOverviews[activeChapter.group] && <p className="experiment-group-overview">{groupOverviews[activeChapter.group]}</p>}
                 <activeChapter.Component
                   key={currentChapter}
                   onComplete={() => markComplete(currentChapter)}
