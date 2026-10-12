@@ -786,7 +786,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 3 | Orbits near a black hole | `03-orbits-near-a-black-hole.md` | Built; wording review not recorded here (see `docs/STATUS.md`) |
 | 4 | Light near a black hole: can light be trapped? | `04-light-near-a-black-hole.md` | Complete (wording approved) |
 | 5 | Falling in: what does the traveler experience? | `05-falling-in.md` | Complete (wording approved) |
-| 6 | Seeing the fall from far away: does anyone see the traveler cross? | `06-seeing-the-fall.md` | Complete (wording approved); four differences from the spec await the owner (see its "Implementation Notes") |
+| 6 | Seeing the fall from far away: does anyone see the traveler cross? | `06-seeing-the-fall.md` | Complete (wording approved); differences from the spec approved 2026-10-12 |
 | 7 | The color of the fall: what color does the falling traveler's light have? | `07-color-of-the-fall.md` | Specification approved 2026-10-12; Complete (wording approved); seven differences from the spec await the owner (see its "Implementation Notes") |
 
 **Recurring open items** (details in `docs/STATUS.md`): at a 390-pixel window the app's content column is only about 175 to 230 pixels wide, so several pictures' labels are very small (an app-wide layout matter, left for the owner); and several general-knowledge statements in Cosmology and Black Holes learner-facing text were not checked against a primary source (each experiment's specification lists them).
