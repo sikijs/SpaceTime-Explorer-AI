@@ -521,6 +521,138 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
       <h2>Experiment 8 — Spinning Black Holes: Does Spin Change Where Orbits Are Safe?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        {/* Draft wording, for the owner's review (CLAUDE.md §28.1). The introduction must not give away the answers to the
+            four predictions below (§12): not that the last safe orbit moves, not which way it moves for either direction,
+            not that the horizon shrinks, and not which probe gives up more energy. It does not name "frame dragging",
+            which the tutor introduces (§15, success criterion 7 of the specification). */}
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In Experiment 3 you found that a black hole has a last safe circular orbit: the
+            closest circle a small probe can follow without a tiny nudge sending it spiraling in. For a black hole that
+            does not spin, it was at 3 horizon radii from the center. But real black holes usually spin. Does the spin
+            change where the last safe orbit is?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> Imagine you are planning to park a spacecraft in orbit around a real black
+            hole. You studied one that does not spin, and you know the closest safe distance for it. But the black hole you
+            would actually meet is probably turning. Would the same distance still be safe? And with a turning black hole
+            there is a new thing to decide: a spacecraft can circle the same way the black hole turns, or the opposite way.
+            Does that choice matter?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What a spinning black hole is.</strong> Four short ideas.
+          </p>
+          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>Where the spin comes from.</strong> Almost everything in space turns: planets, stars and galaxies. Our
+              Sun turns about once a month. When a big star runs out of fuel, its core can collapse into a black hole, and
+              the core shrinks enormously as it does. A shrinking thing that is turning turns faster. You can see the same
+              thing on ice: a skater who spins with their arms stretched out turns faster when they pull their arms in. A
+              black hole can also be spun faster by swallowing gas that circles around it before it falls in. So a black hole
+              formed this way keeps its turning, and most are thought to spin.
+            </li>
+            <li>
+              <strong>You cannot see it turn.</strong> A planet has a surface, so you can watch a mountain go around. A black
+              hole has no surface to watch. Its spin is part of the black hole itself, and it shows up in the gravity around
+              it: a black hole that spins does not shape the gravity around it in exactly the same way as a black hole of the
+              same mass that does not spin. This experiment asks whether that difference changes where orbits are safe.
+            </li>
+            <li>
+              <strong>The spin number.</strong> We describe how much a black hole spins with one number. For a given mass,
+              the theory sets a limit on how much spin a black hole can have, and the number says how much of that limit it
+              has. So 0 means no spin at all (the black holes of Experiments 1 to 7), 0.5 means half of the most it could
+              have, and 0.9 means nine-tenths of it. The number 1 is the limit itself, which no black hole quite reaches, so
+              the largest spin you can choose here is 0.99.
+            </li>
+            <li>
+              <strong>Only the spin changes.</strong> We compare the same black hole, with the same mass, at different spins.
+              That way, anything that changes in the pictures is caused by the spin and by nothing else.
+            </li>
+          </ol>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What happens.</strong> Here is the whole experiment, step by step.
+          </p>
+          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+            <li>You choose one of the three black holes from Experiment 1, and a spin.</li>
+            <li>
+              You press Run. The black hole is "spun up" from not spinning to the spin you chose, over 10 seconds. This is
+              only how the experiment is shown: the results are the same however fast or slow it plays.
+            </li>
+            <li>
+              A <strong>map</strong>, seen from above, shows the black hole's horizon and the last safe orbit for a probe
+              circling the same way as the spin, and for a probe circling the opposite way. It also shows Experiment 3's
+              distance for no spin, so you can compare.
+            </li>
+            <li>A <strong>graph</strong> shows how those distances change as the spin grows.</li>
+            <li>
+              A third picture shows how much of its energy a probe gives up on the way down to its last safe orbit, in each
+              direction.
+            </li>
+            <li>The experiment is about a small probe circling in a flat sheet, and it does not show anything inside the horizon.</li>
+          </ol>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Some words we will use.</strong> The <strong>spin</strong> is the number described above. A probe can
+            circle <strong>with the spin</strong>, which means the same way the black hole turns, or{' '}
+            <strong>against the spin</strong>, which means the opposite way. The probe circles in the flat sheet that cuts
+            through the black hole halfway between its two poles (the two ends of the line it turns around), just as the
+            Earth's equator does for the Earth. Three words come from earlier experiments: the <strong>horizon</strong>,
+            the one-way boundary of a black hole; the <strong>horizon radius</strong>, the distance from the black hole's
+            center to its horizon; and the <strong>last safe orbit</strong>, described above. A spinning black hole's
+            horizon is not always the same size as one that does not spin, so we need one fixed unit. We call it the{' '}
+            <strong>reference radius</strong>: the horizon radius that the same black hole would have if it did not spin.
+            It is 29.5 km for the 10-Sun black hole, and the numbers on the map are all in reference radii, measured from
+            the center. Finally, every object has energy stored in its mass, just because it has mass (it is called its{' '}
+            <strong>rest-mass energy</strong>). Think of a ball at the top of a hill: when it rolls down, it gives up some
+            of its stored energy on the way, and the energy turns into speed and heat. In the third picture, a probe slowly
+            spiraling down gives up some of its rest-mass energy in the same way, and we show the share it gives up as a
+            percentage.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What this builds on.</strong> Experiment 3 found the last safe orbit at 3 horizon radii for a black hole
+            that does not spin, and its map is the dashed ring here. Experiment 1 gave the horizon radius and the three
+            black holes.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make four predictions. Then choose a black hole and a spin, and run it. Try
+            other black holes and spins too, and compare.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> Where the two colored rings are compared with the dashed ring, what happens to
+            the black disk, and how the two energy bars compare with the dashed line.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>This is a thought experiment about a small probe</strong> circling in the flat sheet through the black
+              hole's equator. The probe's own gravity does not matter.
+            </li>
+            <li>
+              <strong>The equations are given, not derived.</strong> They are the standard ones for a spinning black hole
+              with no electric charge.
+            </li>
+            <li>
+              <strong>The spin stays below 1,</strong> because the equations describe spins up to, but not including, 1.
+            </li>
+            <li>
+              <strong>The last safe orbit means the same as in Experiment 3.</strong> The experiment places it using the
+              given equations. It does not follow a probe's path to show it.
+            </li>
+            <li>
+              <strong>Spin does not change the black hole's mass</strong> here. The same black hole is compared at different
+              spins, which is why distances are in reference radii.
+            </li>
+            <li>
+              <strong>The energy a probe gives up</strong> is for one that slowly spirals down through safe circular orbits
+              from far away. Where that energy goes is not modeled.
+            </li>
+            <li>
+              <strong>The experiment stops at the horizon.</strong> Nothing inside it is modeled.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             Suppose the black hole spins and a probe circles the same way as the spin. Compared with a black hole that does
@@ -725,7 +857,7 @@ export function SpinningBlackHoleExperiment({ onComplete }: SpinningBlackHoleExp
               </p>
               <p style={{ margin: 0 }}>
                 <strong>A limit.</strong> This is a map of where the edges are, not a path. It does not show a probe moving,
-                and it follows probes circling in the flat sheet through the black hole's equator only.
+                and it applies only to probes circling in the flat sheet through the black hole's equator.
               </p>
             </div>
 
