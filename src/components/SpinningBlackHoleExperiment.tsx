@@ -869,11 +869,43 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
                 derived here, say where the horizon and the two safe-orbit edges are for each spin. The picture draws what they
                 give. Why the direction of the circling matters is not shown here.
               </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>4. How the picture shows it.</strong> When you press Run, the black hole is spun up from 0 to the spin
-                you chose. Watch each ring and the black disk: the dotted white ring is the horizon with no spin, so you can see
-                how much the real horizon has shrunk. Each ring is joined by a thin line to a label that gives its distance.
+              <p style={{ ...CAPTION_PARAGRAPH_STYLE, marginBottom: '0.2rem' }}>
+                <strong>4. How the picture shows it.</strong> Read the map one part at a time:
               </p>
+              <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The black disk</strong> is the horizon, the point of no return. Its size is the horizon radius. The
+                  dotted white ring just around it marks where the horizon would be with no spin, so the thin band between
+                  the dotted ring and the edge of the disk shows how much the horizon has shrunk. With no spin there is no
+                  band.
+                </li>
+                <li>
+                  <strong>The dashed grey ring</strong> is Experiment 3's last safe orbit, for a black hole that does not
+                  spin. It never moves, so use it as a yardstick: a ring inside it is closer to the black hole than the
+                  no-spin edge, and a ring outside it is farther away.
+                </li>
+                <li>
+                  <strong>The green ring and the rose ring</strong> are the last safe orbits for the two directions. At the
+                  start of the run, when the spin is 0, they sit on the dashed ring. As the spin rises, watch which one
+                  moves in and which moves out, and how the gap between the two grows.
+                </li>
+                <li>
+                  <strong>The small arrows</strong> show which way a probe goes round on each ring. The green arrow points
+                  the same way as the arrow in the top left corner, which is the way the black hole turns, and the rose
+                  arrow points the opposite way.
+                </li>
+                <li>
+                  <strong>The labels</strong> are joined to their rings by thin lines. Each gives that ring's distance from the
+                  center, in reference radii. To turn it into kilometers, multiply by the length of the scale bar at the
+                  bottom (one reference radius).
+                </li>
+                <li>
+                  <strong>In this run,</strong>{' '}
+                  {result.spin === 0
+                    ? 'the spin is 0, so the green ring, the rose ring and the dashed ring all sit on top of each other at 3, and the horizon has not shrunk. Choose a spin above 0 and run again to see them separate.'
+                    : `at the end the spin is ${result.spin}: the green ring is at ${formatRadii(result.lastSafeWith)}, the rose ring is at ${formatRadii(result.lastSafeAgainst)}, and the dashed ring is still at ${formatRadii(result.noSpinLastSafe)}. The horizon is at ${formatRadii(result.horizon)} instead of 1.`}
+                </li>
+              </ul>
               <p style={{ margin: 0 }}>
                 <strong>A limit.</strong> This is a map of where the edges are, not a path. It does not show a probe moving,
                 and it applies only to probes circling in the flat sheet through the black hole's equator.
@@ -896,11 +928,38 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
                 <strong>2. What is really happening.</strong> At each spin, the three lines show the horizon and the two edges
                 that the formulas for a spinning black hole give (given, not derived here).
               </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>3. How the picture shows it.</strong> At spin 0 the green and rose lines start together on the dashed
-                line, because the direction does not matter when nothing spins. As the spin grows they separate, one going down
-                and the other going up, and the white line (the horizon) also goes down.
+              <p style={{ ...CAPTION_PARAGRAPH_STYLE, marginBottom: '0.2rem' }}>
+                <strong>3. How the picture shows it.</strong> Read the graph like this:
               </p>
+              <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Pick a spin</strong> on the horizontal axis and go straight up from it. The three lines you cross
+                  give the three distances at that spin: the white line is the horizon, the green line is the last safe orbit
+                  for a probe circling with the spin, and the rose line is the last safe orbit for one circling against it.
+                  The number beside each crossing, on the vertical axis, is that distance from the center.
+                </li>
+                <li>
+                  <strong>At the far left, the spin is 0.</strong> The green and rose lines start together on the dashed line
+                  at 3, which is Experiment 3's value, and the white line starts at 1. With nothing spinning, the direction a
+                  probe circles makes no difference.
+                </li>
+                <li>
+                  <strong>Moving to the right, the spin grows.</strong> The green line bends down, below the dashed line, so
+                  the last safe orbit gets closer to the black hole. The rose line bends up, above the dashed line, so it gets
+                  farther away. The gap between them widens. The white line bends down too: the horizon gets smaller.
+                </li>
+                <li>
+                  <strong>The white dots</strong> mark where each line is at the spin the run has reached. During Run they
+                  slide along the lines from left to right, and at the end they stop at the spin you chose. The lines
+                  themselves are drawn all the way to that spin.
+                </li>
+                <li>
+                  <strong>In this run,</strong>{' '}
+                  {result.spin === 0
+                    ? 'the spin is 0, so each line is only a single point at the left edge: horizon 1, green 3, rose 3.'
+                    : `at a spin of ${result.spin} the horizon is at ${formatRadii(result.horizon)}, the green line is at ${formatRadii(result.lastSafeWith)} and the rose line is at ${formatRadii(result.lastSafeAgainst)}, in reference radii.`}
+                </li>
+              </ul>
               <p style={{ margin: 0 }}>
                 <strong>A limit.</strong> The lines show where the edges are, not how a probe gets there.
               </p>
@@ -923,10 +982,37 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
                 give the energy of a circular orbit at each distance. The share given up is what is lost between far away and
                 the last safe orbit. Where that energy goes is not shown.
               </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>3. How the picture shows it.</strong> Compare each bar with the dashed line, and watch how each bar and
-                each dot move as the spin grows. Then compare the energy with where the matching ring was on the map.
+              <p style={{ ...CAPTION_PARAGRAPH_STYLE, marginBottom: '0.2rem' }}>
+                <strong>3. How the picture shows it.</strong> Read the picture in this order:
               </p>
+              <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The height of a bar</strong> is the share of its rest-mass energy that probe gives up, read against
+                  the percentage scale on the left. A taller bar means more energy given up. The labels over the bars give
+                  the exact percentages.
+                </li>
+                <li>
+                  <strong>The dashed grey line</strong> is the share with no spin, about 5.7%. A bar that rises above the line
+                  gives up more than a probe would with no spin, and a bar that stops below it gives up less. With no spin,
+                  both bars reach the line.
+                </li>
+                <li>
+                  <strong>The two curves on the right</strong> show the same two shares for every spin, from 0 on the left to
+                  1 on the right. Each bar is as tall as its curve is at the spin the run has reached, which is where the white
+                  dots are. Follow each curve from the left: the green curve rises, and it rises faster and faster toward the
+                  right, while the rose curve falls a little and then flattens out.
+                </li>
+                <li>
+                  <strong>Compare with the map.</strong> For each direction, ask whether the taller bar goes with the ring that
+                  is closer to the black hole or the one that is farther away.
+                </li>
+                <li>
+                  <strong>In this run,</strong>{' '}
+                  {result.spin === 0
+                    ? `the spin is 0, so both bars are ${formatPercent(result.energyReleasedWith)}, level with the dashed line.`
+                    : `at a spin of ${result.spin} the probe circling with the spin gives up ${formatPercent(result.energyReleasedWith)} and the one circling against it gives up ${formatPercent(result.energyReleasedAgainst)}, where with no spin it is ${formatPercent(result.noSpinEnergyReleased)}.`}
+                </li>
+              </ul>
               <p style={{ margin: 0 }}>
                 <strong>A limit.</strong> This assumes the probe descends gradually, through safe circular orbits, and it does
                 not say where the energy goes or how a real black hole's surroundings behave.
