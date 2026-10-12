@@ -791,20 +791,41 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
                 is why the hatched zone between about 2 and 3 is marked as not known.
               </p>
               <p style={{ ...CAPTION_PARAGRAPH_STYLE, marginBottom: '0.2rem' }}>
-                <strong>3. How the picture shows it.</strong> Read the ladder like this:
+                <strong>3. How the picture shows it.</strong> Read the ladder one step at a time:
               </p>
               <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>Find the marker.</strong> The zone it is over tells you what, if anything, holds that core up. The
-                  key under the bar says what each zone means.
+                  <strong>The bar is a ruler for the core's mass.</strong> The smallest mass is on the left ({MIN_CORE_MASS} Suns)
+                  and the largest is on the right ({MAX_CORE_MASS} Suns), and the numbers under the bar are the marks. The marks are
+                  not evenly spaced, because each step to the right is a bigger jump in mass. That way the bar has room for
+                  small cores and for big ones.
                 </li>
                 <li>
-                  <strong>Read the three edges.</strong> The dashed lines mark 1.44, about 2 and about 3 Suns. Each one is a
-                  mass at which one kind of push runs out.
+                  <strong>The white marker shows the core you chose.</strong> It points to its mass on the ruler, and its label
+                  says the mass in Suns.
                 </li>
                 <li>
-                  <strong>Notice the hatched zone.</strong> It is the only zone drawn as not known. There, a neutron star might
-                  hold the core, or nothing might.
+                  <strong>The color under the marker tells you what holds that core up.</strong> Blue means the push of
+                  electrons holds it: a white dwarf. Violet means the push of neutrons holds it: a neutron star. The hatched
+                  zone means that nobody knows for sure. Black means that no known push holds it, so it becomes a black hole.
+                  The key under the bar says the same in words.
+                </li>
+                <li>
+                  <strong>The dashed lines are the edges between the zones.</strong> Each edge is the heaviest core that one
+                  kind of push can hold up. At {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns the push of electrons gives out. At about{' '}
+                  {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} Suns we are still sure that neutrons can hold a core up (neutron stars a
+                  little over 2 Suns have been measured). At about {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns the theory says that
+                  even neutrons can no longer hold it.
+                </li>
+                <li>
+                  <strong>The hatched zone is "not known" on purpose.</strong> Between about {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES}{' '}
+                  and {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, scientists cannot yet say whether a core is held up or not,
+                  because the matter inside a neutron star is not fully understood. The picture shows this as unknown instead
+                  of pretending to know.
+                </li>
+                <li>
+                  <strong>Try this:</strong> run 0.6, then 1.8, then 2.5, then 3.5, and watch the marker cross from blue to
+                  violet to hatched to black.
                 </li>
                 <li>
                   <strong>In this run,</strong> your core of {formatNumber(result.coreMassSolarMasses)} Suns is{' '}
@@ -840,20 +861,37 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
               </p>
               <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>The ring</strong> marks the horizon radius. It moves to the right for a heavier core, because a
-                  heavier core has a bigger horizon.
+                  <strong>How the ruler works.</strong> The marks are 0.1, 1, 10, 100, 1,000, 10,000 and 100,000 km, and each
+                  one is ten times the one before. The distance on the screen from 1 to 10 km is the same as from 1,000 to
+                  10,000 km, even though the first step covers 9 km and the second covers 9,000. That is how one ruler can show
+                  a neutron star's radius of about 12 km and a white dwarf's radius of thousands of km at the same time.
                 </li>
                 <li>
-                  <strong>The ball</strong> starts at the far right and shrinks. Watch where it stops, and how far it is from
-                  the ring. The farther to the right of the ring, the more room there is before the core would be a black hole.
+                  <strong>The ring is the horizon radius.</strong> It is the size the core would have to be squeezed inside to
+                  be a black hole. A heavier core has a bigger horizon, so the ring sits farther to the right for a heavier core.
                 </li>
                 <li>
-                  <strong>The numbers under the ruler</strong> give the horizon radius, the core's radius and how many times
-                  wider than its horizon the core is.
+                  <strong>The ball is the core's own radius.</strong> It starts at the far right, because the core starts large,
+                  and moves left as the core is squeezed. It stops where something holds the core up, and that spot is the
+                  core's size at the end.
                 </li>
                 <li>
-                  <strong>If nothing holds the core,</strong> the ball does not stop: it shrinks past the ring, into the black
-                  area, and becomes a black hole.
+                  <strong>The gap between the ball and the ring is the room left before a black hole.</strong> The number
+                  under the ruler says how many times as wide as its horizon the core is. A ratio of 2.5, for example, means the
+                  core is 2.5 times as wide as its horizon, so it would have to be squeezed to 2.5 times smaller to become a
+                  black hole. For a white dwarf the ratio is in the hundreds or thousands: it is very far from a black hole.
+                </li>
+                <li>
+                  <strong>The black area is inside the horizon.</strong> Any size to the left of the ring is smaller than the
+                  horizon radius. A core squeezed into that area is a black hole.
+                </li>
+                <li>
+                  <strong>If nothing holds the core up, the ball does not stop.</strong> It keeps moving left, past the ring and
+                  into the black area.
+                </li>
+                <li>
+                  <strong>Try this:</strong> run 1.4, then 1.8, and compare where the ball stops and how far it is from the
+                  ring. Then run 3.5 and watch what changes.
                 </li>
                 <li>
                   <strong>In this run,</strong>{' '}
@@ -888,16 +926,32 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
               </p>
               <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>Start at the left and move right,</strong> along the blue curve. As the mass grows, the curve falls:
-                  a heavier white dwarf is smaller, not bigger.
+                  <strong>What a point on the curve means.</strong> Pick a mass on the bottom axis and go straight up to the blue
+                  curve. The height there, read on the side axis, is the radius of a white dwarf of that mass.
                 </li>
                 <li>
-                  <strong>The curve falls faster and faster</strong> near the limit, and reaches zero at 1.44 Suns. Past that
-                  mass, electrons cannot hold the core up, so there is no white dwarf.
+                  <strong>Follow the curve from left to right.</strong> It goes down, so each extra bit of mass makes a
+                  smaller white dwarf, not a bigger one. In the model, a white dwarf of 0.6 Suns has a radius of{' '}
+                  {formatKm(radiusLight)}, one of 1.0 Sun has {formatKm(radiusMiddle)}, and one of 1.4 Suns has{' '}
+                  {formatKm(radiusHeavy)}.
                 </li>
                 <li>
-                  <strong>The white dot</strong> is your core, if it is a white dwarf. If your core is heavier than 1.44 Suns,
-                  there is no dot, and the picture says so.
+                  <strong>The curve falls faster and faster near the end.</strong> It reaches zero at the dashed white line, at{' '}
+                  {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns. A white dwarf cannot be heavier than that, so there is no blue curve
+                  to the right of the line.
+                </li>
+                <li>
+                  <strong>The dashed violet line is a neutron star.</strong> Its radius, {NEUTRON_STAR_RADIUS_KM} km, is less
+                  than a thousandth of the height of this graph, so it sits on the bottom edge. It looks like zero, but it is
+                  not: it is just tiny next to a white dwarf.
+                </li>
+                <li>
+                  <strong>The white dot is your core.</strong> It shows your core's mass and radius on the curve. If your core is
+                  heavier than {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns, it is not a white dwarf, so there is no dot, and the picture
+                  says so.
+                </li>
+                <li>
+                  <strong>Try this:</strong> run 0.6, then 1.0, then 1.4, and watch the dot slide down the curve.
                 </li>
                 <li>
                   <strong>In this run,</strong>{' '}
