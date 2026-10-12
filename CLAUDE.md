@@ -772,7 +772,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 5 | Dark energy: is the expansion speeding up? | `05-dark-energy.md` | Complete (wording approved) |
 | 6 | How old is the universe? | `06-age-of-the-universe.md` | Complete (wording approved) |
 | 7 | Gravitational lensing | `07-gravitational-lensing.md` | Complete (wording approved) |
-| 8 | How far can we see? The observable universe | `08-observable-universe.md` | Complete (wording approved); open item: spec says "about 2.5%", computed figure is 2.4% |
+| 8 | How far can we see? The observable universe | `08-observable-universe.md` | Complete (wording approved) |
 | 9 | How did galaxies form? Structure formation | `09-structure-formation.md` | Complete (wording approved) |
 | 10 | The fate of the universe | `10-fate-of-the-universe.md` | Complete (wording approved); chapter summary text still carries a "draft placeholder" comment in `src/App.tsx` |
 | - | Closing synthesis ("Putting It All Together"), a section on Experiment 10's page, not an experiment | `closing-synthesis.md` | Complete (wording approved) |
