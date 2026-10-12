@@ -13,6 +13,7 @@ import {
   receivedWavelengthNm,
   runColorOfTheFallExperiment,
   stretchFactor,
+  stretchFactorSteps,
 } from './colorOfTheFallExperiment'
 
 const closeTo = (actual: number, expected: number, relative: number) =>
@@ -46,6 +47,31 @@ describe('the stretch factor, restated from Experiment 6 and checked against its
     expect(() => stretchFactor(10, 11)).toThrow(RangeError)
     expect(() => stretchFactor(1, 1)).toThrow(RangeError)
     expect(() => stretchFactor(Number.NaN, 2)).toThrow(RangeError)
+  })
+})
+
+describe('the worked steps of the stretch factor', () => {
+  it('gives 1.581 and 870 nm at 5 horizon radii from a release at 10', () => {
+    const steps = stretchFactorSteps(10, 5)
+    closeTo(steps.stretch, 1.581, 0.001)
+    closeTo(steps.wavelengthNm, 870, 0.001)
+  })
+
+  it('agrees with the formula written in one piece, and with the energy and roots it shows', () => {
+    for (const [r0, r] of [[10, 5], [100, 1.5], [2, 1.5], [20, 1.0001], [10, 10]]) {
+      const steps = stretchFactorSteps(r0, r)
+      expect(steps.stretch / stretchFactor(r0, r)).toBeCloseTo(1, 12)
+      expect(steps.wavelengthNm / receivedWavelengthNm(r0, r)).toBeCloseTo(1, 12)
+      expect(steps.energy).toBeCloseTo(Math.sqrt(1 - 1 / r0), 12)
+      expect(steps.speedTerm).toBeCloseTo(Math.sqrt(1 / r - 1 / r0), 12)
+      expect(steps.rootGravity).toBeCloseTo(Math.sqrt(1 - 1 / r), 12)
+      closeTo((steps.energy + steps.speedTerm) / steps.rootGravity ** 2, steps.stretch, 1e-12)
+    }
+  })
+
+  it('rejects a distance at the horizon or beyond the release distance', () => {
+    expect(() => stretchFactorSteps(10, 1)).toThrow(RangeError)
+    expect(() => stretchFactorSteps(10, 11)).toThrow(RangeError)
   })
 })
 
