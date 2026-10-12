@@ -8,7 +8,6 @@ import {
   SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
   SURE_NEUTRON_STAR_TOP_SOLAR_MASSES,
   HORIZON_KM_PER_SOLAR_MASS,
-  coreOutcome,
   runBlackHoleFormationExperiment,
   whiteDwarfRadiusKm,
   whiteDwarfRadiusSteps,
@@ -37,12 +36,14 @@ const sizeChoices: Array<{ value: SizeChoice; label: string }> = [
   { value: 'smaller', label: 'It gets smaller' },
 ]
 
-type HoldChoice = 'always' | 'no-limit-known' | 'depends-on-size'
-const holdChoices: Array<{ value: HoldChoice; label: string }> = [
-  { value: 'always', label: 'Yes, something always can' },
-  { value: 'no-limit-known', label: 'No, past some mass nothing known can' },
-  { value: 'depends-on-size', label: "Only up to a limit that depends on the star's size" },
+type ThresholdChoice = 'about-one' | 'about-three' | 'about-thirty'
+const thresholdChoices: Array<{ value: ThresholdChoice; label: string }> = [
+  { value: 'about-one', label: 'About the mass of the Sun (1 Sun)' },
+  { value: 'about-three', label: "About 3 times the Sun's mass (3 Suns)" },
+  { value: 'about-thirty', label: "About 30 times the Sun's mass (30 Suns)" },
 ]
+// The mass each choice names, in Suns, for working out which one the model's black hole edge is nearest to.
+const THRESHOLD_MASS: Record<ThresholdChoice, number> = { 'about-one': 1, 'about-three': 3, 'about-thirty': 30 }
 
 type LimitChoice = 'higher' | 'same' | 'lower'
 const limitChoices: Array<{ value: LimitChoice; label: string }> = [
@@ -422,14 +423,14 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
   const [runCount, setRunCount] = useState(0)
 
   const [sizePrediction, setSizePrediction] = useState<SizeChoice | null>(null)
-  const [holdPrediction, setHoldPrediction] = useState<HoldChoice | null>(null)
+  const [thresholdPrediction, setThresthresholdPrediction] = useState<ThresholdChoice | null>(null)
   const [limitPrediction, setLimitPrediction] = useState<LimitChoice | null>(null)
   const [submittedSize, setSubmittedSize] = useState<SizeChoice | null>(null)
-  const [submittedHold, setSubmittedHold] = useState<HoldChoice | null>(null)
+  const [submittedThreshold, setSubmittedThreshold] = useState<ThresholdChoice | null>(null)
   const [submittedLimit, setSubmittedLimit] = useState<LimitChoice | null>(null)
 
-  const hasPrediction = sizePrediction !== null && holdPrediction !== null && limitPrediction !== null
-  const hasSubmittedPrediction = submittedSize !== null && submittedHold !== null && submittedLimit !== null
+  const hasPrediction = sizePrediction !== null && thresholdPrediction !== null && limitPrediction !== null
+  const hasSubmittedPrediction = submittedSize !== null && submittedThreshold !== null && submittedLimit !== null
 
   const result = useMemo(() => runBlackHoleFormationExperiment(mass), [mass])
   const showResults = status === 'complete' && hasSubmittedPrediction
@@ -443,7 +444,13 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
   const radiusMiddle = whiteDwarfRadiusKm(1)
   const radiusHeavy = whiteDwarfRadiusKm(1.4)
   const sizeModel: SizeChoice = radiusMiddle < radiusLight ? 'smaller' : radiusMiddle > radiusLight ? 'bigger' : 'same'
-  const holdModel: HoldChoice = coreOutcome(MAX_CORE_MASS) === 'black-hole' ? 'no-limit-known' : 'always'
+  // The choice nearest (in ratio) to the mass above which nothing known holds a core up.
+  const thresholdModel = (Object.keys(THRESHOLD_MASS) as ThresholdChoice[]).reduce((best, choice) =>
+    Math.abs(Math.log(THRESHOLD_MASS[choice] / SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES)) <
+    Math.abs(Math.log(THRESHOLD_MASS[best] / SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES))
+      ? choice
+      : best,
+  )
   const limitModel: LimitChoice =
     SURE_NEUTRON_STAR_TOP_SOLAR_MASSES > CHANDRASEKHAR_LIMIT_SOLAR_MASSES ? 'higher' : SURE_NEUTRON_STAR_TOP_SOLAR_MASSES < CHANDRASEKHAR_LIMIT_SOLAR_MASSES ? 'lower' : 'same'
 
@@ -457,7 +464,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
     if (!hasPrediction || status === 'running') return
     if (!hasSubmittedPrediction) {
       setSubmittedSize(sizePrediction)
-      setSubmittedHold(holdPrediction)
+      setSubmittedThreshold(thresholdPrediction)
       setSubmittedLimit(limitPrediction)
     }
     setStatus('running')
@@ -469,7 +476,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
   // core mass.
   const handleChangePrediction = () => {
     setSubmittedSize(null)
-    setSubmittedHold(null)
+    setSubmittedThreshold(null)
     setSubmittedLimit(null)
     setStatus('idle')
     setProgress(0)
@@ -650,16 +657,17 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
           </div>
 
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            If you keep adding mass to a dead star's core, can something always hold it up?
+            At about what mass do you think a dead star's core first becomes a black hole? (This is the mass of the core, not of
+            the whole star.)
           </p>
           <div style={{ marginBottom: '0.5rem' }}>
-            {holdChoices.map((choice) => (
+            {thresholdChoices.map((choice) => (
               <button
                 key={choice.value}
                 type="button"
-                onClick={() => setHoldPrediction(choice.value)}
+                onClick={() => setThresthresholdPrediction(choice.value)}
                 disabled={hasSubmittedPrediction}
-                className={`toggle-button${holdPrediction === choice.value ? ' is-selected' : ''}`}
+                className={`toggle-button${thresholdPrediction === choice.value ? ' is-selected' : ''}`}
                 style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
               >
                 {choice.label}
@@ -689,7 +697,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {hasPrediction || hasSubmittedPrediction
               ? `Your predictions: ${sizeChoices.find((c) => c.value === (sizePrediction ?? submittedSize))!.label}; ${
-                  holdChoices.find((c) => c.value === (holdPrediction ?? submittedHold))!.label
+                  thresholdChoices.find((c) => c.value === (thresholdPrediction ?? submittedThreshold))!.label
                 }; ${limitChoices.find((c) => c.value === (limitPrediction ?? submittedLimit))!.label}`
               : 'Answer all three questions to continue'}
           </p>
@@ -948,18 +956,19 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
                     )}
                   </p>
                   <p>
-                    <strong>Checking your second prediction:</strong> asked whether something can always hold up a core as its
-                    mass grows, you answered "{holdChoices.find((c) => c.value === submittedHold)!.label}". In the model,
+                    <strong>Checking your second prediction:</strong> asked at about what mass a dead star's core first becomes a
+                    black hole, you answered "{thresholdChoices.find((c) => c.value === submittedThreshold)!.label}". In the model,
                     electrons hold a core up below {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns, neutrons hold it up to about{' '}
                     {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} Suns (the model calls what lies between about{' '}
                     {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} and {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns not known), and above about{' '}
-                    {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns nothing known holds it up: a core of {MAX_CORE_MASS} Suns is a
-                    black hole.{' '}
+                    {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns nothing known holds it up. So a core first becomes a black hole at
+                    about {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, and perhaps a little sooner, since the stretch between about{' '}
+                    {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} and {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns is not known.{' '}
                     {verdict(
-                      submittedHold === holdModel,
-                      submittedHold === 'always'
-                        ? `Past about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, nothing known can hold the core up.`
-                        : `In this model it depends on the core's mass: past about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, nothing known can hold the core up.`,
+                      submittedThreshold === thresholdModel,
+                      submittedThreshold === 'about-one'
+                        ? `A core of about 1 Sun is a white dwarf: it takes about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns before nothing known can hold the core up.`
+                        : `A core does not need to be that heavy: above about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, nothing known holds it up.`,
                     )}
                   </p>
                   <p>
@@ -1099,9 +1108,9 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
         <BlackHoleFormationTutor
           key={runCount}
           predictedSize={submittedSize}
-          predictedHold={submittedHold}
+          predictedThreshold={submittedThreshold}
           predictedLimit={submittedLimit}
-          matches={{ size: submittedSize === sizeModel, hold: submittedHold === holdModel, limit: submittedLimit === limitModel }}
+          matches={{ size: submittedSize === sizeModel, threshold: submittedThreshold === thresholdModel, limit: submittedLimit === limitModel }}
           onExplained={() => onTutorComplete?.()}
         />
       )}

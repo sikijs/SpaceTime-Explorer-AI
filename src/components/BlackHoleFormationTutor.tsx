@@ -9,16 +9,16 @@ import {
 } from '../physics/blackHoleFormationExperiment'
 
 type SizeChoice = 'bigger' | 'same' | 'smaller'
-type HoldChoice = 'always' | 'no-limit-known' | 'depends-on-size'
+type ThresholdChoice = 'about-one' | 'about-three' | 'about-thirty'
 type LimitChoice = 'higher' | 'same' | 'lower'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface BlackHoleFormationTutorProps {
   predictedSize: SizeChoice
-  predictedHold: HoldChoice
+  predictedThreshold: ThresholdChoice
   predictedLimit: LimitChoice
   // Whether each prediction matched the model, worked out once, in the experiment (the same sentences as its Results).
-  matches: { size: boolean; hold: boolean; limit: boolean }
+  matches: { size: boolean; threshold: boolean; limit: boolean }
   onExplained?: () => void
 }
 
@@ -28,10 +28,10 @@ const sizeClauses: Record<SizeChoice, string> = {
   smaller: 'a white dwarf would get smaller as mass is added',
 }
 
-const holdClauses: Record<HoldChoice, string> = {
-  always: 'something could always hold a core up',
-  'no-limit-known': 'past some mass nothing known could hold a core up',
-  'depends-on-size': "something could hold a core up only up to a limit that depends on the star's size",
+const thresholdClauses: Record<ThresholdChoice, string> = {
+  'about-one': "a core would first become a black hole at about the mass of the Sun",
+  'about-three': "a core would first become a black hole at about 3 times the Sun's mass",
+  'about-thirty': "a core would first become a black hole at about 30 times the Sun's mass",
 }
 
 const limitClauses: Record<LimitChoice, string> = {
@@ -50,7 +50,7 @@ const fmtKm = (km: number) => `${fmt(km)} km`
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-export function BlackHoleFormationTutor({ predictedSize, predictedHold, predictedLimit, matches, onExplained }: BlackHoleFormationTutorProps) {
+export function BlackHoleFormationTutor({ predictedSize, predictedThreshold, predictedLimit, matches, onExplained }: BlackHoleFormationTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -102,7 +102,7 @@ export function BlackHoleFormationTutor({ predictedSize, predictedHold, predicte
             {tutorStep === 'observe' &&
               'Look at the ladder and the size picture. Try a few masses. What changes in the pictures as the core gets heavier, and where does the ball stop?'}
             {tutorStep === 'compare' &&
-              `You predicted that ${sizeClauses[predictedSize]} (${verdict(matches.size)}); that ${holdClauses[predictedHold]} (${verdict(matches.hold)}); and that ${limitClauses[predictedLimit]} (${verdict(matches.limit)}). Comparing that to what you saw, what do you notice?`}
+              `You predicted that ${sizeClauses[predictedSize]} (${verdict(matches.size)}); that ${thresholdClauses[predictedThreshold]} (${verdict(matches.threshold)}); and that ${limitClauses[predictedLimit]} (${verdict(matches.limit)}). Comparing that to what you saw, what do you notice?`}
             {tutorStep === 'conceptual' && 'A heavier white dwarf is smaller, not bigger. Why might adding mass make it shrink?'}
           </p>
 
