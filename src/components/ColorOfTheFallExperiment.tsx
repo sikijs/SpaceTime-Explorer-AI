@@ -442,7 +442,7 @@ function WavelengthGraph({ result, progress }: { result: ColorOfTheFallResult; p
       <g clipPath="url(#wavelength-plot)">
         <polyline points={line} fill="none" stroke={RECEIVED_COLOR} strokeWidth={3.5} />
       </g>
-      <text x={xFor(lastPoint.gap) - 6} y={yFor(lastPoint.wavelengthNm) + 14} fill={RECEIVED_COLOR} fontSize="10" textAnchor="end">
+      <text x={xFor(lastPoint.gap) - 12} y={yFor(lastPoint.wavelengthNm) - 8} fill={RECEIVED_COLOR} fontSize="10" textAnchor="end">
         keeps going, no limit
       </text>
       {progress > 0 && <circle cx={xFor(gap)} cy={yFor(wavelength)} r={5} fill="#ffffff" stroke={RECEIVED_COLOR} strokeWidth={2} />}
@@ -617,7 +617,8 @@ export function ColorOfTheFallExperiment({ onComplete, onTutorComplete }: ColorO
             distance from the black hole's center to its horizon; and the <strong>stretch factor</strong>, how many times
             as long the gap between two flashes is when they are received, compared with when they were sent. We also
             use the <strong>gap above the horizon</strong>: how far the traveler is above the horizon, measured in
-            horizon radii (their distance from the center, minus 1).
+            horizon radii (their distance from the center, minus 1). This is a distance, not the time between two
+            flashes.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What this builds on.</strong> Experiment 6 followed flashes of light from the falling traveler, and
@@ -884,8 +885,8 @@ export function ColorOfTheFallExperiment({ onComplete, onTutorComplete }: ColorO
                 <strong>The gap above the horizon.</strong> This is the horizontal axis. It means how far the traveler is
                 above the horizon, measured in horizon radii. It is the traveler's distance from the center of the black
                 hole, minus 1 (the horizon is 1 horizon radius from the center). For example, a traveler 10 horizon radii
-                from the center is 9 horizon radii above the horizon, and at 1.0001 from the center the gap is 0.0001. The
-                traveler starts at the left and falls to the right, so the gap shrinks. Each step to the right is ten times
+                from the center is 9 horizon radii above the horizon, and at 1.0001 from the center the gap is 0.0001. This is a
+                distance, not a time. The traveler starts at the left and falls to the right, so the gap shrinks. Each step to the right is ten times
                 smaller.
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
