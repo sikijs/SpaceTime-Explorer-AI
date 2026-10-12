@@ -48,6 +48,10 @@ function fmtDistance(km: number): string {
   return `${fmt(km)} km`
 }
 
+// The two spins the explanation uses: the specification's reference case, and the fast one for the horizon.
+const REFERENCE_SPIN = 0.9
+const FAST_SPIN = 0.99
+
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
 export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predictedHorizon, predictedEnergy, matches, onExplained }: SpinningBlackHoleTutorProps) {
@@ -70,14 +74,14 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
 
   const isResponseEmpty = responseInput.trim() === ''
 
-  // Numbers for the explanation come from the experiment's own model, for a spin of 0.9 (the specification's reference
+  // Numbers for the explanation come from the experiment's own model, for a spin of 0.9 (REFERENCE_SPIN, the specification's reference
   // case), never typed in by hand.
-  const reference = runSpinningBlackHoleExperiment('stellar-black-hole', 0.9)
-  const fast = runSpinningBlackHoleExperiment('stellar-black-hole', 0.99)
-  const withSteps = energyReleasedSteps(0.9, 'with')
-  const againstSteps = energyReleasedSteps(0.9, 'against')
+  const reference = runSpinningBlackHoleExperiment('stellar-black-hole', REFERENCE_SPIN)
+  const fast = runSpinningBlackHoleExperiment('stellar-black-hole', FAST_SPIN)
+  const withSteps = energyReleasedSteps(REFERENCE_SPIN, 'with')
+  const againstSteps = energyReleasedSteps(REFERENCE_SPIN, 'against')
   const noSpinSteps = energyReleasedSteps(0, 'with')
-  const holes = BLACK_HOLE_PRESETS.map((p) => runSpinningBlackHoleExperiment(p.id, 0.9))
+  const holes = BLACK_HOLE_PRESETS.map((p) => runSpinningBlackHoleExperiment(p.id, REFERENCE_SPIN))
   const label = (h: (typeof holes)[number]) => h.preset.label.replace(/^A /, 'a ')
   const verdict = (right: boolean) => (right ? 'right' : 'off this time')
 
@@ -106,7 +110,7 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
             {tutorStep === 'compare' &&
               `You predicted that, circling with the spin, ${edgeClauses[predictedWith]} (${verdict(matches.with)}); that, circling against the spin, ${edgeClauses[predictedAgainst]} (${verdict(matches.against)}); that the horizon would ${horizonClauses[predictedHorizon]} (${verdict(matches.horizon)}); and that ${energyClauses[predictedEnergy]} (${verdict(matches.energy)}). Comparing that to what you saw, what do you notice?`}
             {tutorStep === 'conceptual' &&
-              `At a spin of 0.9, a probe circling with the spin has its last safe orbit at ${fmt2(reference.lastSafeWith)} reference radii, closer in than the 3 of Experiment 3. A probe circling against the spin has it at ${fmt2(reference.lastSafeAgainst)}, farther out. It is the same black hole with the same mass. Why might the direction of the probe's circling matter?`}
+              `At a spin of ${REFERENCE_SPIN}, a probe circling with the spin has its last safe orbit at ${fmt2(reference.lastSafeWith)} reference radii, closer in than the ${fmt(reference.noSpinLastSafe)} of Experiment 3. A probe circling against the spin has it at ${fmt2(reference.lastSafeAgainst)}, farther out. It is the same black hole with the same mass. Why might the direction of the probe's circling matter?`}
           </p>
 
           <textarea
@@ -151,7 +155,7 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
           <p style={paragraphStyle}>
             <strong>1. A black hole can spin, and one number describes how much.</strong> The spin runs from 0 (not
             spinning, the black holes of Experiments 1 to 7) up to just under 1, the most spin a black hole of that mass can
-            have. A spin of 0.9 is nine-tenths of that limit. It cannot be seen turning, because a black hole has no
+            have. A spin of {REFERENCE_SPIN} is {Math.round(REFERENCE_SPIN * 100)}% of that limit. It cannot be seen turning, because a black hole has no
             surface. It shows up in the gravity around it.
           </p>
           <p style={paragraphStyle}>
@@ -170,8 +174,8 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
             say, not a derivation of them.
           </p>
           <p style={paragraphStyle}>
-            <strong>4. The numbers.</strong> With no spin, the last safe orbit is at 3 reference radii (Experiment 3). At a
-            spin of 0.9, a probe circling with the spin has it at {fmt2(reference.lastSafeWith)}, and a probe circling
+            <strong>4. The numbers.</strong> With no spin, the last safe orbit is at {fmt(reference.noSpinLastSafe)} reference radii (Experiment 3). At a
+            spin of {REFERENCE_SPIN}, a probe circling with the spin has it at {fmt2(reference.lastSafeWith)}, and a probe circling
             against the spin has it at {fmt2(reference.lastSafeAgainst)}. For the 10-Sun black hole, where one reference
             radius is about {fmt(reference.referenceRadiusKm)} km, that is about{' '}
             {Math.round(reference.lastSafeWith * reference.referenceRadiusKm)} km and about{' '}
@@ -180,13 +184,16 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
             mass.
           </p>
           <p style={paragraphStyle}>
-            <strong>5. The horizon gets smaller as the spin grows.</strong> At a spin of 0.9 it is {fmt2(reference.horizon)}{' '}
-            reference radii instead of 1, and at 0.99 it is {fmt2(fast.horizon)}. The black hole's mass did not change. The
-            formulas give a smaller horizon for the same mass when it spins.
+            <strong>5. The horizon gets smaller as the spin grows.</strong> At a spin of {REFERENCE_SPIN} it is {fmt2(reference.horizon)}{' '}
+            reference radii instead of 1, and at {FAST_SPIN} it is {fmt2(fast.horizon)}. The black hole's mass did not change.
+            The formulas give a smaller horizon for the same mass when it spins. At {FAST_SPIN}, the last safe orbit for a
+            probe circling with the spin is at {fmt2(fast.lastSafeWith)}, which is closer in than 1, the horizon of a black
+            hole that does not spin. That is not a contradiction: this black hole's horizon is smaller, at{' '}
+            {fmt2(fast.horizon)}, and the last safe orbit stays outside it at every spin.
           </p>
           <p style={paragraphStyle}>
             <strong>6. Closer in means more energy given up.</strong> A probe that slowly spirals down to its last safe orbit
-            gives up {pct(noSpinSteps.released)} of its rest-mass energy with no spin. At a spin of 0.9 it gives up{' '}
+            gives up {pct(noSpinSteps.released)} of its rest-mass energy with no spin. At a spin of {REFERENCE_SPIN} it gives up{' '}
             {pct(withSteps.released)} circling with the spin, which is {fmt(withSteps.released / noSpinSteps.released)} times
             as much, and {pct(againstSteps.released)} circling against it. Like a ball that rolls farther down a hill, a probe
             that gets closer in has gone farther down gravity's hill, so it has given up more. (This is for a gradual descent.

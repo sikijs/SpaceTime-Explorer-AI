@@ -22,6 +22,8 @@ const REFERENCE_COLOR = '#94a3b8' // the no-spin reference (Experiment 3)
 const HORIZON_COLOR = '#e2e8f0'
 
 const SPIN_PRESETS = [0, 0.5, 0.9, 0.99]
+// The spin the Results' checks use when the learner ran a spin of 0 (where nothing differs from Experiment 3).
+const REFERENCE_SPIN = 0.9
 
 // This experiment's four prediction questions, per its specification's "Prediction Activity". Choices are not marked
 // here; they are compared with the model's results later (the Results step). Draft wording, for the owner's review
@@ -284,7 +286,7 @@ function EdgesGraph({ result, progress }: { result: SpinningBlackHoleResult; pro
   }
   const ends = [
     { color: AGAINST_COLOR, text: 'circling against the spin', y: yFor(last.lastSafeAgainst) },
-    { color: REFERENCE_COLOR, text: 'no spin: 3 (Experiment 3)', y: yFor(result.noSpinLastSafe) },
+    { color: REFERENCE_COLOR, text: `no spin: ${result.noSpinLastSafe} (Experiment 3)`, y: yFor(result.noSpinLastSafe) },
     { color: WITH_COLOR, text: 'circling with the spin', y: yFor(last.lastSafeWith) },
     { color: HORIZON_COLOR, text: 'horizon', y: yFor(last.horizon) },
   ]
@@ -463,7 +465,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
 
   // The numbers the Results need, all from the physics module (CLAUDE.md §9). The predictions are about a black hole that
   // spins, so if the chosen spin is 0 (where nothing differs from Experiment 3) they are checked against spin 0.9.
-  const compareSpin = spin > 0 ? spin : 0.9
+  const compareSpin = spin > 0 ? spin : REFERENCE_SPIN
   const compare = useMemo(() => runSpinningBlackHoleExperiment(presetId, compareSpin), [presetId, compareSpin])
   const withSteps = useMemo(() => energyReleasedSteps(compareSpin, 'with'), [compareSpin])
   const againstSteps = useMemo(() => energyReleasedSteps(compareSpin, 'against'), [compareSpin])
@@ -620,7 +622,9 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
             horizon is not always the same size as one that does not spin, so we need one fixed unit. We call it the{' '}
             <strong>reference radius</strong>: the horizon radius that the same black hole would have if it did not spin.
             It is 29.5 km for the 10-Sun black hole, and the numbers on the map are all in reference radii, measured from
-            the center. Finally, every object has energy stored in its mass, just because it has mass (it is called its{' '}
+            the center. For the two much larger black holes the distances in kilometers become huge, so we also give them
+            in <strong>AU</strong>, short for astronomical unit: the average distance from the Earth to the Sun, about 150
+            million km. Finally, every object has energy stored in its mass, just because it has mass (it is called its{' '}
             <strong>rest-mass energy</strong>). Think of a ball at the top of a hill: when it rolls down, it gives up some
             of its stored energy on the way, and the energy turns into speed and heat. In the third picture, a probe slowly
             spiraling down gives up some of its rest-mass energy in the same way, and we show the share it gives up as a
@@ -902,13 +906,15 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
                 <li>
                   <strong>In this run,</strong>{' '}
                   {result.spin === 0
-                    ? 'the spin is 0, so the green ring, the rose ring and the dashed ring all sit on top of each other at 3, and the horizon has not shrunk. Choose a spin above 0 and run again to see them separate.'
+                    ? `the spin is 0, so the green ring, the rose ring and the dashed ring all sit on top of each other at ${result.noSpinLastSafe}, and the horizon has not shrunk. Choose a spin above 0 and run again to see them separate.`
                     : `at the end the spin is ${result.spin}: the green ring is at ${formatRadii(result.lastSafeWith)}, the rose ring is at ${formatRadii(result.lastSafeAgainst)}, and the dashed ring is still at ${formatRadii(result.noSpinLastSafe)}. The horizon is at ${formatRadii(result.horizon)} instead of 1.`}
                 </li>
               </ul>
               <p style={{ margin: 0 }}>
                 <strong>A limit.</strong> This is a map of where the edges are, not a path. It does not show a probe moving,
-                and it applies only to probes circling in the flat sheet through the black hole's equator.
+                and it applies only to probes circling in the flat sheet through the black hole's equator. The "spinning up"
+                while Run plays is only a way of showing many different spins one after another: each spin is a separate
+                black hole with its own edges, and nothing in the experiment changes the spin over time.
               </p>
             </div>
 
@@ -919,9 +925,10 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>1. What is drawn.</strong> Across the bottom is the spin, from 0 (not spinning) to 1. Up the side is the
-                distance from the center, in reference radii. The white line is the horizon, the green line is the last safe
+                distance from the center, in reference radii (one reference radius is the horizon radius the black hole would
+                have if it did not spin). The white line is the horizon, the green line is the last safe
                 orbit for a probe circling with the spin, and the rose line is the last safe orbit for a probe circling against
-                it. The dashed grey line is the 3 of Experiment 3, for no spin. The lines are drawn up to the spin you chose,
+                it. The dashed grey line is the {result.noSpinLastSafe} of Experiment 3, for no spin. The lines are drawn up to the spin you chose,
                 and each dot is where that line is at the spin now.
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
@@ -940,7 +947,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
                 </li>
                 <li>
                   <strong>At the far left, the spin is 0.</strong> The green and rose lines start together on the dashed line
-                  at 3, which is Experiment 3's value, and the white line starts at 1. With nothing spinning, the direction a
+                  at {result.noSpinLastSafe}, which is Experiment 3's value, and the white line starts at 1. With nothing spinning, the direction a
                   probe circles makes no difference.
                 </li>
                 <li>
@@ -956,7 +963,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
                 <li>
                   <strong>In this run,</strong>{' '}
                   {result.spin === 0
-                    ? 'the spin is 0, so each line is only a single point at the left edge: horizon 1, green 3, rose 3.'
+                    ? `the spin is 0, so each line is only a single point at the left edge: horizon ${formatRadii(result.horizon)}, green ${formatRadii(result.lastSafeWith)}, rose ${formatRadii(result.lastSafeAgainst)}.`
                     : `at a spin of ${result.spin} the horizon is at ${formatRadii(result.horizon)}, the green line is at ${formatRadii(result.lastSafeWith)} and the rose line is at ${formatRadii(result.lastSafeAgainst)}, in reference radii.`}
                 </li>
               </ul>
@@ -992,7 +999,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
                   the exact percentages.
                 </li>
                 <li>
-                  <strong>The dashed grey line</strong> is the share with no spin, about 5.7%. A bar that rises above the line
+                  <strong>The dashed grey line</strong> is the share with no spin, about {formatPercent(result.noSpinEnergyReleased)}. A bar that rises above the line
                   gives up more than a probe would with no spin, and a bar that stops below it gives up less. With no spin,
                   both bars reach the line.
                 </li>
@@ -1069,7 +1076,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
 
                   {spin === 0 && (
                     <p>
-                      You ran a spin of 0, where nothing differs from Experiment 3, so the four checks below use a spin of 0.9
+                      You ran a spin of 0, where nothing differs from Experiment 3, so the four checks below use a spin of {REFERENCE_SPIN}
                       instead. Choose a spin above 0 and run again to see your own numbers.
                     </p>
                   )}
@@ -1166,7 +1173,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
                     </li>
                   </ol>
                   <p>
-                    For comparison, with no spin the last safe orbit is at 6M, E = {four(noSpinSteps.numerator)} ÷{' '}
+                    For comparison, with no spin the last safe orbit is at {formatNumber(noSpinSteps.lastSafeInM)}M, E = {four(noSpinSteps.numerator)} ÷{' '}
                     {four(noSpinSteps.denominator)} = {four(noSpinSteps.energy)}, and the share given up is{' '}
                     {formatPercent(noSpinSteps.released)}. So with the spin, the probe gives up{' '}
                     {four(withSteps.released)} ÷ {four(noSpinSteps.released)} ={' '}
