@@ -30,17 +30,36 @@ function checkPositive(coreMassSolarMasses: number) {
   }
 }
 
-// The radius of a white dwarf of the given mass. It falls as the mass rises, and falls to zero at the limit, so a mass at
-// or above the limit is not a white dwarf.
-export function whiteDwarfRadiusKm(coreMassSolarMasses: number): number {
+// The horizon radius for one solar mass, in km (about 2.953): the horizon radius is this times the mass in Suns.
+export const HORIZON_KM_PER_SOLAR_MASS = horizonRadiusKm(1)
+
+// The white dwarf's radius worked step by step, for the Results (so the interface does no physics, CLAUDE.md §9).
+export interface WhiteDwarfRadiusSteps {
+  massOverLimit: number // M / 1.44
+  massFactor: number // (M / M_sun)^(-1/3)
+  limitTerm: number // (M / 1.44)^(4/3)
+  squeezeFactor: number // sqrt(1 - limitTerm): it falls to zero at the limit
+  scaleKm: number // 0.0131 R_sun, in km
+  radiusKm: number // scaleKm x massFactor x squeezeFactor
+}
+
+export function whiteDwarfRadiusSteps(coreMassSolarMasses: number): WhiteDwarfRadiusSteps {
   checkPositive(coreMassSolarMasses)
   if (coreMassSolarMasses >= CHANDRASEKHAR_LIMIT_SOLAR_MASSES) {
     throw new RangeError('A white dwarf must have less than 1.44 solar masses.')
   }
-  const ratio = coreMassSolarMasses / CHANDRASEKHAR_LIMIT_SOLAR_MASSES
-  return (
-    WHITE_DWARF_COEFFICIENT_IN_SUN_RADII * SUN_RADIUS_KM * coreMassSolarMasses ** (-1 / 3) * Math.sqrt(1 - ratio ** (4 / 3))
-  )
+  const massOverLimit = coreMassSolarMasses / CHANDRASEKHAR_LIMIT_SOLAR_MASSES
+  const massFactor = coreMassSolarMasses ** (-1 / 3)
+  const limitTerm = massOverLimit ** (4 / 3)
+  const squeezeFactor = Math.sqrt(1 - limitTerm)
+  const scaleKm = WHITE_DWARF_COEFFICIENT_IN_SUN_RADII * SUN_RADIUS_KM
+  return { massOverLimit, massFactor, limitTerm, squeezeFactor, scaleKm, radiusKm: scaleKm * massFactor * squeezeFactor }
+}
+
+// The radius of a white dwarf of the given mass. It falls as the mass rises, and falls to zero at the limit, so a mass at
+// or above the limit is not a white dwarf.
+export function whiteDwarfRadiusKm(coreMassSolarMasses: number): number {
+  return whiteDwarfRadiusSteps(coreMassSolarMasses).radiusKm
 }
 
 export function coreOutcome(coreMassSolarMasses: number): CoreOutcome {

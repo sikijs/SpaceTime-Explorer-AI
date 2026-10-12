@@ -8,9 +8,11 @@ import {
   NEUTRON_STAR_RADIUS_KM,
   SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
   SURE_NEUTRON_STAR_TOP_SOLAR_MASSES,
+  HORIZON_KM_PER_SOLAR_MASS,
   coreOutcome,
   runBlackHoleFormationExperiment,
   whiteDwarfRadiusKm,
+  whiteDwarfRadiusSteps,
 } from './blackHoleFormationExperiment'
 import { horizonRadiusKm } from './blackHoleSizeExperiment'
 
@@ -125,6 +127,37 @@ describe('the white dwarf\'s radius', () => {
 
   it('throws a RangeError at or above the limit, and for a non-positive or non-finite mass', () => {
     for (const bad of [1.44, 1.5, 10, 0, -1, NaN, Infinity]) expect(() => whiteDwarfRadiusKm(bad)).toThrow(RangeError)
+  })
+})
+
+describe('the white dwarf\'s radius, worked step by step', () => {
+  it('multiplies the three factors, and equals whiteDwarfRadiusKm', () => {
+    for (const m of [0.1, 0.6, 1, 1.4]) {
+      const steps = whiteDwarfRadiusSteps(m)
+      expect(steps.radiusKm).toBeCloseTo(steps.scaleKm * steps.massFactor * steps.squeezeFactor, 9)
+      expect(steps.radiusKm).toBe(whiteDwarfRadiusKm(m))
+    }
+  })
+
+  it('has each step right at 1 Sun: mass over the limit 0.6944, mass factor 1, limit term 0.6149, squeeze factor 0.6205, scale 9,113 km, radius 5,655 km', () => {
+    const steps = whiteDwarfRadiusSteps(1)
+    expect(steps.massOverLimit).toBeCloseTo(1 / 1.44, 12)
+    expect(steps.massFactor).toBe(1)
+    expect(steps.limitTerm).toBeCloseTo((1 / 1.44) ** (4 / 3), 12)
+    closeTo(steps.limitTerm, 0.6149, 0.001)
+    closeTo(steps.squeezeFactor, 0.6205, 0.001)
+    closeTo(steps.scaleKm, 9113, 0.001)
+    closeTo(steps.radiusKm, 5655, 0.001)
+  })
+
+  it('has a squeeze factor that falls toward zero as the mass nears the limit, and throws at or above it', () => {
+    expect(whiteDwarfRadiusSteps(1.4399).squeezeFactor).toBeLessThan(0.05)
+    for (const bad of [1.44, 2, 0, NaN]) expect(() => whiteDwarfRadiusSteps(bad)).toThrow(RangeError)
+  })
+
+  it('has the horizon radius per Sun equal to Experiment 1\'s for one Sun: about 2.953 km', () => {
+    expect(HORIZON_KM_PER_SOLAR_MASS).toBe(horizonRadiusKm(1))
+    closeTo(HORIZON_KM_PER_SOLAR_MASS, 2.953, 0.001)
   })
 })
 

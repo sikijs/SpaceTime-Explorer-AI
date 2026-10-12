@@ -7,8 +7,11 @@ import {
   NEUTRON_STAR_RADIUS_KM,
   SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
   SURE_NEUTRON_STAR_TOP_SOLAR_MASSES,
+  HORIZON_KM_PER_SOLAR_MASS,
+  coreOutcome,
   runBlackHoleFormationExperiment,
   whiteDwarfRadiusKm,
+  whiteDwarfRadiusSteps,
 } from '../physics/blackHoleFormationExperiment'
 import type { CoreOutcome, CoreResult } from '../physics/blackHoleFormationExperiment'
 
@@ -426,6 +429,20 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
   const hasSubmittedPrediction = submittedSize !== null && submittedHold !== null && submittedLimit !== null
 
   const result = useMemo(() => runBlackHoleFormationExperiment(mass), [mass])
+  const showResults = status === 'complete' && hasSubmittedPrediction
+
+  // The numbers the Results need, all from the physics module (CLAUDE.md §9). The white dwarf's radius is worked at the
+  // chosen mass if it is a white dwarf, or at 1 Sun if it is not.
+  const workedMass = result.outcome === 'white-dwarf' ? result.coreMassSolarMasses : 1
+  const wdSteps = useMemo(() => whiteDwarfRadiusSteps(workedMass), [workedMass])
+  const presetRows = useMemo(() => MASS_PRESETS.map((m) => runBlackHoleFormationExperiment(m)), [])
+  const radiusLight = whiteDwarfRadiusKm(0.6)
+  const radiusMiddle = whiteDwarfRadiusKm(1)
+  const radiusHeavy = whiteDwarfRadiusKm(1.4)
+  const sizeModel: SizeChoice = radiusMiddle < radiusLight ? 'smaller' : radiusMiddle > radiusLight ? 'bigger' : 'same'
+  const holdModel: HoldChoice = coreOutcome(MAX_CORE_MASS) === 'black-hole' ? 'no-limit-known' : 'always'
+  const limitModel: LimitChoice =
+    SURE_NEUTRON_STAR_TOP_SOLAR_MASSES > CHANDRASEKHAR_LIMIT_SOLAR_MASSES ? 'higher' : SURE_NEUTRON_STAR_TOP_SOLAR_MASSES < CHANDRASEKHAR_LIMIT_SOLAR_MASSES ? 'lower' : 'same'
 
   const handleMassChange = (value: number) => {
     setMass(value)
@@ -840,6 +857,194 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
                 holds a heavier core up.
               </p>
             </div>
+
+            {showResults && (() => {
+              const four = (v: number) => v.toFixed(4)
+              const verdict = (right: boolean, wrongText: string) => (right ? 'So your prediction was right.' : `So your prediction was off this time. ${wrongText}`)
+              const heldUpText = (r: CoreResult) =>
+                r.heldUpRadiusKm === null ? 'none: nothing known holds it' : `${formatKm(r.heldUpRadiusKm)}${r.outcome === 'uncertain' ? ' if it holds' : ''}`
+              const ratioText = (r: CoreResult) => (r.radiusOverHorizon === null ? '—' : formatRatio(r.radiusOverHorizon))
+              return (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
+                  {/* Draft wording, for the owner's review (CLAUDE.md §28.1). */}
+                  <h3 style={{ marginTop: 0 }}>Results</h3>
+                  <p>
+                    You squeezed a dead star's core of <strong>{formatNumber(result.coreMassSolarMasses)} Suns</strong>. For this run:
+                  </p>
+                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                      <tbody>
+                        {[
+                          ['What it is', OUTCOME_NAME[result.outcome]],
+                          ['Its horizon radius', formatKm(result.horizonRadiusKm)],
+                          ['The radius of what holds it up', heldUpText(result)],
+                          ['That radius divided by the horizon radius', result.radiusOverHorizon === null ? 'it ends smaller than its horizon' : `${formatRatio(result.radiusOverHorizon)} times`],
+                        ].map(([label, value]) => (
+                          <tr key={label}>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
+                            <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
+                              <strong>{value}</strong>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p>
+                    <strong>Checking your first prediction:</strong> asked what happens to a white dwarf's size when you add mass,
+                    you answered "{sizeChoices.find((c) => c.value === submittedSize)!.label}". In the model, a white dwarf of 0.6
+                    Suns has a radius of {formatKm(radiusLight)}, one of 1.0 Sun has {formatKm(radiusMiddle)}, and one of 1.4 Suns
+                    has {formatKm(radiusHeavy)}.{' '}
+                    {verdict(
+                      submittedSize === sizeModel,
+                      submittedSize === 'bigger' ? 'A heavier white dwarf is smaller, not bigger.' : 'The size changes: a heavier white dwarf is smaller.',
+                    )}
+                  </p>
+                  <p>
+                    <strong>Checking your second prediction:</strong> asked whether something can always hold up a core as its
+                    mass grows, you answered "{holdChoices.find((c) => c.value === submittedHold)!.label}". In the model,
+                    electrons hold a core up below {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns, neutrons hold it up to about{' '}
+                    {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} Suns (the model calls what lies between about{' '}
+                    {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} and {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns not known), and above about{' '}
+                    {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns nothing known holds it up: a core of {MAX_CORE_MASS} Suns is a
+                    black hole.{' '}
+                    {verdict(
+                      submittedHold === holdModel,
+                      submittedHold === 'always'
+                        ? `Past about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, nothing known can hold the core up.`
+                        : `In this model it depends on the core's mass: past about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, nothing known can hold the core up.`,
+                    )}
+                  </p>
+                  <p>
+                    <strong>Checking your third prediction:</strong> asked whether a neutron star's largest mass is higher than,
+                    the same as, or lower than a white dwarf's, you answered "{limitChoices.find((c) => c.value === submittedLimit)!.label}". In
+                    the model, a white dwarf's largest mass is {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns, and a neutron star's is at
+                    least about {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} Suns, and perhaps up to about{' '}
+                    {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES}.{' '}
+                    {verdict(
+                      submittedLimit === limitModel,
+                      `Neutrons can hold up a heavier core than electrons can: at least about ${SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} Suns, against ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES}.`,
+                    )}
+                  </p>
+
+                  <p style={{ marginBottom: '0.25rem' }}>
+                    <strong>The simple math: the horizon, and how close the core gets to it.</strong> The horizon radius is{' '}
+                    {formatNumber(HORIZON_KM_PER_SOLAR_MASS)} km for every Sun of mass (Experiment 1). For your core:
+                  </p>
+                  <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                    <li>
+                      The horizon radius is {formatNumber(HORIZON_KM_PER_SOLAR_MASS)} km × {formatNumber(result.coreMassSolarMasses)} ={' '}
+                      <strong>{formatKm(result.horizonRadiusKm)}</strong>.
+                    </li>
+                    {result.heldUpRadiusKm === null ? (
+                      <li>
+                        Nothing known holds a core this heavy up, so there is no radius to compare: it keeps shrinking until it
+                        is smaller than its horizon, which makes it a black hole.
+                      </li>
+                    ) : (
+                      <>
+                        <li>
+                          What holds it up has a radius of <strong>{formatKm(result.heldUpRadiusKm)}</strong>
+                          {result.outcome === 'white-dwarf' ? ' (worked out below)' : result.outcome === 'neutron-star' ? " (a neutron star's round 12 km)" : ' (a neutron star\'s 12 km, if a neutron star holds it)'}.
+                        </li>
+                        <li>
+                          How many times wider than its horizon the core is: {formatNumber(result.heldUpRadiusKm)} ÷{' '}
+                          {formatNumber(result.horizonRadiusKm)} = <strong>{formatRatio(result.radiusOverHorizon as number)}</strong>.
+                        </li>
+                      </>
+                    )}
+                  </ol>
+
+                  <p style={{ marginBottom: '0.25rem' }}>
+                    <strong>The simple math: a white dwarf's radius.</strong> For a white dwarf of {formatNumber(workedMass)}{' '}
+                    {workedMass === 1 ? 'Sun' : 'Suns'}
+                    {result.outcome === 'white-dwarf' ? '' : ' (your core is not a white dwarf, so we use 1 Sun as an example)'}, the model's
+                    formula is <strong>R = 0.0131 R☉ × M^(−1/3) × √(1 − (M ÷ 1.44)^(4/3))</strong>, where R☉ is the Sun's
+                    radius, 695,700 km, and M is the mass in Suns. It is given, not derived. Worked out:
+                  </p>
+                  <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
+                    <li>
+                      0.0131 × 695,700 km = {Math.round(wdSteps.scaleKm).toLocaleString('en-US')} km.
+                    </li>
+                    <li>
+                      M^(−1/3) = {formatNumber(workedMass)}^(−1/3) = {four(wdSteps.massFactor)}.
+                    </li>
+                    <li>
+                      M ÷ 1.44 = {four(wdSteps.massOverLimit)}, and {four(wdSteps.massOverLimit)}^(4/3) = {four(wdSteps.limitTerm)}.
+                    </li>
+                    <li>
+                      √(1 − {four(wdSteps.limitTerm)}) = {four(wdSteps.squeezeFactor)}. As M gets close to 1.44, this number gets
+                      close to 0.
+                    </li>
+                    <li>
+                      R = {Math.round(wdSteps.scaleKm).toLocaleString('en-US')} km × {four(wdSteps.massFactor)} ×{' '}
+                      {four(wdSteps.squeezeFactor)} = <strong>{formatKm(wdSteps.radiusKm)}</strong>.
+                    </li>
+                  </ol>
+
+                  <p>The preset masses compare like this:</p>
+                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                      <thead>
+                        <tr>
+                          {['Core mass (Suns)', 'What it is', 'Horizon radius', 'Radius of what holds it up', 'That radius ÷ the horizon radius'].map((h) => (
+                            <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {presetRows.map((row) => (
+                          <tr key={row.coreMassSolarMasses} style={row.coreMassSolarMasses === result.coreMassSolarMasses ? { fontWeight: 'bold' } : undefined}>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{row.coreMassSolarMasses}</td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{OUTCOME_NAME[row.outcome].replace(/^a /, '')}</td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatKm(row.horizonRadiusKm)}</td>
+                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{heldUpText(row)}</td>
+                            <td style={{ padding: '0.3rem 0' }}>{ratioText(row)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p>
+                    <strong>A comparison from daily life.</strong> Think of people being squeezed into a lift. At first you can
+                    keep adding people, and the crowd pushes back harder and harder against being squeezed. But a crowd can only
+                    push back so hard, and past a certain number there is no way to fit more in. A dead core's push is a little
+                    like this: the more mass is squeezed together, the harder the particles push back, but each kind of push (the
+                    electrons', the neutrons') has a most it can give. This is only a comparison, and it does not explain why the
+                    pushes give out where they do.
+                  </p>
+
+                  <div
+                    style={{
+                      margin: '0.75rem 0',
+                      padding: '0.75rem 1rem',
+                      border: '2px solid #f59e0b',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                    }}
+                  >
+                    <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                      <strong>What this model can and cannot tell you.</strong> This is a thought experiment about the dead core
+                      of a star, which has cooled, is not spinning and is at rest. It does not follow the star's life, the
+                      explosion that can happen when a core collapses, or how long a real collapse takes: the squeeze you
+                      watched is only a way of showing the result. It does not say which stars end up as which, and it stops at
+                      the horizon, so nothing inside is modeled.
+                    </p>
+                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                      The limits are standard results, given and not derived. The white dwarf's, {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns,
+                      is well established. The neutron star's is not known exactly, which is why a stretch of masses is drawn as
+                      not known. "Nothing known holds a heavier core up" is a statement about what is known: a form of matter
+                      that could has been suggested, but none has been seen, and the experiment does not model one. The sizes
+                      are round or fitted numbers, and real ones vary a little.
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
           </>
         )}
       </div>
