@@ -483,6 +483,89 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
       <h2>Experiment 9 — How a Black Hole Forms: What Can Hold Up a Dead Star's Core?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        {/* Draft wording, for the owner's review (CLAUDE.md §28.1). The introduction must not give away the answers to the
+            three predictions below (§12): not that a heavier white dwarf is smaller, not that there is a largest mass that
+            a white dwarf or a neutron star can have (so it does not use the word "limit" and does not name the
+            Chandrasekhar limit, which the first picture's caption names), and not that a neutron star can have more mass
+            than a white dwarf. It does not say that nothing known holds a heavy enough core up. */}
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In Experiment 1 you squeezed objects until they became black holes, and found how
+            small each one would have to be. You also found that a neutron star, a dead star only about 12 km across, is only
+            about 3 times too big. But in nature there is no hand doing the squeezing. When a star runs out of fuel, its own
+            gravity squeezes its core. So what does the squeezing, and what can stop it?
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Why even ask this.</strong> The Sun will never become a black hole. Some stars do. What decides the
+            difference? It comes down to what is left at the center when the fuel is gone, and whether anything can hold it
+            up.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What happens.</strong> Here is the whole experiment, step by step.
+          </p>
+          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+            <li>You make three predictions.</li>
+            <li>You choose the mass of a dead star's core, in Suns (one Sun is the mass of our Sun).</li>
+            <li>
+              You press Run. A ball, the core, shrinks over 10 seconds, from a large size down to whatever holds it up. This is
+              only how the result is shown, and it is not how long a real collapse takes.
+            </li>
+            <li>
+              A <strong>ladder</strong> shows what holds a core up, for every mass. A <strong>ruler</strong> shows how wide the
+              core ends up compared with its own horizon. A <strong>graph</strong> shows how the size of one kind of dead star
+              depends on its mass.
+            </li>
+            <li>The experiment stops at the horizon. It does not show anything inside it.</li>
+          </ol>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Some words we will use.</strong> A <strong>dead star's core</strong> is the central part of a star that has
+            used up its fuel. A star's fuel is what makes it push outward against its own gravity, so once the fuel is gone,
+            only a push that comes from squeezing particles together is left. A <strong>white dwarf</strong> is a dead star
+            roughly the size of the Earth, and a <strong>neutron star</strong> is a dead star only about 12 km across,
+            about the size of a city. Atoms are made of particles. An <strong>electron</strong> is a tiny particle that moves
+            around the outside of an atom, and a <strong>neutron</strong> is a particle that sits in the middle of an atom, in
+            its nucleus. Both can hold a dead star up, in a way that has a name: <strong>degeneracy pressure</strong>. Here is a
+            comparison. In a theatre, every seat holds one person, and you cannot put two people in the same seat, however hard
+            you push. Electrons, and neutrons, behave a little like this: no two of them can be in exactly the same state, so
+            when they are crowded together they resist being crowded more. That resistance is the push. The comparison is only
+            a picture, and the tutor comes back to it. Finally, from Experiment 1: a <strong>Sun</strong> is the mass of our
+            Sun, which is how we measure the mass of a core here, and the <strong>horizon radius</strong> is the distance from
+            the center to the horizon of a black hole of that mass, the size the core would have to be squeezed inside to be a
+            black hole.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What this builds on.</strong> Experiment 1 found the horizon radius and squeezed real objects down to it.
+            It said that what could do the squeezing, and what would stop it, was not modeled. This experiment is the answer.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> First, make three predictions. Then choose a core mass and run it. Try other masses too,
+            and compare.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What to look for.</strong> Where your core is on the ladder, where the ball stops, how far that is from the
+            ring of the horizon, and what the three pictures show as you try different masses.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What we assume.</strong>
+          </p>
+          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>This is a thought experiment about a dead core</strong> that has cooled, is not spinning and is at rest.
+              How the star got to the end of its life is not shown.
+            </li>
+            <li>
+              <strong>The numbers are standard results, given and not derived,</strong> and some are not known exactly. The
+              experiment says which, when it uses them.
+            </li>
+            <li>
+              <strong>The sizes and masses are round numbers.</strong> Real ones vary a little.
+            </li>
+            <li>
+              <strong>The experiment stops at the horizon.</strong> Nothing inside it is modeled.
+            </li>
+          </ul>
+        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
             A white dwarf is a dead star held up by the push of its electrons. If you add more mass to a white dwarf, what do
@@ -632,7 +715,7 @@ export function BlackHoleFormationExperiment({ onComplete }: BlackHoleFormationE
               </p>
               <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>2. What is really happening.</strong> The limits between the zones are standard results that are given
-                here and not derived. The white dwarf's limit, 1.44 Suns, is well established. The neutron star's limit is not
+                here and not derived. The white dwarf's limit, 1.44 Suns, is called the <em>Chandrasekhar limit</em>, after the physicist who worked it out in the 1930s, and it is well established. The neutron star's limit is not
                 known exactly: neutron stars of about 2 Suns are known, and the theory says the limit is at most about 3. That
                 is why the hatched zone between about 2 and 3 is marked as not known.
               </p>
