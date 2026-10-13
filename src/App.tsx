@@ -686,7 +686,7 @@ export function App() {
               <Welcome chapters={chapters} onSelectChapter={setCurrentChapter} />
             )}
 
-            {!isWelcome && !isCurrentExplained && (
+            {!isWelcome && !isCurrentExplained && activeChapter?.learned !== '' && (
               <p
                 className="summary-card"
                 style={{
@@ -702,7 +702,7 @@ export function App() {
               </p>
             )}
 
-            {isCurrentExplained && (
+            {isCurrentExplained && activeChapter?.learned !== '' && (
               <section
                 aria-label="Chapter summary"
                 className="summary-card is-explained"

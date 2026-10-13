@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { runIntervalExperiment } from '../physics/spacetimeInterval'
 import type { ObserverReading } from '../physics/spacetimeInterval'
+import { SpacetimeIntervalTutor } from './SpacetimeIntervalTutor'
 
 // Presets are the defaults of Decision 5 in docs/experiments/spacetime-geometry/01-the-interval.md.
 // The dark canvas used by the newer experiments, with light text and lines.
@@ -239,15 +240,22 @@ function ResultsBars({ rows }: { rows: ObserverRow[] }) {
   )
 }
 
-// Steps 2 to 6 (basic interface, prediction, run gate, playback, results) of docs/experiments/spacetime-geometry/01-the-interval.md.
-// The tutor is a later step, so there is no onTutorComplete prop yet.
+// Steps 2 to 7 (basic interface, prediction, run gate, playback, results, tutor) of docs/experiments/spacetime-geometry/01-the-interval.md.
+// The tutor (Step 7) is shown below the card once the results are.
 // Changing either speed or the prediction returns to the idle state, as in the other experiments.
-export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () => void }) {
+interface SpacetimeIntervalExperimentProps {
+  onComplete?: () => void
+  onTutorComplete?: () => void
+}
+
+export function SpacetimeIntervalExperiment({ onComplete, onTutorComplete }: SpacetimeIntervalExperimentProps) {
   const [clockSpeed, setClockSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.5)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  // Counts the runs so the tutor starts again at its first question after each run.
+  const [runCount, setRunCount] = useState(0)
   // The results are shown only when the playback has ended; the physics result does not depend on the prediction.
   const result = useMemo(() => runIntervalExperiment(clockSpeed, passingSpeed), [clockSpeed, passingSpeed])
   const observers: ObserverRow[] = [
@@ -392,7 +400,7 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
             this number for the same two events from their own measurements.
           </p>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-            The lab sees the clock's two ticks farther apart in time and in space than the clock's own face
+            If the clock is moving, the lab sees its two ticks farther apart in time and in space than the clock's own face
             shows. What do you expect the number "time² − distance²" to be for the lab, compared with the
             clock's own frame?
           </p>
@@ -421,6 +429,7 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
           className="action-button"
           onClick={() => {
             setProgress(0)
+            setRunCount((n) => n + 1)
             setStatus('running')
           }}
           disabled={prediction === null || status === 'running'}
@@ -553,6 +562,17 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
           </div>
         )}
       </div>
+
+      {status === 'complete' && prediction !== null && (
+        <SpacetimeIntervalTutor
+          key={runCount}
+          clockSpeed={clockSpeed}
+          passingSpeed={passingSpeed}
+          predicted={prediction}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }
+
