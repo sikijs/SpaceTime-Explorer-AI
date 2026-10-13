@@ -17,6 +17,15 @@ const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
 const TICK_COLOR = '#cbd5e1'
 
+type Prediction = 'bigger' | 'same' | 'smaller'
+
+// The three answers of the prediction in the specification's "Prediction Activity" section (wording is a draft, §28.1).
+const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
+  { value: 'bigger', label: 'Bigger in the lab' },
+  { value: 'same', label: 'The same in both' },
+  { value: 'smaller', label: 'Smaller in the lab' },
+]
+
 const CLOCK_SPEED_PRESETS = [0, 0.3, 0.6, 0.9, 0.99]
 const PASSING_SPEED_PRESETS = [-0.8, -0.5, 0, 0.5, 0.8]
 
@@ -137,11 +146,13 @@ function SetupDiagram({ clockSpeed, passingSpeed }: SetupDiagramProps) {
   )
 }
 
-// Step 2 (basic interface) of docs/experiments/spacetime-geometry/01-the-interval.md. The prediction, the run,
-// the results and the tutor are later steps, so there are no onComplete or onTutorComplete props yet.
+// Steps 2 (basic interface) and 3 (prediction) of docs/experiments/spacetime-geometry/01-the-interval.md. The run,
+// the results and the tutor are later steps, so there are no onComplete or onTutorComplete props yet. The answer is
+// kept in state for them; the START button that the prediction gates arrives with the run (Step 5).
 export function SpacetimeIntervalExperiment() {
   const [clockSpeed, setClockSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.5)
+  const [prediction, setPrediction] = useState<Prediction | null>(null)
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
@@ -229,6 +240,40 @@ export function SpacetimeIntervalExperiment() {
           arrow showing which way they move. Change either speed and watch where tick 1 lands and which way the
           passing observer moves.
         </p>
+
+        <div style={{ marginTop: '2rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What "time² − distance²" means.</strong> Take the time between two events, in seconds. Take
+            the distance between them, in light-seconds. Multiply each number by itself, then subtract the
+            distance result from the time result. For example, if two events are 3 seconds apart in time and 2
+            light-seconds apart in space, then 3 × 3 = 9, 2 × 2 = 4, and 9 − 4 = 5. Each observer can work out
+            this number for the same two events from their own measurements.
+          </p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+            The lab sees the clock's two ticks farther apart in time and in space than the clock's own face
+            shows. What do you expect the number "time² − distance²" to be for the lab, compared with the
+            clock's own frame?
+          </p>
+          <div>
+            {PREDICTION_CHOICES.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => setPrediction(choice.value)}
+                className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+            {prediction !== null
+              ? `Your prediction: ${PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.toLowerCase()}.`
+              : 'Choose an option to continue'}
+          </p>
+        </div>
       </div>
     </div>
   )
