@@ -124,7 +124,7 @@ Before running, the learner chooses a clock speed and answers one question. Word
 >
 > (a) Bigger in the lab, (b) The same in both, (c) Smaller in the lab.
 
-Not scored. START stays disabled until a speed and an answer are chosen. The submitted answer is kept for the results and the tutor. The learner is not told which answer is right before running (§12).
+Not scored. The Run button (the label used by the other experiments) stays disabled until an answer is chosen; the speeds always have a value. The submitted answer is kept for the results and the tutor. The learner is not told which answer is right before running (§12).
 
 ---
 
@@ -137,7 +137,7 @@ Following the structure of existing introductions (the question, what happens, t
 - Start from the everyday idea that "two events have one time between them and one distance between them", and note that earlier experiments showed this isn't true for everyone.
 - Define **event** (a place and a moment), **interval** (defined only after the learner has seen the numbers), and why distance is measured in light-seconds.
 - Say plainly that this experiment does not explain *why* the interval is the same, only shows that it is, and that the tutor will help with the why afterward.
-- Offer one daily-life anchor and one worked calculation (the `v = 0.6c` example above), per §15.
+- Offer one daily-life anchor and one worked calculation, per §15. As approved by the owner (2026-10-13): the introduction's anchor is the train-and-ball example; the stick-on-a-table example and its worked 3-4-5 calculation are in the tutor's explanation, and the explanation of `time² − distance²` with a 3 and 2 example sits above the prediction. The `v = 0.6c` example is not used in the introduction, because it would show the result before the learner has observed it (§12).
 
 **Approved wording for "The question" and "What happens" (owner, 2026-10-13):**
 
@@ -186,7 +186,7 @@ The worked example uses 3 and 2, the same numbers as the prediction's explanatio
 
 ### Run
 
-A short playback: the clock ticks, the two events are marked, then each observer's numbers appear in turn. Playback speed does not change the result (§11).
+A short playback: the clock ticks, the two events are marked, then, when the playback ends, the three observers' numbers appear together in the results. Playback speed does not change the result (§11).
 
 ---
 
@@ -196,7 +196,7 @@ Shown only when the run ends. Values only, with plain labels:
 
 - the clock's speed and the passing observer's speed;
 - for each of the three observers: time between, distance between, `time² − distance²`;
-- the interval, as the clock's own elapsed time (1 second).
+- (not shown as its own line, as approved by the owner on 2026-10-13: the clock's own frame row already gives 1.00, and a separate line would point at the explanation before the tutor).
 
 Results are neutral. The explanation comes from the tutor, after the learner has responded (§12).
 
@@ -339,3 +339,4 @@ The group name (Decision 1) was confirmed on 2026-10-13 as "Spacetime Geometry: 
 > **What you learned.** Two observers who move differently can measure different times and different distances between the same two events. But there is one number they agree on. Square the time, square the distance, and subtract. For two ticks of one clock, the answer came out the same for the lab, for the clock itself and for the passing observer, however fast each was moving. It is called the interval squared, and its square root, the interval, is the time the clock's own face shows between the two ticks. It is a little like a stick on a table. As you turn the stick, its east-west and north-south parts change, but its length does not. The comparison is not exact, though. A stick's length comes from adding the squares of its parts, while the interval comes from subtracting them, and this experiment did not explain why.
 >
 > **What's next.** You saw this for one pair of events: two ticks of one clock, measured by three observers. Next, we ask whether the same number can be found for other pairs of events, and how what an observer actually sees, because of the light that reaches them, differs from what they measure.
+- **Differences from this specification approved (2026-10-13, owner's instruction "approve the differences from the spec"):** (1) the introduction leaves out the worked `v = 0.6c` example and the stick anchor, which are in the tutor (Step 2). (2) The setup diagram shows only the setup before the run, and the three observers' contrast appears in the results (Step 2). (3) The button is labeled "Run", not "START" (Step 4). (4) The three observers' numbers appear together when the playback ends, not one at a time (Step 6). (5) The passing observer is drawn still, not moving at its speed (Step 5). (6) The results omit the separate "interval = 1 second" line (Step 6). (7) The time, distance and `time² − distance²` bars are three rows, not three columns, and the `time² − distance²` block is a fixed length (Step 6). (8) The tutor's stick example uses the numbers 5, 3 and 4 and the tutor names "interval squared" and "interval" (Step 7). (9) The explanation of `time² − distance²` above the prediction (Step 3). The "Prediction Activity", "Introductory text", "Run" and "Results Display" sections above were edited to say so. This closes the open item about these differences in the final review.
