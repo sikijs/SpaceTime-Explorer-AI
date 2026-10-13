@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { runIntervalExperiment } from '../physics/spacetimeInterval'
 
@@ -146,13 +146,29 @@ function SetupDiagram({ clockSpeed, passingSpeed }: SetupDiagramProps) {
   )
 }
 
-// Steps 2 (basic interface) and 3 (prediction) of docs/experiments/spacetime-geometry/01-the-interval.md. The run,
-// the results and the tutor are later steps, so there are no onComplete or onTutorComplete props yet. The answer is
-// kept in state for them; the START button that the prediction gates arrives with the run (Step 5).
+// Steps 2 to 4 (basic interface, prediction, run gate) of docs/experiments/spacetime-geometry/01-the-interval.md.
+// The playback, the results and the tutor are later steps, so there are no onComplete or onTutorComplete props yet.
+// Changing either speed or the prediction returns to the idle state, as in the other experiments.
 export function SpacetimeIntervalExperiment() {
   const [clockSpeed, setClockSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.5)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
+  const [hasRun, setHasRun] = useState(false)
+  // The physics result for the chosen speeds. Nothing from it is shown until the playback and results steps.
+  const result = useMemo(() => runIntervalExperiment(clockSpeed, passingSpeed), [clockSpeed, passingSpeed])
+
+  const handleClockSpeedChange = (speed: number) => {
+    setClockSpeed(speed)
+    setHasRun(false)
+  }
+  const handlePassingSpeedChange = (speed: number) => {
+    setPassingSpeed(speed)
+    setHasRun(false)
+  }
+  const handlePredictionChange = (choice: Prediction) => {
+    setPrediction(choice)
+    setHasRun(false)
+  }
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
@@ -198,7 +214,7 @@ export function SpacetimeIntervalExperiment() {
               <button
                 key={speed}
                 type="button"
-                onClick={() => setClockSpeed(speed)}
+                onClick={() => handleClockSpeedChange(speed)}
                 className={`toggle-button${clockSpeed === speed ? ' is-selected' : ''}`}
                 style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               >
@@ -219,7 +235,7 @@ export function SpacetimeIntervalExperiment() {
               <button
                 key={speed}
                 type="button"
-                onClick={() => setPassingSpeed(speed)}
+                onClick={() => handlePassingSpeedChange(speed)}
                 className={`toggle-button${passingSpeed === speed ? ' is-selected' : ''}`}
                 style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               >
@@ -260,7 +276,7 @@ export function SpacetimeIntervalExperiment() {
               <button
                 key={choice.value}
                 type="button"
-                onClick={() => setPrediction(choice.value)}
+                onClick={() => handlePredictionChange(choice.value)}
                 className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
                 style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               >
@@ -274,6 +290,26 @@ export function SpacetimeIntervalExperiment() {
               : 'Choose an option to continue'}
           </p>
         </div>
+
+        <button
+          type="button"
+          className="action-button"
+          onClick={() => setHasRun(true)}
+          disabled={prediction === null}
+          style={{ marginTop: '1.5rem', padding: '0.6rem 1.5rem' }}
+        >
+          Run
+        </button>
+        {prediction === null && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>
+            Choose a prediction above to run the experiment.
+          </p>
+        )}
+        {hasRun && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>
+            Run with the clock at {result.clockSpeed}c and the passing observer at {result.passingObserverSpeed}c.
+          </p>
+        )}
       </div>
     </div>
   )
