@@ -345,8 +345,10 @@ Source for the measurement: Planck 2018 combined with baryon acoustic oscillatio
 Not changed or not checked:
 
 - At a 390-pixel window the three pictures shrink to about 176 pixels and their labels become very small (the same app-wide layout matter as in Experiments 4, 7, 8 and 9). Left for the owner. There is no horizontal scrolling.
-- The chapter summary text in `src/App.tsx` is a draft placeholder.
+- ~~The chapter summary text in `src/App.tsx` is a draft placeholder.~~ Resolved on 2026-10-12: the owner approved the chapter summary text as written (see the last Implementation Note).
 - Not checked: keyboard use, any browser other than headless Chrome, screen readers (the pictures have no text alternative, as in the earlier experiments), and the Results table at widths between 390 and 1,200 pixels.
 - The tutor's and the introduction's factual statements were written from the model and general knowledge, not from a source: that radiation is negligible for the future, that a flat matter-only universe is the escape-speed borderline case, and the "rule of 70". These are standard, but I did not check them against a reference.
 
 Not checked: the `tsc -b` type check reports one error in the new test file (`node:fs/promises` has no type definitions), the same error nine existing test files already have; it was left alone.
+
+**Chapter summary approved (2026-10-12):** the owner approved the chapter summary text in `src/App.tsx` as written ("With only matter, the expansion slows down forever without quite stopping. With dark energy, each doubling of the universe takes about the same time as the one before, so the growth becomes steady and endless.", and the "what's next" line pointing to the Black Holes and Strong Gravity chapter). It had not been part of the 2026-10-09 line-by-line approval. The "draft placeholder" comment in `src/App.tsx` was replaced by "Wording approved by the owner on 2026-10-12", and the open item above is resolved.

@@ -371,7 +371,7 @@ const chapters: Chapter[] = [
     title: 'The Fate of the Universe',
     group: 'Cosmology',
     Component: FateOfTheUniverseExperiment,
-    // Draft placeholder, not yet approved by the owner (CLAUDE.md §28.1).
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1).
     learned:
       'With only matter, the expansion slows down forever without quite stopping. With dark energy, each doubling of the universe takes about the same time as the one before, so the growth becomes steady and endless.',
     next: 'Next, a new chapter, Black Holes and Strong Gravity, begins with a simple question: how small would an ordinary object have to be squeezed to become a black hole?',

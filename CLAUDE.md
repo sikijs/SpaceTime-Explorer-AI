@@ -774,7 +774,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 7 | Gravitational lensing | `07-gravitational-lensing.md` | Complete (wording approved) |
 | 8 | How far can we see? The observable universe | `08-observable-universe.md` | Complete (wording approved) |
 | 9 | How did galaxies form? Structure formation | `09-structure-formation.md` | Complete (wording approved) |
-| 10 | The fate of the universe | `10-fate-of-the-universe.md` | Complete (wording approved); chapter summary text still carries a "draft placeholder" comment in `src/App.tsx` |
+| 10 | The fate of the universe | `10-fate-of-the-universe.md` | Complete (wording approved, including the chapter summary text, approved 2026-10-12) |
 | - | Closing synthesis ("Putting It All Together"), a section on Experiment 10's page, not an experiment | `closing-synthesis.md` | Complete (wording approved) |
 
 **Black Holes and Strong Gravity** (`docs/experiments/black-holes-and-strong-gravity/`). Planned as five experiments, with a sixth added on 2026-10-11, a seventh on 2026-10-12 and an eighth (spinning black holes), a ninth (how a black hole forms) and a tenth (Hawking radiation) approved on 2026-10-12; Experiments 1 to 10 are built. No further experiment is planned.
