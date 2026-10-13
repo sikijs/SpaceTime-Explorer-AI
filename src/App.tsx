@@ -392,17 +392,17 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-10 (CLAUDE.md §28.1).
     learned:
       'A clock held still near a black hole ticks more slowly than a clock far away, by the factor √(1 − r_s ÷ r). It depends only on how many horizon radii away the clock is, so it is the same for a small black hole and a giant one. The factor falls toward zero at the horizon. The simple formula from the earlier experiments is accurate far away and fails near the horizon.',
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 3.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 3.
     next: 'Next, orbits near a black hole: is it safe to circle one at any distance?',
   },
   {
     title: 'Orbits Near a Black Hole',
     group: 'Black Holes and Strong Gravity',
     Component: OrbitsNearBlackHoleExperiment,
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1).
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1).
     learned:
       'In ordinary gravity, a circular orbit that gets a small nudge only wobbles, at any distance. In the exact theory, there is a last safe circular orbit at 6GM/c², which is 3 horizon radii, the same number for every black hole. At or inside it, a small nudge sends the probe spiraling into the black hole. Far away, the two rules give nearly the same orbit.',
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 4.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 4.
     next: 'Next, light near a black hole: how much does it bend light, and can light be trapped?',
   },
   {

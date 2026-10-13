@@ -783,7 +783,7 @@ Every experiment below has an approved specification, a tested physics model, an
 |---|---|---|---|
 | 1 | How small must something be to become a black hole? | `01-how-small-a-black-hole.md` | Complete (wording approved), with an optional "guide to black holes" |
 | 2 | Time near a black hole: does a clock ever stop? | `02-time-near-a-black-hole.md` | Complete (wording approved) |
-| 3 | Orbits near a black hole | `03-orbits-near-a-black-hole.md` | Built; wording review not recorded here (see `docs/STATUS.md`) |
+| 3 | Orbits near a black hole | `03-orbits-near-a-black-hole.md` | Complete (wording approved 2026-10-12, as is, without a fresh read-through; the captions had been approved on 2026-10-10) |
 | 4 | Light near a black hole: can light be trapped? | `04-light-near-a-black-hole.md` | Complete (wording approved) |
 | 5 | Falling in: what does the traveler experience? | `05-falling-in.md` | Complete (wording approved) |
 | 6 | Seeing the fall from far away: does anyone see the traveler cross? | `06-seeing-the-fall.md` | Complete (wording approved); differences from the spec approved 2026-10-12 |

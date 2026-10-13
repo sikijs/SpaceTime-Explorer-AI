@@ -526,7 +526,7 @@ export function OrbitsNearBlackHoleExperiment({ onComplete, onTutorComplete }: O
       <h2>Experiment 3 — Orbits Near a Black Hole: Is There a Point of No Safe Orbit?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). It must not give away the answers to
+        {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). It must not give away the answers to
             the three predictions below (§12): no mention of where the last safe orbit is, of a probe plunging for
             certain, or of far orbits looking alike. */}
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -976,7 +976,7 @@ export function OrbitsNearBlackHoleExperiment({ onComplete, onTutorComplete }: O
 
         {showResults && (
           <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-            {/* DRAFT wording, for the owner's line-by-line review (CLAUDE.md §28.1). */}
+            {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
             <h3 style={{ marginTop: 0 }}>Results</h3>
             <p>
               You started both probes at <strong>{formatRadii(start)} horizon radii</strong> (
