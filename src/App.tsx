@@ -71,11 +71,11 @@ const groupOrder = [
 ]
 
 // A one-sentence overview of a group, shown under its title on every chapter page of that group. Only groups that have one
-// are listed. Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). It names only what is built, so a later
-// experiment (the planned end of a black hole's story) is added to it when that experiment is approved.
+// are listed. Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1), including the last clause, "and how one might
+// end", which was added for Experiment 10 (Hawking radiation). It names only what is built.
 const groupOverviews: Record<string, string> = {
   'Black Holes and Strong Gravity':
-    'This group follows black holes from several sides: how small something must be to become one, what happens to time, orbits, light and a falling traveler near one, what spin changes, and where black holes come from.',
+    'This group follows black holes from several sides: how small something must be to become one, what happens to time, orbits, light and a falling traveler near one, what spin changes, where black holes come from, and how one might end.',
 }
 
 const chapters: Chapter[] = [
