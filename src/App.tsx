@@ -71,7 +71,7 @@ const groupOrder = [
 ]
 
 // A one-sentence overview of a group, shown under its title on every chapter page of that group. Only groups that have one
-// are listed. Draft wording, not yet approved by the owner (CLAUDE.md §28.1). It names only what is built, so a later
+// are listed. Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). It names only what is built, so a later
 // experiment (the planned end of a black hole's story) is added to it when that experiment is approved.
 const groupOverviews: Record<string, string> = {
   'Black Holes and Strong Gravity':
@@ -442,24 +442,24 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "The crests of a light wave are stretched apart just as the flashes in Experiment 6 were, by the same stretch factor, so the wavelength the observer receives is the lamp's wavelength times that factor. A falling traveler's green lamp turns redder (this is called redshift), leaves visible light well before the horizon, and goes on into infrared and then microwaves, with no limit near the horizon. Two effects multiply to give the stretching: gravity slowing the traveler's clock, and the traveler moving away. The color depends only on the distance in horizon radii, not on the mass of the black hole.",
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 8.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 8.
     next: 'Next, spinning black holes: does the direction a probe circles, and how fast the black hole spins, change where orbits are safe?',
   },
   {
     title: 'Spinning Black Holes',
     group: 'Black Holes and Strong Gravity',
     Component: SpinningBlackHoleExperiment,
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A black hole can spin, and the space around it is dragged around in the direction of the spin (frame dragging). That moves the last safe orbit: closer in for a probe circling with the spin, farther out for one circling against it. At a spin of 0.9 they are at 1.16 and 4.36 reference radii, where a black hole that does not spin has 3. The horizon gets smaller, and the closer in the last safe orbit is, the more of its rest-mass energy a probe gives up on the way down (15.6% with the spin, against 5.7% with no spin and 3.9% against it). In reference radii, all of this is the same for every black hole.",
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 9.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 9.
     next: 'Next, how a black hole forms: what can hold up a dead star\'s core, and what happens when nothing can?',
   },
   {
     title: 'How a Black Hole Forms',
     group: 'Black Holes and Strong Gravity',
     Component: BlackHoleFormationExperiment,
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A dead star's core is held up only by pushes that run out at certain masses. Electrons hold up a white dwarf, which gets smaller as it gets heavier, up to 1.44 Suns (the Chandrasekhar limit). Neutrons hold up a neutron star, about 12 km in radius, up to somewhere between about 2 and 3 Suns, which is not known exactly. Above that, nothing known holds the core up, so it collapses until it is inside its horizon: a black hole. The heavier the core, the closer it gets to its own horizon before that happens.",
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 10.

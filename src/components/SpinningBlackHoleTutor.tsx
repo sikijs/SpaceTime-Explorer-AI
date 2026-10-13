@@ -95,7 +95,7 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
         backgroundColor: '#f0f7ff',
       }}
     >
-      {/* Draft wording, for the owner's review (CLAUDE.md §28.1). Follows the tutor sequence in the specification: observe,
+      {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Follows the tutor sequence in the specification: observe,
           compare with the predictions, one conceptual question, then the explanation. "Frame dragging" and the honey
           comparison appear only in the explanation (§12, §15; Decision 5 and success criterion 7). */}
       <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>

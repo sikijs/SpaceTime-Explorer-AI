@@ -26,8 +26,8 @@ const SPIN_PRESETS = [0, 0.5, 0.9, 0.99]
 const REFERENCE_SPIN = 0.9
 
 // This experiment's four prediction questions, per its specification's "Prediction Activity". Choices are not marked
-// here; they are compared with the model's results later (the Results step). Draft wording, for the owner's review
-// (CLAUDE.md §28.1). The wording avoids the word "dragging", which would give away the first two answers.
+// here; they are compared with the model's results later (the Results step). The question wording was approved by the owner
+// on 2026-10-12 (CLAUDE.md §28.1). The wording avoids the word "dragging", which would give away the first two answers.
 type EdgeChoice = 'closer' | 'same' | 'farther'
 const edgeChoices: Array<{ value: EdgeChoice; label: string }> = [
   { value: 'closer', label: 'Closer to the black hole' },
@@ -542,7 +542,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
       <h2>Experiment 8 — Spinning Black Holes: Does Spin Change Where Orbits Are Safe?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Draft wording, for the owner's review (CLAUDE.md §28.1). The introduction must not give away the answers to the
+        {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). The introduction must not give away the answers to the
             four predictions below (§12): not that the last safe orbit moves, not which way it moves for either direction,
             not that the horizon shrinks, and not which probe gives up more energy. It does not name "frame dragging",
             which the tutor introduces (§15, success criterion 7 of the specification). */}
@@ -849,7 +849,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
             </p>
 
             <SafeOrbitMap result={result} progress={progress} />
-            {/* Draft wording, for the owner's review (CLAUDE.md §28.1). */}
+            {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
             <div style={{ ...CAPTION_STYLE, maxWidth: `${MAP_WIDTH}px` }}>
               <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
                 <strong>How to read this picture: the map.</strong>
@@ -1033,7 +1033,7 @@ export function SpinningBlackHoleExperiment({ onComplete, onTutorComplete }: Spi
               const verdict = (right: boolean, wrongText: string) => (right ? 'So your prediction was right.' : `So your prediction was off this time. ${wrongText}`)
               return (
                 <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-                  {/* Draft wording, for the owner's review (CLAUDE.md §28.1). */}
+                  {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
                   <h3 style={{ marginTop: 0 }}>Results</h3>
                   <p>
                     You spun <strong>{holeLabel}</strong> ({formatMass(result.preset.massSolarMasses)}) up to a spin of{' '}

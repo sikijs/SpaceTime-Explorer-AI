@@ -27,8 +27,8 @@ const ANIMATION_DURATION_MS = 10_000
 const MASS_PRESETS = [0.6, 1.0, 1.4, 1.8, 2.5, 3.5, 10]
 
 // This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not marked
-// here; they are compared with the model's results later (the Results step). Draft wording, for the owner's review
-// (CLAUDE.md §28.1).
+// here; they are compared with the model's results later (the Results step). The question wording was approved by the owner
+// on 2026-10-12 (CLAUDE.md §28.1).
 type SizeChoice = 'bigger' | 'same' | 'smaller'
 const sizeChoices: Array<{ value: SizeChoice; label: string }> = [
   { value: 'bigger', label: 'It gets bigger' },
@@ -511,7 +511,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
       <h2>Experiment 9 — How a Black Hole Forms: What Can Hold Up a Dead Star's Core?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Draft wording, for the owner's review (CLAUDE.md §28.1). The introduction must not give away the answers to the
+        {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). The introduction must not give away the answers to the
             three predictions below (§12): not that a heavier white dwarf is smaller, not that there is a largest mass that
             a white dwarf or a neutron star can have (so it does not use the word "limit" and does not name the
             Chandrasekhar limit, which the first picture's caption names), and not that a neutron star can have more mass
@@ -772,7 +772,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
             </p>
 
             <Ladder result={result} />
-            {/* Draft wording, for the owner's review (CLAUDE.md §28.1). */}
+            {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
             <div style={{ ...CAPTION_STYLE, maxWidth: `${LADDER_WIDTH}px` }}>
               <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
                 <strong>How to read this picture: the ladder.</strong>
@@ -974,7 +974,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
               const ratioText = (r: CoreResult) => (r.radiusOverHorizon === null ? '—' : formatRatio(r.radiusOverHorizon))
               return (
                 <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-                  {/* Draft wording, for the owner's review (CLAUDE.md §28.1). */}
+                  {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
                   <h3 style={{ marginTop: 0 }}>Results</h3>
                   <p>
                     You squeezed a dead star's core of <strong>{formatNumber(result.coreMassSolarMasses)} Suns</strong>. For this run:
