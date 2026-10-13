@@ -167,7 +167,7 @@ export function ObservableUniverseTutor({ predictedToday, predictedLeft, onExpla
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>7. The model is close to the real values, not exact.</strong> This model gives {today}{' '}
-            billion light-years for the oldest light's source. The real value is about {realSource}, and the
+            billion light-years for the oldest light's source. The real value is about 45 to 46 billion light-years, and the
             edge of the observable universe is about {realEdge}. The model is a little low because it leaves
             out radiation, which matters most at the earliest times. Remember too that this experiment used the
             oldest light as a stand-in for the farthest we can see with light; the true edge is slightly farther.

@@ -165,7 +165,7 @@ export function LightNearBlackHoleTutor({
           </p>
           <p style={paragraphStyle}>
             <strong>2. The simple formula works far away and fails close in.</strong> The formula from Experiment 8
-            says the bend is 2 ÷ b, in radians, where b is the aim distance in horizon radii. At an aim of 20 it gives{' '}
+            gives a first approximation of 2 ÷ b for the bend, in radians, where b is the aim distance in horizon radii. At an aim of 20 it gives{' '}
             {fmt(farSimple)}°, and the exact theory gives {fmt(farBend)}°, close but not equal. At an aim of 3 the
             formula gives {fmt(nearSimple)}° and the exact theory gives {fmt(nearBend)}°, more than twice as much.
             The formula was made for weak gravity, and near a black hole gravity is not weak.
@@ -207,7 +207,8 @@ export function LightNearBlackHoleTutor({
           <p style={paragraphStyle}>
             <strong>8. Beyond what this experiment shows.</strong> The dark central region in pictures of black holes
             made by the Event Horizon Telescope, a network of radio telescopes, is generally described as matching
-            this critical aim. This is not something you saw here. It is mentioned only to say where this idea
+            this critical aim. (The bright ring seen around it is about the size that theory predicts for the dark region,
+            but the ring is not the dark region itself, and a black hole's spin and the viewing angle also matter.) This is not something you saw here. It is mentioned only to say where this idea
             turns up.
           </p>
           <p style={paragraphStyle}>

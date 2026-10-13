@@ -461,7 +461,7 @@ const chapters: Chapter[] = [
     Component: BlackHoleFormationExperiment,
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
-      "A dead star's core is held up only by pushes that run out at certain masses. Electrons hold up a white dwarf, which gets smaller as it gets heavier, up to 1.44 Suns (the Chandrasekhar limit). Neutrons hold up a neutron star, about 12 km in radius, up to somewhere between about 2 and 3 Suns, which is not known exactly. Above that, nothing known holds the core up, so it collapses until it is inside its horizon: a black hole. The heavier the core, the closer it gets to its own horizon before that happens.",
+      "A dead star's core is held up only by pushes that run out at certain masses. Electrons hold up a white dwarf, which gets smaller as it gets heavier, up to 1.44 Suns (the Chandrasekhar limit). Neutrons hold up a neutron star, about 12 to 13 km in radius, up to somewhere between about 2 and 3 Suns, which is not known exactly. Above that, nothing known holds the core up, so it collapses until it is inside its horizon: a black hole. The heavier the core, the closer it gets to its own horizon before that happens.",
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 10.
     next: 'Next, Hawking radiation: does a black hole slowly disappear?',
   },

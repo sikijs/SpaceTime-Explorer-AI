@@ -628,7 +628,7 @@ export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: Li
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The black holes.</strong> They are the three from Experiments 1, 2 and 3: a stellar black hole of
             10 Suns' worth of mass (a round, illustrative value), Sagittarius A*, the black hole at the center of
-            our galaxy, and M87*, the black hole imaged in the galaxy M87. Their masses are about 4.3 million and
+            our galaxy, and M87*, the black hole imaged in the galaxy M87. Their masses are about 4 million and
             6.5 billion Suns.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
@@ -1051,7 +1051,7 @@ export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: Li
                   </li>
                 </ol>
                 <p style={{ marginBottom: '0.25rem' }}>
-                  The simple formula from Experiment 8, written in horizon radii, says the bend is <strong>2 ÷ b</strong>,
+                  The simple formula from Experiment 8, written in horizon radii, gives a first approximation of <strong>2 ÷ b</strong> for the bend,
                   in radians, where b is the aim distance. For your aim, b = {formatRadii(aim)}:
                 </p>
                 <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>

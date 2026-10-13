@@ -212,7 +212,7 @@ export function DarkEnergyExperiment({ onComplete, onTutorComplete }: DarkEnergy
             from it, can eventually grow too heavy to hold itself together. It then blows apart in a huge
             explosion, which is a Type Ia supernova ("Type Ia" is just astronomers' label for this particular
             kind, based on what its light looks like). For a few weeks the explosion shines as brightly as
-            billions of Suns, rivaling the light of an entire small galaxy of stars, so it can be seen across
+            billions of Suns, so it can be seen across
             billions of light-years. Because these explosions start from very similar conditions, they reach
             very nearly the same true peak brightness. Astronomers can also fine-tune the estimate: a slightly
             brighter one tends to fade more slowly, so watching how fast a supernova fades lets them correct

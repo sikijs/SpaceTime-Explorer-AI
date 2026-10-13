@@ -779,7 +779,7 @@ export function ObservableUniverseExperiment({ onComplete, onTutorComplete }: Ob
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
                 <strong>How close is this model to the real values?</strong> For the oldest light, this model
                 gives a source {distanceLabel(oldestLight.distanceTodayLightYears)} away today. Real
-                astronomers find about {(REAL_CMB_SOURCE_DISTANCE_TODAY_LIGHT_YEARS / 1e9).toFixed(1)} billion light-years for it, and
+                astronomers find about 45 to 46 billion light-years for it, and
                 about {(REAL_OBSERVABLE_UNIVERSE_RADIUS_LIGHT_YEARS / 1e9).toFixed(1)} billion light-years for the edge of the
                 observable universe, the farthest from which any signal could have reached us by now, which is
                 a little farther still. The model is about {modelBelowRealPercent.toFixed(1)}% below the real

@@ -263,7 +263,7 @@ export function BlackHoleSizeExperiment({ onComplete, onTutorComplete }: BlackHo
             main ways. First, stars near it are pulled into orbit around it. By tracking how fast a star
             circles and how big its orbit is, astronomers can work out how much mass it is circling, the
             same method Cosmology Experiment 4 used. At the center of our galaxy, stars circle at great
-            speed around a point where we can see nothing, and the speeds need about 4.3 million Suns' worth
+            speed around a point where we can see nothing, and the speeds need about 4 million Suns' worth
             of mass in a tiny space. Second, gas that falls toward a black hole speeds up and is squeezed
             until it is so hot that it glows brightly. That glow comes from the gas just outside the
             horizon. The black hole itself gives off no light.
@@ -352,7 +352,7 @@ export function BlackHoleSizeExperiment({ onComplete, onTutorComplete }: BlackHo
             <li>
               The real sizes of Earth, the Sun and the neutron star are rounded values, used only as the
               starting points of the squeeze. A neutron star's size is not settled exactly, so the value used
-              is a round figure inside the range found by observations. The "stellar black hole" mass is an
+              is a round figure inside the range found by observations (about 12 to 13 km). The "stellar black hole" mass is an
               illustrative round value, not a particular object.
             </li>
             <li>

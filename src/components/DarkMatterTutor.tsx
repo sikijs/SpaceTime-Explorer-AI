@@ -142,9 +142,9 @@ export function DarkMatterTutor({ predictedSpeed, predictedMeasured, onExplained
             must be pulling on it, and Neptune was found almost exactly where they predicted. The difference
             is that dark matter has never been seen directly, only inferred from its gravity, and what it is
             made of is still unknown. Dark matter is the leading explanation, supported by several independent
-            kinds of evidence, while modified-gravity ideas such as MOND fit galaxy rotation curves well but
-            have a harder time with other observations such as galaxy clusters and the cosmic microwave
-            background.
+            kinds of evidence, while modified-gravity ideas such as MOND fit galaxy rotation curves well, but
+            many astronomers think they have a harder time with other observations, such as galaxy clusters and
+            the cosmic microwave background.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>5. Keep in mind</strong> that this experiment used ordinary Newtonian gravity, which is

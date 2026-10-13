@@ -787,7 +787,7 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
               <p style={CAPTION_PARAGRAPH_STYLE}>
                 <strong>2. What is really happening.</strong> The limits between the zones are standard results that are given
                 here and not derived. The white dwarf's limit, {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns, is called the <em>Chandrasekhar limit</em>, after the physicist who worked it out in the 1930s, and it is well established. The neutron star's limit is not
-                known exactly: neutron stars of about 2 Suns are known, and the theory says the limit is at most about 3. That
+                known exactly: neutron stars of about 2 Suns are known, and the theory says the limit is somewhere between about 2 and 3 (some newer studies point to the lower end). That
                 is why the hatched zone between about 2 and 3 is marked as not known.
               </p>
               <p style={{ ...CAPTION_PARAGRAPH_STYLE, marginBottom: '0.2rem' }}>
@@ -814,8 +814,8 @@ export function BlackHoleFormationExperiment({ onComplete, onTutorComplete }: Bl
                   <strong>The dashed lines are the edges between the zones.</strong> Each edge is the heaviest core that one
                   kind of push can hold up. At {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns the push of electrons gives out. At about{' '}
                   {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} Suns we are still sure that neutrons can hold a core up (neutron stars a
-                  little over 2 Suns have been measured). At about {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns the theory says that
-                  even neutrons can no longer hold it.
+                  little over 2 Suns have been measured). By about {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns the theory says that
+                  even neutrons can no longer hold it (some newer studies put the limit nearer 2 to 2.3 Suns).
                 </li>
                 <li>
                   <strong>The hatched zone is "not known" on purpose.</strong> Between about {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES}{' '}

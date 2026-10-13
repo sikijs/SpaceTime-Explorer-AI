@@ -53,7 +53,7 @@ const TABLE_ROWS: Array<{ kind: string; example: string; massLabel: string; mass
   {
     kind: 'Supermassive',
     example: 'Sagittarius A*',
-    massLabel: 'about 4.3 million Suns',
+    massLabel: 'about 4 million Suns',
     massSolar: 4.3e6,
     how: 'At the center of our own galaxy',
   },
@@ -287,7 +287,7 @@ export function BlackHoleGuide() {
           <strong>(d) Pictures.</strong> The Event Horizon Telescope links radio telescopes around the world
           into one giant "virtual" telescope. In 2019 it released the first image of a black hole's
           surroundings, M87*, and in 2022 the one at the center of our own galaxy, Sagittarius A*. Each shows a
-          glowing ring of hot gas around a dark central patch, the black hole's shadow. Its size matches
+          glowing ring of hot gas around a dark central patch, the black hole's shadow. The ring's size matches
           what Einstein's theory predicts for the masses known from other measurements. In 2024 the team
           added pictures in polarized light (light whose waves wiggle in a particular direction, which shows
           magnetic fields). They showed strong, organized magnetic fields spiraling near the edge of
