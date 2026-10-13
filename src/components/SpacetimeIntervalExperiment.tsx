@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { runIntervalExperiment } from '../physics/spacetimeInterval'
 
@@ -36,19 +36,24 @@ function passingLabel(speed: number): string {
 
 // Drawing constants (SVG units). The ruler is scaled so the clock's tick 1 always fits.
 const VIEW_WIDTH = 460
-const VIEW_HEIGHT = 260
+const VIEW_HEIGHT = 290
 const RULER_START_X = 40
 const RULER_END_X = 420
 const RULER_Y = 150
+// Wall-clock length of the playback. It only sets how fast the result is shown; the physics does not depend on it (§11).
+const ANIMATION_DURATION_MS = 6_000
+const CLOCK_COLOR = '#10b981'
 
 interface SetupDiagramProps {
   clockSpeed: number
   passingSpeed: number
+  // null while idle (the setup is shown); otherwise how far the playback has got, from 0 to 1.
+  progress: number | null
 }
 
-// Draws the setup only: the lab ruler, the two events, the clock's path and the passing observer.
+// Draws the setup, and while the run plays the moving clock travelling from tick 0 to tick 1: the lab ruler, the two events, the clock's path and the passing observer.
 // It deliberately shows no interval and no other observer's numbers; those come after the run (§12).
-function SetupDiagram({ clockSpeed, passingSpeed }: SetupDiagramProps) {
+function SetupDiagram({ clockSpeed, passingSpeed, progress }: SetupDiagramProps) {
   const { tickOne } = runIntervalExperiment(clockSpeed, passingSpeed)
   const distance = tickOne.position
   const rulerMax = Math.max(1, Math.ceil(distance))
@@ -60,6 +65,10 @@ function SetupDiagram({ clockSpeed, passingSpeed }: SetupDiagramProps) {
   const tickOneAnchor = tickOneX < VIEW_WIDTH / 2 ? 'start' : 'end'
   const tickOneLabelX = tickOneAnchor === 'start' ? tickOneX - 14 : tickOneX + 14
   const sameSpot = distance === 0
+  const playing = progress !== null
+  // Tick 1 is marked only once the clock reaches it. The clock's own face counts from 0 to 1 second as it goes.
+  const showTickOne = !playing || progress >= 1
+  const clockX = RULER_START_X + distance * scale * (progress ?? 0)
 
   return (
     <svg
@@ -127,48 +136,91 @@ function SetupDiagram({ clockSpeed, passingSpeed }: SetupDiagramProps) {
         Tick 0: the clock at the lab's start
       </text>
 
-      {/* Event: tick 1. */}
-      <rect
-        x={tickOneX - 14}
-        y={RULER_Y + 34}
-        width="28"
-        height="20"
-        rx="3"
-        fill="#f59e0b"
-      />
-      <text x={tickOneLabelX} y={RULER_Y + 70} textAnchor={tickOneAnchor} fontSize="11" fill={TEXT_COLOR}>
-        Tick 1: one second later by the clock's own face
-      </text>
-      <text x={tickOneLabelX} y={RULER_Y + 85} textAnchor={tickOneAnchor} fontSize="11" fill={TEXT_COLOR}>
-        {sameSpot ? '(the clock is at rest, so the same spot)' : `(${distance.toFixed(2)} light-seconds along the lab's ruler)`}
-      </text>
+      {showTickOne && (
+        <g>
+          {/* Event: tick 1. */}
+          <rect
+            x={tickOneX - 14}
+            y={RULER_Y + 34}
+            width="28"
+            height="20"
+            rx="3"
+            fill="#f59e0b"
+          />
+          <text x={tickOneLabelX} y={RULER_Y + 70} textAnchor={tickOneAnchor} fontSize="11" fill={TEXT_COLOR}>
+            Tick 1: one second later by the clock's own face
+          </text>
+          <text x={tickOneLabelX} y={RULER_Y + 85} textAnchor={tickOneAnchor} fontSize="11" fill={TEXT_COLOR}>
+            {sameSpot ? '(the clock is at rest, so the same spot)' : `(${distance.toFixed(2)} light-seconds along the lab's ruler)`}
+          </text>
+        </g>
+      )}
+
+      {/* The moving clock, drawn only during and after the playback; before it, the blue square stands for the clock. */}
+      {playing && (
+        <g>
+          <rect x={clockX - 10} y={RULER_Y - 10} width="20" height="20" rx="3" fill={CLOCK_COLOR} stroke="#0b1020" strokeWidth="2" />
+          <rect x={RULER_START_X} y="262" width="12" height="12" rx="2" fill={CLOCK_COLOR} />
+          <text x={RULER_START_X + 18} y="272" fontSize="11" fill={TEXT_COLOR}>
+            The moving clock: its own face reads {progress.toFixed(2)} seconds
+          </text>
+        </g>
+      )}
     </svg>
   )
 }
 
-// Steps 2 to 4 (basic interface, prediction, run gate) of docs/experiments/spacetime-geometry/01-the-interval.md.
-// The playback, the results and the tutor are later steps, so there are no onComplete or onTutorComplete props yet.
+// Steps 2 to 5 (basic interface, prediction, run gate, playback) of docs/experiments/spacetime-geometry/01-the-interval.md.
+// The results and the tutor are later steps, so there is no onTutorComplete prop yet.
 // Changing either speed or the prediction returns to the idle state, as in the other experiments.
-export function SpacetimeIntervalExperiment() {
+export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () => void }) {
   const [clockSpeed, setClockSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.5)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
-  const [hasRun, setHasRun] = useState(false)
-  // The physics result for the chosen speeds. Nothing from it is shown until the playback and results steps.
-  const result = useMemo(() => runIntervalExperiment(clockSpeed, passingSpeed), [clockSpeed, passingSpeed])
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [progress, setProgress] = useState(0)
+
+  const returnToIdle = () => {
+    setStatus('idle')
+    setProgress(0)
+  }
 
   const handleClockSpeedChange = (speed: number) => {
     setClockSpeed(speed)
-    setHasRun(false)
+    returnToIdle()
   }
   const handlePassingSpeedChange = (speed: number) => {
     setPassingSpeed(speed)
-    setHasRun(false)
+    returnToIdle()
   }
   const handlePredictionChange = (choice: Prediction) => {
     setPrediction(choice)
-    setHasRun(false)
+    returnToIdle()
   }
+
+  useEffect(() => {
+    if (status !== 'running') return
+
+    const startTime = performance.now()
+    let frameId: number
+
+    const animate = (currentTime: number) => {
+      const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setProgress(fraction)
+
+      if (fraction >= 1) {
+        setStatus('complete')
+        onComplete?.()
+        return
+      }
+
+      frameId = requestAnimationFrame(animate)
+    }
+
+    frameId = requestAnimationFrame(animate)
+
+    return () => cancelAnimationFrame(frameId)
+  }, [status, onComplete])
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
@@ -245,7 +297,7 @@ export function SpacetimeIntervalExperiment() {
           </div>
         </div>
 
-        <SetupDiagram clockSpeed={clockSpeed} passingSpeed={passingSpeed} />
+        <SetupDiagram clockSpeed={clockSpeed} passingSpeed={passingSpeed} progress={status === 'idle' ? null : progress} />
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
           <strong>How to read this diagram.</strong> The grey line is the lab's ruler, marked in light-seconds.{' '}
           <strong style={{ color: '#3b82f6' }}>Blue square</strong>: the clock at tick 0, the first event, at
@@ -254,7 +306,8 @@ export function SpacetimeIntervalExperiment() {
           the distance the clock covers between the two events, as the lab measures it; at 0c there is no such
           distance. <strong style={{ color: '#8b5cf6' }}>Purple square</strong>: the passing observer, with an
           arrow showing which way they move. Change either speed and watch where tick 1 lands and which way the
-          passing observer moves.
+          passing observer moves. Press Run to watch the <strong style={{ color: '#10b981' }}>green square</strong>, the
+          moving clock, travel from tick 0 to tick 1 while its own face counts up to one second.
         </p>
 
         <div style={{ marginTop: '2rem' }}>
@@ -294,20 +347,18 @@ export function SpacetimeIntervalExperiment() {
         <button
           type="button"
           className="action-button"
-          onClick={() => setHasRun(true)}
-          disabled={prediction === null}
+          onClick={() => {
+            setProgress(0)
+            setStatus('running')
+          }}
+          disabled={prediction === null || status === 'running'}
           style={{ marginTop: '1.5rem', padding: '0.6rem 1.5rem' }}
         >
-          Run
+          {status === 'running' ? 'Running...' : 'Run'}
         </button>
         {prediction === null && (
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>
             Choose a prediction above to run the experiment.
-          </p>
-        )}
-        {hasRun && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>
-            Run with the clock at {result.clockSpeed}c and the passing observer at {result.passingObserverSpeed}c.
           </p>
         )}
       </div>
