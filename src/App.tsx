@@ -48,6 +48,7 @@ import { ColorOfTheFallExperiment } from './components/ColorOfTheFallExperiment'
 import { SpinningBlackHoleExperiment } from './components/SpinningBlackHoleExperiment'
 import { BlackHoleFormationExperiment } from './components/BlackHoleFormationExperiment'
 import { HawkingRadiationExperiment } from './components/HawkingRadiationExperiment'
+import { SpacetimeIntervalExperiment } from './components/SpacetimeIntervalExperiment'
 
 interface Chapter {
   title: string
@@ -68,6 +69,7 @@ const groupOrder = [
   'Gravitational Waves',
   'Cosmology',
   'Black Holes and Strong Gravity',
+  'Spacetime Geometry: What Is Real, What Is Seen',
 ]
 
 // A one-sentence overview of a group, shown under its title on every chapter page of that group. Only groups that have one
@@ -473,6 +475,14 @@ const chapters: Chapter[] = [
     learned:
       "A black hole is not perfectly black: it gives off a very faint heat, called Hawking radiation, and the smaller the black hole, the hotter it is (1 Sun: about 0.00000006 K). Heat flows from hot to cold, so a black hole hotter than its surroundings loses mass and one colder gains it. The cosmic microwave background is at 2.725 K, warmer than every black hole found in space, so today they gain mass. A lone black hole would take a time that grows as the cube of its mass to evaporate: about 2 × 10⁶⁷ years for 1 Sun, against the universe's 1.4 × 10¹⁰ years.",
     next: 'This is currently the last experiment in the project. No further experiment is approved in this chapter.',
+  },  {
+    title: 'The Interval',
+    group: 'Spacetime Geometry: What Is Real, What Is Seen',
+    Component: SpacetimeIntervalExperiment,
+    // Placeholders: this experiment has no tutor yet, so these are never shown. The real wording is a later step
+    // and the owner's to approve (CLAUDE.md §28.1).
+    learned: '',
+    next: '',
   },
 ]
 
