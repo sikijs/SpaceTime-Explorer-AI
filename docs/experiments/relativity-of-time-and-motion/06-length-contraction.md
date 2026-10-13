@@ -329,9 +329,9 @@ Follows the pattern of Experiments 3 to 5 and the plain-language style of all ch
 ### Open items after implementation
 
 - **The own-time readouts.** Resolved: the tutor's step 2 now explains that the same-length clock's own display shows more than 1 second after one tick, so this version cannot be right (Decision 6).
-- **Length of the introduction.** Trimmed at the owner's request. Owner to say whether it is now short enough.
-- **Wording approval.** The learner-facing text, including the tutor's step 3 ("light cannot go faster or slower than c to fix this… the only thing left that can change is the distance between the mirrors") and the chapter summary, was drafted from this specification and has not had the owner's line-by-line approval.
-- **Label hint (Decision 3).** The panel names "mirrors as far apart as at rest" and "mirrors closer together" still hint at the answer. The owner chose these names.
+- **Length of the introduction.** Trimmed at the owner's request. Resolved (2026-10-13, owner delegated the choice to Claude): keep it as trimmed.
+- **Wording approval.** Approved 2026-10-13 (blanket approval, no fresh read-through). The learner-facing text, including the tutor's step 3 ("light cannot go faster or slower than c to fix this… the only thing left that can change is the distance between the mirrors") and the chapter summary, was drafted from this specification and has not had the owner's line-by-line approval.
+- **Label hint (Decision 3).** The panel names "mirrors as far apart as at rest" and "mirrors closer together" still hint at the answer. The owner chose these names; kept as chosen (2026-10-13, owner delegated the choice to Claude), since the neutral alternatives in Decision 3 would make the diagram harder to read.
 - **Visual limits.** In narrow windows the drawings shrink to about 213×33 pixels; at high speeds the two "start" labels of the shorter clock nearly touch; at 0.01c the difference between the ticks is too small to show at three decimals.
 - **Zero or negative predictions** are accepted, as in earlier experiments.
 

@@ -792,7 +792,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 9 | How a black hole forms: what can hold up a dead star's core? | `09-how-a-black-hole-forms.md` | Complete (built, tested, final review done 2026-10-12; wording approved 2026-10-12); the white dwarf formula's coefficient, 0.0131, is Claude's own fit to a numerical integration, approved |
 | 10 | Hawking radiation: does a black hole slowly disappear? | `10-hawking-radiation.md` | Specification approved 2026-10-12 (all nine decisions on their defaults); Complete (built, tested, complete-flow tested, final review done 2026-10-12; wording approved 2026-10-12); the formulas were checked only against secondary sources |
 
-**Recurring open items** (details in `docs/STATUS.md`): at a 390-pixel window the app's content column is only about 175 to 230 pixels wide, so several pictures' labels are very small (an app-wide layout matter, left for the owner); and several general-knowledge statements in Cosmology and Black Holes learner-facing text were not checked against a primary source (each experiment's specification lists them).
+**Recurring open items** (details in `docs/STATUS.md`): most general-knowledge statements in Cosmology and Black Holes learner-facing text were checked against sources on 2026-10-13 (see STATUS.md); the 2011 Nobel Prize claim, the original papers behind several formulas, and a few hand-derived formulas remain unchecked, and each experiment's specification lists them.
 
 ## Guided-Journey Work
 

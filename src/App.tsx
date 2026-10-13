@@ -552,7 +552,7 @@ export function App() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#fafafa' }}>
-      <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+      <div className="app-shell" style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
         {isWelcome && (
           <>
             <h1 className="app-title" style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '3rem' }}>

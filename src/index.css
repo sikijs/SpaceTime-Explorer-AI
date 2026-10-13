@@ -377,3 +377,20 @@ textarea {
     width: 100%;
   }
 }
+
+/* Narrow windows: the app, each experiment and its card each add their own padding, which left
+   the content only about 175 to 230 pixels wide at 390px. These padding values are set inline in
+   the components, so !important is needed to reduce them here. */
+@media (max-width: 600px) {
+  .app-shell {
+    padding: 0.75rem !important;
+  }
+
+  .chapter-main > div {
+    padding: 0.5rem 0 !important;
+  }
+
+  .exp-card {
+    padding: 0.75rem !important;
+  }
+}
