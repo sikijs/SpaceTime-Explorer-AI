@@ -462,14 +462,14 @@ const chapters: Chapter[] = [
     // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A dead star's core is held up only by pushes that run out at certain masses. Electrons hold up a white dwarf, which gets smaller as it gets heavier, up to 1.44 Suns (the Chandrasekhar limit). Neutrons hold up a neutron star, about 12 km in radius, up to somewhere between about 2 and 3 Suns, which is not known exactly. Above that, nothing known holds the core up, so it collapses until it is inside its horizon: a black hole. The heavier the core, the closer it gets to its own horizon before that happens.",
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1): changed to point to Experiment 10.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 10.
     next: 'Next, Hawking radiation: does a black hole slowly disappear?',
   },
   {
     title: 'Hawking Radiation',
     group: 'Black Holes and Strong Gravity',
     Component: HawkingRadiationExperiment,
-    // Draft wording, not yet approved by the owner (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A black hole is not perfectly black: it gives off a very faint heat, called Hawking radiation, and the smaller the black hole, the hotter it is (1 Sun: about 0.00000006 K). Heat flows from hot to cold, so a black hole hotter than its surroundings loses mass and one colder gains it. The cosmic microwave background is at 2.725 K, warmer than every black hole found in space, so today they gain mass. A lone black hole would take a time that grows as the cube of its mass to evaporate: about 2 × 10⁶⁷ years for 1 Sun, against the universe's 1.4 × 10¹⁰ years.",
     next: 'This is currently the last experiment in the project. No further experiment is approved in this chapter.',

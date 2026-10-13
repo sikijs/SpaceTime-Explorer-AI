@@ -107,7 +107,7 @@ export function HawkingRadiationTutor({ predictedHot, predictedDirection, predic
         backgroundColor: '#f0f7ff',
       }}
     >
-      {/* Draft wording, for the owner's review (CLAUDE.md §28.1). Follows the tutor sequence in the specification: observe,
+      {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Follows the tutor sequence in the specification: observe,
           compare with the predictions, one conceptual question, then the explanation. */}
       <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>
         Let's reflect on what you observed

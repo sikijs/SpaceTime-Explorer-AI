@@ -30,8 +30,8 @@ const ANIMATION_DURATION_MS = 10_000
 const DISK_CHANGE_FRACTION = 0.4
 
 // This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not marked
-// here; they are compared with the model's results later (the Results step). Draft wording, for the owner's review
-// (CLAUDE.md §28.1).
+// here; they are compared with the model's results later (the Results step). The question wording was approved by the owner
+// on 2026-10-12 (CLAUDE.md §28.1).
 type HotChoice = 'big' | 'small' | 'same'
 const hotChoices: Array<{ value: HotChoice; label: string }> = [
   { value: 'big', label: 'The big one' },
@@ -525,7 +525,7 @@ export function HawkingRadiationExperiment({ onComplete, onTutorComplete }: Hawk
       <h2>Experiment 10 — Hawking Radiation: Does a Black Hole Slowly Disappear?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Draft wording, for the owner's review (CLAUDE.md §28.1). The introduction must not give away the answers to the
+        {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). The introduction must not give away the answers to the
             three predictions below (§12): not that a smaller black hole is hotter, not that a black hole can be colder than
             the background, not which way a black hole's mass goes in the background, and not how the time to evaporate
             depends on the mass. It says that a black hole might have a temperature and might lose mass, since the questions
@@ -764,7 +764,7 @@ export function HawkingRadiationExperiment({ onComplete, onTutorComplete }: Hawk
             </p>
 
             <Thermometer result={result} />
-            {/* Draft wording, for the owner's review (CLAUDE.md §28.1). */}
+            {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
             <div style={{ ...CAPTION_STYLE, maxWidth: `${THERMO_WIDTH}px` }}>
               <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
                 <strong>How to read this picture: the thermometer.</strong>
@@ -932,7 +932,7 @@ export function HawkingRadiationExperiment({ onComplete, onTutorComplete }: Hawk
               const cell = { padding: '0.3rem 1rem 0.3rem 0' } as const
               return (
                 <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-                  {/* Draft wording, for the owner's review (CLAUDE.md §28.1). */}
+                  {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
                   <h3 style={{ marginTop: 0 }}>Results</h3>
                   <p>
                     You chose <strong>{presetLabel[HAWKING_PRESETS.find((p) => p.massKg === massKg)!.id]}</strong>. For this run:
