@@ -730,9 +730,9 @@ Every experiment below has an approved specification, a tested physics model, an
 | 5 | Why can't light go faster? | `05-invariant-light-speed.md` | Complete; has open items in its spec |
 | 6 | Does motion change length? | `06-length-contraction.md` | Complete; has open items in its spec |
 | 7 | Relativity of simultaneity | `07-relativity-of-simultaneity.md` | Complete (wording approved) |
-| 8 | Drawing spacetime | `08-spacetime-diagrams.md` | Complete; wording approval explicitly skipped |
+| 8 | Drawing spacetime | `08-spacetime-diagrams.md` | Complete (wording approved 2026-10-13, after being skipped earlier) |
 | 9 | Same time, different line | `09-same-time-different-line.md` | Complete (wording approved) |
-| 10 | The twin paradox | `10-twin-paradox.md` | Complete; wording approval not yet done, except the daily-life paragraph |
+| 10 | The twin paradox | `10-twin-paradox.md` | Complete (wording approved 2026-10-13) |
 | 11 | The rod's own axes | `11-rods-own-axes.md` | Complete (wording approved); closes this chapter |
 
 **Gravity and Curved Spacetime** (`docs/experiments/gravity-and-curved-spacetime/`)
@@ -755,11 +755,11 @@ Every experiment below has an approved specification, a tested physics model, an
 |---|---|---|---|
 | 1 | Ripples in spacetime | `01-gravitational-waves.md` | Complete (wording approved) |
 | 2 | The chirp: a wave that builds | `02-the-chirp.md` | Complete (wording approved) |
-| 3 | Where the energy comes from | `03-orbital-energy-loss.md` | Complete (wording reviewed in conversation) |
+| 3 | Where the energy comes from | `03-orbital-energy-loss.md` | Complete (wording approved 2026-10-13, after review in conversation) |
 | 4 | Comparing two real events | `04-comparing-real-events.md` | Complete (wording approved) |
 | 5 | Stretched by motion: redshift of a receding source | `05-redshift-of-a-receding-source.md` | Complete (wording approved) |
-| 6 | Triangulation: finding where a signal came from | `06-triangulation.md` | Complete; wording approval explicitly skipped |
-| 7 | Standard sirens: how far, how fast | `07-standard-sirens.md` | Complete; wording approval explicitly skipped |
+| 6 | Triangulation: finding where a signal came from | `06-triangulation.md` | Complete (wording approved 2026-10-13, after being skipped earlier) |
+| 7 | Standard sirens: how far, how fast | `07-standard-sirens.md` | Complete (wording approved 2026-10-13, after being skipped earlier) |
 
 **Cosmology** (`docs/experiments/cosmology/`). This chapter is complete.
 
