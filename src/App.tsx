@@ -49,6 +49,7 @@ import { SpinningBlackHoleExperiment } from './components/SpinningBlackHoleExper
 import { BlackHoleFormationExperiment } from './components/BlackHoleFormationExperiment'
 import { HawkingRadiationExperiment } from './components/HawkingRadiationExperiment'
 import { SpacetimeIntervalExperiment } from './components/SpacetimeIntervalExperiment'
+import { LightConesExperiment } from './components/LightConesExperiment'
 
 interface Chapter {
   title: string
@@ -483,6 +484,15 @@ const chapters: Chapter[] = [
     learned:
       "Two observers who move differently can measure different times and different distances between the same two events. But there is one number they agree on. Square the time, square the distance, and subtract. For two ticks of one clock, the answer came out the same for the lab, for the clock itself and for the passing observer, however fast each was moving. It is called the interval squared, and its square root, the interval, is the time the clock's own face shows between the two ticks. It is a little like a stick on a table. As you turn the stick, its east-west and north-south parts change, but its length does not. The comparison is not exact, though. A stick's length comes from adding the squares of its parts, while the interval comes from subtracting them, and this experiment did not explain why.",
     next: "You saw this for one pair of events: two ticks of one clock, measured by three observers. Next, we ask whether the same number can be found for other pairs of events, and how what an observer actually sees, because of the light that reaches them, differs from what they measure.",
+  },
+  {
+    title: 'Light Cones',
+    group: 'Spacetime Geometry: What Is Real, What Is Seen',
+    Component: LightConesExperiment,
+    // Wording approved by the owner on 2026-10-13 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    learned:
+      "Whether one event can affect another depends on whether a signal could cover the distance between them in the time available. Light is the fastest signal, so the events a flash of light from an event could reach make up its light cone. Measure the time in seconds and the distance in light-seconds. If there is more time than distance, something slower than light could make the trip; if the two are equal, only light could; if there is less time than distance, nothing could. Squaring the time and the distance and subtracting, as in the last experiment, gives a positive number, zero or a negative number in those three cases. Different observers measure different times and distances, but they all get the same sign, so they all agree on which case an event is. Physicists call the three cases timelike, lightlike and spacelike. The comparison with a shout across a field is not exact, because observers can disagree about how fast sound goes, but they all agree on how fast light goes.",
+    next: "You saw which events can be reached from one event, and that every observer agrees on it. This experiment left the order of events alone. Next, we ask whether observers can disagree about which of two events came first, and what that means for cause and effect.",
   },
 ]
 
