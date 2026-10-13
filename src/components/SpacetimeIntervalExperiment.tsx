@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { runIntervalExperiment } from '../physics/spacetimeInterval'
+import type { ObserverReading } from '../physics/spacetimeInterval'
 
 // Presets are the defaults of Decision 5 in docs/experiments/spacetime-geometry/01-the-interval.md.
 // The dark canvas used by the newer experiments, with light text and lines.
@@ -43,6 +44,9 @@ const RULER_Y = 150
 // Wall-clock length of the playback. It only sets how fast the result is shown; the physics does not depend on it (§11).
 const ANIMATION_DURATION_MS = 6_000
 const CLOCK_COLOR = '#10b981'
+const TIME_COLOR = '#38bdf8'
+const DISTANCE_COLOR = '#f472b6'
+const INTERVAL_COLOR = '#a3e635'
 
 interface SetupDiagramProps {
   clockSpeed: number
@@ -170,8 +174,73 @@ function SetupDiagram({ clockSpeed, passingSpeed, progress }: SetupDiagramProps)
   )
 }
 
-// Steps 2 to 5 (basic interface, prediction, run gate, playback) of docs/experiments/spacetime-geometry/01-the-interval.md.
-// The results and the tutor are later steps, so there is no onTutorComplete prop yet.
+interface ObserverRow {
+  name: string
+  reading: ObserverReading
+}
+
+// Bar sizes (SVG units) for the results drawing. Time and distance bars share one scale; the
+// time² − distance² bar is the same fixed length for every observer, so any change in it would show as a change in length.
+const BARS_VIEW_HEIGHT = 300
+const BAR_START_X = 10
+const BAR_MAX_LENGTH = 200
+const INTERVAL_BAR_X = 330
+const INTERVAL_BAR_LENGTH = 100
+const ROW_HEIGHT = 80
+const ROWS_TOP = 36
+
+function ResultsBars({ rows }: { rows: ObserverRow[] }) {
+  // Time is never shorter than distance (|distance| < time for a clock's ticks), so the longest time sets the scale.
+  const longest = Math.max(...rows.flatMap((r) => [r.reading.timeBetween, Math.abs(r.reading.distanceBetween)]))
+  const lengthOf = (value: number) => (Math.abs(value) / longest) * BAR_MAX_LENGTH
+
+  return (
+    <svg
+      viewBox={`0 0 460 ${BARS_VIEW_HEIGHT}`}
+      role="img"
+      aria-label={`Bars of the time, the distance and time squared minus distance squared that each of the three observers found. ${rows
+        .map((r) => `${r.name}: time ${r.reading.timeBetween.toFixed(2)}, distance ${Math.abs(r.reading.distanceBetween).toFixed(2)}, time squared minus distance squared ${r.reading.intervalSquared.toFixed(2)}`)
+        .join('. ')}.`}
+      style={SVG_STYLE}
+    >
+      <text x={BAR_START_X} y="20" fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
+        Time and distance (one scale)
+      </text>
+      <text x={INTERVAL_BAR_X} y="20" fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
+        time² − distance²
+      </text>
+      {rows.map((row, i) => {
+        const y = ROWS_TOP + i * ROW_HEIGHT
+        const distance = Math.abs(row.reading.distanceBetween)
+        return (
+          <g key={row.name}>
+            <text x={BAR_START_X} y={y + 12} fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
+              {row.name}
+            </text>
+            <rect x={BAR_START_X} y={y + 20} width={lengthOf(row.reading.timeBetween)} height="14" rx="2" fill={TIME_COLOR} />
+            <text x={BAR_START_X + lengthOf(row.reading.timeBetween) + 6} y={y + 31} fontSize="11" fill={TEXT_COLOR}>
+              time {row.reading.timeBetween.toFixed(2)} s
+            </text>
+            <rect x={BAR_START_X} y={y + 40} width={lengthOf(distance)} height="14" rx="2" fill={DISTANCE_COLOR} />
+            <text x={BAR_START_X + lengthOf(distance) + 6} y={y + 51} fontSize="11" fill={TEXT_COLOR}>
+              distance {distance.toFixed(2)} ls
+            </text>
+            <rect x={INTERVAL_BAR_X} y={y + 20} width={INTERVAL_BAR_LENGTH} height="34" rx="2" fill={INTERVAL_COLOR} />
+            <text x={INTERVAL_BAR_X + INTERVAL_BAR_LENGTH / 2} y={y + 42} textAnchor="middle" fontSize="13" fontWeight="bold" fill="#0b1020">
+              {row.reading.intervalSquared.toFixed(2)}
+            </text>
+          </g>
+        )
+      })}
+      <text x={BAR_START_X} y={BARS_VIEW_HEIGHT - 10} fontSize="10" fill={MUTED_COLOR}>
+        s = seconds, ls = light-seconds. The longest time or distance bar here is {longest.toFixed(2)}.
+      </text>
+    </svg>
+  )
+}
+
+// Steps 2 to 6 (basic interface, prediction, run gate, playback, results) of docs/experiments/spacetime-geometry/01-the-interval.md.
+// The tutor is a later step, so there is no onTutorComplete prop yet.
 // Changing either speed or the prediction returns to the idle state, as in the other experiments.
 export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () => void }) {
   const [clockSpeed, setClockSpeed] = useState(0.6)
@@ -179,6 +248,13 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  // The results are shown only when the playback has ended; the physics result does not depend on the prediction.
+  const result = useMemo(() => runIntervalExperiment(clockSpeed, passingSpeed), [clockSpeed, passingSpeed])
+  const observers: ObserverRow[] = [
+    { name: 'The lab', reading: result.lab },
+    { name: "The moving clock itself (the clock's own frame)", reading: result.clockFrame },
+    { name: 'The passing observer', reading: result.passing },
+  ]
 
   const returnToIdle = () => {
     setStatus('idle')
@@ -402,6 +478,80 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
             </p>
           </div>
         </div>
+        {status === 'complete' && prediction !== null && (
+          <div style={{ marginTop: '2rem' }}>
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              The clock moved at {result.clockSpeed}c and the passing observer at {result.passingObserverSpeed}c, both measured
+              from the lab. Your prediction was: {PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.toLowerCase()}.
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <thead>
+                  <tr>
+                    {['Observer', 'Time between the ticks (seconds)', 'Distance between the ticks (light-seconds)', 'time² − distance²'].map((h) => (
+                      <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {observers.map((o) => (
+                    <tr key={o.name}>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{o.name}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{o.reading.timeBetween.toFixed(2)}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{Math.abs(o.reading.distanceBetween).toFixed(2)}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{o.reading.intervalSquared.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <ResultsBars rows={observers} />
+            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>How to read this drawing.</strong> Three observers each measured the same two ticks of the
+                clock. Each observer gets one row, and the rows are in the same order as the table above. The drawing
+                shows the same numbers as the table, as lengths.
+              </p>
+              <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong style={{ color: TIME_COLOR }}>Blue bar (time):</strong> how much time that observer found
+                  between the two ticks. The label at the end of the bar gives it in seconds ("s"). A longer bar means
+                  more time passed, according to that observer.
+                </li>
+                <li>
+                  <strong style={{ color: DISTANCE_COLOR }}>Pink bar (distance):</strong> how far apart that observer
+                  found the two ticks, as a number of light-seconds ("ls"). A pink bar with no length means the observer
+                  found both ticks at the same place. That is what an observer finds if the clock is at rest for them.
+                </li>
+                <li>
+                  <strong>The blue and pink bars share one scale.</strong> A light-second and a second are the same
+                  kind of length here, because of how we measure distance. So you can compare a blue bar and a pink bar
+                  directly. The scale is set by the longest bar in the drawing, which is named at the bottom. Bars from
+                  different observers can be compared the same way. This means that a very long bar for one observer can
+                  make the others look short, but their labels still give the exact numbers.
+                </li>
+                <li>
+                  <strong style={{ color: INTERVAL_COLOR }}>Green block (time² − distance²):</strong> the number you
+                  predicted about. It is worked out for each observer from their own two numbers: multiply the time by
+                  itself, multiply the distance by itself, and subtract. For example, a row with time 3.00 s and
+                  distance 2.00 ls would give 3 × 3 − 2 × 2 = 9 − 4 = 5.00. The block is drawn at the same length in
+                  every row on purpose, so its length does not stand for the size of the number. Read the number written
+                  inside it.
+                </li>
+              </ul>
+              <p style={{ margin: 0 }}>
+                <strong>What to look for.</strong> Compare how the blue and pink bars change from one row to the next.
+                Then compare the numbers inside the green blocks. Next, change the clock's speed or the passing
+                observer's speed, run again, and see whether what you noticed still holds. A good test is to try the
+                passing observer at rest in the lab (0c), then at −0.8c.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
