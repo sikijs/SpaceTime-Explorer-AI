@@ -1,6 +1,6 @@
 # Black Holes and Strong Gravity — Experiment 4: Light Near a Black Hole — Can Light Be Trapped?
 
-**Status: APPROVED by the owner on 2026-10-11, with all thirteen "Decisions Needing Human Review" items taken as Claude's recommended defaults. Proposed by Claude per `CLAUDE.md` §23 Stages 1–2 and drafted as a specification per Stage 3 on 2026-10-11, as the fourth of the five experiments planned for this group (see the group list in Experiment 1's specification). To be built one step at a time (§6); nothing is implemented yet. Learner-facing wording (introduction, prediction questions, captions, Results, tutor) is still subject to the owner's line-by-line review when it is drafted (§28.1).**
+**Status: APPROVED by the owner on 2026-10-11, with all thirteen "Decisions Needing Human Review" items taken as Claude's recommended defaults. Proposed by Claude per `CLAUDE.md` §23 Stages 1–2 and drafted as a specification per Stage 3 on 2026-10-11, as the fourth of the five experiments originally planned for this group (see the group list in Experiment 1's specification; the group later grew to ten). Built one step at a time (§6), complete-flow tested and finally reviewed (2026-10-11); the owner's line-by-line wording approval (§28.1) is complete (2026-10-11). This experiment is complete; see "Implementation Notes".**
 
 ---
 
@@ -253,7 +253,7 @@ Each shows Claude's recommended default as used above.
 
 ## Relationship to Later Experiments
 
-- **Experiment 5, falling in** (planned, not approved): the capture shown here is where a falling traveler's story starts, from the traveler's side instead of the light's.
+- **Experiment 5, falling in** (approved and built, 2026-10-11): the capture shown here is where a falling traveler's story starts, from the traveler's side instead of the light's.
 
 ---
 

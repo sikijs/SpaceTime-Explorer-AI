@@ -277,8 +277,8 @@ Each shows Claude's recommended default as used above.
 
 ## Relationship to Later Experiments
 
-- **Experiment 4, how a black hole bends light** (planned, not approved): the exact theory's circular orbit at 1.5 horizon radii, which this experiment only mentions, is where light itself can circle.
-- **Experiment 5, falling in** (planned, not approved): the plunge shown here is where that experiment starts.
+- **Experiment 4, how a black hole bends light** (approved and built, 2026-10-11): the exact theory's circular orbit at 1.5 horizon radii, which this experiment only mentions, is where light itself can circle.
+- **Experiment 5, falling in** (approved and built, 2026-10-11): the plunge shown here is where that experiment starts.
 
 ---
 

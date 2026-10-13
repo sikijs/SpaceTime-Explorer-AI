@@ -1,6 +1,6 @@
 # Black Holes and Strong Gravity — Experiment 5: Falling In — What Does the Traveler Experience?
 
-**Status: DRAFT PROPOSAL, awaiting the owner's review. Proposed by Claude per `CLAUDE.md` §23 Stages 1–2 and drafted as a specification per Stage 3 on 2026-10-11, as the fifth and last of the five experiments planned for this group (see the group list in Experiment 1's specification: "5. Falling in (tidal forces at the horizon)"). Nothing is implemented. Do not build until the owner approves (Stage 4). Learner-facing wording (introduction, prediction questions, captions, Results, tutor) will be drafted during implementation and is subject to the owner's line-by-line review (§28.1).**
+**Status: APPROVED by the owner on 2026-10-11. Proposed by Claude per `CLAUDE.md` §23 Stages 1–2 and drafted as a specification per Stage 3 on 2026-10-11, as the fifth and last of the five experiments originally planned for this group (see the group list in Experiment 1's specification: "5. Falling in (tidal forces at the horizon)"; the group later grew to ten). Built one step at a time (§6), complete-flow tested and finally reviewed (2026-10-11); the owner's line-by-line wording approval (§28.1) is complete (2026-10-11). This experiment is complete; see "Implementation Notes".**
 
 ---
 
