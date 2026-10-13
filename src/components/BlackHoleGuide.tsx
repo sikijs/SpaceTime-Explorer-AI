@@ -302,8 +302,7 @@ export function BlackHoleGuide() {
           Experiments 2 and 9. Close to a horizon it becomes extreme: to a distant observer, someone falling
           in seems to slow down and fade as they approach the horizon, never quite seeming to reach it. The
           person falling in notices nothing odd about their own clock, and crosses the horizon in a finite
-          time. Later experiments in this group are planned to show this properly. This guide only describes
-          it.
+          time. Experiments 5 and 6 of this group show this properly. This guide only describes it.
         </P>
         <P>
           <strong>Light bends and objects orbit.</strong> Light passing near a black hole bends, as in

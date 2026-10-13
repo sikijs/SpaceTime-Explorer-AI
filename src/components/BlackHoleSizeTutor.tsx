@@ -181,9 +181,8 @@ export function BlackHoleSizeTutor({ predictedSunRadius, predictedMassScaling, o
           </p>
           <p style={paragraphStyle}>
             <strong>7. Not covered here.</strong> What time does near a black hole, what orbits and light do
-            near it, and what falling in is like. This group of experiments is planned to take those questions
-            up next. If you would like a fuller picture of what black holes are and how we know about them,
-            there is an optional guide just above this, below the Results.
+            near it, and what falling in is like. This group of experiments takes those questions up next. If you
+            would like a fuller picture of what black holes are and how we know about them, there is an optional guide just above this, below the Results.
           </p>
         </div>
       )}

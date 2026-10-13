@@ -206,8 +206,8 @@ export function TimeNearBlackHoleTutor({
           <p style={paragraphStyle}>
             <strong>6. What this does and does not say.</strong> This compares two clocks that are each held at
             rest. It does not describe what a traveler who falls toward the black hole experiences. That is
-            different, and later experiments in this group are planned to take it up (they are not built yet), so
-            this experiment should not be read as saying that time stops for someone falling in.
+            different, and Experiment 5 of this group, "Falling In", takes it up, so this experiment should not be
+            read as saying that time stops for someone falling in.
           </p>
           <p style={paragraphStyle}>
             <strong>7. The honest limits.</strong> This was a thought experiment. It did not say how the hovering
