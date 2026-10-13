@@ -230,9 +230,15 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
         {/* Introduction: draft wording for the owner's review (CLAUDE.md §28.1). */}
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> Earlier experiments showed that two observers can disagree about
-            how much time passed between two things happening, and about how far apart those things were.
-            So is there anything the observers still agree on?
+            <strong>The question.</strong> Imagine you are on a train and drop a ball. You see it fall straight
+            down, so for you it landed in the same spot it was dropped. Someone on the platform sees the train
+            carry the ball forward as it falls, so for them it landed many meters from where it was dropped. You
+            and the platform observer disagree about how far apart those two events were: the dropping and the
+            landing. Earlier experiments showed that moving observers can also disagree about how much time
+            passed between two events. So observers can differ on both the time and the distance. That raises the
+            question this experiment explores: when two observers disagree on both numbers, is there still some
+            way of combining their own two numbers that gives the same answer for everyone? Or is everything
+            about two events up to each observer's point of view?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Some words we will use.</strong> An <strong>event</strong> is something that happens at one
@@ -245,8 +251,11 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
             <strong>What happens.</strong> A clock moves past the lab at a steady speed. It ticks once every
             second of its own face, as the moving clock did in Experiments 3 to 5. Two of its ticks are our two
             events: tick 0, and tick 1 one second later by the clock's own face. Three observers will each
-            measure the time and the distance between those two events: the lab, the moving clock itself (for
-            which the clock is simply at rest), and a passing observer who moves past the lab at a speed you choose.
+            measure the same two events. The first is the lab, which sees the clock move. The second is the clock
+            itself, for which the clock is simply at rest. The third is a passing observer who moves past the lab
+            at a speed you choose. Each observer reports two numbers: the time between the two ticks and the
+            distance between them. You will predict how a certain combination of those two numbers compares
+            between the lab and the clock, then run the experiment and look at what all three observers find.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Your job.</strong> Choose the clock's speed and the passing observer's speed. Then you will
@@ -297,20 +306,7 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        <SetupDiagram clockSpeed={clockSpeed} passingSpeed={passingSpeed} progress={status === 'idle' ? null : progress} />
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
-          <strong>How to read this diagram.</strong> The grey line is the lab's ruler, marked in light-seconds.{' '}
-          <strong style={{ color: '#3b82f6' }}>Blue square</strong>: the clock at tick 0, the first event, at
-          the start of the ruler. <strong style={{ color: '#f59e0b' }}>Orange square</strong>: where the lab finds
-          the clock at tick 1, the second event, one second later by the clock's own face. The orange line is
-          the distance the clock covers between the two events, as the lab measures it; at 0c there is no such
-          distance. <strong style={{ color: '#8b5cf6' }}>Purple square</strong>: the passing observer, with an
-          arrow showing which way they move. Change either speed and watch where tick 1 lands and which way the
-          passing observer moves. Press Run to watch the <strong style={{ color: '#10b981' }}>green square</strong>, the
-          moving clock, travel from tick 0 to tick 1 while its own face counts up to one second.
-        </p>
-
-        <div style={{ marginTop: '2rem' }}>
+        <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What "time² − distance²" means.</strong> Take the time between two events, in seconds. Take
@@ -361,6 +357,51 @@ export function SpacetimeIntervalExperiment({ onComplete }: { onComplete?: () =>
             Choose a prediction above to run the experiment.
           </p>
         )}
+
+        <div style={{ marginTop: '2rem' }}>
+          <SetupDiagram clockSpeed={clockSpeed} passingSpeed={passingSpeed} progress={status === 'idle' ? null : progress} />
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+            <p style={{ margin: '0 0 0.5rem' }}>
+              <strong>How to read this diagram.</strong> The drawing is from the lab's point of view. Everything is
+              placed using the lab's own ruler.
+            </p>
+            <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>The grey line</strong> is the lab's ruler. Its numbers are distances in light-seconds,
+                measured from the start of the ruler. If a mark says 2, it is 2 light-seconds, about 600,000
+                kilometers, from the start.
+              </li>
+              <li>
+                <strong style={{ color: '#3b82f6' }}>Blue square (tick 0):</strong> the first event. The moving
+                clock ticks for the first time at the start of the ruler.
+              </li>
+              <li>
+                <strong style={{ color: '#f59e0b' }}>Orange square (tick 1):</strong> the second event. It sits
+                where the lab finds the clock when the clock's own face shows that one second has passed since
+                tick 0. The orange line along the ruler is the distance the clock has covered between the two
+                events, as the lab measures it. For example, at 0.6c the orange square lands 0.75 light-seconds
+                along the ruler. At 0c the clock does not move, so there is no orange line, and tick 1 is at the
+                same spot as tick 0.
+              </li>
+              <li>
+                <strong style={{ color: '#10b981' }}>Green square (the moving clock):</strong> appears when you
+                press Run. It travels along the ruler from tick 0 to tick 1. The line beneath the drawing shows
+                the number on the clock's own face as it goes, counting up to one second.
+              </li>
+              <li>
+                <strong style={{ color: '#8b5cf6' }}>Purple square (the passing observer):</strong> the third
+                observer. The arrow shows which way they move relative to the lab, and no arrow means they are at
+                rest in the lab. In this drawing they are only shown, not moved.
+              </li>
+            </ul>
+            <p style={{ margin: 0 }}>
+              <strong>What to look for.</strong> Change the clock's speed and watch where tick 1 lands: the faster
+              the clock, the farther along the ruler it is. Change the passing observer's speed and watch the purple
+              arrow change direction. The drawing only sets up the two events. The measurements each observer makes
+              of them appear after you run the experiment.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
