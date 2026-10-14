@@ -168,11 +168,12 @@ export function CauseBeforeEffectTutor({ event, passingSpeed, predicted, onExpla
             {lineSideWords}.
           </p>
           <p style={paragraphStyle}>
-            <strong>3. An everyday example: a ball and a window.</strong> A ball is thrown, and a window breaks. For the
-            throw to be the cause of the breaking, the ball must travel from the thrower to the window. That is the shout
-            across the field from the last experiment: a signal has to make the trip. If it can make the trip, the throw
-            comes first for everyone who measures carefully. If nothing could make the trip in the time available, the throw
-            cannot be the cause, and then it does no harm if different observers disagree about which came first.
+            <strong>3. An everyday example: a flash and a firecracker.</strong> A flash of light is sent from O, and a
+            firecracker goes off at B. For the flash to be the cause of the bang, it must travel from O to the place where
+            the firecracker is. That is the shout across the field from the last experiment: a signal has to make the trip.
+            If it can make the trip, the flash comes first for everyone who measures carefully. If nothing could make the
+            trip in the time available, the flash cannot be the cause, and then it does no harm if different observers
+            disagree about which came first.
           </p>
           <p style={paragraphStyle}>
             <strong>4. Why we never notice this in daily life.</strong> Take an observer moving at 30 meters per second,

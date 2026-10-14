@@ -514,16 +514,16 @@ export function CauseBeforeEffectExperiment({ onComplete, onTutorComplete }: Cau
         {/* Introduction: draft wording for the owner's review (CLAUDE.md §28.1). */}
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> Imagine a ball is thrown at a window, and the window breaks. The throw is
-            the <strong>cause</strong>, because it makes the breaking happen. The breaking is the{' '}
-            <strong>effect</strong>. In everyday life, nobody would ever find that the window broke before the ball
-            was thrown. Whoever you ask, the cause comes first, and an effect can never come before the thing that
-            caused it. Earlier experiments gave us a reason to look at this more carefully. They showed that "at the
+            <strong>The question.</strong> Imagine a flash of light is sent out, and when it reaches a light-sensitive
+            switch, a firecracker goes off. The flash is the <strong>cause</strong>, because it makes the bang
+            happen. The bang is the <strong>effect</strong>. In everyday life, nobody would ever find that the
+            firecracker went off before the flash was sent. Whoever you ask, the cause comes first, and an effect can
+            never come before the thing that caused it. Earlier experiments gave us a reason to look at this more carefully. They showed that "at the
             same time" can depend on who is measuring: two far-apart events can be at the same moment for one
             observer and at different moments for another. If observers can disagree about whether two events are
             simultaneous, a bigger question follows. Can they also disagree about which of the two events came{' '}
             <em>first</em>? And if they can, does that break cause and effect? Could some observer, somewhere, find
-            that the window broke before the ball was thrown? This experiment is about finding out when the order of
+            that the firecracker went off before the flash was sent? This experiment is about finding out when the order of
             two events can change, and when it cannot.
           </p>
           <div style={{ marginBottom: '0.75rem' }}>
@@ -534,13 +534,35 @@ export function CauseBeforeEffectExperiment({ onComplete, onTutorComplete }: Cau
             <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
               <li>
                 <strong>Event:</strong> something that happens at one place at one moment, such as a flash of light
-                or a window breaking. It is a point in space and time.
+                or a firecracker going off. It is a point in space and time.
               </li>
               <li>
-                <strong>Light cone:</strong> the set of events that a flash of light from a given event could reach.
-                Think of the ripples from a stone dropped in a pond. They spread outward at a fixed speed, and they
-                can only touch places the ripple has had time to reach. Light plays the part of the ripple, and
-                nothing can travel faster than it.
+                <strong>Light cone:</strong> the set of all the events that a flash of light from a given event could
+                reach, or could have come from. Think of a stone dropped into a pond. The ripples spread outward at a
+                fixed speed, so after 3 seconds they have reached only the places within 3 ripple-lengths of the
+                splash. Places farther out have not been reached yet. A pond is only a picture, because you could
+                still throw a pebble there faster. Light is different: nothing at all can travel faster than light,
+                so nothing that starts at the event can reach a place sooner than a flash of light would.{' '}
+                Light covers 1{' '}
+                <strong>light-second</strong> (about 300,000 kilometers) in 1 second, 2 in 2 seconds, 3 in 3 seconds,
+                and so on. Here is how the cone is used in this experiment, which has two events. <strong>Event O</strong>{' '}
+                is "here, now": a flash of light leaves your place at time 0. <strong>Event B</strong> is a second
+                event somewhere else, for example a firecracker going off. The question is: could O's flash reach B's
+                place by the time B happens? Say B happens 2 seconds after O. In 2 seconds the flash travels 2
+                light-seconds, so what matters is how far away B is. If B is 1 light-second away, the flash arrives
+                after 1 second, a second early, so B is <strong>inside</strong> O's cone. If B is 2 light-seconds
+                away, the flash arrives after exactly 2 seconds, just as B happens, so B is on the{' '}
+                <strong>edge</strong> of the cone. If B is 5 light-seconds away, then after 2 seconds the flash has
+                covered only 2 of the 5, and is still 3 short, so B is <strong>outside</strong> the cone. To check any
+                B in the same way: Step 1, count the seconds between O and B. Step 2, find how far away B is, in
+                light-seconds. Step 3, compare. A smaller distance means inside, an equal distance means on the edge,
+                and a bigger distance means outside.{' '}
+The cone has a future half,
+                for events the flash can reach later, and a past half, for events from which a flash could have
+                reached the first one. On the diagram of space and time, the cone is drawn as two lines spreading out
+                from the event, the paths of light going right and going left. The "cone" shape comes from picturing
+                the flash as a sphere of light that grows over time. The drawings here show only one direction of
+                space, so the sphere appears as just two edges.
               </li>
               <li>
                 <strong>Cause:</strong> in this experiment, one event can be the cause of another only if something
@@ -583,13 +605,13 @@ export function CauseBeforeEffectExperiment({ onComplete, onTutorComplete }: Cau
             faster than light?</em> If yes, O could be the cause. If no, it could not. An everyday version: you leave
             home at noon, and a friend 20 kilometers away is called at 12:30. Walking at 5 kilometers per hour, you
             cover only 2.5 kilometers in half an hour, so you could not be the one who reached them in time. Now the
-            same test with light, using an example that is not one of the choices below: event B happens 4 seconds
-            after O, and 1 light-second away. Remember that a light-second is the distance light travels in one
-            second. Step 1: in 4 seconds, light covers 4 light-seconds. Step 2: B is only 1 light-second away.
-            Step 3: 1 is less than 4, so a flash from O would arrive long before B happens. Something starting at O
-            could easily reach B, so O could be the cause of B. The rule to use on the choices below: compare the
-            distance to B with the time until B. If the distance is no bigger than the time, B is inside, or on the
-            edge of, O's light cone.
+            same test with light, using the firecracker from the Light cone entry above. Suppose O's flash is what
+            might have set off the firecracker, which goes off at B. If B is 2 seconds after O and 1 light-second
+            away, the flash arrives after 1 second, well before B, so O could be the cause of B. If B is 2 seconds
+            after O and 5 light-seconds away, the flash is still 3 light-seconds short when the firecracker goes off,
+            and nothing is faster than light, so O could not be the cause. The rule to use on the choices below:
+            compare the distance to B with the time until B. If the distance is no bigger than the time, B is
+            inside, or on the edge of, O's light cone, and O could be its cause.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Your job.</strong> There are three things to do, in this order. First, choose event B from the
