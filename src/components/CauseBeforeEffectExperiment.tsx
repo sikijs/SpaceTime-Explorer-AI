@@ -553,8 +553,9 @@ export function CauseBeforeEffectExperiment({ onComplete, onTutorComplete }: Cau
                 <strong>An observer "finds" the order of two events:</strong> this means the order worked out from
                 their own ruler and their own synchronized clocks, after allowing for the time light takes to reach
                 them. It does not mean the order in which the light first arrives at their eyes. For example, if an
-                event happens 3 light-seconds away, its light reaches you 3 seconds later. A careful observer
-                subtracts those 3 seconds and finds when it really happened.
+                event happens 3 light-seconds away, its light reaches you 3 seconds later. (A{' '}
+                <strong>light-second</strong> is the distance light travels in one second, about 300,000 kilometers.)
+                A careful observer subtracts those 3 seconds and finds when it really happened.
               </li>
               <li>
                 <strong>Same-moment line:</strong> on the diagram of space and time, the line through all the events
@@ -583,7 +584,7 @@ export function CauseBeforeEffectExperiment({ onComplete, onTutorComplete }: Cau
             home at noon, and a friend 20 kilometers away is called at 12:30. Walking at 5 kilometers per hour, you
             cover only 2.5 kilometers in half an hour, so you could not be the one who reached them in time. Now the
             same test with light, using an example that is not one of the choices below: event B happens 4 seconds
-            after O, and 1 light-second away. A <strong>light-second</strong> is the distance light travels in one
+            after O, and 1 light-second away. Remember that a light-second is the distance light travels in one
             second. Step 1: in 4 seconds, light covers 4 light-seconds. Step 2: B is only 1 light-second away.
             Step 3: 1 is less than 4, so a flash from O would arrive long before B happens. Something starting at O
             could easily reach B, so O could be the cause of B. The rule to use on the choices below: compare the
