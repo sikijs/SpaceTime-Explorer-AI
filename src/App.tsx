@@ -50,6 +50,7 @@ import { BlackHoleFormationExperiment } from './components/BlackHoleFormationExp
 import { HawkingRadiationExperiment } from './components/HawkingRadiationExperiment'
 import { SpacetimeIntervalExperiment } from './components/SpacetimeIntervalExperiment'
 import { LightConesExperiment } from './components/LightConesExperiment'
+import { CauseBeforeEffectExperiment } from './components/CauseBeforeEffectExperiment'
 
 interface Chapter {
   title: string
@@ -493,6 +494,14 @@ const chapters: Chapter[] = [
     learned:
       "Whether one event can affect another depends on whether a signal could cover the distance between them in the time available. Light is the fastest signal, so the events a flash of light from an event could reach make up its light cone. Measure the time in seconds and the distance in light-seconds. If there is more time than distance, something slower than light could make the trip; if the two are equal, only light could; if there is less time than distance, nothing could. Squaring the time and the distance and subtracting, as in the last experiment, gives a positive number, zero or a negative number in those three cases. Different observers measure different times and distances, but they all get the same sign, so they all agree on which case an event is. Physicists call the three cases timelike, lightlike and spacelike. The comparison with a shout across a field is not exact, because observers can disagree about how fast sound goes, but they all agree on how fast light goes.",
     next: "You saw which events can be reached from one event, and that every observer agrees on it. This experiment left the order of events alone. Next, we ask whether observers can disagree about which of two events came first, and what that means for cause and effect.",
+  },
+  {
+    title: 'Cause Before Effect',
+    group: 'Spacetime Geometry: What Is Real, What Is Seen',
+    Component: CauseBeforeEffectExperiment,
+    // Placeholders until the tutor exists (Step 7) and the owner approves the wording (CLAUDE.md §28.1); never shown while empty.
+    learned: '',
+    next: '',
   },
 ]
 
