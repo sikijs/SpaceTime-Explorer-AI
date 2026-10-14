@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { PRESET_EVENTS } from '../physics/lightCones'
+import type { EventRelation } from '../physics/lightCones'
 import { runCauseBeforeEffectExperiment } from '../physics/causeBeforeEffect'
+import type { EventOrder, OrderReading } from '../physics/causeBeforeEffect'
 
-// Steps 2 to 5 (basic interface, prediction, run gate, playback) of docs/experiments/spacetime-geometry/03-cause-before-effect.md:
-// introduction, controls, the prediction, the Run button, and the diagram with its caption and playback. The results and the
-// tutor come in later steps.
+// Steps 2 to 6 (basic interface, prediction, run gate, playback, results) of docs/experiments/spacetime-geometry/03-cause-before-effect.md:
+// introduction, controls, the prediction, the Run button, the diagram with its caption and playback, and the results.
+// The tutor comes in a later step.
 // Presets are the defaults of Decisions 2 and 3 of that specification.
 const PASSING_SPEED_PRESETS = [-0.9, -0.6, -0.3, 0, 0.3, 0.6, 0.9]
 
@@ -355,6 +357,101 @@ function Diagram({ eventIndex, passingSpeed, progress }: DiagramProps) {
   )
 }
 
+// Plain names for the cases (as in Experiment 2) and for the order each observer finds.
+const RELATION_NAMES: Record<EventRelation, string> = {
+  reachable: 'reachable',
+  'light-only': 'light only',
+  unreachable: 'unreachable',
+}
+const ORDER_NAMES: Record<EventOrder, string> = {
+  'o-first': 'O first',
+  'same-moment': 'the same moment',
+  'b-first': 'B first',
+}
+
+// Two decimals, with a true minus sign for a negative number.
+function signed(value: number): string {
+  return value.toFixed(2).replace('-', '\u2212')
+}
+
+interface ObserverRow {
+  name: string
+  color: string
+  reading: OrderReading
+}
+
+const BARS_VIEW_WIDTH = 520
+const BARS_VIEW_HEIGHT = 190
+const BARS_CENTER_X = 260
+const BAR_MAX_LENGTH = 200
+const BARS_ROWS_TOP = 56
+const BARS_ROW_HEIGHT = 58
+
+// The time each observer found from O to B, as a bar on one scale around a middle line at zero. A bar to the right means B
+// was later than O, a bar to the left means B was earlier. The words next to each bar say the same, so colour is not needed.
+function ResultsBars({ rows }: { rows: ObserverRow[] }) {
+  const longest = Math.max(...rows.map((r) => Math.abs(r.reading.timeBetween)), 1e-9)
+  const lengthOf = (value: number) => (Math.abs(value) / longest) * BAR_MAX_LENGTH
+
+  return (
+    <svg
+      viewBox={`0 0 ${BARS_VIEW_WIDTH} ${BARS_VIEW_HEIGHT}`}
+      role="img"
+      aria-label={`Bars of the time each observer found from O to B. A bar to the right means B was later than O, and a bar to the left means B was earlier. ${rows
+        .map((r) => `${r.name}: ${signed(r.reading.timeBetween)} seconds, ${ORDER_NAMES[r.reading.order]}`)
+        .join('. ')}.`}
+      style={SVG_STYLE}
+    >
+      <text x="20" y="22" fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
+        Time from O to B, as each observer found it (one scale)
+      </text>
+      <text x={BARS_CENTER_X - 8} y="44" textAnchor="end" fontSize="10" fill={MUTED_COLOR}>
+        {'\u2190 B earlier than O'}
+      </text>
+      <text x={BARS_CENTER_X + 8} y="44" textAnchor="start" fontSize="10" fill={MUTED_COLOR}>
+        {'B later than O \u2192'}
+      </text>
+      <line
+        x1={BARS_CENTER_X}
+        y1="48"
+        x2={BARS_CENTER_X}
+        y2={BARS_VIEW_HEIGHT - 28}
+        stroke={TICK_COLOR}
+        strokeWidth="1.5"
+      />
+      {rows.map((row, i) => {
+        const y = BARS_ROWS_TOP + i * BARS_ROW_HEIGHT
+        const time = row.reading.timeBetween
+        const length = lengthOf(time)
+        return (
+          <g key={row.name}>
+            <text x="20" y={y + 10} fontSize="12" fontWeight="bold" fill={row.color}>
+              {row.name}
+            </text>
+            <text x={BARS_VIEW_WIDTH - 20} y={y + 10} textAnchor="end" fontSize="11" fill={TEXT_COLOR}>
+              {signed(time)} s: {ORDER_NAMES[row.reading.order]}
+            </text>
+            {length > 0.5 && (
+              <rect
+                x={time > 0 ? BARS_CENTER_X : BARS_CENTER_X - length}
+                y={y + 18}
+                width={length}
+                height="16"
+                rx="2"
+                fill={row.color}
+              />
+            )}
+            {length <= 0.5 && <circle cx={BARS_CENTER_X} cy={y + 26} r="4" fill={row.color} />}
+          </g>
+        )
+      })}
+      <text x="20" y={BARS_VIEW_HEIGHT - 10} fontSize="10" fill={MUTED_COLOR}>
+        s = seconds. The longest bar here is {longest.toFixed(2)} s. The middle line is zero.
+      </text>
+    </svg>
+  )
+}
+
 // The prediction is about the chosen event B, so choosing a different B clears it; the passing observer's speed does not
 // change the question and keeps it. Changing the event, the speed or the prediction returns to the idle state, so a run is
 // never shown for different settings.
@@ -398,8 +495,13 @@ export function CauseBeforeEffectExperiment({ onComplete }: CauseBeforeEffectExp
     return () => cancelAnimationFrame(frameId)
   }, [status, onComplete])
 
-  // Checks the chosen setup, so the drawing never shows an impossible one.
-  useMemo(() => runCauseBeforeEffectExperiment(PRESET_EVENTS[eventIndex], passingSpeed), [eventIndex, passingSpeed])
+  // Also checks the chosen setup, so the drawing never shows an impossible one. The results are shown only when the
+  // playback has ended; the physics result does not depend on the prediction.
+  const result = useMemo(() => runCauseBeforeEffectExperiment(PRESET_EVENTS[eventIndex], passingSpeed), [eventIndex, passingSpeed])
+  const observers: ObserverRow[] = [
+    { name: 'The lab', color: LAB_LINE_COLOR, reading: result.lab },
+    { name: 'The passing observer', color: OBSERVER_COLOR, reading: result.passing },
+  ]
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
@@ -598,12 +700,6 @@ export function CauseBeforeEffectExperiment({ onComplete }: CauseBeforeEffectExp
             Choose a prediction above to run the experiment.
           </p>
         )}
-        {status === 'complete' && (
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
-            Run with event B {eventLabel(eventIndex)} and a passing observer {passingSpeed === 0 ? '' : 'at '}{passingLabel(passingSpeed).toLowerCase()}.
-            The results are not built yet.
-          </p>
-        )}
 
         <div style={{ marginTop: '2rem' }}>
           <Diagram eventIndex={eventIndex} passingSpeed={passingSpeed} progress={status === 'idle' ? null : progress} />
@@ -742,11 +838,125 @@ export function CauseBeforeEffectExperiment({ onComplete }: CauseBeforeEffectExp
               </li>
               <li>
                 <strong>Then try again:</strong> pick a different B or a different speed, and see what changes and
-                what stays the same. Each observer's numbers appear in the results, which are not built yet.
+                what stays the same. Each observer's numbers appear in the results, below the drawing.
               </li>
             </ol>
           </div>
         </div>
+        {/* Results: draft wording for the owner's review (CLAUDE.md §28.1). Values only; the explanation comes from the tutor (§12). */}
+        {status === 'complete' && prediction !== null && (
+          <div style={{ marginTop: '2rem' }}>
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              <strong>What you ran.</strong> Event B happened {eventLabel(eventIndex)} by the lab's clock, and the
+              passing observer was {passingLabel(passingSpeed).toLowerCase()}. Both observers measured the same two
+              events, O and B, each with their own ruler and clocks. <strong>Your prediction was:</strong>{' '}
+              {PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.replace(/^(Yes|No|An)/, (w) => w.toLowerCase())}.
+              It is only recorded here, not marked right or wrong.
+            </p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              <strong>The table.</strong> Each observer has one row. The first row is the lab. The second row is the
+              passing observer.
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <thead>
+                  <tr>
+                    {[
+                      'Observer',
+                      'Time from O to B (seconds)',
+                      'Distance between O and B (light-seconds)',
+                      'time² − distance²',
+                      'Could O cause B?',
+                      'Which event came first',
+                    ].map((h) => (
+                      <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {observers.map((o) => (
+                    <tr key={o.name}>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{o.name}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{signed(o.reading.timeBetween)}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{Math.abs(o.reading.distanceBetween).toFixed(2)}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{signed(o.reading.intervalSquared)}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{RELATION_NAMES[o.reading.relation]}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{ORDER_NAMES[o.reading.order]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What each column means.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Time from O to B:</strong> how much time that observer found between the two events. A plus
+                  number means B happened after O. A number with a minus sign means B happened <em>before</em> O for
+                  that observer. For example, 5.00 means B was 5 seconds after O, and {'\u2212'}2.00 means B was 2
+                  seconds before O.
+                </li>
+                <li>
+                  <strong>Distance between O and B:</strong> how far apart that observer found the two events.
+                </li>
+                <li>
+                  <strong>time² − distance²:</strong> the time multiplied by itself, minus the distance multiplied by
+                  itself. For example, a time of 3 and a distance of 2 give 3 × 3 − 2 × 2 = 9 − 4 = 5. A positive number
+                  or zero means B is inside or on the edge of O's light cone. A negative number means B is outside it.
+                </li>
+                <li>
+                  <strong>Could O cause B?</strong> "reachable" means B is inside O's light cone, so something slower
+                  than light could get from O to B. "light only" means B is on the edge of the cone, so only light could
+                  get there. "unreachable" means B is outside the cone, so nothing could get from O to B in time.
+                </li>
+                <li>
+                  <strong>Which event came first:</strong> "O first", "B first", or "the same moment", according to
+                  that observer's own clocks.
+                </li>
+              </ul>
+            </div>
+
+            <ResultsBars rows={observers} />
+            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>How to read this drawing.</strong> The drawing shows only the "Time from O to B" column of the
+                table, as bars, so you can see at a glance which way each observer's time points. The top bar is the
+                lab and the bottom bar is the passing observer, in the same order as the table.
+              </p>
+              <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The line in the middle is zero:</strong> no time between O and B. Every bar starts on it.
+                </li>
+                <li>
+                  <strong>A bar that goes to the right</strong> means B happened <em>after</em> O for that observer.{' '}
+                  <strong>A bar that goes to the left</strong> means B happened <em>before</em> O for that observer. The
+                  labels above the bars say the same.
+                </li>
+                <li>
+                  <strong>The length of a bar</strong> is how many seconds that observer found between O and B. Both
+                  bars use the same scale, so you can compare their lengths directly. The longest bar is named at the
+                  bottom. If a row shows a dot instead of a bar, that observer found the two events at the same
+                  moment.
+                </li>
+                <li>
+                  <strong>The words at the right of each row</strong> give the same result in words: the time in
+                  seconds, and which event came first for that observer.
+                </li>
+              </ul>
+              <p style={{ margin: 0 }}>
+                <strong>What to look for.</strong> First, compare the two bars. Do they point the same way? Second, look
+                at the "Could O cause B?" column and the "time² − distance²" column for both rows. Are those the same
+                for both observers? Then pick a different event B or a different passing speed, run it again, and
+                watch which numbers change and which stay the same.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

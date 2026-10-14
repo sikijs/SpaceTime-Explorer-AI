@@ -287,9 +287,9 @@ The tutor must not invent physics, change results, or contradict the engine (§1
 
 ## Implementation Notes
 
-**Built so far (2026-10-14):** the physics model (`src/physics/causeBeforeEffect.ts`) and its tests, and the interface up to the run: the introduction, the controls, the prediction, and the animated diagram with its caption. The results panel, the tutor and the chapter summary are not built; the chapter's `learned` and `next` text in `src/App.tsx` are empty placeholders and never shown while empty.
+**Built so far (2026-10-14):** the physics model (`src/physics/causeBeforeEffect.ts`) and its tests, and the interface up to and including the results: the introduction, the controls, the prediction, the animated diagram with its caption, and the results panel. The tutor and the chapter summary are not built; the chapter's `learned` and `next` text in `src/App.tsx` are empty placeholders and never shown while empty.
 
-**Approved wording (owner, 2026-10-14):** the introduction and the "How to read this diagram" caption, as they stand in `src/components/CauseBeforeEffectExperiment.tsx`. The component holds the verbatim text; this note records its structure.
+**Approved wording (owner, 2026-10-14):** the introduction, the "How to read this diagram" caption and the results panel, as they stand in `src/components/CauseBeforeEffectExperiment.tsx`. The component holds the verbatim text; this note records its structure.
 
 *Introduction*, in this order:
 1. **The question:** the ball and window; "cause" and "effect" defined; the question of whether observers can disagree about which of two events came first, and whether that would break cause and effect.
@@ -305,6 +305,12 @@ The tutor must not invent physics, change results, or contradict the engine (§1
 3. **Why two lines:** the lab's line is level, a mover's is tilted (right-moving rises to the right), and a mountain-range comparison.
 4. **A worked example** with numbers that are not among the choices (B 6 seconds after O and 2 light-seconds right, observer at +0.5c; the tilted line is at 0.5 × 2 = 1 second at B's place, B is above it, so both find O first), in four steps.
 5. **A list of what each part of the drawing is:** the ruler, the lab's clock line, O, B, the passing observer, the lab's line, the passing observer's line, the colored regions and the yellow lines.
-6. **What to look for:** four steps (before, while, when it ends, then try again). It ends with a development note that the results are not built yet, which must change when they are.
+6. **What to look for:** four steps (before, while, when it ends, then try again). It ends by saying each observer's numbers appear in the results, below the drawing.
 
-**Differences from the specification as written:** none have been approved yet. Items to report to the owner for approval: the pond-ripple, walking, scanner-bar, timetable and mountain-range comparisons, the "try again" step in "Your job" and "What to look for", and the worked example's closing line "Both observers agree on the order here", are Claude's additions to the draft wording.
+*Results panel* (shown only when the run ends and a prediction was made; values only, no explanation, §12):
+1. **What you ran:** the chosen event B and passing speed, and the learner's prediction, recorded and not marked right or wrong.
+2. **A table** with one row for the lab and one for the passing observer: time from O to B (signed, minus means B was earlier), distance between O and B, time² − distance², "Could O cause B?" (reachable, light only or unreachable), and "Which event came first" (O first, the same moment or B first).
+3. **"What each column means":** a list with examples, including the time² − distance² calculation (3 × 3 − 2 × 2 = 5) and its link to the light cone from Experiment 2.
+4. **A bars drawing** of the signed time from O to B for each observer, on one scale around a zero line (right: B later than O; left: B earlier; a dot: the same moment), with the time and the order written beside each bar, and a "How to read this drawing" caption and "What to look for" paragraph.
+
+**Differences from the specification as written:** none have been approved yet. The results panel's column "Could O cause B?" is Claude's plain-language name for the "Which case" column the specification describes, and the results show the order as a bar drawing of signed times only (the specification's "bars" description). Other items to report to the owner for approval: the pond-ripple, walking, scanner-bar, timetable and mountain-range comparisons, the "try again" step in "Your job" and "What to look for", and the worked example's closing line "Both observers agree on the order here", are Claude's additions to the draft wording.
