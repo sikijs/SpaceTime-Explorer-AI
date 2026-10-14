@@ -3,11 +3,12 @@ import type { CSSProperties } from 'react'
 import { PRESET_EVENTS } from '../physics/lightCones'
 import type { EventRelation } from '../physics/lightCones'
 import { runCauseBeforeEffectExperiment } from '../physics/causeBeforeEffect'
+import { CauseBeforeEffectTutor } from './CauseBeforeEffectTutor'
 import type { EventOrder, OrderReading } from '../physics/causeBeforeEffect'
 
-// Steps 2 to 6 (basic interface, prediction, run gate, playback, results) of docs/experiments/spacetime-geometry/03-cause-before-effect.md:
+// Steps 2 to 7 (basic interface, prediction, run gate, playback, results, tutor) of docs/experiments/spacetime-geometry/03-cause-before-effect.md:
 // introduction, controls, the prediction, the Run button, the diagram with its caption and playback, and the results.
-// The tutor comes in a later step.
+// Step 7 adds the tutor, which is shown below the card once the results are.
 // Presets are the defaults of Decisions 2 and 3 of that specification.
 const PASSING_SPEED_PRESETS = [-0.9, -0.6, -0.3, 0, 0.3, 0.6, 0.9]
 
@@ -460,12 +461,14 @@ interface CauseBeforeEffectExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function CauseBeforeEffectExperiment({ onComplete }: CauseBeforeEffectExperimentProps) {
+export function CauseBeforeEffectExperiment({ onComplete, onTutorComplete }: CauseBeforeEffectExperimentProps) {
   const [eventIndex, setEventIndex] = useState(3)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  // Counts the runs so the tutor starts again at its first question after each run.
+  const [runCount, setRunCount] = useState(0)
   const returnToIdle = () => {
     setStatus('idle')
     setProgress(0)
@@ -688,6 +691,7 @@ export function CauseBeforeEffectExperiment({ onComplete }: CauseBeforeEffectExp
           className="action-button"
           onClick={() => {
             setProgress(0)
+            setRunCount((n) => n + 1)
             setStatus('running')
           }}
           disabled={prediction === null || status === 'running'}
@@ -958,6 +962,16 @@ export function CauseBeforeEffectExperiment({ onComplete }: CauseBeforeEffectExp
           </div>
         )}
       </div>
+
+      {status === 'complete' && prediction !== null && (
+        <CauseBeforeEffectTutor
+          key={runCount}
+          event={PRESET_EVENTS[eventIndex]}
+          passingSpeed={passingSpeed}
+          predicted={prediction}
+          onExplained={() => onTutorComplete?.()}
+        />
+      )}
     </div>
   )
 }

@@ -499,9 +499,10 @@ const chapters: Chapter[] = [
     title: 'Cause Before Effect',
     group: 'Spacetime Geometry: What Is Real, What Is Seen',
     Component: CauseBeforeEffectExperiment,
-    // Placeholders until the tutor exists (Step 7) and the owner approves the wording (CLAUDE.md §28.1); never shown while empty.
-    learned: '',
-    next: '',
+    // Draft wording for the owner's review (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    learned:
+      "Two observers can disagree about which of two events came first, but only for some pairs of events. If an event is inside or on the edge of another event's light cone, then something could travel from the first to the second, and every observer finds the first one first. If an event is outside the cone, then nothing could make the trip, and an observer moving fast enough can find the order reversed. For example, take an event 3 seconds after O and 5 light-seconds away. The lab finds it 3.00 seconds after O, but an observer passing at +0.9c finds it 3.44 seconds before O. The reason is that every observer's same-moment line through O is tilted by their speed. Their speed is always below the speed of light, so the line is always flatter than the edge of the cone. Events inside the cone always stay on the later side of it, and events outside the cone can end up on the earlier side. The events whose order can change are exactly the ones that could not be cause and effect, so no observer ever finds a cause after its effect. If something could go faster than light, this protection would fail. At everyday speeds, the order changes only for events millions of light-seconds apart, so we never notice it.",
+    next: "Everything in this experiment was the order that each observer works out from their own ruler and clocks, after allowing for the time light takes to travel. It is not what the observer sees with their eyes. A later experiment looks at that difference.",
   },
 ]
 
