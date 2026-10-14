@@ -13,7 +13,7 @@ import { SeeingThePastTutor } from './SeeingThePastTutor'
 const SPEED_PRESETS = [0.3, 0.5, 0.6, 0.9]
 type Prediction = 'slower' | 'same' | 'faster'
 
-// The three answers of the prediction in the specification's "Prediction Activity" section (wording is a draft, §28.1).
+// The three answers of the prediction in the specification's "Prediction Activity" section (wording approved by the owner on 2026-10-14, §28.1).
 // (b) is never right; it is there because it is the natural guess.
 const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
   { value: 'slower', label: "Slower than the spaceship's real speed" },
@@ -493,7 +493,7 @@ export function SeeingThePastExperiment({ onComplete, onTutorComplete }: SeeingT
       <h2>Experiment 4 — What You See Is the Past: Where Is the Spaceship, and Where Does It Look to Be?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Introduction: draft wording for the owner's review (CLAUDE.md §28.1). */}
+        {/* Introduction: wording approved by the owner on 2026-10-14 (CLAUDE.md §28.1). */}
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The question.</strong> Imagine a friend who is travelling toward you and mails you one postcard at
@@ -693,7 +693,7 @@ export function SeeingThePastExperiment({ onComplete, onTutorComplete }: SeeingT
           </div>
         )}
 
-        {/* Caption for both pictures: draft wording for the owner's review (CLAUDE.md §28.1). */}
+        {/* Caption for both pictures: wording approved by the owner on 2026-10-14 (CLAUDE.md §28.1). */}
         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
             <strong>How to read these pictures.</strong> There are two pictures. The first is a <strong>map of space and
@@ -851,7 +851,7 @@ export function SeeingThePastExperiment({ onComplete, onTutorComplete }: SeeingT
           </ol>
         </div>
 
-        {/* Results: draft wording for the owner's review (CLAUDE.md §28.1). Values only; the explanation comes from the tutor (§12). */}
+        {/* Results: wording approved by the owner on 2026-10-14 (CLAUDE.md §28.1). Values only; the explanation comes from the tutor (§12). */}
         {status === 'complete' && prediction !== null && (
           <div style={{ marginTop: '2rem' }}>
             <h3 style={{ marginTop: 0 }}>Results</h3>

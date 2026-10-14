@@ -509,7 +509,7 @@ const chapters: Chapter[] = [
     title: 'What You See Is the Past',
     group: 'Spacetime Geometry: What Is Real, What Is Seen',
     Component: SeeingThePastExperiment,
-    // Draft wording for the owner's review (CLAUDE.md §28.1). Shown only after the tutor's explanation.
+    // Wording approved by the owner on 2026-10-14 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "What a telescope shows is light that reached it now, and that light left the spaceship earlier. So a moving spaceship is not where it looks to be, and its image can seem to move at a different speed from the spaceship. A spaceship coming toward the lab looks faster than it is, and one going away looks slower, because each later picture has a shorter or longer trip. For example, a spaceship flying toward the lab at 0.6c covers 4 light-seconds in 6.67 seconds. The first image arrives at time 5.00 and the last at time 7.67, so the image covers the same distance in 2.67 seconds, which is 1.50c. An image that looks faster than light breaks no rule. The spaceship itself is below the speed of light, and nothing travels along the image. This effect comes only from the time light takes to travel, and it would happen even without relativity.",
     next: "You saw only where the spaceship looks to be, along one line. You did not see its brightness or color, or a spaceship moving across the line of sight. This group has no further experiment yet.",
