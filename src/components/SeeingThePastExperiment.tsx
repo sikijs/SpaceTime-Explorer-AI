@@ -72,6 +72,11 @@ function lerp(a: number, b: number, fraction: number): number {
   return a + (b - a) * fraction
 }
 
+// The looking time at a point in the playback, kept inside the run so a rounding error at the very end cannot push it out.
+function lookingTimeAt(first: number, last: number, progress: number): number {
+  return Math.min(last, Math.max(first, lerp(first, last, progress)))
+}
+
 // While idle it draws only the setup: the lab's axes, the eye at position 0, the lab's clock line, and the spaceship's path as the lab
 // works it out. It deliberately draws no telescope view then: where the spaceship looks to be is what the learner is asked to
 // predict (§12). While the run plays, the lab's looking event moves up its clock line, the past light cone is drawn from it
@@ -101,7 +106,7 @@ function Diagram({ direction, speed, progress }: DiagramProps) {
   const pathLastY = yOf(pathLastTime)
 
   let looking: ReturnType<typeof seenAt> | null = null
-  if (playing) looking = seenAt(direction, speed, lerp(run.firstLooking, run.lastLooking, progress))
+  if (playing) looking = seenAt(direction, speed, lookingTimeAt(run.firstLooking, run.lastLooking, progress))
   // The right edge of the cone runs down and out at one light-second per second, until it leaves the drawing.
   const coneReach = looking === null ? 0 : Math.min(looking.lookingTime, maxPosition)
   const leftReach = looking === null ? 0 : Math.min(looking.lookingTime, -MIN_POSITION)
@@ -291,7 +296,7 @@ function PositionPlot({ direction, speed, progress }: { direction: Direction; sp
   const positionMax = Math.ceil(Math.max(realAt(run.lastLooking), realAt(run.firstLooking), ...run.samples.map((sample) => sample.seenPosition)))
   const xOfTime = (time: number) => PLOT_LEFT + ((time - timeMin) / (timeMax - timeMin)) * (PLOT_RIGHT - PLOT_LEFT)
   const yOfPosition = (position: number) => PLOT_BOTTOM - (position / positionMax) * (PLOT_BOTTOM - PLOT_TOP)
-  const now = seenAt(direction, speed, lerp(run.firstLooking, run.lastLooking, progress))
+  const now = seenAt(direction, speed, lookingTimeAt(run.firstLooking, run.lastLooking, progress))
   const reached = run.samples.filter((sample) => sample.lookingTime <= now.lookingTime)
   const seenPoints = [...reached.map((sample) => [sample.lookingTime, sample.seenPosition]), [now.lookingTime, now.seenPosition]]
   const realPoints = [
