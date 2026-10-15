@@ -284,6 +284,18 @@ Every experiment's animated diagram must, before its UI step is reported done �
 2. Visually distinguish any two quantities the learner is meant to compare. A control that changes a number must never leave the animation looking identical — if the experiment's point is a contrast (true vs. detected, near vs. far, before vs. after), the diagram has to show that contrast, not just report it in text.
 3. Include a "How to read this diagram" caption beneath it, explaining what's drawn and what to look for, matching the established pattern in this project's prior experiments.
 
+   The caption must be detailed, in simple words, and explanatory, so that a learner with only basic science knowledge can read the diagram without guessing. Write it this way the first time; do not wait for the owner to ask for it. In particular:
+
+   * Name every picture and say what each one shows (for example, whose view it is, and when it appears during a run).
+   * List every drawn element and say what it means: each shape, arrow, line, row, colour, fill pattern, marker, and bar, including what a longer arrow or a missing arrow means.
+   * Define any unit or term used in the drawing's labels (for example, "0.5c is half the speed of light").
+   * Describe what appears when, if the diagram changes during a run, in the order the learner sees it.
+   * Use short sections or bullet lists, not one dense paragraph.
+   * Include a worked moment with real numbers and a "what to look for" list, as in earlier experiments.
+   * Do not reveal what the experiment shows before the learner has predicted and observed it (§12).
+
+   As with other learner-facing wording, the caption is the owner's to approve (§28.1).
+
 This pattern emerged in earlier experiments only through repeated, after-the-fact owner feedback. Apply it proactively on every new experiment's first UI pass.
 
 ---
