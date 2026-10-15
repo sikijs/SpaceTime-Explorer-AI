@@ -17,8 +17,8 @@ export interface EnergyMomentumReading {
 }
 
 // Named constants of Part 3 and the tutor's real-world facts (spec "Real-World Facts Used, and Source Status").
-// The proton rest energy and the helium-4 binding energy are confirmed by search; the neutron and helium-4 nucleus masses are
-// from memory and are consistent with them (a test checks this). They must be confirmed from CODATA before approval of the wording.
+// The proton rest energy and the helium-4 binding energy were confirmed by search on 2026-10-14, and the neutron and helium-4
+// nucleus masses on 2026-10-15 (CODATA 2022 gives 939.565 421 94 and 3727.379 4118 MeV). A test checks that all four agree.
 export const ELECTRON_REST_ENERGY_MEV = 0.51099895
 export const PROTON_REST_ENERGY_MEV = 938.272
 export const NEUTRON_REST_ENERGY_MEV = 939.565
