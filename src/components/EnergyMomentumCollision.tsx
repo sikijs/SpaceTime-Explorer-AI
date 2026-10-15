@@ -497,8 +497,9 @@ function CollisionResults({ speed, passingSpeed, prediction }: { speed: number; 
 }
 
 // Part 2's section. Changing a setting returns to the setup, so a run is never shown for different settings. Changing the prediction does
-// the same.
-export function EnergyMomentumCollision() {
+// the same. `skippedPartOne` is true when the learner reached Part 2 with the skip link instead of through Part 1's tutor; the
+// introduction then adds a reminder, because it uses the combination from Part 1.
+export function EnergyMomentumCollision({ skippedPartOne = false }: { skippedPartOne?: boolean }) {
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
@@ -540,6 +541,12 @@ export function EnergyMomentumCollision() {
       {/* Introduction, stage B (needed by Part 2): draft wording for the owner's review (CLAUDE.md §28.1), from the specification's
           "Introduction: three stages". It does not say what the lump's mass is (that is Part 2's prediction, §12). */}
       <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        {skippedPartOne && (
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>If you skipped Part 1.</strong> This part uses the combination E² − (momentum × c)² from Part 1. Open the "Words
+            and formulas" panel at the top of the page if you need a reminder of it.
+          </p>
+        )}
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
           <strong>Why a collision.</strong> So far we looked at one particle. Now two particles meet. This is how momentum was first
           understood, and it is where the everyday rule <em>mass × speed</em> is put to the test.

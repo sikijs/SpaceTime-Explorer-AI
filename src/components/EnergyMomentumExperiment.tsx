@@ -26,6 +26,9 @@ const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
   },
 ]
 
+// The element Part 2 sits in, so the skip link can scroll to it.
+const PART_TWO_ID = 'energy-momentum-part-2'
+
 const KIND_CHOICES: { value: Kind; label: string }[] = [
   { value: 'particle', label: 'A particle with mass' },
   { value: 'light', label: 'A light pulse' },
@@ -429,11 +432,20 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
   const [runCount, setRunCount] = useState(0)
   // Part 2 is shown only after the learner has reached Part 1's tutor explanation (spec, Learner Controls, Decision 2).
   const [partOneExplained, setPartOneExplained] = useState(false)
+  // A learner who already knows Part 1 can skip to Part 2 with a link under Part 1's heading. Part 2 is then shown without
+  // Part 1's tutor explanation, and it says so (it uses a combination from Part 1). Skipping does not count as having
+  // reached the explanation, so it does not call onTutorComplete or onComplete.
+  const [skippedToPartTwo, setSkippedToPartTwo] = useState(false)
+  const partTwoShown = partOneExplained || skippedToPartTwo
   const result = runInvariantExperiment(kind, speed, passingSpeed)
   const returnToIdle = () => {
     setStatus('idle')
     setProgress(0)
   }
+
+  useEffect(() => {
+    if (skippedToPartTwo) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [skippedToPartTwo])
 
   useEffect(() => {
     if (status !== 'running') return
@@ -469,6 +481,18 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <h3 style={{ marginTop: 0 }}>Part 1 — Energy and momentum, seen by different observers</h3>
+        {!partTwoShown && (
+          <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
+            <span style={{ color: 'var(--text-muted)' }}>Already know this? </span>
+            <button
+              type="button"
+              onClick={() => setSkippedToPartTwo(true)}
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              Skip to Part 2
+            </button>
+          </p>
+        )}
 
         {/* Introduction, stage A (needed by Part 1): draft wording for the owner's review (CLAUDE.md §28.1), from the
             specification's "Introduction: three stages". It gives the formulas for one observer's numbers and one worked
@@ -604,7 +628,7 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
           </p>
         </div>
 
-        <ReferencePanel entries={partOneExplained ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES] : REFERENCE_ENTRIES} />
+        <ReferencePanel entries={partTwoShown ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES] : REFERENCE_ENTRIES} />
 
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>What moves past the lab?</label>
@@ -952,7 +976,11 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
         <EnergyMomentumTutor key={runCount} kind={kind} speed={speed} passingSpeed={passingSpeed} predicted={prediction} onExplained={() => setPartOneExplained(true)} />
       )}
 
-      {partOneExplained && <EnergyMomentumCollision />}
+      {partTwoShown && (
+        <div id={PART_TWO_ID}>
+          <EnergyMomentumCollision skippedPartOne={skippedToPartTwo && !partOneExplained} />
+        </div>
+      )}
     </div>
   )
 }
