@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { totalsOf } from '../physics/energyMomentum'
 import { runDecay } from '../physics/makingNewParticles'
 
 // Step 4 of docs/experiments/spacetime-geometry/06-making-new-particles.md for Part 2 (decay): the section, the introduction (stage B),
 // the two controls (the pieces' mass, r, and the passing observer's speed), a labeled diagram of the setup (the parent at rest, and
 // the passing observer), and its "How to read this diagram" caption (CLAUDE.md §14). Only the setup is shown. There is deliberately no
-// prediction, results or tutor yet: those are later steps, and the caption will be extended when the run is built. Every number
+// tutor yet (Step 7 adds the results table, shown when the run ends: values only, with plain labels, and the explanation is the
+// tutor's, §12). Every number
 // comes from `runDecay` (CLAUDE.md §9). Wording here is draft for the owner's review (CLAUDE.md §28.1).
 
 // The terms and formulas that stage B's introduction defines, added to the "Words and formulas" panel once Part 2 appears (spec,
@@ -265,6 +267,142 @@ interface DecayDiagramProps {
   pieceMass: number
   // null while idle (only the setup is shown); otherwise how far the playback has got, from 0 to 1.
   progress: number | null
+}
+
+const CELL: CSSProperties = { padding: '0.3rem 1rem 0.3rem 0' }
+
+function Table({ head, rows }: { head: string[]; rows: string[][] }) {
+  return (
+    <div style={{ overflowX: 'auto', maxWidth: '100%', marginBottom: '0.75rem' }}>
+      <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            {head.map((h, i) => (
+              <th key={i} style={{ ...CELL, textAlign: 'left' }}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, r) => (
+            <tr key={r}>
+              {row.map((cell, i) => (
+                <td key={i} style={CELL}>
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// A difference that is zero apart from rounding is shown as 0.0000.
+function formatDifference(value: number): string {
+  return formatNumber(Math.abs(value) < 5e-10 ? 0 : value, 4)
+}
+
+// The results, shown only when the run ends. Values only, with plain labels: what they mean is the tutor's to explain (§12).
+function DecayResults({ pieceMass, passingSpeed, prediction }: { pieceMass: number; passingSpeed: number; prediction: Prediction }) {
+  const result = runDecay(pieceMass, passingSpeed)
+  const chosen = PREDICTION_CHOICES.find((c) => c.value === prediction)?.label
+  const record = (
+    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+      The pieces' mass was r = {pieceMass === 0 ? '0 (pieces of light)' : pieceMass} times the parent's mass, and the passing observer moved
+      at {passingLabel(passingSpeed)}. Masses and energies are in the parent's rest energies. <strong>Your prediction was:</strong> {chosen}{' '}
+      It is only recorded here, not marked right or wrong.
+    </p>
+  )
+  if (!result.allowed) {
+    return (
+      <div style={{ marginTop: '1.5rem', overflowX: 'auto', maxWidth: '100%' }}>
+        <h3 style={{ marginBottom: '0.5rem' }}>Results</h3>
+        {record}
+        <p style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>No decay can happen.</p>
+        <Table
+          head={['', 'Mass']}
+          rows={[
+            ["The parent's mass", formatNumber(1, 4)],
+            ["The pieces' rest masses added up (2r)", formatNumber(result.sumOfRestMasses, 4)],
+          ]}
+        />
+      </div>
+    )
+  }
+
+  const labBefore = totalsOf([result.labParent])
+  const labAfter = totalsOf(result.labPieces.map((p) => p.reading))
+  const passingBefore = totalsOf([result.passingParent])
+  const passingAfter = totalsOf(result.passingPieces.map((p) => p.reading))
+  const row = (name: string, before: number, after: number) => [
+    name,
+    formatNumber(before, 4),
+    formatNumber(after, 4),
+    formatDifference(after - before),
+  ]
+  const pieceRows = (pieces: typeof result.labPieces) =>
+    pieces.map((p, i) => [
+      pieceMass === 0 ? `Light pulse ${i + 1}` : `Piece ${i + 1}`,
+      pieceMass === 0 ? '1c (light)' : `${formatNumber(Math.abs(p.reading.speed), 4)}c`,
+      formatNumber(p.reading.energy, 4),
+      formatNumber(p.reading.momentumTimesC, 4),
+      formatNumber(p.restMass, 4),
+    ])
+  return (
+    <div style={{ marginTop: '1.5rem', overflowX: 'auto', maxWidth: '100%' }}>
+      <h3 style={{ marginBottom: '0.5rem' }}>Results</h3>
+      {record}
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.25rem' }}>
+        <strong>The masses.</strong>
+      </p>
+      <Table
+        head={['', 'Mass']}
+        rows={[
+          ["The parent's mass", formatNumber(1, 4)],
+          ["The pieces' rest masses added up (2r)", formatNumber(result.sumOfRestMasses, 4)],
+          ['The mass given up (parent − pieces)', formatNumber(result.massGivenUp, 4)],
+        ]}
+      />
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.25rem' }}>
+        <strong>The pieces, as the lab measures them.</strong>
+      </p>
+      <Table head={['', 'Speed', 'Energy', 'Momentum × c', 'Rest mass']} rows={pieceRows(result.labPieces)} />
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.25rem' }}>
+        <strong>The pieces, as the passing observer ({passingLabel(passingSpeed)}) measures them.</strong>
+      </p>
+      <Table head={['', 'Speed', 'Energy', 'Momentum × c', 'Rest mass']} rows={pieceRows(result.passingPieces)} />
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.25rem' }}>
+        <strong>The totals, before the decay (the parent) and after it (the two pieces together).</strong> A difference of zero means the
+        total did not change.
+      </p>
+      <Table
+        head={['', 'Before', 'After', 'Difference']}
+        rows={[
+          row('Lab: total energy', labBefore.energy, labAfter.energy),
+          row('Lab: total momentum × c', labBefore.momentumTimesC, labAfter.momentumTimesC),
+          row('Passing observer: total energy', passingBefore.energy, passingAfter.energy),
+          row('Passing observer: total momentum × c', passingBefore.momentumTimesC, passingAfter.momentumTimesC),
+        ]}
+      />
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.25rem' }}>
+        <strong>The system's mass, worked out from the total energy and total momentum.</strong>
+      </p>
+      <Table
+        head={['', 'Before', 'After']}
+        rows={[
+          ['As the lab finds it', formatNumber(Math.sqrt(result.labParent.invariant), 4), formatNumber(result.systemMassLab, 4)],
+          [
+            'As the passing observer finds it',
+            formatNumber(Math.sqrt(result.passingParent.invariant), 4),
+            formatNumber(result.systemMassPassing, 4),
+          ],
+        ]}
+      />
+    </div>
+  )
 }
 
 function DecayDiagram({ passingSpeed, pieceMass, progress }: DecayDiagramProps) {
@@ -794,6 +932,10 @@ export function MakingNewParticlesDecay({
             </ul>
           </div>
         </div>
+      )}
+
+      {status === 'complete' && prediction !== null && (
+        <DecayResults pieceMass={pieceMass} passingSpeed={passingSpeed} prediction={prediction} />
       )}
     </div>
   )
