@@ -423,9 +423,9 @@ function ReferencePanel({ entries }: { entries: { term: string; meaning: string 
 }
 
 // Changing the object, its speed or the passing observer's speed returns to the idle state, so a run is never shown for
-// different settings. The completion mark is saved only when Part 3 ends (Decision 18 of the specification), so onComplete is
-// not called yet.
-export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) {
+// different settings. The completion mark is saved only when Part 3's playback ends (Decision 18 of the specification), and the
+// explained mark, which shows the chapter summary, when Part 3's tutor reaches its explanation. Parts 1 and 2 call neither.
+export function EnergyMomentumExperiment({ onComplete, onTutorComplete }: EnergyMomentumExperimentProps) {
   const [kind, setKind] = useState<Kind>('particle')
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
@@ -1031,6 +1031,8 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
             skippedPartTwo={skippedToPartThree && !partTwoExplained}
             onBackToPartOne={() => document.getElementById(PART_ONE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             onBackToPartTwo={() => document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onComplete={onComplete}
+            onTutorComplete={onTutorComplete}
           />
         </div>
       )}

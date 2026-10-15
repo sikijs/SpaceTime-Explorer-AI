@@ -618,11 +618,16 @@ export function EnergyMomentumReactions({
   skippedPartTwo = false,
   onBackToPartOne,
   onBackToPartTwo,
+  onComplete,
+  onTutorComplete,
 }: {
   skippedPartOne?: boolean
   skippedPartTwo?: boolean
   onBackToPartOne?: () => void
   onBackToPartTwo?: () => void
+  // Called when the playback reaches its end, and when the tutor reaches its explanation (the experiment's completion marks).
+  onComplete?: () => void
+  onTutorComplete?: () => void
 }) {
   const [kind, setKind] = useState<ReactionKind>('annihilation')
   const [settings, setSettings] = useState<Record<ReactionKind, number>>(START_SETTING)
@@ -650,6 +655,7 @@ export function EnergyMomentumReactions({
 
       if (fraction >= 1) {
         setStatus('complete')
+        onComplete?.()
         return
       }
 
@@ -659,7 +665,7 @@ export function EnergyMomentumReactions({
     frameId = requestAnimationFrame(animate)
 
     return () => cancelAnimationFrame(frameId)
-  }, [status])
+  }, [status, onComplete])
   const settingPresets = kind === 'annihilation' ? ANNIHILATION_SPEEDS : kind === 'pair-creation' ? PHOTON_ENERGIES : []
 
   return (
@@ -1063,7 +1069,7 @@ export function EnergyMomentumReactions({
 
       {status === 'complete' && prediction !== null && <ReactionResults kind={kind} setting={setting} passingSpeed={passingSpeed} prediction={prediction} />}
       {status === 'complete' && prediction !== null && (
-        <EnergyMomentumReactionsTutor key={runCount} kind={kind} setting={setting} passingSpeed={passingSpeed} predicted={prediction} />
+        <EnergyMomentumReactionsTutor key={runCount} kind={kind} setting={setting} passingSpeed={passingSpeed} predicted={prediction} onExplained={() => onTutorComplete?.()} />
       )}
     </div>
   )

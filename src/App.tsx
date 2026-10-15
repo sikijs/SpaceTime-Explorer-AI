@@ -519,9 +519,10 @@ const chapters: Chapter[] = [
     title: 'Energy, Momentum and Mass',
     group: 'Spacetime Geometry: What Is Real, What Is Seen',
     Component: EnergyMomentumExperiment,
-    // Placeholder: the summary is written in a later step (the experiment has no tutor yet, so it is never shown).
-    learned: '',
-    next: '',
+    // Draft wording for the owner's review (CLAUDE.md §28.1). Shown only after Part 3's tutor explanation.
+    learned:
+      "Different observers measure different energies and momenta for the same moving thing, but the combination E² − (pc)² is the same for all of them, and it is the square of the thing's mass. So mass is the number every observer agrees on, and a particle at rest still has energy, its rest energy mc². In a collision, the total energy and the total momentum are conserved for every observer, but the sum of the separate masses is not. Two lumps of mass m that meet at 0.6c each make one lump of mass 2.5 m, not 2 m, because their energy of motion becomes internal energy. What does not change is the mass of the whole system, worked out from its total energy and total momentum. The same holds when pieces are created or destroyed. An electron and a positron at rest turn into two pulses of light: the sum of the masses goes from 2 to 0, while the system's mass stays 2. Two beams of light can make a pair only if each has at least one rest energy. And a helium nucleus weighs 28.3 MeV, about 0.75 percent, less than its two protons and two neutrons, because that energy leaves when they bind.",
+    next: "You saw particles and light along one line, and the formulas were used, not derived. Forces, acceleration, electric charge, and the force that holds a nucleus together were not shown. This group has no further experiment yet.",
   },
 ]
 
