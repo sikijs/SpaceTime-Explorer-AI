@@ -5,7 +5,8 @@ import type { MakingExperimentResult, SetupResult } from '../physics/makingNewPa
 import { systemMassOf, totalsOf } from '../physics/energyMomentum'
 import { MakingNewParticlesTutor } from './MakingNewParticlesTutor'
 import { REFERENCE_ENTRIES, ReferencePanel } from './EnergyMomentumExperiment'
-import { PART_TWO_REFERENCE_ENTRIES } from './EnergyMomentumCollision'
+import { PART_TWO_REFERENCE_ENTRIES as EXPERIMENT_FIVE_PART_TWO_ENTRIES } from './EnergyMomentumCollision'
+import { MakingNewParticlesDecay, PART_TWO_REFERENCE_ENTRIES } from './MakingNewParticlesDecay'
 import { PART_THREE_REFERENCE_ENTRIES } from './EnergyMomentumReactions'
 
 // Step 4 of docs/experiments/spacetime-geometry/06-making-new-particles.md (the basic interface), Part 1 only: the two controls
@@ -65,6 +66,9 @@ const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
   { value: 'same', label: '(b) The same for both.' },
   { value: 'setup-b', label: '(c) Setup B, the head-on beams.' },
 ]
+
+const PART_ONE_ID = 'making-new-particles-part-1'
+const PART_TWO_ID = 'making-new-particles-part-2'
 
 const ENERGY_PRESETS = [1, 2, 5, 10, 100]
 const MASS_PRESETS = [0.5, 1, 2, 4]
@@ -475,6 +479,14 @@ export function MakingNewParticlesExperiment() {
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
   const [runCount, setRunCount] = useState(0)
+  // Part 2 is shown after the learner reaches Part 1's tutor explanation, or by a skip link under Part 1's heading. Skipping does not
+  // count as having reached the explanation (spec, Decision 14).
+  const [partOneExplained, setPartOneExplained] = useState(false)
+  const [skippedToPartTwo, setSkippedToPartTwo] = useState(false)
+  const partTwoShown = partOneExplained || skippedToPartTwo
+  useEffect(() => {
+    if (skippedToPartTwo) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [skippedToPartTwo])
   const returnToIdle = () => {
     setStatus('idle')
     setProgress(0)
@@ -511,8 +523,29 @@ export function MakingNewParticlesExperiment() {
   return (
     <div>
       <h2>Experiment 6 — Making New Particles: How Much Energy Does It Take?</h2>
-      <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+      <div id={PART_ONE_ID} className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <h3 style={{ marginTop: 0 }}>Part 1 — Making a new particle</h3>
+        <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
+          {!partTwoShown && <span style={{ color: 'var(--text-muted)' }}>Already know this? </span>}
+          <button
+            type="button"
+            onClick={() => {
+              if (partTwoShown) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              else setSkippedToPartTwo(true)
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              font: 'inherit',
+              color: '#0066cc',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {partTwoShown ? 'Go to Part 2 - Decay ↓' : 'Skip to Part 2 - Decay'}
+          </button>
+        </p>
 
         {/* Introduction, stage A (needed by Part 1): draft wording for the owner's review (CLAUDE.md §28.1), from the specification's
             "Introduction: two stages". It does not say which setup leaves more usable energy (that is the prediction, §12). */}
@@ -641,7 +674,13 @@ export function MakingNewParticlesExperiment() {
         </div>
 
         <ReferencePanel
-          entries={[...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES, ...PART_THREE_REFERENCE_ENTRIES, ...PART_ONE_REFERENCE_ENTRIES]}
+          entries={[
+            ...REFERENCE_ENTRIES,
+            ...EXPERIMENT_FIVE_PART_TWO_ENTRIES,
+            ...PART_THREE_REFERENCE_ENTRIES,
+            ...PART_ONE_REFERENCE_ENTRIES,
+            ...(partTwoShown ? PART_TWO_REFERENCE_ENTRIES : []),
+          ]}
         />
 
         <div style={{ marginBottom: '2rem' }}>
@@ -944,9 +983,24 @@ export function MakingNewParticlesExperiment() {
         )}
 
         {complete && prediction !== null && (
-          <MakingNewParticlesTutor key={runCount} energyOfMotion={energyOfMotion} newMass={newMass} predicted={prediction} />
+          <MakingNewParticlesTutor
+            key={runCount}
+            energyOfMotion={energyOfMotion}
+            newMass={newMass}
+            predicted={prediction}
+            onExplained={() => setPartOneExplained(true)}
+          />
         )}
       </div>
+
+      {partTwoShown && (
+        <div id={PART_TWO_ID}>
+          <MakingNewParticlesDecay
+            skippedPartOne={skippedToPartTwo && !partOneExplained}
+            onBackToPartOne={() => document.getElementById(PART_ONE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          />
+        </div>
+      )}
     </div>
   )
 }
