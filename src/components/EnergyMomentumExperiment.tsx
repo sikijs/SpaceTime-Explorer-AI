@@ -435,7 +435,8 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
   const [partOneExplained, setPartOneExplained] = useState(false)
   // A learner who already knows Part 1 can skip to Part 2 with a link under Part 1's heading. Part 2 is then shown without
   // Part 1's tutor explanation, and it says so (it uses a combination from Part 1). Skipping does not count as having
-  // reached the explanation, so it does not call onTutorComplete or onComplete.
+  // reached the explanation, so it does not call onTutorComplete or onComplete. Once Part 2 is open, the same link reads
+  // "Go to Part 2" and scrolls down to it, so a learner who went back up can return.
   const [skippedToPartTwo, setSkippedToPartTwo] = useState(false)
   const partTwoShown = partOneExplained || skippedToPartTwo
   const result = runInvariantExperiment(kind, speed, passingSpeed)
@@ -482,18 +483,19 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
 
       <div id={PART_ONE_ID} className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <h3 style={{ marginTop: 0 }}>Part 1 — Energy and momentum, seen by different observers</h3>
-        {!partTwoShown && (
-          <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Already know this? </span>
-            <button
-              type="button"
-              onClick={() => setSkippedToPartTwo(true)}
-              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
-            >
-              Skip to Part 2
-            </button>
-          </p>
-        )}
+        <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
+          {!partTwoShown && <span style={{ color: 'var(--text-muted)' }}>Already know this? </span>}
+          <button
+            type="button"
+            onClick={() => {
+              if (partTwoShown) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              else setSkippedToPartTwo(true)
+            }}
+            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            {partTwoShown ? 'Go to Part 2 ↓' : 'Skip to Part 2'}
+          </button>
+        </p>
 
         {/* Introduction, stage A (needed by Part 1): draft wording for the owner's review (CLAUDE.md §28.1), from the
             specification's "Introduction: three stages". It gives the formulas for one observer's numbers and one worked
