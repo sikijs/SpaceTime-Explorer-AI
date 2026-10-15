@@ -2,13 +2,38 @@ import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { runCollisionExperiment } from '../physics/energyMomentum'
 
-// Steps 4 and 5 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 2 only: the controls, the setup
-// diagram, and the run that connects the diagram to the physics model: the lab's view of the collision (the two lumps meet and
-// stick into one at rest, drawn beside a bar for 2m so the extra mass is visible), and then the passing observer's view of the
-// same collision. Every number comes from `runCollisionExperiment` in `energyMomentum.ts`. The introduction stage for Part 2,
-// the prediction (which will gate Run), the results tables (conservation, everyday momentum, whole-system mass) and the tutor
-// are later steps. Presets are Decision 5 of the specification. Wording here is
-// draft for the owner's review (CLAUDE.md §28.1).
+// Steps 4 to 6 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 2 only: the introduction (stage B), the
+// controls, the setup diagram, the prediction that gates Run, and the run that connects the diagram to the physics model: the
+// lab's view of the collision (the two lumps meet and stick into one at rest, drawn beside a bar for 2m so the extra mass is
+// visible), and then the passing observer's view of the same collision. Every number comes from `runCollisionExperiment` in
+// `energyMomentum.ts`. The results tables (conservation, everyday momentum, whole-system mass) and the tutor are later steps.
+// The presets are Decision 5 of that specification. Wording here is draft for the owner's review (CLAUDE.md §28.1).
+type Prediction = 'less' | 'same' | 'more'
+
+// The three answers of Part 2's prediction in the specification's "Prediction Activity" section (wording is a draft, §28.1).
+// Not scored, and the learner is not told which is right (§12).
+const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
+  { value: 'less', label: '(a) Less than 2m.' },
+  { value: 'same', label: '(b) Exactly 2m.' },
+  { value: 'more', label: '(c) More than 2m.' },
+]
+
+// The terms and formulas that stage B's introduction defines, added to the "Words and formulas" panel at the top of the page
+// once Part 2 appears (spec, Introduction, rule 5). They repeat the introduction's wording, with no new claims.
+export const PART_TWO_REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
+  { term: 'Collision', meaning: 'two things meeting. Head-on means from opposite directions. Stick together means they join into one lump.' },
+  {
+    term: 'Conserved',
+    meaning: 'a quantity is conserved if its total does not change. Here, the total energy and the total momentum are conserved in a collision.',
+  },
+  { term: 'System', meaning: 'the whole group of pieces taken together, as if they were one thing.' },
+  { term: 'Internal energy', meaning: 'energy inside a thing that is not its motion as a whole, such as the heat in a warm lump of clay.' },
+  {
+    term: 'Mass of a system: M = √(E_total² − (P_total c)²)',
+    meaning: 'put the total energy and the total momentum × c through the same “subtract the squares” combination.',
+  },
+]
+
 // Wall-clock length of the playback. It only sets how fast the result is shown; the physics does not depend on it (§11).
 const ANIMATION_DURATION_MS = 12_000
 const SPEED_PRESETS = [0.3, 0.6, 0.8, 0.9]
@@ -331,11 +356,12 @@ function CollisionDiagram({ speed, passingSpeed, progress }: CollisionDiagramPro
 
 }
 
-// Part 2's section. Changing a setting returns to the setup, so a run is never shown for different settings. The prediction (which
-// will gate Run), the results tables and the tutor are later steps.
+// Part 2's section. Changing a setting returns to the setup, so a run is never shown for different settings. Changing the prediction does
+// the same. The results tables and the tutor are later steps.
 export function EnergyMomentumCollision() {
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
+  const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
   const returnToIdle = () => {
@@ -370,11 +396,67 @@ export function EnergyMomentumCollision() {
     <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
       <h3 style={{ marginTop: 0 }}>Part 2 — A collision, seen by two observers</h3>
 
-      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
-        Two identical lumps of clay move toward each other along one line, collide head-on and stick together. The lab measures
-        them, and so does a passing observer. Choose how fast each lump moves and how fast the passing observer moves, then press
-        Run. (The introduction, the prediction and the results for this part come in later steps.)
-      </p>
+      {/* Introduction, stage B (needed by Part 2): draft wording for the owner's review (CLAUDE.md §28.1), from the specification's
+          "Introduction: three stages". It does not say what the lump's mass is (that is Part 2's prediction, §12). */}
+      <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>Why a collision.</strong> So far we looked at one particle. Now two particles meet. This is how momentum was first
+          understood, and it is where the everyday rule <em>mass × speed</em> is put to the test.
+        </p>
+
+        <div style={{ marginBottom: '0.75rem' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <strong>Some new words.</strong> Here is each one in plain language.
+          </p>
+          <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>Collision:</strong> two things meeting. <strong>Head-on:</strong> meeting from opposite directions.{' '}
+              <strong>Stick together:</strong> they join into one lump, as two balls of clay do.
+            </li>
+            <li>
+              <strong>Conserved:</strong> a quantity is conserved if its total does not change. Think of money moved between two
+              bank accounts. The money in each account changes, but the total stays the same. In a collision, the{' '}
+              <strong>total energy</strong> and the <strong>total momentum</strong> are conserved. We use this as a rule of the
+              experiment. The totals add up each piece's value with its direction: a piece moving to the left has a negative
+              momentum, so two equal pieces moving toward each other have a total momentum of zero.
+            </li>
+            <li>
+              <strong>System:</strong> the whole group of pieces taken together, as if they were one thing. The pieces' own masses
+              are one thing, and the mass of the system is another. The system's mass is worked out from its total energy and its
+              total momentum.
+            </li>
+            <li>
+              <strong>The mass of a system:</strong> M = √(E_total² − (P_total c)²). It is the same "subtract the squares"
+              combination as before, applied to the totals. In words: "put the total energy and the total momentum through the same
+              combination." For example, a group of pieces with a total energy of 5 and a total momentum × c of 3 gives M = √(25 − 9) = √16 = 4.{' '}
+              <em>What it does not mean:</em> it is not simply the masses of the pieces added together.
+            </li>
+            <li>
+              <strong>Internal energy:</strong> energy inside a thing that is not its motion as a whole. A lump of clay that gets
+              warm has more internal energy, in the heat of its jiggling atoms.
+            </li>
+          </ul>
+        </div>
+
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>A worked everyday example of conservation (momentum).</strong> Two equal billiard balls, 1 kilogram each, roll
+          toward each other at 2 meters per second and stick. Before, the total momentum is 1 × 2 + 1 × (−2) = 0. After, they have
+          stopped, so the total is 0. The total is unchanged.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>What happens.</strong> Two identical lumps collide head-on in the lab and stick. Two pictures show it: the lab's
+          view, and then the view of a passing observer.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>Your job.</strong> Choose how fast the lumps move and how fast the passing observer moves. Then predict the mass of
+          the lump that results, and press Run. You are not graded. The Run button stays off until you choose a prediction. The
+          "Words and formulas" panel at the top of the page now includes these new words.
+        </p>
+        <p style={{ margin: 0 }}>
+          <strong>What we assume.</strong> Nothing escapes: no light or heat leaves the lump. Speeds are steady before and after the
+          collision, and the collision itself is not shown in detail, only the situation just before and just after.
+        </p>
+      </div>
 
       <div style={{ marginBottom: '2rem' }}>
         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The speed of each lump in the lab</label>
@@ -421,6 +503,36 @@ export function EnergyMomentumCollision() {
         </div>
       </div>
 
+      <div style={{ marginBottom: '2rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+          Two identical lumps of clay, each of mass <em>m</em> (that is, <em>m</em> measured when the lump is at rest), move toward
+          each other at {speed}c in the lab, collide head-on and stick together. Energy and momentum are not lost: nothing escapes.
+          What is the mass of the single lump that results, compared with 2<em>m</em>, the two masses added?
+        </p>
+        <div>
+          {PREDICTION_CHOICES.map((choice) => (
+            <button
+              key={choice.value}
+              type="button"
+              onClick={() => {
+                setPrediction(choice.value)
+                returnToIdle()
+              }}
+              className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
+              style={{ display: 'block', textAlign: 'left', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+            >
+              {choice.label}
+            </button>
+          ))}
+        </div>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+          {prediction !== null
+            ? `Your prediction: ${PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.slice(0, 3)}. This is not graded.`
+            : 'Choose an option to continue'}
+        </p>
+      </div>
+
       <button
         type="button"
         className="action-button"
@@ -428,11 +540,16 @@ export function EnergyMomentumCollision() {
           setProgress(0)
           setStatus('running')
         }}
-        disabled={status === 'running'}
+        disabled={prediction === null || status === 'running'}
         style={{ padding: '0.6rem 1.5rem' }}
       >
         {status === 'running' ? 'Running...' : 'Run'}
       </button>
+      {prediction === null && (
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>
+          Choose a prediction above to run the experiment.
+        </p>
+      )}
 
       <div style={{ marginTop: '2rem' }}>
         <CollisionDiagram speed={speed} passingSpeed={passingSpeed} progress={status === 'idle' ? null : progress} />

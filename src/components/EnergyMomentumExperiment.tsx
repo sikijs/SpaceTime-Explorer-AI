@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { EnergyMomentumTutor } from './EnergyMomentumTutor'
-import { EnergyMomentumCollision } from './EnergyMomentumCollision'
+import { EnergyMomentumCollision, PART_TWO_REFERENCE_ENTRIES } from './EnergyMomentumCollision'
 import type { CSSProperties } from 'react'
 import { particleReading, readingFor, runInvariantExperiment } from '../physics/energyMomentum'
 import type { EnergyMomentumReading } from '../physics/energyMomentum'
@@ -361,7 +361,7 @@ interface EnergyMomentumExperimentProps {
 }
 
 // The quick-reference panel ("Words and formulas"): one line for each term and formula introduced so far (spec, Introduction,
-// rule 5). Only Part 1's are listed; terms from Parts 2 and 3 are added when those parts' introductions are built. Draft
+// rule 5). Part 1's are listed from the start, and Part 2's are added once Part 2 appears; Part 3's are added when its introduction is built. Draft
 // wording for the owner's review (§28.1). The one-line formulas repeat the introduction's, with no new claims.
 const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Particle', meaning: 'a very small piece of matter, such as an electron or a proton, treated here as a single point.' },
@@ -389,7 +389,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Light: E = pc', meaning: 'for a light pulse, the energy equals the momentum times c, and the combination E² − (pc)² is zero.' },
 ]
 
-function ReferencePanel() {
+function ReferencePanel({ entries }: { entries: { term: string; meaning: string }[] }) {
   return (
     <details
       style={{
@@ -406,7 +406,7 @@ function ReferencePanel() {
         📖 Words and formulas: click to open a quick reference
       </summary>
       <ul style={{ margin: '0.75rem 0 0', paddingLeft: '1.25rem' }}>
-        {REFERENCE_ENTRIES.map((entry) => (
+        {entries.map((entry) => (
           <li key={entry.term}>
             <strong>{entry.term}:</strong> {entry.meaning}
           </li>
@@ -604,7 +604,7 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
           </p>
         </div>
 
-        <ReferencePanel />
+        <ReferencePanel entries={partOneExplained ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES] : REFERENCE_ENTRIES} />
 
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>What moves past the lab?</label>
