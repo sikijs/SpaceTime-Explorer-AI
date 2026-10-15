@@ -559,6 +559,15 @@ export function EnergyMomentumCollision({ skippedPartOne = false, onBackToPartOn
           </p>
         )}
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>The question.</strong> In Part 1 we followed one particle, and found how its energy and momentum look to
+          different observers. Now we put these ideas to the test with a collision. Two identical lumps of clay meet head-on and
+          stick together, so there are two pieces to add up before the collision and one piece after it. Three questions come up.
+          Do two observers who move differently agree that the total energy and the total momentum stay the same through the
+          collision? Does the everyday rule for momentum, mass × speed, still work when a moving observer measures the speeds? And
+          what is the mass of the single lump that results: is it just the two masses added together? You will be asked to predict
+          the last one.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
           <strong>Why a collision.</strong> So far we looked at one particle. Now two particles meet. This is how momentum was first
           understood, and it is where the everyday rule <em>mass × speed</em> is put to the test.
         </p>
