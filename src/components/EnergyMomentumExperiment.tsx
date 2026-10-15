@@ -30,6 +30,7 @@ const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
 // The elements Part 1 and Part 2 sit in, so the skip link and the back link can scroll to them.
 const PART_TWO_ID = 'energy-momentum-part-2'
 const PART_ONE_ID = 'energy-momentum-part-1'
+const PART_THREE_ID = 'energy-momentum-part-3'
 
 const KIND_CHOICES: { value: Kind; label: string }[] = [
   { value: 'particle', label: 'A particle with mass' },
@@ -437,11 +438,15 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
   // A learner who already knows Part 1 can skip to Part 2 with a link under Part 1's heading. Part 2 is then shown without
   // Part 1's tutor explanation, and it says so (it uses a combination from Part 1). Skipping does not count as having
   // reached the explanation, so it does not call onTutorComplete or onComplete. Once Part 2 is open, the same link reads
-  // "Go to Part 2" and scrolls down to it, so a learner who went back up can return.
+  // "Go to Part 2 - Collision" and scrolls down to it, so a learner who went back up can return.
   const [skippedToPartTwo, setSkippedToPartTwo] = useState(false)
-  const partTwoShown = partOneExplained || skippedToPartTwo
-  // Part 3 is shown only after the learner has reached Part 2's tutor explanation (spec, Learner Controls).
+  // Part 3 is shown after the learner has reached Part 2's tutor explanation (spec, Learner Controls), or by a skip link in Part 1
+  // or Part 2. Skipping to Part 3 also opens Part 2 above it, because Part 3 uses Part 2's terms. As with Part 2, skipping does
+  // not count as having reached an explanation.
   const [partTwoExplained, setPartTwoExplained] = useState(false)
+  const [skippedToPartThree, setSkippedToPartThree] = useState(false)
+  const partTwoShown = partOneExplained || skippedToPartTwo || skippedToPartThree
+  const partThreeShown = partTwoExplained || skippedToPartThree
   const result = runInvariantExperiment(kind, speed, passingSpeed)
   const returnToIdle = () => {
     setStatus('idle')
@@ -451,6 +456,15 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
   useEffect(() => {
     if (skippedToPartTwo) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [skippedToPartTwo])
+
+  useEffect(() => {
+    if (skippedToPartThree) document.getElementById(PART_THREE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [skippedToPartThree])
+
+  const goToPartThree = () => {
+    if (partThreeShown) document.getElementById(PART_THREE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    else setSkippedToPartThree(true)
+  }
 
   useEffect(() => {
     if (status !== 'running') return
@@ -496,7 +510,15 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
             }}
             style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
           >
-            {partTwoShown ? 'Go to Part 2 ↓' : 'Skip to Part 2'}
+            {partTwoShown ? 'Go to Part 2 - Collision ↓' : 'Skip to Part 2 - Collision'}
+          </button>
+          {' · '}
+          <button
+            type="button"
+            onClick={goToPartThree}
+            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            {partThreeShown ? 'Go to Part 3 - Reactions ↓' : 'Skip to Part 3 - Reactions'}
           </button>
         </p>
 
@@ -636,7 +658,7 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
 
         <ReferencePanel
           entries={
-            partTwoExplained
+            partThreeShown
               ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES, ...PART_THREE_REFERENCE_ENTRIES]
               : partTwoShown
                 ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES]
@@ -993,14 +1015,25 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
       {partTwoShown && (
         <div id={PART_TWO_ID}>
           <EnergyMomentumCollision
-            skippedPartOne={skippedToPartTwo && !partOneExplained}
+            skippedPartOne={(skippedToPartTwo || skippedToPartThree) && !partOneExplained}
             onBackToPartOne={() => document.getElementById(PART_ONE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             onExplained={() => setPartTwoExplained(true)}
+            onGoToPartThree={goToPartThree}
+            partThreeShown={partThreeShown}
           />
         </div>
       )}
 
-      {partTwoExplained && <EnergyMomentumReactions />}
+      {partThreeShown && (
+        <div id={PART_THREE_ID}>
+          <EnergyMomentumReactions
+            skippedPartOne={(skippedToPartTwo || skippedToPartThree) && !partOneExplained}
+            skippedPartTwo={skippedToPartThree && !partTwoExplained}
+            onBackToPartOne={() => document.getElementById(PART_ONE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onBackToPartTwo={() => document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -43,6 +43,7 @@ export const PART_THREE_REFERENCE_ENTRIES: { term: string; meaning: string }[] =
     meaning:
       'the unit of energy used for particles: the energy an electron gains crossing a 1-volt battery, about 1.6 × 10⁻¹⁹ joules. keV is a thousand eV, MeV a million, GeV a billion, TeV a million million. “938 MeV/c²” is the proton’s mass.',
   },
+  { term: 'Rest mass', meaning: 'the mass a piece has when it sits still, as in Part 1. A pulse of light has no mass, so its rest mass is zero.' },
   {
     term: 'Sum of the rest masses, and the system’s mass',
     meaning: 'the first adds up the masses of the separate pieces (a light pulse counts as zero). The second is M = √(E_total² − (P_total c)²), worked out from the pieces’ total energy and momentum.',
@@ -608,9 +609,21 @@ function ReactionResults({ kind, setting, passingSpeed, prediction }: { kind: Re
   )
 }
 
-// Part 3's section: the controls and the setup diagram only. The settings are remembered for each process, so that going back to a
-// process does not lose its setting.
-export function EnergyMomentumReactions() {
+// Part 3's section: the introduction, the controls, the prediction, the run, the results and the tutor. `skippedPartOne` and `skippedPartTwo`
+// are true when the learner reached it with a skip link instead of through that part's tutor; the introduction then adds a
+// reminder, because it uses ideas from that part. `onBackToPartOne` and `onBackToPartTwo` scroll back up to those parts. The settings are remembered for each process, so that going back to a process does not lose its
+// setting.
+export function EnergyMomentumReactions({
+  skippedPartOne = false,
+  skippedPartTwo = false,
+  onBackToPartOne,
+  onBackToPartTwo,
+}: {
+  skippedPartOne?: boolean
+  skippedPartTwo?: boolean
+  onBackToPartOne?: () => void
+  onBackToPartTwo?: () => void
+}) {
   const [kind, setKind] = useState<ReactionKind>('annihilation')
   const [settings, setSettings] = useState<Record<ReactionKind, number>>(START_SETTING)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
@@ -652,102 +665,216 @@ export function EnergyMomentumReactions() {
   return (
     <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
       <h3 style={{ marginTop: 0 }}>Part 3 — Reactions: can the masses change?</h3>
+      {(onBackToPartOne || onBackToPartTwo) && (
+        <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
+          {onBackToPartOne && (
+            <button
+              type="button"
+              onClick={onBackToPartOne}
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              ← Back to Part 1 - Energy and momentum
+            </button>
+          )}
+          {onBackToPartOne && onBackToPartTwo && ' · '}
+          {onBackToPartTwo && (
+            <button
+              type="button"
+              onClick={onBackToPartTwo}
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              ← Back to Part 2 - Collision
+            </button>
+          )}
+        </p>
+      )}
 
       {/* Introduction, stage C (needed by Part 3): draft wording for the owner's review (CLAUDE.md §28.1), from the specification's
-          "Introduction: three stages". It does not say how the masses compare in any reaction (that is Part 3's prediction, §12). */}
+          "Introduction: three stages". Every term is defined before it is used, each formula is read in words with a worked example
+          and a note of what it does not mean, and nothing says how the masses compare in any reaction (that is Part 3's prediction,
+          §12). The two reminders appear only for a learner who skipped the earlier part. */}
       <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        {skippedPartOne && (
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>If you skipped Part 1.</strong> This part uses three ideas from Part 1. First, a particle's energy and its
+            momentum × c are measured in the same units, and its <em>rest energy</em>, the energy it has when it sits still, is the
+            unit, written as 1. Second, a particle moving at speed v has an energy of E = 1 ÷ D(v), where D(v) = √(1 − v²) is the time
+            dilation factor. For example, at 0.6c, D = √(1 − 0.36) = 0.8, so E = 1 ÷ 0.8 = 1.25 rest energies. Third, a pulse of light
+            has no mass, and its energy equals its momentum × c. Open the "Words and formulas" panel at the top of the page if you need
+            more of a reminder.
+          </p>
+        )}
+        {skippedPartTwo && (
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>If you skipped Part 2.</strong> This part uses the mass of a system from Part 2. A <em>system</em> is a group of
+            pieces taken together, and its mass is worked out from its total energy and its total momentum × c: M = √(E_total² −
+            (P_total c)²). For example, a group of pieces with a total energy of 5 and a total momentum × c of 3 has M = √(25 − 9) = 4.
+            The totals add up each piece's value with its direction, so a piece moving to the left counts as negative. Open the "Words
+            and formulas" panel at the top of the page if you need a reminder.
+          </p>
+        )}
+
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>The question.</strong> In Part 2 we added up the masses of the pieces before and after a collision, and we also
+          worked out the mass of the whole system, and we asked how these compare. In Part 3 we ask the same kind of question about
+          three processes in which the pieces do more than stick together: a particle and its antiparticle can turn into light, light
+          can turn into particles, and four particles can bind into a single nucleus. In each one, energy and momentum are
+          conserved. So when the pieces change, how does the total of the separate masses compare before and after? And what about the
+          mass of the whole system? You will be asked to predict the first.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>Why these three processes.</strong> They are the best-known cases where the pieces themselves change, not just
+          their motion. In one, pieces disappear. In another, pieces appear from light. In the third, several pieces become one.
+          Trying all three lets you see which things change and which do not, so you do not have to trust a
+          single example.
+        </p>
+
         <div style={{ marginBottom: '0.75rem' }}>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>Some new words.</strong> Here is each one in plain language.
+            <strong>Some new words.</strong> Here is each one in plain language, with an example.
           </p>
           <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
             <li>
-              <strong>Electric charge:</strong> a property that makes things pull or push each other. The electron has negative
-              charge, the proton positive, and the neutron none.
+              <strong>Electric charge:</strong> a property that makes things pull or push each other. When you rub a balloon on your
+              hair, it picks up charge and then sticks to the wall. The electron has negative charge, the proton positive, and the
+              neutron none.
             </li>
             <li>
-              <strong>Antiparticle:</strong> a particle with the same mass as another, but opposite electric charge. The electron's
-              antiparticle is the <strong>positron</strong>. Charge is conserved too: a particle and its antiparticle have a total
-              charge of zero.
+              <strong>Antiparticle:</strong> a particle with the same mass as another, but opposite electric charge. Think of it as
+              the particle's opposite twin. The electron's antiparticle is the <strong>positron</strong>, with the same mass as the
+              electron but positive charge. Charge is conserved too: a particle and its antiparticle have a total charge of zero,
+              so the two together are electrically neutral.
             </li>
             <li>
-              <strong>Photon:</strong> here, a light pulse of a given energy, with no mass. (The quantum idea behind the word is not
-              needed.)
+              <strong>Photon:</strong> here, a pulse of light of a given energy, with no mass. (The quantum idea behind the word is not
+              needed.) We draw it as an arrow, with no circle.
             </li>
             <li>
               <strong>Annihilation:</strong> a particle and its antiparticle meeting and turning into light.{' '}
               <strong>Pair creation:</strong> light turning into a particle and its antiparticle.
             </li>
             <li>
-              <strong>Threshold:</strong> the least energy at which something can happen. To get over a 1-meter wall you have to jump
-              at least high enough to reach the top. With less, nothing happens at all.
+              <strong>Threshold:</strong> the least energy at which something can happen. To get over a 1-meter wall you have to jump at
+              least high enough to reach the top. With less, nothing happens at all: you do not get half-way over. Or: a bus ride costs 2
+              coins, and with 1 coin you cannot go at all.
             </li>
             <li>
               <strong>Atomic nucleus:</strong> the tiny, heavy core of an atom, made of <strong>protons</strong> (positive) and{' '}
-              <strong>neutrons</strong> (no charge). <strong>Helium-4</strong> has two of each.
+              <strong>neutrons</strong> (no charge). <strong>Helium-4</strong> is the common kind of helium, with two protons and two
+              neutrons in its nucleus.
             </li>
             <li>
-              <strong>Binding energy:</strong> the energy needed to pull a nucleus apart into its separate protons and neutrons. It
-              is also the energy released when they come together. Think of a ball in a pit: it takes energy to lift it out, and it
-              gives up that same energy when it falls in.
+              <strong>Binding energy:</strong> the energy needed to pull a nucleus apart into its separate protons and neutrons. It is
+              also the energy released when they come together. Think of a ball in a pit. If it takes 5 units of energy to lift the ball
+              out, then it gives up those same 5 units when it falls back in.
             </li>
             <li>
-              <strong>Mass defect:</strong> how much less a nucleus weighs than its separate parts. (The experiment shows the
-              amount.)
+              <strong>Mass defect:</strong> how much less a nucleus weighs than its separate parts. (The experiment shows the amount.)
             </li>
             <li>
               <strong>Fusion:</strong> nuclei joining into a heavier nucleus, as happens in the Sun.
             </li>
             <li>
-              <strong>The electron-volt (eV):</strong> the unit of energy used for particles: the energy an electron gains when it
-              crosses a 1-volt battery. 1 eV is a tiny 1.6 × 10⁻¹⁹ joules. A particle of visible light carries about 2 or 3 eV.{' '}
-              <strong>keV</strong> is a thousand eV, <strong>MeV</strong> a million, <strong>GeV</strong> a billion, and{' '}
-              <strong>TeV</strong> a million million. Particle masses are written as energy divided by c²: "938 MeV/c²" is the
-              proton's.
+              <strong>The electron-volt (eV):</strong> the unit of energy used for particles. It is the energy an electron gains when it
+              crosses a 1-volt battery. 1 eV is a tiny 1.6 × 10⁻¹⁹ joules, far too small for everyday use but about the right size for a
+              single particle: a particle of visible light carries about 2 or 3 eV. <strong>keV</strong> is a thousand eV,{' '}
+              <strong>MeV</strong> a million, <strong>GeV</strong> a billion, and <strong>TeV</strong> a million million. Particle
+              masses are written as energy divided by c²: "938 MeV/c²" is the proton's, and 938 MeV is its rest energy.
             </li>
             <li>
-              <strong>The sum of the rest masses, and the system's mass:</strong> the first adds up the masses of the separate
-              pieces, and a light pulse counts as zero. The second is the M from Part 2, worked out from the pieces' total energy and
-              total momentum. The experiment compares the two kinds of total.
+              <strong>The sum of the rest masses, and the system's mass:</strong> these are two different totals. The first adds up the
+              masses of the separate pieces, each as it would be if the piece sat still, and a pulse of light counts as zero. The
+              second is the M from Part 2, worked out from the pieces' <em>total energy</em> and <em>total momentum</em>. The experiment
+              compares the first total before and after, and then does the same for the second.
             </li>
           </ul>
         </div>
 
         <div style={{ marginBottom: '0.75rem' }}>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>Formulas needed here.</strong> Each is read in words, with an example.
+            <strong>Formulas needed here.</strong> Each is read in words, with an example worked out step by step.
           </p>
           <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
             <li>
-              <strong>The system's mass again:</strong> M = √(E_total² − (P_total c)²). In words: "put the total energy and the total
-              momentum through the same combination." <em>What it does not mean:</em> it is not the sum of the pieces' masses.
+              <strong>The system's mass again:</strong> M = √(E_total² − (P_total c)²). In words: "add up all the energies, add up all
+              the momenta × c (with their directions), and put the two totals through the same subtract-the-squares combination as
+              before." Example: pieces with a total energy of 5 and a total momentum × c of 3 give M = √(25 − 9) = √16 = 4.{' '}
+              <em>What it does not mean:</em> it is not the sum of the pieces' masses.
             </li>
             <li>
               <strong>Speed from energy:</strong> a particle with energy E (in its own rest energies) has D = 1 ÷ E, so v = √(1 − 1 ÷
-              E²). In words: "the more energy it has, the closer to c it moves." Example, which is not one of the choices: E = 3 gives
-              D = 1/3, so v = √(1 − 1/9) = √(8/9) = 0.943. It follows from E = 1 ÷ D(v) in the introduction at the top of the page.
+              E²). In words: "the more energy it has, the closer to c it moves." It follows from E = 1 ÷ D(v) in the introduction at
+              the top of the page. Example, which is not one of the choices: E = 3 gives D = 1/3, so v = √(1 − 1/9) = √(8/9) = 0.943.
+              As a check, E = 1 gives v = √(1 − 1) = 0: a particle with only its rest energy is at rest.
             </li>
             <li>
               <strong>Energy released:</strong> (sum of rest masses before − sum after) × c². In words: "the drop in the total of the
               rest masses, turned into energy." Example, in rest energies: if the pieces' rest masses add up to 3 before and 2.5 after,
-              then 0.5 rest energies are released. <em>What it does not mean:</em> it does not say whether a given process releases or
-              needs energy. That is for the experiment to show.
+              then 3 − 2.5 = 0.5 rest energies are released. If it were the other way round, 2.5 before and 3 after, the result would
+              be 2.5 − 3 = −0.5, and a minus sign means energy is absorbed instead. <em>What it does not mean:</em> it does not say
+              whether a given process releases or absorbs energy. That is for the experiment to show.
             </li>
           </ul>
         </div>
 
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-          <strong>What happens.</strong> Three processes are offered: a particle and its antiparticle meet, two beams of light meet,
-          and two protons and two neutrons bind into a helium nucleus. In each, the lab is the observer for whom the total momentum is
-          zero, and then the same reaction is shown as a passing observer measures it.
+          <strong>What happens.</strong> Three processes are offered, and you choose one. For the process you choose, the experiment
+          shows the same reaction twice: first as the lab sees it, and then as a passing observer sees it. Here is what each process
+          is.
+        </p>
+        <ul style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>A particle and its antiparticle meet.</strong> The two have the same mass, and we write it as 1, our unit of
+            energy. One starts on the left and the other on the right. They move toward each other at the same speed, which you
+            choose: at rest (they sit side by side), 0.6c or 0.9c. They meet at the dashed line, and then the experiment shows what
+            comes out of the meeting.
+          </li>
+          <li>
+            <strong>Two beams of light meet.</strong> Each beam is a pulse of light, drawn as an arrow with no circle. They come
+            from opposite sides with the same energy, which you choose: 0.5, 1, 2 or 5, measured in rest energies of the particle that
+            might be made (the same unit as above). They meet head-on at the dashed line, and then the experiment shows what comes
+            out of the meeting.
+          </li>
+          <li>
+            <strong>A helium nucleus forms.</strong> Two protons and two neutrons sit at rest in a row. A neutron is a little heavier
+            than a proton. Here the numbers are in MeV, because they are real measured masses. This process is energy accounting
+            only: the pieces do not travel to a meeting point, because how they come together is not shown. The picture shows the
+            four pieces before, and what there is afterward.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>What you will see.</strong> When you press Run, the first picture, in blue, is the lab's view. The pieces come
+          together at the dashed line (or, for helium, stay where they are), a yellow ring flashes at the moment of the reaction, and
+          then the pieces after it appear. Under each piece are three numbers, the same three as in Part 2 and in the setup picture:
+          its energy, its momentum × c, and its rest mass. After the reaction, four bars appear on one scale, the mass ledger. Two of
+          them are the sum of the rest masses, before and after. The other two are the system's mass, before and after. Under the bars
+          is the energy released or absorbed. Then the second picture, in purple, shows the same reaction as the passing observer
+          sees it. The animation takes about 12 seconds, and at the end the results and a conversation with the tutor appear below.
         </p>
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-          <strong>Your job.</strong> Choose one of the processes and its setting, and choose the passing observer's speed. Then
-          predict how the total of the rest masses compares before and after the reaction. You are not graded.
+          <strong>Why the lab is a special observer.</strong> In every process, the lab is the observer for whom the total momentum
+          is zero. Picture two skaters of equal weight gliding toward each other at equal speeds. To someone standing at the meeting
+          point their momenta cancel: one is to the right, the other to the left, and the total is zero. We pick that observer as
+          the lab. It keeps things simple, because a total momentum of zero before the reaction means a total of zero after it, and
+          so what comes out can be worked out from energy and momentum being conserved alone, without guessing.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>The passing observer.</strong> The passing observer moves along the same line, at the speed you choose, for example{' '}
+          +0.3c to the right. They measure the same reaction with their own ruler and clocks, so they find different speeds, energies
+          and momenta from the lab, as the passing observers did in Parts 1 and 2. The experiment shows their numbers next to the
+          lab's, so that you can compare what each observer finds.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+          <strong>Your job.</strong> Choose one of the processes and its setting, and choose the passing observer's speed. Then predict
+          how the total of the rest masses compares before and after the reaction, and press Run. You are not graded. The Run button
+          stays off until you choose a prediction. A set of results appears when the run ends.
         </p>
         <p style={{ margin: 0 }}>
-          <strong>What we assume.</strong> Energy and momentum are conserved, and nothing else enters or leaves. The helium-4 process
-          is energy accounting only: it does not show how the pieces come together, which takes several steps in practice.
+          <strong>What we assume.</strong> Energy and momentum are conserved, and nothing else enters or leaves: this is a rule of the
+          experiment. Everything happens along one line. Only the situation just before and just after each reaction is shown, not the
+          reaction itself. The helium-4 process is energy accounting only: it does not show how the pieces come together, which takes
+          several steps in practice. Electric charge, neutrinos, and the force that holds a nucleus together are not part of the
+          experiment.
         </p>
       </div>
 
@@ -890,25 +1017,42 @@ export function EnergyMomentumReactions() {
         </p>
         <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
           <li>
-            <strong>Picture 1, the lab.</strong> This is the view of someone at rest in the lab, drawn in blue (the light stays
-            yellow). The pieces come together at the dashed line, and a yellow ring flashes when the reaction happens. Then the
-            pieces after the reaction are shown, with their own names and numbers, in the same units. For the helium nucleus, the
-            four pieces stay at rest and the picture is only an accounting of the energy: it does not show how they come together.
-            If the two beams of light are too weak, no pair can be made, and the picture says so and shows the beams passing through
-            each other.
+            <strong>Picture 1, the lab.</strong> This is the view of someone at rest in the lab, next to the dashed line, drawn in
+            blue. Light is always yellow, whichever picture it is in, so you can tell light from the particles at a glance. First
+            the pieces come together. In the first two processes they slide toward the dashed line (unless a particle and its
+            antiparticle start at rest), each at the speed or with the energy you chose, and an arrow shows each one's way. A longer arrow on a particle means a faster particle, and a longer
+            arrow on a light pulse means a more energetic pulse. For helium the four pieces stay at rest, because how they come
+            together is not shown. Under each piece are three numbers, which stay in place while the pieces move: its{' '}
+            <em>energy</em>, its <em>momentum × c</em> (a minus sign means it moves to the left) and its <em>rest mass</em>. Then a
+            yellow ring flashes at the moment of the reaction, and the pieces after it appear, each with its own name, direction and
+            three numbers. The units are the same as before the reaction: rest energies of one particle, or MeV for helium. A circle
+            labelled <strong>He</strong> is the helium nucleus, drawn a little larger than a single proton or neutron. Any note in words
+            under the dashed line explains what you are looking at. <em>What to look for:</em> add up the energies before the reaction
+            and compare them with the total after. Do the same with the momenta × c, remembering that a minus sign counts against a
+            plus sign. Then compare the rest masses before and after.
           </li>
           <li>
-            <strong>The mass ledger.</strong> Once the reaction has happened, four bars appear on one scale. Grey bars are before the
-            reaction and blue bars are after. The first pair of bars adds up the rest masses of the separate pieces, where a pulse of
-            light counts as zero. The second pair is the system's mass, worked out from the total energy and the total momentum of the
-            pieces, as in Part 2. Under the bars is the energy released or absorbed, which is the sum of the rest masses before minus
-            the sum after.
+            <strong>The mass ledger.</strong> Once the reaction has happened, four bars appear under the observer, all on the same
+            scale, so that their lengths can be compared. Grey bars are before the reaction, and blue bars are after. The first pair
+            of bars is the <em>sum of the rest masses</em>: it adds up the masses of the separate pieces, each as it would be if the
+            piece sat still, and a pulse of light counts as zero. A bar of zero is drawn as a thin stub. The second pair is the{' '}
+            <em>system's mass</em>, worked out from the total energy and the total momentum × c of all the pieces taken together, as
+            in Part 2. The number at the end of each bar is its value. Under the bars is the energy released or absorbed, which is the
+            sum of the rest masses before minus the sum after: a plus sign means released, and a minus sign means absorbed.{' '}
+            <em>What to look for:</em> compare the two grey bars with the two blue bars, pair by pair.
           </li>
           <li>
-            <strong>Picture 2, the passing observer.</strong> Then the same reaction is shown as the passing observer sees it, in
-            purple. The pieces move at different speeds than in the lab, and the energies and momenta are different, because this
-            observer moves. The scale is the same as in Picture 1 (the same number of pixels for each 1c of speed), so the two pictures
-            can be compared. Each number is what that observer measures.
+            <strong>Picture 2, the passing observer.</strong> Next, the same reaction is replayed as the passing observer sees it,
+            drawn in purple for the particles (light is still yellow). This observer moves along the same line, so for them it is the
+            lab that is moving, and the pieces move differently from how they did in Picture 1. The particles have different speeds,
+            and a pair that left the meeting point in opposite directions in the lab may leave in the same direction for this
+            observer. Light always moves at the speed c for every observer, but its energy is different: for the two light pulses,
+            one has more energy than the other, and the lengths of their arrows show it. For helium, all four pieces move together, because the observer
+            moves past them. The drawing scale is the same as in Picture 1 (the same number of pixels for each 1c of speed), so
+            you can compare how far and how fast things move in the two pictures. Each number is what this observer measures with
+            their own ruler and clocks. <em>What to look for:</em> the numbers differ from Picture 1. Add up the energies and the
+            momenta × c before and after, as you did for the lab, and compare the rest masses before and after. The results below
+            put the two observers' totals next to each other.
           </li>
           <li>
             The animation takes about 12 seconds. It only sets how fast you watch, and it does not change what the experiment finds.

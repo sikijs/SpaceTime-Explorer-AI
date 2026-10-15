@@ -498,15 +498,19 @@ function CollisionResults({ speed, passingSpeed, prediction }: { speed: number; 
 
 // Part 2's section. Changing a setting returns to the setup, so a run is never shown for different settings. Changing the prediction does
 // the same. `skippedPartOne` is true when the learner reached Part 2 with the skip link instead of through Part 1's tutor; the
-// introduction then adds a reminder, because it uses the combination from Part 1. `onBackToPartOne` scrolls back up to Part 1. `onExplained` is called when the learner reaches the tutor's explanation, which shows Part 3.
+// introduction then adds a reminder, because it uses the combination from Part 1. `onBackToPartOne` scrolls back up to Part 1. `onExplained` is called when the learner reaches the tutor's explanation, which shows Part 3. `onGoToPartThree` is the skip link to Part 3 ("Go to Part 3 - Reactions" once it is open).
 export function EnergyMomentumCollision({
   skippedPartOne = false,
   onBackToPartOne,
   onExplained,
+  onGoToPartThree,
+  partThreeShown = false,
 }: {
   skippedPartOne?: boolean
   onBackToPartOne?: () => void
   onExplained?: () => void
+  onGoToPartThree?: () => void
+  partThreeShown?: boolean
 }) {
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
@@ -545,15 +549,27 @@ export function EnergyMomentumCollision({
   return (
     <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
       <h3 style={{ marginTop: 0 }}>Part 2 — A collision, seen by two observers</h3>
-      {onBackToPartOne && (
+      {(onBackToPartOne || onGoToPartThree) && (
         <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
-          <button
-            type="button"
-            onClick={onBackToPartOne}
-            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
-          >
-            ← Back to Part 1
-          </button>
+          {onBackToPartOne && (
+            <button
+              type="button"
+              onClick={onBackToPartOne}
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              ← Back to Part 1 - Energy and momentum
+            </button>
+          )}
+          {onBackToPartOne && onGoToPartThree && ' · '}
+          {onGoToPartThree && (
+            <button
+              type="button"
+              onClick={onGoToPartThree}
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              {partThreeShown ? 'Go to Part 3 - Reactions ↓' : 'Skip to Part 3 - Reactions'}
+            </button>
+          )}
         </p>
       )}
 
