@@ -369,7 +369,7 @@ interface EnergyMomentumExperimentProps {
 // The quick-reference panel ("Words and formulas"): one line for each term and formula introduced so far (spec, Introduction,
 // rule 5). Part 1's are listed from the start, and Part 2's are added once Part 2 appears; Part 3's are added once Part 3 appears. Draft
 // wording for the owner's review (§28.1). The one-line formulas repeat the introduction's, with no new claims.
-const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
+export const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Particle', meaning: 'a very small piece of matter, such as an electron or a proton, treated here as a single point.' },
   {
     term: 'Observer',
@@ -395,7 +395,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Light: E = pc', meaning: 'for a light pulse, the energy equals the momentum times c, and the combination E² − (pc)² is zero.' },
 ]
 
-function ReferencePanel({ entries }: { entries: { term: string; meaning: string }[] }) {
+export function ReferencePanel({ entries }: { entries: { term: string; meaning: string }[] }) {
   return (
     <details
       style={{
