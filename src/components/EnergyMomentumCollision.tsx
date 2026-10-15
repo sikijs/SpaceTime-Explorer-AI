@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { runCollisionExperiment } from '../physics/energyMomentum'
+import { runCollisionExperiment, systemMassOf, totalsOf } from '../physics/energyMomentum'
 
-// Steps 4 to 6 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 2 only: the introduction (stage B), the
-// controls, the setup diagram, the prediction that gates Run, and the run that connects the diagram to the physics model: the
-// lab's view of the collision (the two lumps meet and stick into one at rest, drawn beside a bar for 2m so the extra mass is
-// visible), and then the passing observer's view of the same collision. Every number comes from `runCollisionExperiment` in
-// `energyMomentum.ts`. The results tables (conservation, everyday momentum, whole-system mass) and the tutor are later steps.
-// The presets are Decision 5 of that specification. Wording here is draft for the owner's review (CLAUDE.md §28.1).
+// Steps 4 to 7 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 2 only: the introduction (stage B), the
+// controls, the setup diagram, the prediction that gates Run, the run that connects the diagram to the physics model (the lab's
+// view of the collision, with a bar for 2m beside the lump's mass M, and then the passing observer's view of the same collision),
+// and the results shown when the run ends (values only, neutral; the explanation is the tutor's, §12). Every number comes from
+// `runCollisionExperiment` in `energyMomentum.ts`. The tutor is a later step. The presets are Decision 5 of that specification.
+// Wording here is draft for the owner's review (CLAUDE.md §28.1).
 type Prediction = 'less' | 'same' | 'more'
 
 // The three answers of Part 2's prediction in the specification's "Prediction Activity" section (wording is a draft, §28.1).
@@ -68,6 +68,17 @@ const MASS_BAR_UNIT = 20
 // The share of the playback used by each picture: the lab's first, then the passing observer's.
 const LAB_END = 0.4
 const OBSERVER_END = 0.8
+
+// Numbers in the results tables: four decimal places, with a minus sign for a negative number and no "-0.0000".
+function formatNumber(value: number): string {
+  const text = value.toFixed(4).replace('-', '−')
+  return /^−0\.0+$/.test(text) ? text.slice(1) : text
+}
+
+// A difference that is zero apart from rounding is shown as 0.0000.
+function formatDifference(value: number): string {
+  return formatNumber(Math.abs(value) < 5e-10 ? 0 : value)
+}
 
 function signed(value: number, digits = 2): string {
   return value.toFixed(digits).replace('-', '−')
@@ -356,8 +367,136 @@ function CollisionDiagram({ speed, passingSpeed, progress }: CollisionDiagramPro
 
 }
 
+const CELL: CSSProperties = { padding: '0.3rem 1rem 0.3rem 0' }
+const INTRO: CSSProperties = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }
+
+function Table({ head, rows }: { head: string[]; rows: string[][] }) {
+  return (
+    <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+      <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '0.5rem' }}>
+        <thead>
+          <tr>
+            {head.map((h, i) => (
+              <th key={i} style={{ ...CELL, textAlign: 'left' }}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, r) => (
+            <tr key={r}>
+              {row.map((cell, i) => (
+                <td key={i} style={CELL}>
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// The results, shown only when the run ends. Values only, with plain labels: what they mean is the tutor's to explain (§12).
+function CollisionResults({ speed, passingSpeed, prediction }: { speed: number; passingSpeed: number; prediction: Prediction }) {
+  const result = runCollisionExperiment(speed, passingSpeed)
+  const labBefore = totalsOf(result.labBefore)
+  const labAfter = totalsOf([result.labAfter])
+  const passingBefore = totalsOf(result.passingBefore)
+  const passingAfter = totalsOf([result.passingAfter])
+  const conservationRow = (name: string, before: number, after: number) => [
+    name,
+    formatNumber(before),
+    formatNumber(after),
+    formatDifference(after - before),
+  ]
+  const passingSystemMassBefore = systemMassOf(result.passingBefore)
+  const passingSystemMassAfter = systemMassOf([result.passingAfter])
+  const labSystemMassAfter = systemMassOf([result.labAfter])
+
+  return (
+    <div style={{ marginTop: '2rem', padding: '1.5rem', border: '1px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
+      <h3 style={{ marginBottom: '0.5rem', marginTop: 0 }}>Results</h3>
+      <p style={INTRO}>
+        Each lump moved at {speed}c in the lab. The passing observer moved at {passingLabel(passingSpeed)}.{' '}
+        <strong>Your prediction was:</strong> {PREDICTION_CHOICES.find((c) => c.value === prediction)?.label} It is only recorded
+        here, not marked right or wrong.
+      </p>
+
+      <p style={INTRO}>
+        <strong>The mass of the lump.</strong> Masses are in units of <em>m</em>, the mass of one lump.
+      </p>
+      <Table
+        head={['', 'In units of m']}
+        rows={[
+          ['The two masses added, 2m', formatNumber(2)],
+          ["The lump's mass, M", formatNumber(result.lumpMass)],
+          ['The extra, M − 2m', formatNumber(result.extraMass)],
+        ]}
+      />
+
+      <p style={{ ...INTRO, marginTop: '1rem' }}>
+        <strong>The total energy before and after the collision, for each observer.</strong> Energy is in rest energies of one
+        lump. Each difference is the total after minus the total before.
+      </p>
+      <Table
+        head={['Observer', 'Before', 'After', 'Difference']}
+        rows={[
+          conservationRow('The lab', labBefore.energy, labAfter.energy),
+          conservationRow('The passing observer', passingBefore.energy, passingAfter.energy),
+        ]}
+      />
+
+      <p style={{ ...INTRO, marginTop: '1rem' }}>
+        <strong>The total momentum × c before and after the collision, for each observer.</strong> It is in the same units as the
+        energy. A minus sign means the total points to the left.
+      </p>
+      <Table
+        head={['Observer', 'Before', 'After', 'Difference']}
+        rows={[
+          conservationRow('The lab', labBefore.momentumTimesC, labAfter.momentumTimesC),
+          conservationRow('The passing observer', passingBefore.momentumTimesC, passingAfter.momentumTimesC),
+        ]}
+      />
+
+      <p style={{ ...INTRO, marginTop: '1rem' }}>
+        <strong>The everyday momentum, for the passing observer.</strong> The everyday rule is mass × speed. Here it is worked out
+        with the speeds the passing observer measures, each in units of c, and with each lump's mass taken as m. For the lump
+        afterward, the mass is taken as 2m.
+      </p>
+      <Table
+        head={['', 'Before', 'After', 'Difference']}
+        rows={[
+          [
+            'm × (the sum of the speeds)',
+            formatNumber(result.newtonMomentumBefore),
+            formatNumber(result.newtonMomentumAfter),
+            formatDifference(result.newtonMomentumAfter - result.newtonMomentumBefore),
+          ],
+        ]}
+      />
+
+      <p style={{ ...INTRO, marginTop: '1rem' }}>
+        <strong>The mass of the whole system, and the sum of the separate masses.</strong> The mass of the whole system is worked
+        out from the total energy and the total momentum × c, as M = √(E_total² − (P_total c)²). The sum of the separate masses adds
+        up the masses of the pieces: 2m before, and the single lump's M after. Masses are in units of m.
+      </p>
+      <Table
+        head={['', 'Before', 'After']}
+        rows={[
+          ['Mass of the whole system, found by the lab', formatNumber(result.systemMass), formatNumber(labSystemMassAfter)],
+          ['Mass of the whole system, found by the passing observer', formatNumber(passingSystemMassBefore), formatNumber(passingSystemMassAfter)],
+          ['Sum of the separate masses', formatNumber(2), formatNumber(result.lumpMass)],
+        ]}
+      />
+    </div>
+  )
+}
+
 // Part 2's section. Changing a setting returns to the setup, so a run is never shown for different settings. Changing the prediction does
-// the same. The results tables and the tutor are later steps.
+// the same. The tutor is a later step.
 export function EnergyMomentumCollision() {
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
@@ -587,6 +726,8 @@ export function EnergyMomentumCollision() {
           </li>
         </ol>
       </div>
+
+      {status === 'complete' && prediction !== null && <CollisionResults speed={speed} passingSpeed={passingSpeed} prediction={prediction} />}
     </div>
   )
 }
