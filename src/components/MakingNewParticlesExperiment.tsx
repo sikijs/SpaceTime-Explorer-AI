@@ -791,24 +791,10 @@ export function MakingNewParticlesExperiment() {
               moving, there is no arrow. The words under the circle say which it is.
             </li>
           </ul>
-          <p style={{ margin: '0 0 0.25rem' }}>
-            <strong>The bars</strong>
-          </p>
           <p style={{ margin: '0 0 0.5rem' }}>
-            At the end of the run, two sets of bars are drawn below the pictures, and they are explained in their own labels.
+            <strong>The bars.</strong> At the end of the run, a second picture, made of bars, appears below this one. It has its own
+            explanation under it.
           </p>
-          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
-            <li>
-              <strong>The first set</strong> takes the energy of motion you supplied, K, and splits it into two parts for each setup. The{' '}
-              <strong>usable</strong> part (green, solid) is the part that can change form into the mass of a new particle. The{' '}
-              <strong>locked-in</strong> part (orange, striped) is the part that is tied up in the motion of the whole system, and cannot. A
-              yellow marker shows how much K the new particle you chose would need.
-            </li>
-            <li>
-              <strong>The second set</strong> shows the system's mass, M, for each setup. A yellow line marks 2 + X, the smallest M that can
-              make a new particle of your chosen mass X.
-            </li>
-          </ul>
           <p style={{ margin: '0 0 0.5rem' }}>
             <strong>A worked moment (K = 3, not one of the buttons).</strong> In Setup A, the beam particle has energy 4 and momentum × c of
             √15 = 3.87, and the target has energy 1 and momentum 0. The total energy is 5 and the total momentum × c is 3.87, so M = √(25 −
@@ -821,8 +807,6 @@ export function MakingNewParticlesExperiment() {
           <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
             <li>After the collision, is the whole system moving or at rest, in each setup?</li>
             <li>In the purple picture, how does the observer see the collision in Setup A, compared with the lab's picture of Setup B?</li>
-            <li>In the first set of bars, how much of each bar is green and how much is orange, and where does the yellow marker fall?</li>
-            <li>In the second set, which setup's bar reaches the yellow line?</li>
           </ul>
           <p style={{ margin: 0 }}>
             Not shown: how the leftover energy is shared among the particles after a reaction. Only energy and momentum are tracked, and
@@ -833,6 +817,64 @@ export function MakingNewParticlesExperiment() {
         {progress > OWN_END && (
           <div style={{ marginTop: '1.5rem' }}>
             <MakingBars result={result} fill={clamp01((progress - OWN_END) / (1 - OWN_END))} />
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>How to read these bars.</strong> This picture has two sets of bars. In each set there is one bar for Setup A (the
+                stationary target) and one for Setup B (the head-on beams), so you can compare them. The bars fill in from the left during
+                the end of the run. Within a set, a longer bar means a bigger number, on one shared scale.
+              </p>
+              <p style={{ margin: '0 0 0.25rem' }}>
+                <strong>The first set: the energy of motion you supplied, K = {energyOfMotion}, split in two</strong>
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The whole bar</strong> is K, the energy of motion given to the particles in the lab. Both setups were given the
+                  same K, so both whole bars are the same length.
+                </li>
+                <li>
+                  <strong>The green, solid part</strong> is the <em>usable</em> energy: the part that can change form into the mass of a new
+                  particle.
+                </li>
+                <li>
+                  <strong>The orange, striped part</strong> is the <em>locked-in</em> energy: the part tied up in the motion of the whole
+                  system, which cannot become mass. If a bar has no orange part, nothing was locked in.
+                </li>
+                <li>
+                  <strong>The numbers under each bar</strong> give the usable and locked-in amounts. They add up to K.
+                </li>
+                <li>
+                  <strong>The yellow marker</strong> shows the amount of K that making a new particle of your chosen mass, X = {newMass},
+                  would need in that setup. If the marker is inside the whole bar, the K you supplied is enough. If it is beyond the end of
+                  the bar, it is not enough.
+                </li>
+              </ul>
+              <p style={{ margin: '0 0 0.25rem' }}>
+                <strong>The second set: the system's mass, M</strong>
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The blue bar</strong> is the system's mass M for that setup: all the particles taken together, worked out from
+                  their total energy and total momentum. The number is written under the bar.
+                </li>
+                <li>
+                  <strong>The yellow line</strong> marks 2 + X = {formatNumber(2 + newMass)}. This is the smallest M at which a new particle
+                  of mass X can be made, because the two colliding particles each still have a mass of 1 and the new particle adds X.
+                </li>
+                <li>
+                  If a blue bar reaches or passes the yellow line, the new particle can be made in that setup. If it stops short of the
+                  line, it cannot. As an example, with K = 3 and X = 1, the line is at 3. A system whose M is 3.16 passes it, and a system
+                  whose M is 2.5 stops short.
+                </li>
+              </ul>
+              <p style={{ margin: '0 0 0.25rem' }}>
+                <em>What to look for:</em>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>In the first set, how much of each bar is green and how much is orange.</li>
+                <li>Where the yellow marker falls compared with the end of each bar.</li>
+                <li>In the second set, which setup's blue bar is longer, and which one reaches the yellow line.</li>
+              </ul>
+            </div>
           </div>
         )}
 
