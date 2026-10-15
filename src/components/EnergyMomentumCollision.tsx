@@ -793,6 +793,17 @@ export function EnergyMomentumCollision({
             finds. At the end, everything stays on the screen.
           </li>
         </ol>
+        <p style={{ margin: '0 0 0.5rem' }}>
+          <strong>A worked moment, with numbers that are not among the choices.</strong> Say each lump moves at 0.5c in the lab. In
+          Picture 1 you would read, under Lump 1, speed 0.50c, energy 1.155 and momentum × c 0.577, and under Lump 2, speed 0.50c,
+          energy 1.155 and momentum × c −0.577 (the picture shows these to two decimals). Before the collision, the total energy is
+          1.155 + 1.155 = 2.309 and the total momentum × c is 0.577 + (−0.577) = 0. Now say the passing observer moves at +0.2c. The
+          rule is the one from Part 1: divide by the time dilation factor at 0.2c, which is √(1 − 0.04) = 0.980, and use energy − 0.2
+          × momentum × c and momentum × c − 0.2 × energy. For Lump 1, the energy is (1.155 − 0.2 × 0.577) ÷ 0.980 = 1.061 and the
+          momentum × c is (0.577 − 0.2 × 1.155) ÷ 0.980 = 0.354. For Lump 2, they are (1.155 + 0.2 × 0.577) ÷ 0.980 = 1.296 and (−0.577
+          − 0.2 × 1.155) ÷ 0.980 = −0.825. So this observer's totals before the collision are 2.357 and −0.471. The experiment does
+          this arithmetic for you, and shows what happens after the collision.
+        </p>
       </div>
 
       {status === 'complete' && prediction !== null && <CollisionResults speed={speed} passingSpeed={passingSpeed} prediction={prediction} />}

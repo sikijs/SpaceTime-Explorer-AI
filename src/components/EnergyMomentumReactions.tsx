@@ -637,7 +637,8 @@ export function EnergyMomentumReactions({
   const [progress, setProgress] = useState(0)
   const [runCount, setRunCount] = useState(0)
   const setting = settings[kind]
-  // Changing a setting, or the prediction, returns to the setup, so a run is never shown for different settings.
+  // Changing a setting, or the prediction, returns to the setup, so a run is never shown for different settings. Changing the process
+  // or its setting also clears the prediction, because the question, and its answer, depend on them.
   const returnToIdle = () => {
     setStatus('idle')
     setProgress(0)
@@ -815,7 +816,7 @@ export function EnergyMomentumReactions({
             </li>
             <li>
               <strong>Energy released:</strong> (sum of rest masses before − sum after) × c². In words: "the drop in the total of the
-              rest masses, turned into energy." Example, in rest energies: if the pieces' rest masses add up to 3 before and 2.5 after,
+              rest masses, times c², is the amount of energy given off." Example, in rest energies: if the pieces' rest masses add up to 3 before and 2.5 after,
               then 3 − 2.5 = 0.5 rest energies are released. If it were the other way round, 2.5 before and 3 after, the result would
               be 2.5 − 3 = −0.5, and a minus sign means energy is absorbed instead. <em>What it does not mean:</em> it does not say
               whether a given process releases or absorbs energy. That is for the experiment to show.
@@ -893,6 +894,7 @@ export function EnergyMomentumReactions({
               type="button"
               onClick={() => {
                 setKind(choice.value)
+                setPrediction(null)
                 returnToIdle()
               }}
               className={`toggle-button${kind === choice.value ? ' is-selected' : ''}`}
@@ -920,6 +922,7 @@ export function EnergyMomentumReactions({
                   type="button"
                   onClick={() => {
                     setSettings((s) => ({ ...s, [kind]: value }))
+                    setPrediction(null)
                     returnToIdle()
                   }}
                   className={`toggle-button${setting === value ? ' is-selected' : ''}`}
@@ -1065,6 +1068,18 @@ export function EnergyMomentumReactions({
             At the end, everything stays on the screen.
           </li>
         </ol>
+        <p style={{ margin: '0 0 0.5rem' }}>
+          <strong>A worked moment, with numbers that are not among the choices.</strong> Say a particle and its antiparticle each move
+          at 0.5c in the lab. In Picture 1 you would read, under the particle, energy 1.155, momentum × c 0.577 and rest mass 1, and
+          under the antiparticle, energy 1.155, momentum × c −0.577 and rest mass 1 (the picture shows these to two decimals). Before
+          the reaction, the total energy is 1.155 + 1.155 = 2.309 and the total momentum × c is 0.577 + (−0.577) = 0. The sum of the
+          rest masses is 1 + 1 = 2. Now say the passing observer moves at +0.2c. The rule is the one from Part 1: divide by the time
+          dilation factor at 0.2c, which is √(1 − 0.04) = 0.980, and use energy − 0.2 × momentum × c and momentum × c − 0.2 × energy.
+          For the particle, the energy is (1.155 − 0.2 × 0.577) ÷ 0.980 = 1.061 and the momentum × c is (0.577 − 0.2 × 1.155) ÷ 0.980
+          = 0.354. For the antiparticle, they are (1.155 + 0.2 × 0.577) ÷ 0.980 = 1.296 and (−0.577 − 0.2 × 1.155) ÷ 0.980 = −0.825. So
+          this observer's totals before the reaction are 2.357 and −0.471. The experiment does this arithmetic for you, and shows what
+          comes out of the meeting.
+        </p>
       </div>
 
       {status === 'complete' && prediction !== null && <ReactionResults kind={kind} setting={setting} passingSpeed={passingSpeed} prediction={prediction} />}

@@ -169,6 +169,22 @@ export function EnergyMomentumReactionsTutor({ kind, setting, passingSpeed, pred
     </>,
   )
 
+  // A pointer to the other two processes, because each run explains only its own.
+  const others: Record<ReactionKind, string> = {
+    annihilation:
+      'In "Two beams of light meet", light makes a particle and its antiparticle, if it has enough energy. In "A helium nucleus forms", a real nucleus gives up energy when it binds.',
+    'pair-creation':
+      'In "A particle and its antiparticle meet", matter turns into light. In "A helium nucleus forms", a real nucleus gives up energy when it binds.',
+    'helium-binding':
+      'In "A particle and its antiparticle meet", matter turns into light. In "Two beams of light meet", light makes a particle and its antiparticle, if it has enough energy.',
+  }
+  paragraphs.push(
+    <>
+      <strong>Try the other two processes.</strong> This explanation covered only the process you ran. {others[kind]} Each shows a
+      different side of the same idea. Choose another process above and press Run to see it.
+    </>,
+  )
+
   paragraphs.push(
     <>
       <strong>What was shown, and what was not.</strong> You saw one kind of reaction at a time, along one line.{' '}
