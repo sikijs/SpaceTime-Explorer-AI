@@ -468,6 +468,8 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
       <h2>Experiment 5 — Energy, Momentum and Mass: What Do All Observers Agree On?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        <h3 style={{ marginTop: 0 }}>Part 1 — Energy and momentum, seen by different observers</h3>
+
         {/* Introduction, stage A (needed by Part 1): draft wording for the owner's review (CLAUDE.md §28.1), from the
             specification's "Introduction: three stages". It gives the formulas for one observer's numbers and one worked
             example each, and does not say what other observers find (that is Part 1's prediction, §12). */}
