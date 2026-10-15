@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { EnergyMomentumTutor } from './EnergyMomentumTutor'
 import type { CSSProperties } from 'react'
 import { particleReading, readingFor, runInvariantExperiment } from '../physics/energyMomentum'
 import type { EnergyMomentumReading } from '../physics/energyMomentum'
@@ -6,10 +7,23 @@ import type { EnergyMomentumReading } from '../physics/energyMomentum'
 // Steps 4 and 5 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 1 only: the controls, the setup
 // diagram, and the run that connects the diagram to the physics model (the curve of readings, the particle's own reading, the
 // passing observer's reading sliding along the curve as their speed sweeps up, and the bars). Every number comes from
-// `energyMomentum.ts`. The prediction (which will gate the Run button), the introduction stages, the quick-reference panel, the
+// `energyMomentum.ts`. The prediction (which gates the Run button), the introduction stages, the quick-reference panel, the
 // results, the tutors and Parts 2 and 3 are later steps. The presets are Decision 5 of that specification. Wording here is draft
 // for the owner's review (CLAUDE.md §28.1).
 type Kind = 'particle' | 'light'
+type Prediction = 'same' | 'nothing' | 'one-number'
+
+// The three answers of Part 1's prediction in the specification's "Prediction Activity" section (wording is a draft, §28.1).
+// Not scored, and the learner is not told which is right (§12).
+const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
+  { value: 'same', label: '(a) The same energy and the same momentum.' },
+  { value: 'nothing', label: '(b) Different energies and different momenta, with nothing about them that they agree on.' },
+  {
+    value: 'one-number',
+    label:
+      '(c) Different energies and different momenta, but there is some number, worked out from the energy and the momentum, that they agree on.',
+  },
+]
 
 const KIND_CHOICES: { value: Kind; label: string }[] = [
   { value: 'particle', label: 'A particle with mass' },
@@ -56,6 +70,12 @@ const TOP_Y = 152
 
 function kindWords(kind: Kind): string {
   return kind === 'particle' ? 'a particle with mass' : 'a light pulse'
+}
+
+// Numbers shown in the results table: four decimal places, with a minus sign for a negative number and no "-0.0000".
+function formatNumber(value: number): string {
+  const text = value.toFixed(4)
+  return /^-0\.0+$/.test(text) ? text.slice(1) : text
 }
 
 function passingLabel(speed: number): string {
@@ -339,6 +359,62 @@ interface EnergyMomentumExperimentProps {
   onTutorComplete?: () => void
 }
 
+// The quick-reference panel ("Words and formulas"): one line for each term and formula introduced so far (spec, Introduction,
+// rule 5). Only Part 1's are listed; terms from Parts 2 and 3 are added when those parts' introductions are built. Draft
+// wording for the owner's review (§28.1). The one-line formulas repeat the introduction's, with no new claims.
+const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
+  { term: 'Particle', meaning: 'a very small piece of matter, such as an electron or a proton, treated here as a single point.' },
+  {
+    term: 'Observer',
+    meaning:
+      'someone with their own ruler and synchronized clocks. The lab is at rest, a passing observer moves past it, and the particle’s own observer travels along with the particle.',
+  },
+  { term: 'c', meaning: 'the speed of light, about 300,000 kilometers per second. 0.6c is 60 percent of it.' },
+  {
+    term: 'Time dilation factor, D(v)',
+    meaning: '√(1 − v²): how much a moving clock’s ticking is slowed. It is 1 at rest and gets smaller as v gets closer to c.',
+  },
+  { term: 'Mass', meaning: 'in this experiment, the number you would find if the particle were sitting still beside you.' },
+  { term: 'Energy', meaning: 'the ability to make things happen, such as to heat water or to move something. Measured in joules (J) in everyday life.' },
+  { term: 'Kinetic energy', meaning: 'energy of motion. At everyday speeds it is ½ × mass × speed².' },
+  { term: 'Momentum', meaning: 'a measure of how hard a moving thing is to stop. At everyday speeds it is mass × speed.' },
+  { term: 'Rest energy', meaning: 'the energy a particle has when it is not moving. Here it is the unit of energy, written as 1.' },
+  { term: 'Total energy', meaning: 'the rest energy plus the kinetic energy.' },
+  { term: 'A light pulse', meaning: 'a short flash of light. It carries energy and momentum, but it has no mass.' },
+  { term: 'E = 1 ÷ D(v)', meaning: 'the total energy of a particle moving at speed v, in rest energies. At v = 0 it is 1, the rest energy.' },
+  { term: 'pc = v ÷ D(v)', meaning: 'the momentum times c, in rest energies: the total energy multiplied by the speed.' },
+  { term: 'E² − (pc)²', meaning: 'square the energy, square the momentum times c, and subtract. Not the same as E² + (pc)².' },
+  { term: 'v′ = (v − u) ÷ (1 − uv)', meaning: 'the speed another observer, moving at u, measures for something moving at v in the lab.' },
+  { term: 'Light: E = pc', meaning: 'for a light pulse, the energy equals the momentum times c, and the combination E² − (pc)² is zero.' },
+]
+
+function ReferencePanel() {
+  return (
+    <details
+      style={{
+        marginBottom: '2rem',
+        padding: '0.75rem 1rem',
+        fontSize: '0.875rem',
+        color: 'var(--text-muted)',
+        border: '2px solid #0066cc',
+        borderRadius: '8px',
+        backgroundColor: '#f0f7ff',
+      }}
+    >
+      <summary style={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', color: '#0066cc' }}>
+        📖 Words and formulas: click to open a quick reference
+      </summary>
+      <ul style={{ margin: '0.75rem 0 0', paddingLeft: '1.25rem' }}>
+        {REFERENCE_ENTRIES.map((entry) => (
+          <li key={entry.term}>
+            <strong>{entry.term}:</strong> {entry.meaning}
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}
+
 // Changing the object, its speed or the passing observer's speed returns to the idle state, so a run is never shown for
 // different settings. The completion mark is saved only when Part 3 ends (Decision 18 of the specification), so onComplete is
 // not called yet.
@@ -346,8 +422,10 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
   const [kind, setKind] = useState<Kind>('particle')
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
+  const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
   const result = runInvariantExperiment(kind, speed, passingSpeed)
   const returnToIdle = () => {
     setStatus('idle')
@@ -387,6 +465,142 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
       <h2>Experiment 5 — Energy, Momentum and Mass: What Do All Observers Agree On?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        {/* Introduction, stage A (needed by Part 1): draft wording for the owner's review (CLAUDE.md §28.1), from the
+            specification's "Introduction: three stages". It gives the formulas for one observer's numbers and one worked
+            example each, and does not say what other observers find (that is Part 1's prediction, §12). */}
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>The question.</strong> In earlier experiments, observers who move differently disagreed about the time and the
+            distance between two events, but they all found the same value of time² − distance² (Experiment 1 of this group). This
+            experiment asks the same kind of question about something else belonging to a moving thing: its <strong>energy</strong>{' '}
+            and its <strong>momentum</strong>. Do observers who move differently agree on them? If not, is there something about
+            them that the observers <em>do</em> agree on?
+          </p>
+
+          <div style={{ marginBottom: '0.75rem' }}>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>Some words we will use.</strong> Here is each one in plain language.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>Particle:</strong> a very small piece of matter, such as an electron or a proton. Here we treat it as a
+                single point, with no size.
+              </li>
+              <li>
+                <strong>Observer:</strong> someone with their own ruler and synchronized clocks, as in the earlier experiments.{' '}
+                <strong>The lab</strong> is at rest. <strong>A passing observer</strong> moves past the lab.{' '}
+                <strong>The particle's own observer</strong> travels along with the particle, so the particle is at rest for them.
+              </li>
+              <li>
+                <strong>The speed of light, c:</strong> about 300,000 kilometers per second. Speeds are given as a fraction of c: 0.6c
+                is 60 percent of it.
+              </li>
+              <li>
+                <strong>Time dilation factor:</strong> from Experiment 3 of the first chapter, the number √(1 − v²) that says how
+                much a moving clock's ticking is slowed. For example, at 0.6c it is √(1 − 0.36) = √0.64 = 0.8, so a clock moving at
+                0.6c ticks at 0.8 of the usual rate. We write D(v) for it. It is 1 for something at rest, and it gets smaller and
+                smaller as the speed gets closer to c.
+              </li>
+              <li>
+                <strong>Mass:</strong> how much matter a thing has, which you can also feel as how hard it is to get moving. A
+                5-kilogram bag of sugar is harder to push than a 1-kilogram bag. In this experiment, the mass of a particle means
+                the number you would find if the particle were sitting still beside you. (Some books use the word "mass"
+                differently, for something that changes with speed. We do not.)
+              </li>
+              <li>
+                <strong>Energy:</strong> the ability to make things happen, such as to heat water, to move something, or to make
+                light. It comes in many forms. A moving car can dent a wall. Hot water can cook an egg. In everyday life energy is
+                measured in <strong>joules</strong> (J).
+              </li>
+              <li>
+                <strong>Kinetic energy:</strong> energy of motion. For everyday speeds it is ½ × mass × speed². For example, a
+                1000-kilogram car at 20 meters per second has ½ × 1000 × 20² = 200,000 joules. This everyday formula is correct for
+                slow things. The experiment shows how it changes for fast ones.
+              </li>
+              <li>
+                <strong>Momentum:</strong> a measure of how hard a moving thing is to stop. For everyday speeds it is mass × speed.
+                A 7-kilogram bowling ball rolling at 2 meters per second has 7 × 2 = 14 units; a 0.06-kilogram tennis ball flying at
+                30 meters per second has 0.06 × 30 = 1.8. The heavy, slow ball is harder to stop, even though the light one moves
+                faster.
+              </li>
+              <li>
+                <strong>Rest energy:</strong> the energy a particle has when it is not moving at all, its own energy. We use it as
+                our unit of energy, so a particle's rest energy is written as <strong>1</strong>. An energy of 2.5 means 2.5 times
+                the particle's rest energy.
+              </li>
+              <li>
+                <strong>Total energy:</strong> the rest energy plus the kinetic energy.
+              </li>
+              <li>
+                <strong>A light pulse:</strong> a short flash of light. It carries energy and momentum, but it has no mass.
+              </li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '0.75rem' }}>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>The rules this experiment uses.</strong> We do not derive these here. They are the rules of special
+              relativity, and the experiment lets you see what they predict. Each is read out in words, with a worked example.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>Total energy:</strong> E = mc² ÷ D(v). In words: "the total energy is the rest energy mc² divided by the time
+                dilation factor." In our units mc² = 1, so E = 1 ÷ D(v). As the speed rises, D shrinks, so the energy grows. For
+                example, at 0.5c: D = √(1 − 0.25) = √0.75 = 0.866, so E = 1 ÷ 0.866 = 1.155 rest energies. At v = 0, D = 1, so E =
+                mc², the rest energy. <em>What it does not mean:</em> it does not say that the particle's mass grows. The mass stays
+                the number found at rest. What grows with speed is the energy.
+              </li>
+              <li>
+                <strong>Momentum (times c):</strong> pc = (mc² ÷ D(v)) × v. In words: "the total energy multiplied by the speed." We
+                multiply the momentum by c so that it has the same units as energy, and the two can be compared. In our units, pc =
+                v ÷ D(v). For example, at 0.5c: pc = 0.5 ÷ 0.866 = 0.577. <em>What it does not mean:</em> it is not the everyday mass
+                × speed, which is the slow-speed version of it. They agree at low speed and differ at high speed.
+              </li>
+              <li>
+                <strong>A combination of the two:</strong> E² − (pc)². In words: "square the energy, square the momentum times c, and
+                subtract", the same "subtract the squares" move as in Experiment 1. For example, at 0.5c: 1.155² − 0.577² = 1.333 −
+                0.333 = 1.000. The experiment asks you to predict what other observers would get. <em>What it does not mean:</em> it
+                is not E² + (pc)². The minus sign matters, as it did in Experiment 1.
+              </li>
+              <li>
+                <strong>What speed does another observer measure?</strong> v′ = (v − u) ÷ (1 − uv), where v is the particle's speed
+                in the lab and u is the passing observer's speed (both fractions of c, in the same direction). In words: "it is almost
+                the difference of the two speeds, but divided by a correction that keeps the result below c." For example, v = 0.6
+                and u = 0.3: (0.6 − 0.3) ÷ (1 − 0.18) = 0.3 ÷ 0.82 = 0.366, not 0.3. If u = v, the result is 0: the particle's own
+                observer finds it at rest. We do not derive this rule here. <em>What it does not mean:</em> it is not a plain
+                subtraction, v − u, which would let speeds pass c.
+              </li>
+              <li>
+                <strong>Energy and momentum seen by a passing observer.</strong> The rule that turns the lab's times and positions
+                into the passing observer's (Experiment 3 of the first chapter and Experiment 1 of this group) also turns the lab's
+                energy and momentum into theirs, with energy playing the part of time, and pc the part of position. The experiment
+                does this arithmetic for you and shows the result.
+              </li>
+              <li>
+                <strong>Light:</strong> for a light pulse, E = pc (the energy equals the momentum times c), and it always moves at c.{' '}
+                <em>What it does not mean:</em> it does not mean that light has mass. For light, the combination E² − (pc)² is zero.
+              </li>
+            </ul>
+          </div>
+
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>What happens.</strong> A particle (or a light pulse) moves past the lab. Three observers (the lab, the particle's
+            own observer, and a passing observer) each measure its energy and momentum. A drawing shows the three readings as
+            points, and a table gives the numbers.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Your job.</strong> Choose whether the object is a particle with mass or a light pulse. For a particle, choose its
+            speed in the lab. Choose the passing observer's speed. Then make a prediction. You are not graded. The Run button stays
+            off until you choose a prediction.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>What we assume.</strong> Speeds are steady, there is no gravity, energy is in rest energies, and momentum is
+            given as pc. For light, energy is in units of the lab's measurement of the pulse.
+          </p>
+        </div>
+
+        <ReferencePanel />
+
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>What moves past the lab?</label>
           <div style={{ marginBottom: '1rem' }}>
@@ -455,18 +669,55 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
           </div>
         </div>
 
+        <div style={{ marginBottom: '2rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+            {kind === 'particle' ? 'A particle with mass is' : 'A light pulse is'} moving past the lab. The lab measures its energy
+            and its momentum. A passing observer, who moves differently, measures them too. Earlier, two observers measured different
+            times and different distances between two events, but the same <code>time² − distance²</code>. What do you think the two
+            observers find for this {kind === 'particle' ? 'particle' : 'light pulse'}?
+          </p>
+          <div>
+            {PREDICTION_CHOICES.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                onClick={() => {
+                  setPrediction(choice.value)
+                  returnToIdle()
+                }}
+                className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
+                style={{ display: 'block', textAlign: 'left', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+            {prediction !== null
+              ? `Your prediction: ${PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.slice(0, 3)}. This is not graded.`
+              : 'Choose an option to continue'}
+          </p>
+        </div>
+
         <button
           type="button"
           className="action-button"
           onClick={() => {
             setProgress(0)
+            setRunCount((n) => n + 1)
             setStatus('running')
           }}
-          disabled={status === 'running'}
+          disabled={prediction === null || status === 'running'}
           style={{ padding: '0.6rem 1.5rem' }}
         >
           {status === 'running' ? 'Running...' : 'Run'}
         </button>
+        {prediction === null && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>
+            Choose a prediction above to run the experiment.
+          </p>
+        )}
 
         <div style={{ marginTop: '2rem' }}>
           <Diagram kind={kind} speed={speed} passingSpeed={passingSpeed} progress={status === 'idle' ? null : progress} />
@@ -514,8 +765,8 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
             <li>
               <strong>{kind === 'particle' ? 'The yellow curve.' : 'The two straight yellow lines.'}</strong>{' '}
               {kind === 'particle'
-                ? 'It marks where the readings of observers moving at every other speed fall. It appears when you press Run.'
-                : 'They mark the places where a light pulse always sits: moving right, its energy equals its momentum × c; moving left, its energy equals minus its momentum × c. They appear when you press Run.'}
+                ? 'It marks where the readings of observers moving at every other speed fall. It is drawn so that you can see, at a glance, every reading that any observer could have, not only the one for the speed you chose. Picture the passing observer speeding up or slowing down: their reading would move along the curve. Look at its shape, and at where the three readings sit on it. It appears when you press Run.'
+                : 'They mark the places where a light pulse always sits: moving right, its energy equals its momentum × c; moving left, its energy equals minus its momentum × c. They are drawn so that you can see every reading that any observer could have for a light pulse, not only the one for the speed you chose. Look at where the lab\'s and the passing observer\'s readings sit on them. They appear when you press Run.'}
             </li>
           </ul>
 
@@ -574,7 +825,104 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
             </li>
           </ol>
         </div>
+        {status === 'complete' && prediction !== null && (
+          <div
+            style={{
+              marginTop: '2rem',
+              padding: '1.5rem',
+              border: '1px solid var(--border-color, #ccc)',
+              borderRadius: '8px',
+            }}
+          >
+            <h3 style={{ marginBottom: '0.5rem' }}>Results</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              {kind === 'particle' ? `The particle moved at ${speed}c in the lab.` : 'The light pulse moved to the right in the lab.'}{' '}
+              The passing observer moved at {passingLabel(passingSpeed)}. <strong>Your prediction was:</strong>{' '}
+              {PREDICTION_CHOICES.find((c) => c.value === prediction)?.label} It is only recorded here, not marked right or wrong.
+            </p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              <strong>The table.</strong> Each observer has one row.{' '}
+              {kind === 'light' && 'There is no row for an observer who travels along with the light, because no observer can. '}
+              All the numbers are in {kind === 'particle' ? "the particle's rest energies" : "the lab's measurement of the pulse"}.
+            </p>
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <thead>
+                  <tr>
+                    {['Observer', 'Speed they measure (c)', 'Energy E', 'Momentum × c', 'E² − (momentum × c)²'].map((h) => (
+                      <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { name: 'The lab', reading: result.lab },
+                    ...(result.own ? [{ name: 'The particle’s own observer', reading: result.own }] : []),
+                    { name: 'The passing observer', reading: result.passing },
+                  ].map((o) => (
+                    <tr key={o.name}>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{o.name}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatNumber(o.reading.speed)}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatNumber(o.reading.energy)}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatNumber(o.reading.momentumTimesC)}</td>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatNumber(o.reading.invariant)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ul style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0 0 1rem', paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>Speed they measure:</strong> how fast that observer finds {kind === 'particle' ? 'the particle' : 'the light pulse'}{' '}
+                moving. A plus sign means to the right and a minus sign to the left.
+              </li>
+              <li>
+                <strong>Energy E</strong> and <strong>Momentum × c:</strong> what that observer measures. A minus sign on the
+                momentum means it points to the left.
+              </li>
+              <li>
+                <strong>E² − (momentum × c)²:</strong> the energy multiplied by itself, minus the momentum × c multiplied by
+                itself.
+              </li>
+            </ul>
+
+            {result.kineticEnergy !== null && result.newtonKineticEnergy !== null && (
+              <>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
+                  <strong>The energy ledger</strong>, for the lab's measurement of the particle at {speed}c, in the particle's rest
+                  energies:
+                </p>
+                <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '0.5rem' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>Rest energy (the energy at rest)</td>
+                      <td>1.0000</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>Kinetic energy (the extra energy from moving)</td>
+                      <td>{result.kineticEnergy.toFixed(4)}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>Total energy</td>
+                      <td>{result.lab.energy.toFixed(4)}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>Newton's ½ × (speed)² for comparison</td>
+                      <td>{result.newtonKineticEnergy.toFixed(4)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+      {status === 'complete' && prediction !== null && (
+        <EnergyMomentumTutor key={runCount} kind={kind} speed={speed} passingSpeed={passingSpeed} predicted={prediction} />
+      )}
     </div>
   )
 }
