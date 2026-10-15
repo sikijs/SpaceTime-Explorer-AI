@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { EnergyMomentumTutor } from './EnergyMomentumTutor'
 import { EnergyMomentumCollision, PART_TWO_REFERENCE_ENTRIES } from './EnergyMomentumCollision'
+import { EnergyMomentumReactions, PART_THREE_REFERENCE_ENTRIES } from './EnergyMomentumReactions'
 import type { CSSProperties } from 'react'
 import { particleReading, readingFor, runInvariantExperiment } from '../physics/energyMomentum'
 import type { EnergyMomentumReading } from '../physics/energyMomentum'
@@ -365,7 +366,7 @@ interface EnergyMomentumExperimentProps {
 }
 
 // The quick-reference panel ("Words and formulas"): one line for each term and formula introduced so far (spec, Introduction,
-// rule 5). Part 1's are listed from the start, and Part 2's are added once Part 2 appears; Part 3's are added when its introduction is built. Draft
+// rule 5). Part 1's are listed from the start, and Part 2's are added once Part 2 appears; Part 3's are added once Part 3 appears. Draft
 // wording for the owner's review (§28.1). The one-line formulas repeat the introduction's, with no new claims.
 const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Particle', meaning: 'a very small piece of matter, such as an electron or a proton, treated here as a single point.' },
@@ -439,6 +440,8 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
   // "Go to Part 2" and scrolls down to it, so a learner who went back up can return.
   const [skippedToPartTwo, setSkippedToPartTwo] = useState(false)
   const partTwoShown = partOneExplained || skippedToPartTwo
+  // Part 3 is shown only after the learner has reached Part 2's tutor explanation (spec, Learner Controls).
+  const [partTwoExplained, setPartTwoExplained] = useState(false)
   const result = runInvariantExperiment(kind, speed, passingSpeed)
   const returnToIdle = () => {
     setStatus('idle')
@@ -631,7 +634,15 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
           </p>
         </div>
 
-        <ReferencePanel entries={partTwoShown ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES] : REFERENCE_ENTRIES} />
+        <ReferencePanel
+          entries={
+            partTwoExplained
+              ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES, ...PART_THREE_REFERENCE_ENTRIES]
+              : partTwoShown
+                ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES]
+                : REFERENCE_ENTRIES
+          }
+        />
 
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>What moves past the lab?</label>
@@ -984,9 +995,12 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
           <EnergyMomentumCollision
             skippedPartOne={skippedToPartTwo && !partOneExplained}
             onBackToPartOne={() => document.getElementById(PART_ONE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onExplained={() => setPartTwoExplained(true)}
           />
         </div>
       )}
+
+      {partTwoExplained && <EnergyMomentumReactions />}
     </div>
   )
 }

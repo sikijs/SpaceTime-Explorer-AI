@@ -498,8 +498,16 @@ function CollisionResults({ speed, passingSpeed, prediction }: { speed: number; 
 
 // Part 2's section. Changing a setting returns to the setup, so a run is never shown for different settings. Changing the prediction does
 // the same. `skippedPartOne` is true when the learner reached Part 2 with the skip link instead of through Part 1's tutor; the
-// introduction then adds a reminder, because it uses the combination from Part 1. `onBackToPartOne` scrolls back up to Part 1.
-export function EnergyMomentumCollision({ skippedPartOne = false, onBackToPartOne }: { skippedPartOne?: boolean; onBackToPartOne?: () => void }) {
+// introduction then adds a reminder, because it uses the combination from Part 1. `onBackToPartOne` scrolls back up to Part 1. `onExplained` is called when the learner reaches the tutor's explanation, which shows Part 3.
+export function EnergyMomentumCollision({
+  skippedPartOne = false,
+  onBackToPartOne,
+  onExplained,
+}: {
+  skippedPartOne?: boolean
+  onBackToPartOne?: () => void
+  onExplained?: () => void
+}) {
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
@@ -773,7 +781,7 @@ export function EnergyMomentumCollision({ skippedPartOne = false, onBackToPartOn
 
       {status === 'complete' && prediction !== null && <CollisionResults speed={speed} passingSpeed={passingSpeed} prediction={prediction} />}
       {status === 'complete' && prediction !== null && (
-        <EnergyMomentumCollisionTutor key={runCount} speed={speed} passingSpeed={passingSpeed} predicted={prediction} />
+        <EnergyMomentumCollisionTutor key={runCount} speed={speed} passingSpeed={passingSpeed} predicted={prediction} onExplained={onExplained} />
       )}
     </div>
   )
