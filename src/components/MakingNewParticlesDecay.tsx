@@ -5,7 +5,7 @@ import { runDecay } from '../physics/makingNewParticles'
 // Step 4 of docs/experiments/spacetime-geometry/06-making-new-particles.md for Part 2 (decay): the section, the introduction (stage B),
 // the two controls (the pieces' mass, r, and the passing observer's speed), a labeled diagram of the setup (the parent at rest, and
 // the passing observer), and its "How to read this diagram" caption (CLAUDE.md §14). Only the setup is shown. There is deliberately no
-// Run, prediction, results or tutor yet: those are later steps, and the caption will be extended when the run is built. Every number
+// prediction, results or tutor yet: those are later steps, and the caption will be extended when the run is built. Every number
 // comes from `runDecay` (CLAUDE.md §9). Wording here is draft for the owner's review (CLAUDE.md §28.1).
 
 // The terms and formulas that stage B's introduction defines, added to the "Words and formulas" panel once Part 2 appears (spec,
@@ -19,6 +19,16 @@ export const PART_TWO_REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
     meaning:
       'the parent is at rest, so the total momentum is zero, and the two equal pieces move apart with equal energies, each half the parent’s energy. Here r is each piece’s mass as a fraction of the parent’s.',
   },
+]
+
+type Prediction = 'less' | 'same' | 'more'
+
+// The three answers of Part 2's prediction in the specification's "Prediction Activity" section (wording is a draft, §28.1). Not
+// scored, and the learner is not told which is right (§12). The right answer depends on the setting, which is the point.
+const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
+  { value: 'less', label: "(a) The pieces' masses add up to less than the parent's mass." },
+  { value: 'same', label: "(b) The same as the parent's mass." },
+  { value: 'more', label: "(c) More than the parent's mass." },
 ]
 
 const MASS_PRESETS: { value: number; label: string }[] = [
@@ -452,6 +462,7 @@ export function MakingNewParticlesDecay({
 }) {
   const [pieceMass, setPieceMass] = useState(0.25)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
+  const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
   const returnToIdle = () => {
@@ -574,7 +585,8 @@ export function MakingNewParticlesDecay({
         </p>
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
           <strong>Your job.</strong> Choose the pieces' mass and the passing observer's speed. Then predict how the sum of the pieces'
-          masses compares with the parent's mass, and run it. You are not graded.
+          masses compares with the parent's mass, and press Run. You are not graded. The Run button stays off until you choose a prediction,
+          and it resets if you change the pieces' mass.
         </p>
         <p style={{ margin: 0 }}>
           <strong>What we assume.</strong> Everything moves along one line. The parent decays into exactly two equal pieces. Only energy and
@@ -594,6 +606,7 @@ export function MakingNewParticlesDecay({
               type="button"
               onClick={() => {
                 setPieceMass(choice.value)
+                setPrediction(null)
                 returnToIdle()
               }}
               className={`toggle-button${pieceMass === choice.value ? ' is-selected' : ''}`}
@@ -626,6 +639,36 @@ export function MakingNewParticlesDecay({
         </div>
       </div>
 
+      <div style={{ marginBottom: '2rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+          A particle at rest splits into two equal pieces. Each piece has{' '}
+          {pieceMass === 0 ? 'no mass: it is a pulse of light' : `${pieceMass} times the parent's mass`}. Compare the total of the pieces'
+          rest masses with the parent's mass. How do they compare?
+        </p>
+        <div>
+          {PREDICTION_CHOICES.map((choice) => (
+            <button
+              key={choice.value}
+              type="button"
+              onClick={() => {
+                setPrediction(choice.value)
+                returnToIdle()
+              }}
+              className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
+              style={{ display: 'block', textAlign: 'left', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+            >
+              {choice.label}
+            </button>
+          ))}
+        </div>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+          {prediction !== null
+            ? `Your prediction: ${PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.slice(0, 3)}. This is not graded.`
+            : 'Choose an option to continue'}
+        </p>
+      </div>
+
       <button
         type="button"
         className="action-button"
@@ -633,11 +676,16 @@ export function MakingNewParticlesDecay({
           setProgress(0)
           setStatus('running')
         }}
-        disabled={status === 'running'}
+        disabled={prediction === null || status === 'running'}
         style={{ padding: '0.6rem 1.5rem', marginBottom: '1.5rem' }}
       >
         {status === 'running' ? 'Running...' : status === 'complete' ? 'Run again' : 'Run'}
       </button>
+      {prediction === null && (
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '-1rem', marginBottom: '1.5rem' }}>
+          Choose a prediction above to run the experiment.
+        </p>
+      )}
 
       <DecayDiagram passingSpeed={passingSpeed} pieceMass={pieceMass} progress={status === 'idle' ? null : progress} />
 
