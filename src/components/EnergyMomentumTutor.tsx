@@ -19,6 +19,8 @@ interface EnergyMomentumTutorProps {
   speed: number
   passingSpeed: number
   predicted: Prediction
+  // Called once, when the learner reaches the explanation (the last step), so the next part can be shown.
+  onExplained?: () => void
 }
 
 const predictionClauses: Record<Prediction, string> = {
@@ -37,7 +39,7 @@ const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333
 // Draft wording for the owner's review (CLAUDE.md §28.1). Follows the Part 1 tutor sequence in the specification:
 // observe, compare with the prediction, one conceptual question, then the explanation and the limits. Every number below
 // comes from the physics model, never typed in by hand.
-export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted }: EnergyMomentumTutorProps) {
+export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted, onExplained }: EnergyMomentumTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -45,7 +47,10 @@ export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted }: En
     if (responseInput.trim() === '') return
     if (tutorStep === 'observe') setTutorStep('compare')
     else if (tutorStep === 'compare') setTutorStep('conceptual')
-    else if (tutorStep === 'conceptual') setTutorStep('explained')
+    else if (tutorStep === 'conceptual') {
+      setTutorStep('explained')
+      onExplained?.()
+    }
     setResponseInput('')
   }
   const isResponseEmpty = responseInput.trim() === ''

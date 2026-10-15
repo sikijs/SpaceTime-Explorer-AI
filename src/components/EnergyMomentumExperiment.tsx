@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { EnergyMomentumTutor } from './EnergyMomentumTutor'
+import { EnergyMomentumCollision } from './EnergyMomentumCollision'
 import type { CSSProperties } from 'react'
 import { particleReading, readingFor, runInvariantExperiment } from '../physics/energyMomentum'
 import type { EnergyMomentumReading } from '../physics/energyMomentum'
@@ -426,6 +427,8 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
   const [runCount, setRunCount] = useState(0)
+  // Part 2 is shown only after the learner has reached Part 1's tutor explanation (spec, Learner Controls, Decision 2).
+  const [partOneExplained, setPartOneExplained] = useState(false)
   const result = runInvariantExperiment(kind, speed, passingSpeed)
   const returnToIdle = () => {
     setStatus('idle')
@@ -944,8 +947,10 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
       </div>
 
       {status === 'complete' && prediction !== null && (
-        <EnergyMomentumTutor key={runCount} kind={kind} speed={speed} passingSpeed={passingSpeed} predicted={prediction} />
+        <EnergyMomentumTutor key={runCount} kind={kind} speed={speed} passingSpeed={passingSpeed} predicted={prediction} onExplained={() => setPartOneExplained(true)} />
       )}
+
+      {partOneExplained && <EnergyMomentumCollision />}
     </div>
   )
 }
