@@ -26,8 +26,9 @@ const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
   },
 ]
 
-// The element Part 2 sits in, so the skip link can scroll to it.
+// The elements Part 1 and Part 2 sit in, so the skip link and the back link can scroll to them.
 const PART_TWO_ID = 'energy-momentum-part-2'
+const PART_ONE_ID = 'energy-momentum-part-1'
 
 const KIND_CHOICES: { value: Kind; label: string }[] = [
   { value: 'particle', label: 'A particle with mass' },
@@ -479,7 +480,7 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
       <h2>Experiment 5 — Energy, Momentum and Mass: What Do All Observers Agree On?</h2>
 
-      <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+      <div id={PART_ONE_ID} className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <h3 style={{ marginTop: 0 }}>Part 1 — Energy and momentum, seen by different observers</h3>
         {!partTwoShown && (
           <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
@@ -978,7 +979,10 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
 
       {partTwoShown && (
         <div id={PART_TWO_ID}>
-          <EnergyMomentumCollision skippedPartOne={skippedToPartTwo && !partOneExplained} />
+          <EnergyMomentumCollision
+            skippedPartOne={skippedToPartTwo && !partOneExplained}
+            onBackToPartOne={() => document.getElementById(PART_ONE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          />
         </div>
       )}
     </div>

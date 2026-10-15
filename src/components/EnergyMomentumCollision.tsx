@@ -498,8 +498,8 @@ function CollisionResults({ speed, passingSpeed, prediction }: { speed: number; 
 
 // Part 2's section. Changing a setting returns to the setup, so a run is never shown for different settings. Changing the prediction does
 // the same. `skippedPartOne` is true when the learner reached Part 2 with the skip link instead of through Part 1's tutor; the
-// introduction then adds a reminder, because it uses the combination from Part 1.
-export function EnergyMomentumCollision({ skippedPartOne = false }: { skippedPartOne?: boolean }) {
+// introduction then adds a reminder, because it uses the combination from Part 1. `onBackToPartOne` scrolls back up to Part 1.
+export function EnergyMomentumCollision({ skippedPartOne = false, onBackToPartOne }: { skippedPartOne?: boolean; onBackToPartOne?: () => void }) {
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
@@ -537,6 +537,17 @@ export function EnergyMomentumCollision({ skippedPartOne = false }: { skippedPar
   return (
     <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
       <h3 style={{ marginTop: 0 }}>Part 2 — A collision, seen by two observers</h3>
+      {onBackToPartOne && (
+        <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
+          <button
+            type="button"
+            onClick={onBackToPartOne}
+            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            ← Back to Part 1
+          </button>
+        </p>
+      )}
 
       {/* Introduction, stage B (needed by Part 2): draft wording for the owner's review (CLAUDE.md §28.1), from the specification's
           "Introduction: three stages". It does not say what the lump's mass is (that is Part 2's prediction, §12). */}
