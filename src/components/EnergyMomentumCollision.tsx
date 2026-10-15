@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { EnergyMomentumCollisionTutor } from './EnergyMomentumCollisionTutor'
 import { runCollisionExperiment, systemMassOf, totalsOf } from '../physics/energyMomentum'
 
 // Steps 4 to 7 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 2 only: the introduction (stage B), the
 // controls, the setup diagram, the prediction that gates Run, the run that connects the diagram to the physics model (the lab's
 // view of the collision, with a bar for 2m beside the lump's mass M, and then the passing observer's view of the same collision),
 // and the results shown when the run ends (values only, neutral; the explanation is the tutor's, §12). Every number comes from
-// `runCollisionExperiment` in `energyMomentum.ts`. The tutor is a later step. The presets are Decision 5 of that specification.
+// `runCollisionExperiment` in `energyMomentum.ts`. The tutor (`EnergyMomentumCollisionTutor`) follows the results. The presets are Decision 5 of that specification.
 // Wording here is draft for the owner's review (CLAUDE.md §28.1).
 type Prediction = 'less' | 'same' | 'more'
 
@@ -496,13 +497,14 @@ function CollisionResults({ speed, passingSpeed, prediction }: { speed: number; 
 }
 
 // Part 2's section. Changing a setting returns to the setup, so a run is never shown for different settings. Changing the prediction does
-// the same. The tutor is a later step.
+// the same.
 export function EnergyMomentumCollision() {
   const [speed, setSpeed] = useState(0.6)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
   const returnToIdle = () => {
     setStatus('idle')
     setProgress(0)
@@ -677,6 +679,7 @@ export function EnergyMomentumCollision() {
         className="action-button"
         onClick={() => {
           setProgress(0)
+          setRunCount((n) => n + 1)
           setStatus('running')
         }}
         disabled={prediction === null || status === 'running'}
@@ -728,6 +731,9 @@ export function EnergyMomentumCollision() {
       </div>
 
       {status === 'complete' && prediction !== null && <CollisionResults speed={speed} passingSpeed={passingSpeed} prediction={prediction} />}
+      {status === 'complete' && prediction !== null && (
+        <EnergyMomentumCollisionTutor key={runCount} speed={speed} passingSpeed={passingSpeed} predicted={prediction} />
+      )}
     </div>
   )
 }
