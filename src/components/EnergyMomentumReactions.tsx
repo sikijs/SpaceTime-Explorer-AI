@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { runReactionExperiment } from '../physics/energyMomentum'
+import { PAIR_CREATION_THRESHOLD, runReactionExperiment, systemMassOf, totalsOf } from '../physics/energyMomentum'
 import type { ReactionExperimentResult, ReactionKind, ReactionPiece } from '../physics/energyMomentum'
 
 // Steps 4 and 6 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 3 only: the basic interface (the
@@ -475,6 +475,139 @@ const SECTION_LABEL: CSSProperties = { display: 'block', marginBottom: '0.5rem',
 const HINT: CSSProperties = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }
 const BUTTON: CSSProperties = { marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }
 
+const CELL: CSSProperties = { padding: '0.3rem 1rem 0.3rem 0' }
+const RESULTS_INTRO: CSSProperties = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }
+
+// Numbers in the results tables: four decimal places, with a minus sign for a negative number and no "-0.0000".
+function formatNumber(value: number): string {
+  const text = value.toFixed(4).replace('-', '−')
+  return /^−0\.0+$/.test(text) ? text.slice(1) : text
+}
+
+// A difference that is zero apart from rounding is shown as 0.0000.
+function formatDifference(value: number): string {
+  return formatNumber(Math.abs(value) < 5e-5 ? 0 : value)
+}
+
+function ResultsTable({ head, rows }: { head: string[]; rows: string[][] }) {
+  return (
+    <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+      <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '0.5rem' }}>
+        <thead>
+          <tr>
+            {head.map((h, i) => (
+              <th key={i} style={{ ...CELL, textAlign: 'left' }}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, r) => (
+            <tr key={r}>
+              {row.map((cell, i) => (
+                <td key={i} style={CELL}>
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function settingSentence(kind: ReactionKind, setting: number): string {
+  if (kind === 'annihilation') return setting === 0 ? 'The particle and its antiparticle were at rest in the lab.' : `The particle and its antiparticle each moved at ${setting}c in the lab.`
+  if (kind === 'pair-creation') return `Each beam of light had an energy of ${setting} rest energies in the lab.`
+  return 'The two protons and the two neutrons were at rest in the lab.'
+}
+
+// The results, shown only when the run ends. Values only, with plain labels: what they mean is the tutor's to explain (§12).
+function ReactionResults({ kind, setting, passingSpeed, prediction }: { kind: ReactionKind; setting: number; passingSpeed: number; prediction: Prediction }) {
+  const result = runReactionExperiment(kind, setting, passingSpeed)
+  const inMeV = kind === 'helium-binding'
+  const unit = inMeV ? 'MeV' : 'rest energies'
+  const readings = (pieces: ReactionPiece[]) => pieces.map((piece) => piece.reading)
+  const labBefore = totalsOf(readings(result.labBefore))
+  const labAfter = totalsOf(readings(result.labAfter))
+  const passingBefore = totalsOf(readings(result.passingBefore))
+  const passingAfter = totalsOf(readings(result.passingAfter))
+  const row = (name: string, before: number, after: number) => [name, formatNumber(before), formatNumber(after), formatDifference(after - before)]
+  const released = result.energyReleased
+  const releasedSentence =
+    Math.abs(released) < 5e-10
+      ? 'No energy was released or absorbed.'
+      : released > 0
+        ? `Energy released: ${formatNumber(released)} ${unit}.`
+        : `Energy absorbed: ${formatNumber(-released)} ${unit}.`
+
+  return (
+    <div style={{ marginTop: '2rem', padding: '1.5rem', border: '1px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
+      <h3 style={{ marginBottom: '0.5rem', marginTop: 0 }}>Results</h3>
+      <p style={RESULTS_INTRO}>
+        <strong>The process:</strong> {KIND_CHOICES.find((c) => c.value === kind)?.label}. {settingSentence(kind, setting)} The passing observer moved at{' '}
+        {passingLabel(passingSpeed)}. <strong>Your prediction was:</strong> {PREDICTION_CHOICES.find((c) => c.value === prediction)?.label} It is only
+        recorded here, not marked right or wrong.
+      </p>
+
+      {kind === 'pair-creation' && !result.created && (
+        <p style={RESULTS_INTRO}>
+          <strong>No pair can be made.</strong> The system's mass is {formatNumber(result.systemMassBefore)} rest energies. A pair needs a system mass of
+          at least {formatNumber(2 * PAIR_CREATION_THRESHOLD)}, twice the mass of one particle, which means at least {formatNumber(PAIR_CREATION_THRESHOLD)}{' '}
+          rest energies for each beam. The beams pass through each other.
+        </p>
+      )}
+
+      <p style={RESULTS_INTRO}>
+        <strong>The sum of the rest masses.</strong> This adds up the masses of the separate pieces, and a pulse of light counts as zero. In {unit}.
+      </p>
+      <ResultsTable
+        head={['', 'Before', 'After', 'Difference']}
+        rows={[row('Sum of the rest masses', result.sumOfRestMassesBefore, result.sumOfRestMassesAfter)]}
+      />
+
+      <p style={{ ...RESULTS_INTRO, marginTop: '1rem' }}>
+        <strong>The system's mass.</strong> It is worked out from the total energy and the total momentum × c of all the pieces, as M = √(E_total² −
+        (P_total c)²). In {unit}.
+      </p>
+      <ResultsTable
+        head={['Observer', 'Before', 'After', 'Difference']}
+        rows={[
+          row("The system's mass, found by the lab", result.systemMassBefore, result.systemMassAfter),
+          row("The system's mass, found by the passing observer", systemMassOf(readings(result.passingBefore)), systemMassOf(readings(result.passingAfter))),
+        ]}
+      />
+
+      <p style={{ ...RESULTS_INTRO, marginTop: '1rem' }}>
+        <strong>The energy released or absorbed.</strong> It is the sum of the rest masses before minus the sum after, in {unit}. {releasedSentence}
+        {inMeV && ` That is ${((released / result.sumOfRestMassesBefore) * 100).toFixed(3)} percent of the mass of the separate pieces.`}
+      </p>
+
+      <p style={{ ...RESULTS_INTRO, marginTop: '1rem' }}>
+        <strong>The total energy before and after the reaction, for each observer.</strong> In {unit}. Each difference is the total after minus the total before.
+      </p>
+      <ResultsTable
+        head={['Observer', 'Before', 'After', 'Difference']}
+        rows={[row('The lab', labBefore.energy, labAfter.energy), row('The passing observer', passingBefore.energy, passingAfter.energy)]}
+      />
+
+      <p style={{ ...RESULTS_INTRO, marginTop: '1rem' }}>
+        <strong>The total momentum × c before and after the reaction, for each observer.</strong> It is in the same units as the energy. A minus sign
+        means the total points to the left.
+      </p>
+      <ResultsTable
+        head={['Observer', 'Before', 'After', 'Difference']}
+        rows={[
+          row('The lab', labBefore.momentumTimesC, labAfter.momentumTimesC),
+          row('The passing observer', passingBefore.momentumTimesC, passingAfter.momentumTimesC),
+        ]}
+      />
+    </div>
+  )
+}
+
 // Part 3's section: the controls and the setup diagram only. The settings are remembered for each process, so that going back to a
 // process does not lose its setting.
 export function EnergyMomentumReactions() {
@@ -781,6 +914,8 @@ export function EnergyMomentumReactions() {
           </li>
         </ol>
       </div>
+
+      {status === 'complete' && prediction !== null && <ReactionResults kind={kind} setting={setting} passingSpeed={passingSpeed} prediction={prediction} />}
     </div>
   )
 }
