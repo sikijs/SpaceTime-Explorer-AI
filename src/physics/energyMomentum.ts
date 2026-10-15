@@ -41,7 +41,8 @@ function assertObserverSpeed(speed: number): void {
   }
 }
 
-function makeReading(energy: number, momentumTimesC: number): EnergyMomentumReading {
+// Exported for Experiment 6 (making new particles), which builds readings from an energy and a momentum.
+export function makeReading(energy: number, momentumTimesC: number): EnergyMomentumReading {
   return { energy, momentumTimesC, speed: energy === 0 ? 0 : momentumTimesC / energy, invariant: energy * energy - momentumTimesC * momentumTimesC }
 }
 
