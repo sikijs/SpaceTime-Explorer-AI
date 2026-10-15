@@ -740,15 +740,29 @@ export function EnergyMomentumCollision({ skippedPartOne = false, onBackToPartOn
         </p>
         <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
           <li>
-            <strong>Picture 1, the lab.</strong> The lumps move toward each other and meet at the dashed line. A yellow ring marks
-            the collision. Afterward there is one lump, drawn at the dashed line. It is drawn larger because it has more mass. The
-            labels give its energy, its momentum × c and its mass M, in units of the mass m of one lump. Two bars beside it
-            compare M with 2m, the two masses added.
+            <strong>Picture 1, the lab.</strong> This is the view of someone standing still next to the dashed line, in the lab. It
+            is drawn in sky blue. First the two lumps slide toward each other, each at the speed you chose, with their arrows
+            showing their direction. Under each lump, three numbers are measured by the lab: its <em>speed</em>, its{' '}
+            <em>energy</em> and its <em>momentum × c</em>. They stay in place while the lumps move, so you can read them before the
+            lumps meet. Then the lumps reach the dashed line, and a yellow ring flashes at the moment of collision. Afterward there
+            is one lump, labelled <strong>1+2</strong>, and the labels now describe it: its speed, its energy, its momentum × c and
+            its mass <strong>M</strong>. All the numbers use the same units as before, with energy in the rest energies of one
+            lump, and <strong>M</strong> in units of <em>m</em>, the mass of one lump. The lump is drawn larger than a single lump: its area is M ÷ m times the area of one lump, so its size is a rough picture of its mass. Beside it, two short bars let you compare lengths directly: the grey bar is the two masses added, 2m, and
+            the blue bar is the mass M of the lump. <em>What to look for:</em> compare the energy and momentum × c before the
+            collision (two lumps, so add their numbers, remembering that a minus sign means "to the left") with the numbers after
+            it. Then compare the blue bar with the grey bar.
           </li>
           <li>
-            <strong>Picture 2, the passing observer.</strong> Then the same collision is shown as the passing observer sees it, in
-            purple. The lumps move at different speeds than in the lab, and the lump afterward is not at rest. Each purple number
-            is what that observer measures.
+            <strong>Picture 2, the passing observer.</strong> Next, the same collision is replayed as seen by the passing
+            observer, the hollow purple circle from the setup. It is drawn in purple instead of blue, so you can tell at a glance
+            whose measurements you are reading. This observer moves along the same line, so for them <em>they</em> are at rest,
+            and it is the lab, with everything in it, that moves. So the two lumps move at different speeds than in the lab, and may no longer move at equal speeds. The lump after the collision
+            is generally not at rest either, because in this picture the lab is moving. The drawing scale is the same as in
+            Picture 1 (the same number of pixels for each 1c of speed), so you can compare how far and how fast things move in the
+            two pictures. Each purple number is what this observer measures with their own ruler and clocks: a different speed,
+            energy and momentum × c for each lump than the lab found. <em>What to look for:</em> the numbers differ between the two
+            pictures. Compare the totals before and after the collision in each picture on its own, and compare
+            the lump's mass M in the two pictures.
           </li>
           <li>
             The animation takes about 12 seconds. It only sets how fast you watch, and it does not change what the experiment
