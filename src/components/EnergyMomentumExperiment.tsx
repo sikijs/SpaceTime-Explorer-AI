@@ -757,18 +757,41 @@ export function EnergyMomentumExperiment(_props: EnergyMomentumExperimentProps) 
               </li>
             )}
             <li>
-              <strong>The hollow purple circle, "The passing observer's reading".</strong> What the passing observer measures.
-              When you press Run, the observer's speed climbs from 0 to the speed you chose, so the circle starts on top of the
-              lab's square, and slides to the observer's own reading. The words beside it show their speed at that moment, and
-              the numbers. A dashed line shows the way it has come.
+              <strong>The hollow purple circle, "The passing observer's reading".</strong> Imagine a second person, the passing
+              observer, who flies past the lab in a straight line. They measure the very same {kind === 'particle' ? 'particle' : 'light pulse'},
+              but because they are moving, they get a <em>different</em> energy and a <em>different</em> momentum × c than the
+              lab does. The circle is a dot on the map that shows those two numbers: how far across it sits is their momentum × c,
+              and how high it sits is their energy. When you press Run, the passing observer starts out standing still next to
+              the lab, so the circle starts right on top of the lab's square (they get the same numbers). Then they speed up,
+              little by little, until they reach the speed you chose. As their speed changes, their numbers change, so the circle
+              moves across the map. A dashed purple line shows the path the circle has travelled, and the words beside it give
+              their speed at that moment and their two numbers.
             </li>
             <li>
               <strong>{kind === 'particle' ? 'The yellow curve.' : 'The two straight yellow lines.'}</strong>{' '}
               {kind === 'particle'
-                ? 'It marks where the readings of observers moving at every other speed fall. It is drawn so that you can see, at a glance, every reading that any observer could have, not only the one for the speed you chose. Picture the passing observer speeding up or slowing down: their reading would move along the curve. Look at its shape, and at where the three readings sit on it. It appears when you press Run.'
-                : 'They mark the places where a light pulse always sits: moving right, its energy equals its momentum × c; moving left, its energy equals minus its momentum × c. They are drawn so that you can see every reading that any observer could have for a light pulse, not only the one for the speed you chose. Look at where the lab\'s and the passing observer\'s readings sit on them. They appear when you press Run.'}
+                ? 'Every observer, whatever their speed, gets one energy and one momentum × c for this particle, and so has one dot on the map. The yellow curve is the line that all of those dots fall on. Think of a road drawn on a map: you can stand at many places along it, but you cannot stand off it. In the same way, the passing observer\'s circle can sit at many places, depending on their speed, but it always stays on the curve. Notice the lowest point of the curve, straight above zero. That is where an observer who moves along with the particle sits, because for them the particle is not moving, so its momentum × c is zero and only its rest energy is left. The farther an observer\'s dot is from that point, the faster the particle appears to move to them, and the more energy and momentum it has. The curve appears when you press Run.'
+                : 'Every observer, whatever their speed, gets one energy and one momentum × c for the light pulse, and so has one dot on the map. A light pulse always has an energy equal to its momentum × c. That is why all of those dots fall on a straight line: the right-hand line if the pulse moves to the right, the left-hand line if it moves to the left (where the momentum × c is a negative number). Think of a road drawn on a map: you can stand at many places along it, but you cannot stand off it. In the same way, the passing observer\'s circle can sit at many places, depending on their speed, but it always stays on the line. Light has no "at rest" reading, so unlike a particle, no observer can get a dot at zero momentum. The lines appear when you press Run.'}
             </li>
           </ul>
+
+          <p style={{ margin: '0 0 0.75rem' }}>
+            <strong>What if a momentum is negative?</strong> A negative momentum × c means moving to the <em>left</em>. The sign
+            shows only the direction; the size shows how much. Energy has no direction, so it is never negative.{' '}
+            {kind === 'particle'
+              ? 'You may see a negative momentum × c for the passing observer even though the lab sees the particle moving to the right. This happens when the passing observer moves to the right faster than the particle does. They overtake it, so from their point of view the particle falls behind and drifts to the left. It is like driving at 100 km/h past a truck that is doing 60 km/h: the truck is moving forward along the road, but from your seat it slides backward past your window. On the map, their circle then sits to the left of the middle line.'
+              : 'A light pulse moving to the left always has a negative momentum × c, for every observer, because every observer sees it moving to the left. A passing observer who moves to the right sees the pulse with a larger energy and a larger (negative) momentum × c, and one who moves to the left sees smaller ones. On the map, the dots for a left-moving pulse sit on the left-hand line.'}
+            {' '}A negative momentum is one observer's measurement at one moment. It does not mean that the particle slowed down,
+            stopped and turned around. A particle that really did that would need something to push it, such as a wall it
+            bounces off.
+          </p>
+
+          <p style={{ margin: '0 0 0.75rem' }}>
+            <strong>What is happening in this experiment.</strong> {kind === 'particle'
+              ? 'The particle itself never changes. In the lab it keeps moving at the same speed the whole time, and nothing pushes it. Only the passing observer changes: they speed up, and every speed gives a different reading of the same particle. The circle moves from positive momentum, through zero, to negative momentum only because the observer\'s own speed has changed. It crosses zero at the moment the observer\'s speed matches the particle\'s. They are then travelling along with the particle, so it looks at rest to them, which is the green diamond. Faster than that, they overtake it, and it looks as if it is moving to the left. It is like standing at the roadside watching a truck that goes 60 km/h, then driving off and speeding up. At 30 km/h the truck still pulls ahead of you. At 60 km/h it seems to hover beside you. At 100 km/h you overtake it and it slides backward. The truck never changed its speed; only yours changed.'
+              : 'The light pulse itself never changes. It keeps moving in the same direction the whole time. Only the passing observer changes: they speed up, and every speed gives a different reading of the same pulse. A left-moving pulse is seen moving left by every observer, so its momentum × c stays negative for all of them. Only its size changes.'}
+            {' '}The sign does not affect the bar for E² − (momentum × c)². A negative number multiplied by itself is positive, so the sign drops out.
+          </p>
 
           <p style={{ margin: '0 0 0.5rem' }}>
             <strong>Picture 2: the bars.</strong> For each observer there are three bars on one scale. The top bar is the{' '}
