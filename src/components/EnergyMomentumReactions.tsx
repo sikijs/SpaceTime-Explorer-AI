@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { EnergyMomentumReactionsTutor } from './EnergyMomentumReactionsTutor'
 import { PAIR_CREATION_THRESHOLD, runReactionExperiment, systemMassOf, totalsOf } from '../physics/energyMomentum'
 import type { ReactionExperimentResult, ReactionKind, ReactionPiece } from '../physics/energyMomentum'
 
-// Steps 4 and 6 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 3 only: the basic interface (the
+// Steps 4 to 8 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 3 only: the basic interface (the
 // three controls: which process, its setting, the passing observer's speed; and the setup diagram, the lab's view just before the
-// reaction, with the passing observer marked), the introduction (stage C) and the prediction. The run, the results and the tutor
-// are later steps, so the prediction does not gate anything yet. Every number comes from `runReactionExperiment` in `energyMomentum.ts`.
+// reaction, with the passing observer marked), the introduction (stage C), the prediction, the run, the results and the tutor (`EnergyMomentumReactionsTutor`). Every number comes from `runReactionExperiment` in `energyMomentum.ts`.
 // Wording here is draft for the owner's review (CLAUDE.md §28.1).
 
 type Prediction = 'less' | 'same' | 'more'
@@ -617,6 +617,7 @@ export function EnergyMomentumReactions() {
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
+  const [runCount, setRunCount] = useState(0)
   const setting = settings[kind]
   // Changing a setting, or the prediction, returns to the setup, so a run is never shown for different settings.
   const returnToIdle = () => {
@@ -856,6 +857,7 @@ export function EnergyMomentumReactions() {
         className="action-button"
         onClick={() => {
           setProgress(0)
+          setRunCount((n) => n + 1)
           setStatus('running')
         }}
         disabled={prediction === null || status === 'running'}
@@ -916,6 +918,9 @@ export function EnergyMomentumReactions() {
       </div>
 
       {status === 'complete' && prediction !== null && <ReactionResults kind={kind} setting={setting} passingSpeed={passingSpeed} prediction={prediction} />}
+      {status === 'complete' && prediction !== null && (
+        <EnergyMomentumReactionsTutor key={runCount} kind={kind} setting={setting} passingSpeed={passingSpeed} predicted={prediction} />
+      )}
     </div>
   )
 }
