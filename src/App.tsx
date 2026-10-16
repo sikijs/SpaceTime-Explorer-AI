@@ -55,6 +55,7 @@ import { SeeingThePastExperiment } from './components/SeeingThePastExperiment'
 import { EnergyMomentumExperiment } from './components/EnergyMomentumExperiment'
 import { MakingNewParticlesExperiment } from './components/MakingNewParticlesExperiment'
 import { AberrationExperiment } from './components/AberrationExperiment'
+import { DopplerShiftExperiment } from './components/DopplerShiftExperiment'
 
 interface Chapter {
   title: string
@@ -544,7 +545,18 @@ const chapters: Chapter[] = [
     // explanation.
     learned:
       "Two observers who move relative to each other measure different directions for the same ray of light, so a traveler sees the stars crowded toward the direction of travel and thinned out behind, and the faster the traveler, the stronger the crowding: for the star the lab sees sideways, the traveler sees it at 72.5 degrees at 0.3c, 53.1 degrees at 0.6c and 25.8 degrees at 0.9c. The two stars straight ahead and straight behind do not move. The stars themselves have not moved; it is the direction of the light, as each observer measures it, that differs.",
-    next: "You saw only the direction of the light. Its colour and brightness change too, which the next experiment shows.",
+    next: "You saw only the direction of the light. Its colour changes too, which the next experiment shows.",
+  },
+  {
+    title: 'The Doppler effect',
+    group: 'Spacetime Geometry: What Is Real, What Is Seen',
+    Component: DopplerShiftExperiment,
+    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
+    // explanation. The "What's next" pointer follows Decision 9 of the specification (a pointer to Experiment 9 only if the owner
+    // approves that experiment's direction), so for now it says that the group has no further experiment yet.
+    learned:
+      "Two observers who move relative to each other measure different frequencies, and so different colors, for the same ray of light. A traveler sees starlight shifted toward blue ahead and toward red behind, by (1 + β cos θ) ÷ D: at 0.6c, 2.00 times the frequency straight ahead and 0.50 times straight behind. Even the star the lab sees sideways is shifted toward blue, by 1 ÷ D (1.25 at 0.6c), because the traveler's clock runs slow. The stars have not changed color.",
+    next: "This group has no further experiment yet.",
   },
 ]
 
