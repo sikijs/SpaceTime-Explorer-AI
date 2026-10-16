@@ -57,6 +57,7 @@ import { MakingNewParticlesExperiment } from './components/MakingNewParticlesExp
 import { AberrationExperiment } from './components/AberrationExperiment'
 import { DopplerShiftExperiment } from './components/DopplerShiftExperiment'
 import { TravelerSkyExperiment } from './components/TravelerSkyExperiment'
+import { RotatedObjectExperiment } from './components/RotatedObjectExperiment'
 
 interface Chapter {
   title: string
@@ -569,6 +570,16 @@ const chapters: Chapter[] = [
     learned:
       "A traveler's whole sky differs from the lab's in three linked ways: the stars are crowded ahead, shifted toward blue ahead and toward red behind, and brighter ahead and dimmer behind, by ((1 + β cos θ) ÷ D)²: at 0.6c, 4.00 times as bright straight ahead and 0.25 times straight behind. Even the star the lab sees sideways is brighter, by 1 ÷ D² (1.56 at 0.6c). A star is brighter exactly when it is bluer. The stars have not changed.",
     next: "You saw stars, which are points. The next experiment asks what a fast object with a shape looks like.",
+  },
+  {
+    title: 'A fast object looks rotated, not squashed',
+    group: 'Spacetime Geometry: What Is Real, What Is Seen',
+    Component: RotatedObjectExperiment,
+    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
+    // explanation. "What's next" follows Decision 9 of the specification (no further experiment; the closing recap is a later step).
+    learned:
+      "A camera records the light that arrives at one moment, and light from the far side of an object left earlier, when the object was farther back. So a very fast cube is photographed turned, not squashed: its front face is contracted to D × its side and its trailing face, of width β × its side, comes into view, exactly like a cube at rest turned by arcsin β (at 0.6c, 0.80 + 0.60 = 1.40 wide, as a cube turned 36.9 degrees). The cube has not turned, and the lab's ruler still measures it as shorter: measured and seen are different questions.",
+    next: "This is the last experiment of this group.",
   },
 ]
 
