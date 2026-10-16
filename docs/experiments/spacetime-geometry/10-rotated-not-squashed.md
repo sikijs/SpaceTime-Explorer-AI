@@ -342,7 +342,7 @@ Each has a default; the owner may change any of them.
 7. **Results.** The table has an extra row (the lab's measured width), and there are extra lines (the turned cube's two widths, whether the leading face appears, and D).
 8. **The formulas panel** gains two entries after the run: the widths formula and the turn angle, each with a worked example at 0.6c.
 9. **Tutor.** The effect is named in part 6, together with the sphere ("A sphere, and a name"), and part 6 gives the sphere's outline radius for a sphere of radius 1.00. Part 4 states D² + β² = 1.
-10. **Chapter summary's "What's next":** "This is the last experiment of this group." (Decision 9 said "no further experiment; the closing recap below follows"; the recap is not built, so it is not mentioned.)
+10. **Chapter summary's "What's next":** "This is the last experiment of this group. "Putting It All Together", below on this page, steps back and shows how the ten experiments fit together." It first said only "This is the last experiment of this group." until the closing recap was built (2026-10-16), when it was changed as Decision 2 of `closing-synthesis.md` approved. The introduction also ends with a "One more thing" paragraph pointing to the recap, from the same decision.
 11. **A pointer line in the caption:** "Why the numbers come out this way. This is not explained here. After the run, the tutor explains it, and the 'Words and formulas' panel above gains the formulas."
 12. **Prediction 1's choice labels** are longer than the specification's one-word choices ("Squashed along its direction of motion", and so on), and the module also exports `CornerName`, `CubeCorner` and `RotatedCubeResult`, which the specification's sketch did not list.
 
