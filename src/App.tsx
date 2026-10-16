@@ -576,10 +576,10 @@ const chapters: Chapter[] = [
     group: 'Spacetime Geometry: What Is Real, What Is Seen',
     Component: RotatedObjectExperiment,
     // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
-    // explanation. "What's next" follows Decision 9 of the specification (no further experiment; the closing recap is a later step).
+    // explanation. "What's next" points to the closing recap below it on the page (Decision 2 of closing-synthesis.md, approved 2026-10-16).
     learned:
       "A camera records the light that arrives at one moment, and light from the far side of an object left earlier, when the object was farther back. So a very fast cube is photographed turned, not squashed: its front face is contracted to D × its side and its trailing face, of width β × its side, comes into view, exactly like a cube at rest turned by arcsin β (at 0.6c, 0.80 + 0.60 = 1.40 wide, as a cube turned 36.9 degrees). The cube has not turned, and the lab's ruler still measures it as shorter: measured and seen are different questions.",
-    next: "This is the last experiment of this group.",
+    next: "This is the last experiment of this group. \"Putting It All Together\", below on this page, steps back and shows how the ten experiments fit together.",
   },
 ]
 

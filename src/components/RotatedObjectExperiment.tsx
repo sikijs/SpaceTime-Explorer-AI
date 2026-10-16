@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import { frontFaceWidth, runRotatedCube } from '../physics/rotatedObject'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { RotatedObjectTutor } from './RotatedObjectTutor'
+import { SpacetimeGeometrySynthesis } from './SpacetimeGeometrySynthesis'
 
 // Step 4 of docs/experiments/spacetime-geometry/10-rotated-not-squashed.md (the basic interface): the introduction, the "Words and
 // formulas" panel, the speed control, Picture 1 (what the lab measures, with the cube at rest outlined for comparison), the cube at
@@ -444,6 +445,8 @@ interface RotatedObjectExperimentProps {
 export function RotatedObjectExperiment({ onComplete, onTutorComplete }: RotatedObjectExperimentProps) {
   // Counts the runs so the tutor starts again at its first question after each run.
   const [runCount, setRunCount] = useState(0)
+  // Set when the tutor's explanation is reached; the group's closing recap shows after it.
+  const [explanationReached, setExplanationReached] = useState(false)
   const [speed, setSpeed] = useState(SPEED_PRESETS[1])
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
@@ -617,6 +620,11 @@ export function RotatedObjectExperiment({ onComplete, onTutorComplete }: Rotated
             instant. The cube moves at a steady speed. We show a flat slice: the cube from above, and its photograph. We show only the
             shape, not color or brightness. The cube is the same cube at all times: it is not really turned.
           </p>
+          <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+            <strong>One more thing.</strong> This is the last experiment in this group. Once you have run it, scroll down to “Putting It All
+            Together” below. It steps back and sorts what all ten experiments showed into what everyone agrees on and what depends on who is
+            looking.
+          </p>
         </div>
 
         <ReferencePanel entries={status === 'complete' ? [...REFERENCE_ENTRIES, ...FORMULA_ENTRIES] : REFERENCE_ENTRIES} />
@@ -712,6 +720,7 @@ export function RotatedObjectExperiment({ onComplete, onTutorComplete }: Rotated
           onClick={() => {
             setProgress(0)
             setRunCount((n) => n + 1)
+            setExplanationReached(false)
             setStatus('running')
           }}
           disabled={!bothPredicted || status === 'running'}
@@ -917,9 +926,14 @@ export function RotatedObjectExperiment({ onComplete, onTutorComplete }: Rotated
           speed={speed}
           predictedShape={predictionShape}
           predictedFace={predictionFace}
-          onExplained={() => onTutorComplete?.()}
+          onExplained={() => {
+            setExplanationReached(true)
+            onTutorComplete?.()
+          }}
         />
       )}
+
+      {showResults && explanationReached && <SpacetimeGeometrySynthesis />}
     </div>
   )
 }
