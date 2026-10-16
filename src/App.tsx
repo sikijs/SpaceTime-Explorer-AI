@@ -533,7 +533,7 @@ const chapters: Chapter[] = [
     // Part 2's tutor reaches its explanation.
     learned:
       "To make a new particle, the system's mass must reach the total mass of what comes out. Two head-on beams make all of their energy of motion usable, while a beam on a stationary target locks part of it into the motion of the whole system. For K = 10, 7.1 of the 10 is locked in, and the system's mass is 4.90 against 12.00. That is why colliders reach much higher masses. A particle can decay only into pieces that weigh less than it in total, with the difference becoming their energy of motion.",
-    next: "The experiment used one line, no probabilities and two equal pieces. This group has no further experiment yet.",
+    next: "The experiment used one line, no probabilities and two equal pieces. The next experiment goes back to what observers see, and asks which direction the light from a star comes from for a fast traveler.",
   },
 ]
 
