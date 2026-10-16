@@ -56,6 +56,7 @@ import { EnergyMomentumExperiment } from './components/EnergyMomentumExperiment'
 import { MakingNewParticlesExperiment } from './components/MakingNewParticlesExperiment'
 import { AberrationExperiment } from './components/AberrationExperiment'
 import { DopplerShiftExperiment } from './components/DopplerShiftExperiment'
+import { TravelerSkyExperiment } from './components/TravelerSkyExperiment'
 
 interface Chapter {
   title: string
@@ -553,10 +554,21 @@ const chapters: Chapter[] = [
     Component: DopplerShiftExperiment,
     // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
     // explanation. The "What's next" pointer follows Decision 9 of the specification (a pointer to Experiment 9 only if the owner
-    // approves that experiment's direction), so for now it says that the group has no further experiment yet.
+    // approves that experiment's direction). The owner approved Experiment 9 on 2026-10-16, so it now points to it.
     learned:
       "Two observers who move relative to each other measure different frequencies, and so different colors, for the same ray of light. A traveler sees starlight shifted toward blue ahead and toward red behind, by (1 + β cos θ) ÷ D: at 0.6c, 2.00 times the frequency straight ahead and 0.50 times straight behind. Even the star the lab sees sideways is shifted toward blue, by 1 ÷ D (1.25 at 0.6c), because the traveler's clock runs slow. The stars have not changed color.",
-    next: "This group has no further experiment yet.",
+    next: "You saw only the colors. The stars' brightness changes too, which the next experiment shows, together with the direction and the color.",
+  },
+  {
+    title: "The traveler's whole sky",
+    group: 'Spacetime Geometry: What Is Real, What Is Seen',
+    Component: TravelerSkyExperiment,
+    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
+    // explanation. The "What's next" pointer follows Decision 7 of the
+    // specification (a pointer to Experiment 10, the fast object looking rotated, now that the owner has chosen the order).
+    learned:
+      "A traveler's whole sky differs from the lab's in three linked ways: the stars are crowded ahead, shifted toward blue ahead and toward red behind, and brighter ahead and dimmer behind, by ((1 + β cos θ) ÷ D)²: at 0.6c, 4.00 times as bright straight ahead and 0.25 times straight behind. Even the star the lab sees sideways is brighter, by 1 ÷ D² (1.56 at 0.6c). A star is brighter exactly when it is bluer. The stars have not changed.",
+    next: "You saw stars, which are points. The next experiment asks what a fast object with a shape looks like.",
   },
 ]
 
