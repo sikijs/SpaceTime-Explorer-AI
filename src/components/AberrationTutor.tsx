@@ -18,7 +18,7 @@ const predictionClauses: Record<Prediction, string> = {
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-// Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "AI Tutor Behavior": observe, compare with the
+// Wording approved by the owner on 2026-10-16 (CLAUDE.md §28.1), from the specification's "AI Tutor Behavior": observe, compare with the
 // prediction, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics module
 // (`runSky`, `rainRuleSidewaysAngle`), never typed in by hand (CLAUDE.md §9), except the facts about Earth's motion and Bradley, which
 // are general knowledge with the source status listed in the specification.

@@ -10,7 +10,7 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 // traveler's sky star by star, drawing the same ray at its two angles.
 // The results, the tutor and the formula with its worked example are later steps. They are left out here on purpose: the formula and any worked example of it show which way a star's direction changes, which is what the
 // prediction asks (§12), so they appear only after the learner has predicted and run. Every number shown comes from `runSky`
-// (CLAUDE.md §9). Wording here is draft for the owner's review (CLAUDE.md §28.1).
+// (CLAUDE.md §9). Wording approved by the owner on 2026-10-16 (CLAUDE.md §28.1).
 
 // Terms the introduction defines, repeated in the "Words and formulas" panel with no new claims. The formula for the traveler's angle
 // is added to this panel after the run (a later step).
@@ -42,7 +42,7 @@ const SPEED_PRESETS = [0.3, 0.6, 0.9, 0.99]
 
 type Prediction = 'same' | 'ahead' | 'behind'
 
-// The three answers of the prediction in the specification's "Prediction Activity" section (draft wording, §28.1). Only the
+// The three answers of the prediction in the specification's "Prediction Activity" section (wording approved 2026-10-16, §28.1). Only the
 // direction is asked, not an angle.
 const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
   { value: 'same', label: 'Exactly sideways, the same as the lab' },
@@ -390,7 +390,7 @@ export function AberrationExperiment({ onComplete, onTutorComplete }: Aberration
     <div>
       <h2>Experiment 7 — Aberration: Why the Sky Bunches Up Ahead of a Fast Traveler</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Introduction: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Introduction". It does not say
+        {/* Introduction: wording approved by the owner on 2026-10-16 (CLAUDE.md §28.1), from the specification's "Introduction". It does not say
             whether, or which way, a star's direction changes (that is the prediction, §12), so the formula and its worked example are
             left for after the run. */}
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -552,7 +552,7 @@ export function AberrationExperiment({ onComplete, onTutorComplete }: Aberration
           </div>
         </div>
 
-        {/* "How to read this diagram" (CLAUDE.md §14): draft wording for the owner's review (§28.1). Before the run it names every picture
+        {/* "How to read this diagram" (CLAUDE.md §14): wording approved by the owner on 2026-10-16 (§28.1). Before the run it names every picture
             and element, defines the terms, and gives a worked moment and questions that do not say which way the stars shift (§12). */}
         <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>

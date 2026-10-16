@@ -540,7 +540,7 @@ const chapters: Chapter[] = [
     title: 'Aberration',
     group: 'Spacetime Geometry: What Is Real, What Is Seen',
     Component: AberrationExperiment,
-    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
+    // Wording approved by the owner on 2026-10-16 (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
     // explanation.
     learned:
       "Two observers who move relative to each other measure different directions for the same ray of light, so a traveler sees the stars crowded toward the direction of travel and thinned out behind, and the faster the traveler, the stronger the crowding: for the star the lab sees sideways, the traveler sees it at 72.5 degrees at 0.3c, 53.1 degrees at 0.6c and 25.8 degrees at 0.9c. The two stars straight ahead and straight behind do not move. The stars themselves have not moved; it is the direction of the light, as each observer measures it, that differs.",
