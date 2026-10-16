@@ -472,7 +472,14 @@ function verdict(canMake: boolean, newMass: number, threshold: number, energy: n
     : `A new particle of mass ${newMass} cannot be made. It needs K ≥ ${formatNumber(threshold)}, and only K = ${energy} is supplied.`
 }
 
-export function MakingNewParticlesExperiment() {
+interface MakingNewParticlesExperimentProps {
+  onComplete?: () => void
+  onTutorComplete?: () => void
+}
+
+// The completion mark is saved when Part 2's playback ends, and the explained mark, which shows the chapter summary, when Part 2's
+// tutor reaches its explanation (spec, Decision 14). Part 1 calls neither.
+export function MakingNewParticlesExperiment({ onComplete, onTutorComplete }: MakingNewParticlesExperimentProps) {
   const [energyOfMotion, setEnergyOfMotion] = useState(ENERGY_PRESETS[2])
   const [newMass, setNewMass] = useState(MASS_PRESETS[2])
   const [prediction, setPrediction] = useState<Prediction | null>(null)
@@ -998,6 +1005,8 @@ export function MakingNewParticlesExperiment() {
           <MakingNewParticlesDecay
             skippedPartOne={skippedToPartTwo && !partOneExplained}
             onBackToPartOne={() => document.getElementById(PART_ONE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onComplete={onComplete}
+            onExplained={onTutorComplete}
           />
         </div>
       )}

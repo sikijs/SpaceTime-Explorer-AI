@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { totalsOf } from '../physics/energyMomentum'
 import { runDecay } from '../physics/makingNewParticles'
+import { MakingNewParticlesDecayTutor } from './MakingNewParticlesDecayTutor'
 
 // Step 4 of docs/experiments/spacetime-geometry/06-making-new-particles.md for Part 2 (decay): the section, the introduction (stage B),
 // the two controls (the pieces' mass, r, and the passing observer's speed), a labeled diagram of the setup (the parent at rest, and
@@ -594,13 +595,19 @@ const LINK_BUTTON: CSSProperties = {
 export function MakingNewParticlesDecay({
   skippedPartOne = false,
   onBackToPartOne,
+  onComplete,
+  onExplained,
 }: {
   skippedPartOne?: boolean
   onBackToPartOne?: () => void
+  // Called when Part 2's playback ends, and when the learner reaches its tutor's explanation (spec, Decision 14).
+  onComplete?: () => void
+  onExplained?: () => void
 }) {
   const [pieceMass, setPieceMass] = useState(0.25)
   const [passingSpeed, setPassingSpeed] = useState(0.3)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
+  const [runCount, setRunCount] = useState(0)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [progress, setProgress] = useState(0)
   const returnToIdle = () => {
@@ -620,6 +627,7 @@ export function MakingNewParticlesDecay({
 
       if (fraction >= 1) {
         setStatus('complete')
+        onComplete?.()
         return
       }
 
@@ -629,7 +637,7 @@ export function MakingNewParticlesDecay({
     frameId = requestAnimationFrame(animate)
 
     return () => cancelAnimationFrame(frameId)
-  }, [status])
+  }, [status, onComplete])
 
   return (
     <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
@@ -812,6 +820,7 @@ export function MakingNewParticlesDecay({
         className="action-button"
         onClick={() => {
           setProgress(0)
+          setRunCount((n) => n + 1)
           setStatus('running')
         }}
         disabled={prediction === null || status === 'running'}
@@ -936,6 +945,16 @@ export function MakingNewParticlesDecay({
 
       {status === 'complete' && prediction !== null && (
         <DecayResults pieceMass={pieceMass} passingSpeed={passingSpeed} prediction={prediction} />
+      )}
+
+      {status === 'complete' && prediction !== null && (
+        <MakingNewParticlesDecayTutor
+          key={runCount}
+          pieceMass={pieceMass}
+          passingSpeed={passingSpeed}
+          predicted={prediction}
+          onExplained={onExplained}
+        />
       )}
     </div>
   )
