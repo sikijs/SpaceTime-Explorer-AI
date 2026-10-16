@@ -523,14 +523,14 @@ const chapters: Chapter[] = [
     // Draft wording for the owner's review (CLAUDE.md §28.1). Shown only after Part 3's tutor explanation.
     learned:
       "Different observers measure different energies and momenta for the same moving thing, but the combination E² − (pc)² is the same for all of them, and it is the square of the thing's mass. So mass is the number every observer agrees on, and a particle at rest still has energy, its rest energy mc². In a collision, the total energy and the total momentum are conserved for every observer, but the sum of the separate masses is not. Two lumps of mass m that meet at 0.6c each make one lump of mass 2.5 m, not 2 m, because their energy of motion becomes internal energy. What does not change is the mass of the whole system, worked out from its total energy and total momentum. The same holds when pieces are created or destroyed. An electron and a positron at rest turn into two pulses of light: the sum of the masses goes from 2 to 0, while the system's mass stays 2. Two beams of light can make a pair only if each has at least one rest energy. And a helium nucleus weighs 28.3 MeV, about 0.75 percent, less than its two protons and two neutrons, because that energy leaves when they bind.",
-    next: "You saw particles and light along one line, and the formulas were used, not derived. Forces, acceleration, electric charge, and the force that holds a nucleus together were not shown. This group has no further experiment yet.",
+    next: "You saw particles and light along one line, and the formulas were used, not derived. Forces, acceleration, electric charge, and the force that holds a nucleus together were not shown. The next experiment applies the system's mass to a practical question: how much energy it takes to make a new particle, and how a particle decays.",
   },
   {
     title: 'Making New Particles',
     group: 'Spacetime Geometry: What Is Real, What Is Seen',
     Component: MakingNewParticlesExperiment,
-    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the
-    // tutor's explanation, and this experiment has no tutor yet, so it is not shown.
+    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after
+    // Part 2's tutor reaches its explanation.
     learned:
       "To make a new particle, the system's mass must reach the total mass of what comes out. Two head-on beams make all of their energy of motion usable, while a beam on a stationary target locks part of it into the motion of the whole system. For K = 10, 7.1 of the 10 is locked in, and the system's mass is 4.90 against 12.00. That is why colliders reach much higher masses. A particle can decay only into pieces that weigh less than it in total, with the difference becoming their energy of motion.",
     next: "The experiment used one line, no probabilities and two equal pieces. This group has no further experiment yet.",

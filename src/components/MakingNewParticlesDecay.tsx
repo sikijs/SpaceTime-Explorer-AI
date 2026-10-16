@@ -14,7 +14,7 @@ import { MakingNewParticlesDecayTutor } from './MakingNewParticlesDecayTutor'
 // The terms and formulas that stage B's introduction defines, added to the "Words and formulas" panel once Part 2 appears (spec,
 // Introduction, rule 5). They repeat the introduction's wording, with no new claims.
 export const PART_TWO_REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
-  { term: 'Decay', meaning: 'a particle turning into lighter particles on its own, with nothing hitting it.' },
+  { term: 'Decay', meaning: 'a particle turning into other particles on its own, with nothing hitting it.' },
   { term: 'Parent, pieces', meaning: 'the parent is the particle before it decays. The pieces are what it turns into.' },
   { term: 'Mass given up', meaning: 'the parent’s mass minus the sum of the pieces’ rest masses.' },
   {
@@ -663,8 +663,8 @@ export function MakingNewParticlesDecay({
         )}
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
           <strong>The question.</strong> In Part 1, we made a new particle by smashing particles together, and the energy of motion of the
-          collision became the mass of the new particle. Now we run the idea backward. Can a particle turn into lighter particles on its
-          own, with nothing hitting it? If it can, what happens to the mass that goes missing, and what must the lighter particles be like?
+          collision changed form into the mass of the new particle. Now we run the idea backward. Can a particle turn into other
+          particles on its own, with nothing hitting it? If it can, what happens to the energy and the mass, and what must the pieces be like?
         </p>
 
         <div style={{ marginBottom: '0.75rem' }}>
@@ -673,8 +673,8 @@ export function MakingNewParticlesDecay({
           </p>
           <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
             <li>
-              <strong>Decay:</strong> a particle turning into lighter particles on its own, with nothing hitting it. This experiment shows
-              what the lighter particles must be like, so we give no everyday example here that would give that away.
+              <strong>Decay:</strong> a particle turning into other particles on its own, with nothing hitting it. This experiment shows
+              what the pieces must be like, so we give no everyday example here that would give that away.
             </li>
             <li>
               <strong>Parent:</strong> the particle before it decays. <strong>Pieces:</strong> what it turns into. Here a parent always

@@ -91,7 +91,7 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
         </>
       ) : (
         <>
-          <strong>Where the mass went.</strong> It did not vanish. It became the pieces' energy of motion. Each piece has a total energy of{' '}
+          <strong>Where the mass went.</strong> It did not vanish. Energy changed form. Each piece has a total energy of{' '}
           {f(lab1.reading.energy)}, and{' '}
           {isLight
             ? 'a pulse of light has no rest energy, so all of it is energy of motion'
@@ -162,7 +162,7 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
     <>
       <strong>A second real example: radioactive decay.</strong> When a nucleus of uranium-238 decays, it turns into a nucleus of
       thorium-234 and an alpha particle, which is a helium nucleus. The two pieces weigh slightly less than the uranium nucleus did: about{' '}
-      {f(massFraction * 100000, 0)} parts in 100,000 less. That small mass difference becomes the pieces' energy of motion, about{' '}
+      {f(massFraction * 100000, 0)} parts in 100,000 less. The energy that went with that small mass difference now shows up as the pieces' energy of motion, about{' '}
       {f(URANIUM_238_ALPHA_Q_MEV)} million electron-volts (MeV). This is the same idea as the mass given up in this experiment. As the
       pieces slow down in the rock around them, their energy of motion becomes heat. Heat from the decay of uranium, thorium and potassium
       inside the Earth supplies about half of the heat the Earth gives off. <em>A difference from our model:</em> here the two pieces are
