@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ComponentType } from 'react'
 import { Welcome } from './components/Welcome'
+import { HubbleTensionExperiment } from './components/HubbleTensionExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -79,6 +80,7 @@ const groupOrder = [
   'Cosmology',
   'Black Holes and Strong Gravity',
   'Spacetime Geometry: What Is Real, What Is Seen',
+  'Frontier and Beyond',
 ]
 
 // A one-sentence overview of a group, shown under its title on every chapter page of that group. Only groups that have one
@@ -580,6 +582,16 @@ const chapters: Chapter[] = [
     learned:
       "A camera records the light that arrives at one moment, and light from the far side of an object left earlier, when the object was farther back. So a very fast cube is photographed turned, not squashed: its front face is contracted to D × its side and its trailing face, of width β × its side, comes into view, exactly like a cube at rest turned by arcsin β (at 0.6c, 0.80 + 0.60 = 1.40 wide, as a cube turned 36.9 degrees). The cube has not turned, and the lab's ruler still measures it as shorter: measured and seen are different questions.",
     next: "This is the last experiment of this group. \"Putting It All Together\", below on this page, steps back and shows how the ten experiments fit together.",
+  },
+  {
+    title: 'Two measurements of the expansion rate',
+    group: 'Frontier and Beyond',
+    Component: HubbleTensionExperiment,
+    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
+    // explanation, which is not built yet.
+    learned:
+      "Two kinds of measurement of how fast the universe is expanding disagree. The microwave background gives 67.4 ± 0.5, and the distance ladder gives about 73 (73.04 ± 1.04 in 2022, 73.50 ± 0.81 in 2026), which is about 5 to 6 sigma apart, where sigma is the gap divided by the combined uncertainty. JWST's sharper images did not change the nearby-universe value, and a third method gives about 70, in between. Nobody knows whether a hidden error or new physics is behind it.",
+    next: 'The next experiment asks whether dark energy, the other big unknown of the expansion, changes over time.',
   },
 ]
 
