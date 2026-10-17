@@ -857,3 +857,19 @@ These are the working agreements that have been established in practice.
 4. **Check user-interface changes in a browser.** Type checks and tests do not cover appearance. Tell the owner the local address where the change can be seen, and wait for their review before committing.
 5. **Commit only when asked.** Keep the owner's pre-existing uncommitted changes in separate commits from the agent's changes (stage by hunk when they share a file), and keep each commit focused.
 6. **Say what was not checked.** Report anything that was not run, not viewed, or not verified.
+
+---
+
+# 29. Frontier and Beyond: Introductions and Captions
+
+Set by the owner on 2026-10-17. The group "Frontier and Beyond" (`docs/experiments/frontier-and-beyond/`) teaches recent discoveries and findings of astronomers and scientists. Its concepts are complex and hard to grasp easily. Two rules apply to **every experiment in the group, all nineteen and any added later**, in its specification and in its interface:
+
+1. **The introduction must be up to date, clear, detailed and in simple terms**, so that a learner with only a basic knowledge of science can understand it. Use real-life examples where they help. Its length is not a problem as long as the extra length helps the learner understand better. It may include links for a learner who wants to know more.
+2. **The caption of every picture follows the same rule** (up to date, clear, detailed, simple terms, real-life examples where they help, no length limit that would cost clarity). This builds on the "How to read this diagram" standard of §14.
+
+How to apply them:
+
+* Draft the introduction and every caption to this standard the first time, not after owner feedback (§14).
+* Links go to the original paper or an official release (a mission, observatory or collaboration page), not to news summaries. Check each link, and record it in the specification's source-status table with the date checked (§20, "Say what was not checked" in §28.6).
+* "Up to date" means stating the status as of the date shown to the learner ("as of October 2026"). A fact that may change goes in the specification's "facts that may change" table.
+* These rules do not override §12 or §28.1: neither an introduction nor a caption may reveal what the learner is asked to predict, and the wording is still the owner's to approve line by line.

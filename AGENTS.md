@@ -166,6 +166,20 @@ Define every specialized term in plain language before it is used.
 Check user-interface changes in a browser, since tests do not cover
 appearance, and report anything that was not verified.
 
+## Frontier and Beyond: Introductions and Captions
+
+The "Frontier and Beyond" group (every experiment in it, all nineteen and any added later) teaches recent discoveries
+and findings of astronomers and scientists. The ideas are complex, so:
+
+1. Each introduction must be up to date, clear and detailed, in simple terms for a learner with basic science
+   knowledge. Real-life examples are welcome. Length is not a problem if it helps understanding. Links for further
+   reading may be included.
+2. The caption of every picture follows the same rule.
+
+Links go to the original paper or an official release, and each is recorded in the experiment's source-status table.
+Neither the introduction nor a caption may reveal what the learner is asked to predict. The wording stays the human's
+to approve.
+
 ## Git
 
 Make small, meaningful commits.

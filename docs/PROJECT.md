@@ -441,6 +441,15 @@ The interface should not require the learner to understand the underlying softwa
 
 Most learners have no everyday experience of ideas such as reference frames, and they take time for granted. Every specialized term should be explained in plain language, at the point where the learner first needs it and before an experiment relies on it. Each experiment opens with a short introduction that states the question, what will happen, what the learner is asked to do, any new term, and the assumptions being made.
 
+### Frontier and Beyond: fuller introductions and captions
+
+The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so two rules apply to every experiment in the group, all nineteen and any added later:
+
+1. **The introduction is up to date, clear and detailed, in simple terms** that a learner with only a basic knowledge of science can follow. It may use real-life examples. Its length is not limited, as long as the extra length helps the learner understand. It may also give links for the learner who wants to know more.
+2. **The caption of every picture follows the same rule:** up to date, clear, detailed and in simple terms, with real-life examples where they help, and as long as it needs to be.
+
+Links point to the original paper or an official release (a mission, an observatory or a collaboration), and each linked source is recorded in the experiment's source-status table. Neither the introduction nor a caption may reveal what the learner is asked to predict. These rules add to, and do not replace, the plain-language rules above.
+
 ---
 
 ## 16. Visualizations
