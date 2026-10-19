@@ -50,7 +50,12 @@ const MUTED_COLOR = '#94a3b8'
 const xOf = (redshift: number) => PLOT_LEFT + ((REDSHIFT_MAX - redshift) / REDSHIFT_MAX) * (PLOT_RIGHT - PLOT_LEFT)
 const yOf = (ratio: number) => PLOT_BOTTOM - ((ratio - RATIO_MIN) / (RATIO_MAX - RATIO_MIN)) * (PLOT_BOTTOM - PLOT_TOP)
 const fixed2 = (value: number) => value.toFixed(2)
-const signed2 = (value: number) => (value < 0 ? `−${Math.abs(value).toFixed(2)}` : value.toFixed(2))
+// A number to a fixed count of decimals, with a true minus sign, and no minus sign on a value that rounds to zero ("0.00", not "−0.00").
+const signedFixed = (value: number, decimals: number) => {
+  const text = Math.abs(value).toFixed(decimals)
+  return value < 0 && Number(text) !== 0 ? `−${text}` : text
+}
+const signed2 = (value: number) => signedFixed(value, 2)
 // A published value exactly as written, with a true minus sign.
 const published = (value: number) => String(value).replace('-', '−')
 
@@ -157,7 +162,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Nearby supernovae lined up', meaning: 'a supernova survey cannot fix the Hubble constant by itself, so the comparison lines the nearby supernovae (z = 0.05) up so that both agree there, and shows how the farther ones differ.' },
 ]
 
-const f3 = (value: number) => (value < 0 ? `−${Math.abs(value).toFixed(3)}` : value.toFixed(3))
+const f3 = (value: number) => signedFixed(value, 3)
 const MORE_LINKS_TEXT = 'These are the links that were kept back until you had seen the results.'
 
 export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: EvolvingDarkEnergyExperimentProps) {
