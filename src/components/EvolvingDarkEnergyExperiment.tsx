@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   ANCHOR_REDSHIFT,
-  brightnessPercentChange,
   brightnessSteps,
   densityRatioSteps,
   FITS,
@@ -138,6 +137,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'w₀ and wₐ', meaning: 'the two numbers that describe a dark energy that changes: w₀ is the value of w today, and wₐ says how much w was different in the past.' },
   { term: 'Redshift, z, and the universe’s size', meaning: 'the redshift says how much the universe has grown since light set out. z = 1 means the universe was half its present size, z = 0.5 two thirds, z = 2 one third. z = 0 is today.' },
   { term: 'Density of dark energy', meaning: 'how much dark energy there is in each cubic metre of space. “1×” means the same as today, 1.2× means 20 percent more than today.' },
+  { term: 'Matter fraction, Ωm (said “omega-m”)', meaning: 'the share of the universe’s energy today that is matter, meaning ordinary matter plus dark matter. In this simplified universe the rest is dark energy. For example, 0.3114 means about 31 percent matter and 69 percent dark energy.' },
   { term: 'Supernova', meaning: 'a star exploding so powerfully that, for a few weeks, it shines as brightly as a whole galaxy.' },
   { term: 'Type Ia supernova', meaning: 'the kind used to measure distances. A white dwarf explodes, and the explosions reach nearly the same peak brightness, so how dim one looks tells how far away it is.' },
   { term: 'White dwarf', meaning: 'the burnt-out core of a star like our Sun: about the size of the Earth, with about as much material as the Sun, slowly cooling.' },
@@ -145,7 +145,11 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Standard candle and standard ruler', meaning: 'something whose true brightness (candle) or true length (ruler) is known, so how dim or how small it looks tells how far away it is.' },
   { term: 'BAO (baryon acoustic oscillations)', meaning: 'a preferred spacing of about 500 million light-years between galaxies, left by sound waves in the early universe. It is used as a standard ruler.' },
   { term: 'DESI', meaning: 'the Dark Energy Spectroscopic Instrument, a survey that measured the positions of more than 14 million galaxies and quasars.' },
+  { term: 'CMB (the cosmic microwave background)', meaning: 'the faint afterglow of the Big Bang, which reaches us from every direction in the sky (Cosmology Experiment 3). “CMB” is its short name. In the bar names and tables, “DESI + CMB” means DESI’s galaxy ruler combined with the microwave background.' },
+  { term: 'Quasar', meaning: 'the extremely bright centre of a distant galaxy, where a huge black hole is pulling in gas. It is so bright that it can be seen from billions of light-years away.' },
+  { term: 'Lyman-alpha forest', meaning: 'light from a distant quasar passes through many clouds of hydrogen gas on its way to us. Each cloud takes a little light out at one particular colour, so the quasar’s light has many thin dark gaps, like the trunks of a forest. Where each gap falls says where its cloud is, so the pattern is another map of the early universe, from farther back in time than the galaxies DESI uses.' },
   { term: 'Supernova collection', meaning: 'a list of supernova measurements gathered by different telescopes and calibrated in different ways. Different collections can give slightly different answers.' },
+  { term: 'Calibration, and recalibration', meaning: 'checking a measuring tool against something whose true value is known, as you might check a kitchen scale with a 1-kilogram weight. For supernovae, it means checking that a given brightness really means a given distance, using nearby supernovae whose distances are known another way. Recalibrating means improving that check.' },
   { term: 'Sigma', meaning: 'how many “give or takes” a result is away from what a constant dark energy predicts (Experiment 1 of this group). The bigger the number, the harder it is to put the difference down to chance.' },
   { term: 'The lines at 3 and 5 sigma', meaning: '“often called evidence” and “the usual bar for a discovery”. These are rules of thumb that some sciences use, not laws.' },
   { term: 'Distance difference', meaning: 'how much nearer or farther, in percent, a galaxy would look with a changing dark energy than with a constant one that has the same amount of matter. A minus sign means nearer.' },
@@ -171,7 +175,6 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
   const path = result.curve.map((r) => `${xOf(r.redshift).toFixed(1)},${yOf(r.densityRatio).toFixed(1)}`).join(' ')
   const bothPredicted = distancePrediction !== null && recalibrationPrediction !== null
   const marked = result.atChosenRedshift
-  const brighterPercent = brightnessPercentChange(marked.magnitudeDifference)
   const brightness = brightnessSteps(marked.magnitudeDifference)
   const densitySteps = densityRatioSteps(lookback, fit.w0, fit.wa)
 
@@ -727,6 +730,12 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                   <text x={xIn(lookback, DIST_LEFT, DIST_RIGHT)} y={yIn(marked.distanceDifferencePercent, DIST_MIN, DIST_MAX) + 18} fill={FIT_COLOR} fontSize="11" textAnchor={lookback >= 2 ? 'start' : 'middle'}>
                     z = {lookback}: {signed2(marked.distanceDifferencePercent)} %
                   </text>
+                  <text x={14} y={P2_TOP + (P2_BOTTOM - P2_TOP) * 0.78} fill={MUTED_COLOR} fontSize="10" textAnchor="middle" transform={`rotate(-90 14 ${P2_TOP + (P2_BOTTOM - P2_TOP) * 0.78})`}>
+                    ↓ nearer
+                  </text>
+                  <text x={14} y={P2_TOP + (P2_BOTTOM - P2_TOP) * 0.18} fill={MUTED_COLOR} fontSize="10" textAnchor="middle" transform={`rotate(-90 14 ${P2_TOP + (P2_BOTTOM - P2_TOP) * 0.18})`}>
+                    farther ↑
+                  </text>
                   <line x1={DIST_LEFT} y1={P2_BOTTOM} x2={DIST_RIGHT} y2={P2_BOTTOM} stroke={MUTED_COLOR} strokeWidth={1.5} />
                   {P2_REDSHIFT_TICKS.map((z) => (
                     <g key={z}>
@@ -734,9 +743,12 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                       <text x={xIn(z, DIST_LEFT, DIST_RIGHT)} y={P2_BOTTOM + 17} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
                         {z === 0 ? 'today' : `z = ${z}`}
                       </text>
+                      <text x={xIn(z, DIST_LEFT, DIST_RIGHT)} y={P2_BOTTOM + 29} fill={MUTED_COLOR} fontSize="9" textAnchor="middle">
+                        {z === 0 ? 'full size' : `size ${fixed2(1 / (1 + z))}`}
+                      </text>
                     </g>
                   ))}
-                  <text x={(DIST_LEFT + DIST_RIGHT) / 2} y={P2_BOTTOM + 34} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                  <text x={(DIST_LEFT + DIST_RIGHT) / 2} y={P2_BOTTOM + 44} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
                     far past ← time → today
                   </text>
                   <text x={DIST_LEFT + 4} y={yIn(0, DIST_MIN, DIST_MAX) + 14} fill={MUTED_COLOR} fontSize="9">
@@ -774,6 +786,12 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                   <text x={xIn(lookback, MAG_LEFT, MAG_RIGHT)} y={yIn(marked.magnitudeDifference, MAG_MIN, MAG_MAX) + 18} fill={FIT_COLOR} fontSize="11" textAnchor={lookback >= 2 ? 'start' : 'middle'}>
                     z = {lookback}: {signed2(marked.magnitudeDifference)}
                   </text>
+                  <text x={296} y={P2_TOP + (P2_BOTTOM - P2_TOP) * 0.78} fill={MUTED_COLOR} fontSize="10" textAnchor="middle" transform={`rotate(-90 296 ${P2_TOP + (P2_BOTTOM - P2_TOP) * 0.78})`}>
+                    ↓ brighter
+                  </text>
+                  <text x={296} y={P2_TOP + (P2_BOTTOM - P2_TOP) * 0.18} fill={MUTED_COLOR} fontSize="10" textAnchor="middle" transform={`rotate(-90 296 ${P2_TOP + (P2_BOTTOM - P2_TOP) * 0.18})`}>
+                    fainter ↑
+                  </text>
                   <line x1={MAG_LEFT} y1={P2_BOTTOM} x2={MAG_RIGHT} y2={P2_BOTTOM} stroke={MUTED_COLOR} strokeWidth={1.5} />
                   {P2_REDSHIFT_TICKS.map((z) => (
                     <g key={z}>
@@ -781,9 +799,12 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                       <text x={xIn(z, MAG_LEFT, MAG_RIGHT)} y={P2_BOTTOM + 17} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
                         {z === 0 ? 'today' : `z = ${z}`}
                       </text>
+                      <text x={xIn(z, MAG_LEFT, MAG_RIGHT)} y={P2_BOTTOM + 29} fill={MUTED_COLOR} fontSize="9" textAnchor="middle">
+                        {z === 0 ? 'full size' : `size ${fixed2(1 / (1 + z))}`}
+                      </text>
                     </g>
                   ))}
-                  <text x={(MAG_LEFT + MAG_RIGHT) / 2} y={P2_BOTTOM + 34} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                  <text x={(MAG_LEFT + MAG_RIGHT) / 2} y={P2_BOTTOM + 44} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
                     far past ← time → today
                   </text>
                   <text x={MAG_LEFT + 4} y={yIn(0, MAG_MIN, MAG_MAX) + 14} fill={MUTED_COLOR} fontSize="9">
@@ -800,80 +821,126 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                 what the chart shows. It does not say whether the difference is "large" or "small": the results and tutor come later. */}
             <div style={{ marginTop: '1rem', marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               <p style={paragraph}>
-                <strong>How to read this diagram.</strong> Picture 1 showed how the dark energy’s <em>density</em> changes in the description you
-                chose. This picture shows what that would do to something we can actually measure: how far away things <em>look</em>. It has
-                two small charts of the same effect, one in distance and one in brightness. In both, the dashed grey line is a{' '}
-                <strong>constant dark energy</strong> (the standard model), which is the comparison, and the orange line is the description you
-                chose. Time runs from the far past on the left to today on the right, as in Picture 1.
+                <strong>How to read this diagram.</strong>
               </p>
+              <p style={paragraph}>
+                <strong>What this picture is for.</strong> Picture 1 showed how a changing dark energy would differ from a constant one{' '}
+                <em>inside</em> the universe: how dense it was at different times. But nobody can measure that density directly. What astronomers
+                can measure is <em>how far away things look</em> and <em>how bright supernovae look</em>. So this picture asks: if dark energy
+                changed the way you chose, how differently would distant things look, compared with a constant dark energy?
+              </p>
+              <p style={paragraph}>
+                <strong>How the comparison is made.</strong> Imagine two universes. They have the same amount of matter, and they look the same
+                today. The only difference is the dark energy. In one it is constant (the <strong>grey dashed line</strong>). In the other it
+                changes the way the fit with {fit.name} describes (the <strong>orange line</strong>). We take one galaxy, at the same place in
+                both universes, and ask how far away each universe would put it. The picture shows the difference. It always compares with the
+                grey line, which is why the grey line sits at “no difference”.
+              </p>
+
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
                 <strong>The left chart: distance.</strong> It appears first, at stage 3.
               </p>
               <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>The side line (−4 % to +1 %):</strong> how much <em>different</em>, in percent, the distance to a galaxy would be, compared
-                  with a constant dark energy. 0 % means the same. −2 % means 2 percent <em>nearer</em>. A plus sign would mean farther.
+                  <strong>The side line</strong> says how much <em>different</em> the distance is, in <strong>percent</strong>. 0 % means no
+                  difference. <strong>−2 % means 2 percent <em>nearer</em></strong> than the grey universe would put it. A plus sign would mean
+                  farther. The arrows along the side line and the note “below the line: nearer” are there to remind you.
                 </li>
                 <li>
-                  <strong>The bottom line:</strong> the time the light set out, marked by redshift as in Picture 1: z = 2 (the universe one third of
-                  its present size), z = 1 (half) and today.
+                  <strong>The bottom line</strong> is the time the light set out, from the far past on the left (z = 2, when the universe was one
+                  third of its present size, written “size 0.33”), through z = 1 (half its present size) to <strong>today</strong> on the right. (“z”
+                  is the redshift of Picture 1.)
                 </li>
                 <li>
-                  <strong>The grey dashed line at 0 %:</strong> a constant dark energy. Nothing differs from it, by definition.
+                  <strong>The grey dashed line at 0 %</strong> is the constant dark energy. Nothing differs from it, by definition.
                 </li>
                 <li>
-                  <strong>The orange line and its dot:</strong> your description. The dot is at z = {lookback}, when the universe was{' '}
-                  {fixed2(1 / (1 + lookback))} of its present size, with its value written below it. {lookback === DEFAULT_LOOKBACK ? 'At z = 0.5 this is the galaxy that Prediction 1 asked about. ' : ''}After the run you can move it with “How far back?” below.
+                  <strong>The orange line</strong> is your description. It <strong>reaches 0 % on the right.</strong> That is correct: a galaxy
+                  very close to us looks the same distance in every version of the universe. (This is why the simple formula of Cosmology
+                  Experiment 1 worked for nearby galaxies.) The differences only build up for far-away galaxies, because they come from the{' '}
+                  <em>whole</em> journey of the light.
+                </li>
+                <li>
+                  <strong>The orange dot</strong> marks one time, z = {lookback}, when the universe was {fixed2(1 / (1 + lookback))} of its
+                  present size. Its value is written below it.{' '}
+                  {lookback === DEFAULT_LOOKBACK ? 'At z = 0.5 this is the galaxy that Prediction 1 asked about. ' : ''}After the run you can move it
+                  with “How far back?” below.
                 </li>
               </ul>
+
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                <strong>The right chart: brightness.</strong> It appears next, at stage 4. Supernovae give distances by how dim they look, so a
-                survey sees a change of distance as a change of brightness.
+                <strong>The right chart: brightness.</strong> It appears next, at stage 4. A supernova does not tell us its distance directly. It
+                tells us <strong>how bright it looks</strong>, and the distance is worked out from that. So the same effect can be shown as a
+                difference in brightness.
               </p>
               <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>Magnitude</strong> is the scale astronomers use for brightness, and it runs backwards: a <em>smaller</em> number is
-                  <em> brighter</em>. A difference of 2.5 magnitudes is a factor of 10 in brightness, and a difference of 0.1 magnitudes is
-                  about 10 percent. So here a number below zero means the supernova looks <em>brighter</em> than it would with a constant dark
-                  energy.
+                  <strong>Magnitude</strong> is the scale astronomers use for brightness, and it runs <strong>backwards</strong>, like golf scores,
+                  where a lower number is better: a <em>smaller</em> magnitude is <em>brighter</em>. A difference of 2.5 magnitudes is a factor of
+                  10 in brightness, and 0.1 magnitudes is about 10 percent. So <strong>a number below zero here means the supernova looks
+                  brighter</strong> than it would in the grey universe. The arrows along the side line and the note “below the line: brighter” remind
+                  you.
                 </li>
                 <li>
-                  <strong>“Nearby ones lined up”:</strong> a supernova survey cannot tell by itself how fast the universe is expanding today
-                  (the Hubble constant of Experiment 1). So the comparison lines up the nearby supernovae (at redshift 0.05) so that both agree
-                  there, and then shows how the farther ones differ. The small white dot, “lined up here”, marks that point, which is why the orange line starts at 0 there and stops. This is the part of the effect that a supernova survey can really use.
+                  <strong>“Lined up” at the white dot near the right edge (z = {ANCHOR_REDSHIFT}).</strong> A supernova survey does not know exactly
+                  how bright its supernovae really are. If every supernova were secretly 5 percent brighter, all of them would look 5 percent
+                  brighter, whatever the dark energy. So the survey cannot use the <em>absolute</em> brightness. It uses the <em>differences</em>{' '}
+                  between near and far supernovae. The chart does the same: it makes the two universes agree for the nearby supernovae at z ={' '}
+                  {ANCHOR_REDSHIFT} (the white dot), and shows how the farther ones then differ. That is why the orange line <strong>starts</strong>{' '}
+                  at that dot, and has no value closer to today.
                 </li>
                 <li>
-                  <strong>The orange line and its dot:</strong> the brightness difference for your description, with the dot again at z ={' '}
-                  {lookback}.
+                  <strong>The grey dashed line at 0</strong> is the constant dark energy, as on the left. <strong>The orange line</strong> is your
+                  description. <strong>The orange dot</strong> is at the same time as the dot on the left chart. (The label on the picture shows two
+                  decimals; the worked moment below uses three.)
                 </li>
               </ul>
+
               <p style={paragraph}>
-                <strong>A worked moment, with your numbers.</strong> Suppose a constant dark energy would put a galaxy at redshift {lookback}{' '}
-                exactly 100 units of distance away. With the description you chose ({fit.name}), the dot says it would be at{' '}
-                {fixed2(100 + marked.distanceDifferencePercent)} units: {fixed2(Math.abs(marked.distanceDifferencePercent))} percent{' '}
-                {marked.distanceDifferencePercent < 0 ? 'nearer' : 'farther'}. In brightness, the dot is at {signed2(marked.magnitudeDifference)}{' '}
-                magnitudes, which is about {fixed2(Math.abs(brighterPercent))} percent {brighterPercent > 0 ? 'brighter' : 'fainter'} than the
-                constant case (once the nearby supernovae are lined up).
+                <strong>The two charts together.</strong> They show the <em>same</em> effect, in two forms. A galaxy that looks nearer is also a
+                supernova that looks brighter, because things look brighter when they are closer. That is why the two orange lines have a similar
+                shape.
               </p>
+
+              <p style={paragraph}>
+                <strong>A worked moment, with your numbers.</strong> Suppose the grey universe puts a galaxy at redshift {lookback} exactly{' '}
+                <strong>100 units</strong> away. With {fit.name}, the orange universe puts it at{' '}
+                <strong>{fixed2(100 + marked.distanceDifferencePercent)} units</strong>: {fixed2(Math.abs(marked.distanceDifferencePercent))} percent{' '}
+                {marked.distanceDifferencePercent < 0 ? 'nearer' : 'farther'}. In brightness, the magnitude difference is{' '}
+                {f3(marked.magnitudeDifference)}. To turn that into a percentage, multiply it by −0.4, which gives {f3(brightness.exponent)}, and
+                then work out 10 to that power, which gives {f3(brightness.factor)}. So the supernova looks about{' '}
+                <strong>
+                  {fixed2(Math.abs(brightness.percent))} percent {brightness.percent > 0 ? 'brighter' : 'fainter'}
+                </strong>{' '}
+                than in the grey universe, once the nearby ones are lined up.
+              </p>
+
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
-              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>How low the orange line goes, compared with the 0 % line.</strong> The lower it goes, the easier it is for a survey to
-                  notice the difference. A difference that is smaller than the survey’s own measurement uncertainty cannot be seen at all.
+                  <strong>How low the orange line goes.</strong> The lower it dips, the easier it is for a survey to notice the difference. A
+                  difference smaller than the survey’s own measurement uncertainty cannot be seen at all. <strong>This picture does not draw that
+                  uncertainty</strong>, because this experiment does not use the surveys’ own error bars. So it shows the size of the effect, not
+                  whether it could be seen.
                 </li>
                 <li>
-                  <strong>Where the difference is largest.</strong> A survey that gathers many supernovae near that redshift can tell the models
-                  apart best. Compare the position of the lowest point with the picture of dark energy’s density in Picture 1.
+                  <strong>Where the dip is deepest.</strong> A survey that gathers many supernovae near that time can tell the two universes apart
+                  best. Compare its position with Picture 1.
                 </li>
                 <li>
-                  <strong>The difference at the far left.</strong> It is smaller there than in the middle. It is worth asking why a very
-                  different density in the far past matters less for what we see.
+                  <strong>How the line behaves at the far left.</strong> The difference is smaller there than in the middle, even though dark
+                  energy was very different then (Picture 1). The reason is for you to think about. The tutor comes back to it.
                 </li>
                 <li>
-                  <strong>Compare the three collections.</strong> Choose another collection (the predictions will be cleared) and see whether the
-                  difference is larger or smaller.
+                  <strong>Try the other two collections</strong> (the predictions will be cleared) and see whether the dip is deeper or shallower.
                 </li>
               </ul>
+
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                <strong>Two cautions.</strong> The grey and orange universes are given the same amount of matter, which is simpler than what the
+                scientists did (they fitted each separately). And the orange line is the best-fitting curve of a two-number description. It is not
+                known to be what dark energy really does, and at the far left the data barely reach.
+              </p>
             </div>
           </div>
         )}
@@ -956,7 +1023,7 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
               <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
                 <li>
                   <strong>The bars.</strong> Each bar is one published result, and its length is the sigma value written beside it. A longer bar
-                  is a stronger preference for a changing dark energy. The names say which data were combined: “DESI + CMB alone” uses no
+                  is a stronger preference for a changing dark energy. The names say which data were combined (CMB means the cosmic microwave background): “DESI + CMB alone” uses no
                   supernovae at all; the others add the supernova collection named; “DES Y5 recalibrated (Dovekie)” is the Dark Energy Survey’s
                   supernovae after the team improved their calibration in 2025. These are the numbers the scientists reported. They are quoted
                   here, not worked out here.
@@ -970,7 +1037,7 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                   chance that chance alone could make a bump this big.
                 </li>
                 <li>
-  <strong>The dashed box at the bottom</strong> appears last, at stage 6. It is a newer analysis. Its own measurement agrees with a
+  <strong>The dashed box at the bottom</strong> appears last, at stage 6. It mentions the <strong>Lyman-alpha forest</strong>, a pattern of thin dark gaps that gas clouds leave in the light of very distant quasars. It is another map of the early universe, and DESI used it to check the others. The box is a newer analysis. Its own measurement agrees with a
                   constant dark energy, but when the DESI team combined it with the other data they again found a preference for a changing
                   one: 2.7 sigma with the microwave background, and 3.2 sigma when supernovae are added too. The abstract does not say which
                   supernova collection that 3.2 uses, so it is not drawn as a bar next to the others. It is described in words.
