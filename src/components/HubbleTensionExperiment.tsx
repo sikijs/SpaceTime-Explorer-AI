@@ -438,6 +438,25 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
               combines many methods.
             </li>
           </ul>
+          <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+            <strong>Want it explained in plainer words?</strong> These two pages are from NASA and the European Space Agency (ESA). They are
+            written for the public, not for scientists.
+          </p>
+          <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+            <li>
+              <ExternalLink href="https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-constant-and-tension/">
+                NASA: The Hubble Constant and Hubble Tension
+              </ExternalLink>
+              : how Cepheid stars and supernovae are used, step by step, to measure the distance to other galaxies (the distance ladder).
+            </li>
+            <li>
+              <ExternalLink href="https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_reveals_an_almost_perfect_Universe">
+                ESA: Planck reveals an almost perfect Universe
+              </ExternalLink>
+              : the Planck satellite and its map of the cosmic microwave background. This is ESA’s 2013 release, so its Hubble constant
+              (67.15) is an earlier value than the 2018 one used on this page.
+            </li>
+          </ul>
         </div>
 
         <ReferencePanel
