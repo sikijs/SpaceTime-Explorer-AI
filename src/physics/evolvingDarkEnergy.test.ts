@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   anchoredMagnitudeDifference,
+  brightnessPercentChange,
   ANCHOR_REDSHIFT,
   comovingDistanceMpc,
   comovingDistanceRatio,
@@ -181,5 +182,39 @@ describe('the published values (test 12)', () => {
       ['DES Y5', 4.2],
       ['DES Y5 recalibrated (Dovekie)', 3.2],
     ])
+  })
+})
+
+describe('the curve is finite everywhere (added in Step 3)', () => {
+  it('has a finite value at every point of the curve, including today (z = 0)', () => {
+    for (const f of FITS) {
+      for (const point of runEvolvingDarkEnergy(f, 0.5).curve) {
+        expect(Number.isFinite(point.distanceDifferencePercent)).toBe(true)
+        expect(Number.isFinite(point.magnitudeDifference)).toBe(true)
+        expect(Number.isFinite(point.densityRatio)).toBe(true)
+        expect(Number.isFinite(point.equationOfState)).toBe(true)
+      }
+    }
+  })
+
+  it('lines the nearby supernovae up at the anchor, so the value there is 0 and the values beyond it are below 0', () => {
+    for (const f of FITS) {
+      expect(anchoredMagnitudeDifference(ANCHOR_REDSHIFT, f)).toBe(0)
+      for (const z of [0.1, 0.5, 1]) expect(anchoredMagnitudeDifference(z, f)).toBeLessThan(0)
+    }
+  })
+})
+
+describe('magnitudes and brightness (added in Step 3)', () => {
+  it('turns a magnitude difference into a percentage change in brightness', () => {
+    expect(brightnessPercentChange(0)).toBe(0)
+    // 2.5 magnitudes brighter is a factor of 10, which is 900 percent more; 2.5 magnitudes fainter leaves 10 percent
+    expect(brightnessPercentChange(-2.5)).toBeCloseTo(900, 8)
+    expect(brightnessPercentChange(2.5)).toBeCloseTo(-90, 8)
+    expect(brightnessPercentChange(-0.0219)).toBeCloseTo(2.04, 2)
+  })
+
+  it('makes a brighter (more negative) difference a larger percentage', () => {
+    expect(brightnessPercentChange(-0.05)).toBeGreaterThan(brightnessPercentChange(-0.02))
   })
 })

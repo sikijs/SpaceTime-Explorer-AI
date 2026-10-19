@@ -136,9 +136,16 @@ function distanceModulus(redshift: number, omegaMatter: number, w0: number, wa: 
 // constant case. Exactly 0 at the anchor redshift.
 export function anchoredMagnitudeDifference(redshift: number, fit: DarkEnergyFit, anchorRedshift = ANCHOR_REDSHIFT): number {
   requireRedshift(redshift)
+  // At z = 0 both distances are 0 and their logarithm is undefined; the two models agree for nearby objects, so the difference there is 0.
   const difference = (z: number) =>
-    distanceModulus(z, fit.omegaMatter, fit.w0, fit.wa) - distanceModulus(z, fit.omegaMatter, -1, 0)
+    z === 0 ? 0 : distanceModulus(z, fit.omegaMatter, fit.w0, fit.wa) - distanceModulus(z, fit.omegaMatter, -1, 0)
   return difference(redshift) - difference(anchorRedshift)
+}
+
+// A magnitude difference as a percentage change in brightness: 10^(-0.4 x difference) - 1, times 100. Astronomers' magnitude scale is
+// backwards: a smaller number is brighter, so a negative difference is a positive (brighter) percentage. 2.5 magnitudes is a factor of 10.
+export function brightnessPercentChange(magnitudeDifference: number): number {
+  return (10 ** (-0.4 * magnitudeDifference) - 1) * 100
 }
 
 export type SigmaLabel = 'hint' | 'evidence' | 'discovery'

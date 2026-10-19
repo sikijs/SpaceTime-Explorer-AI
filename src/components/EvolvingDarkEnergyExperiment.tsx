@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { FITS, runEvolvingDarkEnergy } from '../physics/evolvingDarkEnergy'
+import { ANCHOR_REDSHIFT, brightnessPercentChange, FITS, PUBLISHED_SIGMAS, runEvolvingDarkEnergy } from '../physics/evolvingDarkEnergy'
 
 // Frontier and Beyond, Experiment 2 (docs/experiments/frontier-and-beyond/02-does-dark-energy-change.md).
-// Step 2 builds the status label, the introduction (with its section on supernovae and its "Want to know more?" links), the choice of
-// supernova collection and Picture 1 with its guide. The predictions, Run, Pictures 2 and 3, the results, the "Words and formulas" panel and
-// the tutor come in later steps. All wording here is draft wording for the owner's review (CLAUDE.md §28.1), written to the standard of §29.
+// Step 2 built the status label, the introduction (with its section on supernovae and its "Want to know more?" links), the choice of
+// supernova collection and Picture 1 with its guide (wording approved by the owner on 2026-10-19). Step 3 adds the two predictions, Run,
+// the staged run and Pictures 2 and 3 with their guides (draft wording for the owner's review, CLAUDE.md §28.1, written to the standard of
+// §29). The "How far back?" control, the results, the "Words and formulas" panel and the tutor come in later steps.
 // The interface only displays numbers from src/physics/evolvingDarkEnergy.ts (CLAUDE.md §9). The only calculation here is where a point is drawn.
 
 interface EvolvingDarkEnergyExperimentProps {
@@ -26,6 +27,7 @@ const REDSHIFT_TICKS = [2, 1.5, 1, 0.5, 0]
 const RATIO_TICKS = [0.6, 0.8, 1, 1.2, 1.4]
 
 const FIT_COLOR = '#fb923c' // orange: the chosen fit
+const OTHER_COLOR = '#38bdf8' // sky blue: the other published results
 const CONSTANT_COLOR = '#cbd5e1' // light grey: a constant dark energy (the standard model)
 const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
@@ -58,8 +60,64 @@ const svgStyle = {
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
 
-export function EvolvingDarkEnergyExperiment(_props: EvolvingDarkEnergyExperimentProps) {
+// The run's stages, in the order the learner sees them (the result does not depend on playback speed, CLAUDE.md §11).
+const STAGE_MS = 2600
+const STAGES = [
+  'Dark energy in the standard model: constant (the grey line in Picture 1)',
+  'The fit you chose: how its strength changes (the orange line in Picture 1)',
+  'What that does to distances (Picture 2, left)',
+  'The same thing in brightness (Picture 2, right)',
+  'How strong is the hint? (Picture 3)',
+  'Newer results (Picture 3, last row)',
+]
+const LAST_STAGE = STAGES.length
+
+type DistanceChoice = 'under05' | 'between05and2' | 'between2and5' | 'over5'
+const DISTANCE_CHOICES: Array<{ value: DistanceChoice; label: string }> = [
+  { value: 'under05', label: 'Less than 0.5 percent' },
+  { value: 'between05and2', label: 'Between 0.5 and 2 percent' },
+  { value: 'between2and5', label: 'Between 2 and 5 percent' },
+  { value: 'over5', label: 'More than 5 percent' },
+]
+
+type RecalibrationChoice = 'weaker' | 'same' | 'stronger'
+const RECALIBRATION_CHOICES: Array<{ value: RecalibrationChoice; label: string }> = [
+  { value: 'weaker', label: 'Weaker' },
+  { value: 'same', label: 'About the same' },
+  { value: 'stronger', label: 'Stronger' },
+]
+
+// Layout of Picture 2: two small charts side by side, both with time running from the far past (left) to today (right).
+const P2_TOP = 74
+const P2_BOTTOM = 236
+const DIST_LEFT = 62
+const DIST_RIGHT = 262
+const MAG_LEFT = 346
+const MAG_RIGHT = 536
+const DIST_MIN = -4
+const DIST_MAX = 1
+const MAG_MIN = -0.07
+const MAG_MAX = 0.01
+const DIST_TICKS = [-4, -3, -2, -1, 0, 1]
+const MAG_TICKS = [-0.06, -0.04, -0.02, 0]
+const P2_REDSHIFT_TICKS = [2, 1, 0]
+const MARKED_REDSHIFT = 0.5 // the "How far back?" control (a later step) will move this; for now it is the redshift Prediction 1 names
+
+const xIn = (redshift: number, left: number, right: number) => left + ((REDSHIFT_MAX - redshift) / REDSHIFT_MAX) * (right - left)
+const yIn = (value: number, min: number, max: number) => P2_BOTTOM - ((value - min) / (max - min)) * (P2_BOTTOM - P2_TOP)
+
+// Layout of Picture 3: one bar for each published result, longest sigma on the right.
+const P3_LEFT = 40
+const P3_RIGHT = 520
+const P3_SIGMA_MAX = 6
+const xSigma = (sigma: number) => P3_LEFT + (sigma / P3_SIGMA_MAX) * (P3_RIGHT - P3_LEFT)
+
+export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyExperimentProps) {
   const [fitName, setFitName] = useState(FITS[0].name)
+  const [distancePrediction, setDistancePrediction] = useState<DistanceChoice | null>(null)
+  const [recalibrationPrediction, setRecalibrationPrediction] = useState<RecalibrationChoice | null>(null)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
   const fit = FITS.find((f) => f.name === fitName)!
   // The curve does not depend on the redshift argument; 0.5 is only the default "How far back?" value of a later step.
   const result = runEvolvingDarkEnergy(fit, 0.5)
@@ -67,6 +125,49 @@ export function EvolvingDarkEnergyExperiment(_props: EvolvingDarkEnergyExperimen
   const atHalfSize = at(1)
   const atTwoThirds = at(0.5)
   const path = result.curve.map((r) => `${xOf(r.redshift).toFixed(1)},${yOf(r.densityRatio).toFixed(1)}`).join(' ')
+  const bothPredicted = distancePrediction !== null && recalibrationPrediction !== null
+  const marked = result.curve.find((r) => r.redshift === MARKED_REDSHIFT)!
+  const brighterPercent = brightnessPercentChange(marked.magnitudeDifference)
+
+  // Presentation only: advances one stage at a time. The result does not depend on this timer.
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) {
+        setStage(stage + 1)
+      } else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+
+  const startOver = () => {
+    setDistancePrediction(null)
+    setRecalibrationPrediction(null)
+    setStatus('idle')
+    setStage(0)
+  }
+  const choose = (name: string) => {
+    setFitName(name)
+    startOver() // Prediction 1 names the collection, so changing it clears both predictions
+  }
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
+
+  const distPath = result.curve.map((r) => `${xIn(r.redshift, DIST_LEFT, DIST_RIGHT).toFixed(1)},${yIn(r.distanceDifferencePercent, DIST_MIN, DIST_MAX).toFixed(1)}`).join(' ')
+  // The brightness chart starts at the anchor (z = 0.05), where the nearby supernovae are lined up and the difference is 0 by construction;
+  // the samples at 0 would only show an artefact of that choice.
+  const magPoints = [{ redshift: ANCHOR_REDSHIFT, magnitudeDifference: 0 }, ...result.curve.filter((r) => r.redshift > ANCHOR_REDSHIFT)]
+  const magPath = magPoints.map((r) => `${xIn(r.redshift, MAG_LEFT, MAG_RIGHT).toFixed(1)},${yIn(r.magnitudeDifference, MAG_MIN, MAG_MAX).toFixed(1)}`).join(' ')
+  const sigmaRows = PUBLISHED_SIGMAS
+  const P3_ROW = 46
+  const P3_FIRST_ROW = 74
+  const p3AxisY = P3_FIRST_ROW + sigmaRows.length * P3_ROW + 6
+  const p3Height = p3AxisY + 100
   const strongerOrWeaker = (ratio: number) => (ratio > 1 ? 'stronger' : 'weaker')
   const percentFromToday = (ratio: number) => Math.abs(Math.round((ratio - 1) * 100))
 
@@ -278,7 +379,8 @@ export function EvolvingDarkEnergyExperiment(_props: EvolvingDarkEnergyExperimen
               <button
                 key={f.name}
                 type="button"
-                onClick={() => setFitName(f.name)}
+                onClick={() => choose(f.name)}
+                disabled={status === 'running'}
                 className={`toggle-button${f.name === fitName ? ' is-selected' : ''}`}
                 style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               >
@@ -291,6 +393,90 @@ export function EvolvingDarkEnergyExperiment(_props: EvolvingDarkEnergyExperimen
             {fit.omegaMatter}. Source: {fit.source}, Table 5.
           </p>
         </div>
+
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says
+            which answer is right. */}
+        {(
+          [
+            {
+              title: 'Prediction 1: how different would the distance look?',
+              text: (
+                <>
+                  Suppose dark energy changed with time in the way the fit with <strong>{fit.name}</strong> describes. A galaxy whose light was sent
+                  out when the universe was about two thirds of its present size (redshift 0.5) would be at a certain distance if dark energy
+                  were constant. How much different would its distance be if dark energy changed this way?
+                </>
+              ),
+              choices: DISTANCE_CHOICES,
+              value: distancePrediction,
+              set: (v: DistanceChoice) => setDistancePrediction(v),
+            },
+            {
+              title: 'Prediction 2: what did the recalibration do?',
+              text: (
+                <>
+                  The Dark Energy Survey’s supernova collection (DES Y5) gave a 4.2 sigma preference for changing dark energy when combined with
+                  DESI and the microwave background. In 2025 the team improved how they calibrated the brightness of their supernovae (how they
+                  checked that a given brightness really means a given distance). After that, did the preference become <strong>weaker</strong>,{' '}
+                  stay <strong>about the same</strong>, or become <strong>stronger</strong>?
+                </>
+              ),
+              choices: RECALIBRATION_CHOICES,
+              value: recalibrationPrediction,
+              set: (v: RecalibrationChoice) => setRecalibrationPrediction(v),
+            },
+          ] as const
+        ).map((question) => (
+          <div key={question.title} style={{ marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              {question.text} You are not graded, and a guess is fine.
+            </p>
+            <div>
+              {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                <button
+                  key={choice.value}
+                  type="button"
+                  onClick={() => (question.set as (v: never) => void)(choice.value as never)}
+                  disabled={status !== 'idle'}
+                  className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+              {question.value !== null
+                ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                : 'Choose an option to continue'}
+            </p>
+          </div>
+        ))}
+
+        <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || status !== 'idle'} style={{ padding: '0.6rem 1.5rem' }}>
+          {status === 'running' ? 'Running...' : 'Run'}
+        </button>
+        {status === 'complete' && (
+          <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+            Start over
+          </button>
+        )}
+        {!bothPredicted && status === 'idle' && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+        )}
+
+        {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+          {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>More pictures appear below, one stage at a time, after you press Run.</span>}
+          {status !== 'idle' && (
+            <>
+              <strong>{status === 'complete' ? 'Run complete' : `Stage ${stage} of ${LAST_STAGE}`}</strong>
+              {status === 'running' && <>: {STAGES[stage - 1]}</>}
+              {status === 'complete' && <span style={{ color: 'var(--text-muted)' }}> (all {LAST_STAGE} stages shown). Your predictions are recorded and not marked here.</span>}
+            </>
+          )}
+        </p>
 
         {/* Picture 1: how strong dark energy is compared with today. It does not depend on a run. */}
         <div style={{ marginBottom: '1rem' }}>
@@ -427,6 +613,317 @@ export function EvolvingDarkEnergyExperiment(_props: EvolvingDarkEnergyExperimen
             </li>
           </ul>
         </div>
+
+        {/* Picture 2: what the change does to distances and brightness. Appears when Run is pressed; the left chart at stage 3, the right at stage 4. */}
+        {status !== 'idle' && (
+          <div style={{ marginTop: '2rem' }}>
+            <svg
+              width={VIEW_WIDTH}
+              height={320}
+              viewBox={`0 0 ${VIEW_WIDTH} 320`}
+              style={svgStyle}
+              role="img"
+              aria-label={`How much nearer or farther a galaxy would look, and how much brighter or fainter a supernova, if dark energy changed as in the fit with ${fit.name}, compared with a constant dark energy`}
+            >
+              <text x={PLOT_LEFT - 24} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+                Picture 2: how much would a changing dark energy change what we see?
+              </text>
+
+              {stage >= 3 && (
+                <g>
+                  <text x={DIST_LEFT} y={48} fill={TEXT_COLOR} fontSize="12" fontWeight="bold">
+                    Distance
+                  </text>
+                  <text x={DIST_LEFT} y={62} fill={MUTED_COLOR} fontSize="10">
+                    percent different from a constant dark energy
+                  </text>
+                  {DIST_TICKS.map((t) => (
+                    <g key={t}>
+                      <line x1={DIST_LEFT} y1={yIn(t, DIST_MIN, DIST_MAX)} x2={DIST_RIGHT} y2={yIn(t, DIST_MIN, DIST_MAX)} stroke={MUTED_COLOR} strokeOpacity={0.25} />
+                      <text x={DIST_LEFT - 6} y={yIn(t, DIST_MIN, DIST_MAX) + 4} fill={MUTED_COLOR} fontSize="10" textAnchor="end">
+                        {t > 0 ? `+${t}` : t < 0 ? `−${Math.abs(t)}` : '0'} %
+                      </text>
+                    </g>
+                  ))}
+                  <line x1={DIST_LEFT} y1={yIn(0, DIST_MIN, DIST_MAX)} x2={DIST_RIGHT} y2={yIn(0, DIST_MIN, DIST_MAX)} stroke={CONSTANT_COLOR} strokeWidth={2} strokeDasharray="6 4" />
+                  <text x={DIST_LEFT + 4} y={yIn(0, DIST_MIN, DIST_MAX) - 5} fill={CONSTANT_COLOR} fontSize="10">
+                    constant dark energy: 0 %
+                  </text>
+                  <polyline points={distPath} fill="none" stroke={FIT_COLOR} strokeWidth={3} />
+                  <circle cx={xIn(MARKED_REDSHIFT, DIST_LEFT, DIST_RIGHT)} cy={yIn(marked.distanceDifferencePercent, DIST_MIN, DIST_MAX)} r={5} fill={FIT_COLOR} stroke={TEXT_COLOR} />
+                  <text x={xIn(MARKED_REDSHIFT, DIST_LEFT, DIST_RIGHT)} y={yIn(marked.distanceDifferencePercent, DIST_MIN, DIST_MAX) + 18} fill={FIT_COLOR} fontSize="11" textAnchor="middle">
+                    z = {MARKED_REDSHIFT}: {signed2(marked.distanceDifferencePercent)} %
+                  </text>
+                  <line x1={DIST_LEFT} y1={P2_BOTTOM} x2={DIST_RIGHT} y2={P2_BOTTOM} stroke={MUTED_COLOR} strokeWidth={1.5} />
+                  {P2_REDSHIFT_TICKS.map((z) => (
+                    <g key={z}>
+                      <line x1={xIn(z, DIST_LEFT, DIST_RIGHT)} y1={P2_BOTTOM - 4} x2={xIn(z, DIST_LEFT, DIST_RIGHT)} y2={P2_BOTTOM + 4} stroke={MUTED_COLOR} />
+                      <text x={xIn(z, DIST_LEFT, DIST_RIGHT)} y={P2_BOTTOM + 17} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                        {z === 0 ? 'today' : `z = ${z}`}
+                      </text>
+                    </g>
+                  ))}
+                  <text x={(DIST_LEFT + DIST_RIGHT) / 2} y={P2_BOTTOM + 34} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                    far past ← time → today
+                  </text>
+                  <text x={DIST_LEFT + 4} y={yIn(0, DIST_MIN, DIST_MAX) + 14} fill={MUTED_COLOR} fontSize="9">
+                    ↓ below the line: nearer
+                  </text>
+                </g>
+              )}
+
+              {stage >= 4 && (
+                <g>
+                  <text x={MAG_LEFT} y={48} fill={TEXT_COLOR} fontSize="12" fontWeight="bold">
+                    Brightness of a supernova
+                  </text>
+                  <text x={MAG_LEFT} y={62} fill={MUTED_COLOR} fontSize="10">
+                    magnitude difference, nearby lined up
+                  </text>
+                  {MAG_TICKS.map((t) => (
+                    <g key={t}>
+                      <line x1={MAG_LEFT} y1={yIn(t, MAG_MIN, MAG_MAX)} x2={MAG_RIGHT} y2={yIn(t, MAG_MIN, MAG_MAX)} stroke={MUTED_COLOR} strokeOpacity={0.25} />
+                      <text x={MAG_LEFT - 6} y={yIn(t, MAG_MIN, MAG_MAX) + 4} fill={MUTED_COLOR} fontSize="10" textAnchor="end">
+                        {t === 0 ? '0' : `−${Math.abs(t).toFixed(2)}`}
+                      </text>
+                    </g>
+                  ))}
+                  <line x1={MAG_LEFT} y1={yIn(0, MAG_MIN, MAG_MAX)} x2={MAG_RIGHT} y2={yIn(0, MAG_MIN, MAG_MAX)} stroke={CONSTANT_COLOR} strokeWidth={2} strokeDasharray="6 4" />
+                  <text x={MAG_LEFT + 4} y={yIn(0, MAG_MIN, MAG_MAX) - 5} fill={CONSTANT_COLOR} fontSize="10">
+                    constant dark energy: 0
+                  </text>
+                  <polyline points={magPath} fill="none" stroke={FIT_COLOR} strokeWidth={3} />
+                  <circle cx={xIn(ANCHOR_REDSHIFT, MAG_LEFT, MAG_RIGHT)} cy={yIn(0, MAG_MIN, MAG_MAX)} r={3} fill={TEXT_COLOR} />
+                  <text x={MAG_RIGHT} y={yIn(0, MAG_MIN, MAG_MAX) - 22} fill={MUTED_COLOR} fontSize="9" textAnchor="end">
+                    lined up here (z = {ANCHOR_REDSHIFT})
+                  </text>
+                  <circle cx={xIn(MARKED_REDSHIFT, MAG_LEFT, MAG_RIGHT)} cy={yIn(marked.magnitudeDifference, MAG_MIN, MAG_MAX)} r={5} fill={FIT_COLOR} stroke={TEXT_COLOR} />
+                  <text x={xIn(MARKED_REDSHIFT, MAG_LEFT, MAG_RIGHT)} y={yIn(marked.magnitudeDifference, MAG_MIN, MAG_MAX) + 18} fill={FIT_COLOR} fontSize="11" textAnchor="middle">
+                    z = {MARKED_REDSHIFT}: {signed2(marked.magnitudeDifference)}
+                  </text>
+                  <line x1={MAG_LEFT} y1={P2_BOTTOM} x2={MAG_RIGHT} y2={P2_BOTTOM} stroke={MUTED_COLOR} strokeWidth={1.5} />
+                  {P2_REDSHIFT_TICKS.map((z) => (
+                    <g key={z}>
+                      <line x1={xIn(z, MAG_LEFT, MAG_RIGHT)} y1={P2_BOTTOM - 4} x2={xIn(z, MAG_LEFT, MAG_RIGHT)} y2={P2_BOTTOM + 4} stroke={MUTED_COLOR} />
+                      <text x={xIn(z, MAG_LEFT, MAG_RIGHT)} y={P2_BOTTOM + 17} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                        {z === 0 ? 'today' : `z = ${z}`}
+                      </text>
+                    </g>
+                  ))}
+                  <text x={(MAG_LEFT + MAG_RIGHT) / 2} y={P2_BOTTOM + 34} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                    far past ← time → today
+                  </text>
+                  <text x={MAG_LEFT + 4} y={yIn(0, MAG_MIN, MAG_MAX) + 14} fill={MUTED_COLOR} fontSize="9">
+                    ↓ below the line: brighter
+                  </text>
+                </g>
+              )}
+              <text x={PLOT_LEFT - 24} y={296} fill={MUTED_COLOR} fontSize="10">
+                orange: the fit with {fit.name}; dashed grey: a constant dark energy with the same amount of matter
+              </text>
+            </svg>
+
+            {/* Picture 2's guide: draft wording (CLAUDE.md §14 and §29) for the owner's review (§28.1). It is shown after the run, so it can say
+                what the chart shows. It does not say whether the difference is "large" or "small": the results and tutor come later. */}
+            <div style={{ marginTop: '1rem', marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={paragraph}>
+                <strong>How to read this diagram.</strong> Picture 1 showed how the dark energy’s <em>density</em> changes in the description you
+                chose. This picture shows what that would do to something we can actually measure: how far away things <em>look</em>. It has
+                two small charts of the same effect, one in distance and one in brightness. In both, the dashed grey line is a{' '}
+                <strong>constant dark energy</strong> (the standard model), which is the comparison, and the orange line is the description you
+                chose. Time runs from the far past on the left to today on the right, as in Picture 1.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>The left chart: distance.</strong> It appears first, at stage 3.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The side line (−4 % to +1 %):</strong> how much <em>different</em>, in percent, the distance to a galaxy would be, compared
+                  with a constant dark energy. 0 % means the same. −2 % means 2 percent <em>nearer</em>. A plus sign would mean farther.
+                </li>
+                <li>
+                  <strong>The bottom line:</strong> the time the light set out, marked by redshift as in Picture 1: z = 2 (the universe one third of
+                  its present size), z = 1 (half) and today.
+                </li>
+                <li>
+                  <strong>The grey dashed line at 0 %:</strong> a constant dark energy. Nothing differs from it, by definition.
+                </li>
+                <li>
+                  <strong>The orange line and its dot:</strong> your description. The dot is at z = {MARKED_REDSHIFT}, when the universe was two
+                  thirds of its present size, with its value written below it. This is the galaxy that Prediction 1 asked about.
+                </li>
+              </ul>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>The right chart: brightness.</strong> It appears next, at stage 4. Supernovae give distances by how dim they look, so a
+                survey sees a change of distance as a change of brightness.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Magnitude</strong> is the scale astronomers use for brightness, and it runs backwards: a <em>smaller</em> number is
+                  <em> brighter</em>. A difference of 2.5 magnitudes is a factor of 10 in brightness, and a difference of 0.1 magnitudes is
+                  about 10 percent. So here a number below zero means the supernova looks <em>brighter</em> than it would with a constant dark
+                  energy.
+                </li>
+                <li>
+                  <strong>“Nearby ones lined up”:</strong> a supernova survey cannot tell by itself how fast the universe is expanding today
+                  (the Hubble constant of Experiment 1). So the comparison lines up the nearby supernovae (at redshift 0.05) so that both agree
+                  there, and then shows how the farther ones differ. The small white dot, “lined up here”, marks that point, which is why the orange line starts at 0 there and stops. This is the part of the effect that a supernova survey can really use.
+                </li>
+                <li>
+                  <strong>The orange line and its dot:</strong> the brightness difference for your description, with the dot again at z ={' '}
+                  {MARKED_REDSHIFT}.
+                </li>
+              </ul>
+              <p style={paragraph}>
+                <strong>A worked moment, with your numbers.</strong> Suppose a constant dark energy would put a galaxy at redshift {MARKED_REDSHIFT}{' '}
+                exactly 100 units of distance away. With the description you chose ({fit.name}), the dot says it would be at{' '}
+                {fixed2(100 + marked.distanceDifferencePercent)} units: {fixed2(Math.abs(marked.distanceDifferencePercent))} percent{' '}
+                {marked.distanceDifferencePercent < 0 ? 'nearer' : 'farther'}. In brightness, the dot is at {signed2(marked.magnitudeDifference)}{' '}
+                magnitudes, which is about {fixed2(Math.abs(brighterPercent))} percent {brighterPercent > 0 ? 'brighter' : 'fainter'} than the
+                constant case (once the nearby supernovae are lined up).
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>How low the orange line goes, compared with the 0 % line.</strong> The lower it goes, the easier it is for a survey to
+                  notice the difference. A difference that is smaller than the survey’s own measurement uncertainty cannot be seen at all.
+                </li>
+                <li>
+                  <strong>Where the difference is largest.</strong> A survey that gathers many supernovae near that redshift can tell the models
+                  apart best. Compare the position of the lowest point with the picture of dark energy’s density in Picture 1.
+                </li>
+                <li>
+                  <strong>The difference at the far left.</strong> It is smaller there than in the middle. It is worth asking why a very
+                  different density in the far past matters less for what we see.
+                </li>
+                <li>
+                  <strong>Compare the three collections.</strong> Choose another collection (the predictions will be cleared) and see whether the
+                  difference is larger or smaller.
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Picture 3: how strong is the claimed hint. Appears at stage 5; the last row at stage 6. */}
+        {status !== 'idle' && stage >= 5 && (
+          <div style={{ marginTop: '2rem' }}>
+            <svg
+              width={VIEW_WIDTH}
+              height={p3Height}
+              viewBox={`0 0 ${VIEW_WIDTH} ${p3Height}`}
+              style={svgStyle}
+              role="img"
+              aria-label="The published sigma values for the preference for a changing dark energy, with lines at 3 and 5 sigma"
+            >
+              <text x={P3_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+                Picture 3: how strong is the claimed hint?
+              </text>
+              {[3, 5].map((mark) => (
+                <g key={mark}>
+                  <line x1={xSigma(mark)} y1={50} x2={xSigma(mark)} y2={p3AxisY} stroke={CONSTANT_COLOR} strokeDasharray="5 4" />
+                  <text x={xSigma(mark)} y={44} fill={CONSTANT_COLOR} fontSize="10" textAnchor="middle">
+                    {mark === 3 ? '3: often called evidence' : '5: the usual bar for a discovery'}
+                  </text>
+                </g>
+              ))}
+              {sigmaRows.map((row, i) => {
+                const y = P3_FIRST_ROW + i * P3_ROW
+                const chosen = row.name === fit.name
+                return (
+                  <g key={row.name}>
+                    <text x={P3_LEFT} y={y - 6} fill={chosen ? FIT_COLOR : TEXT_COLOR} fontSize="12" fontWeight={chosen ? 'bold' : 'normal'}>
+                      {row.name}
+                      {chosen ? ' (your choice)' : ''}
+                    </text>
+                    <rect x={P3_LEFT} y={y} width={xSigma(row.sigma) - P3_LEFT} height={18} fill={chosen ? FIT_COLOR : OTHER_COLOR} opacity={chosen ? 1 : 0.8} />
+                    <text x={xSigma(row.sigma) + 6} y={y + 13} fill={TEXT_COLOR} fontSize="12" stroke="#0b1020" strokeWidth={3} paintOrder="stroke">
+                      {row.sigma.toFixed(1)} sigma
+                    </text>
+                  </g>
+                )
+              })}
+              <line x1={P3_LEFT} y1={p3AxisY} x2={P3_RIGHT} y2={p3AxisY} stroke={MUTED_COLOR} strokeWidth={1.5} />
+              {[0, 1, 2, 3, 4, 5, 6].map((t) => (
+                <g key={t}>
+                  <line x1={xSigma(t)} y1={p3AxisY - 4} x2={xSigma(t)} y2={p3AxisY + 4} stroke={MUTED_COLOR} />
+                  <text x={xSigma(t)} y={p3AxisY + 18} fill={MUTED_COLOR} fontSize="11" textAnchor="middle">
+                    {t}
+                  </text>
+                </g>
+              ))}
+              <text x={(P3_LEFT + P3_RIGHT) / 2} y={p3AxisY + 36} fill={TEXT_COLOR} fontSize="12" textAnchor="middle">
+                Published preference for a changing dark energy (sigma)
+              </text>
+              {stage >= 6 && (
+                <g>
+                  <rect x={P3_LEFT} y={p3AxisY + 52} width={P3_RIGHT - P3_LEFT} height={34} fill="none" stroke={MUTED_COLOR} strokeDasharray="4 3" />
+                  <text x={P3_LEFT + 8} y={p3AxisY + 66} fill={TEXT_COLOR} fontSize="11">
+                    July 2026, DESI’s Lyman-alpha analysis: its result agrees with the standard model
+                  </text>
+                  <text x={P3_LEFT + 8} y={p3AxisY + 80} fill={MUTED_COLOR} fontSize="11">
+                    (a constant dark energy). No sigma value is quoted for it, so it has no bar.
+                  </text>
+                </g>
+              )}
+            </svg>
+
+            {/* Picture 3's guide: draft wording (CLAUDE.md §14 and §29) for the owner's review (§28.1). */}
+            <div style={{ marginTop: '1rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={paragraph}>
+                <strong>How to read this diagram.</strong> The first two pictures were about what a changing dark energy would mean. This picture
+                is about the evidence: how strongly do the published results prefer a changing dark energy over a constant one? It uses{' '}
+                <strong>sigma</strong>, from Experiment 1 of this group: how many “give or takes” a result is away from what a constant dark
+                energy predicts. The bigger the number, the harder it is to put the preference down to chance.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What is drawn:</p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The bars.</strong> Each bar is one published result, and its length is the sigma value written beside it. A longer bar
+                  is a stronger preference for a changing dark energy. The names say which data were combined: “DESI + CMB alone” uses no
+                  supernovae at all; the others add the supernova collection named; “DES Y5 recalibrated (Dovekie)” is the Dark Energy Survey’s
+                  supernovae after the team improved their calibration in 2025. These are the numbers the scientists reported. They are quoted
+                  here, not worked out here.
+                </li>
+                <li>
+                  <strong>The orange bar</strong> is the collection you chose. The sky-blue bars are the others.
+                </li>
+                <li>
+                  <strong>The line at 3,</strong> “often called evidence”, and <strong>the line at 5,</strong> “the usual bar for a discovery”.
+                  These are rules of thumb that some sciences use, not laws. In particle physics, 5 sigma means about a 1-in-3.5-million
+                  chance that chance alone could make a bump this big.
+                </li>
+                <li>
+                  <strong>The dashed box at the bottom</strong> appears last, at stage 6. It is a newer result with no sigma value, so it cannot
+                  be drawn as a bar. It is described in words.
+                </li>
+              </ul>
+              <p style={paragraph}>
+                <strong>A worked moment, with your numbers.</strong> The bar for {fit.name} is {fit.sigma.toFixed(1)} sigma long, so it lies{' '}
+                {fit.sigma < 3 ? 'short of the line at 3' : fit.sigma < 5 ? 'between the line at 3 and the line at 5' : 'beyond the line at 5'}.
+                That means: if dark energy were really constant, a result this far from it would be an unusual fluke, but not as unusual as the
+                line at 5 asks for.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Whether any bar reaches the line at 5.</strong> If one did, it would be called a discovery by the usual rule.
+                </li>
+                <li>
+                  <strong>Whether the bars agree.</strong> The same galaxies and the same microwave background went into every bar. Only the
+                  supernovae changed. If the preference were a fixed fact about the universe, you might expect every bar to be about the same
+                  length.
+                </li>
+                <li>
+                  <strong>The two DES bars.</strong> They use the same supernovae. They differ only in how the brightness was calibrated.
+                </li>
+                <li>
+                  <strong>The last box.</strong> A newer result does not have to point the same way as an older one.
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
