@@ -316,4 +316,9 @@ Defaults are what I will use unless you say otherwise.
 
 ## Implementation Notes
 
-None yet. Nothing is built. After approval, the work follows `CLAUDE.md` §6 and §21 one step at a time, starting with the physics model and its tests (the real `tsc` check is `tsc --noEmit -p tsconfig.app.json`).
+The work follows `CLAUDE.md` §6 and §21 one step at a time (the real `tsc` check is `tsc --noEmit -p tsconfig.app.json`).
+
+**Built so far (2026-10-19):**
+
+- **Step 1, physics model and tests:** `src/physics/lumpiness.ts` and `lumpiness.test.ts` (23 tests covering the 12 required tests, checked by thirteen deliberate breaks of the module, each of which made at least one test fail). The full suite passed (960 tests); `tsc --noEmit -p tsconfig.app.json` shows no errors in the new files (the project's 26 errors in other files are unchanged). The module reuses `combinedUncertainty` from `hubbleTension.ts`. **Differences from this specification, for the owner's approval:** (1) `tensionSigma(a, b)` is symmetric in its two arguments (the lower value uses its upward uncertainty and the higher its downward one) instead of taking `(late, early)`, so the order cannot matter; (2) `shift(from, to)` is signed (`to − from`, so KiDS-1000 to KiDS-Legacy is +0.056); (3) the module also exports `curveFor` (the equal-S₈ curve at Ωm 0.20 to 0.40 in steps of 0.01, 21 points), `LATE_MEASUREMENTS`, `EARLY_MEASUREMENT`, `PLANCK_OWN` (Planck's own σ₈ and Ωm from its abstract) and `CURVE_OMEGA_MIN` and `_MAX`, and its result carries the curves, the other tensions, the KiDS shift and its direction, and Planck's own point, so the interface reads every number from the module (§9); (4) the Planck entry is named "Planck Legacy" with the year 2018 (the Planck paper's year, not an arXiv year of the S₈ value, which the KiDS-Legacy text quotes); (5) `s8` accepts Ωm up to and including 1, and throws for 0 or below and for more than 1. Not checked: anything in the interface (not built).
+- **Step 1 approved by the owner on 2026-10-19:** "approved" (the five differences listed under Step 1).
