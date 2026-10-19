@@ -74,9 +74,10 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'The standard model', meaning: 'the model of the universe built in the Cosmology experiments, with ordinary matter, dark matter and dark energy.' },
   { term: 'The microwave background', meaning: 'the faint afterglow of the Big Bang, which reaches us from every direction in the sky (Cosmology Experiment 3).' },
   { term: 'Planck Legacy', meaning: `the European Space Agency’s Planck satellite mapped the microwave background, and “Legacy” means its final, most refined results (2018). From that map and the standard model, scientists predict the lumpiness today: S₈ = ${EARLY_MEASUREMENT.value} ± ${EARLY_MEASUREMENT.up}. It is a prediction, not a lensing measurement.` },
-  { term: 'KiDS (the Kilo-Degree Survey)', meaning: 'a survey run with a telescope of the European Southern Observatory. It photographs a large patch of sky in nine colours to measure the shapes of galaxies for weak lensing. KiDS-1000 is the team’s first analysis (2020) and KiDS-Legacy its analysis of the complete survey (2025): the same survey, analysed twice.' },
+  { term: 'KiDS (the Kilo-Degree Survey)', meaning: 'a survey run with a telescope of the European Southern Observatory. It photographs a large patch of sky in nine colours to measure the shapes of galaxies for weak lensing. KiDS-1000 is the team’s first analysis (2020) and KiDS-Legacy its analysis of the complete survey (2025): the same survey, and KiDS-Legacy uses its complete data, with more sky and improved calibration and image processing.' },
   { term: 'Square degree', meaning: 'a patch of sky about five times the area of the full Moon. KiDS-Legacy covers 1,347 of them, about 3 percent of the whole sky.' },
   { term: 'DES (the Dark Energy Survey)', meaning: 'a different survey, with a different telescope, camera and team. Its Year 6 result (2026) uses six years of observing and about 140 million galaxies. It is shown twice, NLA and TATT: two ways of treating one nuisance effect in the analysis.' },
+  { term: 'arXiv', meaning: 'the free website where scientists post their papers. Links to “arxiv.org” on this page lead to the original papers, which use technical words.' },
   { term: 'Calibration', meaning: 'checking a measuring tool against something whose true value is known, as you might check a kitchen scale with a 1-kilogram weight. For lensing, a hard part is calibrating how far away the lensed galaxies are.' },
   { term: 'Best value and error bar', meaning: 'every measurement is a best value plus a “give or take”. The error bar draws the “give or take” as a line either side of the dot. The surveys publish different upward and downward “give or takes”, so a bar can be longer on one side.' },
   { term: 'Gap and combined give-or-take', meaning: 'the gap is the difference between two best values. The combined give-or-take is the doubt about the gap, worked out from the two uncertainties, using for each the one on the side facing the other value.' },
@@ -819,11 +820,11 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
               <li>
                 <strong>S₈</strong> (said “S-eight”): one number that combines the two, <strong>S₈ = σ₈ × √(Ωm ÷ 0.3)</strong>. Lensing is
                 sensitive mostly to this combination, which is why scientists quote it. It is a plain number with no units. Here is an example with the
-                microwave background’s own published ingredients: the Planck satellite found Ωm = {PLANCK_OWN.omegaMatter} and σ₈ ={' '}
+                microwave background’s own published ingredients: the Planck satellite (described below) found Ωm = {PLANCK_OWN.omegaMatter} and σ₈ ={' '}
                 {PLANCK_OWN.sigma8}. So Ωm ÷ 0.3 = {(PLANCK_OWN.omegaMatter / 0.3).toFixed(3)}, its square root is{' '}
                 {Math.sqrt(PLANCK_OWN.omegaMatter / 0.3).toFixed(4)}, and S₈ = {PLANCK_OWN.sigma8} × {Math.sqrt(PLANCK_OWN.omegaMatter / 0.3).toFixed(4)} ={' '}
                 {planckFromParts.toFixed(3)}. (Different analyses of the same microwave-background data give values that differ in the third
-                decimal. This page uses {early.value}, the value the Kilo-Degree Survey team compares its own result with.)
+                decimal. This page uses {early.value}, the value the Kilo-Degree Survey team (described below) compares its own result with.)
               </li>
               <li>
                 <strong>Tension:</strong> as in Experiment 1, a disagreement between two measurements that is too big to put down to chance. A
@@ -869,7 +870,7 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
                     square degree is a patch of sky about five times the area of the full Moon, so the survey covers about 3 percent of the whole
                     sky.
                   </li>
-                  <li>Both are the same survey, analysed twice.</li>
+                  <li>Both are the same survey: KiDS-Legacy uses its complete data, with more sky and improved calibration and image processing.</li>
                 </ul>
               </li>
               <li>
@@ -903,29 +904,11 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
             measurement, if any, is wrong.
           </p>
 
-          <p style={{ marginTop: 0, marginBottom: 0 }}>
-            <strong>Want to know more?</strong> These are the original scientific papers and official pages. Links open in a new tab. This page
-            was written as of October 2026.
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>Want to know more?</strong> Links to the original scientific papers and to the surveys’ own pages appear below the results, after
+            you press Run, because their summaries state what the predictions ask, and you should get to guess first. Links open in a new tab. This
+            page was written as of October 2026.
           </p>
-          <ul style={{ margin: '0.25rem 0 0.75rem', paddingLeft: '1.25rem' }}>
-            <li>
-              <ExternalLink href="https://arxiv.org/abs/2503.19441">KiDS-Legacy: cosmological constraints from cosmic shear (Wright et al., 2025)</ExternalLink>
-              : the scientific paper behind one of the measurements (technical words). It opens on arxiv.org, the free site where scientists
-              post their papers.
-            </li>
-            <li>
-              <ExternalLink href="https://kids.strw.leidenuniv.nl/">The Kilo-Degree Survey (KiDS) website</ExternalLink>: the survey team’s own page,
-              with its results and papers.
-            </li>
-            <li>
-              <ExternalLink href="https://arxiv.org/abs/2602.10065">Dark Energy Survey Year 6: cosmic shear (2026)</ExternalLink>: the scientific
-              paper behind another of the measurements (technical words).
-            </li>
-            <li>
-              <ExternalLink href="https://www.darkenergysurvey.org/des-y6-cosmology-results-papers/">The Dark Energy Survey Year 6 results page</ExternalLink>
-              : the survey team’s own list of its Year 6 papers.
-            </li>
-          </ul>
           <p style={{ marginTop: 0, marginBottom: 0 }}>
             <strong>Want it explained in plainer words?</strong> This page is written for the public, by the European Space Agency (ESA).
           </p>
@@ -1313,13 +1296,30 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
 
             <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               <p style={{ marginTop: 0, marginBottom: 0 }}>
-                <strong>More to read, now that you have seen the results.</strong> These are the links that were kept back until you had seen the
-                results. They open in a new tab.
+                <strong>More to read, now that you have seen the results.</strong> These are the papers and survey pages whose summaries state what the
+                predictions ask, so they were kept back until now. They open in a new tab.
               </p>
               <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
                 <li>
+                  <ExternalLink href="https://arxiv.org/abs/2503.19441">KiDS-Legacy: cosmological constraints from cosmic shear (Wright et al., 2025)</ExternalLink>
+                  : the scientific paper behind the KiDS-Legacy measurement (technical words). It opens on arxiv.org, the free site where scientists
+                  post their papers.
+                </li>
+                <li>
                   <ExternalLink href="https://arxiv.org/abs/2007.15633">KiDS-1000 cosmology: cosmic shear constraints (Asgari et al., 2020)</ExternalLink>
                   : the scientific paper behind the first KiDS measurement (technical words).
+                </li>
+                <li>
+                  <ExternalLink href="https://kids.strw.leidenuniv.nl/">The Kilo-Degree Survey (KiDS) website</ExternalLink>: the survey team’s own
+                  page, with its results and papers.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2602.10065">Dark Energy Survey Year 6: cosmic shear (2026)</ExternalLink>: the scientific
+                  paper behind the DES measurements (technical words).
+                </li>
+                <li>
+                  <ExternalLink href="https://www.darkenergysurvey.org/des-y6-cosmology-results-papers/">The Dark Energy Survey Year 6 results page</ExternalLink>
+                  : the survey team’s own list of its Year 6 papers.
                 </li>
                 <li>
                   <ExternalLink href="https://arxiv.org/abs/1807.06209">Planck 2018 results VI: cosmological parameters</ExternalLink>: the scientific
