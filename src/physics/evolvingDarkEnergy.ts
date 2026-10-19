@@ -34,10 +34,16 @@ export interface PublishedSigma {
   source: string
 }
 const DOVEKIE_SIGMA = 3.2
+// DESI's July 2026 paper (arXiv:2607.27410, abstract): w0 wa dark energy "preferred over LCDM at 2.7 sigma for the combination of DESI and CMB
+// data, and at 3.2 sigma when also including supernovae". The 2.7 is the same combination as 'DESI + CMB alone' with the new Lyman-alpha
+// analysis added, so it is drawn as a bar. The 3.2 is not: the abstract does not say which supernova collection it uses, so no honest bar
+// name exists (it stays a table row and a sentence).
+export const NEWER_RESULT_NAME = 'DESI + CMB, with the July 2026 Lyman-alpha analysis'
 export const PUBLISHED_SIGMAS: PublishedSigma[] = [
   { name: 'DESI + CMB alone', sigma: 3.1, source: 'DESI Collaboration, arXiv:2503.14738' },
   ...FITS.map((f) => ({ name: f.name, sigma: f.sigma, source: f.source })),
   { name: 'DES Y5 recalibrated (Dovekie)', sigma: DOVEKIE_SIGMA, source: 'DES Collaboration, arXiv:2511.07517' },
+  { name: NEWER_RESULT_NAME, sigma: 2.7, source: 'DESI Collaboration, arXiv:2607.27410' },
 ]
 
 export const MAX_REDSHIFT = 2

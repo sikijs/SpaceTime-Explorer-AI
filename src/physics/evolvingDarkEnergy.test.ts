@@ -6,6 +6,7 @@ import {
   chanceOfAtLeastOne,
   DES_RECALIBRATION,
   distanceRange,
+  NEWER_RESULT_NAME,
   oneSidedChance,
   recalibrationEffect,
   densityRatioSteps,
@@ -188,6 +189,7 @@ describe('the published values (test 12)', () => {
       ['Union3', 3.8],
       ['DES Y5', 4.2],
       ['DES Y5 recalibrated (Dovekie)', 3.2],
+      ['DESI + CMB, with the July 2026 Lyman-alpha analysis', 2.7],
     ])
   })
 })
@@ -292,5 +294,20 @@ describe('the answers to the predictions (added in Step 5)', () => {
     expect(chanceOfAtLeastOne(oneSidedChance(3), 100)).toBeCloseTo(0.1264, 3)
     expect(() => chanceOfAtLeastOne(1.5, 2)).toThrow(RangeError)
     expect(() => chanceOfAtLeastOne(0.1, 0)).toThrow(RangeError)
+  })
+})
+
+describe('the newer result (added when Decision 10 was settled)', () => {
+  it('is the last published value, 2.7 sigma, and is a hint by the 3 and 5 lines', () => {
+    const last = PUBLISHED_SIGMAS[PUBLISHED_SIGMAS.length - 1]
+    expect(last.name).toBe(NEWER_RESULT_NAME)
+    expect(last.sigma).toBe(2.7)
+    expect(last.source).toContain('2607.27410')
+    expect(sigmaLabel(last.sigma)).toBe('hint')
+  })
+
+  it('is lower than the DESI + CMB value it updates (3.1)', () => {
+    const before = PUBLISHED_SIGMAS.find((p) => p.name === 'DESI + CMB alone')!
+    expect(PUBLISHED_SIGMAS.find((p) => p.name === NEWER_RESULT_NAME)!.sigma).toBeLessThan(before.sigma)
   })
 })

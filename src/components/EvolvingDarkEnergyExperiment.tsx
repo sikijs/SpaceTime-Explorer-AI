@@ -5,6 +5,7 @@ import {
   brightnessSteps,
   densityRatioSteps,
   FITS,
+  NEWER_RESULT_NAME,
   PUBLISHED_SIGMAS,
   RESULT_REDSHIFTS,
   runEvolvingDarkEnergy,
@@ -222,7 +223,7 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
   const P3_ROW = 46
   const P3_FIRST_ROW = 74
   const p3AxisY = P3_FIRST_ROW + sigmaRows.length * P3_ROW + 6
-  const p3Height = p3AxisY + 118
+  const p3Height = p3AxisY + 132
   const strongerOrWeaker = (ratio: number) => (ratio > 1 ? 'stronger' : 'weaker')
   const percentFromToday = (ratio: number) => Math.abs(Math.round((ratio - 1) * 100))
 
@@ -973,6 +974,7 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                 </g>
               ))}
               {sigmaRows.map((row, i) => {
+                if (row.name === NEWER_RESULT_NAME && stage < 6) return null // the newer result appears at stage 6, with the box below
                 const y = P3_FIRST_ROW + i * P3_ROW
                 const chosen = row.name === fit.name
                 return (
@@ -1002,15 +1004,18 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
               </text>
               {stage >= 6 && (
                 <g>
-                  <rect x={P3_LEFT} y={p3AxisY + 52} width={P3_RIGHT - P3_LEFT} height={50} fill="none" stroke={MUTED_COLOR} strokeDasharray="4 3" />
+                  <rect x={P3_LEFT} y={p3AxisY + 52} width={P3_RIGHT - P3_LEFT} height={64} fill="none" stroke={MUTED_COLOR} strokeDasharray="4 3" />
                   <text x={P3_LEFT + 8} y={p3AxisY + 67} fill={TEXT_COLOR} fontSize="11">
                     July 2026, DESI’s Lyman-alpha analysis: on its own, its result agrees with
                   </text>
                   <text x={P3_LEFT + 8} y={p3AxisY + 81} fill={TEXT_COLOR} fontSize="11">
                     the standard model (a constant dark energy). With the microwave background,
                   </text>
-                  <text x={P3_LEFT + 8} y={p3AxisY + 95} fill={MUTED_COLOR} fontSize="11">
-                    its paper quotes 2.7 sigma (3.2 with supernovae) for a changing one: no bar.
+                  <text x={P3_LEFT + 8} y={p3AxisY + 95} fill={TEXT_COLOR} fontSize="11">
+                    its paper quotes 2.7 sigma for a changing one (the last bar above), and 3.2 sigma
+                  </text>
+                  <text x={P3_LEFT + 8} y={p3AxisY + 109} fill={MUTED_COLOR} fontSize="11">
+                    with supernovae too (no bar: the abstract does not say which collection).
                   </text>
                 </g>
               )}
@@ -1042,10 +1047,13 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                   chance that chance alone could make a bump this big.
                 </li>
                 <li>
-  <strong>The dashed box at the bottom</strong> appears last, at stage 6. It mentions the <strong>Lyman-alpha forest</strong>, a pattern of thin dark gaps that gas clouds leave in the light of very distant quasars. It is another map of the early universe, and DESI used it to check the others. The box is a newer analysis. Its own measurement agrees with a
-                  constant dark energy, but when the DESI team combined it with the other data they again found a preference for a changing
-                  one: 2.7 sigma with the microwave background, and 3.2 sigma when supernovae are added too. The abstract does not say which
-                  supernova collection that 3.2 uses, so it is not drawn as a bar next to the others. It is described in words.
+  <strong>The last bar and the dashed box at the bottom</strong> appear last, at stage 6. They are a newer analysis. The box mentions the{' '}
+                  <strong>Lyman-alpha forest</strong>, a pattern of thin dark gaps that gas clouds leave in the light of very distant quasars. It is
+                  another map of the early universe, and DESI used it to check the others. Its own measurement agrees with a constant dark energy,
+                  but when the DESI team combined it with the other data they again found a preference for a changing one. With the microwave
+                  background it is <strong>2.7 sigma</strong>. That is the same combination as the first bar, “DESI + CMB alone” (3.1 sigma),
+                  with the newer analysis added, so it is drawn as the last bar. With supernovae added too it is 3.2 sigma, but the abstract does not say
+                  which supernova collection that uses, so it cannot be given a name like the other bars and is described in words.
                 </li>
               </ul>
               <p style={paragraph}>
@@ -1189,12 +1197,7 @@ export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: Ev
                     </tr>
                   ))}
                   <tr style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
-                    <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>DESI + CMB, with the July 2026 Lyman-alpha analysis</td>
-                    <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>2.7</td>
-                    <td style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>DESI Collaboration, arXiv:2607.27410</td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
-                    <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>The same, “also including supernovae” (collection not stated in the abstract)</td>
+                    <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>The same, “also including supernovae” (collection not stated in the abstract; no bar)</td>
                     <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>3.2</td>
                     <td style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>DESI Collaboration, arXiv:2607.27410</td>
                   </tr>
