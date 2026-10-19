@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ComponentType } from 'react'
 import { Welcome } from './components/Welcome'
 import { HubbleTensionExperiment } from './components/HubbleTensionExperiment'
+import { EvolvingDarkEnergyExperiment } from './components/EvolvingDarkEnergyExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -594,6 +595,15 @@ const chapters: Chapter[] = [
     learned:
       "Two kinds of measurement of how fast the universe is expanding disagree. The microwave background gives 67.4 ± 0.5, and the distance ladder gives about 73 (73.04 ± 1.04 in 2022, 73.50 ± 0.81 in 2026), which is about 5 to 6 sigma apart, where sigma is the gap divided by the combined uncertainty. JWST's sharper images did not change the nearby-universe value, and a third method gives about 70, in between. Nobody knows whether a hidden error or new physics is behind it.",
     next: 'The next experiment asks whether dark energy, the other big unknown of the expansion, changes over time.',
+  },
+  {
+    title: 'Does dark energy change?',
+    group: 'Frontier and Beyond',
+    Component: EvolvingDarkEnergyExperiment,
+    // Placeholder, for the owner's review (CLAUDE.md §28.1). Shown only after the tutor's explanation, which is not built yet; the real
+    // summary is drafted when the tutor is built (specification, "Chapter summary").
+    learned: 'The summary of this experiment is not written yet.',
+    next: 'The summary of this experiment is not written yet.',
   },
 ]
 
