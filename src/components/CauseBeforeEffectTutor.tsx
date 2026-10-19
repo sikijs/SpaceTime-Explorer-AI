@@ -60,7 +60,6 @@ export function CauseBeforeEffectTutor({ event, passingSpeed, predicted, onExpla
   const example = runCauseBeforeEffectExperiment(EXAMPLE_EVENT, EXAMPLE_SPEED)
   const two = (value: number) => Math.abs(value).toFixed(2)
   const signed = (value: number) => value.toFixed(2).replace('-', '\u2212')
-  const unreachable = lab.relation === 'unreachable'
 
   // How the passing observer's time reads in words: after, before, or at the same moment as O.
   const timeWords = (time: number, order: EventOrder) =>

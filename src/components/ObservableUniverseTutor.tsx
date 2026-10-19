@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   CMB_REDSHIFT,
-  REAL_CMB_SOURCE_DISTANCE_TODAY_LIGHT_YEARS,
   REAL_OBSERVABLE_UNIVERSE_RADIUS_LIGHT_YEARS,
   runObservableUniverseExperiment,
 } from '../physics/observableUniverseExperiment'
@@ -55,7 +54,6 @@ export function ObservableUniverseTutor({ predictedToday, predictedLeft, onExpla
   const travelled = billions(oldest.lightTravelYears)
   const today = billions(oldest.distanceTodayLightYears)
   const leftMillions = Math.round(oldest.distanceWhenLightLeftLightYears / 1e6)
-  const realSource = billions(REAL_CMB_SOURCE_DISTANCE_TODAY_LIGHT_YEARS)
   const realEdge = billions(REAL_OBSERVABLE_UNIVERSE_RADIUS_LIGHT_YEARS)
 
   return (

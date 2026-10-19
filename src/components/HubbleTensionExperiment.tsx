@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { EARLY_MEASUREMENT, LATE_MEASUREMENTS, runTensionExperiment } from '../physics/hubbleTension'
+import { LATE_MEASUREMENTS, runTensionExperiment } from '../physics/hubbleTension'
 import type { SigmaRange } from '../physics/hubbleTension'
 import { REAL_UNIVERSE_AGE_YEARS } from '../physics/bigBangExperiment'
 import { ReferencePanel } from './EnergyMomentumExperiment'

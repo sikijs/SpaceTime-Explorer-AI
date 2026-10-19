@@ -59,7 +59,7 @@ function growthFactorAt(time: number, mergerTime: number): number {
 // Accumulates phase numerically, one simulation step at a time (the same step-based style
 // already used by orbitExperiment.ts and blackHoleExperiment.ts), rather than a closed-form
 // phase formula, since frequency is no longer constant.
-function accumulatedPhaseAt(time: number, mass: number, baseFrequency: number, mergerTime: number): number {
+function accumulatedPhaseAt(time: number, baseFrequency: number, mergerTime: number): number {
   let phase = 0
   let t = 0
 
@@ -94,7 +94,7 @@ export function chirpStateAt(
 
   const frequency = baseFrequency * growthFactor
   const amplitude = baseAmplitude * growthFactor * (mass / REFERENCE_MASS)
-  const phase = accumulatedPhaseAt(time, mass, baseFrequency, mergerTime)
+  const phase = accumulatedPhaseAt(time, baseFrequency, mergerTime)
   const strain = amplitude * Math.sin(phase)
 
   const armXLength = BASE_ARM_LENGTH * (1 + strain / 2)

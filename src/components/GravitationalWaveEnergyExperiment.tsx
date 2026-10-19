@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BASE_ARM_LENGTH } from '../physics/gravitationalWaveExperiment'
 import { chirpRunFor, chirpStateAt } from '../physics/gravitationalWaveChirpExperiment'
 import { orbitalEnergyStateAt } from '../physics/gravitationalWaveEnergyExperiment'

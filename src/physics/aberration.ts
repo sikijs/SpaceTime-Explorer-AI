@@ -92,7 +92,7 @@ export interface SkyStar {
   travelerAngle: number // θ'
 }
 
-export interface WedgeCounts {
+export type WedgeCounts = {
   aheadOfSideways: number // stars strictly less than 90 degrees from straight ahead
   within30OfAhead: number // stars within 30 degrees of straight ahead
   within30OfBehind: number // stars within 30 degrees of straight behind

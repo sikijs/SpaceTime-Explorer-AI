@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactElement } from 'react'
 import relativityBanner from '../assets/relativity-banner.jpg'
 
 interface PreviewChapter {
@@ -18,7 +18,7 @@ const iconStyle = { display: 'block' }
 
 // Small symbolic icons, one per experiment, matched by array index. Purely illustrative — not
 // drawn from the physics model, unlike the animations inside each experiment.
-const icons: JSX.Element[] = [
+const icons: ReactElement[] = [
   // 1. One clock
   <svg viewBox="0 0 40 40" style={iconStyle} aria-hidden="true">
     <circle cx="20" cy="20" r="15" fill="none" stroke="#555" strokeWidth="2" />
