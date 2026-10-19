@@ -11,9 +11,12 @@ import {
   runEvolvingDarkEnergy,
 } from '../physics/evolvingDarkEnergy'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { EvolvingDarkEnergyTutor } from './EvolvingDarkEnergyTutor'
+import type { DistanceRange, RecalibrationEffect } from '../physics/evolvingDarkEnergy'
 
 // Frontier and Beyond, Experiment 2 (docs/experiments/frontier-and-beyond/02-does-dark-energy-change.md).
-// Step 4 adds the "Words and formulas" panel (the formulas appear after the run), the "How far back?" control and the neutral results (both
+// Step 5 adds the tutor (EvolvingDarkEnergyTutor.tsx), shown below the results after the run; the chapter summary in App appears once the
+// learner reaches its explanation. Step 4 adds the "Words and formulas" panel (the formulas appear after the run), the "How far back?" control and the neutral results (both
 // shown after the run), and the links withheld until then. The wording of Step 4 is draft wording for the owner's review (§28.1).
 // Step 2 built the status label, the introduction (with its section on supernovae and its "Want to know more?" links), the choice of
 // supernova collection and Picture 1 with its guide (wording approved by the owner on 2026-10-19). Step 3 adds the two predictions, Run,
@@ -84,7 +87,7 @@ const STAGES = [
 ]
 const LAST_STAGE = STAGES.length
 
-type DistanceChoice = 'under05' | 'between05and2' | 'between2and5' | 'over5'
+type DistanceChoice = DistanceRange
 const DISTANCE_CHOICES: Array<{ value: DistanceChoice; label: string }> = [
   { value: 'under05', label: 'Less than 0.5 percent' },
   { value: 'between05and2', label: 'Between 0.5 and 2 percent' },
@@ -92,7 +95,7 @@ const DISTANCE_CHOICES: Array<{ value: DistanceChoice; label: string }> = [
   { value: 'over5', label: 'More than 5 percent' },
 ]
 
-type RecalibrationChoice = 'weaker' | 'same' | 'stronger'
+type RecalibrationChoice = RecalibrationEffect
 const RECALIBRATION_CHOICES: Array<{ value: RecalibrationChoice; label: string }> = [
   { value: 'weaker', label: 'Weaker' },
   { value: 'same', label: 'About the same' },
@@ -153,7 +156,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
 const f3 = (value: number) => (value < 0 ? `−${Math.abs(value).toFixed(3)}` : value.toFixed(3))
 const MORE_LINKS_TEXT = 'These are the links that were kept back until you had seen the results.'
 
-export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyExperimentProps) {
+export function EvolvingDarkEnergyExperiment({ onComplete, onTutorComplete }: EvolvingDarkEnergyExperimentProps) {
   const [fitName, setFitName] = useState(FITS[0].name)
   const [distancePrediction, setDistancePrediction] = useState<DistanceChoice | null>(null)
   const [recalibrationPrediction, setRecalibrationPrediction] = useState<RecalibrationChoice | null>(null)
@@ -1179,6 +1182,17 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
               </ul>
             </div>
           </div>
+        )}
+
+        {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The summary below the experiment
+            (in App) is shown only once the learner reaches the explanation. */}
+        {status === 'complete' && distancePrediction !== null && recalibrationPrediction !== null && (
+          <EvolvingDarkEnergyTutor
+            fit={fit}
+            distancePrediction={distancePrediction}
+            recalibrationPrediction={recalibrationPrediction}
+            onExplained={() => onTutorComplete?.()}
+          />
         )}
       </div>
     </div>

@@ -3,6 +3,11 @@ import {
   anchoredMagnitudeDifference,
   brightnessPercentChange,
   brightnessSteps,
+  chanceOfAtLeastOne,
+  DES_RECALIBRATION,
+  distanceRange,
+  oneSidedChance,
+  recalibrationEffect,
   densityRatioSteps,
   ANCHOR_REDSHIFT,
   comovingDistanceMpc,
@@ -247,5 +252,45 @@ describe('the worked-example steps (added in Step 4)', () => {
 
   it('throws a RangeError outside the redshift range', () => {
     expect(() => densityRatioSteps(2.5, -1, 0)).toThrow(RangeError)
+  })
+})
+
+describe('the answers to the predictions (added in Step 5)', () => {
+  it('puts each collection in the range the specification gives at z = 0.5', () => {
+    expect(distanceRange(runEvolvingDarkEnergy(pantheon, 0.5).atChosenRedshift.distanceDifferencePercent)).toBe('between05and2') // 1.37
+    expect(distanceRange(runEvolvingDarkEnergy(union3, 0.5).atChosenRedshift.distanceDifferencePercent)).toBe('between2and5') // 3.08
+    expect(distanceRange(runEvolvingDarkEnergy(desy5, 0.5).atChosenRedshift.distanceDifferencePercent)).toBe('between2and5') // 2.24
+  })
+
+  it('uses the size of the difference, not its sign, and puts the edges where documented', () => {
+    expect(distanceRange(-0.49)).toBe('under05')
+    expect(distanceRange(0.5)).toBe('between05and2')
+    expect(distanceRange(-2)).toBe('between05and2')
+    expect(distanceRange(2.01)).toBe('between2and5')
+    expect(distanceRange(-5)).toBe('between2and5')
+    expect(distanceRange(5.01)).toBe('over5')
+    expect(() => distanceRange(Number.NaN)).toThrow(RangeError)
+  })
+
+  it('says the recalibration made the preference weaker (4.2 to 3.2)', () => {
+    expect(DES_RECALIBRATION.beforeSigma).toBe(4.2)
+    expect(DES_RECALIBRATION.afterSigma).toBe(3.2)
+    expect(recalibrationEffect()).toBe('weaker')
+  })
+
+  it('has the one-sided chances of 1, 3 and 5 sigma from the normal curve', () => {
+    expect(oneSidedChance(0)).toBeCloseTo(0.5, 8)
+    expect(oneSidedChance(1)).toBeCloseTo(0.158655, 5)
+    expect(oneSidedChance(3)).toBeCloseTo(0.0013499, 6)
+    expect(1 / oneSidedChance(5)).toBeCloseTo(3.4885e6, -3)
+    expect(() => oneSidedChance(-1)).toThrow(RangeError)
+  })
+
+  it('works out the chance that at least one of several tries gives the event', () => {
+    expect(chanceOfAtLeastOne(0.5, 1)).toBe(0.5)
+    expect(chanceOfAtLeastOne(0.5, 3)).toBeCloseTo(0.875, 12)
+    expect(chanceOfAtLeastOne(oneSidedChance(3), 100)).toBeCloseTo(0.1264, 3)
+    expect(() => chanceOfAtLeastOne(1.5, 2)).toThrow(RangeError)
+    expect(() => chanceOfAtLeastOne(0.1, 0)).toThrow(RangeError)
   })
 })

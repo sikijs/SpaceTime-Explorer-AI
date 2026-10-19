@@ -33,10 +33,11 @@ export interface PublishedSigma {
   sigma: number
   source: string
 }
+const DOVEKIE_SIGMA = 3.2
 export const PUBLISHED_SIGMAS: PublishedSigma[] = [
   { name: 'DESI + CMB alone', sigma: 3.1, source: 'DESI Collaboration, arXiv:2503.14738' },
   ...FITS.map((f) => ({ name: f.name, sigma: f.sigma, source: f.source })),
-  { name: 'DES Y5 recalibrated (Dovekie)', sigma: 3.2, source: 'DES Collaboration, arXiv:2511.07517' },
+  { name: 'DES Y5 recalibrated (Dovekie)', sigma: DOVEKIE_SIGMA, source: 'DES Collaboration, arXiv:2511.07517' },
 ]
 
 export const MAX_REDSHIFT = 2
@@ -223,4 +224,55 @@ export function runEvolvingDarkEnergy(fit: DarkEnergyFit, redshift: number): Evo
     sigmaLabel: sigmaLabel(fit.sigma),
     curve: CURVE_REDSHIFTS.map((z) => resultAt(fit, z)),
   }
+}
+
+// --- Answers to the predictions (used by the tutor, shown only in its explanation) ---
+
+// Prediction 1: how different the distance looks at the chosen redshift, in the four ranges the buttons offer. The size of the difference
+// is what counts, not its sign. Boundaries: below 0.5 percent; up to and including 2; up to and including 5; above 5.
+export type DistanceRange = 'under05' | 'between05and2' | 'between2and5' | 'over5'
+export function distanceRange(differencePercent: number): DistanceRange {
+  const size = Math.abs(differencePercent)
+  if (!Number.isFinite(size)) throw new RangeError('The distance difference must be a finite number')
+  if (size < 0.5) return 'under05'
+  if (size <= 2) return 'between05and2'
+  if (size <= 5) return 'between2and5'
+  return 'over5'
+}
+
+// Prediction 2: what the 2025 recalibration of the DES supernovae did to the preference. Published values: 4.2 sigma for DES Y5
+// (DESI Collaboration, arXiv:2503.14738) and 3.2 sigma for the recalibrated DES-Dovekie (DES Collaboration, arXiv:2511.07517, "reduced from
+// 4.2 sigma"). Two quoted values that differ by less than their one-decimal precision (0.1 sigma) count as "the same".
+export type RecalibrationEffect = 'weaker' | 'same' | 'stronger'
+export const DES_RECALIBRATION = {
+  beforeSigma: FITS.find((f) => f.name === 'DES Y5')!.sigma,
+  afterSigma: DOVEKIE_SIGMA,
+  source: 'DES Collaboration, arXiv:2511.07517',
+}
+export function recalibrationEffect(): RecalibrationEffect {
+  const change = DES_RECALIBRATION.afterSigma - DES_RECALIBRATION.beforeSigma
+  if (Math.abs(change) < 0.1) return 'same'
+  return change < 0 ? 'weaker' : 'stronger'
+}
+
+// --- Chance, for the tutor's everyday example (standard statistics, computed here from the normal distribution) ---
+
+// The chance, counting only one direction, that pure chance gives a result at least this many sigma from the expected value: the area of
+// the normal curve beyond sigma, by Simpson's rule out to 12 sigma (the rest is negligible).
+export function oneSidedChance(sigma: number): number {
+  if (!(sigma >= 0 && sigma <= 10)) throw new RangeError('Sigma must be between 0 and 10')
+  const upper = 12
+  const steps = 20000
+  const h = (upper - sigma) / steps
+  const density = (x: number) => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI)
+  let sum = density(sigma) + density(upper)
+  for (let i = 1; i < steps; i++) sum += (i % 2 === 1 ? 4 : 2) * density(sigma + i * h)
+  return (sum * h) / 3
+}
+
+// The chance that at least one of several independent tries gives an event of the given chance: 1 - (1 - chance)^tries.
+export function chanceOfAtLeastOne(chance: number, tries: number): number {
+  if (!(chance >= 0 && chance <= 1)) throw new RangeError('A chance must be between 0 and 1')
+  if (!(Number.isInteger(tries) && tries >= 1)) throw new RangeError('The number of tries must be a whole number of at least 1')
+  return 1 - (1 - chance) ** tries
 }
