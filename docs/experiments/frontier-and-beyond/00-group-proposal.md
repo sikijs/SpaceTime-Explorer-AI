@@ -214,6 +214,8 @@ A section on the last experiment's page (not an experiment, no new physics), as 
 
 ## Keeping the facts honest
 
+- **Links on every page (owner's rule of 2026-10-19, `CLAUDE.md` §29 rule 3).** Every experiment page carries a "Want to know more?" list: the original paper or official release for each result, and an official plain-language page (NASA, ESA, a mission or observatory) for each background idea the introduction explains. Each specification lists its links and the date each was fetched.
+
 - **Each specification checks its facts against the original papers or official releases**, not press summaries, and records the check in a source-status table (the project's existing practice). What this proposal read were search-result summaries only, and some figures above (for example the 240,000 and 400,000 square kilometres, the 5 sigma, the 3 to 4 sigma for DESI, the 0.73 sigma of KiDS-Legacy, the 19 and 10 sigma of the wide-binary analyses, and the 4.5 sigma of LZ) are from those and need that check.
 - **No sentence stronger than its source.** For the contested results, the learner-facing text says "some analyses find… others find…", and it names what would settle it.
 - **Dates on the page.** The status label and "as of October 2026" appear with each experiment, and each specification lists what to re-check and when (Decision 4).

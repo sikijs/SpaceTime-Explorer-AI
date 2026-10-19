@@ -175,8 +175,11 @@ and findings of astronomers and scientists. The ideas are complex, so:
    knowledge. Real-life examples are welcome. Length is not a problem if it helps understanding. Links for further
    reading may be included.
 2. The caption of every picture follows the same rule.
+3. Every experiment page has a "Want to know more?" list of links (owner's rule, 2026-10-19): the original paper or
+   official release for each result used, and an official plain-language page (for example NASA or ESA) for each
+   background idea the introduction explains. Each link opens in a new tab and says what the learner will find.
 
-Links go to the original paper or an official release, and each is recorded in the experiment's source-status table.
+Links go to the original paper or an official release (a mission, observatory or space agency page), and each is fetched and recorded in the experiment's source-status table.
 Neither the introduction nor a caption may reveal what the learner is asked to predict. The wording stays the human's
 to approve.
 
