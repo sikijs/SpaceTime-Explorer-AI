@@ -10,16 +10,20 @@ import {
   oscillationFloor,
   runNeutrinoMass,
   clumpSmoothing,
+  BOUNDS,
+  TYPICAL_ENERGY_TODAY_EV,
 } from '../physics/neutrinoMass'
-import type { HeavyTiming, RoomRange } from '../physics/neutrinoMass'
+import type { HeavyTiming, Room, RoomRange } from '../physics/neutrinoMass'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
 // Frontier and Beyond, Experiment 4 (docs/experiments/frontier-and-beyond/04-can-the-universe-weigh-a-neutrino.md).
 // Step 2 built the status label, the introduction with its new-word list and its "Want to know more?" links, a drawing of the relic neutrino
 // sea, and the skeleton of Picture 1 with its guide (wording approved by the owner on 2026-10-19). Step 3 adds the two predictions, Run, the
 // staged run, the neutrinos' turning point on Picture 1, and Pictures 2 and 3 with their guides. The results, the "Try a different total mass"
-// control, the links kept back until the results, the tutor and the chapter summary come in later steps. All Step 3 wording is draft wording
-// for the owner's review (CLAUDE.md §28.1), written to the standard of §29. The interface only displays numbers from src/physics (CLAUDE.md §9); the only calculation
+// control, the links kept back until the results, the tutor and the chapter summary come in later steps (wording approved by the owner on
+// 2026-10-19 for Steps 2 and 3). Step 4 adds the "Try a different total mass" control, the neutral results tables and their guide, the formulas
+// in the "Words and formulas" panel and the links kept back until the results (all shown after the run). The tutor and the chapter summary come
+// in later steps. All Step 4 wording is draft wording for the owner's review (CLAUDE.md §28.1), written to the standard of §29. The interface only displays numbers from src/physics (CLAUDE.md §9); the only calculation
 // here is where a point is drawn.
 
 interface NeutrinoMassExperimentProps {
@@ -136,6 +140,15 @@ const LAST_STAGE = STAGES.length
 // The run uses DESI's July 2026 limit as the total (the default of the later "Try a different total mass" control). The predictions use 0.06 eV.
 const RUN_TOTAL_MASS_EV = DESI_JULY_2026.value
 
+// "Try a different total mass": the totals offered after the run (the default is DESI's July 2026 limit).
+const TOTAL_PRESETS: ReadonlyArray<{ value: number; label: string }> = [
+  { value: RUN_TOTAL_MASS_EV, label: `${RUN_TOTAL_MASS_EV} eV (DESI, July 2026 upper limit)` },
+  { value: 0.1, label: '0.10 eV (about the inverted-ordering floor)' },
+  { value: 0.12, label: '0.12 eV (Planck 2018 upper limit)' },
+  { value: 0.3, label: '0.30 eV' },
+  { value: MAX_TOTAL_MASS_EV, label: '0.50 eV (the most this model handles)' },
+]
+
 const TIMING_CHOICES: ReadonlyArray<{ value: HeavyTiming; label: string }> = [
   { value: 'before', label: 'Before the microwave background was released' },
   { value: 'after', label: 'After the microwave background was released' },
@@ -176,9 +189,10 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
   const [roomPrediction, setRoomPrediction] = useState<RoomRange | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  const [totalMass, setTotalMass] = useState(RUN_TOTAL_MASS_EV)
 
-  // Every number comes from the physics module. The run uses DESI's July 2026 limit as the total (Step 4 adds the control for other totals).
-  const result = runNeutrinoMass(RUN_TOTAL_MASS_EV)
+  // Every number comes from the physics module. The run starts with DESI's July 2026 limit as the total; the control after the run changes it.
+  const result = runNeutrinoMass(totalMass)
   const bothPredicted = timingPrediction !== null && roomPrediction !== null
   const eachEv = result.massEachEv
   const floorNormal = oscillationFloor('normal')
@@ -208,6 +222,7 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
     setRoomPrediction(null)
     setStatus('idle')
     setStage(0)
+    setTotalMass(RUN_TOTAL_MASS_EV)
   }
   const run = () => {
     setStage(1)
@@ -217,7 +232,7 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
   const releaseX = xOfZ(RECOMBINATION_REDSHIFT)
   const heavyX = xOfZ(result.heavyRedshift)
   const oneX = xOfZ(result.heavyRedshiftOneNeutrino)
-  const p1Height = AXIS_Y + 66
+  const p1Height = AXIS_Y + 88
 
   // Picture 2 (the matter share and the smoothing)
   const P2_LEFT = 40
@@ -229,7 +244,8 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
   const smoothingMax = 0.3
   const massX = (total: number) => P2_PLOT_LEFT + (total / MAX_TOTAL_MASS_EV) * (P2_RIGHT - P2_PLOT_LEFT)
   const smoothY = (fraction: number) => P2_PLOT_BOTTOM - (fraction / smoothingMax) * (P2_PLOT_BOTTOM - P2_PLOT_TOP)
-  const SMOOTH_PRESETS = [RUN_TOTAL_MASS_EV, 0.1, 0.12, 0.3, 0.5]
+  const SMOOTH_PRESETS = TOTAL_PRESETS.map((preset) => preset.value)
+  const keyOrder = [totalMass, ...SMOOTH_PRESETS.filter((m) => m !== totalMass)]
   const zoomShareX = P2_LEFT + (result.share / 0.01) * (P2_RIGHT - P2_LEFT)
 
   // Picture 3 (the floors and the ceilings)
@@ -243,6 +259,43 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
   const drawnCeilings = CEILINGS.filter((b) => b.drawn).sort((a, b) => a.year - b.year || a.value - b.value)
   const p3AxisY = ROW_TOP + drawnCeilings.length * ROW_STEP + 8
   const p3Height = p3AxisY + 54
+
+  // After the run: the formulas, each with a worked example from the learner's chosen total (the formulas wait until now, §12).
+  const heavyOverTypical = eachEv / TYPICAL_ENERGY_TODAY_EV
+  const h = 0.674
+  const omegaMatter = 0.315
+  const energyShare = result.totalMassEv / 93.14 / (h * h)
+  const gaps = MASS_SQUARED_GAPS
+  const roomText = (room: Room) =>
+    room.difference >= 0
+      ? `${room.ratio.toFixed(3)} times the floor (${room.difference.toFixed(4)} eV above it)`
+      : `below the floor, by ${Math.abs(room.difference).toFixed(4)} eV (${room.ratio.toFixed(2)} times it)`
+  const formulaEntries: { term: string; meaning: string }[] = [
+    {
+      term: 'The neutrino temperature (formula)',
+      meaning: `T(neutrinos) = (4/11)^(1/3) × T(light). Example: (4/11)^(1/3) = ${Math.cbrt(4 / 11).toFixed(4)}, so ${Math.cbrt(4 / 11).toFixed(4)} × ${CMB_TEMPERATURE_TODAY_KELVIN} K = ${result.neutrinoTemperatureKelvin.toFixed(3)} K.`,
+    },
+    {
+      term: 'When the neutrinos turn heavy (formula)',
+      meaning: `A typical neutrino’s energy is 3.151 × k × T, with k = 8.617 × 10⁻⁵ eV per kelvin. Today that is 3.151 × 8.617 × 10⁻⁵ × ${result.neutrinoTemperatureKelvin.toFixed(3)} = ${result.typicalEnergyTodayEv.toFixed(6)} eV. In the past it was 1 + z times bigger. The neutrinos turn heavy when this equals their mass, so 1 + z = (mass of one neutrino) ÷ ${result.typicalEnergyTodayEv.toFixed(6)}. Example, with your total of ${result.totalMassEv} eV: each is ${result.totalMassEv} ÷ 3 = ${eachEv.toFixed(4)} eV, so 1 + z = ${eachEv.toFixed(4)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)} = ${heavyOverTypical.toFixed(1)}, and z = ${result.heavyRedshift.toFixed(1)}. This is a rule of thumb, not a sharp switch.`,
+    },
+    {
+      term: 'The neutrinos’ share of the matter (formula)',
+      meaning: `Ων × h² = (total mass) ÷ 93.14 eV, so share of the matter = (total ÷ 93.14) ÷ h² ÷ Ωm, with h = ${h} and Ωm = ${omegaMatter}. Example, with ${result.totalMassEv} eV: ${result.totalMassEv} ÷ 93.14 = ${(result.totalMassEv / 93.14).toFixed(6)}; ÷ ${(h * h).toFixed(3)} = ${energyShare.toFixed(5)}; ÷ ${omegaMatter} = ${result.share.toFixed(5)}, which is ${(result.share * 100).toFixed(2)} percent.`,
+    },
+    {
+      term: 'The smoothing of small clumps (formula)',
+      meaning: `smoothing ≈ 8 × (the neutrinos’ share of the matter), for a small share. Example: 8 × ${result.share.toFixed(5)} = ${result.smoothing.toFixed(4)}, which is ${(result.smoothing * 100).toFixed(2)} percent. This model uses the rule only up to ${MAX_TOTAL_MASS_EV} eV.`,
+    },
+    {
+      term: 'The two floors (formulas)',
+      meaning: `Normal ordering, with the lightest neutrino massless: floor = √(Δm²₂₁) + √(Δm²₃₁) = √${gaps.solar} + √${gaps.atmosphericNormal} = ${Math.sqrt(gaps.solar).toFixed(4)} + ${Math.sqrt(gaps.atmosphericNormal).toFixed(4)} = ${floorNormal.toFixed(4)} eV. Inverted ordering: floor = √|Δm²₃₁| + √(|Δm²₃₁| + Δm²₂₁) = √${gaps.atmosphericInverted} + √${(gaps.atmosphericInverted + gaps.solar).toFixed(6)} = ${Math.sqrt(gaps.atmosphericInverted).toFixed(4)} + ${Math.sqrt(gaps.atmosphericInverted + gaps.solar).toFixed(4)} = ${floorInverted.toFixed(4)} eV. (Δm² are the measured gaps between the squares of the masses, in eV².)`,
+    },
+    {
+      term: 'Room under a ceiling (formula)',
+      meaning: `ratio = ceiling ÷ floor, and difference = ceiling − floor (negative when the ceiling is below the floor). Example, DESI July 2026 against the normal floor: ${DESI_JULY_2026.value} ÷ ${floorNormal.toFixed(4)} = ${(DESI_JULY_2026.value / floorNormal).toFixed(3)}, and ${DESI_JULY_2026.value} − ${floorNormal.toFixed(4)} = ${(DESI_JULY_2026.value - floorNormal).toFixed(4)} eV. Against the inverted floor: ${DESI_JULY_2026.value} − ${floorInverted.toFixed(4)} = ${(DESI_JULY_2026.value - floorInverted).toFixed(4)} eV, which is below it.`,
+    },
+  ]
 
   return (
     <div>
@@ -474,7 +527,7 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
           </ul>
         </div>
 
-        <ReferencePanel entries={REFERENCE_ENTRIES} />
+        <ReferencePanel entries={status === 'complete' ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
             says which answer is right, and neither gives DESI's limit. */}
@@ -577,8 +630,7 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
             <strong>Stage 1: the cold sea of neutrinos.</strong> The neutrino sea’s temperature today is (4/11)^(1/3) × {CMB_TEMPERATURE_TODAY_KELVIN} K ={' '}
             <strong>{result.neutrinoTemperatureKelvin.toFixed(3)} K</strong>. A typical neutrino in it carries an energy of about{' '}
             <strong>{result.typicalEnergyTodayEv.toFixed(6)} eV</strong> ({sci(result.typicalEnergyTodayEv)} eV) today. That is the number the
-            neutrinos’ mass will be compared with. For this run the three masses add up to <strong>{result.totalMassEv} eV</strong> (DESI’s
-            July 2026 upper limit, a later step will let you try other totals), shared equally, so each neutrino weighs{' '}
+            neutrinos’ mass will be compared with. For this run the three masses add up to <strong>{result.totalMassEv} eV</strong> ({result.totalMassEv === RUN_TOTAL_MASS_EV ? 'DESI’s July 2026 upper limit' : 'the total you chose below'}; after the run you can try other totals), shared equally, so each neutrino weighs{' '}
             <strong>{result.totalMassEv} ÷ 3 = {eachEv.toFixed(4)} eV</strong>.
           </div>
         )}
@@ -608,10 +660,10 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
                 <rect x={AXIS_LEFT} y={AXIS_Y - 30} width={heavyX - AXIS_LEFT} height={30} fill={HEAVY_COLOR} opacity={0.22} />
                 <rect x={heavyX} y={AXIS_Y - 30} width={AXIS_RIGHT - heavyX} height={30} fill={CEILING_COLOR} opacity={0.22} />
                 <text x={(AXIS_LEFT + heavyX) / 2} y={AXIS_Y - 11} fill={HEAVY_COLOR} fontSize="11" textAnchor="middle">
-                  the neutrinos act like light
+                  {heavyX - AXIS_LEFT >= 170 ? 'the neutrinos act like light' : 'light-like'}
                 </text>
                 <text x={(heavyX + AXIS_RIGHT) / 2} y={AXIS_Y - 11} fill={CEILING_COLOR} fontSize="11" textAnchor="middle">
-                  the neutrinos act like matter
+                  {AXIS_RIGHT - heavyX >= 170 ? 'the neutrinos act like matter' : 'matter-like'}
                 </text>
               </g>
             )}
@@ -659,8 +711,9 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
                 </text>
                 <line x1={oneX} y1={AXIS_Y - 30} x2={oneX} y2={AXIS_Y} stroke={MUTED_COLOR} strokeWidth={1} strokeDasharray="2 3" />
                 <circle cx={oneX} cy={AXIS_Y} r={3} fill="none" stroke={MUTED_COLOR} strokeWidth={1.5} />
-                <text x={oneX - 5} y={AXIS_Y - 36} fill={MUTED_COLOR} fontSize="10" textAnchor="end">
-                  all in one: z = {Math.round(result.heavyRedshiftOneNeutrino)}
+                <circle cx={AXIS_LEFT + 4} cy={AXIS_Y + 78} r={3} fill="none" stroke={MUTED_COLOR} strokeWidth={1.5} />
+                <text x={AXIS_LEFT + 14} y={AXIS_Y + 81} fill={MUTED_COLOR} fontSize="10">
+                  grey circle: where it would turn heavy if one neutrino carried the whole {result.totalMassEv} eV (z = {Math.round(result.heavyRedshiftOneNeutrino)})
                 </text>
               </g>
             )}
@@ -703,7 +756,8 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
             </li>
             <li>
               <strong>The two shaded stretches</strong> (stage 2): before the violet marker (to its left) the neutrinos act like light; after it
-              (to its right) they act like matter.
+              (to its right) they act like matter. When a stretch is too narrow for the whole sentence it is labelled “light-like” or
+              “matter-like”.
             </li>
             <li>
               <strong>The small grey hollow circle and dotted line</strong> (stage 2): where the turning point would be if the whole total were
@@ -808,11 +862,11 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
                     smoothing of small clumps
                   </text>
                   <line x1={massX(0)} y1={smoothY(0)} x2={massX(MAX_TOTAL_MASS_EV)} y2={smoothY(clumpSmoothing(MAX_TOTAL_MASS_EV))} stroke={NEUTRINO_COLOR} strokeWidth={2} />
-                  {SMOOTH_PRESETS.map((m, i) => (
-                    <circle key={m} cx={massX(m)} cy={smoothY(clumpSmoothing(m))} r={i === 0 ? 5.5 : 3.5} fill={i === 0 ? '#facc15' : NEUTRINO_COLOR} stroke="#0b1020" />
+                  {SMOOTH_PRESETS.map((m) => (
+                    <circle key={m} cx={massX(m)} cy={smoothY(clumpSmoothing(m))} r={m === totalMass ? 5.5 : 3.5} fill={m === totalMass ? '#facc15' : NEUTRINO_COLOR} stroke="#0b1020" />
                   ))}
                   {/* A key for the dots, in the empty corner above the line */}
-                  {SMOOTH_PRESETS.map((m, i) => (
+                  {keyOrder.map((m, i) => (
                     <g key={`key-${m}`}>
                       <circle cx={P2_PLOT_LEFT + 14} cy={P2_PLOT_TOP + 4 + i * 13} r={i === 0 ? 4.5 : 3} fill={i === 0 ? '#facc15' : NEUTRINO_COLOR} />
                       <text x={P2_PLOT_LEFT + 24} y={P2_PLOT_TOP + 8 + i * 13} fill={i === 0 ? '#facc15' : TEXT_COLOR} fontSize="10">
@@ -1003,6 +1057,194 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
               <strong>What to look for:</strong> how far each orange bar reaches to the right of the first green line, and how that distance has
               changed from the top bar to the bottom bar, and where each orange bar ends compared with the second green line.
             </p>
+          </div>
+        )}
+
+        {/* After the run: the "Try a different total mass" control, the neutral results, the guide to them and the links kept back until now.
+            Draft wording for the owner's review (CLAUDE.md §28.1, §29). The results only report; they do not say why. */}
+        {status === 'complete' && (
+          <div style={{ marginTop: '2rem' }}>
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Try a different total mass</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              Choose a total for the three neutrino masses added together (shared equally among the three). The first table below, Picture 1’s
+              violet marker, Picture 2’s share bar and yellow dot, and the worked examples in the “Words and formulas” box change with it.
+              Picture 3 does not, because the floors and ceilings are published numbers. Your predictions stay as they are.
+            </p>
+            <div style={{ marginBottom: '1.5rem' }}>
+              {TOTAL_PRESETS.map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => setTotalMass(preset.value)}
+                  className={`toggle-button${totalMass === preset.value ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ border: '1px solid var(--border-color, #ccc)', borderRadius: '8px', padding: '1rem', fontSize: '0.875rem' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+                <strong>Results.</strong> These are the numbers behind the three pictures. They only report what was published and what was calculated.
+                They do not say why the numbers are what they are.
+              </p>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>For a total of {result.totalMassEv} eV, shared equally</p>
+              <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '420px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                      <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>Quantity</th>
+                      <th style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>Value</th>
+                      <th style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>How it is worked out</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      [
+                        ['Each of the three masses', `${eachEv.toFixed(4)} eV`, `${result.totalMassEv} ÷ 3`],
+                        ['A typical neutrino’s energy today', `${result.typicalEnergyTodayEv.toFixed(6)} eV`, `3.151 × k × ${result.neutrinoTemperatureKelvin.toFixed(3)} K`],
+                        ['Redshift at which they turn heavy', `z = ${result.heavyRedshift.toFixed(1)}`, `(${eachEv.toFixed(4)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)}) − 1`],
+                        ['Age of the universe then', `about ${millions(result.heavyTimeYears)} million years`, 'the age function of Cosmology Experiment 6, at Planck’s expansion rate'],
+                        ['The microwave background’s release', `z = ${RECOMBINATION_REDSHIFT}, ${RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')} years`, 'Cosmology Experiment 3'],
+                        ['How many times later than the release', `${result.timesLaterThanRelease.toFixed(0)} times`, `${Math.round(result.heavyTimeYears).toLocaleString('en-US')} ÷ ${RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')}`],
+                        ['Redshift if one neutrino carried the whole total', `z = ${result.heavyRedshiftOneNeutrino.toFixed(1)}`, `(${result.totalMassEv} ÷ ${result.typicalEnergyTodayEv.toFixed(6)}) − 1`],
+                        ['The neutrinos’ share of all the matter', `${(result.share * 100).toFixed(2)} percent`, `${result.totalMassEv} ÷ 93.14 ÷ ${(h * h).toFixed(3)} ÷ ${omegaMatter}`],
+                        ['Smoothing of the smallest clumps', `${(result.smoothing * 100).toFixed(2)} percent`, `8 × ${result.share.toFixed(5)}`],
+                      ] as const
+                    ).map(([label, value, how]) => (
+                      <tr key={label} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{label}</td>
+                        <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>{value}</td>
+                        <td style={{ padding: '0.4rem 0 0.4rem 0.5rem', color: 'var(--text-muted)' }}>{how}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Every floor, ceiling and limit</p>
+              <div style={{ overflowX: 'auto', marginBottom: '1rem' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '560px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                      <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>Name</th>
+                      <th style={{ padding: '0.4rem 0.5rem' }}>Year</th>
+                      <th style={{ padding: '0.4rem 0.5rem' }}>Kind</th>
+                      <th style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>Value (eV)</th>
+                      <th style={{ padding: '0.4rem 0.5rem' }}>Against the normal floor</th>
+                      <th style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>Against the inverted floor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {BOUNDS.map((bound) => {
+                      const room = result.rooms.find((r) => r.bound === bound)
+                      return (
+                        <tr key={bound.name} style={{ borderBottom: '1px solid var(--border-color, #ccc)', verticalAlign: 'top' }}>
+                          <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                            {bound.name}
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{bound.source}</div>
+                          </td>
+                          <td style={{ padding: '0.4rem 0.5rem' }}>{bound.year}</td>
+                          <td style={{ padding: '0.4rem 0.5rem' }}>
+                            {bound.kind === 'floor' ? 'floor (oscillations)' : bound.kind === 'direct' ? 'ceiling, one kind (KATRIN)' : `ceiling (${bound.confidence})`}
+                          </td>
+                          <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>{bound.kind === 'floor' ? bound.value.toFixed(4) : bound.value}</td>
+                          <td style={{ padding: '0.4rem 0.5rem' }}>{room ? roomText(room.normal) : '—'}</td>
+                          <td style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>{room ? roomText(room.inverted) : '—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* How to read the results: draft wording (CLAUDE.md §29). It explains each row, column and the control, and says nothing about why. */}
+              <div style={{ color: 'var(--text-muted)' }}>
+                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                  <strong>How to read these results.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>The first table</strong> is the chain of arithmetic behind Pictures 1 and 2 for the total you chose: the mass of each
+                    neutrino, the redshift and age at which they turn heavy, how that compares with the microwave background’s release, and the
+                    neutrinos’ share of the matter and its effect on small clumps. The last column shows each step so you can follow it.
+                  </li>
+                  <li>
+                    <strong>“How many times later than the release”</strong> divides the age when the neutrinos turn heavy by the age when the
+                    microwave background was released.
+                  </li>
+                  <li>
+                    <strong>“Redshift if one neutrino carried the whole total”</strong> is the grey circle on Picture 1: the same sum, but with the
+                    whole mass in a single neutrino instead of shared among three.
+                  </li>
+                  <li>
+                    <strong>The second table</strong> lists every floor, ceiling and limit the experiment uses, with its year and where it comes
+                    from. A <em>floor</em> is a minimum from oscillation experiments (computed here from their measured gaps). A <em>ceiling</em>{' '}
+                    is a 95 percent upper limit from the sky. KATRIN’s limit (90 percent) is for one kind of neutrino, not the sum, so it is not
+                    compared with the floors.
+                  </li>
+                  <li>
+                    <strong>The last two columns</strong> compare each ceiling with the two floors: the ceiling divided by the floor, and how far
+                    above the floor it is. “Below the floor” means the ceiling is lower than the floor, by the amount shown. The first table and
+                    these columns use the same numbers as Picture 3.
+                  </li>
+                  <li>
+                    <strong>“Try a different total mass”</strong> changes only the first table, Picture 1’s violet marker, Picture 2’s yellow dot
+                    and the worked examples. It does not change the second table, Picture 3 or your predictions.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                <strong>More to read, now that you have seen the results.</strong> These are the papers and DESI’s own guide, whose summaries state
+                what the predictions ask, so they were kept back until now. They open in a new tab. Most of the papers use technical words.
+              </p>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2607.27410">
+                    DESI DR2 Results IV: Alcock-Paczyński measurements from the Lyman-alpha forest and cosmological constraints (2026)
+                  </ExternalLink>
+                  : the paper with DESI’s newest neutrino-mass limits, in its section on neutrino masses. It opens on arxiv.org, the free site where
+                  scientists post their papers.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2503.14744">Constraints on neutrino physics from DESI DR2 BAO and DR1 full shape (Elbers et al., 2025)</ExternalLink>
+                  : the paper behind the March 2025 limit, including the assumption of three equal neutrino masses.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2503.14738">DESI DR2 Results II: baryon acoustic oscillations and cosmological constraints (2025)</ExternalLink>
+                  : DESI’s main paper for the March 2025 release, with its neutrino-mass limits for the standard model and for a changing dark energy.
+                </li>
+                <li>
+                  <ExternalLink href="https://www.desi.lbl.gov/2025/03/19/desi-dr2-results-march-19-guide/">DESI: DR2 Results, March 19 guide</ExternalLink>
+                  : DESI’s own plainer guide to its March 2025 results, from the team that ran the survey.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2410.05380">NuFit-6.0: updated global analysis of three-flavor neutrino oscillations (2024)</ExternalLink>
+                  : the global fit of oscillation experiments from which the two floors are worked out.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2406.13516">Direct neutrino-mass measurement based on 259 days of KATRIN data (2024)</ExternalLink>
+                  : the paper behind KATRIN’s laboratory limit of 0.45 eV.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/1807.06209">Planck 2018 results VI: cosmological parameters</ExternalLink>: the paper behind the
+                  2018 limit of 0.12 eV and the matter share of 0.315 used here.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2406.14554">Neutrino mass bounds from DESI 2024 are relaxed by Planck PR4 and cosmological supernovae (Allali and Notari)</ExternalLink>
+                  : shows how a different choice of microwave-background data loosens an earlier DESI limit.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2605.21456">Negative neutrino mass or negative dark energy? (Kıbrıs et al., 2026)</ExternalLink>
+                  : a 2026 paper on the mismatch between the sky’s limit and the oscillation floor, and one way out of it.
+                </li>
+              </ul>
+            </div>
           </div>
         )}
       </div>
