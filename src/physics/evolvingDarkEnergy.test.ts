@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   anchoredMagnitudeDifference,
   brightnessPercentChange,
+  brightnessSteps,
+  densityRatioSteps,
   ANCHOR_REDSHIFT,
   comovingDistanceMpc,
   comovingDistanceRatio,
@@ -216,5 +218,34 @@ describe('magnitudes and brightness (added in Step 3)', () => {
 
   it('makes a brighter (more negative) difference a larger percentage', () => {
     expect(brightnessPercentChange(-0.05)).toBeGreaterThan(brightnessPercentChange(-0.02))
+  })
+})
+
+describe('the worked-example steps (added in Step 4)', () => {
+  it('multiplies out to the density ratio, with the exponents written in the specification', () => {
+    // Pantheon+ at z = 1: exponent 3 (1 - 0.838 - 0.62) = -1.374; 2^-1.374 = 0.3860; exp(-3 x -0.62 x 0.5) = exp(0.93) = 2.5345
+    const steps = densityRatioSteps(1, -0.838, -0.62)
+    expect(steps.exponent).toBeCloseTo(-1.374, 10)
+    expect(steps.powerFactor).toBeCloseTo(0.386, 3)
+    expect(steps.exponentialFactor).toBeCloseTo(2.5345, 3)
+    expect(steps.ratio).toBeCloseTo(0.9779, 3)
+    expect(steps.ratio).toBe(darkEnergyDensityRatio(1, -0.838, -0.62))
+  })
+
+  it('has a density ratio of 1 for a constant dark energy', () => {
+    expect(densityRatioSteps(1.5, -1, 0).ratio).toBe(1)
+  })
+
+  it('turns a magnitude difference into an exponent, a factor and a percentage', () => {
+    // Union3 at z = 0.5: -0.0514 magnitudes -> exponent 0.02056 -> factor 1.0485 -> 4.85 percent brighter
+    const steps = brightnessSteps(-0.0514)
+    expect(steps.exponent).toBeCloseTo(0.02056, 5)
+    expect(steps.factor).toBeCloseTo(1.0485, 4)
+    expect(steps.percent).toBeCloseTo(4.85, 2)
+    expect(steps.percent).toBe(brightnessPercentChange(-0.0514))
+  })
+
+  it('throws a RangeError outside the redshift range', () => {
+    expect(() => densityRatioSteps(2.5, -1, 0)).toThrow(RangeError)
   })
 })

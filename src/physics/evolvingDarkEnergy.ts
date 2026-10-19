@@ -148,6 +148,28 @@ export function brightnessPercentChange(magnitudeDifference: number): number {
   return (10 ** (-0.4 * magnitudeDifference) - 1) * 100
 }
 
+// The steps of the brightness conversion, so a worked example can show them: the exponent -0.4 x difference, the factor 10^exponent, and
+// the percentage change (factor - 1) x 100. A factor above 1 means brighter.
+export function brightnessSteps(magnitudeDifference: number): { exponent: number; factor: number; percent: number } {
+  const exponent = -0.4 * magnitudeDifference
+  const factor = 10 ** exponent
+  return { exponent, factor, percent: (factor - 1) * 100 }
+}
+
+// The steps of the density ratio, so a worked example can show them: the exponent 3 (1 + w0 + wa), the power (1 + z)^exponent, the
+// exponential factor exp(-3 wa z / (1 + z)), and their product (the density ratio itself).
+export function densityRatioSteps(
+  redshift: number,
+  w0: number,
+  wa: number,
+): { exponent: number; powerFactor: number; exponentialFactor: number; ratio: number } {
+  requireRedshift(redshift)
+  const exponent = 3 * (1 + w0 + wa)
+  const powerFactor = (1 + redshift) ** exponent
+  const exponentialFactor = Math.exp((-3 * wa * redshift) / (1 + redshift))
+  return { exponent, powerFactor, exponentialFactor, ratio: powerFactor * exponentialFactor }
+}
+
 export type SigmaLabel = 'hint' | 'evidence' | 'discovery'
 
 // Decision 6: only two reference lines, 3 ("often called evidence") and 5 ("the usual bar for a

@@ -1,8 +1,20 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { ANCHOR_REDSHIFT, brightnessPercentChange, FITS, PUBLISHED_SIGMAS, runEvolvingDarkEnergy } from '../physics/evolvingDarkEnergy'
+import {
+  ANCHOR_REDSHIFT,
+  brightnessPercentChange,
+  brightnessSteps,
+  densityRatioSteps,
+  FITS,
+  PUBLISHED_SIGMAS,
+  RESULT_REDSHIFTS,
+  runEvolvingDarkEnergy,
+} from '../physics/evolvingDarkEnergy'
+import { ReferencePanel } from './EnergyMomentumExperiment'
 
 // Frontier and Beyond, Experiment 2 (docs/experiments/frontier-and-beyond/02-does-dark-energy-change.md).
+// Step 4 adds the "Words and formulas" panel (the formulas appear after the run), the "How far back?" control and the neutral results (both
+// shown after the run), and the links withheld until then. The wording of Step 4 is draft wording for the owner's review (§28.1).
 // Step 2 built the status label, the introduction (with its section on supernovae and its "Want to know more?" links), the choice of
 // supernova collection and Picture 1 with its guide (wording approved by the owner on 2026-10-19). Step 3 adds the two predictions, Run,
 // the staged run and Pictures 2 and 3 with their guides (draft wording for the owner's review, CLAUDE.md §28.1, written to the standard of
@@ -101,7 +113,8 @@ const MAG_MAX = 0.01
 const DIST_TICKS = [-4, -3, -2, -1, 0, 1]
 const MAG_TICKS = [-0.06, -0.04, -0.02, 0]
 const P2_REDSHIFT_TICKS = [2, 1, 0]
-const MARKED_REDSHIFT = 0.5 // the "How far back?" control (a later step) will move this; for now it is the redshift Prediction 1 names
+const DEFAULT_LOOKBACK = 0.5 // the redshift Prediction 1 names; the "How far back?" control (shown after the run) can move it
+const LOOKBACK_CHOICES = RESULT_REDSHIFTS // 0.3, 0.5, 1 and 2
 
 const xIn = (redshift: number, left: number, right: number) => left + ((REDSHIFT_MAX - redshift) / REDSHIFT_MAX) * (right - left)
 const yIn = (value: number, min: number, max: number) => P2_BOTTOM - ((value - min) / (max - min)) * (P2_BOTTOM - P2_TOP)
@@ -112,22 +125,52 @@ const P3_RIGHT = 520
 const P3_SIGMA_MAX = 6
 const xSigma = (sigma: number) => P3_LEFT + (sigma / P3_SIGMA_MAX) * (P3_RIGHT - P3_LEFT)
 
+// Terms the introduction and the guides define, repeated in the "Words and formulas" panel with no new claims. The formulas are added after the
+// run, because their worked examples use the learner's own numbers (§12).
+const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
+  { term: 'Dark energy', meaning: 'the name for whatever is making the expansion of the universe speed up. Nobody knows what it is.' },
+  { term: 'Constant dark energy', meaning: 'the simplest idea, part of the standard model: dark energy has the same strength at every time. In the two-number description it is w₀ = −1 and wₐ = 0.' },
+  { term: 'Changing dark energy', meaning: 'dark energy whose strength was different in the past.' },
+  { term: 'w', meaning: 'a number that says how the dark energy’s density changes as the universe grows. w = −1: the density stays the same. w above −1: it thins out as space grows. w below −1: it grows.' },
+  { term: 'w₀ and wₐ', meaning: 'the two numbers that describe a dark energy that changes: w₀ is the value of w today, and wₐ says how much w was different in the past.' },
+  { term: 'Redshift, z, and the universe’s size', meaning: 'the redshift says how much the universe has grown since light set out. z = 1 means the universe was half its present size, z = 0.5 two thirds, z = 2 one third. z = 0 is today.' },
+  { term: 'Density of dark energy', meaning: 'how much dark energy there is in each cubic metre of space. “1×” means the same as today, 1.2× means 20 percent more than today.' },
+  { term: 'Supernova', meaning: 'a star exploding so powerfully that, for a few weeks, it shines as brightly as a whole galaxy.' },
+  { term: 'Type Ia supernova', meaning: 'the kind used to measure distances. A white dwarf explodes, and the explosions reach nearly the same peak brightness, so how dim one looks tells how far away it is.' },
+  { term: 'White dwarf', meaning: 'the burnt-out core of a star like our Sun: about the size of the Earth, with about as much material as the Sun, slowly cooling.' },
+  { term: 'Electron degeneracy pressure', meaning: 'the outward push from electrons, which cannot be in exactly the same state, when gravity squeezes them together. It is what holds a white dwarf up.' },
+  { term: 'Standard candle and standard ruler', meaning: 'something whose true brightness (candle) or true length (ruler) is known, so how dim or how small it looks tells how far away it is.' },
+  { term: 'BAO (baryon acoustic oscillations)', meaning: 'a preferred spacing of about 500 million light-years between galaxies, left by sound waves in the early universe. It is used as a standard ruler.' },
+  { term: 'DESI', meaning: 'the Dark Energy Spectroscopic Instrument, a survey that measured the positions of more than 14 million galaxies and quasars.' },
+  { term: 'Supernova collection', meaning: 'a list of supernova measurements gathered by different telescopes and calibrated in different ways. Different collections can give slightly different answers.' },
+  { term: 'Sigma', meaning: 'how many “give or takes” a result is away from what a constant dark energy predicts (Experiment 1 of this group). The bigger the number, the harder it is to put the difference down to chance.' },
+  { term: 'The lines at 3 and 5 sigma', meaning: '“often called evidence” and “the usual bar for a discovery”. These are rules of thumb that some sciences use, not laws.' },
+  { term: 'Distance difference', meaning: 'how much nearer or farther, in percent, a galaxy would look with a changing dark energy than with a constant one that has the same amount of matter. A minus sign means nearer.' },
+  { term: 'Magnitude', meaning: 'the scale astronomers use for brightness. It runs backwards: a smaller number is brighter. A difference of 2.5 magnitudes is a factor of 10 in brightness, and 0.1 magnitudes is about 10 percent.' },
+  { term: 'Nearby supernovae lined up', meaning: 'a supernova survey cannot fix the Hubble constant by itself, so the comparison lines the nearby supernovae (z = 0.05) up so that both agree there, and shows how the farther ones differ.' },
+]
+
+const f3 = (value: number) => (value < 0 ? `−${Math.abs(value).toFixed(3)}` : value.toFixed(3))
+const MORE_LINKS_TEXT = 'These are the links that were kept back until you had seen the results.'
+
 export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyExperimentProps) {
   const [fitName, setFitName] = useState(FITS[0].name)
   const [distancePrediction, setDistancePrediction] = useState<DistanceChoice | null>(null)
   const [recalibrationPrediction, setRecalibrationPrediction] = useState<RecalibrationChoice | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  const [lookback, setLookback] = useState(DEFAULT_LOOKBACK)
   const fit = FITS.find((f) => f.name === fitName)!
-  // The curve does not depend on the redshift argument; 0.5 is only the default "How far back?" value of a later step.
-  const result = runEvolvingDarkEnergy(fit, 0.5)
+  const result = runEvolvingDarkEnergy(fit, lookback)
   const at = (redshift: number) => result.curve.find((r) => r.redshift === redshift)!
   const atHalfSize = at(1)
   const atTwoThirds = at(0.5)
   const path = result.curve.map((r) => `${xOf(r.redshift).toFixed(1)},${yOf(r.densityRatio).toFixed(1)}`).join(' ')
   const bothPredicted = distancePrediction !== null && recalibrationPrediction !== null
-  const marked = result.curve.find((r) => r.redshift === MARKED_REDSHIFT)!
+  const marked = result.atChosenRedshift
   const brighterPercent = brightnessPercentChange(marked.magnitudeDifference)
+  const brightness = brightnessSteps(marked.magnitudeDifference)
+  const densitySteps = densityRatioSteps(lookback, fit.w0, fit.wa)
 
   // Presentation only: advances one stage at a time. The result does not depend on this timer.
   useEffect(() => {
@@ -148,6 +191,7 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
     setRecalibrationPrediction(null)
     setStatus('idle')
     setStage(0)
+    setLookback(DEFAULT_LOOKBACK)
   }
   const choose = (name: string) => {
     setFitName(name)
@@ -167,7 +211,7 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
   const P3_ROW = 46
   const P3_FIRST_ROW = 74
   const p3AxisY = P3_FIRST_ROW + sigmaRows.length * P3_ROW + 6
-  const p3Height = p3AxisY + 100
+  const p3Height = p3AxisY + 118
   const strongerOrWeaker = (ratio: number) => (ratio > 1 ? 'stronger' : 'weaker')
   const percentFromToday = (ratio: number) => Math.abs(Math.round((ratio - 1) * 100))
 
@@ -364,6 +408,32 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
             </li>
           </ul>
         </div>
+
+        <ReferencePanel
+          entries={
+            status === 'complete'
+              ? [
+                  ...REFERENCE_ENTRIES,
+                  {
+                    term: 'Dark energy’s density compared with today (formula)',
+                    meaning: `density ratio = (1 + z)^(3 × (1 + w₀ + wₐ)) × exp(−3 × wₐ × z ÷ (1 + z)). Example, with ${fit.name} (w₀ = ${published(fit.w0)}, wₐ = ${published(fit.wa)}) at z = ${lookback}: the exponent is 3 × (1 + (${published(fit.w0)}) + (${published(fit.wa)})) = ${f3(densitySteps.exponent)}. The first factor is ${1 + lookback}^(${f3(densitySteps.exponent)}) = ${f3(densitySteps.powerFactor)}. The second is exp(−3 × (${published(fit.wa)}) × ${lookback} ÷ ${1 + lookback}) = ${f3(densitySteps.exponentialFactor)}. Multiplied: ${f3(densitySteps.ratio)}. So the dark energy was ${f3(densitySteps.ratio)} times as dense as it is today.`,
+                  },
+                  {
+                    term: 'w at redshift z (formula)',
+                    meaning: `w = w₀ + wₐ × z ÷ (1 + z). Example: ${published(fit.w0)} + (${published(fit.wa)}) × ${lookback} ÷ ${1 + lookback} = ${f3(marked.equationOfState)}.`,
+                  },
+                  {
+                    term: 'Distance and the distance difference (formula)',
+                    meaning: `The distance to a galaxy at redshift z is (c ÷ H₀) × the sum of dz′ ÷ E(z′) from 0 to z (an integral, worked out by computer), where E(z) = √(Ωm × (1 + z)³ + (1 − Ωm) × the density ratio above) and Ωm is the amount of matter. The distance difference is the percent by which this distance differs from the one for a constant dark energy with the same Ωm: ${fixed2(Math.abs(marked.distanceDifferencePercent))} percent ${marked.distanceDifferencePercent < 0 ? 'nearer' : 'farther'} at z = ${lookback} with ${fit.name} (Ωm = ${fit.omegaMatter}). The Hubble constant cancels out of this comparison.`,
+                  },
+                  {
+                    term: 'Brightness from magnitudes (formula)',
+                    meaning: `brightness factor = 10^(−0.4 × the magnitude difference). Example, at z = ${lookback} with ${fit.name}: the magnitude difference is ${f3(marked.magnitudeDifference)}, so the exponent is −0.4 × (${f3(marked.magnitudeDifference)}) = ${f3(brightness.exponent)}, and 10^(${f3(brightness.exponent)}) = ${f3(brightness.factor)}. That is ${fixed2(Math.abs(brightness.percent))} percent ${brightness.percent > 0 ? 'brighter' : 'fainter'} than the constant case.`,
+                  },
+                ]
+              : REFERENCE_ENTRIES
+          }
+        />
 
         {/* The choice of supernova collection (specification, Learner Controls). */}
         <div style={{ marginBottom: '2rem' }}>
@@ -650,9 +720,9 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
                     constant dark energy: 0 %
                   </text>
                   <polyline points={distPath} fill="none" stroke={FIT_COLOR} strokeWidth={3} />
-                  <circle cx={xIn(MARKED_REDSHIFT, DIST_LEFT, DIST_RIGHT)} cy={yIn(marked.distanceDifferencePercent, DIST_MIN, DIST_MAX)} r={5} fill={FIT_COLOR} stroke={TEXT_COLOR} />
-                  <text x={xIn(MARKED_REDSHIFT, DIST_LEFT, DIST_RIGHT)} y={yIn(marked.distanceDifferencePercent, DIST_MIN, DIST_MAX) + 18} fill={FIT_COLOR} fontSize="11" textAnchor="middle">
-                    z = {MARKED_REDSHIFT}: {signed2(marked.distanceDifferencePercent)} %
+                  <circle cx={xIn(lookback, DIST_LEFT, DIST_RIGHT)} cy={yIn(marked.distanceDifferencePercent, DIST_MIN, DIST_MAX)} r={5} fill={FIT_COLOR} stroke={TEXT_COLOR} />
+                  <text x={xIn(lookback, DIST_LEFT, DIST_RIGHT)} y={yIn(marked.distanceDifferencePercent, DIST_MIN, DIST_MAX) + 18} fill={FIT_COLOR} fontSize="11" textAnchor={lookback >= 2 ? 'start' : 'middle'}>
+                    z = {lookback}: {signed2(marked.distanceDifferencePercent)} %
                   </text>
                   <line x1={DIST_LEFT} y1={P2_BOTTOM} x2={DIST_RIGHT} y2={P2_BOTTOM} stroke={MUTED_COLOR} strokeWidth={1.5} />
                   {P2_REDSHIFT_TICKS.map((z) => (
@@ -697,9 +767,9 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
                   <text x={MAG_RIGHT} y={yIn(0, MAG_MIN, MAG_MAX) - 22} fill={MUTED_COLOR} fontSize="9" textAnchor="end">
                     lined up here (z = {ANCHOR_REDSHIFT})
                   </text>
-                  <circle cx={xIn(MARKED_REDSHIFT, MAG_LEFT, MAG_RIGHT)} cy={yIn(marked.magnitudeDifference, MAG_MIN, MAG_MAX)} r={5} fill={FIT_COLOR} stroke={TEXT_COLOR} />
-                  <text x={xIn(MARKED_REDSHIFT, MAG_LEFT, MAG_RIGHT)} y={yIn(marked.magnitudeDifference, MAG_MIN, MAG_MAX) + 18} fill={FIT_COLOR} fontSize="11" textAnchor="middle">
-                    z = {MARKED_REDSHIFT}: {signed2(marked.magnitudeDifference)}
+                  <circle cx={xIn(lookback, MAG_LEFT, MAG_RIGHT)} cy={yIn(marked.magnitudeDifference, MAG_MIN, MAG_MAX)} r={5} fill={FIT_COLOR} stroke={TEXT_COLOR} />
+                  <text x={xIn(lookback, MAG_LEFT, MAG_RIGHT)} y={yIn(marked.magnitudeDifference, MAG_MIN, MAG_MAX) + 18} fill={FIT_COLOR} fontSize="11" textAnchor={lookback >= 2 ? 'start' : 'middle'}>
+                    z = {lookback}: {signed2(marked.magnitudeDifference)}
                   </text>
                   <line x1={MAG_LEFT} y1={P2_BOTTOM} x2={MAG_RIGHT} y2={P2_BOTTOM} stroke={MUTED_COLOR} strokeWidth={1.5} />
                   {P2_REDSHIFT_TICKS.map((z) => (
@@ -749,8 +819,8 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
                   <strong>The grey dashed line at 0 %:</strong> a constant dark energy. Nothing differs from it, by definition.
                 </li>
                 <li>
-                  <strong>The orange line and its dot:</strong> your description. The dot is at z = {MARKED_REDSHIFT}, when the universe was two
-                  thirds of its present size, with its value written below it. This is the galaxy that Prediction 1 asked about.
+                  <strong>The orange line and its dot:</strong> your description. The dot is at z = {lookback}, when the universe was{' '}
+                  {fixed2(1 / (1 + lookback))} of its present size, with its value written below it. {lookback === DEFAULT_LOOKBACK ? 'At z = 0.5 this is the galaxy that Prediction 1 asked about. ' : ''}After the run you can move it with “How far back?” below.
                 </li>
               </ul>
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -771,11 +841,11 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
                 </li>
                 <li>
                   <strong>The orange line and its dot:</strong> the brightness difference for your description, with the dot again at z ={' '}
-                  {MARKED_REDSHIFT}.
+                  {lookback}.
                 </li>
               </ul>
               <p style={paragraph}>
-                <strong>A worked moment, with your numbers.</strong> Suppose a constant dark energy would put a galaxy at redshift {MARKED_REDSHIFT}{' '}
+                <strong>A worked moment, with your numbers.</strong> Suppose a constant dark energy would put a galaxy at redshift {lookback}{' '}
                 exactly 100 units of distance away. With the description you chose ({fit.name}), the dot says it would be at{' '}
                 {fixed2(100 + marked.distanceDifferencePercent)} units: {fixed2(Math.abs(marked.distanceDifferencePercent))} percent{' '}
                 {marked.distanceDifferencePercent < 0 ? 'nearer' : 'farther'}. In brightness, the dot is at {signed2(marked.magnitudeDifference)}{' '}
@@ -857,12 +927,15 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
               </text>
               {stage >= 6 && (
                 <g>
-                  <rect x={P3_LEFT} y={p3AxisY + 52} width={P3_RIGHT - P3_LEFT} height={34} fill="none" stroke={MUTED_COLOR} strokeDasharray="4 3" />
-                  <text x={P3_LEFT + 8} y={p3AxisY + 66} fill={TEXT_COLOR} fontSize="11">
-                    July 2026, DESI’s Lyman-alpha analysis: its result agrees with the standard model
+                  <rect x={P3_LEFT} y={p3AxisY + 52} width={P3_RIGHT - P3_LEFT} height={50} fill="none" stroke={MUTED_COLOR} strokeDasharray="4 3" />
+                  <text x={P3_LEFT + 8} y={p3AxisY + 67} fill={TEXT_COLOR} fontSize="11">
+                    July 2026, DESI’s Lyman-alpha analysis: on its own, its result agrees with
                   </text>
-                  <text x={P3_LEFT + 8} y={p3AxisY + 80} fill={MUTED_COLOR} fontSize="11">
-                    (a constant dark energy). No sigma value is quoted for it, so it has no bar.
+                  <text x={P3_LEFT + 8} y={p3AxisY + 81} fill={TEXT_COLOR} fontSize="11">
+                    the standard model (a constant dark energy). With the microwave background,
+                  </text>
+                  <text x={P3_LEFT + 8} y={p3AxisY + 95} fill={MUTED_COLOR} fontSize="11">
+                    its paper quotes 2.7 sigma (3.2 with supernovae) for a changing one: no bar.
                   </text>
                 </g>
               )}
@@ -894,8 +967,10 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
                   chance that chance alone could make a bump this big.
                 </li>
                 <li>
-                  <strong>The dashed box at the bottom</strong> appears last, at stage 6. It is a newer result with no sigma value, so it cannot
-                  be drawn as a bar. It is described in words.
+  <strong>The dashed box at the bottom</strong> appears last, at stage 6. It is a newer analysis. Its own measurement agrees with a
+                  constant dark energy, but when the DESI team combined it with the other data they again found a preference for a changing
+                  one: 2.7 sigma with the microwave background, and 3.2 sigma when supernovae are added too. The abstract does not say which
+                  supernova collection that 3.2 uses, so it is not drawn as a bar next to the others. It is described in words.
                 </li>
               </ul>
               <p style={paragraph}>
@@ -919,6 +994,187 @@ export function EvolvingDarkEnergyExperiment({ onComplete }: EvolvingDarkEnergyE
                 </li>
                 <li>
                   <strong>The last box.</strong> A newer result does not have to point the same way as an older one.
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* After the run: the "How far back?" control, the neutral results, the guide to them and the links kept back until now.
+            Draft wording for the owner's review (CLAUDE.md §28.1, §29). The results only report; they do not say why. */}
+        {status === 'complete' && (
+          <div style={{ marginTop: '2rem' }}>
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>How far back?</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              Choose when the light you are asking about set out (z is the redshift, and “size” is the universe’s size compared with today).
+              The dot in Picture 2 and the numbers below follow your choice. Your predictions stay as they are.
+            </p>
+            <div style={{ marginBottom: '1.5rem' }}>
+              {LOOKBACK_CHOICES.map((z) => (
+                <button
+                  key={z}
+                  type="button"
+                  onClick={() => setLookback(z)}
+                  className={`toggle-button${lookback === z ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  z = {z} (size {fixed2(1 / (1 + z))})
+                </button>
+              ))}
+            </div>
+
+            <div style={{ border: '1px solid var(--border-color, #ccc)', borderRadius: '8px', padding: '1rem', fontSize: '0.875rem' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+                <strong>Results.</strong> These are the numbers behind the three pictures, for the fit with {fit.name}. They only report what was
+                published and what was calculated. They do not say why the numbers are what they are.
+              </p>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Your collection, and the time you chose (z = {lookback})</p>
+              <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '1.5rem' }}>
+                <tbody>
+                  {(
+                    [
+                      ['Supernova collection', `${fit.name} (${fit.source}, Table 5)`],
+                      ['w₀, wₐ and the amount of matter', `${published(fit.w0)}, ${published(fit.wa)} and ${fit.omegaMatter}`],
+                      ['Published preference over a constant dark energy', `${fit.sigma.toFixed(1)} sigma`],
+                      ['w today', `${f3(result.equationOfStateToday)}`],
+                      [`w at z = ${lookback}`, `${f3(marked.equationOfState)}`],
+                      ['Dark energy density today, compared with today', '1.000×'],
+                      [`Dark energy density at z = ${lookback}, compared with today`, `${f3(marked.densityRatio)}×`],
+                      [`Distance difference at z = ${lookback}`, `${signed2(marked.distanceDifferencePercent)} %`],
+                      [`Brightness difference at z = ${lookback} (nearby lined up)`, `${f3(marked.magnitudeDifference)} magnitudes (${signed2(brightness.percent)} % in brightness)`],
+                    ] as const
+                  ).map(([name, value]) => (
+                    <tr key={name} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                      <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{name}</td>
+                      <td style={{ padding: '0.4rem 0', fontWeight: 'bold', textAlign: 'right' }}>{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>The same numbers at four times in the past, for {fit.name}</p>
+              <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '420px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'right' }}>
+                      <th style={{ padding: '0.4rem 0.5rem 0.4rem 0', textAlign: 'left' }}>At redshift</th>
+                      {result.atEachRedshift.map((r) => (
+                        <th key={r.redshift} style={{ padding: '0.4rem 0.5rem' }}>
+                          z = {r.redshift}
+                          <br />
+                          <span style={{ fontWeight: 'normal' }}>size {fixed2(1 / (1 + r.redshift))}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      [
+                        ['Dark energy density (× today)', (r: (typeof result.atEachRedshift)[number]) => `${f3(r.densityRatio)}×`],
+                        ['w', (r: (typeof result.atEachRedshift)[number]) => f3(r.equationOfState)],
+                        ['Distance difference (%)', (r: (typeof result.atEachRedshift)[number]) => signed2(r.distanceDifferencePercent)],
+                        ['Brightness difference (magnitudes)', (r: (typeof result.atEachRedshift)[number]) => f3(r.magnitudeDifference)],
+                      ] as const
+                    ).map(([name, format]) => (
+                      <tr key={name} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{name}</td>
+                        {result.atEachRedshift.map((r) => (
+                          <td
+                            key={r.redshift}
+                            style={{ padding: '0.4rem 0.5rem', textAlign: 'right', fontWeight: r.redshift === lookback ? 'bold' : 'normal' }}
+                          >
+                            {format(r)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>The published preferences for a changing dark energy</p>
+              <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '1.5rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                    <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>Data combined</th>
+                    <th style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>Sigma (quoted)</th>
+                    <th style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>Source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {PUBLISHED_SIGMAS.map((row) => (
+                    <tr key={row.name} style={{ borderBottom: '1px solid var(--border-color, #ccc)', fontWeight: row.name === fit.name ? 'bold' : 'normal' }}>
+                      <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                        {row.name}
+                        {row.name === fit.name ? ' (the one you chose)' : ''}
+                      </td>
+                      <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>{row.sigma.toFixed(1)}</td>
+                      <td style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>{row.source}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                    <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>DESI + CMB, with the July 2026 Lyman-alpha analysis</td>
+                    <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>2.7</td>
+                    <td style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>DESI Collaboration, arXiv:2607.27410</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                    <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>The same, “also including supernovae” (collection not stated in the abstract)</td>
+                    <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>3.2</td>
+                    <td style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>DESI Collaboration, arXiv:2607.27410</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* How to read the results: draft wording (CLAUDE.md §29). It explains each row and the control, and says nothing about why. */}
+              <div style={{ color: 'var(--text-muted)' }}>
+                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                  <strong>How to read these results.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>The first table</strong> gives the numbers that went into the description you chose, and the numbers for the time
+                    you chose with “How far back?”. The dark energy density is compared with today’s, so today is always 1.000×. The distance
+                    difference and the brightness difference are in Picture 2 (the dot). A minus sign on the distance difference means nearer,
+                    and a minus sign on the brightness difference means brighter.
+                  </li>
+                  <li>
+                    <strong>The second table</strong> repeats these numbers at the four times you can choose, so you can compare them side by
+                    side. The time you chose is in bold.
+                  </li>
+                  <li>
+                    <strong>The third table</strong> lists the published sigma values, as in Picture 3, with the two numbers from DESI’s July
+                    2026 paper added. Sigma values are quoted from the papers, not worked out here. The rows are not all the same kind of
+                    comparison, so they should not be added up or averaged.
+                  </li>
+                  <li>
+                    <strong>“How far back?”</strong> moves only the time in the first two tables and the dot in Picture 2. It does not change
+                    the published sigma values or your predictions.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                <strong>More to read, now that you have seen the results.</strong> {MORE_LINKS_TEXT} They open in a new tab.
+              </p>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <ExternalLink href="https://www.desi.lbl.gov/2026/07/30/new-desi-dr2-lyman-alpha-results-shed-light-on-dark-energy/">
+                    DESI: New DR2 Lyman-alpha results shed light on dark energy
+                  </ExternalLink>
+                  : DESI’s own plain-language note on its July 2026 analysis.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2607.27410">DESI DR2 Results IV (July 2026)</ExternalLink>: the scientific paper
+                  behind that note, with the 2.7 and 3.2 sigma values (technical words).
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2511.07517">
+                    The Dark Energy Survey supernova program: a reanalysis with an updated calibration (2025)
+                  </ExternalLink>
+                  : the paper on the recalibrated DES supernovae (technical words).
                 </li>
               </ul>
             </div>
