@@ -12,6 +12,7 @@ import {
   sigma8OnCurve,
   tensionRange,
   tensionSigma,
+  uncertaintiesFacing,
 } from './lumpiness'
 import type { S8Measurement } from './lumpiness'
 
@@ -214,5 +215,26 @@ describe('out-of-range inputs (test 12)', () => {
     expect(() => runLumpiness(planck)).toThrow(RangeError)
     const bad: S8Measurement = { ...kidsLegacy, name: 'bad', up: 0 }
     expect(() => tensionSigma(bad, planck)).toThrow(RangeError)
+  })
+})
+
+describe('the uncertainties used (added in Step 4)', () => {
+  it('gives the one on the side facing the other value, in the order of the arguments', () => {
+    // a survey below Planck: its upward uncertainty, and Planck's downward one
+    expect(uncertaintiesFacing(kids1000, planck)).toEqual({ first: 0.024, second: 0.016 })
+    expect(uncertaintiesFacing(desTatt, planck)).toEqual({ first: 0.019, second: 0.016 })
+    // the other order: Planck first, so its downward one first, then the survey's upward one
+    expect(uncertaintiesFacing(planck, kids1000)).toEqual({ first: 0.016, second: 0.024 })
+    // a constructed survey above Planck: its downward uncertainty, and Planck's upward one
+    const above: S8Measurement = { ...kidsLegacy, name: 'constructed', value: 0.86, up: 0.03, down: 0.02 }
+    expect(uncertaintiesFacing(above, planck)).toEqual({ first: 0.02, second: 0.016 })
+  })
+
+  it('is what the result reports, and what the combined uncertainty is made of', () => {
+    const r = runLumpiness(kids1000)
+    expect(r.surveyUncertaintyUsed).toBe(0.024)
+    expect(r.earlyUncertaintyUsed).toBe(0.016)
+    expect(r.combinedUncertainty).toBeCloseTo(Math.sqrt(0.024 ** 2 + 0.016 ** 2), 12)
+    expect(r.gap / r.combinedUncertainty).toBeCloseTo(r.tension, 12)
   })
 })

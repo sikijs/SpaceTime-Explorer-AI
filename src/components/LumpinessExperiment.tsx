@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { EARLY_MEASUREMENT, LATE_MEASUREMENTS, MEASUREMENTS, PLANCK_OWN, runLumpiness, s8, shift, tensionSigma } from '../physics/lumpiness'
+import { EARLY_MEASUREMENT, LATE_MEASUREMENTS, MEASUREMENTS, PLANCK_OWN, runLumpiness, s8, shift, sigma8OnCurve, tensionSigma } from '../physics/lumpiness'
+import { ReferencePanel } from './EnergyMomentumExperiment'
 import type { LumpinessResult, ShiftDirection, TensionRange } from '../physics/lumpiness'
 
 // Frontier and Beyond, Experiment 3 (docs/experiments/frontier-and-beyond/03-how-lumpy-is-the-universe.md).
 // Step 2 built the status label, the introduction with its "Want to know more?" links, the weak-lensing drawing and Picture 1 (wording approved
 // by the owner on 2026-10-19). Step 3 adds the two predictions, Run, the staged run, the survey measurements and gaps on Picture 1, and Pictures 2
-// and 3 with their guides (draft wording for the owner's review, CLAUDE.md §28.1, written to the standard of §29). The "Look closer at" control,
-// the results, the "Words and formulas" panel and the tutor come in later steps. The interface only displays numbers from src/physics/lumpiness.ts (CLAUDE.md §9); the only calculation here
+// and 3 with their guides (wording approved by the owner on 2026-10-19). Step 4 adds the "Look closer at" control and the neutral results (shown
+// after the run), the "Words and formulas" panel (the formulas appear after the run) and the links kept back until the results (draft wording for
+// the owner's review, CLAUDE.md §28.1, written to the standard of §29). The tutor comes in a later step. The interface only displays numbers from src/physics/lumpiness.ts (CLAUDE.md §9); the only calculation here
 // is where a point is drawn.
 
 interface LumpinessExperimentProps {
@@ -48,6 +50,37 @@ const RANGE_CHOICES: Array<{ value: TensionRange; label: string }> = [
   { value: 'under1', label: 'Within 1 sigma (it agrees)' },
   { value: 'oneToTwoAndAHalf', label: 'Between 1 and 2.5 sigma (partly)' },
   { value: 'over2AndAHalf', label: 'More than 2.5 sigma (clearly different)' },
+]
+
+// "Look closer at": the survey whose numbers the first results table shows and whose curve Picture 2 draws bold. DES Year 6 is two
+// measurements, the main one (NLA) and the other way of modelling the same data (TATT).
+const FOCUS_PRESETS: Array<{ label: string; names: string[] }> = [
+  { label: 'KiDS-1000', names: ['KiDS-1000'] },
+  { label: 'KiDS-Legacy', names: ['KiDS-Legacy'] },
+  { label: 'DES Year 6', names: ['DES Y6 (NLA)', 'DES Y6 (TATT)'] },
+]
+const DEFAULT_FOCUS = 1
+
+// Terms the introduction and the guides define, repeated in the "Words and formulas" panel with no new claims. The formulas are added after the run,
+// because their worked examples use the learner's chosen survey (§12).
+const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
+  { term: 'Lumpiness', meaning: 'how much the density of matter differs from place to place today: crowded in galaxies and clusters, thin in the empty spaces between them.' },
+  { term: 'Weak lensing, or cosmic shear', meaning: 'the tiny stretching of the shapes of distant galaxies by the matter their light passes on the way to us. Averaged over millions of galaxies, the pattern of stretching maps the matter.' },
+  { term: 'Ωm (said “omega-m”)', meaning: 'the share of the universe’s energy today that is matter, meaning ordinary matter plus dark matter. For example, 0.315 means about 31 percent matter.' },
+  { term: 'σ₈ (said “sigma-eight”)', meaning: 'how big the ripples in the matter are today, measured in regions of one standard size. It is not the sigma that measures disagreement. A larger σ₈ means a lumpier universe.' },
+  { term: 'S₈ (said “S-eight”)', meaning: 'one number that combines the two: S₈ = σ₈ × √(Ωm ÷ 0.3). Lensing measures mostly this combination. It has no units.' },
+  { term: 'Curve of equal S₈', meaning: 'all the pairs of Ωm and σ₈ that give one value of S₈ (Picture 2). A lensing measurement fixes this curve, not a point on it.' },
+  { term: 'The standard model', meaning: 'the model of the universe built in the Cosmology experiments, with ordinary matter, dark matter and dark energy.' },
+  { term: 'The microwave background', meaning: 'the faint afterglow of the Big Bang, which reaches us from every direction in the sky (Cosmology Experiment 3).' },
+  { term: 'Planck Legacy', meaning: `the European Space Agency’s Planck satellite mapped the microwave background, and “Legacy” means its final, most refined results (2018). From that map and the standard model, scientists predict the lumpiness today: S₈ = ${EARLY_MEASUREMENT.value} ± ${EARLY_MEASUREMENT.up}. It is a prediction, not a lensing measurement.` },
+  { term: 'KiDS (the Kilo-Degree Survey)', meaning: 'a survey run with a telescope of the European Southern Observatory. It photographs a large patch of sky in nine colours to measure the shapes of galaxies for weak lensing. KiDS-1000 is the team’s first analysis (2020) and KiDS-Legacy its analysis of the complete survey (2025): the same survey, analysed twice.' },
+  { term: 'Square degree', meaning: 'a patch of sky about five times the area of the full Moon. KiDS-Legacy covers 1,347 of them, about 3 percent of the whole sky.' },
+  { term: 'DES (the Dark Energy Survey)', meaning: 'a different survey, with a different telescope, camera and team. Its Year 6 result (2026) uses six years of observing and about 140 million galaxies. It is shown twice, NLA and TATT: two ways of treating one nuisance effect in the analysis.' },
+  { term: 'Calibration', meaning: 'checking a measuring tool against something whose true value is known, as you might check a kitchen scale with a 1-kilogram weight. For lensing, a hard part is calibrating how far away the lensed galaxies are.' },
+  { term: 'Best value and error bar', meaning: 'every measurement is a best value plus a “give or take”. The error bar draws the “give or take” as a line either side of the dot. The surveys publish different upward and downward “give or takes”, so a bar can be longer on one side.' },
+  { term: 'Gap and combined give-or-take', meaning: 'the gap is the difference between two best values. The combined give-or-take is the doubt about the gap, worked out from the two uncertainties, using for each the one on the side facing the other value.' },
+  { term: 'Sigma and tension', meaning: 'sigma is the gap divided by the combined give-or-take: how many “give or takes” fit in the gap. About 1 is ordinary. A tension is a disagreement too big to put down to chance, a puzzle and not yet a discovery. 5 sigma is the usual bar in many sciences for calling a difference real.' },
+  { term: 'The paper’s own sigma', meaning: 'the scientists’ own comparison with the microwave background, which uses fuller statistics (and, for DES, a combination of microwave-background data), so it can differ from the simple sigma worked out here. The results show both.' },
 ]
 
 // Layout of Picture 1: one row for the microwave-background prediction and one for each survey.
@@ -333,7 +366,7 @@ function LensingDrawing() {
 }
 
 // ---- Picture 2: why lensing measures a combination (stage 4) ----
-function Picture2({ result }: { result: LumpinessResult }) {
+function Picture2({ result, highlight }: { result: LumpinessResult; highlight: string[] }) {
   const early = result.early
   const planckOwn = result.planckOwnPoint
   const colorOf = (name: string) => (name === early.name ? EARLY_COLOR : name === 'DES Y6 (TATT)' ? PALE_LATE_COLOR : LATE_COLOR)
@@ -402,13 +435,14 @@ function Picture2({ result }: { result: LumpinessResult }) {
             points={c.points.map((pt) => `${omegaX(pt.omegaMatter).toFixed(1)},${sigma8Y(pt.sigma8).toFixed(1)}`).join(' ')}
             fill="none"
             stroke={colorOf(c.measurement.name)}
-            strokeWidth={c.measurement.name === early.name ? 3 : 2.5}
+            strokeWidth={highlight.includes(c.measurement.name) ? 5 : c.measurement.name === early.name ? 3 : 2.5}
+            opacity={highlight.length > 0 && !highlight.includes(c.measurement.name) && c.measurement.name !== early.name ? 0.55 : 1}
           />
         ))}
         {placed.map(({ c, endY, labelY }) => (
           <g key={c.measurement.name}>
             <line x1={P2_RIGHT} y1={endY} x2={P2_RIGHT + 10} y2={labelY} stroke={colorOf(c.measurement.name)} strokeWidth={1} />
-            <text x={P2_RIGHT + 14} y={labelY + 4} fill={colorOf(c.measurement.name)} fontSize="11">
+            <text x={P2_RIGHT + 14} y={labelY + 4} fill={colorOf(c.measurement.name)} fontSize="11" fontWeight={highlight.includes(c.measurement.name) ? 'bold' : 'normal'}>
               {c.measurement.name === early.name ? 'Planck Legacy' : c.measurement.name} ({c.measurement.value})
             </text>
           </g>
@@ -641,9 +675,15 @@ export function LumpinessExperiment({ onComplete }: LumpinessExperimentProps) {
   const [rangePrediction, setRangePrediction] = useState<TensionRange | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  const [focusIndex, setFocusIndex] = useState(DEFAULT_FOCUS)
 
   // The numbers all come from the physics module. Which survey is "looked at" comes in a later step, so any survey does for the curves.
-  const result = runLumpiness(LATE_MEASUREMENTS[0])
+  const focusNames = FOCUS_PRESETS[focusIndex].names
+  const focusMeasurements = focusNames.map((n) => MEASUREMENTS.find((m) => m.name === n)!)
+  const results = focusMeasurements.map((m) => runLumpiness(m))
+  const result = results[0]
+  const sign3 = (value: number) => (value < 0 ? `−${Math.abs(value).toFixed(3)}` : `+${value.toFixed(3)}`)
+  const kidsChange = shift(MEASUREMENTS.find((m) => m.name === 'KiDS-1000')!, MEASUREMENTS.find((m) => m.name === 'KiDS-Legacy')!)
   const bothPredicted = shiftPrediction !== null && rangePrediction !== null
   const kids1000 = MEASUREMENTS.find((m) => m.name === 'KiDS-1000')!
 
@@ -666,6 +706,7 @@ export function LumpinessExperiment({ onComplete }: LumpinessExperimentProps) {
     setRangePrediction(null)
     setStatus('idle')
     setStage(0)
+    setFocusIndex(DEFAULT_FOCUS)
   }
   const run = () => {
     setStage(1)
@@ -896,6 +937,28 @@ export function LumpinessExperiment({ onComplete }: LumpinessExperimentProps) {
           </ul>
         </div>
 
+        <ReferencePanel
+          entries={
+            status === 'complete'
+              ? [
+                  ...REFERENCE_ENTRIES,
+                  {
+                    term: 'S₈ and the curve of equal S₈ (formula)',
+                    meaning: `S₈ = σ₈ × √(Ωm ÷ 0.3), so on a curve of equal S₈, σ₈ = S₈ ÷ √(Ωm ÷ 0.3). Example, with ${result.focus.name} (S₈ = ${result.focus.value}) at Ωm = 0.35: √(0.35 ÷ 0.3) = ${Math.sqrt(0.35 / 0.3).toFixed(4)}, so σ₈ = ${result.focus.value} ÷ ${Math.sqrt(0.35 / 0.3).toFixed(4)} = ${sigma8OnCurve(result.focus.value, 0.35).toFixed(3)}.`,
+                  },
+                  {
+                    term: 'Sigma, with unequal error bars (formula)',
+                    meaning: `sigma = (the gap) ÷ √(u₁² + u₂²), where u₁ and u₂ are the two uncertainties on the sides facing each other. Example, with ${result.focus.name} against ${result.early.name}: the gap is ${result.early.value} − ${result.focus.value} = ${result.gap.toFixed(3)}. The survey’s uncertainty on the side facing the microwave background is ${result.surveyUncertaintyUsed}, and the microwave background’s on the side facing the survey is ${result.earlyUncertaintyUsed}. So the combined give-or-take is √(${result.surveyUncertaintyUsed}² + ${result.earlyUncertaintyUsed}²) = ${result.combinedUncertainty.toFixed(4)}, and sigma = ${result.gap.toFixed(3)} ÷ ${result.combinedUncertainty.toFixed(4)} = ${result.tension.toFixed(2)}.`,
+                  },
+                  {
+                    term: 'The change between two analyses (formula)',
+                    meaning: `change = (the later S₈) − (the earlier S₈); a plus sign means higher. Example, KiDS-1000 to KiDS-Legacy: ${MEASUREMENTS.find((m) => m.name === 'KiDS-Legacy')!.value} − ${MEASUREMENTS.find((m) => m.name === 'KiDS-1000')!.value} = ${sign3(kidsChange)}.`,
+                  },
+                ]
+              : REFERENCE_ENTRIES
+          }
+        />
+
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
             says which answer is right. */}
         {(
@@ -1111,10 +1174,164 @@ export function LumpinessExperiment({ onComplete }: LumpinessExperimentProps) {
         </div>
 
         {/* Picture 2: why lensing measures a combination (stage 4). Draft wording for the owner's review. */}
-        {status !== 'idle' && stage >= 4 && <Picture2 result={result} />}
+        {status !== 'idle' && stage >= 4 && <Picture2 result={result} highlight={status === 'complete' ? focusNames : []} />}
 
         {/* Picture 3: how the values changed (stage 5). Draft wording for the owner's review. */}
         {status !== 'idle' && stage >= 5 && <Picture3 />}
+
+        {/* After the run: the "Look closer at" control, the neutral results, the guide to them and the links kept back until now. Draft wording
+            for the owner's review (CLAUDE.md §28.1, §29). The results only report; they do not say why. */}
+        {status === 'complete' && (
+          <div style={{ marginTop: '2rem' }}>
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Look closer at</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              Choose a survey. The first table below shows its numbers, and its curve is drawn bold in Picture 2. Your predictions stay as they are.
+              (DES Year 6 shows both of its versions.)
+            </p>
+            <div style={{ marginBottom: '1.5rem' }}>
+              {FOCUS_PRESETS.map((preset, i) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => setFocusIndex(i)}
+                  className={`toggle-button${focusIndex === i ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ border: '1px solid var(--border-color, #ccc)', borderRadius: '8px', padding: '1rem', fontSize: '0.875rem' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+                <strong>Results.</strong> These are the numbers behind the three pictures. They only report what was published and what was calculated.
+                They do not say why the numbers are what they are.
+              </p>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                {FOCUS_PRESETS[focusIndex].label}, compared with {result.early.name}
+              </p>
+              <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '320px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'right' }}>
+                      <th style={{ padding: '0.4rem 0.5rem 0.4rem 0', textAlign: 'left' }} />
+                      {results.map((r) => (
+                        <th key={r.focus.name} style={{ padding: '0.4rem 0.5rem' }}>
+                          {r.focus.name} ({r.focus.year})
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      [
+                        ['S₈, with upward and downward give-or-take', (r: LumpinessResult) => `${r.focus.value.toFixed(3)} (+${r.focus.up.toFixed(3)}, −${r.focus.down.toFixed(3)})`],
+                        [`Microwave background (${result.early.name})`, (r: LumpinessResult) => `${r.early.value.toFixed(3)} (±${r.early.up.toFixed(3)})`],
+                        ['Gap between the two best values', (r: LumpinessResult) => r.gap.toFixed(3)],
+                        ['Survey’s give-or-take, side facing the microwave background', (r: LumpinessResult) => r.surveyUncertaintyUsed.toFixed(3)],
+                        ['Microwave background’s give-or-take, side facing the survey', (r: LumpinessResult) => r.earlyUncertaintyUsed.toFixed(3)],
+                        ['Combined give-or-take', (r: LumpinessResult) => r.combinedUncertainty.toFixed(4)],
+                        ['Sigma, worked out here', (r: LumpinessResult) => r.tension.toFixed(2)],
+                        ['The paper’s own comparison (sigma)', (r: LumpinessResult) => r.paperSigma],
+                      ] as const
+                    ).map(([name, format]) => (
+                      <tr key={name} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{name}</td>
+                        {results.map((r) => (
+                          <td key={r.focus.name} style={{ padding: '0.4rem 0.5rem', textAlign: 'right', fontWeight: 'bold' }}>
+                            {format(r)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Every measurement</p>
+              <div style={{ overflowX: 'auto', marginBottom: '1rem' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '420px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                      <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>Measurement</th>
+                      <th style={{ padding: '0.4rem 0.5rem' }}>Year</th>
+                      <th style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>S₈</th>
+                      <th style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>Sigma, worked out here</th>
+                      <th style={{ padding: '0.4rem 0 0.4rem 0.5rem', textAlign: 'right' }}>The paper’s own</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MEASUREMENTS.map((m) => (
+                      <tr key={m.name} style={{ borderBottom: '1px solid var(--border-color, #ccc)', fontWeight: focusNames.includes(m.name) ? 'bold' : 'normal' }}>
+                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{m.name}</td>
+                        <td style={{ padding: '0.4rem 0.5rem' }}>{m.year}</td>
+                        <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>
+                          {m.value.toFixed(3)} (+{m.up.toFixed(3)}, −{m.down.toFixed(3)})
+                        </td>
+                        <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>{m.side === 'early' ? '—' : tensionSigma(m, result.early).toFixed(2)}</td>
+                        <td style={{ padding: '0.4rem 0 0.4rem 0.5rem', textAlign: 'right' }}>{m.side === 'early' ? '—' : m.paperSigma}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p style={{ marginTop: 0, marginBottom: '1rem' }}>
+                <strong>The change in KiDS’s S₈</strong> from KiDS-1000 to KiDS-Legacy: <strong>{sign3(kidsChange)}</strong>.
+              </p>
+
+              {/* How to read the results: draft wording (CLAUDE.md §29). It explains each row and the control, and says nothing about why. */}
+              <div style={{ color: 'var(--text-muted)' }}>
+                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                  <strong>How to read these results.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>The first table</strong> is the sigma worked out step by step for the survey you chose, as in Experiment 1: the gap, the
+                    two “give or takes” that face each other, the combined “give or take”, and the gap divided by it. The survey’s own bar is longer
+                    on one side than the other, so the table says which side is used.
+                  </li>
+                  <li>
+                    <strong>The two sigma lines are different on purpose.</strong> “Worked out here” is the simple sigma. “The paper’s own” is the
+                    figure the scientists published, from fuller statistics and (for DES) compared with a combination of microwave-background data,
+                    so the two should not be expected to match exactly. The simple one is a guide to the size of the gap, not the final word.
+                  </li>
+                  <li>
+                    <strong>The second table</strong> lists every measurement side by side. The survey you chose is in bold.
+                  </li>
+                  <li>
+                    <strong>The change in KiDS’s S₈</strong> is the later value minus the earlier one, so a plus sign means higher.
+                  </li>
+                  <li>
+                    <strong>“Look closer at”</strong> changes only the first table, the bold line in Picture 2 and the worked examples in the
+                    “Words and formulas” panel. It does not change the pictures’ numbers or your predictions.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                <strong>More to read, now that you have seen the results.</strong> These are the links that were kept back until you had seen the
+                results. They open in a new tab.
+              </p>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2007.15633">KiDS-1000 cosmology: cosmic shear constraints (Asgari et al., 2020)</ExternalLink>
+                  : the scientific paper behind the first KiDS measurement (technical words).
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/1807.06209">Planck 2018 results VI: cosmological parameters</ExternalLink>: the scientific
+                  paper that gives the Ωm and σ₈ used in the introduction (technical words).
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2602.12238">Status of the S₈ tension: a 2026 review of probe discrepancies (Pantos and Perivolaropoulos)</ExternalLink>
+                  : a review that compares many measurements, including KiDS-Legacy and DES Year 6 (technical words).
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

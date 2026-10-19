@@ -69,6 +69,13 @@ export function tensionSigma(a: S8Measurement, b: S8Measurement): number {
   return (high.value - low.value) / combinedUncertainty(low.up, high.down)
 }
 
+// The two uncertainties that tensionSigma uses for a pair: for each value, the one on the side facing the other value. Returned as
+// { first, second } for the arguments in the order given, so a worked example can show them.
+export function uncertaintiesFacing(a: S8Measurement, b: S8Measurement): { first: number; second: number } {
+  const aIsLow = a.value <= b.value
+  return aIsLow ? { first: a.up, second: b.down } : { first: a.down, second: b.up }
+}
+
 // The change in S8 from one measurement to another (positive = the second is higher).
 export function shift(from: S8Measurement, to: S8Measurement): number {
   return to.value - from.value
@@ -112,6 +119,8 @@ export interface LumpinessResult {
   early: S8Measurement
   focus: S8Measurement
   gap: number
+  surveyUncertaintyUsed: number // the survey's uncertainty on the side facing the early value
+  earlyUncertaintyUsed: number // the early value's uncertainty on the side facing the survey
   combinedUncertainty: number
   tension: number
   paperSigma: string
@@ -125,13 +134,14 @@ export interface LumpinessResult {
 export function runLumpiness(focus: S8Measurement): LumpinessResult {
   if (focus.side !== 'late') throw new RangeError('The measurement to look closer at must be a survey (a late measurement)')
   const early = EARLY_MEASUREMENT
-  const low = focus.value <= early.value ? focus : early
-  const high = focus.value <= early.value ? early : focus
+  const facing = uncertaintiesFacing(focus, early)
   return {
     early,
     focus,
     gap: Math.abs(early.value - focus.value),
-    combinedUncertainty: combinedUncertainty(low.up, high.down),
+    surveyUncertaintyUsed: facing.first,
+    earlyUncertaintyUsed: facing.second,
+    combinedUncertainty: combinedUncertainty(facing.first, facing.second),
     tension: tensionSigma(focus, early),
     paperSigma: focus.paperSigma,
     otherTensions: LATE_MEASUREMENTS.filter((m) => m !== focus).map((m) => ({ measurement: m, tension: tensionSigma(m, early) })),
