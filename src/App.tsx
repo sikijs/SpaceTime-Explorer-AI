@@ -3,6 +3,7 @@ import type { ComponentType } from 'react'
 import { Welcome } from './components/Welcome'
 import { HubbleTensionExperiment } from './components/HubbleTensionExperiment'
 import { EvolvingDarkEnergyExperiment } from './components/EvolvingDarkEnergyExperiment'
+import { LumpinessExperiment } from './components/LumpinessExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -605,6 +606,15 @@ const chapters: Chapter[] = [
     learned:
       "Dark energy might not be constant. DESI's 2025 data, combined with the microwave background and a collection of supernovae, fit a dark energy that changes over time slightly better than a constant one, by 2.8 to 4.2 sigma depending on the supernova collection. The effect on distances is small, about 1 to 3 percent at redshift 0.5 for the published fits, so only very large surveys can see it. The preference fell from 4.2 to 3.2 sigma when the Dark Energy Survey supernovae were recalibrated, and DESI's July 2026 Lyman-alpha analysis, on its own, agrees with a constant dark energy, though the combined preference stays at 2.7 to 3.2 sigma. None reaches the 5 sigma bar, so this is a hint, not a discovery: Contested, as of October 2026.",
     next: 'The next experiment looks at a tension that went away: how lumpy is the universe, and why a disagreement between surveys shrank when a measurement was improved.',
+  },
+  {
+    title: 'How lumpy is the universe?',
+    group: 'Frontier and Beyond',
+    Component: LumpinessExperiment,
+    // Placeholder, for the owner's review (CLAUDE.md §28.1). Shown only after the tutor's explanation, which is not built yet; the real
+    // summary is drafted when the tutor is built (specification, "Chapter summary").
+    learned: 'The summary of this experiment is not written yet.',
+    next: 'The summary of this experiment is not written yet.',
   },
 ]
 
