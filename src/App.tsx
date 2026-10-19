@@ -89,6 +89,8 @@ const groupOrder = [
 const groupOverviews: Record<string, string> = {
   'Black Holes and Strong Gravity':
     'This group follows black holes from several sides: how small something must be to become one, what happens to time, orbits, light and a falling traveler near one, what spin changes, where black holes come from, and how one might end.',
+  'Frontier and Beyond':
+    'This group follows recent results that are still being tested: where measurements disagree, where something unexpected has been seen, and what a result must show before it counts as a discovery. Each experiment says how settled its result is, as of October 2026.',
 }
 
 const chapters: Chapter[] = [
