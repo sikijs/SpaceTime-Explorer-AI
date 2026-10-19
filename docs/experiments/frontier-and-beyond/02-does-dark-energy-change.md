@@ -104,9 +104,9 @@ Dark energy density compared with today, `ρ_DE(z) ÷ ρ_DE(0)` (computed):
 
 | Collection | z = 0.5 | z = 1.0 | z = 2.0 | w at z = 0 | w at z = 0.5 | w at z = 1 |
 |---|---|---|---|---|---|---|
-| Pantheon+ | 1.065 | 0.978 | 0.764 | −0.838 | −0.981 | −1.148 |
-| Union3 | 1.184 | 1.063 | 0.730 | −0.667 | −0.919 | −1.212 |
-| DES Y5 | 1.123 | 1.018 | 0.743 | −0.752 | −0.950 | −1.182 |
+| Pantheon+ | 1.065 | 0.978 | 0.764 | −0.838 | −1.045 | −1.148 |
+| Union3 | 1.184 | 1.063 | 0.730 | −0.667 | −1.030 | −1.212 |
+| DES Y5 | 1.123 | 1.018 | 0.743 | −0.752 | −1.039 | −1.182 |
 
 **Two honest points the specification draws from these numbers.** (a) The differences are **1 to 3 percent in distance** and **0.02 to 0.05 magnitudes** in brightness: small, which is why a hint needs a very large survey. (b) In this two-number description, dark energy was **stronger a few billion years ago and weaker much earlier** (the density at z = 2 is about 0.73 to 0.76 of today's, and above 1 near z = 0.5), and w drops below −1 in the past. Whether the real dark energy does this, or whether the two-number formula is just the simplest curve that fits the data, is **not known** (Decision 4).
 
@@ -124,7 +124,7 @@ export function anchoredMagnitudeDifference(z: number, fit: DarkEnergyFit, ancho
 export function runEvolvingDarkEnergy(fit: DarkEnergyFit, z: number): EvolvingDarkEnergyResult
 // the chosen fit, w and density ratio today and at z, the distance ratio and anchored magnitude difference at z, and the distance ratio at the
 // other three redshifts, so the results can show them all
-export function sigmaLabel(sigma: number): 'below 3' | 'hint' | 'evidence' | 'discovery'   // thresholds: see Decision 6
+export function sigmaLabel(sigma: number): 'hint' | 'evidence' | 'discovery'   // below 3, 3 to below 5, 5 and above: see Decision 6
 ```
 
 Out-of-range inputs throw `RangeError` (z below 0 or above 2, Ωm outside 0 to 1). The module reuses the Simpson integration pattern and conventions of `darkEnergyExperiment.ts` (Cosmology Experiment 5) where it can, and invents no new physical assumption. With `w₀ = −1`, `wₐ = 0` it must reproduce Cosmology Experiment 5's matter-plus-Λ distance with `Λ = 1 − Ωm`.
@@ -322,4 +322,6 @@ Defaults are what I will use unless you say otherwise.
 
 ## Implementation Notes
 
-None yet. Nothing is built. After approval, the work follows `CLAUDE.md` §6 and §21 one step at a time, starting with the physics model and its tests.
+**Built so far (2026-10-19):**
+
+- **Step 1, physics model and tests:** `src/physics/evolvingDarkEnergy.ts` and `evolvingDarkEnergy.test.ts` (19 tests covering the 12 required tests, checked by ten deliberate breaks of the module, each of which made at least one test fail). The full suite passed (922 tests); `tsc` shows no errors in the new files. **Differences from this specification, for the owner's approval:** (1) `sigmaLabel` returns `'hint' | 'evidence' | 'discovery'`, not the four values first listed: with Decision 6's default (reference lines at 3 and 5 only), "below 3" and "hint" were the same thing; (2) the module also exports `PUBLISHED_SIGMAS` (the five bars of Picture 3, with sources), `RESULT_REDSHIFTS`, `ANCHOR_REDSHIFT`, `MAX_REDSHIFT`, `comovingDistanceMpc`, `distanceDifferencePercent` and a `curve` (z = 0 to 2 in steps of 0.1) in the result, so the interface reads every number from the module (§9); (3) **a correction to this specification's table:** the "w at z = 0.5" column was copied from the wrong row of the script output (it was the z = 0.3 value). It now reads −1.045 (Pantheon+), −1.030 (Union3) and −1.039 (DES Y5); all other numbers were right. **The owner approved all three differences on 2026-10-19.** Not checked: anything in the interface (not built).
