@@ -14,16 +14,17 @@ import {
   TYPICAL_ENERGY_TODAY_EV,
 } from '../physics/neutrinoMass'
 import type { HeavyTiming, Room, RoomRange } from '../physics/neutrinoMass'
+import { NeutrinoMassTutor } from './NeutrinoMassTutor'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
 // Frontier and Beyond, Experiment 4 (docs/experiments/frontier-and-beyond/04-can-the-universe-weigh-a-neutrino.md).
 // Step 2 built the status label, the introduction with its new-word list and its "Want to know more?" links, a drawing of the relic neutrino
-// sea, and the skeleton of Picture 1 with its guide (wording approved by the owner on 2026-10-19). Step 3 adds the two predictions, Run, the
-// staged run, the neutrinos' turning point on Picture 1, and Pictures 2 and 3 with their guides. The results, the "Try a different total mass"
-// control, the links kept back until the results, the tutor and the chapter summary come in later steps (wording approved by the owner on
-// 2026-10-19 for Steps 2 and 3). Step 4 adds the "Try a different total mass" control, the neutral results tables and their guide, the formulas
-// in the "Words and formulas" panel and the links kept back until the results (all shown after the run). The tutor and the chapter summary come
-// in later steps. All Step 4 wording is draft wording for the owner's review (CLAUDE.md §28.1), written to the standard of §29. The interface only displays numbers from src/physics (CLAUDE.md §9); the only calculation
+// sea, and the skeleton of Picture 1 with its guide. Step 3 added the two predictions, Run, the staged run, the neutrinos' turning point on
+// Picture 1, and Pictures 2 and 3 with their guides. Step 4 added the "Try a different total mass" control, the neutral results tables and their
+// guide, the formulas in the "Words and formulas" panel and the links kept back until the results (all shown after the run). Step 5 adds the
+// tutor (NeutrinoMassTutor.tsx) and the chapter summary (in App.tsx). The wording of Steps 2 and 3 was approved by the owner on 2026-10-19; the
+// wording of Steps 4 and 5 is draft wording for the owner's review (CLAUDE.md §28.1), written to the standard of §29. The interface only
+// displays numbers from src/physics (CLAUDE.md §9); the only calculation
 // here is where a point is drawn.
 
 interface NeutrinoMassExperimentProps {
@@ -184,7 +185,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'arXiv', meaning: 'the free website where scientists post their papers. Links to “arxiv.org” on this page lead to the original papers, which use technical words.' },
 ]
 
-export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentProps) {
+export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: NeutrinoMassExperimentProps) {
   const [timingPrediction, setTimingPrediction] = useState<HeavyTiming | null>(null)
   const [roomPrediction, setRoomPrediction] = useState<RoomRange | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -1246,6 +1247,17 @@ export function NeutrinoMassExperiment({ onComplete }: NeutrinoMassExperimentPro
               </ul>
             </div>
           </div>
+        )}
+
+        {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The summary below the experiment (in
+            App) is shown only once the learner reaches the explanation. */}
+        {status === 'complete' && timingPrediction !== null && roomPrediction !== null && (
+          <NeutrinoMassTutor
+            totalMassEv={totalMass}
+            timingPrediction={timingPrediction}
+            roomPrediction={roomPrediction}
+            onExplained={() => onTutorComplete?.()}
+          />
         )}
       </div>
     </div>

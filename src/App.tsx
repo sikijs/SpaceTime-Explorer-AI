@@ -623,10 +623,12 @@ const chapters: Chapter[] = [
     title: 'Can the universe weigh a neutrino?',
     group: 'Frontier and Beyond',
     Component: NeutrinoMassExperiment,
-    // PLACEHOLDER: the real chapter summary is drafted with the tutor (a later step) and approved line by line (CLAUDE.md §28.1). It is shown
-    // only after the tutor's explanation, which is not built yet, so a learner never sees this text.
-    learned: 'The summary of this experiment will be written when its tutor is built.',
-    next: 'The next experiments will appear here once they have an approved specification.',
+    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's explanation.
+    // Every number is the published one the experiment uses (DESI arXiv:2503.14744 and 2607.27410, Planck arXiv:1807.06209, NuFIT 6.0 arXiv:2410.05380).
+    // "What's next" says nothing about Experiment 5 until it has an approved specification (Decision 13).
+    learned:
+      "Neutrinos left over from the Big Bang fill space, and the sky can weigh them, because even a tiny mass changes how the universe expanded and how matter clumped. For three equal masses adding up to 0.06 eV, the neutrinos turn from light-like to matter-like about 74 million years after the Big Bang, long after the microwave background was released (380,000 years). They make up well under 1 percent of the matter, and smooth the smallest clumps by about 3.6 percent. Oscillation experiments set a floor on the total of about 0.059 eV, or 0.10 eV if the masses are in the inverted order. The sky's ceiling has come down from 0.12 eV (Planck, 2018) to 0.0642 eV (DESI, March 2025) to 0.0592 eV (DESI, July 2026), almost level with the first floor and below the second. DESI's March 2025 paper reported a 3 sigma tension with the floor, and allowing a changing dark energy relaxes the limit to 0.163 eV. Possible explanations are a data or analysis choice, a different dark energy, or new neutrino physics; none is established. This model shows why a tiny mass leaves a mark, not DESI's limit itself. Contested, as of October 2026.",
+    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
   },
 ]
 
