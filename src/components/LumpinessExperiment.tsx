@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { EARLY_MEASUREMENT, LATE_MEASUREMENTS, MEASUREMENTS, PLANCK_OWN, runLumpiness, s8, shift, sigma8OnCurve, tensionSigma } from '../physics/lumpiness'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { LumpinessTutor } from './LumpinessTutor'
 import type { LumpinessResult, ShiftDirection, TensionRange } from '../physics/lumpiness'
 
 // Frontier and Beyond, Experiment 3 (docs/experiments/frontier-and-beyond/03-how-lumpy-is-the-universe.md).
@@ -668,7 +669,7 @@ function Picture3() {
   )
 }
 
-export function LumpinessExperiment({ onComplete }: LumpinessExperimentProps) {
+export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessExperimentProps) {
   const early = EARLY_MEASUREMENT
   const planckFromParts = s8(PLANCK_OWN.sigma8, PLANCK_OWN.omegaMatter)
   const [shiftPrediction, setShiftPrediction] = useState<ShiftDirection | null>(null)
@@ -1331,6 +1332,17 @@ export function LumpinessExperiment({ onComplete }: LumpinessExperimentProps) {
               </ul>
             </div>
           </div>
+        )}
+
+        {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The summary below the experiment (in
+            App) is shown only once the learner reaches the explanation. */}
+        {status === 'complete' && shiftPrediction !== null && rangePrediction !== null && (
+          <LumpinessTutor
+            focus={focusMeasurements[0]}
+            shiftPrediction={shiftPrediction}
+            rangePrediction={rangePrediction}
+            onExplained={() => onTutorComplete?.()}
+          />
         )}
       </div>
     </div>
