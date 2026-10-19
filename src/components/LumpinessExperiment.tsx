@@ -1,11 +1,13 @@
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { EARLY_MEASUREMENT, PLANCK_OWN, s8 } from '../physics/lumpiness'
+import { EARLY_MEASUREMENT, LATE_MEASUREMENTS, MEASUREMENTS, PLANCK_OWN, runLumpiness, s8, shift, tensionSigma } from '../physics/lumpiness'
+import type { LumpinessResult, ShiftDirection, TensionRange } from '../physics/lumpiness'
 
 // Frontier and Beyond, Experiment 3 (docs/experiments/frontier-and-beyond/03-how-lumpy-is-the-universe.md).
-// Step 2 builds the status label, the introduction with its "Want to know more?" links, and Picture 1 (the microwave-background prediction on
-// the S8 number line) with its guide. The predictions, Run, the survey measurements, Pictures 2 and 3, the "Look closer at" control, the results,
-// the "Words and formulas" panel and the tutor come in later steps. All wording here is draft wording for the owner's review (CLAUDE.md §28.1),
-// written to the standard of §29. The interface only displays numbers from src/physics/lumpiness.ts (CLAUDE.md §9); the only calculation here
+// Step 2 built the status label, the introduction with its "Want to know more?" links, the weak-lensing drawing and Picture 1 (wording approved
+// by the owner on 2026-10-19). Step 3 adds the two predictions, Run, the staged run, the survey measurements and gaps on Picture 1, and Pictures 2
+// and 3 with their guides (draft wording for the owner's review, CLAUDE.md §28.1, written to the standard of §29). The "Look closer at" control,
+// the results, the "Words and formulas" panel and the tutor come in later steps. The interface only displays numbers from src/physics/lumpiness.ts (CLAUDE.md §9); the only calculation here
 // is where a point is drawn.
 
 interface LumpinessExperimentProps {
@@ -21,8 +23,66 @@ const AXIS_RIGHT = 520
 const TICKS = [0.7, 0.72, 0.74, 0.76, 0.78, 0.8, 0.82, 0.84, 0.86, 0.88]
 
 const EARLY_COLOR = '#38bdf8' // sky blue: the microwave-background prediction
+const LATE_COLOR = '#fb923c' // orange: a survey's measurement
+const PALE_LATE_COLOR = '#fdba74' // paler orange: the other way of modelling the same DES result
 const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
+
+// The run's stages, in the order the learner sees them (the result does not depend on playback speed, CLAUDE.md §11).
+const STAGE_MS = 2600
+const STAGES = [
+  'The microwave-background prediction (Picture 1)',
+  'The surveys’ measurements (Picture 1)',
+  'The gap in sigma (Picture 1)',
+  'Why lensing measures a combination (Picture 2)',
+  'How the values changed (Picture 3)',
+]
+const LAST_STAGE = STAGES.length
+
+const SHIFT_CHOICES: Array<{ value: ShiftDirection; label: string }> = [
+  { value: 'lower', label: 'Lower' },
+  { value: 'same', label: 'About the same' },
+  { value: 'higher', label: 'Higher' },
+]
+const RANGE_CHOICES: Array<{ value: TensionRange; label: string }> = [
+  { value: 'under1', label: 'Within 1 sigma (it agrees)' },
+  { value: 'oneToTwoAndAHalf', label: 'Between 1 and 2.5 sigma (partly)' },
+  { value: 'over2AndAHalf', label: 'More than 2.5 sigma (clearly different)' },
+]
+
+// Layout of Picture 1: one row for the microwave-background prediction and one for each survey.
+const ROW_STEP = 68
+const P1_PLANCK_Y = 70
+const surveyY = (i: number) => P1_PLANCK_Y + 54 + ROW_STEP * i
+
+// Layout of Picture 2: Omega_m along the bottom, sigma8 up the side; one curve of equal S8 for each measurement.
+const P2_LEFT = 64
+const P2_RIGHT = 384
+const P2_TOP = 46
+const P2_BOTTOM = 252
+const OMEGA_AXIS_MIN = 0.2
+const OMEGA_AXIS_MAX = 0.4
+const SIGMA8_AXIS_MIN = 0.6
+const SIGMA8_AXIS_MAX = 1.05
+const OMEGA_TICKS = [0.2, 0.25, 0.3, 0.35, 0.4]
+const SIGMA8_TICKS = [0.6, 0.7, 0.8, 0.9, 1.0]
+const omegaX = (omega: number) => P2_LEFT + ((omega - OMEGA_AXIS_MIN) / (OMEGA_AXIS_MAX - OMEGA_AXIS_MIN)) * (P2_RIGHT - P2_LEFT)
+const sigma8Y = (sigma8: number) => P2_BOTTOM - ((sigma8 - SIGMA8_AXIS_MIN) / (SIGMA8_AXIS_MAX - SIGMA8_AXIS_MIN)) * (P2_BOTTOM - P2_TOP)
+
+// Layout of Picture 3: the year each paper was posted along the bottom, S8 up the side.
+const P3_LEFT = 64
+const P3_RIGHT = 520
+const P3_TOP = 50
+const P3_BOTTOM = 250
+const YEAR_MIN = 2019
+const YEAR_MAX = 2028
+const S8_AXIS_MIN = 0.72
+const S8_AXIS_MAX = 0.88
+const YEAR_TICKS = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027]
+const S8_TICKS = [0.72, 0.76, 0.8, 0.84, 0.88]
+const yearX = (year: number) => P3_LEFT + ((year - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * (P3_RIGHT - P3_LEFT)
+const s8Y = (value: number) => P3_BOTTOM - ((value - S8_AXIS_MIN) / (S8_AXIS_MAX - S8_AXIS_MIN)) * (P3_BOTTOM - P3_TOP)
+const signed3 = (value: number) => (value < 0 ? `−${Math.abs(value).toFixed(3)}` : `+${value.toFixed(3)}`)
 
 const xOf = (value: number) => AXIS_LEFT + ((value - AXIS_MIN) / (AXIS_MAX - AXIS_MIN)) * (AXIS_RIGHT - AXIS_LEFT)
 
@@ -272,11 +332,348 @@ function LensingDrawing() {
   )
 }
 
-export function LumpinessExperiment(_props: LumpinessExperimentProps) {
+// ---- Picture 2: why lensing measures a combination (stage 4) ----
+function Picture2({ result }: { result: LumpinessResult }) {
+  const early = result.early
+  const planckOwn = result.planckOwnPoint
+  const colorOf = (name: string) => (name === early.name ? EARLY_COLOR : name === 'DES Y6 (TATT)' ? PALE_LATE_COLOR : LATE_COLOR)
+  // Labels in a column to the right of the plot, in the order of the curves' right-hand ends, kept at least 14 units apart.
+  const ends = result.curves
+    .map((c) => ({ c, endY: sigma8Y(c.points[c.points.length - 1].sigma8) }))
+    .sort((a, b) => a.endY - b.endY)
+  let previous = -Infinity
+  const placed = ends.map((e) => {
+    const labelY = Math.max(e.endY, previous + 14)
+    previous = labelY
+    return { ...e, labelY }
+  })
+  const markerX = omegaX(planckOwn.omegaMatter)
+  const markerY = sigma8Y(planckOwn.sigma8)
+
+  return (
+    <div style={{ marginTop: '2rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={330}
+        viewBox={`0 0 ${VIEW_WIDTH} 330`}
+        style={svgStyle}
+        role="img"
+        aria-label="Curves of equal S8 in the plane of the matter fraction and sigma8, for the microwave background and each survey"
+      >
+        <text x={P2_LEFT - 24} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Picture 2: why lensing measures a combination
+        </text>
+
+        {/* Axes and grid */}
+        {SIGMA8_TICKS.map((t) => (
+          <g key={t}>
+            <line x1={P2_LEFT} y1={sigma8Y(t)} x2={P2_RIGHT} y2={sigma8Y(t)} stroke={MUTED_COLOR} strokeOpacity={0.25} />
+            <text x={P2_LEFT - 6} y={sigma8Y(t) + 4} fill={MUTED_COLOR} fontSize="10" textAnchor="end">
+              {t.toFixed(1)}
+            </text>
+          </g>
+        ))}
+        <line x1={P2_LEFT} y1={P2_BOTTOM} x2={P2_RIGHT} y2={P2_BOTTOM} stroke={MUTED_COLOR} strokeWidth={1.5} />
+        {OMEGA_TICKS.map((t) => (
+          <g key={t}>
+            <line x1={omegaX(t)} y1={P2_BOTTOM - 4} x2={omegaX(t)} y2={P2_BOTTOM + 4} stroke={MUTED_COLOR} />
+            <text x={omegaX(t)} y={P2_BOTTOM + 17} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+              {t.toFixed(2)}
+            </text>
+          </g>
+        ))}
+        <text x={(P2_LEFT + P2_RIGHT) / 2} y={P2_BOTTOM + 36} fill={TEXT_COLOR} fontSize="12" textAnchor="middle">
+          Ωm: how much of the universe is matter
+        </text>
+        <text x={16} y={(P2_TOP + P2_BOTTOM) / 2} fill={TEXT_COLOR} fontSize="12" textAnchor="middle" transform={`rotate(-90 16 ${(P2_TOP + P2_BOTTOM) / 2})`}>
+          σ₈: how big the ripples are
+        </text>
+
+        {/* The line where Ωm = 0.3, on which σ8 equals S8 */}
+        <line x1={omegaX(0.3)} y1={P2_TOP} x2={omegaX(0.3)} y2={P2_BOTTOM} stroke={TEXT_COLOR} strokeOpacity={0.5} strokeDasharray="5 4" />
+        <text x={omegaX(0.3) + 4} y={P2_TOP + 10} fill={MUTED_COLOR} fontSize="9">
+          Ωm = 0.3: σ₈ equals S₈
+        </text>
+
+        {/* One curve of equal S8 for each measurement */}
+        {result.curves.map((c) => (
+          <polyline
+            key={c.measurement.name}
+            points={c.points.map((pt) => `${omegaX(pt.omegaMatter).toFixed(1)},${sigma8Y(pt.sigma8).toFixed(1)}`).join(' ')}
+            fill="none"
+            stroke={colorOf(c.measurement.name)}
+            strokeWidth={c.measurement.name === early.name ? 3 : 2.5}
+          />
+        ))}
+        {placed.map(({ c, endY, labelY }) => (
+          <g key={c.measurement.name}>
+            <line x1={P2_RIGHT} y1={endY} x2={P2_RIGHT + 10} y2={labelY} stroke={colorOf(c.measurement.name)} strokeWidth={1} />
+            <text x={P2_RIGHT + 14} y={labelY + 4} fill={colorOf(c.measurement.name)} fontSize="11">
+              {c.measurement.name === early.name ? 'Planck Legacy' : c.measurement.name} ({c.measurement.value})
+            </text>
+          </g>
+        ))}
+
+        {/* Planck's own point: its own sigma8 and Omega_m, which make an S8 close to the value used */}
+        <line x1={markerX} y1={markerY + 5} x2={markerX} y2={P2_BOTTOM - 52} stroke={TEXT_COLOR} strokeOpacity={0.6} />
+        <circle cx={markerX} cy={markerY} r={5} fill={TEXT_COLOR} stroke={EARLY_COLOR} strokeWidth={2} />
+        <text x={markerX} y={P2_BOTTOM - 40} fill={TEXT_COLOR} fontSize="10" textAnchor="middle">
+          Planck’s own σ₈ and Ωm
+        </text>
+        <text x={markerX} y={P2_BOTTOM - 27} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+          ({planckOwn.sigma8}, {planckOwn.omegaMatter}): S₈ = {planckOwn.s8.toFixed(3)}
+        </text>
+
+        <text x={P2_LEFT - 24} y={316} fill={MUTED_COLOR} fontSize="10">
+          each curve: every pair (Ωm, σ₈) that gives one value of S₈
+        </text>
+      </svg>
+
+      {/* Picture 2's guide: draft wording (CLAUDE.md §14 and §29) for the owner's review (§28.1). */}
+      <div style={{ marginTop: '1rem', marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        <p style={paragraph}>
+          <strong>How to read this diagram.</strong> S₈ is built from two things, how much of the universe is matter (Ωm) and how big the ripples
+          in it are (σ₈). This picture shows what that means: lensing measures the combination S₈, but it does not tell the two ingredients apart.
+          Each curve answers the question “which pairs of Ωm and σ₈ would give this value of S₈?”
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The bottom line (0.20 to 0.40)</strong> is Ωm, the share of the universe’s energy that is matter. <strong>The side line (0.6 to
+            1.0)</strong> is σ₈, how big the ripples in the matter are today. A point in the picture is a pair of values, one on each line.
+          </li>
+          <li>
+            <strong>Each curve</strong> is all the pairs (Ωm, σ₈) that give <em>one</em> value of S₈. The sky-blue curve is the microwave
+            background’s value, {early.value}. The orange curves are the surveys’ values (the paler one is the second way of treating DES’s
+            nuisance effect). Each is labelled at its right-hand end with its name and its S₈. The curves slope downward: if there is more matter,
+            the ripples must be smaller to give the same S₈.
+          </li>
+          <li>
+            <strong>The dashed upright line at Ωm = 0.3</strong> is where the formula S₈ = σ₈ × √(Ωm ÷ 0.3) has √(0.3 ÷ 0.3) = 1, so σ₈ equals
+            S₈. Every curve crosses it at its own S₈, and that is why 0.3 appears in the formula.
+          </li>
+          <li>
+            <strong>The white dot</strong> is the microwave background’s own pair: σ₈ = {planckOwn.sigma8} and Ωm = {planckOwn.omegaMatter}, which make S₈ ={' '}
+            {planckOwn.s8.toFixed(3)}. It lies almost exactly on the sky-blue curve for {early.value}. (The two numbers differ in the third
+            decimal because different analyses of the same data differ slightly.)
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment, with real numbers.</strong> Take the sky-blue curve, S₈ = {early.value}. At Ωm = 0.25, σ₈ must be {early.value} ÷
+          √(0.25 ÷ 0.3) = {early.value} ÷ 0.9129 = {(early.value / Math.sqrt(0.25 / 0.3)).toFixed(3)}. At Ωm = 0.35 it must be {early.value} ÷ √(0.35 ÷ 0.3) ={' '}
+          {early.value} ÷ 1.0801 = {(early.value / Math.sqrt(0.35 / 0.3)).toFixed(3)}. Both pairs give the same S₈, which is why a lensing measurement cannot say which pair is
+          true. It fixes the curve, not a point on it.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>How close the curves are to each other.</strong> A difference of a few hundredths in S₈ moves a whole curve only a little. The
+            curves are all about as far apart as the gaps you saw in Picture 1.
+          </li>
+          <li>
+            <strong>The order of the curves.</strong> They keep the same order everywhere: a lower S₈ is a lower curve at every Ωm. So “this survey is
+            lower” does not depend on which Ωm you pick.
+          </li>
+          <li>
+            <strong>Why the surveys are compared by S₈.</strong> It is the combination lensing measures best, so comparing S₈ compares the same
+            thing in every survey.
+          </li>
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+// ---- Picture 3: how the values changed (stage 5) ----
+function Picture3() {
+  const early = EARLY_MEASUREMENT
+  const kids1000 = MEASUREMENTS.find((m) => m.name === 'KiDS-1000')!
+  const kidsLegacy = MEASUREMENTS.find((m) => m.name === 'KiDS-Legacy')!
+  const desNla = MEASUREMENTS.find((m) => m.name === 'DES Y6 (NLA)')!
+  const desTatt = MEASUREMENTS.find((m) => m.name === 'DES Y6 (TATT)')!
+  const kidsShiftValue = shift(kids1000, kidsLegacy)
+  const point = (m: (typeof MEASUREMENTS)[number], x: number, color: string) => (
+    <g>
+      <line x1={x} y1={s8Y(m.value + m.up)} x2={x} y2={s8Y(m.value - m.down)} stroke={color} strokeWidth={3} />
+      <line x1={x - 5} y1={s8Y(m.value + m.up)} x2={x + 5} y2={s8Y(m.value + m.up)} stroke={color} strokeWidth={2} />
+      <line x1={x - 5} y1={s8Y(m.value - m.down)} x2={x + 5} y2={s8Y(m.value - m.down)} stroke={color} strokeWidth={2} />
+      <circle cx={x} cy={s8Y(m.value)} r={5} fill={color} />
+    </g>
+  )
+  const xKids1000 = yearX(kids1000.year)
+  const xKidsLegacy = yearX(kidsLegacy.year)
+  const xNla = yearX(desNla.year) - 12
+  const xTatt = yearX(desTatt.year) + 12
+
+  return (
+    <div style={{ marginTop: '2rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={330}
+        viewBox={`0 0 ${VIEW_WIDTH} 330`}
+        style={svgStyle}
+        role="img"
+        aria-label="S8 against the year each paper was posted: the microwave-background band and the KiDS and DES measurements"
+      >
+        <text x={P3_LEFT - 24} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Picture 3: how the values changed over time
+        </text>
+
+        {/* Axes */}
+        {S8_TICKS.map((t) => (
+          <g key={t}>
+            <line x1={P3_LEFT} y1={s8Y(t)} x2={P3_RIGHT} y2={s8Y(t)} stroke={MUTED_COLOR} strokeOpacity={0.25} />
+            <text x={P3_LEFT - 6} y={s8Y(t) + 4} fill={MUTED_COLOR} fontSize="10" textAnchor="end">
+              {t.toFixed(2)}
+            </text>
+          </g>
+        ))}
+        <line x1={P3_LEFT} y1={P3_BOTTOM} x2={P3_RIGHT} y2={P3_BOTTOM} stroke={MUTED_COLOR} strokeWidth={1.5} />
+        {YEAR_TICKS.map((t) => (
+          <g key={t}>
+            <line x1={yearX(t)} y1={P3_BOTTOM - 4} x2={yearX(t)} y2={P3_BOTTOM + 4} stroke={MUTED_COLOR} />
+            <text x={yearX(t)} y={P3_BOTTOM + 17} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+              {t}
+            </text>
+          </g>
+        ))}
+        <text x={(P3_LEFT + P3_RIGHT) / 2} y={P3_BOTTOM + 36} fill={TEXT_COLOR} fontSize="12" textAnchor="middle">
+          The year the paper was posted on arXiv
+        </text>
+        <text x={16} y={(P3_TOP + P3_BOTTOM) / 2} fill={TEXT_COLOR} fontSize="12" textAnchor="middle" transform={`rotate(-90 16 ${(P3_TOP + P3_BOTTOM) / 2})`}>
+          S₈ (how lumpy)
+        </text>
+
+        {/* The microwave-background band: the prediction and its give-or-take */}
+        <rect x={P3_LEFT} y={s8Y(early.value + early.up)} width={P3_RIGHT - P3_LEFT} height={s8Y(early.value - early.down) - s8Y(early.value + early.up)} fill={EARLY_COLOR} opacity={0.18} />
+        <line x1={P3_LEFT} y1={s8Y(early.value)} x2={P3_RIGHT} y2={s8Y(early.value)} stroke={EARLY_COLOR} strokeWidth={1.5} strokeDasharray="6 4" />
+        <text x={P3_LEFT + 4} y={s8Y(early.value + early.up) - 5} fill={EARLY_COLOR} fontSize="11">
+          Planck Legacy: {early.value} ± {early.up} (the band)
+        </text>
+
+        {/* The surveys, with the KiDS shift as an arrow */}
+        <line x1={xKids1000 + 8} y1={s8Y(kids1000.value) - 2} x2={xKidsLegacy - 8} y2={s8Y(kidsLegacy.value) + 2} stroke={TEXT_COLOR} strokeWidth={1.5} strokeDasharray="5 3" markerEnd="url(#lumpiness-arrow)" />
+        <defs>
+          <marker id="lumpiness-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill={TEXT_COLOR} />
+          </marker>
+        </defs>
+        <text x={(xKids1000 + xKidsLegacy) / 2} y={(s8Y(kids1000.value) + s8Y(kidsLegacy.value)) / 2 - 12} fill={TEXT_COLOR} fontSize="11" textAnchor="middle">
+          KiDS: {signed3(kidsShiftValue)}
+        </text>
+        {point(kids1000, xKids1000, LATE_COLOR)}
+        {point(kidsLegacy, xKidsLegacy, LATE_COLOR)}
+        {point(desNla, xNla, LATE_COLOR)}
+        {point(desTatt, xTatt, PALE_LATE_COLOR)}
+        <text x={xKids1000 + 10} y={s8Y(kids1000.value) + 18} fill={LATE_COLOR} fontSize="11">
+          KiDS-1000: {kids1000.value}
+        </text>
+        <text x={xKidsLegacy} y={s8Y(early.value + early.up) - 5} fill={LATE_COLOR} fontSize="11" textAnchor="middle">
+          KiDS-Legacy: {kidsLegacy.value}
+        </text>
+        <text x={xNla - 8} y={s8Y(desNla.value) + 18} fill={LATE_COLOR} fontSize="11" textAnchor="end">
+          DES Y6 (NLA): {desNla.value}
+        </text>
+        <text x={xTatt + 8} y={s8Y(desTatt.value) + 30} fill={PALE_LATE_COLOR} fontSize="11" textAnchor="end">
+          DES Y6 (TATT): {desTatt.value}
+        </text>
+      </svg>
+
+      {/* Picture 3's guide: draft wording (CLAUDE.md §14 and §29) for the owner's review (§28.1). */}
+      <div style={{ marginTop: '1rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        <p style={paragraph}>
+          <strong>How to read this diagram.</strong> Picture 1 compared the measurements side by side. This picture adds <em>time</em>: when each
+          result was published, so that you can see how the values changed as the surveys improved. The side line is S₈, as in Picture 1, now
+          running up the page, so a higher dot means a lumpier universe.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The bottom line</strong> is the year each paper was posted on arXiv, the free site where scientists post their papers. It is not
+            always the year of the journal version.
+          </li>
+          <li>
+            <strong>The sky-blue band and dashed line:</strong> the microwave-background prediction, {early.value} ± {early.up}. The dashed line is
+            the best value and the shaded band is its “give or take”. It runs across all the years because it is one value, not a series.
+          </li>
+          <li>
+            <strong>The orange dots and upright bars:</strong> the survey measurements, each at the year its paper was posted. The bar runs from
+            the lowest to the highest value that measurement allows, so it can be longer above the dot than below. The paler dot is the second way
+            of treating DES’s nuisance effect.
+          </li>
+          <li>
+            <strong>The dashed arrow between the two KiDS dots</strong> goes from KiDS’s first full analysis to its re-analysis. The words on it
+            give how much S₈ changed: {signed3(kidsShiftValue)}. A plus sign means higher.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment, with real numbers.</strong> The arrow’s number is the difference of the two dots: {kidsLegacy.value} −{' '}
+          {kids1000.value} = {signed3(kidsShiftValue)}. For comparison, the band’s “give or take” is {early.up}, so the KiDS change is about{' '}
+          {(Math.abs(kidsShiftValue) / early.up).toFixed(1)} times the width of the band on one side.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Where each dot sits compared with the band.</strong> A dot inside the band agrees with the prediction within its “give or
+            take”. A dot below it says the universe is smoother than predicted.
+          </li>
+          <li>
+            <strong>What the arrow did to the KiDS dot.</strong> Compare the position of the dot before and after, relative to the band. This is how
+            a tension can change when a measurement is improved.
+          </li>
+          <li>
+            <strong>Whether the other survey followed.</strong> The two DES dots are the newest. Look at where they sit relative to the band, and
+            compare with the KiDS dots. If every survey moved the same way, a single cause would be the natural suspect; if they did not, something
+            specific to each survey may be at work.
+          </li>
+          <li>
+            <strong>What the picture cannot tell you:</strong> which survey is right, or why a value changed. It only shows the numbers the
+            papers published.
+          </li>
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+export function LumpinessExperiment({ onComplete }: LumpinessExperimentProps) {
   const early = EARLY_MEASUREMENT
   const planckFromParts = s8(PLANCK_OWN.sigma8, PLANCK_OWN.omegaMatter)
-  const planckY = 76
-  const axisY = 134
+  const [shiftPrediction, setShiftPrediction] = useState<ShiftDirection | null>(null)
+  const [rangePrediction, setRangePrediction] = useState<TensionRange | null>(null)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+
+  // The numbers all come from the physics module. Which survey is "looked at" comes in a later step, so any survey does for the curves.
+  const result = runLumpiness(LATE_MEASUREMENTS[0])
+  const bothPredicted = shiftPrediction !== null && rangePrediction !== null
+  const kids1000 = MEASUREMENTS.find((m) => m.name === 'KiDS-1000')!
+
+  // Presentation only: advances one stage at a time. The result does not depend on this timer.
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) {
+        setStage(stage + 1)
+      } else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+
+  const startOver = () => {
+    setShiftPrediction(null)
+    setRangePrediction(null)
+    setStatus('idle')
+    setStage(0)
+  }
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
+  const axisY = surveyY(LATE_MEASUREMENTS.length - 1) + 50
+  const planckY = P1_PLANCK_Y
+  const p1Height = axisY + 52
 
   return (
     <div>
@@ -405,6 +802,52 @@ export function LumpinessExperiment(_props: LumpinessExperimentProps) {
             of the job.
           </p>
 
+          <div style={{ marginBottom: '0.75rem' }}>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>The measurements you will meet.</strong> Each name below appears in the pictures, so here is what each one is.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>Planck Legacy (the microwave background).</strong> Planck was a European Space Agency satellite that mapped the microwave
+                background, the afterglow of the Big Bang, more precisely than any before it. “Legacy” means its final, most refined results (2018).
+                From that map and the standard model, scientists work out how lumpy the universe should be today. That prediction,{' '}
+                <strong>S₈ = {early.value} ± {early.up}</strong>, is the sky-blue dot in the pictures. It is a prediction, not a lensing
+                measurement.
+              </li>
+              <li>
+                <strong>KiDS, the Kilo-Degree Survey.</strong> A survey run with a telescope of the European Southern Observatory. It photographs a
+                large patch of sky in nine different colours (filters), so that it can measure the shapes of a very large number of galaxies and map
+                the matter by weak lensing. It measures S₈ directly, from the lensing, and does not use the microwave background.
+                <ul style={{ marginTop: '0.25rem', paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>KiDS-1000</strong> is the name of the team’s first analysis (posted in 2020).
+                  </li>
+                  <li>
+                    <strong>KiDS-Legacy</strong> is its analysis of the complete survey (posted in 2025). That is 1,347 square degrees of sky. A
+                    square degree is a patch of sky about five times the area of the full Moon, so the survey covers about 3 percent of the whole
+                    sky.
+                  </li>
+                  <li>Both are the same survey, analysed twice.</li>
+                </ul>
+              </li>
+              <li>
+                <strong>DES, the Dark Energy Survey.</strong> A different survey, with a different telescope and camera, run by a different team.
+                Its <strong>Year 6</strong> result (posted in 2026) comes from six years of observing and about 140 million galaxies. It measures S₈
+                by lensing too.
+                <ul style={{ marginTop: '0.25rem', paddingLeft: '1.25rem' }}>
+                  <li>
+                    It is shown twice, <strong>NLA</strong> and <strong>TATT</strong>. These are two ways of treating one nuisance effect in the
+                    analysis, and the paler dot is the second way. This experiment does not explain the effect itself.
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <strong>Why the surveys are compared.</strong> All of them measure the same thing, S₈, by different routes, so if the universe is as
+                the standard model says, they should agree.
+              </li>
+            </ul>
+          </div>
+
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions about surveys that measured S₈ by lensing, press Run, and then look
             closer at the survey you choose. Nothing here is graded.
@@ -453,15 +896,98 @@ export function LumpinessExperiment(_props: LumpinessExperimentProps) {
           </ul>
         </div>
 
-        {/* Picture 1: the microwave-background prediction on the S8 number line. The surveys' measurements are added at Run (a later step). */}
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
+            says which answer is right. */}
+        {(
+          [
+            {
+              title: 'Prediction 1: what did the better calibration do?',
+              text: (
+                <>
+                  In 2020, the Kilo-Degree Survey (KiDS) measured S₈ = {kids1000.value}, which was about 3 sigma <strong>below</strong> the value
+                  predicted from the microwave background. In 2025 the team re-analysed its complete data with a better way of working out how far
+                  away the lensed galaxies are, more sky and improved image processing. Did S₈ come out <strong>lower</strong>, about the{' '}
+                  <strong>same</strong> or <strong>higher</strong> than in 2020?
+                </>
+              ),
+              choices: SHIFT_CHOICES,
+              value: shiftPrediction,
+              set: (v: ShiftDirection) => setShiftPrediction(v),
+            },
+            {
+              title: 'Prediction 2: do the other surveys now agree?',
+              text: (
+                <>
+                  In 2026 the Dark Energy Survey (DES), a different survey with a different telescope, published its own six-year result.
+                  Compared with the microwave-background value, how far below or above it is DES’s S₈, in sigma?
+                </>
+              ),
+              choices: RANGE_CHOICES,
+              value: rangePrediction,
+              set: (v: TensionRange) => setRangePrediction(v),
+            },
+          ] as const
+        ).map((question) => (
+          <div key={question.title} style={{ marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              {question.text} You are not graded, and a guess is fine.
+            </p>
+            <div>
+              {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                <button
+                  key={choice.value}
+                  type="button"
+                  onClick={() => (question.set as (v: never) => void)(choice.value as never)}
+                  disabled={status !== 'idle'}
+                  className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+              {question.value !== null
+                ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                : 'Choose an option to continue'}
+            </p>
+          </div>
+        ))}
+
+        <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || status !== 'idle'} style={{ padding: '0.6rem 1.5rem' }}>
+          {status === 'running' ? 'Running...' : 'Run'}
+        </button>
+        {status === 'complete' && (
+          <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+            Start over
+          </button>
+        )}
+        {!bothPredicted && status === 'idle' && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+        )}
+
+        {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+          {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+          {status !== 'idle' && (
+            <>
+              <strong>{status === 'complete' ? 'Run complete' : `Stage ${stage} of ${LAST_STAGE}`}</strong>
+              {status === 'running' && <>: {STAGES[stage - 1]}</>}
+              {status === 'complete' && <span style={{ color: 'var(--text-muted)' }}> (all {LAST_STAGE} stages shown). Your predictions are recorded and not marked here.</span>}
+            </>
+          )}
+        </p>
+
+        {/* Picture 1: the S8 number line. The microwave-background prediction is always drawn; the surveys appear at stage 2 and their gaps at stage 3. */}
         <div style={{ marginBottom: '1rem' }}>
           <svg
             width={VIEW_WIDTH}
-            height={190}
-            viewBox={`0 0 ${VIEW_WIDTH} 190`}
+            height={p1Height}
+            viewBox={`0 0 ${VIEW_WIDTH} ${p1Height}`}
             style={svgStyle}
             role="img"
-            aria-label="Number line of S8: the microwave-background prediction with its error bar"
+            aria-label="Number line of S8: the microwave-background prediction and each survey's measurement with its error bar"
           >
             <text x={AXIS_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
               Picture 1: the measurements of S₈ on one number line
@@ -483,30 +1009,47 @@ export function LumpinessExperiment(_props: LumpinessExperimentProps) {
 
             {/* The microwave-background prediction: a dot with an error bar, and a dashed line down to the number line */}
             <line x1={xOf(early.value)} y1={planckY + 4} x2={xOf(early.value)} y2={axisY} stroke={EARLY_COLOR} strokeWidth={1} strokeDasharray="4 3" />
-            <line
-              x1={xOf(early.value - early.down)}
-              y1={planckY}
-              x2={xOf(early.value + early.up)}
-              y2={planckY}
-              stroke={EARLY_COLOR}
-              strokeWidth={3}
-            />
+            <line x1={xOf(early.value - early.down)} y1={planckY} x2={xOf(early.value + early.up)} y2={planckY} stroke={EARLY_COLOR} strokeWidth={3} />
             <circle cx={xOf(early.value)} cy={planckY} r={5} fill={EARLY_COLOR} />
             <text x={xOf(early.value) - 24} y={planckY - 14} fill={EARLY_COLOR} fontSize="12" textAnchor="middle">
               {early.name} (microwave background): {early.value} ± {early.up}
             </text>
-            <text x={AXIS_LEFT} y={planckY + 6} fill={MUTED_COLOR} fontSize="11">
-              the surveys’ values appear here
-            </text>
-            <text x={AXIS_LEFT} y={planckY + 20} fill={MUTED_COLOR} fontSize="11">
-              when Run is built (a later step)
-            </text>
+
+            {/* The surveys: each a dot with an error bar that can be longer on one side (stage 2), then its gap from the prediction (stage 3) */}
+            {stage >= 2 &&
+              LATE_MEASUREMENTS.map((m, i) => {
+                const y = surveyY(i)
+                const color = m.name === 'DES Y6 (TATT)' ? PALE_LATE_COLOR : LATE_COLOR
+                const sigma = tensionSigma(m, early)
+                return (
+                  <g key={m.name}>
+                    <line x1={xOf(m.value - m.down)} y1={y} x2={xOf(m.value + m.up)} y2={y} stroke={color} strokeWidth={3} />
+                    <line x1={xOf(m.value - m.down)} y1={y - 5} x2={xOf(m.value - m.down)} y2={y + 5} stroke={color} strokeWidth={2} />
+                    <line x1={xOf(m.value + m.up)} y1={y - 5} x2={xOf(m.value + m.up)} y2={y + 5} stroke={color} strokeWidth={2} />
+                    <circle cx={xOf(m.value)} cy={y} r={5} fill={color} />
+                    <text x={xOf(m.value)} y={y - 12} fill={color} fontSize="12" textAnchor="middle">
+                      {m.name} ({m.year}): {m.value}
+                    </text>
+                    {stage >= 3 && (
+                      <g>
+                        <line x1={xOf(m.value)} y1={y + 16} x2={xOf(early.value)} y2={y + 16} stroke={TEXT_COLOR} strokeWidth={1.5} />
+                        <line x1={xOf(m.value)} y1={y + 11} x2={xOf(m.value)} y2={y + 21} stroke={TEXT_COLOR} strokeWidth={1.5} />
+                        <line x1={xOf(early.value)} y1={y + 11} x2={xOf(early.value)} y2={y + 21} stroke={TEXT_COLOR} strokeWidth={1.5} />
+                        <text x={(xOf(m.value) + xOf(early.value)) / 2} y={y + 33} fill={TEXT_COLOR} fontSize="11" textAnchor="middle">
+                          gap {(early.value - m.value).toFixed(3)} = {sigma.toFixed(2)} sigma
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                )
+              })}
           </svg>
         </div>
 
-        {/* Picture 1's guide: draft wording (CLAUDE.md §14 and §29) for the owner's review (§28.1). It does not say where any survey's value
-            lies relative to the microwave background. */}
-        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        {/* Picture 1's guide: draft wording (CLAUDE.md §14 and §29) for the owner's review (§28.1). The first three bullets are the wording
+            approved on 2026-10-19; the bullets about the surveys and the gaps replace the placeholder "the surveys' values appear here when Run is
+            built". It does not say where any survey's value lies relative to the microwave background. */}
+        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>
           <p style={paragraph}>
             <strong>How to read this diagram.</strong> This picture is a <strong>number line</strong>, like the marks on a ruler. It is made to
             compare measurements of one thing, S₈, the number that says how lumpy matter is today. Each measurement is drawn as a dot with a bar
@@ -527,11 +1070,29 @@ export function LumpinessExperiment(_props: LumpinessExperimentProps) {
               can read its value.
             </li>
             <li>
-              <strong>The grey words on the left:</strong> the place where the surveys’ values will be drawn after you press Run. Each survey will
-              be an <strong>orange</strong> dot with its own bar, labelled with its name. Because the surveys publish different upward and
-              downward “give or takes”, an orange bar can be longer on one side than the other.
+              <strong>The orange dots and bars</strong> (they appear at stage 2): one for each survey measurement, labelled with its name and the
+              year its paper was posted. Each survey publishes a different upward and downward “give or take”, so an orange bar can be longer on
+              one side than the other; the small upright marks at its ends show where it stops. There are four: KiDS’s first full analysis (2020),
+              KiDS’s re-analysis (2025) (KiDS is the Kilo-Degree Survey, described in the introduction above), and the Dark Energy Survey’s
+              Year 6 result (2026) in two versions (DES, also described above). The two versions are the same data
+              analysed with two ways of treating one nuisance effect (written “NLA” and “TATT”), and the paler dot is the second way.
+            </li>
+            <li>
+              <strong>The white brackets and the words “gap … = … sigma”</strong> (they appear at stage 3): the gap between that survey’s value
+              and the microwave-background value, and what it comes to in sigma. As in Experiment 1, sigma is the gap divided by the combined
+              “give or take” of the two values. Because the bars can be unequal, the combined “give or take” uses the length of each bar on the
+              side facing the other value. The scientists’ own papers use fuller statistics, so their quoted sigma can differ from this simple one;
+              the results show both.
             </li>
           </ul>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <strong>A worked moment, with real numbers.</strong> Take the {kids1000.name} dot ({kids1000.value}) and the sky-blue dot ({early.value}). The gap is{' '}
+            {early.value} − {kids1000.value} = {(early.value - kids1000.value).toFixed(3)}. The orange bar reaches up {kids1000.up} on the side facing the
+            sky-blue dot, and the sky-blue bar reaches {early.down} on its side, so the combined “give or take” is √({kids1000.up}² + {early.down}²) ={' '}
+            {Math.sqrt(kids1000.up ** 2 + early.down ** 2).toFixed(4)}. Then {(early.value - kids1000.value).toFixed(3)} ÷{' '}
+            {Math.sqrt(kids1000.up ** 2 + early.down ** 2).toFixed(4)} = {tensionSigma(kids1000, early).toFixed(2)} sigma. That is the number the picture
+            shows at stage 3.
+          </p>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
           <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
             <li>
@@ -540,7 +1101,7 @@ export function LumpinessExperiment(_props: LumpinessExperimentProps) {
             </li>
             <li>
               <strong>Whether the bars overlap.</strong> Overlapping bars mean the two measurements could both be right. But overlap alone is not
-              the whole story: the sigma, which comes later in this experiment, puts a number on it.
+              the whole story: the sigma puts a number on it.
             </li>
             <li>
               <strong>Which side of the sky-blue dot a survey’s dot is on.</strong> Left means a smoother universe than the microwave background
@@ -548,6 +1109,12 @@ export function LumpinessExperiment(_props: LumpinessExperimentProps) {
             </li>
           </ul>
         </div>
+
+        {/* Picture 2: why lensing measures a combination (stage 4). Draft wording for the owner's review. */}
+        {status !== 'idle' && stage >= 4 && <Picture2 result={result} />}
+
+        {/* Picture 3: how the values changed (stage 5). Draft wording for the owner's review. */}
+        {status !== 'idle' && stage >= 5 && <Picture3 />}
       </div>
     </div>
   )
