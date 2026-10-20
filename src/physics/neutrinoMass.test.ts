@@ -3,6 +3,7 @@ import {
   BOUNDS,
   CEILINGS,
   clumpSmoothing,
+  energyDensityShare,
   heavyBeforeRelease,
   heavyRedshift,
   heavyTimeYears,
@@ -10,6 +11,7 @@ import {
   matterShare,
   neutrinoTemperatureKelvin,
   oscillationFloor,
+  PREDICTION_TOTAL_MASS_EV,
   roomRange,
   roomUnder,
   runNeutrinoMass,
@@ -70,6 +72,28 @@ describe('when the neutrinos turn heavy (tests 3 to 5)', () => {
     for (let i = 1; i < masses.length; i += 1) {
       expect(heavyTimeYears(masses[i])).toBeLessThan(heavyTimeYears(masses[i - 1]))
     }
+  })
+})
+
+describe('the neutrinos\' share of the whole energy (added at the final review)', () => {
+  it('is (total / 93.14) / h^2: 0.00140 for 0.0592 eV', () => {
+    // 0.0592 / 93.14 = 6.3560e-4; / 0.674^2 (= 0.454276) = 1.39915e-3
+    expect(energyDensityShare(0.0592)).toBeCloseTo(1.39915e-3, 7)
+  })
+
+  it('is proportional to the total, and the matter share is it divided by the matter fraction 0.315', () => {
+    expect(energyDensityShare(0.2) / energyDensityShare(0.1)).toBeCloseTo(2, 10)
+    expect(matterShare(0.0592)).toBeCloseTo(energyDensityShare(0.0592) / 0.315, 12)
+  })
+
+  it('throws RangeError for a total that is not above zero', () => {
+    expect(() => energyDensityShare(0)).toThrow(RangeError)
+    expect(() => energyDensityShare(-0.1)).toThrow(RangeError)
+  })
+
+  it('names the predictions\' total as 0.06 eV', () => {
+    expect(PREDICTION_TOTAL_MASS_EV).toBe(0.06)
+    expect(heavyBeforeRelease(PREDICTION_TOTAL_MASS_EV)).toBe('after')
   })
 })
 

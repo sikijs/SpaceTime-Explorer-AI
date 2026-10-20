@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import {
   CEILINGS,
+  EV_FOR_ONE_OMEGA_H_SQUARED,
+  HUBBLE_PARAMETER_H,
+  OMEGA_MATTER,
+  PREDICTION_TOTAL_MASS_EV,
+  SMOOTHING_FACTOR,
   DESI_JULY_2026,
   heavyBeforeRelease,
   MASS_SQUARED_GAPS,
@@ -29,6 +34,9 @@ const roomWords: Record<RoomRange, string> = {
   veryLittle: 'very little room (the maximum is at most 20 percent above the minimum)',
   none: 'no room (the maximum is below the minimum)',
 }
+
+// How a total is written everywhere on the page: DESI's limit as 0.0592, any other total with two decimals (0.10, 0.12, 0.30, 0.50, 0.06).
+export const formatTotal = (value: number) => (value === DESI_JULY_2026.value ? String(value) : value.toFixed(2))
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
@@ -60,8 +68,8 @@ export function NeutrinoMassTutor({ totalMassEv, timingPrediction, roomPredictio
 
   // The learner's own total, and the totals the predictions use (0.06 eV for Prediction 1, DESI's July 2026 ceiling for Prediction 2).
   const mine = runNeutrinoMass(totalMassEv)
-  const predicted = runNeutrinoMass(0.06)
-  const actualTiming = heavyBeforeRelease(0.06)
+  const predicted = runNeutrinoMass(PREDICTION_TOTAL_MASS_EV)
+  const actualTiming = heavyBeforeRelease(PREDICTION_TOTAL_MASS_EV)
   const floorNormal = oscillationFloor('normal')
   const floorInverted = oscillationFloor('inverted')
   const julyRoom = roomUnder(DESI_JULY_2026.value, 'normal')
@@ -93,7 +101,7 @@ export function NeutrinoMassTutor({ totalMassEv, timingPrediction, roomPredictio
             {tutorStep === 'observe' &&
               'Look at Picture 1 and Picture 3. What do you notice about where the neutrinos turn heavy compared with the release of the microwave background in Picture 1, and about the floors and the ceilings in Picture 3?'}
             {tutorStep === 'compare' &&
-              `You predicted that, for a total of 0.06 eV, the neutrinos would turn from light-like to matter-like ${timingWords[timingPrediction]}, and that between the oscillation floor and DESI’s 2026 ceiling there would be ${roomWords[roomPrediction]}. Look at Pictures 1 and 3 again. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
+              `You predicted that, for a total of ${formatTotal(PREDICTION_TOTAL_MASS_EV)} eV, the neutrinos would turn from light-like to matter-like ${timingWords[timingPrediction]}, and that between the oscillation floor and DESI’s 2026 ceiling there would be ${roomWords[roomPrediction]}. Look at Pictures 1 and 3 again. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
             {tutorStep === 'conceptual' &&
               'Two quite different methods, one watching neutrinos change kind in a laboratory and one watching the sky, have squeezed the same number from two sides until they nearly touch. What are the different things that could explain that?'}
           </p>
@@ -140,10 +148,10 @@ export function NeutrinoMassTutor({ totalMassEv, timingPrediction, roomPredictio
           {/* The predictions are marked here, in the explanation, and nowhere earlier, so the learner reasons first (CLAUDE.md §12). */}
           <p style={paragraphStyle}>
             <strong>Your predictions.</strong> Now that you have thought about it, here is how each one compared with the result. You predicted that
-            three equal neutrinos weighing 0.06 eV in all would turn heavy <em>{timingWords[timingPrediction]}</em>. Each would weigh 0.06 ÷ 3 = 0.02
+            three equal neutrinos weighing {formatTotal(PREDICTION_TOTAL_MASS_EV)} eV in all would turn heavy <em>{timingWords[timingPrediction]}</em>. Each would weigh {formatTotal(PREDICTION_TOTAL_MASS_EV)} ÷ 3 = {predicted.massEachEv.toFixed(2)}
             eV, and they turn heavy at a redshift of {predicted.heavyRedshift.toFixed(1)}, about {millions(predicted.heavyTimeYears)} million years
             after the Big Bang, which is <em>{timingWords[actualTiming]}</em> (that was at {predicted.releaseYears.toLocaleString('en-US')} years).{' '}
-            {timingPrediction === actualTiming ? 'Your prediction matched.' : 'Your prediction did not match.'} Even if one neutrino carried the whole 0.06
+            {timingPrediction === actualTiming ? 'Your prediction matched.' : 'Your prediction did not match.'} Even if one neutrino carried the whole {formatTotal(PREDICTION_TOTAL_MASS_EV)}
             eV, it would turn heavy at a redshift of {predicted.heavyRedshiftOneNeutrino.toFixed(0)}, still long after the release. You predicted{' '}
             <em>{roomWords[roomPrediction]}</em> between the oscillation floor and DESI’s 2026 ceiling. The floor for the normal ordering is{' '}
             {floorNormal.toFixed(4)} eV and DESI’s July 2026 ceiling is {DESI_JULY_2026.value} eV, which is {julyRoom.ratio.toFixed(3)} times the
@@ -155,13 +163,13 @@ export function NeutrinoMassTutor({ totalMassEv, timingPrediction, roomPredictio
           </p>
 
           <p style={paragraphStyle}>
-            <strong>1. What the results show, in your own numbers.</strong> You looked at a total of {mine.totalMassEv} eV. Shared equally, each of the
-            three weighs {mine.totalMassEv} ÷ 3 = {mine.massEachEv.toFixed(4)} eV. A typical neutrino in the cold sea carries an energy of{' '}
+            <strong>1. What the results show, in your own numbers.</strong> You looked at a total of {formatTotal(mine.totalMassEv)} eV. Shared equally, each of the
+            three weighs {formatTotal(mine.totalMassEv)} ÷ 3 = {mine.massEachEv.toFixed(4)} eV. A typical neutrino in the cold sea carries an energy of{' '}
             {mine.typicalEnergyTodayEv.toFixed(6)} eV today. In the past that energy was bigger by the same factor, 1 + <em>z</em>, by which the
             universe was smaller. So they turn heavy when 1 + <em>z</em> = {mine.massEachEv.toFixed(4)} ÷ {mine.typicalEnergyTodayEv.toFixed(6)} ={' '}
             {(mine.heavyRedshift + 1).toFixed(1)}, at <em>z</em> = {mine.heavyRedshift.toFixed(1)}, about {millions(mine.heavyTimeYears)} million
             years after the Big Bang: {mine.timesLaterThanRelease.toFixed(0)} times later than the release of the microwave background. Their share of
-            the matter is {mine.totalMassEv} ÷ 93.14 ÷ 0.454 ÷ 0.315 = {(mine.share * 100).toFixed(2)} percent, and 8 × {mine.share.toFixed(5)} ={' '}
+            the matter is {formatTotal(mine.totalMassEv)} ÷ {EV_FOR_ONE_OMEGA_H_SQUARED} ÷ {(HUBBLE_PARAMETER_H * HUBBLE_PARAMETER_H).toFixed(3)} ÷ {OMEGA_MATTER} = {(mine.share * 100).toFixed(2)} percent, and {SMOOTHING_FACTOR} × {mine.share.toFixed(5)} ={' '}
             {(mine.smoothing * 100).toFixed(2)} percent is how much they smooth the smallest clumps.
           </p>
 
@@ -180,7 +188,7 @@ export function NeutrinoMassTutor({ totalMassEv, timingPrediction, roomPredictio
             <strong>3. Small, but not nothing.</strong> The neutrinos are well under 1 percent of the matter, yet they are not harmless to the
             clumps. Think of mixing a little fine sand into snow. The snow packs into drifts, but the sand does not settle into them, so the drifts
             come out a little softer. In the same way, neutrinos move too fast to settle into the smallest clumps of matter, and they smooth those clumps
-            out by about eight times their share: for a total of {DESI_JULY_2026.value} eV, 8 × {runNeutrinoMass(DESI_JULY_2026.value).share.toFixed(5)}{' '}
+            out by about eight times their share: for a total of {DESI_JULY_2026.value} eV, {SMOOTHING_FACTOR} × {runNeutrinoMass(DESI_JULY_2026.value).share.toFixed(5)}{' '}
             = {(smoothingAtJuly * 100).toFixed(2)} percent. A few percent is small, but large surveys of the sky can measure the sizes of clumps to
             about that precision, which is why the sky can “weigh” the neutrinos.
           </p>

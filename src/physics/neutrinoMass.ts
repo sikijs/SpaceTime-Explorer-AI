@@ -67,9 +67,11 @@ export const MEAN_ENERGY_IN_KT = 3.151 // average energy of a Fermi-Dirac neutri
 export const EV_FOR_ONE_OMEGA_H_SQUARED = 93.14
 export const HUBBLE_PARAMETER_H = HUBBLE_MEASUREMENTS.find((m) => m.side === 'early')!.value / 100 // Planck 2018: 0.674
 export const OMEGA_MATTER = PLANCK_OWN.omegaMatter // 0.315
+export const SMOOTHING_FACTOR = 8 // small clumps are smoothed by about 8 x the neutrinos' share of the matter
 export const MAX_TOTAL_MASS_EV = 0.5 // above this the 8 f_nu estimate begins to fail
 export const ROOM_VERY_LITTLE_RATIO = 1.2 // Decision 6: "very little room" is a ceiling at most 20 percent above the floor
 export const EQUAL_SPLIT = 3
+export const PREDICTION_TOTAL_MASS_EV = 0.06 // the total the two predictions use (Prediction 1 states it)
 
 function requirePositive(value: number, what: string): void {
   if (!(value > 0)) throw new RangeError(`${what} must be greater than zero`)
@@ -106,10 +108,15 @@ export function heavyTimeYears(massEachEv: number): number {
   return timeAfterBigBangYears(1 / (1 + z), PLANCK_LIKE_DARK_ENERGY_FRACTION) * projectToPlanck
 }
 
-// The neutrinos' share of the matter: f_nu = (sum of masses / 93.14 eV / h^2) / Omega_m.
-export function matterShare(totalMassEv: number): number {
+// The neutrinos' share of the universe's whole energy: Omega_nu = (sum of masses / 93.14 eV) / h^2.
+export function energyDensityShare(totalMassEv: number): number {
   requirePositive(totalMassEv, 'The total mass')
-  return totalMassEv / EV_FOR_ONE_OMEGA_H_SQUARED / (HUBBLE_PARAMETER_H * HUBBLE_PARAMETER_H) / OMEGA_MATTER
+  return totalMassEv / EV_FOR_ONE_OMEGA_H_SQUARED / (HUBBLE_PARAMETER_H * HUBBLE_PARAMETER_H)
+}
+
+// The neutrinos' share of the matter: f_nu = Omega_nu / Omega_m.
+export function matterShare(totalMassEv: number): number {
+  return energyDensityShare(totalMassEv) / OMEGA_MATTER
 }
 
 // How much the smallest clumps are smoothed: 8 f_nu (a fraction; 0.0355 is 3.55 percent), for a small share only.
@@ -117,7 +124,7 @@ export function clumpSmoothing(totalMassEv: number): number {
   if (!(totalMassEv <= MAX_TOTAL_MASS_EV)) {
     throw new RangeError(`The 8 f_nu estimate is only used up to a total of ${MAX_TOTAL_MASS_EV} eV`)
   }
-  return 8 * matterShare(totalMassEv)
+  return SMOOTHING_FACTOR * matterShare(totalMassEv)
 }
 
 export interface Room {

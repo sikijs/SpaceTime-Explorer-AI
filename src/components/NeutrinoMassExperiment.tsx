@@ -12,9 +12,17 @@ import {
   clumpSmoothing,
   BOUNDS,
   TYPICAL_ENERGY_TODAY_EV,
+  BOLTZMANN_EV_PER_KELVIN,
+  energyDensityShare,
+  EV_FOR_ONE_OMEGA_H_SQUARED,
+  HUBBLE_PARAMETER_H,
+  MEAN_ENERGY_IN_KT,
+  OMEGA_MATTER,
+  PREDICTION_TOTAL_MASS_EV,
+  SMOOTHING_FACTOR,
 } from '../physics/neutrinoMass'
 import type { HeavyTiming, Room, RoomRange } from '../physics/neutrinoMass'
-import { NeutrinoMassTutor } from './NeutrinoMassTutor'
+import { formatTotal, NeutrinoMassTutor } from './NeutrinoMassTutor'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
 // Frontier and Beyond, Experiment 4 (docs/experiments/frontier-and-beyond/04-can-the-universe-weigh-a-neutrino.md).
@@ -22,8 +30,8 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 // sea, and the skeleton of Picture 1 with its guide. Step 3 added the two predictions, Run, the staged run, the neutrinos' turning point on
 // Picture 1, and Pictures 2 and 3 with their guides. Step 4 added the "Try a different total mass" control, the neutral results tables and their
 // guide, the formulas in the "Words and formulas" panel and the links kept back until the results (all shown after the run). Step 5 adds the
-// tutor (NeutrinoMassTutor.tsx) and the chapter summary (in App.tsx). The wording of Steps 2 and 3 was approved by the owner on 2026-10-19; the
-// wording of Steps 4 and 5 is draft wording for the owner's review (CLAUDE.md §28.1), written to the standard of §29. The interface only
+// tutor (NeutrinoMassTutor.tsx) and the chapter summary (in App.tsx). The owner has committed Steps 2 to 5 but has not yet given the line-by-line
+// wording approval of CLAUDE.md §28.1 for them, so all the wording here is draft wording for the owner's review (CLAUDE.md §28.1), written to the standard of §29. The interface only
 // displays numbers from src/physics (CLAUDE.md §9); the only calculation
 // here is where a point is drawn.
 
@@ -180,6 +188,8 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'DESI (the Dark Energy Spectroscopic Instrument)', meaning: 'a survey that uses a large telescope in Arizona to split the light of millions of galaxies and quasars into colours, measure how much each is redshifted, and so map their distances in three dimensions. Its second data release, DR2, covers more than 14 million of them (Experiment 2).' },
   { term: 'Quasar', meaning: 'a very bright, very distant galaxy centre. Quasars can be seen from billions of light-years away, so they are useful markers for mapping the distant universe.' },
   { term: 'BAO, CMB and DR2 (in the names of Picture 3’s bars)', meaning: 'BAO is baryon acoustic oscillations, a pattern in how galaxies are spread across the sky that works as a ruler for measuring distances (Experiment 2). CMB is the cosmic microwave background. DR2 is the second data release of DESI, the survey of Experiment 2.' },
+  { term: 'Planck', meaning: 'the European Space Agency’s Planck satellite, which mapped the microwave background in detail. Its final results (2018) give the matter share and expansion rate used here, and a limit on the neutrino masses (Cosmology Experiment 3, and Experiments 1 and 3 of this group).' },
+  { term: 'Sigma', meaning: 'as in Experiment 1: the size of a gap between two values, counted in units of their combined “give or take”. About 1 sigma is ordinary, and 5 sigma is the usual bar in many sciences for calling a difference real.' },
   { term: 'Tension', meaning: 'as in Experiments 1 to 3 of this group, a disagreement between two measurements that is too big to put down to chance. It is a puzzle, not yet a discovery.' },
   { term: 'Standard model of the universe', meaning: 'the model built in the Cosmology experiments, with ordinary matter, dark matter and dark energy. The cosmic limits on neutrino mass assume it.' },
   { term: 'arXiv', meaning: 'the free website where scientists post their papers. Links to “arxiv.org” on this page lead to the original papers, which use technical words.' },
@@ -247,7 +257,10 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
   const smoothY = (fraction: number) => P2_PLOT_BOTTOM - (fraction / smoothingMax) * (P2_PLOT_BOTTOM - P2_PLOT_TOP)
   const SMOOTH_PRESETS = TOTAL_PRESETS.map((preset) => preset.value)
   const keyOrder = [totalMass, ...SMOOTH_PRESETS.filter((m) => m !== totalMass)]
-  const zoomShareX = P2_LEFT + (result.share / 0.01) * (P2_RIGHT - P2_LEFT)
+  // The zoom bar shows the first zoomPercent percent of the matter bar, magnified 100 ÷ zoomPercent times: 1 percent unless the share is bigger.
+  const zoomPercent = [1, 2, 5, 10].find((pct) => result.share * 100 <= pct) ?? 10
+  const zoomTimes = 100 / zoomPercent
+  const zoomShareX = P2_LEFT + ((result.share * 100) / zoomPercent) * (P2_RIGHT - P2_LEFT)
 
   // Picture 3 (the floors and the ceilings)
   const P3_LEFT = 40
@@ -259,13 +272,15 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
   const eV = (value: number) => P3_LEFT + (value / P3_MAX) * (P3_RIGHT - P3_LEFT)
   const drawnCeilings = CEILINGS.filter((b) => b.drawn).sort((a, b) => a.year - b.year || a.value - b.value)
   const p3AxisY = ROW_TOP + drawnCeilings.length * ROW_STEP + 8
-  const p3Height = p3AxisY + 54
+  const p3Height = p3AxisY + 100
 
   // After the run: the formulas, each with a worked example from the learner's chosen total (the formulas wait until now, §12).
   const heavyOverTypical = eachEv / TYPICAL_ENERGY_TODAY_EV
-  const h = 0.674
-  const omegaMatter = 0.315
-  const energyShare = result.totalMassEv / 93.14 / (h * h)
+  const h = HUBBLE_PARAMETER_H
+  const omegaMatter = OMEGA_MATTER
+  const energyShare = energyDensityShare(result.totalMassEv)
+  const hundredK = (BOLTZMANN_EV_PER_KELVIN * 1e5).toFixed(3)
+  const omegaUnit = EV_FOR_ONE_OMEGA_H_SQUARED
   const gaps = MASS_SQUARED_GAPS
   const roomText = (room: Room) =>
     room.difference >= 0
@@ -278,15 +293,15 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
     },
     {
       term: 'When the neutrinos turn heavy (formula)',
-      meaning: `A typical neutrino’s energy is 3.151 × k × T, with k = 8.617 × 10⁻⁵ eV per kelvin. Today that is 3.151 × 8.617 × 10⁻⁵ × ${result.neutrinoTemperatureKelvin.toFixed(3)} = ${result.typicalEnergyTodayEv.toFixed(6)} eV. In the past it was 1 + z times bigger. The neutrinos turn heavy when this equals their mass, so 1 + z = (mass of one neutrino) ÷ ${result.typicalEnergyTodayEv.toFixed(6)}. Example, with your total of ${result.totalMassEv} eV: each is ${result.totalMassEv} ÷ 3 = ${eachEv.toFixed(4)} eV, so 1 + z = ${eachEv.toFixed(4)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)} = ${heavyOverTypical.toFixed(1)}, and z = ${result.heavyRedshift.toFixed(1)}. This is a rule of thumb, not a sharp switch.`,
+      meaning: `A typical neutrino’s energy is ${MEAN_ENERGY_IN_KT} × k × T, with k = ${hundredK} × 10⁻⁵ eV per kelvin. Today that is ${MEAN_ENERGY_IN_KT} × ${hundredK} × 10⁻⁵ × ${result.neutrinoTemperatureKelvin.toFixed(3)} = ${result.typicalEnergyTodayEv.toFixed(6)} eV. In the past it was 1 + z times bigger. The neutrinos turn heavy when this equals their mass, so 1 + z = (mass of one neutrino) ÷ ${result.typicalEnergyTodayEv.toFixed(6)}. Example, with your total of ${formatTotal(result.totalMassEv)} eV: each is ${formatTotal(result.totalMassEv)} ÷ 3 = ${eachEv.toFixed(4)} eV, so 1 + z = ${eachEv.toFixed(4)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)} = ${heavyOverTypical.toFixed(1)}, and z = ${result.heavyRedshift.toFixed(1)}. This is a rule of thumb, not a sharp switch.`,
     },
     {
       term: 'The neutrinos’ share of the matter (formula)',
-      meaning: `Ων × h² = (total mass) ÷ 93.14 eV, so share of the matter = (total ÷ 93.14) ÷ h² ÷ Ωm, with h = ${h} and Ωm = ${omegaMatter}. Example, with ${result.totalMassEv} eV: ${result.totalMassEv} ÷ 93.14 = ${(result.totalMassEv / 93.14).toFixed(6)}; ÷ ${(h * h).toFixed(3)} = ${energyShare.toFixed(5)}; ÷ ${omegaMatter} = ${result.share.toFixed(5)}, which is ${(result.share * 100).toFixed(2)} percent.`,
+      meaning: `Ων × h² = (total mass) ÷ ${omegaUnit} eV, so share of the matter = (total ÷ ${omegaUnit}) ÷ h² ÷ Ωm, with h = ${h} and Ωm = ${omegaMatter}. Example, with ${formatTotal(result.totalMassEv)} eV: ${formatTotal(result.totalMassEv)} ÷ ${omegaUnit} = ${(result.totalMassEv / omegaUnit).toFixed(6)}; ÷ ${(h * h).toFixed(3)} = ${energyShare.toFixed(5)}; ÷ ${omegaMatter} = ${result.share.toFixed(5)}, which is ${(result.share * 100).toFixed(2)} percent.`,
     },
     {
       term: 'The smoothing of small clumps (formula)',
-      meaning: `smoothing ≈ 8 × (the neutrinos’ share of the matter), for a small share. Example: 8 × ${result.share.toFixed(5)} = ${result.smoothing.toFixed(4)}, which is ${(result.smoothing * 100).toFixed(2)} percent. This model uses the rule only up to ${MAX_TOTAL_MASS_EV} eV.`,
+      meaning: `smoothing ≈ ${SMOOTHING_FACTOR} × (the neutrinos’ share of the matter), for a small share. Example: ${SMOOTHING_FACTOR} × ${result.share.toFixed(5)} = ${result.smoothing.toFixed(4)}, which is ${(result.smoothing * 100).toFixed(2)} percent. This model uses the rule only up to ${MAX_TOTAL_MASS_EV} eV.`,
     },
     {
       term: 'The two floors (formulas)',
@@ -481,6 +496,11 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 <strong>Tension</strong> (reminder from Experiments 1 to 3): a disagreement between two measurements that is too big to put down
                 to chance. A tension is a puzzle, not yet a discovery.
               </li>
+              <li>
+                <strong>Sigma</strong> (reminder from Experiment 1): the size of a gap between two values, counted in units of their combined
+                “give or take”. About 1 sigma is an ordinary difference. The bigger the number, the harder the gap is to put down to chance, and
+                5 sigma is the usual bar in many sciences for calling a difference real.
+              </li>
             </ul>
           </div>
 
@@ -493,7 +513,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
             <strong>What we assume.</strong> The total mass is shared <strong>equally</strong> among the three kinds of neutrino (the real masses
             are not equal, but this is the assumption in the papers behind the sky’s limit). A neutrino counts as “matter-like” when the typical
             energy of its motion equals its mass energy, which is a rule of thumb, not a sharp switch. The rest of the universe is taken from
-            Planck’s measurements of the microwave background. The limits are quoted as the papers state them. And this experiment cannot say
+            the measurements of the microwave background made by the Planck satellite (a European Space Agency mission, described in the ESA link below). The limits are quoted as the papers state them. And this experiment cannot say
             whether the disagreement it shows is real.
           </p>
 
@@ -508,6 +528,14 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
               to what neutrinos are, where they come from and why they are hard to catch, including that they have some mass, but not much.
             </li>
             <li>
+              <ExternalLink href="https://neutrinos.fnal.gov/faq/what-are-neutrino-oscillations/">Fermilab: What are neutrino oscillations?</ExternalLink>: how
+              neutrinos change from one kind to another as they travel, and why that shows that they have mass.
+            </li>
+            <li>
+              <ExternalLink href="https://neutrinos.fnal.gov/mysteries/mass-ordering/">Fermilab: Which neutrino is the lightest?</ExternalLink>: the normal
+              and inverted mass orderings, and what experiments have not yet settled about them.
+            </li>
+            <li>
               <ExternalLink href="https://home.cern/science/physics/standard-model">CERN: The Standard Model</ExternalLink>: the family of known
               particles, where neutrinos sit next to the electron and its heavier cousins, and what the model cannot yet explain.
             </li>
@@ -516,6 +544,15 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 ESA: Planck and the cosmic microwave background
               </ExternalLink>
               : how the Planck satellite mapped the leftover light of the Big Bang, which is where this experiment’s cosmic picture starts.
+            </li>
+            <li>
+              <ExternalLink href="https://sci.esa.int/web/euclid/-/46681-baryonic-acoustic-oscillations-bao">ESA: Baryonic acoustic oscillations (BAO)</ExternalLink>
+              : the pattern in how galaxies are spread across the sky, which is used as a standard ruler. (ESA’s science pages carry a notice
+              that they are under review and not being updated.)
+            </li>
+            <li>
+              <ExternalLink href="https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-quasars/">NASA: Hubble quasars</ExternalLink>
+              : what quasars are and why they shine so brightly.
             </li>
             <li>
               <ExternalLink href="https://www.desi.lbl.gov/">DESI: the Dark Energy Spectroscopic Instrument</ExternalLink>: the survey’s own home
@@ -538,7 +575,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
               title: 'Prediction 1: when do the neutrinos turn heavy?',
               text: (
                 <>
-                  Suppose the three kinds of neutrino weigh <strong>0.06 eV</strong> all together, shared equally. When the universe was young
+                  Suppose the three kinds of neutrino weigh <strong>{PREDICTION_TOTAL_MASS_EV} eV</strong> all together, shared equally. When the universe was young
                   and hot, neutrinos moved almost as fast as light, so they acted like light. As the universe cooled they slowed, and today they
                   act like matter. The microwave background was released about {RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')} years
                   after the Big Bang. Did the neutrinos turn from “light-like” to “matter-like” <strong>before</strong> that, or{' '}
@@ -631,8 +668,8 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
             <strong>Stage 1: the cold sea of neutrinos.</strong> The neutrino sea’s temperature today is (4/11)^(1/3) × {CMB_TEMPERATURE_TODAY_KELVIN} K ={' '}
             <strong>{result.neutrinoTemperatureKelvin.toFixed(3)} K</strong>. A typical neutrino in it carries an energy of about{' '}
             <strong>{result.typicalEnergyTodayEv.toFixed(6)} eV</strong> ({sci(result.typicalEnergyTodayEv)} eV) today. That is the number the
-            neutrinos’ mass will be compared with. For this run the three masses add up to <strong>{result.totalMassEv} eV</strong> ({result.totalMassEv === RUN_TOTAL_MASS_EV ? 'DESI’s July 2026 upper limit' : 'the total you chose below'}; after the run you can try other totals), shared equally, so each neutrino weighs{' '}
-            <strong>{result.totalMassEv} ÷ 3 = {eachEv.toFixed(4)} eV</strong>.
+            neutrinos’ mass will be compared with. For this run the three masses add up to <strong>{formatTotal(result.totalMassEv)} eV</strong> ({result.totalMassEv === RUN_TOTAL_MASS_EV ? 'DESI’s July 2026 upper limit' : 'the total you chose below'}; after the run you can try other totals), shared equally, so each neutrino weighs{' '}
+            <strong>{formatTotal(result.totalMassEv)} ÷ 3 = {eachEv.toFixed(4)} eV</strong>.
           </div>
         )}
 
@@ -714,15 +751,15 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 <circle cx={oneX} cy={AXIS_Y} r={3} fill="none" stroke={MUTED_COLOR} strokeWidth={1.5} />
                 <circle cx={AXIS_LEFT + 4} cy={AXIS_Y + 78} r={3} fill="none" stroke={MUTED_COLOR} strokeWidth={1.5} />
                 <text x={AXIS_LEFT + 14} y={AXIS_Y + 81} fill={MUTED_COLOR} fontSize="10">
-                  grey circle: where it would turn heavy if one neutrino carried the whole {result.totalMassEv} eV (z = {Math.round(result.heavyRedshiftOneNeutrino)})
+                  grey circle: where it would turn heavy if one neutrino carried the whole {formatTotal(result.totalMassEv)} eV (z = {Math.round(result.heavyRedshiftOneNeutrino)})
                 </text>
               </g>
             )}
           </svg>
         </div>
 
-        {/* Picture 1's guide: draft wording (CLAUDE.md §14 and §29) for the owner's review (§28.1). The first bullets are the wording approved on
-            2026-10-19; the bullets about the violet marker and the bands replace the placeholder "what will appear when Run is built". It does not
+        {/* Picture 1's guide: draft wording (CLAUDE.md §14 and §29) for the owner's review (§28.1). The first bullets are the Step 2 wording;
+            the bullets about the violet marker and the bands replace the placeholder "what will appear when Run is built". It does not
             say what the learner predicted. */}
         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>
           <p style={paragraph}>
@@ -770,7 +807,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
           </ul>
           {stage >= 2 && (
           <p style={paragraph}>
-            <strong>A worked moment.</strong> The three masses add up to {result.totalMassEv} eV, so each is {result.totalMassEv} ÷ 3 ={' '}
+            <strong>A worked moment.</strong> The three masses add up to {formatTotal(result.totalMassEv)} eV, so each is {formatTotal(result.totalMassEv)} ÷ 3 ={' '}
             {eachEv.toFixed(4)} eV. A typical neutrino’s energy today is {result.typicalEnergyTodayEv.toFixed(6)} eV, and in the past it was
             larger by a factor of 1 + <em>z</em>, because the universe was that many times smaller and everything was squeezed and hotter. It
             reaches {eachEv.toFixed(4)} eV when 1 + <em>z</em> = {eachEv.toFixed(4)} ÷ {result.typicalEnergyTodayEv.toFixed(6)} ={' '}
@@ -808,12 +845,15 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 all the matter in the universe (100 percent)
               </text>
               <rect x={P2_LEFT} y={56} width={Math.max(2, (result.share) * (P2_RIGHT - P2_LEFT))} height={20} fill={NEUTRINO_COLOR} />
+              <text x={P2_LEFT + Math.max(2, result.share * (P2_RIGHT - P2_LEFT)) + 6} y={70} fill={NEUTRINO_COLOR} fontSize="10" fontWeight="bold">
+                ← neutrinos (the violet part)
+              </text>
 
-              {/* The zoom: the first 1 percent of that bar, magnified a hundred times */}
+              {/* The zoom: the first zoomPercent percent of that bar, magnified 100 ÷ zoomPercent times */}
               <line x1={P2_LEFT} y1={78} x2={P2_LEFT} y2={ZOOM_TOP - 2} stroke={MUTED_COLOR} strokeDasharray="3 3" />
-              <line x1={P2_LEFT + 0.01 * (P2_RIGHT - P2_LEFT)} y1={78} x2={P2_RIGHT} y2={ZOOM_TOP - 2} stroke={MUTED_COLOR} strokeDasharray="3 3" />
+              <line x1={P2_LEFT + (zoomPercent / 100) * (P2_RIGHT - P2_LEFT)} y1={78} x2={P2_RIGHT} y2={ZOOM_TOP - 2} stroke={MUTED_COLOR} strokeDasharray="3 3" />
               <text x={P2_LEFT + 6} y={ZOOM_TOP - 8} fill={MUTED_COLOR} fontSize="10">
-                zoom: the first 1 percent, magnified 100 times
+                zoom: the first {zoomPercent} percent, magnified {zoomTimes} times
               </text>
               <rect x={P2_LEFT} y={ZOOM_TOP} width={P2_RIGHT - P2_LEFT} height={22} fill="#475569" />
               <rect x={P2_LEFT} y={ZOOM_TOP} width={zoomShareX - P2_LEFT} height={22} fill={NEUTRINO_COLOR} />
@@ -821,13 +861,13 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 neutrinos: {(result.share * 100).toFixed(2)} percent
               </text>
               <text x={P2_RIGHT - 6} y={ZOOM_TOP + 15} fill={TEXT_COLOR} fontSize="11" textAnchor="end">
-                ordinary and dark matter
+                other matter
               </text>
-              {[0, 0.25, 0.5, 0.75, 1].map((pct) => (
-                <g key={pct}>
-                  <line x1={P2_LEFT + (pct / 1) * (P2_RIGHT - P2_LEFT)} y1={ZOOM_TOP + 22} x2={P2_LEFT + (pct / 1) * (P2_RIGHT - P2_LEFT)} y2={ZOOM_TOP + 27} stroke={MUTED_COLOR} />
-                  <text x={P2_LEFT + (pct / 1) * (P2_RIGHT - P2_LEFT)} y={ZOOM_TOP + 40} fill={MUTED_COLOR} fontSize="10" textAnchor={pct === 1 ? 'end' : pct === 0 ? 'start' : 'middle'}>
-                    {pct}%
+              {[0, 0.25, 0.5, 0.75, 1].map((fraction) => (
+                <g key={fraction}>
+                  <line x1={P2_LEFT + fraction * (P2_RIGHT - P2_LEFT)} y1={ZOOM_TOP + 22} x2={P2_LEFT + fraction * (P2_RIGHT - P2_LEFT)} y2={ZOOM_TOP + 27} stroke={MUTED_COLOR} />
+                  <text x={P2_LEFT + fraction * (P2_RIGHT - P2_LEFT)} y={ZOOM_TOP + 40} fill={MUTED_COLOR} fontSize="10" textAnchor={fraction === 1 ? 'end' : fraction === 0 ? 'start' : 'middle'}>
+                    {+(fraction * zoomPercent).toFixed(2)}%
                   </text>
                 </g>
               ))}
@@ -871,7 +911,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                     <g key={`key-${m}`}>
                       <circle cx={P2_PLOT_LEFT + 14} cy={P2_PLOT_TOP + 4 + i * 13} r={i === 0 ? 4.5 : 3} fill={i === 0 ? '#facc15' : NEUTRINO_COLOR} />
                       <text x={P2_PLOT_LEFT + 24} y={P2_PLOT_TOP + 8 + i * 13} fill={i === 0 ? '#facc15' : TEXT_COLOR} fontSize="10">
-                        {i === 0 ? `this run: ${m} eV smooths them by ${(clumpSmoothing(m) * 100).toFixed(2)} percent` : `${m} eV: ${(clumpSmoothing(m) * 100).toFixed(1)} percent`}
+                        {i === 0 ? `this run: ${formatTotal(m)} eV smooths them by ${(clumpSmoothing(m) * 100).toFixed(2)} percent` : `${formatTotal(m)} eV: ${(clumpSmoothing(m) * 100).toFixed(1)} percent`}
                       </text>
                     </g>
                   ))}
@@ -888,18 +928,19 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
               <strong>How to read this diagram.</strong> Picture 2 has two parts. Part A (stage 3) shows <strong>how much of the universe’s
               matter</strong> the neutrinos make up. Part B (stage 4) shows <strong>how much they smooth out the smallest clumps</strong> of
               matter, for different total masses. Both use the sky’s ordinary measurements of the universe from Planck (the share of the universe’s
-              energy that is matter, 0.315, and the expansion rate, 67.4 km/s/Mpc, used in Experiments 1 and 3 of this group).
+              energy that is matter, {omegaMatter}, and the expansion rate, {(h * 100).toFixed(1)} km/s/Mpc, used in Experiments 1 and 3 of this group).
             </p>
             <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
               <li>
                 <strong>Part A, the long grey bar:</strong> all the matter in the universe, ordinary and dark together, counted as 100 percent.
-                The very thin violet sliver at its left end is the neutrinos’ share. It is so thin that you can hardly see it.
+                The violet part at its left end is the neutrinos’ share. For small totals it is a very thin sliver that you can hardly see.
               </li>
               <li>
-                <strong>Part A, the second bar (the “zoom”):</strong> the first 1 percent of the bar above, <em>magnified 100 times</em> so that
-                the sliver becomes visible. The dashed lines show where it comes from. The violet part of the zoom is the neutrinos, and its length
-                on the 0 to 1 percent scale is their share: {(result.share * 100).toFixed(2)} percent of the matter. The grey rest is ordinary and
-                dark matter.
+                <strong>Part A, the second bar (the “zoom”):</strong> the first {zoomPercent} percent of the bar above, <em>magnified {zoomTimes} times</em> so that
+                the violet part becomes easy to see. (The zoom is the first 1 percent unless the neutrinos’ share is bigger than that, and then it
+                is the first 2, 5 or 10 percent, so that the violet part always fits.) The dashed lines show where it comes from. The violet part of
+                the zoom is the neutrinos, and its length on the 0 to {zoomPercent} percent scale is their share: {(result.share * 100).toFixed(2)}{' '}
+                percent of the matter. The grey rest is ordinary matter and dark matter.
               </li>
               <li>
                 <strong>Part B, the line:</strong> a straight violet line from the bottom left. The further right you go (a larger total
@@ -907,18 +948,18 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 smallest clumps are smoothed.
               </li>
               <li>
-                <strong>Part B, the dots and the key:</strong> the yellow dot is this run’s total ({result.totalMassEv} eV), the violet dots are
+                <strong>Part B, the dots and the key:</strong> the yellow dot is this run’s total ({formatTotal(result.totalMassEv)} eV), the violet dots are
                 other totals (the key at the top left lists their values). The line is only used up to {MAX_TOTAL_MASS_EV} eV. For larger
                 masses the neutrinos’ share is not small, and the simple rule behind the line stops being a good estimate.
               </li>
             </ul>
             <p style={paragraph}>
-              <strong>A worked moment.</strong> The total mass of {result.totalMassEv} eV, divided by 93.14 eV, gives{' '}
-              {(result.totalMassEv / 93.14).toFixed(6)}. Astronomers have worked out that this number equals the neutrinos’ share of the universe’s energy
-              multiplied by 0.674 × 0.674 = 0.454, where 0.674 is the expansion rate in units of 100 km/s/Mpc. So the neutrinos’ share of the
-              universe’s energy is {(result.totalMassEv / 93.14).toFixed(6)} ÷ 0.454 = {(result.totalMassEv / 93.14 / (0.674 * 0.674)).toFixed(5)}. The matter is 0.315 of the universe’s energy, so the neutrinos’ share <em>of the matter</em> is{' '}
-              {(result.totalMassEv / 93.14 / (0.674 * 0.674)).toFixed(5)} ÷ 0.315 = {result.share.toFixed(5)}, which is{' '}
-              {(result.share * 100).toFixed(2)} percent. The smoothing of the smallest clumps is about 8 times that share: 8 × {result.share.toFixed(5)}
+              <strong>A worked moment.</strong> The total mass of {formatTotal(result.totalMassEv)} eV, divided by {omegaUnit} eV, gives{' '}
+              {(result.totalMassEv / omegaUnit).toFixed(6)}. Astronomers have worked out that this number equals the neutrinos’ share of the universe’s energy
+              multiplied by {h} × {h} = {(h * h).toFixed(3)}, where {h} is the expansion rate in units of 100 km/s/Mpc. So the neutrinos’ share of the
+              universe’s energy is {(result.totalMassEv / omegaUnit).toFixed(6)} ÷ {(h * h).toFixed(3)} = {energyShare.toFixed(5)}. The matter is {omegaMatter} of the universe’s energy, so the neutrinos’ share <em>of the matter</em> is{' '}
+              {energyShare.toFixed(5)} ÷ {omegaMatter} = {result.share.toFixed(5)}, which is{' '}
+              {(result.share * 100).toFixed(2)} percent. The smoothing of the smallest clumps is about {SMOOTHING_FACTOR} times that share: {SMOOTHING_FACTOR} × {result.share.toFixed(5)}
               = {result.smoothing.toFixed(4)}, or {(result.smoothing * 100).toFixed(2)} percent. In everyday terms, it is as if fine sand were
               mixed into a snowdrift, a few percent of extra stuff that will not settle softens its edges by a few percent.
             </p>
@@ -1006,6 +1047,20 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
               <text x={(P3_LEFT + P3_RIGHT) / 2} y={p3AxisY + 38} fill={TEXT_COLOR} fontSize="12" textAnchor="middle">
                 the three neutrino masses added together (eV)
               </text>
+
+              {/* A key to the three patterns of the bars */}
+              {[
+                { fill: 'url(#nm-below-floor)', text: 'grey stripes: below the normal-ordering floor, ruled out by the oscillation experiments' },
+                { fill: CEILING_COLOR, text: 'solid orange: from the normal-ordering floor up to the ceiling, the room left under that ordering' },
+                { fill: 'url(#nm-gap-to-floor)', text: 'red stripes: from a ceiling up to the inverted-ordering floor, where the ceiling is below the floor' },
+              ].map((item, i) => (
+                <g key={item.text}>
+                  <rect x={P3_LEFT} y={p3AxisY + 52 + i * 15} width={16} height={9} fill={item.fill} stroke={MUTED_COLOR} strokeWidth={0.5} />
+                  <text x={P3_LEFT + 24} y={p3AxisY + 60 + i * 15} fill={MUTED_COLOR} fontSize="10">
+                    {item.text}
+                  </text>
+                </g>
+              ))}
             </svg>
           </div>
         )}
@@ -1091,7 +1146,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 They do not say why the numbers are what they are.
               </p>
 
-              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>For a total of {result.totalMassEv} eV, shared equally</p>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>For a total of {formatTotal(result.totalMassEv)} eV, shared equally</p>
               <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
                 <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '420px' }}>
                   <thead>
@@ -1104,15 +1159,15 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                   <tbody>
                     {(
                       [
-                        ['Each of the three masses', `${eachEv.toFixed(4)} eV`, `${result.totalMassEv} ÷ 3`],
-                        ['A typical neutrino’s energy today', `${result.typicalEnergyTodayEv.toFixed(6)} eV`, `3.151 × k × ${result.neutrinoTemperatureKelvin.toFixed(3)} K`],
+                        ['Each of the three masses', `${eachEv.toFixed(4)} eV`, `${formatTotal(result.totalMassEv)} ÷ 3`],
+                        ['A typical neutrino’s energy today', `${result.typicalEnergyTodayEv.toFixed(6)} eV`, `${MEAN_ENERGY_IN_KT} × k × ${result.neutrinoTemperatureKelvin.toFixed(3)} K`],
                         ['Redshift at which they turn heavy', `z = ${result.heavyRedshift.toFixed(1)}`, `(${eachEv.toFixed(4)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)}) − 1`],
                         ['Age of the universe then', `about ${millions(result.heavyTimeYears)} million years`, 'the age function of Cosmology Experiment 6, at Planck’s expansion rate'],
                         ['The microwave background’s release', `z = ${RECOMBINATION_REDSHIFT}, ${RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')} years`, 'Cosmology Experiment 3'],
                         ['How many times later than the release', `${result.timesLaterThanRelease.toFixed(0)} times`, `${Math.round(result.heavyTimeYears).toLocaleString('en-US')} ÷ ${RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')}`],
-                        ['Redshift if one neutrino carried the whole total', `z = ${result.heavyRedshiftOneNeutrino.toFixed(1)}`, `(${result.totalMassEv} ÷ ${result.typicalEnergyTodayEv.toFixed(6)}) − 1`],
-                        ['The neutrinos’ share of all the matter', `${(result.share * 100).toFixed(2)} percent`, `${result.totalMassEv} ÷ 93.14 ÷ ${(h * h).toFixed(3)} ÷ ${omegaMatter}`],
-                        ['Smoothing of the smallest clumps', `${(result.smoothing * 100).toFixed(2)} percent`, `8 × ${result.share.toFixed(5)}`],
+                        ['Redshift if one neutrino carried the whole total', `z = ${result.heavyRedshiftOneNeutrino.toFixed(1)}`, `(${formatTotal(result.totalMassEv)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)}) − 1`],
+                        ['The neutrinos’ share of all the matter', `${(result.share * 100).toFixed(2)} percent`, `${formatTotal(result.totalMassEv)} ÷ ${omegaUnit} ÷ ${(h * h).toFixed(3)} ÷ ${omegaMatter}`],
+                        ['Smoothing of the smallest clumps', `${(result.smoothing * 100).toFixed(2)} percent`, `${SMOOTHING_FACTOR} × ${result.share.toFixed(5)}`],
                       ] as const
                     ).map(([label, value, how]) => (
                       <tr key={label} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
@@ -1234,7 +1289,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 </li>
                 <li>
                   <ExternalLink href="https://arxiv.org/abs/1807.06209">Planck 2018 results VI: cosmological parameters</ExternalLink>: the paper behind the
-                  2018 limit of 0.12 eV and the matter share of 0.315 used here.
+                  2018 limit of 0.12 eV and the matter share of {omegaMatter} used here.
                 </li>
                 <li>
                   <ExternalLink href="https://arxiv.org/abs/2406.14554">Neutrino mass bounds from DESI 2024 are relaxed by Planck PR4 and cosmological supernovae (Allali and Notari)</ExternalLink>
