@@ -13,13 +13,15 @@ import {
   SLIDER_MIN_REDSHIFT,
 } from '../physics/earliestGalaxies'
 import type { AgeShareRange, CountRange } from '../physics/earliestGalaxies'
+import { EarliestGalaxiesTutor } from './EarliestGalaxiesTutor'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
 // Frontier and Beyond, Experiment 5 (docs/experiments/frontier-and-beyond/05-how-early-can-galaxies-form.md).
 // Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of a stretched wave
 // (an illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 with its guide. Step 3 adds the two
 // predictions, Run, the five-stage run, the stretching and Webb's range on Picture 1, Picture 2 (the clock and the ruler) and Picture 3
-// (the count), each with a guide. The results, the "Look at another galaxy" control, the tutor and the chapter summary come in later steps.
+// (the count), each with a guide. Step 4 added the "Look at another galaxy" control, the results tables and their guide, the formulas and the links
+// kept back. Step 5 adds the tutor (EarliestGalaxiesTutor.tsx) and the chapter summary (in App.tsx).
 // All wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing the predictions ask
 // is shown before the run (§12). The interface only displays numbers from src/physics (CLAUDE.md §9); the only calculation here is where a
 // point is drawn.
@@ -198,7 +200,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Bright', meaning: 'in this experiment, “bright” means giving out a lot of light, whatever the distance. A galaxy can look faint because it is far away and still be intrinsically bright.' },
 ]
 
-export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExperimentProps) {
+export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: EarliestGalaxiesExperimentProps) {
   const [agePrediction, setAgePrediction] = useState<AgeShareRange | null>(null)
   const [countPrediction, setCountPrediction] = useState<CountRange | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -1298,6 +1300,19 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
               </ul>
             </div>
           </div>
+        )}
+
+        {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The summary below the experiment (in
+            App) is shown only once the learner reaches the explanation. */}
+        {status === 'complete' && agePrediction !== null && countPrediction !== null && (
+          <EarliestGalaxiesTutor
+            redshift={redshift}
+            galaxyName={nameThe}
+            isImaginary={whatIf}
+            agePrediction={agePrediction}
+            countPrediction={countPrediction}
+            onExplained={() => onTutorComplete?.()}
+          />
         )}
       </div>
     </div>
