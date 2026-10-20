@@ -7,6 +7,7 @@ import { LumpinessExperiment } from './components/LumpinessExperiment'
 import { NeutrinoMassExperiment } from './components/NeutrinoMassExperiment'
 import { EarliestGalaxiesExperiment } from './components/EarliestGalaxiesExperiment'
 import { DarkMatterSearchesExperiment } from './components/DarkMatterSearchesExperiment'
+import { WideBinariesExperiment } from './components/WideBinariesExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -653,6 +654,15 @@ const chapters: Chapter[] = [
     learned:
       "A search that sees nothing still teaches something: it rules out every interaction strong enough that seeing nothing would have been less than a 1-in-10 accident. That limit sits where a search would expect about 2.3 bumps, so a particle ten times weaker, searched for ten times longer, is expected to give the same 2.3, and more data tests weaker interactions. With no background, LZ's limit of 2.2 × 10^-48 cm² after 280 live days would fall to about 6.2 × 10^-49 cm² after 1,000, and with a background that grows with the data, only to about 1.2 × 10^-48 cm² (two idealised rules, not LZ's forecast). Neutrinos from the Sun are a real signal and also a background: LZ saw the boron-8 kind at 4.5 sigma, above PandaX-4T's 2.64 and XENONnT's 2.73. LZ's 2026 search reported one event at 248 keV, at 3.4 sigma where it appeared. Counting all the places the search looked, LZ gives 2.6 sigma, below the 3 sigma of evidence (about 14 independent places would do this, as an illustration). The collaboration says the event does not establish a dark matter origin, so it is a hint, not a discovery, and what it is remains open. This experiment is a counting model: it does not reproduce LZ's limits, and it cannot say what the event is. Strong evidence about what dark matter is not; Open: what it is, and what one unexplained event means, as of October 2026.",
     next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+  },
+  {
+    title: 'Do we need dark matter, or does gravity change?',
+    group: 'Frontier and Beyond',
+    Component: WideBinariesExperiment,
+    // PLACEHOLDER (Step 2). The real chapter summary is drafted with the tutor (a later step) and approved line by line (CLAUDE.md §28.1).
+    // It is never shown until then, because the summary appears only after the tutor's explanation, which is not built yet.
+    learned: 'Placeholder: the chapter summary is written with the tutor, in a later step.',
+    next: 'Placeholder: the next experiment is named once it has an approved specification.',
   },
 ]
 
