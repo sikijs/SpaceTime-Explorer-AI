@@ -1,0 +1,345 @@
+# Experiment 5 (Frontier and Beyond): How Early Can Galaxies Form?
+
+**Status: Specification APPROVED by the owner on 2026-10-20 ("approved, all defaults", read as approving all thirteen decisions on their defaults, including the status label, the two predictions, the model without a galaxy-formation model, and the what-if slider; Claude should say so if the owner meant otherwise), proposed by Claude on 2026-10-20 per `CLAUDE.md` §23 Stages 1 to 3, as the fifth experiment of the group approved on 2026-10-16 (`00-group-proposal.md`, "list of 19 approved"). The approval covers the specification, not the learner-facing wording. Step 1 (the physics model and its tests) is built; see "Implementation Notes". All learner-facing wording below is draft wording for the owner's line-by-line approval (§28.1), written to the standard of `CLAUDE.md` §29. Every published number was checked on 2026-10-20 against an arXiv abstract, an arXiv HTML page or an official page (see "Real-World Facts Used, and Source Status"); the full papers were not read, and the arXiv HTML page of Naidu et al. was read only in its first 100,000 of 405,917 characters. Every number marked "computed" was computed on 2026-10-20 with the project's own functions (a throw-away test, deleted afterwards) and must be re-checked by the physics tests.**
+
+**This specification departs from the group proposal in four places, each listed as a decision below (Decisions 1, 2, 3 and 5).**
+
+1. **The "2024 record" was written as 14.18 in the proposal; the sources give two values.** JADES-GS-z14-0 was reported at z = 14.32 (NIRSpec, Carniani et al. 2024) and later refined to z = 14.1793 ± 0.0007 by ALMA's oxygen line; the MoM-z14 paper compares itself with the second ("zspec = 14.18"). This specification uses 14.18 and says why (Decision 5).
+2. **The proposal's "280 million years" is the paper's figure; the project's model gives 284.** The project's models leave out radiation (as Cosmology Experiments 5, 6 and 8 already say), so they are about 1.4 percent above the paper's number. The page shows both and explains the difference (Decision 3).
+3. **The proposal's "more bright galaxies than many models expected" is stated by the sources in two ways.** The paper says "more than 100 times larger" with a best estimate of 182 (+329, −105) times, from one survey, and the ESA and NASA releases say "100 times more". The specification uses the paper's number with its uncertainty and does not generalise it to "all models" (Decision 10).
+4. **Two predictions, not one** (the group's pattern since Experiment 2). The proposal named one. Decision 4.
+
+**Group:** "Frontier and Beyond" (Part A: the expanding universe and what fills it). **Status label shown to the learner (proposed): "Strong evidence that these galaxies exist; Open: what built them so fast" (as of October 2026).** The proposal's label was "Strong evidence (the galaxies); Open (why so many)"; "so many" would tell the learner the answer to Prediction 2, so the wording is changed (Decision 1).
+
+---
+
+## Overview
+
+For most of the twentieth century, galaxies were studied as they are now, or as they were a few billion years ago. The James Webb Space Telescope (JWST), launched in December 2021, was built to look much further back, to the "cosmic dawn", when the first stars and galaxies formed. Its first surprise, from 2022, was that galaxies were already there, and bright, much earlier than expected. The latest and most distant that has been confirmed is **MoM-z14**, whose light left it only about **280 million years after the Big Bang** (a **redshift of 14.44**), published by Naidu and colleagues in 2025 (revised January 2026) and announced by ESA and NASA on 28 January 2026. Its paper says it is also **extremely bright and compact for its age**, and that the number of bright galaxies like it implied by the survey is **more than 100 times** what the models in use before JWST predicted.
+
+This experiment rebuilds three ideas behind that headline, with the project's existing physics:
+
+1. **A redshift is a stretch factor.** A redshift of 14.44 means that the light has been stretched by a factor of **15.44** on its way to us (1 + z). Light that left the galaxy as ultraviolet arrived as infrared, which is why JWST (an infrared telescope) was needed.
+2. **A redshift is also a time.** From Cosmology Experiments 6 and 8, a redshift of 14.44 is **about 284 million years after the Big Bang (about 2.1 percent of the universe's present age of 13.8 billion years)**; the light has travelled about **13.5 billion years**; and the galaxy is now about **33.8 billion light-years** away, though it was only about **2.2 billion light-years** away when its light left.
+3. **Why this is a puzzle for galaxy formation but not for the Big Bang.** The Big Bang model gives the age and distance at a redshift, and it is not in question. What is in question is how fast stars and galaxies can form: standard models before JWST expected few bright galaxies this early, and JWST found many more. Several explanations are being tested (for example, galaxies that form stars in short, strong bursts, or very efficient early star formation) and **none is settled**.
+
+It is a **predict, run, observe, explain** lesson on a small tested model: the learner predicts what fraction of the universe's present age has passed at a redshift of 14.4, and how the number of bright galaxies compares with what the models expected; then watches the light's stretching, the clock, the distance and the counts; then the tutor explains.
+
+It says honestly what it does **not** do: it does **not** model galaxy formation (no halo mass function, no star-formation model), so it **cannot say which explanation is right or whether the excess is real at every redshift**. The count comparison is a published number, shown as data, not a result computed here (Decision 2).
+
+The new ideas are (1) **a redshift is a stretch factor, so any wavelength can be turned into the one a telescope sees**, (2) **a redshift is also an age**, (3) **a result that disagrees with models can leave the underlying theory untouched**, and (4) **a record is a record until it is beaten**, shown on a staircase of confirmed redshifts, with the difference between a **photometric** candidate (a guess from colours) and a **spectroscopic** confirmation (a measured spectrum).
+
+---
+
+## Learning Objective
+
+After this experiment, the learner should understand:
+
+1. **A redshift of z means light stretched by 1 + z.** For z = 14.44 the factor is 15.44, and a wavelength of 121.6 nm (ultraviolet) becomes about 1,877 nm (1.88 micrometres, near-infrared).
+2. **Why JWST, and why infrared.** Ultraviolet and visible light from the first galaxies arrives as infrared. (Why an infrared telescope in space: stated briefly, with the link, not modelled.)
+3. **A redshift can be converted into an age and a distance** with the project's models: age about 284 million years (2.1 percent of today's age), light-travel time about 13.5 billion years, distance today about 33.8 billion light-years and distance then about 2.2 billion light-years. The light-travel time is not the distance today (Cosmology Experiment 8).
+4. **The universe was about 6.5 percent of its present size** when the light left (1 ÷ 15.44).
+5. **Spectroscopic confirmation is different from a colour-based estimate**, and MoM-z14 was confirmed with a spectrum (a sharp Lyman-alpha break at z = 14.42 and emission lines at z = 14.44 ± 0.02, about 6 sigma together).
+6. **The puzzle.** The survey behind MoM-z14 implies more than 100 times (best estimate 182, range 77 to 511) the number density of bright galaxies at z of about 14 to 15 than the models in use before JWST predicted. This is one survey's estimate with a large uncertainty.
+7. **What it does and does not challenge.** The age at a given redshift comes from the expansion history, not from galaxy formation, so the puzzle is about how galaxies formed, not about the Big Bang. Proposed explanations include bursty star formation and very efficient early star formation (named, not modelled), and none is settled.
+8. **A label of "Strong evidence" and "Open" can apply to one topic together:** the galaxies are real; the reason is not known.
+
+---
+
+## Physical Situation
+
+### Reused
+- **Redshift and the stretching of light** (Cosmology Experiment 1): `wavelengthStretchFactor`-style relation, but at large redshift the stretch is exactly 1 + z (Cosmology Experiment 8), not the small-redshift formula of Experiment 1.
+- **Age of the universe and time after the Big Bang** (Cosmology Experiments 6 and 8): `timeAfterBigBangYears`, `universeAgeYears`, `lightTravelYears`, `distanceTodayLightYears`, `distanceWhenLightLeftLightYears`, all with a flat universe of matter and a cosmological constant, **radiation left out**.
+- **Planck's values** (Experiments 1 and 4 of this group): Hubble constant 67.4 km/s/Mpc, matter fraction 0.315.
+- **Sigma** (Experiment 1 of this group): for the "about 6 sigma" of the emission lines (stated, not computed).
+- **Structure formation** (Cosmology Experiment 9): the idea that matter clumps over time, named in the tutor only (Decision 2).
+
+### What is new
+- **A spectrum with a sharp break** (the Lyman-alpha break) as the tool that measures a redshift, and the difference between a **photometric** and a **spectroscopic** redshift.
+- **A "staircase" of records** (four confirmed galaxies, 2023 to 2025).
+- **A published number density comparison** (data, not a model).
+- **Two named families of explanation** (bursty star formation, feedback-free starbursts), with their sources, as possibilities.
+
+### Simplifying assumptions (all stated to the learner in plain language)
+- **The universe is a flat universe of matter and a cosmological constant, with radiation left out**, using Planck's Hubble constant (67.4) and matter fraction (0.315), as Cosmology Experiments 5, 6 and 8 do (with the Hubble constant changed to Planck's). The age therefore comes out about 1.4 percent above the paper's 280 million years.
+- **The model's ages and distances are rescaled from the project's illustrative Hubble constant of 70 to Planck's 67.4**, as in Experiment 4 of this group (times scale as 1 ÷ H₀, and the comoving distance as 1 ÷ H₀ too).
+- **The count comparison is the paper's own published estimate**, stated with its uncertainty and its date, and not recomputed.
+- **Lyman-alpha's rest wavelength is 121.567 nm** (a standard constant, unchecked at a primary source in this specification).
+- **The galaxies are not simulated.**
+
+### Not introduced
+How galaxies form (halo mass functions, star-formation efficiency, feedback, dust, the initial mass function), reionization, the "little red dots" (Experiment 18 of this group), unusual chemical abundances (MoM-z14's nitrogen, named as one sentence at most, Decision 8), photometric-redshift fitting, spectral-line physics beyond one picture, and any prediction of what JWST will find.
+
+---
+
+## Physics Model
+
+### The numbers (published values; checked on 2026-10-20)
+
+| Quantity | Value | Source |
+|---|---|---|
+| MoM-z14: redshift from emission lines | z = 14.44 (−0.02, +0.02), about 6 sigma in all | Naidu et al., arXiv:2505.11263, HTML page (first 100,000 characters) |
+| MoM-z14: redshift from the Lyman-alpha break | z = 14.42 (−0.09, +0.10) | same |
+| MoM-z14: age | 280 million years after the Big Bang | same; the ESA and NASA releases of 28 January 2026 |
+| MoM-z14: brightness and size | UV absolute magnitude −20.2; extremely compact (circularised radius about 74 parsecs) | same, the arXiv abstract page |
+| Number density of bright z of about 14 to 15 sources | "more than 100 times larger (182, +329, −105)" than pre-JWST consensus models | same |
+| Earlier record, JADES-GS-z14-0 | z = 14.18 (the paper); z = 14.32 (+0.08, −0.20) from NIRSpec, refined to 14.1793 ± 0.0007 by ALMA | Naidu et al. (HTML); Carniani et al., Nature 633, 318 (2024), arXiv:2405.18485 |
+| JADES-GS-z13-0 | z = 13.20 (spectroscopic) | Curtis-Lake et al., Nature Astronomy 7, 622 (2023), arXiv:2212.04568: **from a search summary only**, the page was not fetched |
+| GN-z11 | z = 10.603 (JWST NIRSpec) | Bunker et al., A&A 677 (2023), arXiv:2302.07256: **from a search summary only**, the page was not fetched |
+
+### The rules
+
+- **Stretch factor:** `1 + z`. **Observed wavelength:** `λ_observed = λ_emitted × (1 + z)`. For Lyman-alpha (121.567 nm) at z = 14.44 this is 1,877 nm (computed).
+- **Relative size of the universe then:** `a = 1 ÷ (1 + z)` (6.48 percent at z = 14.44, computed).
+- **Time after the Big Bang:** `timeAfterBigBangYears(1 ÷ (1 + z), 0.685)` rescaled by 70 ÷ 67.4 (as in `neutrinoMass.ts`).
+- **Fraction of the present age:** time ÷ `universeAgeYears(0.685, 67.4)` (13.80 billion years, computed).
+- **Light-travel time:** present age minus time after the Big Bang.
+- **Distance today and then:** the project's `distanceTodayLightYears` and `distanceWhenLightLeftLightYears`, both rescaled by 70 ÷ 67.4 (Decision 3).
+- **A what-if redshift** (the control): the same functions for any redshift between 6 and 30.
+
+### Numbers (computed 2026-10-20 with the project's functions; the tests recompute them)
+
+| Redshift | 1 + z | Time after the Big Bang (million years), rescaled to H₀ = 67.4 | Share of present age | Light travel time (billion years) | Distance today (billion light-years) | Distance then (million light-years) |
+|---|---|---|---|---|---|---|
+| 10.603 (GN-z11) | 11.603 | 435.9 | 3.16 % | 13.36 | 31.83 | 2,743 |
+| 13.20 (JADES-GS-z13-0) | 14.20 | 322.0 | 2.33 % | 13.47 | 33.29 | 2,344 |
+| 14.18 (JADES-GS-z14-0, ALMA) | 15.18 | 291.3 | 2.11 % | 13.50 | 33.74 | 2,223 |
+| 14.32 (the NIRSpec value) | 15.32 | 287.3 | 2.08 % | 13.51 | 33.80 | 2,206 |
+| **14.44 (MoM-z14)** | **15.44** | **284.0** | **2.06 %** | **13.51** | **33.85** | **2,192** |
+| 20 (what-if) | 21 | 179.1 | 1.30 % | 13.62 | 35.7 | 1,701 |
+| 25 (what-if) | 26 | 130.0 | 0.94 % | 13.67 | 36.9 | 1,418 |
+
+(Rows for z = 14.18 and above: the module's output at H₀ = 70, rescaled by hand; distance today and then ×1.0386; light travel time = 13.796 − time. The 10.603 and 13.20 rows are left to the tests so that no number is typed by hand. Reference: for the oldest light, z = 1,089.8, the model gives a distance today of 45.4 billion light-years (43.74 × 1.0386) against the real 45.7, the 0.7 to 2.4 percent shortfall of Cosmology Experiment 8's note.)
+
+**The paper's 280 million years against the model's 284**: a difference of 1.4 percent. Leaving radiation out is the likely cause, but **this specification has not computed radiation's effect on the age**, so that is an expectation, not a result (the other possible cause is a small difference in the constants the paper used). The page says so and does not change the model to hit 280 (Decision 3).
+
+### New: a small independent physics module
+
+```typescript
+// src/physics/earliestGalaxies.ts (proposed)
+export interface RecordGalaxy { name: string; redshift: number; redshiftNote: string; year: number; method: 'spectroscopic'; source: string }
+export const RECORDS: RecordGalaxy[]                 // GN-z11 (10.603), JADES-GS-z13-0 (13.20), JADES-GS-z14-0 (14.18), MoM-z14 (14.44)
+export const MOM_Z14_REDSHIFT = 14.44
+export const LYMAN_ALPHA_NM = 121.567
+export const NUMBER_DENSITY_EXCESS = { best: 182, low: 77, high: 511, headline: 100 }   // Naidu et al.: 182 (+329, -105); '>100'
+export const HUBBLE_CONSTANT_PLANCK = 67.4           // reused from hubbleTension.ts
+export function stretchFactor(redshift: number): number                         // 1 + z
+export function observedWavelengthNm(emittedNm: number, redshift: number): number
+export function relativeSizeThen(redshift: number): number                      // 1 / (1 + z)
+export function ageAfterBigBangYears(redshift: number): number                  // timeAfterBigBangYears rescaled by 70 / 67.4
+export function shareOfPresentAge(redshift: number): number
+export function lightTravelYearsPlanck(redshift: number): number
+export function distanceTodayLightYearsPlanck(redshift: number): number
+export function distanceThenLightYearsPlanck(redshift: number): number
+export function runEarliestGalaxies(redshift: number): EarliestGalaxiesResult   // everything the results show
+export type AgeShareRange = 'about1' | 'about2' | 'about10'
+export function ageShareRange(redshift: number): AgeShareRange                  // the answer to Prediction 1
+export type CountRange = 'fewer' | 'same' | 'few' | 'hundred'
+export function countRange(): CountRange                                        // the answer to Prediction 2 (from the data)
+```
+
+Out-of-range inputs (a redshift below 0, above 30 or not finite) throw `RangeError`. `ageShareRange` is `'about1'` below 1.5 percent, `'about2'` from 1.5 to 4 percent, and `'about10'` above 4 percent (Decision 4). `countRange` returns `'hundred'` if the lowest published value is above 50 times, as the data says (77). **The module invents no new physics**: it reuses the project's age, distance and redshift functions, and adds only the stretching of a wavelength.
+
+---
+
+## Learner Controls
+
+1. **Run:** gated on both predictions.
+2. **After the run only, "Look at another galaxy":** presets for the four confirmed record holders (GN-z11, JADES-GS-z13-0, JADES-GS-z14-0, MoM-z14; MoM-z14 is the default), and a **"What if a galaxy were found at redshift …"** slider from 6 to 30, labelled "an imaginary galaxy: none is confirmed beyond 14.44" (Decision 6). It changes the stretched light, the timeline's marker and the distances, and **does not clear the predictions** (the predictions themselves use z = 14.44, so the answers do not depend on the control).
+3. **A "Start over" button** clears the predictions and the pictures.
+
+---
+
+## Prediction Activity
+
+Two questions, both answered before Run is enabled. Not scored while the learner is predicting; the tutor marks each as matched or not matched in its explanation (the group's pattern). Each ends "You are not graded, and a guess is fine."
+
+> **Prediction 1: how early?** Light from a galaxy confirmed at a redshift of about 14.4 left it a long time ago. The universe is now 13.8 billion years old. When that light left, how much of the universe's present age had passed? Buttons: **About 1 percent (under 1.5 percent)**, **About 2 percent (1.5 to 4 percent)**, **About 10 percent (over 4 percent)**.
+>
+> **Prediction 2: how many?** Before Webb, computer models of galaxy formation predicted how many bright galaxies there would be at this time. A survey of Webb's images found bright galaxies like this one. Compared with what the models predicted, the number the survey implies is: **fewer**, **about the same**, **a few times more**, or **about a hundred times more or higher**.
+
+Right answers: Prediction 1 is **about 2 percent** (2.06), by `ageShareRange(14.44)`. Prediction 2 is **about a hundred times more or higher** (182 with a range of 77 to 511, one survey), by `countRange()`. The natural wrong answers: "about 10 percent" for Prediction 1 (a few hundred million years sounds like a tenth of 13.8 billion years: it is a fiftieth); "about the same" or "a few times more" for Prediction 2 (a model that is wrong by a hundred sounds unlikely). The tutor says why "a few times more" is a reasonable guess (other surveys and other redshifts find smaller excesses; this specification has not checked which, Decision 10).
+
+The prediction texts do not give the age, the share, the numbers or say that there is an excess. The word "more" appears only among the choices.
+
+---
+
+## Experiment Behavior
+
+### Introduction (draft contents, to the standard of `CLAUDE.md` §29; the owner approves the wording line by line)
+
+1. **The question.** "How soon after the Big Bang could galaxies already exist, and how can we know?"
+2. **Where we left off.** Experiments 1 to 4 of this group were about measurements that disagree or are near their limit: the expansion rate, a dark energy that might change, the clumpiness of the universe, the weight of a neutrino. This one is about a discovery rather than a disagreement: a telescope found something earlier than expected.
+3. **What is a galaxy, and what is the cosmic dawn?** A galaxy: a huge group of stars, gas and dust held together by gravity (Cosmology Experiments 4, 7 and 9). The cosmic dawn: the time, a few hundred million years after the Big Bang, when the first stars and galaxies lit up (NASA's own phrase, from the page below). Everyday comparison: dawn is the first light of the day.
+4. **Looking far away is looking back in time** (Cosmology Experiment 8): the light of a distant galaxy took billions of years to reach us, so the galaxy appears as it was. An everyday comparison: the light of a distant street lamp or the sound of thunder arriving late.
+5. **What is a redshift?** Space expands, and the expansion stretches the light travelling through it (Cosmology Experiment 1). A redshift of z means a stretch by 1 + z. An everyday comparison: dots drawn on a balloon that is blown up, or a wave drawn on a rubber band that is pulled. A worked example: z = 1 means light stretched to twice its wavelength. **Why infrared:** when the stretch is more than about ten times, ultraviolet and visible light arrive as infrared, which our eyes and ordinary telescopes cannot see; JWST is built to see it (with the NASA and ESA links).
+6. **How is a redshift measured?** Two ways, in plain words. **Photometric:** photograph the galaxy through several colour filters; a distant galaxy disappears in the bluer ones, and the colours give an estimate, which can be wrong. **Spectroscopic:** split the light into its colours (a spectrum, with the ESA link) and look for the sharp edge (the **Lyman-alpha break**, because hydrogen gas absorbs light bluer than 121.6 nm) and for bright lines; the position gives the redshift accurately. Only a spectroscopic redshift is called "confirmed". An everyday comparison: guessing a person's height from a blurry photo and measuring it with a tape.
+7. **Some new words:** redshift, stretch factor, cosmic dawn, photometric and spectroscopic, Lyman-alpha break, ultraviolet and infrared, micrometre, light-year (reused), "number density" (how many per volume of space), "bright" in the sense of absolute magnitude (named in one plain sentence), and "the models before JWST" (an everyday comparison: a weather forecast made before a better satellite).
+8. **What the learner does.** Two predictions, press Run, then look at the other galaxies and the what-if slider.
+9. **Assumptions** (the list above in plain language).
+10. **"Want to know more?" links** (`CLAUDE.md` §29 rule 3). **Visible from the start (proposed; each to be fetched again before approval):** NASA's "What Is Cosmological Redshift?", ESA/Webb's "Spectroscopy with Webb", ESA/Webb's NIRSpec page, and NASA's Webb "Early Universe" page **only if** its summary ("more massive galaxies in the early universe than expected") is judged not to reveal Prediction 2 (**it does reveal it, so it is kept back**; see below). **Kept back until after the run (their summaries state what the predictions ask, §12):** Naidu et al. (arXiv:2505.11263), the ESA/Webb release weic2603 (the "100 times" figure), NASA's Webb "Early Universe" page, Carniani et al. (arXiv:2405.18485) and the two explanation papers, Sun et al. (arXiv:2307.15305) and Dekel et al. (arXiv:2303.04827). **Background ideas without a plain official link yet:** the cosmic dawn and what a galaxy is (NASA's 2019 "Webb to explore galaxies from cosmic dawn to present day" is a candidate, not fetched). Each link is recorded in the source table.
+11. **Date.** "As of October 2026."
+
+The introduction must **not** say that bright galaxies are more numerous than predicted, give any number from the count comparison, say that the models are wrong, or give the age or the share for z = 14.44.
+
+### Display
+
+Three pictures, each with every component labelled on the canvas (§14) and a guide beneath it (§14 and §29), plus a small drawing in the introduction (a rubber band with a wave drawn on it, before and after stretching: an illustration, not a model).
+
+- **Picture 1: "A wave stretched by the expansion."** A wavelength axis (100 nm to 3,000 nm, a log scale) with the ultraviolet, visible and near-infrared regions shaded and labelled, JWST's near-infrared range (about 600 to 5,000 nm: **to be checked at a NASA or ESA page**) as a bracket, and Lyman-alpha's emitted wavelength (121.6 nm) with an arrow stretching to its observed wavelength for the chosen redshift (1,877 nm for MoM-z14). A second, grey arrow for a nearby comparison (z = 1: 243 nm, still ultraviolet) is shown beside it.
+- **Picture 2: "The clock and the ruler."** A timeline from the Big Bang to today (13.8 billion years, log or linear scale, to be chosen at the interface step) with markers for the four record holders and the chosen galaxy, each labelled with its redshift and its age, and under it three bars (as in Cosmology Experiment 8): how long the light travelled, how far away the galaxy was when the light left, and how far away it is now.
+- **Picture 3: "How many bright galaxies?"** A log-scale bar chart with the number density the models predicted before JWST as one bar (labelled "pre-JWST consensus models = 1") and the survey's estimate as a second bar (182 times), with the published range (77 to 511) as a bar's whisker, labelled "one survey's estimate; the uncertainty is large". A key explains the whisker. No axis beyond 1 to 1,000.
+
+The guides must name every picture, define every term (including nm, micrometre, redshift, the Lyman-alpha break, number density, bright), list every drawn element, give a worked moment with real numbers (for example: 121.6 × 15.44 = 1,877; the time after the Big Bang for z = 14.44 is 284 million years, which is 284 ÷ 13,796 = 2.06 percent of today's age), and give a "what to look for, and what it would mean" list, without revealing what the learner predicted before the run.
+
+### Run
+
+Five named stages of 2.6 seconds each: (1) "The light is stretched" (Picture 1), (2) "The age of the universe then" (Picture 2's timeline), (3) "The distance" (Picture 2's bars), (4) "The record holders" (Picture 2 with the staircase's markers), (5) "How many were expected?" (Picture 3). Playback speed does not change any number (§11). Stage 1 draws the wavelengths; Stage 5 shows Picture 3.
+
+### Results (neutral, then explained by the tutor)
+
+Shown only after the run. Two tables: (1) for the chosen galaxy: its redshift, the stretch factor, the observed wavelength of Lyman-alpha, the time after the Big Bang, the share of the present age, the light-travel time, the distance then and today, with the formulas' numbers step by step; (2) every record holder (name, redshift, year, method, source) and, below it, the count comparison with its source and uncertainty. A "Words and formulas" panel (collapsed from the start) lists every term; formulas and worked examples with the learner's numbers appear only after the run (§12). The links kept back until now are listed here.
+
+---
+
+## Expected Observations
+
+- A redshift of 14.44 is about 284 million years after the Big Bang, about 2 percent of the universe's present age.
+- The light has travelled about 13.5 billion years, but the galaxy is now about 33.8 billion light-years away, and it was about 2.2 billion light-years away when the light left.
+- Lyman-alpha arrives at about 1,877 nm, in the near-infrared.
+- Each record in the staircase has a larger redshift and an earlier age than the one before it, and the last steps (14.18 to 14.44) are small: about 7 million years in the model's age (291.3 to 284.0).
+- The survey's estimate of bright galaxies is more than 100 times the models' prediction, with an uncertainty from about 77 to 511 times.
+
+## Expected Learner Understanding
+
+The learner should leave able to say, in their own words: what a redshift of 14.4 means as a stretch, a time and a distance; why JWST has to look in the infrared; what makes a redshift "confirmed"; that finding bright galaxies this early disagrees with galaxy-formation models and not with the Big Bang; that several explanations are being tested and none is settled; and that the experiment did not model galaxy formation.
+
+## New Concepts Introduced
+
+Redshift as a stretch factor and as an age, cosmic dawn, photometric and spectroscopic redshift, the Lyman-alpha break, number density, and a result that challenges models without challenging the underlying theory.
+
+## Relationship to Previous Experiments
+
+Builds on Cosmology 1 (redshift), 6 (age), 8 (distance and the observable universe) and 9 (structure formation, named only), and this group's Experiments 1 to 4 (sigma, tension, the "Contested" label, and the idea of a tension that can fade). It is the first experiment of the group that is anchored on a **discovery** rather than a tension.
+
+## Relationship to Later Experiments
+
+Experiment 18 of the group ("little red dots") is also from JWST's early universe and builds on this one's redshift and age. Experiment 6 (dark matter searches) and Experiment 7 (wide binary stars) carry on Part A. The closing recap sorts all nineteen results by status label.
+
+---
+
+## Required Physics Tests
+
+1. `stretchFactor(14.44)` is 15.44, `stretchFactor(0)` is 1, and it is strictly increasing.
+2. `observedWavelengthNm(121.567, 14.44)` is 1,877 nm to four significant figures, written out by hand; at z = 0 the wavelength is unchanged; at z = 1 it is 243.1 nm.
+3. `relativeSizeThen(14.44)` is 0.0648 and equals 1 ÷ `stretchFactor`.
+4. `ageAfterBigBangYears(14.44)` is 284 million years to within 0.5 percent, is strictly decreasing with redshift, and for z = 14.44 is within 2 percent of the paper's 280 million years (a test that the rescaling is right and the radiation shortfall is small).
+5. `shareOfPresentAge(14.44)` is 2.06 percent; `shareOfPresentAge(0)` is 100 percent (a limit test).
+6. `lightTravelYearsPlanck(z) + ageAfterBigBangYears(z)` equals the present age (13.80 billion years) for any redshift.
+7. `distanceTodayLightYearsPlanck(14.44)` is 33.85 billion light-years; `distanceThenLightYearsPlanck` equals it divided by `stretchFactor`; and both are 1.0386 times the project's unrescaled values.
+8. The model's distance today at z = 1,089.8 is within 3 percent of the real 45.7 billion light-years (the model keeps Cosmology Experiment 8's known shortfall).
+9. `ageShareRange(14.44)` is `'about2'`, `ageShareRange(6)` is `'about10'` (6.7 percent), `ageShareRange(25)` is `'about1'` (0.9 percent), and the edges at 1.5 and 4 percent are as documented.
+10. `countRange()` is `'hundred'`, and the lowest published value (77) is above 50.
+11. The published values in the table equal the module's data (a data test that catches a typing error): the four record holders' redshifts, years, methods and sources, and the paper's 182, 77 and 511.
+12. The staircase is increasing in redshift and in year: `RECORDS` sorted by year has non-decreasing redshift, and the last is MoM-z14.
+13. For each record, `ageAfterBigBangYears` decreases as redshift grows, and the model's age for GN-z11 (10.603) is within 10 percent of ESA's "400 million years" and the 430 Myr of the GN-z11 paper's title (a sanity test, since neither is a model input).
+14. The what-if redshift: every redshift from 6 to 30 gives finite, positive numbers; out-of-range or non-finite input throws `RangeError`.
+15. The module's imports reuse the project's age and distance functions (a regression test that scans the imports, as in Experiment 6 of Cosmology).
+
+Each test must fail when the module is deliberately broken (several deliberate breaks, as in Experiments 1 to 4).
+
+---
+
+## AI Tutor Behavior
+
+The same pattern as the earlier experiments (`CLAUDE.md` §13): **observe, compare with the predictions, a conceptual question, then the explanation**, each answered before the next (Continue enabled only after a reply). The tutor does not invent physics; every number comes from `earliestGalaxies.ts` or the cited papers. The predictions are marked as matched or not matched in the explanation only.
+
+1. **Observe.** "What do you notice about the timeline in Picture 2, and about the survey's bar compared with the models' bar in Picture 3?"
+2. **Compare.** The two predictions, without marking.
+3. **Conceptual question.** "Galaxies that already look bright and compact 280 million years after the Big Bang are far more common than the models expected. Which of these would you have to change to explain that: the age of the universe at that redshift, or the way stars form in the first galaxies? Why?" (The tutor does not answer it for the learner.)
+4. **Explanation**, in simple words, with everyday examples, after a paragraph that marks the two predictions (and, for a learner who predicted "a few times more", a sentence on why that is a reasonable guess): (1) the learner's own numbers, with the formulas worked step by step (the stretch, the age, the share, the distances); (2) why the share is so small (2 percent: the universe was 284 million years old and is now 13,796; a person's first month of life is about 2 percent of 4 years), and why the light's travel time is not the distance today (the balloon with the dots); (3) why spectroscopy matters (the tape measure and the blurry photo), and what "about 6 sigma" says for MoM-z14; (4) what the puzzle is and is not: the age at a redshift comes from the expansion history, which is not in question here, while the number and brightness of galaxies depend on how fast gas turns into stars (with an everyday comparison: a recipe's baking time is fixed, but how much dough turns into bread depends on the baker); (5) what has been proposed, named as possibilities with their sources and not modelled: bursts of star formation that make galaxies temporarily bright (Sun et al. 2023, in simulations of galaxies at z of 8 to 12), very efficient star formation when gas is dense and the star's winds have not yet had time to blow the gas away (Dekel et al. 2023, for z of about 10 and above), and, in one sentence, less dust and a different mix of star sizes as other ideas (named only); (6) why the label is **Strong evidence** (spectra, several teams, several galaxies) and **Open** (why), and that the 182 comes from one survey, with a range of 77 to 511; (7) what was shown and what was not: the model gives the age and the distance, and it does not model galaxy formation, so it cannot say which explanation is right.
+
+### Chapter summary (draft)
+
+"What you learned" and "What's next", shown only after the tutor's explanation. Drafted after the owner approves the experiment, and then approved line by line. "What's next" points to Experiment 6 (the dark matter search) only once it has an approved specification, and the one-line edit of Experiment 4's "What's next" (which says nothing about this experiment) is an edit to approved wording and is made only with the owner's approval (Decision 12).
+
+---
+
+## Real-World Facts Used, and Source Status
+
+| Statement | Source | Status |
+|---|---|---|
+| MoM-z14: z = 14.44 (emission lines, about 6 sigma), z = 14.42 from the Lyman-alpha break; 280 million years after the Big Bang; extremely compact (about 74 parsecs); "number density of bright z of about 14 to 15 sources implied by our survey is more than 100 times larger (182, +329, −105) than pre-JWST consensus models"; Planck 2018 cosmology; the abstract's first sentence | Naidu et al., "A Cosmic Miracle", arXiv:2505.11263 (submitted 16 May 2025, revised 28 January 2026; published in the Open Journal of Astrophysics) | **Checked (arXiv abstract page and the first 100,000 of 405,917 characters of the HTML page) on 2026-10-20**; the PDF would not convert; the rest of the paper (including the discussion of explanations) was **not read** |
+| "The most distant among these sources, JADES-GS-z14-0 (zspec = 14.18; Carniani et al. 2024)"; "zprism = 14.32 (−0.20, +0.08) for JADES-GS-z14-0 subsequently refined with ALMA to z[OIII] = 14.1793 ± 0.0007" | the same HTML page | **Checked on 2026-10-20** |
+| Carniani et al.: spectroscopic confirmation of two luminous galaxies at z of about 14 (z = 14.32 and 13.90), "dominated by stellar continuum emission", "more common than expected"; Nature 633, 318 (2024) | arXiv:2405.18485, abstract (via a fetch summary) | **Checked (abstract) on 2026-10-20** |
+| Release of 28 January 2026: z = 14.44, 280 million years after the Big Bang; "100 times more than theoretical studies predicted before the launch of Webb"; "brighter, more compact and more chemically enriched than astronomers expected"; unusual nitrogen; "a growing chasm between theory and observation"; "the greater the redshift, the greater the distance the light has travelled" | ESA/Webb, esawebb.org/news/weic2603/ (fetched summary); the same text republished by Newswise from STScI | **Fetched on 2026-10-20**; the summariser also wrote that GN-z11 was "the previous record", which this specification does **not** use (GN-z11 was the record in 2023, and JADES-GS-z14-0 in 2024) |
+| "The universe is expanding, and that expansion stretches light traveling through space in a phenomenon known as cosmological redshift"; "visible light is shifted into the near- and mid-infrared"; "telescopes with infrared detectors" | NASA Science, "What Is Cosmological Redshift?", science.nasa.gov/asset/webb/what-is-cosmological-redshift/ | **Fetched on 2026-10-20** |
+| Webb observes "approximately 50 million years to one billion years after the big bang"; "Webb's data show there are more massive galaxies in the early universe than expected"; the cosmic dawn is when "the first stars and galaxies formed"; "the expansion of the universe means it is the space between objects that actually stretches" | NASA Science, science.nasa.gov/mission/webb/early-universe | **Fetched on 2026-10-20**; **its second sentence reveals Prediction 2, so the link is kept back** |
+| "Light that enters the telescope is split into its different wavelengths by a grating, forming a spectrum"; "light from each chemical element has a unique spectrum, like a fingerprint" (the page does not discuss redshift or distance) | ESA/Webb, esawebb.org/about/general/spectroscopy-with-webb/ | **Fetched on 2026-10-20** |
+| Sun et al.: bursty star formation reproduces the abundance of UV-bright galaxies in FIRE-2 simulations at 8 ≤ z ≤ 12, "without any fine-tuning" and without a top-heavy initial mass function, a nonstandard cosmology or a strongly enhanced star-formation efficiency | Sun et al., ApJ Letters (2023), arXiv:2307.15305 (a fetch summary and a search summary) | **Checked (abstract, via summaries) on 2026-10-20**; whether it reaches z of about 14 is **not checked** |
+| Dekel et al.: "feedback-free starbursts" when the free-fall time is under about 1 million years give a high star-formation efficiency in the most massive halos; z of about 10 and above; MNRAS 523, 1557 (2023) | arXiv:2303.04827 (a fetch summary and a search summary) | **Checked (abstract, via summaries) on 2026-10-20**; the first arXiv number I tried from memory (2205.08566) was a different paper (a gamma-ray burst), which is why every ID in this table was fetched |
+| Harikane et al.: 23 galaxy candidates at z of about 9 to 16 in early JWST data, with a star-formation rate density above a constant-efficiency model | arXiv:2208.01612, abstract (a fetch summary) | **Checked (abstract) on 2026-10-20**; not used for a number on the page (optional link) |
+| JADES-GS-z13-0 at z = 13.2, and the four galaxies at 10.3 ≤ z ≤ 13.2; Nature Astronomy 7, 622 (2023) | Curtis-Lake et al., arXiv:2212.04568 | **Partly checked**: from a search summary; **the page was not fetched** |
+| GN-z11 at z = 10.603 (JWST NIRSpec), "430 Myr after Big Bang" in a later title | Bunker et al., A&A 677 (2023), arXiv:2302.07256; arXiv:2504.12584 | **Partly checked**: from a search summary; **not fetched** |
+| Lyman-alpha rest wavelength 121.567 nm; hydrogen gas absorbs light bluer than Lyman-alpha (the break); JWST's near-infrared range | General astronomy | **Not checked at a source** |
+| `λ_observed = λ_emitted × (1 + z)` | Standard cosmology | **Not checked at a primary source** (the NASA and ESA pages state the idea, not the formula) |
+| No galaxy confirmed beyond z = 14.44 as of 20 October 2026 | Two web searches on 2026-10-20 (search results named MoM-z14 as the most distant) | **Not checked at an official page**; the search results did not mention photometric candidates beyond z = 15 and this specification has not looked for them |
+| EGS-z11-R0 is "the most distant red galaxy" (z of about 11.45, arXiv, 18 March 2026) | A search result (phys.org) | **Not checked**; not used |
+
+### Facts that may change (re-check list, as of October 2026)
+
+- **A new record**: a spectroscopic confirmation beyond z = 14.44 (including candidates at z of about 15 to 25, which this specification has not looked for), which would change the staircase, the anchor and the title question.
+- **The number-density excess**: revised counts from other surveys (JADES, CEERS, and others), the size of the uncertainty, and whether the excess is as large at other redshifts.
+- **Revisions of MoM-z14's own measurements** (a later version of the paper, further ALMA or NIRSpec data).
+- **Whether the proposed explanations are tested at z of about 14**: the two simulations and models cited here are for z of about 8 to 12 (Sun) and about 10 and above (Dekel); later work may confirm, extend or rule them out.
+- **JWST's observing cycles and which galaxies they confirm** (a statement about "this year" would age).
+
+---
+
+## Decisions Needing Human Review
+
+Defaults are what I will use unless you say otherwise.
+
+1. **The status label.** Default: "Strong evidence that these galaxies exist; Open: what built them so fast". Alternative: the proposal's "Strong evidence (the galaxies); Open (why so many)", which reveals Prediction 2 (the number is surprising) from the start; or a single label (**Strong evidence**), which hides that the cause is open.
+2. **A model of the age, the stretch and the distance, and the count as data.** Default: no galaxy-formation model; the 182 (77 to 511) is data from the paper. Alternative: add a **halo mass function** (Press-Schechter) from Cosmology Experiment 9's growth factor, so the learner can see how the abundance of massive halos falls steeply with redshift. That is genuine new physics that the project has not used and whose source this specification has not checked (the "most complex" Part A option, as in Experiment 4's Decision 3).
+3. **Planck's cosmology, with the age and distances rescaled.** Default: Planck's Hubble constant (67.4) and matter fraction (0.315), the model rescaled from the project's 70, as in Experiment 4, giving 284 million years where the paper gives 280, with the difference explained (radiation is left out). Alternative: show the paper's 280 as the "published" value in a table beside the model's 284; or add radiation to the model (a heavier change than the experiment needs).
+4. **Two predictions and their ranges.** Default: Prediction 1 with three ranges (under 1.5, 1.5 to 4, over 4 percent) and Prediction 2 with four choices (fewer, about the same, a few times more, about a hundred times more or higher), as written. Alternatives: use only Prediction 1 (the proposal's) to avoid leaking "an excess" in Prediction 2's choices; or replace Prediction 2 with "Which of the four record holders was confirmed first?" (no leak, but a trivia question).
+5. **The record holders.** Default: four spectroscopic confirmations (GN-z11 10.603, JADES-GS-z13-0 13.20, JADES-GS-z14-0 14.18, MoM-z14 14.44), with 14.18 (ALMA) for the third because the MoM-z14 paper compares itself with it, and the NIRSpec 14.32 shown in the table. The first two need their pages fetched before approval. Alternative: show only the last two (both sourced here).
+6. **A what-if slider.** Default: a slider from 6 to 30, labelled as imaginary, so the learner can see what "how early" would mean at z = 20 (179 million years, 1.3 percent) or 25 (130 million years, 0.9 percent). Alternative: no slider, only the four presets (a simpler control, but it does not answer "how early can they be?").
+7. **The explanations named.** Default: bursty star formation (Sun et al. 2023) and feedback-free starbursts (Dekel et al. 2023), named as possibilities with their ranges of redshift (8 to 12 and about 10 and above) and not modelled, plus "less dust" and "a different mix of star sizes" named in a few words with no source. Alternative: leave out the last two (no source read); or leave out the explanations altogether (and say only that several are being tested).
+8. **MoM-z14's unusual nitrogen.** Default: left out of the learner text (it is a second puzzle, about chemistry, and the tutor would need a mechanism that this specification has not sourced). Alternative: one sentence in the tutor, as the ESA release states it.
+9. **Which links are shown when.** Default: from the start, NASA's cosmological redshift page, ESA/Webb's spectroscopy and NIRSpec pages; after the run, the papers, the ESA release and NASA's Early Universe page. Alternative: show all from the start (against §12).
+10. **The strength of "more than 100 times".** Default: stated as "one survey's estimate, 182 times, with a range of 77 to 511", and the tutor says other studies may find smaller excesses (not checked here). Alternative: state the ESA and NASA wording ("100 times") only, which is simpler but hides the uncertainty; or look for an independent measurement before approval (I have not).
+11. **Photometric candidates beyond 14.44.** Default: the page says "the most distant galaxy confirmed with a spectrum as of October 2026" and does not mention candidates. Alternative: do the search first, because a confirmed result could already exist that my two searches missed; this is a **check I recommend before approval**.
+12. **A mention of Experiments 4 and 6.** Default: the tutor names Cosmology 8 (the distance) and does not mention other experiments; "What's next" says nothing about Experiment 6 until it has a specification; and Experiment 4's "What's next" is not edited until you approve (an edit to approved wording, as Experiment 3's was).
+13. **The title.** Default: "How early can galaxies form?" (the proposal's), which does not give away either prediction. Alternative: "Galaxies at 280 million years: how can they be so bright?", which does.
+
+---
+
+## Success Criteria
+
+1. The learner can say in plain words what a redshift of 14.44 means as a stretch (15.44 times), as an age (about 284 million years, about 2 percent of 13.8 billion) and as a distance.
+2. The learner sees Lyman-alpha stretched from 121.6 nm to about 1,877 nm, into the near-infrared, and why that needs an infrared telescope.
+3. The learner sees the age, the distance and the count on one timeline and one chart, and that the model gives the first two but not the third.
+4. Every drawn component is labelled on the canvas, and each picture's guide follows `CLAUDE.md` §14 and §29.
+5. The status label is shown, dated "as of October 2026", and says the cause is open.
+6. Neither the introduction nor the captions reveal the answers to the predictions before the learner has predicted (§12), including that there is an excess.
+7. The physics tests above pass and fail under deliberate breaks.
+8. The experiment says it does not model galaxy formation and cannot say which explanation is right.
+9. The "Words and formulas" panel lists every term and formula (formulas after the run), and every term is defined before it is first used (§15), including redshift, ultraviolet, infrared, nm, micrometre, spectrum, Lyman-alpha break, photometric, spectroscopic, number density and cosmic dawn.
+10. Every published number matches the checked source, the "facts that may change" list is in the specification, and the links list includes the original papers and official pages (§29 rule 3), each fetched.
+11. Nothing contradicts Cosmology 1, 6, 8 and 9 or Experiments 1 to 4 of this group.
+
+---
+
+## Implementation Notes
+
+The specification is approved (2026-10-20). **Built so far (2026-10-20):**
+
+- **Step 1, physics model and tests:** `src/physics/earliestGalaxies.ts` and `earliestGalaxies.test.ts` (29 tests covering the 15 required tests). The age and the distance are also computed in the tests by a separate numerical integration (Simpson's rule on the expansion rate with Planck's H₀ = 67.4 and matter fraction 0.315), so a wrong rescaling cannot make a test pass; the module and the integral agree within 0.5 percent at z = 6, 10, 13.2, 14.44, 20 and 30. **Checked by twelve deliberate breaks of the module** (the stretch factor without its 1, no rescaling to Planck, the size as 1 ÷ z, the present age at H₀ = 70, a range edge moved, the count threshold moved, the distance "then" not rescaled, the low end of the published range changed, GN-z11's redshift rounded, the upper redshift bound moved, the travel time as present age plus age, Lyman-alpha rounded), each of which made at least one test fail (1 to 15 failures). The full suite passed (1,023 tests, 62 files) and `tsc --noEmit -p tsconfig.app.json` printed no errors. No interface is built.
+- **The values the module gives** (the table above now has every row; the two rows that were left to the tests are z = 10.603: 435.9 million years, 3.16 percent, light travel 13.36 billion years, 31.83 billion light-years today and 2,743 million then; and z = 13.20: 322.0 million years, 2.33 percent, 13.47, 33.29 and 2,344). Lyman-alpha arrives at 1,877.0 nm for MoM-z14, 1,845.4 for JADES-GS-z14-0 and 1,410.5 for GN-z11.
+- **Differences from this specification, for the owner's approval:** (1) `RECORDS` carries the years of the **cited papers** (2023, 2023, 2024, 2025), not the years of the records, because GN-z11's JWST measurement refined an earlier record and was not itself a record in 2023 (the specification's test 12 says "sorted by year", and with paper years the order by redshift is also non-decreasing in year); (2) the module also exports `presentAgeYears`, `JADES_GS_Z14_0_NIRSPEC_REDSHIFT` (14.32), `MOM_Z14_PAPER_AGE_YEARS` (280 million), the range-edge constants (1.5 and 4 percent), `MIN_REDSHIFT`, `MAX_REDSHIFT` (30) and `SLIDER_MIN_REDSHIFT` (6), and `runEarliestGalaxies` also returns the Lyman-alpha wavelength and the present age; (3) the model accepts any redshift from 0 to 30 and throws `RangeError` outside it, and the slider's lower end of 6 is a constant for the interface to use; (4) test 8 (the oldest light's distance, within 3 percent of the real 45.7 billion light-years) calls the project's own `distanceTodayLightYears` at z = 1,089.8, rescaled, because the module's own range stops at 30, so it checks that the rescaling reproduces the known shortfall (0.6 percent, as Cosmology Experiment 8 says), not the module's function at that redshift; (5) `countRange` uses the thresholds "low end at least 50 times → about a hundred times more or higher; best estimate at least 2 → a few times; at least 0.5 → about the same; otherwise fewer", which are my choice, since the specification gives only the answer; (6) the 280 million years of the paper stays a constant for the interface to show beside the model's 284 (Decision 3).
+- **Not checked:** the first two record holders' redshifts (GN-z11 10.603, JADES-GS-z13-0 13.20) come from search summaries and the papers' pages were **not fetched**; Lyman-alpha's rest wavelength and the relation `λ_observed = λ_emitted × (1 + z)` have no source read; the model's 1.4 percent excess over the paper's 280 million years is **not** shown to be due to radiation (that was not computed); the interface, the predictions' wording, the pictures, the tutor and the chapter summary are not built.
+
+**Before the wording is approved, still to do:** fetch the Curtis-Lake and Bunker pages (the two earlier record holders), fetch ESA/Webb's NIRSpec page and find an official page for "what a galaxy is" and for JWST's wavelength range, read the discussion of explanations in Naidu et al. (the HTML page beyond 100,000 characters), do the search for newer or photometric candidates beyond z = 14.44 (Decision 11), and fill in the table rows left to the tests. The work then follows `CLAUDE.md` §6 and §21 one step at a time, starting with the physics model and its tests (the real `tsc` check is `tsc --noEmit -p tsconfig.app.json`).
