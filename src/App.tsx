@@ -6,6 +6,7 @@ import { EvolvingDarkEnergyExperiment } from './components/EvolvingDarkEnergyExp
 import { LumpinessExperiment } from './components/LumpinessExperiment'
 import { NeutrinoMassExperiment } from './components/NeutrinoMassExperiment'
 import { EarliestGalaxiesExperiment } from './components/EarliestGalaxiesExperiment'
+import { DarkMatterSearchesExperiment } from './components/DarkMatterSearchesExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -641,6 +642,15 @@ const chapters: Chapter[] = [
     learned:
       "A redshift of 14.44, the most distant galaxy confirmed with a spectrum (MoM-z14), means its light was stretched 15.44 times on the way to us, so ultraviolet light that left at 121.6 nm arrived at about 1,877 nm, in the near-infrared, which is why Webb was needed. In the model, that light left about 284 million years after the Big Bang (the paper says 280), only about 2 percent of the universe's present age of 13.8 billion years. It travelled for about 13.5 billion years, and the galaxy was about 2.2 billion light-years away when the light left and is about 33.85 billion light-years away now. The survey behind it implies about 182 times the number of bright galaxies the models used before Webb predicted, in a range from 77 to 511 times, which is one survey's estimate. The age and the distance come from how the universe expands, so the puzzle is how galaxies could form so early, not the age shown here. Proposed explanations include short, strong bursts of star formation and very efficient early star formation. None is settled. This model gives ages and distances. It does not model how galaxies form, so it cannot say which explanation is right. Strong evidence that these galaxies exist; Open: what built them so fast, as of October 2026.",
     next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+  },
+  {
+    title: 'Where is the dark matter?',
+    group: 'Frontier and Beyond',
+    Component: DarkMatterSearchesExperiment,
+    // PLACEHOLDER (Step 2). The real chapter summary is drafted with the tutor (a later step) and approved line by line (CLAUDE.md §28.1).
+    // It is never shown until then, because the summary appears only after the tutor's explanation, which is not built yet.
+    learned: 'Placeholder: the chapter summary is written with the tutor, in a later step.',
+    next: 'Placeholder: the next experiment is named once it has an approved specification.',
   },
 ]
 
