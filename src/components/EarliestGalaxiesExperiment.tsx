@@ -3,11 +3,14 @@ import type { ReactNode } from 'react'
 import {
   ageAfterBigBangYears,
   LYMAN_ALPHA_NM,
+  MAX_REDSHIFT,
+  MOM_Z14_PAPER_AGE_YEARS,
   MOM_Z14_REDSHIFT,
   NUMBER_DENSITY_EXCESS,
   observedWavelengthNm,
   RECORDS,
   runEarliestGalaxies,
+  SLIDER_MIN_REDSHIFT,
 } from '../physics/earliestGalaxies'
 import type { AgeShareRange, CountRange } from '../physics/earliestGalaxies'
 import { ReferencePanel } from './EnergyMomentumExperiment'
@@ -135,7 +138,7 @@ const TL_RIGHT = 520
 const ZOOM_MAX_MYR = 500 // the zoomed bar shows the first 500 million years
 const ZOOM_BAR_Y = 202
 const RULER_TOP = 288
-const RULER_MAX_GLY = 36
+const RULER_MAX_GLY = 40
 const P2_HEIGHT_CLOCK = 274
 const P2_HEIGHT_FULL = RULER_TOP + 186
 const MOM_COLOR = '#fb923c' // orange: the galaxy of this run
@@ -200,15 +203,27 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
   const [countPrediction, setCountPrediction] = useState<CountRange | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  // The galaxy shown: MoM-z14 (the most distant confirmed with a spectrum) for the run, and after the run the learner can choose another
+  // record holder or an imaginary galaxy (the control "Look at another galaxy").
+  const [redshift, setRedshift] = useState(MOM_Z14_REDSHIFT)
+  const [whatIf, setWhatIf] = useState(false)
+  const [sliderZ, setSliderZ] = useState(20)
 
-  // Every number comes from the physics module. The run is for MoM-z14, the most distant galaxy confirmed with a spectrum.
-  const result = runEarliestGalaxies(MOM_Z14_REDSHIFT)
+  // Every number comes from the physics module.
+  const result = runEarliestGalaxies(redshift)
+  const record = whatIf ? undefined : RECORDS.find((r) => r.redshift === redshift)
+  const nameThe = record ? record.name : 'the imaginary galaxy'
+  const nameCap = record ? record.name : 'An imaginary galaxy'
+  const possessive = record ? `${record.name}’s` : 'the imaginary galaxy’s'
+  const galaxyPhrase = record ? `the galaxy ${record.name}` : 'the imaginary galaxy'
   const bothPredicted = agePrediction !== null && countPrediction !== null
   const lymanX = xOfNm(LYMAN_ALPHA_NM)
   const doubledNm = observedWavelengthNm(LYMAN_ALPHA_NM, 1) // a worked example for the guide: a stretch by 2 (z = 1)
   const doubledX = xOfNm(doubledNm)
   const stretchedNm = result.lymanAlphaObservedNm
-  const stretchedX = xOfNm(stretchedNm)
+  // For a redshift above about 23.7 the stretched Lyman-alpha is beyond the 3,000 nm end of the scale: the arrow then runs to the edge.
+  const offScale = stretchedNm > AXIS_MAX_NM
+  const stretchedX = xOfNm(Math.min(stretchedNm, AXIS_MAX_NM))
   const presentMyr = result.presentAgeYears / 1e6
   const ageMyr = result.ageAfterBigBangYears / 1e6
   const presentBillions = (result.presentAgeYears / 1e9).toFixed(1)
@@ -217,11 +232,14 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
   const todayGly = result.distanceTodayLightYears / 1e9
   const wholeX = (myr: number) => TL_LEFT + (myr / presentMyr) * (TL_RIGHT - TL_LEFT)
   const zoomX = (myr: number) => TL_LEFT + (myr / ZOOM_MAX_MYR) * (TL_RIGHT - TL_LEFT)
-  // The four record holders, the one of this run first. Tier 0 is the lowest label above the zoomed bar: the markers are ordered from the
-  // earliest time (the smallest x) up, so that a marker's line never crosses another's label, which ends at its own marker.
-  const markers = [...RECORDS]
-    .sort((a, b) => b.redshift - a.redshift)
-    .map((r, tier) => ({ name: r.name, redshift: r.redshift, myr: ageAfterBigBangYears(r.redshift) / 1e6, tier, isRun: r.redshift === MOM_Z14_REDSHIFT }))
+  // The four record holders and, for an imaginary galaxy, that galaxy too. Tier 0 is the lowest label above the zoomed bar: the markers are
+  // ordered from the earliest time (the smallest x) up, so that a marker's line never crosses another's label, which ends at its own marker.
+  const baseMarkers = RECORDS.map((r) => ({ name: r.name, redshift: r.redshift, myr: ageAfterBigBangYears(r.redshift) / 1e6, isRun: !whatIf && r.redshift === redshift }))
+  const allMarkers = whatIf ? [...baseMarkers, { name: 'An imaginary galaxy', redshift, myr: ageMyr, isRun: true }] : baseMarkers
+  const markers = allMarkers
+    .filter((m) => m.isRun || stage >= 4)
+    .sort((a, b) => a.myr - b.myr)
+    .map((m, tier) => ({ ...m, tier }))
   const p2Height = stage >= 3 ? P2_HEIGHT_FULL : P2_HEIGHT_CLOCK
 
   // Presentation only: advances one stage at a time. The result does not depend on this timer.
@@ -243,11 +261,48 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
     setCountPrediction(null)
     setStatus('idle')
     setStage(0)
+    setRedshift(MOM_Z14_REDSHIFT)
+    setWhatIf(false)
+    setSliderZ(20)
   }
   const run = () => {
     setStage(1)
     setStatus('running')
   }
+
+  // After the run: the formulas, each with a worked example for the galaxy shown (the formulas wait until now, §12).
+  const f2 = result.stretchFactor.toFixed(2)
+  const presentMyrText = Math.round(presentMyr).toLocaleString('en-US')
+  const formulaEntries: { term: string; meaning: string }[] = [
+    {
+      term: 'The stretch factor (formula)',
+      meaning: `stretch factor = 1 + z. Example, for ${nameThe}: 1 + ${redshift} = ${f2}, so every wave has become ${f2} times as long as when it left.`,
+    },
+    {
+      term: 'The stretched wavelength (formula)',
+      meaning: `wavelength when it arrives = wavelength when it left × (1 + z). Example, for Lyman-alpha: ${LYMAN_ALPHA_NM} × ${f2} = ${stretchedNm.toFixed(1)} nm, which is ${(stretchedNm / 1000).toFixed(3)} µm.`,
+    },
+    {
+      term: 'The size of the universe then (formula)',
+      meaning: `size then, as a fraction of today’s = 1 ÷ (1 + z). Example: 1 ÷ ${f2} = ${result.relativeSizeThen.toFixed(4)}, which is ${(result.relativeSizeThen * 100).toFixed(2)} percent of today’s size.`,
+    },
+    {
+      term: 'The age then (the age function)',
+      meaning: `The time after the Big Bang at a given redshift comes from the expansion model of Cosmology Experiments 6 and 8: a universe of matter and dark energy, with radiation left out, at Planck’s expansion rate (67.4 km/s per Mpc) and matter share (0.315). It is a formula with an inverse hyperbolic sine in it, so there is no short step-by-step sum to show here. The tests of this experiment check it against a separate numerical integration. For ${nameThe} it gives ${Math.round(ageMyr)} million years.`,
+    },
+    {
+      term: 'The share of the present age (formula)',
+      meaning: `share = (time after the Big Bang then) ÷ (the universe’s present age). Example: ${Math.round(ageMyr)} ÷ ${presentMyrText} = ${(result.shareOfPresentAge * 100).toFixed(2)} percent.`,
+    },
+    {
+      term: 'How long the light travelled (formula)',
+      meaning: `light travel time = present age − time after the Big Bang then. Example: ${presentMyrText} − ${Math.round(ageMyr)} = ${Math.round(presentMyr - ageMyr).toLocaleString('en-US')} million years, which is ${travelGly.toFixed(2)} billion years. Light covers one light-year in a year, so the distance the light travelled is the same number in light-years.`,
+    },
+    {
+      term: 'The two distances (formulas)',
+      meaning: `distance when the light left = distance now ÷ (1 + z). The distance now comes from the comoving-distance function of Cosmology Experiments 5 and 8 (an integral of the expansion rate), at Planck’s expansion rate. Example for ${nameThe}: the distance now is ${todayGly.toFixed(2)} billion light-years, so the distance then is ${todayGly.toFixed(2)} ÷ ${f2} = ${thenGly.toFixed(2)} billion light-years.`,
+    },
+  ]
 
   return (
     <div>
@@ -468,7 +523,7 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
           </ul>
         </div>
 
-        <ReferencePanel entries={REFERENCE_ENTRIES} />
+        <ReferencePanel entries={status === 'complete' ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
             says which answer is right, gives the age, the share or any number from the count comparison, or says that there is an excess. */}
@@ -627,13 +682,18 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
                 <line x1={lymanX} y1={86} x2={stretchedX - 8} y2={86} stroke={ARRIVED_COLOR} strokeWidth={2.5} />
                 <polygon points={`${stretchedX - 9},81 ${stretchedX},86 ${stretchedX - 9},91`} fill={ARRIVED_COLOR} />
                 <text x={(lymanX + stretchedX) / 2} y={80} fill={ARRIVED_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
-                  MoM-z14, redshift {MOM_Z14_REDSHIFT}: stretched {result.stretchFactor.toFixed(2)} times
+                  {nameCap}, redshift {redshift}: stretched {result.stretchFactor.toFixed(2)} times
                 </text>
-                <line x1={stretchedX} y1={86} x2={stretchedX} y2={AXIS_Y} stroke={ARRIVED_COLOR} strokeWidth={2.5} />
-                <circle cx={stretchedX} cy={AXIS_Y} r={4} fill={ARRIVED_COLOR} />
+                {!offScale && <line x1={stretchedX} y1={86} x2={stretchedX} y2={AXIS_Y} stroke={ARRIVED_COLOR} strokeWidth={2.5} />}
+                {!offScale && <circle cx={stretchedX} cy={AXIS_Y} r={4} fill={ARRIVED_COLOR} />}
                 <text x={AXIS_LEFT} y={AXIS_Y + 64} fill={ARRIVED_COLOR} fontSize="11" fontWeight="bold">
-                  MoM-z14’s Lyman-alpha arrives at {stretchedNm.toLocaleString('en-US', { maximumFractionDigits: 0 })} nm ({(stretchedNm / 1000).toFixed(2)} µm), in the near-infrared
+                  {nameCap === 'An imaginary galaxy' ? 'The imaginary galaxy’s' : possessive} Lyman-alpha arrives at {stretchedNm.toLocaleString('en-US', { maximumFractionDigits: 0 })} nm ({(stretchedNm / 1000).toFixed(2)} µm), in the near-infrared
                 </text>
+                {offScale && (
+                  <text x={AXIS_LEFT} y={AXIS_Y + 78} fill={ARRIVED_COLOR} fontSize="11">
+                    (beyond the right edge of this scale, so the arrow runs to the edge)
+                  </text>
+                )}
 
                 <line x1={xOfNm(WEBB_MIN_NM)} y1={AXIS_Y + 96} x2={AXIS_RIGHT - 8} y2={AXIS_Y + 96} stroke={WEBB_COLOR} strokeWidth={2} />
                 <line x1={xOfNm(WEBB_MIN_NM)} y1={AXIS_Y + 90} x2={xOfNm(WEBB_MIN_NM)} y2={AXIS_Y + 102} stroke={WEBB_COLOR} strokeWidth={2} />
@@ -676,9 +736,9 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
             {stage >= 1 && (
               <>
                 <li>
-                  <strong>The red arrow and the red vertical line show the same light after the stretching,</strong> for the galaxy MoM-z14.
-                  The arrow’s label gives the stretch factor, 1 + {MOM_Z14_REDSHIFT} = {result.stretchFactor.toFixed(2)}: the wave is now{' '}
-                  {result.stretchFactor.toFixed(2)} times as long. The red line is where it arrives, and the text under the axis gives the number.
+                  <strong>The red arrow and the red vertical line show the same light after the stretching,</strong> for {galaxyPhrase}.
+                  The arrow’s label gives the stretch factor, 1 + {redshift} = {result.stretchFactor.toFixed(2)}: the wave is now{' '}
+                  {result.stretchFactor.toFixed(2)} times as long. The red line is where it arrives (if it would be beyond the right edge of the scale, the arrow runs to the edge and the line is left out), and the text under the axis gives the number.
                   A <strong>longer arrow</strong> means a bigger stretch.
                 </li>
                 <li>
@@ -700,7 +760,7 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
             {stage >= 1 && (
               <>
                 {' '}
-                Now the real galaxy. For MoM-z14 the redshift is {MOM_Z14_REDSHIFT}, so the stretch factor is 1 + {MOM_Z14_REDSHIFT} ={' '}
+                Now {record ? 'the real galaxy' : 'the imaginary galaxy'}. For {nameThe} the redshift is {redshift}, so the stretch factor is 1 + {redshift} ={' '}
                 {result.stretchFactor.toFixed(2)}, and the Lyman-alpha wave arrives at {LYMAN_ALPHA_NM} × {result.stretchFactor.toFixed(2)} ={' '}
                 {stretchedNm.toFixed(1)} nm, which is {(stretchedNm / 1000).toFixed(3)} µm.
               </>
@@ -762,11 +822,11 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
               </text>
 
               {/* The first 500 million years, magnified; the galaxy of this run is marked, and from stage 4 the other record holders. */}
-              <text x={TL_LEFT} y={118} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+              <text x={TL_LEFT} y={112} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
                 Zoomed in: the first {ZOOM_MAX_MYR} million years, magnified {Math.round(presentMyr / ZOOM_MAX_MYR)} times
               </text>
               <rect x={TL_LEFT} y={ZOOM_BAR_Y} width={TL_RIGHT - TL_LEFT} height={22} fill={MUTED_COLOR} opacity={0.3} />
-              <rect x={TL_LEFT} y={ZOOM_BAR_Y} width={zoomX(ageMyr) - TL_LEFT} height={22} fill={MOM_COLOR} opacity={0.35} />
+              <rect x={TL_LEFT} y={ZOOM_BAR_Y} width={zoomX(Math.min(ageMyr, ZOOM_MAX_MYR)) - TL_LEFT} height={22} fill={MOM_COLOR} opacity={0.35} />
               {[0, 100, 200, 300, 400, 500].map((myr) => (
                 <g key={myr}>
                   <line x1={zoomX(myr)} y1={ZOOM_BAR_Y + 22} x2={zoomX(myr)} y2={ZOOM_BAR_Y + 27} stroke={TEXT_COLOR} />
@@ -778,26 +838,26 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
               <text x={(TL_LEFT + TL_RIGHT) / 2} y={ZOOM_BAR_Y + 54} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
                 millions of years after the Big Bang
               </text>
-              {markers
-                .filter((m) => m.isRun || stage >= 4)
-                .map((m) => {
-                  const labelY = ZOOM_BAR_Y - 12 - m.tier * 16
-                  return (
-                    <g key={m.name}>
-                      <line x1={zoomX(m.myr)} y1={labelY + 3} x2={zoomX(m.myr)} y2={ZOOM_BAR_Y + 22} stroke={m.isRun ? MOM_COLOR : RECORD_COLOR} strokeWidth={m.isRun ? 2.5 : 1.5} />
-                      <circle cx={zoomX(m.myr)} cy={ZOOM_BAR_Y + 11} r={m.isRun ? 4.5 : 3.5} fill={m.isRun ? MOM_COLOR : RECORD_COLOR} />
-                      <text x={zoomX(m.myr)} y={labelY} fill={m.isRun ? MOM_COLOR : RECORD_COLOR} fontSize="10" fontWeight={m.isRun ? 'bold' : 'normal'} textAnchor="end">
-                        {m.name} (redshift {m.redshift}): {Math.round(m.myr)} million years
-                      </text>
-                    </g>
-                  )
-                })}
+              {markers.map((m) => {
+                const labelY = ZOOM_BAR_Y - 12 - m.tier * 16
+                const beyond = m.myr > ZOOM_MAX_MYR // too late for this bar: the marker sits at its right edge
+                const x = zoomX(Math.min(m.myr, ZOOM_MAX_MYR))
+                return (
+                  <g key={m.name}>
+                    <line x1={x} y1={labelY + 3} x2={x} y2={ZOOM_BAR_Y + 22} stroke={m.isRun ? MOM_COLOR : RECORD_COLOR} strokeWidth={m.isRun ? 2.5 : 1.5} />
+                    <circle cx={x} cy={ZOOM_BAR_Y + 11} r={m.isRun ? 4.5 : 3.5} fill={m.isRun ? MOM_COLOR : RECORD_COLOR} />
+                    <text x={x} y={labelY} fill={m.isRun ? MOM_COLOR : RECORD_COLOR} fontSize="10" fontWeight={m.isRun ? 'bold' : 'normal'} textAnchor="end">
+                      {m.name} (redshift {m.redshift}): {Math.round(m.myr)} million years{beyond ? ' (later than this bar: at its right edge)' : ''}
+                    </text>
+                  </g>
+                )
+              })}
 
               {/* Stage 3: the ruler, three distances on one scale. */}
               {stage >= 3 && (
                 <g>
                   <text x={TL_LEFT} y={RULER_TOP} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
-                    How far? Three distances for MoM-z14, on one scale (billions of light-years)
+                    How far? Three distances for {nameThe}, on one scale (billions of light-years)
                   </text>
                   {[
                     { label: `How far the light travelled: ${travelGly.toFixed(2)} billion light-years (it took ${travelGly.toFixed(2)} billion years)`, value: travelGly, color: TRAVEL_COLOR },
@@ -814,7 +874,7 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
                       </g>
                     )
                   })}
-                  {[0, 10, 20, 30].map((gly) => (
+                  {[0, 10, 20, 30, 40].map((gly) => (
                     <g key={gly}>
                       <line x1={TL_LEFT + (gly / RULER_MAX_GLY) * (TL_RIGHT - TL_LEFT)} y1={RULER_TOP + 142} x2={TL_LEFT + (gly / RULER_MAX_GLY) * (TL_RIGHT - TL_LEFT)} y2={RULER_TOP + 148} stroke={TEXT_COLOR} />
                       <text x={TL_LEFT + (gly / RULER_MAX_GLY) * (TL_RIGHT - TL_LEFT)} y={RULER_TOP + 160} fill={TEXT_COLOR} fontSize="10" textAnchor={gly === 0 ? 'start' : 'middle'}>
@@ -834,7 +894,7 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
         {stage >= 2 && (
           <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             <p style={paragraph}>
-              <strong>How to read Picture 2.</strong> It shows <em>when</em> the light of the galaxy MoM-z14 left it, and, from stage 3,{' '}
+              <strong>How to read Picture 2.</strong> It shows <em>when</em> the light of {galaxyPhrase} left it, and, from stage 3,{' '}
               <em>how far</em>. The top bar is the whole history of the universe, from the Big Bang on the left to today on the right, marked in{' '}
               <strong>billions of years</strong>. The orange part at the left end of it is the first {ZOOM_MAX_MYR} million years, which is far
               too thin to read at that scale, so the second bar shows only that stretch, magnified {Math.round(presentMyr / ZOOM_MAX_MYR)} times
@@ -843,7 +903,7 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
             </p>
             <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
               <li>
-                <strong>The orange dot and line on the zoomed bar</strong> mark the moment the light of MoM-z14 left the galaxy, with its label:
+                <strong>The orange dot and line on the zoomed bar</strong> mark the moment the light of {nameThe} left the galaxy, with its label:
                 the galaxy’s name, its redshift, and the number of millions of years after the Big Bang. The orange shading to its left is the
                 time that had passed.
               </li>
@@ -861,15 +921,15 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
               )}
               {stage >= 4 && (
                 <li>
-                  <strong>The grey-blue dots and lines are the earlier record holders,</strong> galaxies whose redshifts were also confirmed
-                  with a spectrum: GN-z11, JADES-GS-z13-0 and JADES-GS-z14-0. Each label gives the galaxy’s name, its redshift and its time after
+                  <strong>The grey-blue dots and lines are the other record holders,</strong> galaxies whose redshifts were also confirmed
+                  with a spectrum (the list is in the second table below the results). Each label gives the galaxy’s name, its redshift and its time after
                   the Big Bang. (The redshift of JADES-GS-z14-0 is the one refined by the ALMA telescope. NIRSpec alone gave 14.32.) A{' '}
                   <strong>larger redshift is further left,</strong> because the light left earlier.
                 </li>
               )}
             </ul>
             <p style={paragraph}>
-              <strong>A worked moment.</strong> For MoM-z14 the model gives {Math.round(ageMyr)} million years after the Big Bang. The universe’s
+              <strong>A worked moment.</strong> For {nameThe} the model gives {Math.round(ageMyr)} million years after the Big Bang. The universe’s
               present age is {Math.round(presentMyr).toLocaleString('en-US')} million years, so the share is {Math.round(ageMyr)} ÷{' '}
               {Math.round(presentMyr).toLocaleString('en-US')} = {(result.shareOfPresentAge * 100).toFixed(2)} percent.
               {stage >= 3 && (
@@ -887,10 +947,10 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
             <p style={paragraph}>
               <strong>What to look for.</strong> How thin the orange sliver is in the top bar compared with the whole.
               {stage >= 3 && <> Which of the three distances is longest, and why it is not the same as how far the light travelled (the answer is in Cosmology Experiment 8).</>}
-              {stage >= 4 && <> Where the four record holders fall on the zoomed bar, and how close together the last two are.</>}
+              {stage >= 4 && <> Where the record holders fall on the zoomed bar, and how close together the last two are.</>}
             </p>
             <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
-              The ages and distances come from the model described under “What we assume”. A scientific paper’s own figure for MoM-z14’s age can
+              The ages and distances come from the model described under “What we assume”. A scientific paper’s own figure for a galaxy’s age can
               differ slightly, and the model does not say why.
             </p>
           </div>
@@ -1007,6 +1067,236 @@ export function EarliestGalaxiesExperiment({ onComplete }: EarliestGalaxiesExper
               This is <strong>one survey’s estimate</strong> (Naidu and colleagues, 2025), and the range the paper quotes for it is wide. It is a published number, quoted here, not something this experiment calculates: the experiment does not model how galaxies
               form.
             </p>
+          </div>
+        )}
+
+        {/* After the run: the "Look at another galaxy" control, the neutral results, the guide to them and the links kept back until now.
+            Draft wording for the owner's review (CLAUDE.md §28.1, §29). The results only report; they do not say why. */}
+        {status === 'complete' && (
+          <div style={{ marginTop: '2rem' }}>
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Look at another galaxy</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              Choose one of the four record holders (each one’s redshift was confirmed with a spectrum), or an <strong>imaginary galaxy</strong>:
+              move the slider to any redshift from {SLIDER_MIN_REDSHIFT} to {MAX_REDSHIFT}. <strong>No galaxy has been confirmed beyond a redshift of {MOM_Z14_REDSHIFT},</strong> so
+              the imaginary galaxy shows only what the model would give. Pictures 1 and 2, the first table below and the worked examples in the “Words
+              and formulas” box change with your choice. Picture 3 and the second table do not, because they are published numbers. Your predictions stay
+              as they are.
+            </p>
+            <div style={{ marginBottom: '0.75rem' }}>
+              {RECORDS.slice()
+                .reverse()
+                .map((r) => (
+                  <button
+                    key={r.name}
+                    type="button"
+                    onClick={() => {
+                      setWhatIf(false)
+                      setRedshift(r.redshift)
+                    }}
+                    className={`toggle-button${!whatIf && redshift === r.redshift ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {r.name} (redshift {r.redshift})
+                  </button>
+                ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setWhatIf(true)
+                  setRedshift(sliderZ)
+                }}
+                className={`toggle-button${whatIf ? ' is-selected' : ''}`}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+              >
+                An imaginary galaxy (use the slider)
+              </button>
+            </div>
+            <div style={{ marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <label htmlFor="what-if-redshift" style={{ display: 'block', marginBottom: '0.25rem' }}>
+                Imaginary galaxy’s redshift: <strong>{sliderZ.toFixed(1)}</strong> (an imaginary galaxy: none is confirmed beyond {MOM_Z14_REDSHIFT})
+              </label>
+              <input
+                id="what-if-redshift"
+                type="range"
+                min={SLIDER_MIN_REDSHIFT}
+                max={MAX_REDSHIFT}
+                step={0.1}
+                value={sliderZ}
+                onChange={(e) => {
+                  const z = Number(e.target.value)
+                  setSliderZ(z)
+                  setWhatIf(true)
+                  setRedshift(z)
+                }}
+                style={{ width: '100%', maxWidth: '480px' }}
+              />
+            </div>
+
+            <div style={{ border: '1px solid var(--border-color, #ccc)', borderRadius: '8px', padding: '1rem', fontSize: '0.875rem' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+                <strong>Results.</strong> These are the numbers behind the pictures. They only report what was published and what was calculated.
+                They do not say why the numbers are what they are.
+              </p>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                For {nameThe}, redshift {redshift}
+                {whatIf ? ' (imaginary: no galaxy is confirmed beyond ' + MOM_Z14_REDSHIFT + ')' : ''}
+              </p>
+              <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '420px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                      <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>Quantity</th>
+                      <th style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>Value</th>
+                      <th style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>How it is worked out</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      [
+                        ['Redshift', `z = ${redshift}`, record ? `the published value (${record.redshiftNote})` : 'the value you chose with the slider'],
+                        ['Stretch factor', `${f2} times`, `1 + ${redshift}`],
+                        ['Lyman-alpha arrives at', `${stretchedNm.toFixed(1)} nm (${(stretchedNm / 1000).toFixed(3)} µm)`, `${LYMAN_ALPHA_NM} × ${f2}`],
+                        ['Size of the universe then', `${(result.relativeSizeThen * 100).toFixed(2)} percent of today’s`, `1 ÷ ${f2}`],
+                        ['Time after the Big Bang', `about ${Math.round(ageMyr)} million years`, 'the age function of Cosmology Experiments 6 and 8, at Planck’s expansion rate'],
+                        ['The universe’s present age', `${presentMyrText} million years`, 'the same function, today'],
+                        ['Share of the present age', `${(result.shareOfPresentAge * 100).toFixed(2)} percent`, `${Math.round(ageMyr)} ÷ ${presentMyrText}`],
+                        ['How long the light travelled', `${travelGly.toFixed(2)} billion years`, `${presentMyrText} − ${Math.round(ageMyr)} million years`],
+                        ['Distance when the light left', `${thenGly.toFixed(2)} billion light-years`, `${todayGly.toFixed(2)} ÷ ${f2}`],
+                        ['Distance now', `${todayGly.toFixed(2)} billion light-years`, 'the comoving-distance function of Cosmology Experiments 5 and 8, at Planck’s expansion rate'],
+                        ...(record && record.name === 'MoM-z14'
+                          ? ([
+                              [
+                                'The age stated by the paper and the releases',
+                                `${MOM_Z14_PAPER_AGE_YEARS / 1e6} million years`,
+                                `the model’s figure is ${(((result.ageAfterBigBangYears - MOM_Z14_PAPER_AGE_YEARS) / MOM_Z14_PAPER_AGE_YEARS) * 100).toFixed(1)} percent above it; this experiment has not worked out why`,
+                              ],
+                            ] as const)
+                          : []),
+                      ] as const
+                    ).map(([label, value, how]) => (
+                      <tr key={label} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{label}</td>
+                        <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>{value}</td>
+                        <td style={{ padding: '0.4rem 0 0.4rem 0.5rem', color: 'var(--text-muted)' }}>{how}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>The galaxies confirmed with a spectrum, and the count</p>
+              <div style={{ overflowX: 'auto', marginBottom: '0.75rem' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '560px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                      <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>Name</th>
+                      <th style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>Redshift</th>
+                      <th style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>Time after the Big Bang (model)</th>
+                      <th style={{ padding: '0.4rem 0.5rem' }}>Year</th>
+                      <th style={{ padding: '0.4rem 0 0.4rem 0.5rem' }}>Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {RECORDS.slice()
+                      .reverse()
+                      .map((r) => (
+                        <tr key={r.name} style={{ borderBottom: '1px solid var(--border-color, #ccc)', verticalAlign: 'top' }}>
+                          <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{r.name}</td>
+                          <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>
+                            {r.redshift}
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{r.redshiftNote}</div>
+                          </td>
+                          <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>{Math.round(ageAfterBigBangYears(r.redshift) / 1e6)} million years</td>
+                          <td style={{ padding: '0.4rem 0.5rem' }}>{r.year}</td>
+                          <td style={{ padding: '0.4rem 0 0.4rem 0.5rem', color: 'var(--text-muted)' }}>{r.source}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              <p style={{ marginTop: 0, marginBottom: '1rem' }}>
+                <strong>The count.</strong> The survey behind MoM-z14 implies a number density of bright galaxies at redshifts of about 14 to 15 of{' '}
+                <strong>{NUMBER_DENSITY_EXCESS.best} times</strong> what the models used before Webb predicted, with the range the paper quotes from{' '}
+                {NUMBER_DENSITY_EXCESS.low} to {NUMBER_DENSITY_EXCESS.high} times (Naidu et al., arXiv:2505.11263). ESA’s and NASA’s announcements of
+                January 2026 say “100 times”.
+              </p>
+
+              {/* How to read the results: draft wording (CLAUDE.md §29). It explains each row, column and the control, and says nothing about why. */}
+              <div style={{ color: 'var(--text-muted)' }}>
+                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                  <strong>How to read these results.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>The first table</strong> is the chain of arithmetic behind Pictures 1 and 2 for the galaxy shown: its redshift, how much
+                    its light was stretched, where its Lyman-alpha light arrives, how old the universe was then and what share of its present age
+                    that is, how long the light travelled, and the two distances. The last column shows each step so you can follow it.
+                  </li>
+                  <li>
+                    <strong>“Time after the Big Bang” and “Distance now”</strong> come from the expansion model described under “What we
+                    assume”, so they are the model’s numbers. A scientific paper’s own figure can differ slightly. For MoM-z14 the table shows the
+                    paper’s figure beside the model’s.
+                  </li>
+                  <li>
+                    <strong>The second table</strong> lists the four galaxies of the staircase in Picture 2, from the most distant down, with
+                    the redshift each paper reports, the model’s time after the Big Bang, the year of the paper and where it comes from. The
+                    redshift of JADES-GS-z14-0 is the one refined by ALMA. NIRSpec alone gave 14.32.
+                  </li>
+                  <li>
+                    <strong>“The count”</strong> is the number of Picture 3. It is a published number, quoted from the paper, and was not
+                    calculated by this experiment.
+                  </li>
+                  <li>
+                    <strong>“Look at another galaxy”</strong> changes only the first table, Pictures 1 and 2 and the worked examples. It does not
+                    change the second table, Picture 3 or your predictions. An imaginary galaxy is labelled as one wherever it appears.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                <strong>More to read, now that you have seen the results.</strong> These are the papers and announcements behind the experiment,
+                and two pages from NASA and ESA, whose summaries state what the predictions ask, so they were kept back until now. They open in
+                a new tab. The papers use technical words, and they open on arxiv.org, the free site where scientists post their papers.
+              </p>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2505.11263">A Cosmic Miracle: a remarkably luminous galaxy at z=14.44 confirmed with JWST (Naidu et al., 2025)</ExternalLink>
+                  : the paper behind MoM-z14: its redshift, its spectrum, its size and brightness, and the comparison with the models’ number of
+                  bright galaxies.
+                </li>
+                <li>
+                  <ExternalLink href="https://esawebb.org/news/weic2603/">ESA/Webb: the announcement of MoM-z14 (28 January 2026)</ExternalLink>
+                  : the plain-language release from ESA and NASA that announced the galaxy, with what it means in everyday words.
+                </li>
+                <li>
+                  <ExternalLink href="https://science.nasa.gov/mission/webb/early-universe">NASA: Webb and the early universe</ExternalLink>: NASA’s
+                  overview of what Webb has found about the first galaxies.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2405.18485">Spectroscopic confirmation of two luminous galaxies at z∼14 (Carniani et al., Nature, 2024)</ExternalLink>
+                  : the paper behind JADES-GS-z14-0.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2212.04568">Spectroscopic confirmation of four metal-poor galaxies at z=10.3-13.2 (Curtis-Lake et al., 2023)</ExternalLink>
+                  : the paper behind JADES-GS-z13-0.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2302.07256">JADES NIRSpec spectroscopy of GN-z11 (Bunker et al., 2023)</ExternalLink>: the paper behind
+                  GN-z11’s redshift of 10.603.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2307.15305">Bursty star formation naturally explains the abundance of bright galaxies at cosmic dawn (Sun et al., 2023)</ExternalLink>
+                  : one proposed explanation, from computer simulations of galaxies at redshifts 8 to 12.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2303.04827">Efficient formation of massive galaxies at cosmic dawn by feedback-free starbursts (Dekel et al., 2023)</ExternalLink>
+                  : another proposed explanation, for redshifts of about 10 and above.
+                </li>
+              </ul>
+            </div>
           </div>
         )}
       </div>
