@@ -614,7 +614,7 @@ const chapters: Chapter[] = [
     Component: LumpinessExperiment,
     // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's explanation.
     // Every number is the published one the experiment uses (KiDS arXiv:2007.15633 and 2503.19441, DES arXiv:2602.10065, Planck as quoted by KiDS-Legacy).
-    // "What's next" was changed on 2026-10-19, at the owner's request after Experiment 4 was built, to point to Experiment 4 (Decision 13 had kept it silent until then).
+    // "What's next" was changed on 2026-10-19, at the owner's request after Experiment 4 was built, to point to Experiment 4 (Decision 13 had kept it silent until then); the owner approved the new sentence on 2026-10-19.
     learned:
       "Lensing measures how lumpy matter is today, summarised in one number, S₈ = σ₈ × √(Ωm ÷ 0.3). The microwave background predicts about 0.834 ± 0.016. The Kilo-Degree Survey's first full analysis (2020) gave 0.759, about 3 sigma below that. Its re-analysis of the complete survey (2025) gave 0.815, in agreement with the microwave background (0.73 sigma in the paper's own comparison); the authors say the rise comes mainly from improved calibration of how far away the lensed galaxies are, together with new sky area and better image processing. But the Dark Energy Survey's 2026 Year 6 result (0.798 or 0.783) is still 2.0 to 2.3 sigma below, in its own paper's comparison. So a tension went away in one survey and not in another, and a 2026 review finds survey-specific systematic effects contribute substantially. Contested, as of October 2026.",
     next: 'The next experiment asks whether the universe, by the way it expands and clumps, can weigh a neutrino, and whether that agrees with what laboratories find.',
@@ -623,7 +623,7 @@ const chapters: Chapter[] = [
     title: 'Can the universe weigh a neutrino?',
     group: 'Frontier and Beyond',
     Component: NeutrinoMassExperiment,
-    // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's explanation.
+    // Wording approved by the owner on 2026-10-19 (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's explanation.
     // Every number is the published one the experiment uses (DESI arXiv:2503.14744 and 2607.27410, Planck arXiv:1807.06209, NuFIT 6.0 arXiv:2410.05380).
     // "What's next" says nothing about Experiment 5 until it has an approved specification (Decision 13).
     learned:

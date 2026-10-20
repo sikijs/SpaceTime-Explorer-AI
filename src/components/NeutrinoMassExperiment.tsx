@@ -30,8 +30,8 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 // sea, and the skeleton of Picture 1 with its guide. Step 3 added the two predictions, Run, the staged run, the neutrinos' turning point on
 // Picture 1, and Pictures 2 and 3 with their guides. Step 4 added the "Try a different total mass" control, the neutral results tables and their
 // guide, the formulas in the "Words and formulas" panel and the links kept back until the results (all shown after the run). Step 5 adds the
-// tutor (NeutrinoMassTutor.tsx) and the chapter summary (in App.tsx). The owner has committed Steps 2 to 5 but has not yet given the line-by-line
-// wording approval of CLAUDE.md §28.1 for them, so all the wording here is draft wording for the owner's review (CLAUDE.md §28.1), written to the standard of §29. The interface only
+// tutor (NeutrinoMassTutor.tsx) and the chapter summary (in App.tsx). The owner approved all the wording of this page on 2026-10-19 (CLAUDE.md §28.1: "wording approved"); the
+// owner also approved the differences from the specification, listed in its Implementation Notes, on 2026-10-19 (CLAUDE.md §28.1), written to the standard of §29. The interface only
 // displays numbers from src/physics (CLAUDE.md §9); the only calculation
 // here is where a point is drawn.
 
