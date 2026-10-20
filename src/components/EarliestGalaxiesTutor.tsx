@@ -3,9 +3,12 @@ import {
   ageShareRange,
   countRange,
   LYMAN_ALPHA_NM,
+  monthsOfFirstFourYears,
+  MONTHS_IN_FOUR_YEARS,
   MOM_Z14_PAPER_AGE_YEARS,
   MOM_Z14_REDSHIFT,
   NUMBER_DENSITY_EXCESS,
+  paperAgeGapPercent,
   runEarliestGalaxies,
 } from '../physics/earliestGalaxies'
 import type { AgeShareRange, CountRange } from '../physics/earliestGalaxies'
@@ -69,9 +72,9 @@ export function EarliestGalaxiesTutor({ redshift, galaxyName, isImaginary, agePr
   const millions = (years: number) => Math.round(years / 1e6).toLocaleString('en-US')
   const f2 = (value: number) => value.toFixed(2)
   const billions = (years: number) => (years / 1e9).toFixed(2)
-  const paperGap = ((mom.ageAfterBigBangYears - MOM_Z14_PAPER_AGE_YEARS) / MOM_Z14_PAPER_AGE_YEARS) * 100
+  const paperGap = paperAgeGapPercent()
   // A person's age, for the comparison with the share: the same share of a 4-year-old's 48 months.
-  const monthsOf48 = mine.shareOfPresentAge * 48
+  const monthsOf48 = monthsOfFirstFourYears(redshift)
 
   return (
     <div
@@ -143,7 +146,7 @@ export function EarliestGalaxiesTutor({ redshift, galaxyName, isImaginary, agePr
             {millions(mom.ageAfterBigBangYears)} ÷ {millions(mom.presentAgeYears)} = {f2(mom.shareOfPresentAge * 100)} percent:{' '}
             <em>{ageWords[actualAge]}</em>. {agePrediction === actualAge ? 'Your prediction matched.' : 'Your prediction did not match.'}
             {agePrediction === 'about10' &&
-              ' It is an easy mistake to make: a few hundred million years sounds like a lot, but next to 13.8 billion years it is a small slice.'}{' '}
+              ' It is an easy mistake to make: a few hundred million years sounds like a lot, but next to ' + (mom.presentAgeYears / 1e9).toFixed(1) + ' billion years it is a small slice.'}{' '}
             You predicted that the number of bright galaxies the survey implies would be <em>{countWords[countPrediction]}</em>. The survey’s
             best estimate is {NUMBER_DENSITY_EXCESS.best} times the models, with a range from {NUMBER_DENSITY_EXCESS.low} to{' '}
             {NUMBER_DENSITY_EXCESS.high} times, which is <em>{countWords[actualCount]}</em>.{' '}
@@ -168,7 +171,7 @@ export function EarliestGalaxiesTutor({ redshift, galaxyName, isImaginary, agePr
 
           <p style={paragraphStyle}>
             <strong>2. Why the share is so small, and why two distances are different.</strong> A share of {f2(mine.shareOfPresentAge * 100)} percent
-            is like the first {monthsOf48.toFixed(1)} months of the life of a child who is now 4 years old (48 months): a very early moment in a long history.
+            is like the first {monthsOf48.toFixed(1)} months of the life of a child who is now 4 years old ({MONTHS_IN_FOUR_YEARS} months): a very early moment in a long history.
             The light then spent almost all of that history on its way to us. It did not travel {billions(mine.distanceTodayLightYears)} billion
             light-years, though, only {billions(mine.lightTravelYears)} billion. The rest is the stretching of space itself (Cosmology Experiment 8): think of two
             dots on a balloon that is being blown up. While a message crawls from one dot to the other, the balloon keeps stretching, so the dots end up
@@ -178,8 +181,9 @@ export function EarliestGalaxiesTutor({ redshift, galaxyName, isImaginary, agePr
           <p style={paragraphStyle}>
             <strong>3. Why a spectrum matters.</strong> The redshift of a distant galaxy candidate is often first estimated from colour filters,
             which is like guessing a person’s height from a blurry photo. A spectrum is like using a tape measure. For MoM-z14 the paper reports two
-            measurements from its spectrum that agree: the bright lines of its gas give a redshift of {MOM_Z14_REDSHIFT} (taken together at about 6 sigma,
-            a standard way of saying how sure the detection is, from Experiment 1 of this group), and the sharp Lyman-alpha edge gives 14.42. That is why it
+            measurements from its spectrum that agree: the bright lines of its gas give a redshift of {MOM_Z14_REDSHIFT} (taken together at about 6 sigma:
+            sigma is a way of saying how sure a detection is, as in Experiment 1 of this group. About 1 sigma is ordinary, and 5 sigma is the usual bar
+            for calling something real), and the sharp Lyman-alpha edge gives 14.42. That is why it
             is counted as confirmed.
           </p>
 

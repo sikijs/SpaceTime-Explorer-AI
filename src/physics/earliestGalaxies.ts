@@ -13,6 +13,7 @@ import {
   distanceWhenLightLeftLightYears,
   timeAfterBigBangYears,
 } from './observableUniverseExperiment'
+import { PLANCK_OWN } from './lumpiness'
 import { PLANCK_LIKE_DARK_ENERGY_FRACTION, universeAgeYears } from './universeAgeExperiment'
 
 export interface RecordGalaxy {
@@ -43,6 +44,13 @@ export const LYMAN_ALPHA_NM = 121.567
 // (182, +329, -105)" than pre-JWST consensus models. One survey's estimate; the uncertainty is large.
 export const NUMBER_DENSITY_EXCESS = { best: 182, low: 182 - 105, high: 182 + 329, headline: 100 }
 
+// Planck's matter fraction (0.315, the same value Experiments 1, 3 and 4 of this group use); with the dark energy fraction of the age function
+// (0.685) it makes a flat universe.
+export const PLANCK_MATTER_FRACTION = PLANCK_OWN.omegaMatter
+// The range of light that Webb's NIRCam camera is designed to capture, in nanometres: 0.6 to 5 microns (NASA's NIRCam page, fetched 2026-10-20).
+export const WEBB_NIRCAM_RANGE_NM = { min: 600, max: 5000 }
+// For the tutor's comparison of a share of the universe's history with a share of a child's first four years.
+export const MONTHS_IN_FOUR_YEARS = 48
 export const HUBBLE_CONSTANT_PLANCK = HUBBLE_MEASUREMENTS.find((m) => m.name === 'Planck 2018')!.value // 67.4
 export const MIN_REDSHIFT = 0
 export const MAX_REDSHIFT = 30
@@ -157,4 +165,20 @@ export function runEarliestGalaxies(redshift: number): EarliestGalaxiesResult {
     distanceTodayLightYears: distanceTodayLightYearsPlanck(redshift),
     ageShareRange: ageShareRange(redshift),
   }
+}
+
+// How far the model's age for MoM-z14 is above the paper's 280 million years, in percent (the experiment has not worked out why).
+export function paperAgeGapPercent(): number {
+  return ((ageAfterBigBangYears(MOM_Z14_REDSHIFT) - MOM_Z14_PAPER_AGE_YEARS) / MOM_Z14_PAPER_AGE_YEARS) * 100
+}
+
+// The same share of a child's first four years (48 months) as the share of the universe's present age at this redshift, in months.
+export function monthsOfFirstFourYears(redshift: number): number {
+  return shareOfPresentAge(redshift) * MONTHS_IN_FOUR_YEARS
+}
+
+// How many ticks of a logarithmic scale (each tick ten times the one before) a multiple sits above 1: log10 of the multiple.
+export function ticksAboveOne(times: number): number {
+  if (!Number.isFinite(times) || times <= 0) throw new RangeError('The multiple must be positive')
+  return Math.log10(times)
 }

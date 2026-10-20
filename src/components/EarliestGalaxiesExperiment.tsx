@@ -2,15 +2,21 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   ageAfterBigBangYears,
+  HUBBLE_CONSTANT_PLANCK,
   LYMAN_ALPHA_NM,
   MAX_REDSHIFT,
   MOM_Z14_PAPER_AGE_YEARS,
   MOM_Z14_REDSHIFT,
   NUMBER_DENSITY_EXCESS,
   observedWavelengthNm,
+  paperAgeGapPercent,
+  PLANCK_MATTER_FRACTION,
+  presentAgeYears,
   RECORDS,
   runEarliestGalaxies,
   SLIDER_MIN_REDSHIFT,
+  ticksAboveOne,
+  WEBB_NIRCAM_RANGE_NM,
 } from '../physics/earliestGalaxies'
 import type { AgeShareRange, CountRange } from '../physics/earliestGalaxies'
 import { EarliestGalaxiesTutor } from './EarliestGalaxiesTutor'
@@ -130,7 +136,7 @@ const VISIBLE_TO_INFRARED_NM = 700
 const xOfNm = (nm: number) =>
   AXIS_LEFT + ((Math.log10(nm) - Math.log10(AXIS_MIN_NM)) / (Math.log10(AXIS_MAX_NM) - Math.log10(AXIS_MIN_NM))) * (AXIS_RIGHT - AXIS_LEFT)
 const P1_HEIGHT = 274
-const WEBB_MIN_NM = 600 // NASA: NIRCam is designed to capture light from 0.6 microns to 5 microns
+const WEBB_MIN_NM = WEBB_NIRCAM_RANGE_NM.min // NASA: NIRCam is designed to capture light from 0.6 microns to 5 microns
 const ARRIVED_COLOR = '#f87171' // red: the light after the stretching
 const WEBB_COLOR = '#4ade80' // green: Webb's range
 
@@ -139,9 +145,9 @@ const TL_LEFT = 40
 const TL_RIGHT = 520
 const ZOOM_MAX_MYR = 500 // the zoomed bar shows the first 500 million years
 const ZOOM_BAR_Y = 202
-const RULER_TOP = 288
+const RULER_TOP = 304
 const RULER_MAX_GLY = 40
-const P2_HEIGHT_CLOCK = 274
+const P2_HEIGHT_CLOCK = 290
 const P2_HEIGHT_FULL = RULER_TOP + 186
 const MOM_COLOR = '#fb923c' // orange: the galaxy of this run
 const RECORD_COLOR = '#cbd5e1' // grey-blue: the earlier record holders
@@ -193,10 +199,14 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'James Webb Space Telescope (JWST)', meaning: 'a large space telescope that observes infrared light. NASA, ESA (the European Space Agency) and CSA (the Canadian Space Agency) built it together. It was designed to see the first galaxies, whose light has been stretched into the infrared on the way to us.' },
   { term: 'NIRSpec', meaning: 'one of JWST’s instruments, the Near-InfraRed Spectrograph. It splits the near-infrared light of a galaxy into a spectrum, which is how redshifts are confirmed (see the ESA link below).' },
   { term: 'Number density', meaning: 'how many of something there are in a given volume of space, such as how many bright galaxies in a cube of space a billion light-years across.' },
-  { term: 'Time after the Big Bang', meaning: 'how long it had been since the universe began to expand, at the moment the light we are looking at left its galaxy. It is how old the universe was then (Cosmology Experiment 2). The universe is now about 13.8 billion years old.' },
+  { term: 'Time after the Big Bang', meaning: 'how long it had been since the universe began to expand, at the moment the light we are looking at left its galaxy. It is how old the universe was then (Cosmology Experiment 2). The universe is now about ' + (presentAgeYears() / 1e9).toFixed(1) + ' billion years old.' },
   { term: 'Distance when the light left, and distance now', meaning: 'two different distances to the same galaxy (Cosmology Experiment 8). Space has been stretching ever since the light left, so the galaxy is now much further away than it was then. Neither is the same as how far the light travelled.' },
   { term: 'Models of galaxy formation', meaning: 'computer programs that start from the early universe and follow how gas gathers, cools and turns into stars and galaxies, to predict how many galaxies of each size and brightness there should be at each time. They are tested by comparing their predictions with what telescopes see.' },
   { term: 'Logarithmic scale', meaning: 'a scale on which each step along the line multiplies the value instead of adding to it, for example by 10. It lets numbers that differ a lot, such as 1 and 1,000, fit on one picture. On this page it is used for wavelengths (Picture 1) and for numbers of galaxies (Picture 3).' },
+  { term: 'Sigma', meaning: 'a way of saying how sure a measurement or detection is (Experiment 1 of this group): the size of a result counted in units of its own “give or take”. The bigger the number, the less likely the result is just chance. About 1 sigma is ordinary, and 5 sigma is the usual bar in many sciences for calling something real.' },
+  { term: 'ALMA', meaning: 'the Atacama Large Millimeter/submillimeter Array, a large group of radio dishes in Chile. In this experiment it re-measured the redshift of JADES-GS-z14-0 from the glow of oxygen gas in the galaxy, which refined the first value that Webb’s NIRSpec gave.' },
+  { term: 'Microwave background (CMB)', meaning: 'the faint glow of light left over from the Big Bang, which fills all of space (Cosmology Experiment 3). Its detailed pattern, mapped by the Planck satellite, is where the expansion rate and the matter share used on this page come from.' },
+  { term: 'Interloper', meaning: 'an object that was mistaken for a very distant galaxy but is something else, such as a nearer galaxy. Telling a real distant galaxy from an interloper is the reason a spectrum is needed.' },
   { term: 'Bright', meaning: 'in this experiment, “bright” means giving out a lot of light, whatever the distance. A galaxy can look faint because it is far away and still be intrinsically bright.' },
 ]
 
@@ -290,7 +300,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
     },
     {
       term: 'The age then (the age function)',
-      meaning: `The time after the Big Bang at a given redshift comes from the expansion model of Cosmology Experiments 6 and 8: a universe of matter and dark energy, with radiation left out, at Planck’s expansion rate (67.4 km/s per Mpc) and matter share (0.315). It is a formula with an inverse hyperbolic sine in it, so there is no short step-by-step sum to show here. The tests of this experiment check it against a separate numerical integration. For ${nameThe} it gives ${Math.round(ageMyr)} million years.`,
+      meaning: `The time after the Big Bang at a given redshift comes from the expansion model of Cosmology Experiments 6 and 8: a universe of matter and dark energy, with radiation left out, at Planck’s expansion rate (${HUBBLE_CONSTANT_PLANCK} km/s per Mpc) and matter share (${PLANCK_MATTER_FRACTION}). It is a single formula from mathematics that cannot be shown as a short step-by-step sum, so only its result is shown here. The tests of this experiment check it against a separate numerical integration. For ${nameThe} it gives ${Math.round(ageMyr)} million years.`,
     },
     {
       term: 'The share of the present age (formula)',
@@ -298,11 +308,11 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
     },
     {
       term: 'How long the light travelled (formula)',
-      meaning: `light travel time = present age − time after the Big Bang then. Example: ${presentMyrText} − ${Math.round(ageMyr)} = ${Math.round(presentMyr - ageMyr).toLocaleString('en-US')} million years, which is ${travelGly.toFixed(2)} billion years. Light covers one light-year in a year, so the distance the light travelled is the same number in light-years.`,
+      meaning: `light travel time = present age − time after the Big Bang then. Example: ${presentMyrText} − ${Math.round(ageMyr)} = ${Math.round(result.lightTravelYears / 1e6).toLocaleString('en-US')} million years, which is ${travelGly.toFixed(2)} billion years. Light covers one light-year in a year, so the distance the light travelled is the same number in light-years.`,
     },
     {
       term: 'The two distances (formulas)',
-      meaning: `distance when the light left = distance now ÷ (1 + z). The distance now comes from the comoving-distance function of Cosmology Experiments 5 and 8 (an integral of the expansion rate), at Planck’s expansion rate. Example for ${nameThe}: the distance now is ${todayGly.toFixed(2)} billion light-years, so the distance then is ${todayGly.toFixed(2)} ÷ ${f2} = ${thenGly.toFixed(2)} billion light-years.`,
+      meaning: `distance when the light left = distance now ÷ (1 + z). The distance now comes from the distance function of Cosmology Experiments 5 and 8 (it adds up the stretching of space along the light’s whole journey), at Planck’s expansion rate. Example for ${nameThe}: the distance now is ${todayGly.toFixed(2)} billion light-years, so the distance then is ${todayGly.toFixed(2)} ÷ ${f2} = ${thenGly.toFixed(2)} billion light-years.`,
     },
   ]
 
@@ -370,7 +380,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
           </div>
 
           <p style={paragraph}>
-            <strong>Why Webb looks in the infrared.</strong> When light is stretched by several times or more, ultraviolet and visible light end
+            <strong>Why Webb looks in the infrared.</strong> When light is stretched by several times or more, <strong>ultraviolet</strong> light (light with waves shorter than violet, which our eyes cannot see, and which is what causes sunburn) and visible light end
             up as <strong>infrared</strong>, a kind of light our eyes cannot see (think of the heat you feel from a warm stove without seeing any
             glow). Ordinary telescopes are not made to see much of it, and the Earth’s air gets in the way. JWST is built to see infrared light
             from space, so it can see the first galaxies, whose light left as ultraviolet and visible light and arrives as infrared. NASA’s page
@@ -384,7 +394,9 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
             <li>
               <strong>A photometric redshift is an estimate.</strong> Astronomers photograph the galaxy through several colour filters. A very
               distant galaxy vanishes from the bluer filters, because of the Lyman-alpha break (explained next), and which filters it shows up
-              in gives a rough redshift. It is like guessing a person’s height from a blurry photo. It is quick, but it can be wrong.
+              in gives a rough redshift. It is like guessing a person’s height from a blurry photo. It is quick, but it can be wrong. A September 2026 paper reports
+              that deeper spectroscopy of the faintest candidates beyond a redshift of about 14.5 “now finds only interlopers”, that is, objects
+              that were mistaken for very distant galaxies (Zhang and colleagues, linked below).
             </li>
             <li>
               <strong>A spectroscopic redshift is a measurement.</strong> Astronomers split the galaxy’s light into a <strong>spectrum</strong> (a
@@ -392,8 +404,10 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
               called the <strong>Lyman-alpha break</strong>. Hydrogen gas, the most common gas in the universe, soaks up ultraviolet light
               bluer than a wavelength of {LYMAN_ALPHA_NM} nm, called Lyman-alpha, so the galaxy’s light is bright on one side of that
               wavelength and dark on the other. How far the edge has been shifted tells us the redshift. Bright lines from the galaxy’s gas give
-              a second, independent measurement. It is like measuring the person with a tape. Only a galaxy whose redshift comes from a
-              spectrum is called <strong>confirmed</strong>.
+              a second, independent measurement. It is like measuring the person with a tape. Even a tape has a small uncertainty: a 2026 study
+              of 25 galaxies (Heintz and colleagues, linked below the results) found that absorption by hydrogen gas around a galaxy, if it is not allowed
+              for, can bias a redshift measured from the Lyman-alpha break by about 0.14 on average, and one estimated from colours by about 0.39,
+              with only a marginal effect on counts of galaxies. Only a galaxy whose redshift comes from a spectrum is called <strong>confirmed</strong>.
             </li>
           </ul>
 
@@ -401,7 +415,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
             <strong>The record, as of October 2026.</strong> JWST’s NIRSpec instrument (a spectrograph, described in the ESA link below) has
             confirmed galaxies at redshifts above 14. The most distant confirmed so far is called <strong>MoM-z14</strong>. Its redshift is{' '}
             <strong>14.44</strong>, so its light has been stretched to 15.44 times its original wavelength. It was reported by a team led by
-            Rohan Naidu in 2025 and announced by ESA and NASA in January 2026. This experiment is about that galaxy and the ones before it: what
+            Rohan Naidu in 2025 and announced by ESA and NASA in January 2026. As of October 2026 no galaxy farther away has been confirmed with a spectrum. This experiment is about that galaxy and the ones before it: what
             a redshift of 14.4 tells us, and what it means that galaxies like this exist.
           </p>
 
@@ -476,8 +490,8 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
             </li>
             <li>
               <strong>The two numbers that set the pace are measured, not chosen.</strong> They are how fast the universe is expanding today
-              (67.4 kilometres per second for every megaparsec of distance, Experiment 1) and how much of the universe is matter (31.5 percent,
-              Experiment 3 of this group). Both come from the microwave background, measured by the Planck satellite, a European Space Agency
+              ({HUBBLE_CONSTANT_PLANCK} kilometres per second for every megaparsec of distance, Experiment 1) and how much of the universe is matter ({(PLANCK_MATTER_FRACTION * 100).toFixed(1)} percent,
+              Experiment 3 of this group). Both come from the microwave background (the faint leftover glow of the Big Bang, Cosmology Experiment 3), measured by the Planck satellite, a European Space Agency
               mission. A <strong>megaparsec</strong> is a unit of distance, about 3.26 million light-years. Earlier experiments in the project
               used a round 70 for the expansion rate, to keep the numbers simple, and this experiment switches to Planck’s own value (the
               times and distances are rescaled to match), as Experiment 4 did.
@@ -495,8 +509,8 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
           </ul>
 
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Want to know more?</strong> Plainer-language pages are listed here. Links to the original scientific papers and to the
-            announcements of the results appear below the results, after you press Run, because their summaries state what the predictions ask,
+            <strong>Want to know more?</strong> Plainer-language pages, and the one 2026 paper that the introduction cites, are listed here. Links to the
+            other scientific papers and to the announcements of the results appear below the results, after you press Run, because their summaries state what the predictions ask,
             and you should get to guess first. Links open in a new tab. This page was written as of October 2026.
           </p>
           <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
@@ -514,7 +528,12 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
             </li>
             <li>
               <ExternalLink href="https://science.nasa.gov/mission/webb/nircam/">NASA: NIRCam, Webb’s near-infrared camera</ExternalLink>: the camera
-              that takes Webb’s deep pictures of the early universe, and the range of light, 0.6 to 5 microns, that it is designed to capture.
+              that takes Webb’s deep pictures of the early universe, and the range of light, {WEBB_NIRCAM_RANGE_NM.min / 1000} to {WEBB_NIRCAM_RANGE_NM.max / 1000} microns, that it is designed to capture.
+            </li>
+            <li>
+              <ExternalLink href="https://arxiv.org/abs/2609.28257">JWST evidence for a sharp “Cosmic Daybreak” at z = 15 (Zhang et al., September 2026)</ExternalLink>
+              : a 2026 paper, on arxiv.org (the free site where scientists post their papers, in technical words), that reports that deeper spectroscopy of faint
+              candidates beyond a redshift of about 14.5 finds only interlopers.
             </li>
             <li>
               <ExternalLink href="https://www.stsci.edu/contents/news-releases/2019/news-2019-20">
@@ -677,6 +696,9 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
                 <line x1={lymanX} y1={58} x2={doubledX - 8} y2={58} stroke={MUTED_COLOR} strokeWidth={1.5} strokeDasharray="4 3" />
                 <polygon points={`${doubledX - 8},54 ${doubledX},58 ${doubledX - 8},62`} fill={MUTED_COLOR} />
                 <circle cx={doubledX} cy={AXIS_Y} r={3} fill={MUTED_COLOR} />
+                <text x={doubledX} y={AXIS_Y + 20} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                  redshift 1
+                </text>
                 <text x={doubledX + 8} y={62} fill={MUTED_COLOR} fontSize="10">
                   for comparison, a redshift of 1 (stretched 2 times): {doubledNm.toFixed(0)} nm, still ultraviolet
                 </text>
@@ -701,10 +723,10 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
                 <line x1={xOfNm(WEBB_MIN_NM)} y1={AXIS_Y + 90} x2={xOfNm(WEBB_MIN_NM)} y2={AXIS_Y + 102} stroke={WEBB_COLOR} strokeWidth={2} />
                 <polygon points={`${AXIS_RIGHT - 9},${AXIS_Y + 92} ${AXIS_RIGHT},${AXIS_Y + 96} ${AXIS_RIGHT - 9},${AXIS_Y + 100}`} fill={WEBB_COLOR} />
                 <text x={AXIS_RIGHT} y={AXIS_Y + 116} fill={WEBB_COLOR} fontSize="10" textAnchor="end">
-                  Webb’s NIRCam camera is designed for 0.6 to 5 µm
+                  Webb’s NIRCam camera is designed for {WEBB_NIRCAM_RANGE_NM.min / 1000} to {WEBB_NIRCAM_RANGE_NM.max / 1000} µm
                 </text>
                 <text x={AXIS_RIGHT} y={AXIS_Y + 129} fill={WEBB_COLOR} fontSize="10" textAnchor="end">
-                  (600 to 5,000 nm); this scale stops at 3 µm
+                  ({WEBB_NIRCAM_RANGE_NM.min} to {WEBB_NIRCAM_RANGE_NM.max.toLocaleString('en-US')} nm); this scale stops at {AXIS_MAX_NM / 1000} µm
                 </text>
               </g>
             )}
@@ -749,7 +771,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
                 </li>
                 <li>
                   <strong>The green bracket at the bottom is the range of light that one of Webb’s cameras, NIRCam, is designed to capture.</strong>{' '}
-                  NASA’s page on NIRCam says 0.6 µm (visible red) to 5 µm. The scale here stops at 3 µm, so the bracket runs off the right edge,
+                  NASA’s page on NIRCam says {WEBB_NIRCAM_RANGE_NM.min / 1000} µm (visible red) to {WEBB_NIRCAM_RANGE_NM.max / 1000} µm. The scale here stops at 3 µm, so the bracket runs off the right edge,
                   and the arrow-head shows that it carries on.
                 </li>
               </>
@@ -805,7 +827,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
               <rect x={TL_LEFT} y={50} width={TL_RIGHT - TL_LEFT} height={16} fill={MUTED_COLOR} opacity={0.3} />
               <rect x={TL_LEFT} y={50} width={((ZOOM_MAX_MYR / presentMyr) * (TL_RIGHT - TL_LEFT))} height={16} fill={MOM_COLOR} opacity={0.85} />
               <text x={TL_LEFT + 24} y={62} fill={TEXT_COLOR} fontSize="10">
-                ◂ the first {ZOOM_MAX_MYR} million years (magnified below)
+                ◂ orange: the first {ZOOM_MAX_MYR} million years (magnified below)
               </text>
               {[0, 2, 4, 6, 8, 10].map((billion) => (
                 <g key={billion}>
@@ -839,6 +861,9 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
               ))}
               <text x={(TL_LEFT + TL_RIGHT) / 2} y={ZOOM_BAR_Y + 54} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
                 millions of years after the Big Bang
+              </text>
+              <text x={(TL_LEFT + TL_RIGHT) / 2} y={ZOOM_BAR_Y + 68} fill={MOM_COLOR} fontSize="10" textAnchor="middle">
+                orange shading: the time that had passed before the light left
               </text>
               {markers.map((m) => {
                 const labelY = ZOOM_BAR_Y - 12 - m.tier * 16
@@ -925,7 +950,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
                 <li>
                   <strong>The grey-blue dots and lines are the other record holders,</strong> galaxies whose redshifts were also confirmed
                   with a spectrum (the list is in the second table below the results). Each label gives the galaxy’s name, its redshift and its time after
-                  the Big Bang. (The redshift of JADES-GS-z14-0 is the one refined by the ALMA telescope. NIRSpec alone gave 14.32.) A{' '}
+                  the Big Bang. (The redshift of JADES-GS-z14-0 is the one refined by ALMA, a large group of radio dishes in Chile, from the glow of oxygen gas. NIRSpec alone gave 14.32.) A{' '}
                   <strong>larger redshift is further left,</strong> because the light left earlier.
                 </li>
               )}
@@ -938,7 +963,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
                 <>
                   {' '}
                   The light has been travelling for the rest of history: {Math.round(presentMyr).toLocaleString('en-US')} −{' '}
-                  {Math.round(ageMyr)} = {Math.round(presentMyr - ageMyr).toLocaleString('en-US')} million years, which is{' '}
+                  {Math.round(ageMyr)} = {Math.round(result.lightTravelYears / 1e6).toLocaleString('en-US')} million years, which is{' '}
                   {travelGly.toFixed(2)} billion years. When the light left, the universe was 1 ÷ {result.stretchFactor.toFixed(2)} ={' '}
                   {(result.relativeSizeThen * 100).toFixed(1)} percent of its present size, so the galaxy was {todayGly.toFixed(2)} ÷{' '}
                   {result.stretchFactor.toFixed(2)} = {thenGly.toFixed(2)} billion light-years away, and it is {todayGly.toFixed(2)} billion
@@ -1057,7 +1082,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
               <strong>A worked moment.</strong> If the models had predicted 1 bright galaxy in some volume of space, the survey’s estimate
               says there would be about {NUMBER_DENSITY_EXCESS.best}, and the range the paper quotes is {NUMBER_DENSITY_EXCESS.low} to{' '}
               {NUMBER_DENSITY_EXCESS.high}. On this scale the dot sits between 100 and 1,000, closer to 100: 100 is two ticks from 1, 1,000 is
-              three ticks, and {NUMBER_DENSITY_EXCESS.best} is about {Math.log10(NUMBER_DENSITY_EXCESS.best).toFixed(1)} ticks.
+              three ticks, and {NUMBER_DENSITY_EXCESS.best} is about {ticksAboveOne(NUMBER_DENSITY_EXCESS.best).toFixed(1)} ticks.
             </p>
             <p style={paragraph}>
               <strong>What to look for.</strong> Where the dot and the bar sit compared with the violet line, and whether the whole bar is to
@@ -1165,13 +1190,13 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
                         ['Share of the present age', `${(result.shareOfPresentAge * 100).toFixed(2)} percent`, `${Math.round(ageMyr)} ÷ ${presentMyrText}`],
                         ['How long the light travelled', `${travelGly.toFixed(2)} billion years`, `${presentMyrText} − ${Math.round(ageMyr)} million years`],
                         ['Distance when the light left', `${thenGly.toFixed(2)} billion light-years`, `${todayGly.toFixed(2)} ÷ ${f2}`],
-                        ['Distance now', `${todayGly.toFixed(2)} billion light-years`, 'the comoving-distance function of Cosmology Experiments 5 and 8, at Planck’s expansion rate'],
+                        ['Distance now', `${todayGly.toFixed(2)} billion light-years`, 'the distance function of Cosmology Experiments 5 and 8, which gives a galaxy’s distance as it is today, at Planck’s expansion rate'],
                         ...(record && record.name === 'MoM-z14'
                           ? ([
                               [
                                 'The age stated by the paper and the releases',
                                 `${MOM_Z14_PAPER_AGE_YEARS / 1e6} million years`,
-                                `the model’s figure is ${(((result.ageAfterBigBangYears - MOM_Z14_PAPER_AGE_YEARS) / MOM_Z14_PAPER_AGE_YEARS) * 100).toFixed(1)} percent above it; this experiment has not worked out why`,
+                                `the model’s figure is ${paperAgeGapPercent().toFixed(1)} percent above it; this experiment has not worked out why`,
                               ],
                             ] as const)
                           : []),
@@ -1243,7 +1268,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
                   <li>
                     <strong>The second table</strong> lists the four galaxies of the staircase in Picture 2, from the most distant down, with
                     the redshift each paper reports, the model’s time after the Big Bang, the year of the paper and where it comes from. The
-                    redshift of JADES-GS-z14-0 is the one refined by ALMA. NIRSpec alone gave 14.32.
+                    redshift of JADES-GS-z14-0 is the one refined by ALMA, a large group of radio dishes in Chile (see the words box). NIRSpec alone gave 14.32.
                   </li>
                   <li>
                     <strong>“The count”</strong> is the number of Picture 3. It is a published number, quoted from the paper, and was not
@@ -1260,7 +1285,7 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
             <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               <p style={{ marginTop: 0, marginBottom: 0 }}>
                 <strong>More to read, now that you have seen the results.</strong> These are the papers and announcements behind the experiment,
-                and two pages from NASA and ESA, whose summaries state what the predictions ask, so they were kept back until now. They open in
+                two pages from NASA and ESA, and two 2026 papers, whose summaries state what the predictions ask, so they were kept back until now. They open in
                 a new tab. The papers use technical words, and they open on arxiv.org, the free site where scientists post their papers.
               </p>
               <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
@@ -1276,6 +1301,16 @@ export function EarliestGalaxiesExperiment({ onComplete, onTutorComplete }: Earl
                 <li>
                   <ExternalLink href="https://science.nasa.gov/mission/webb/early-universe">NASA: Webb and the early universe</ExternalLink>: NASA’s
                   overview of what Webb has found about the first galaxies.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2610.12121">Too many or too bright? Status and perspectives in the study of the UV luminosity function at z ≥ 10 (October 2026)</ExternalLink>
+                  : a review of what the surveys have found about the number and brightness of galaxies at redshifts of 10 and above, which gives
+                  MoM-z14 as the most distant galaxy known.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2606.30787">JWST spectroscopy of galaxies at z &gt; 10: damped Lyα absorbers reveal efficient star formation and hidden redshift biases (Heintz et al., June 2026)</ExternalLink>
+                  : the 2026 study of 25 galaxies with spectra, which measures how hydrogen absorption can bias a redshift, and also looks at how fast these
+                  galaxies use up their gas.
                 </li>
                 <li>
                   <ExternalLink href="https://arxiv.org/abs/2405.18485">Spectroscopic confirmation of two luminous galaxies at z∼14 (Carniani et al., Nature, 2024)</ExternalLink>

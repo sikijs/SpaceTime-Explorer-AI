@@ -8,16 +8,21 @@ import {
   HUBBLE_CONSTANT_PLANCK,
   lightTravelYearsPlanck,
   LYMAN_ALPHA_NM,
+  monthsOfFirstFourYears,
   MOM_Z14_PAPER_AGE_YEARS,
   MOM_Z14_REDSHIFT,
   NUMBER_DENSITY_EXCESS,
   observedWavelengthNm,
+  paperAgeGapPercent,
+  PLANCK_MATTER_FRACTION,
   presentAgeYears,
   RECORDS,
   relativeSizeThen,
   runEarliestGalaxies,
   shareOfPresentAge,
   stretchFactor,
+  ticksAboveOne,
+  WEBB_NIRCAM_RANGE_NM,
 } from './earliestGalaxies'
 import { distanceTodayLightYears } from './observableUniverseExperiment'
 
@@ -242,5 +247,36 @@ describe('module source (test 15)', () => {
     expect(joined).toContain('hubbleTension')
     expect(source).toContain('timeAfterBigBangYears(')
     expect(source).toContain('distanceTodayLightYears(')
+  })
+})
+
+// Added at the final review (2026-10-20), when the numbers the interface had typed or calculated were moved into the module.
+describe('Planck\'s matter fraction and Webb\'s range (review, finding a)', () => {
+  it('the matter fraction is 0.315 and, with the age function\'s dark energy fraction 0.685, makes a flat universe', () => {
+    expect(PLANCK_MATTER_FRACTION).toBe(0.315)
+    expect(PLANCK_MATTER_FRACTION + OMEGA_L).toBeCloseTo(1, 12)
+  })
+  it('NIRCam\'s range is 600 to 5,000 nm (0.6 to 5 microns), the bracket of Picture 1', () => {
+    expect(WEBB_NIRCAM_RANGE_NM).toEqual({ min: 600, max: 5000 })
+  })
+})
+
+describe('derived figures the tutor and the results show (review, finding a)', () => {
+  it('the model\'s age for MoM-z14 is 1.4 percent above the paper\'s 280 million years, worked out from the module\'s own numbers', () => {
+    const byHand = ((ageAfterBigBangYears(14.44) - 280e6) / 280e6) * 100
+    expect(paperAgeGapPercent()).toBeCloseTo(byHand, 10)
+    expect(paperAgeGapPercent()).toBeCloseTo(1.4, 1)
+    expect(paperAgeGapPercent()).toBeGreaterThan(0)
+  })
+  it('the share of a child\'s first four years: 0.99 months for MoM-z14 (2.06 percent of 48), 48 months at z = 0', () => {
+    expect(monthsOfFirstFourYears(14.44)).toBeCloseTo(0.99, 2)
+    expect(monthsOfFirstFourYears(0)).toBeCloseTo(48, 8)
+  })
+  it('ticks above one on a logarithmic scale: 0 for 1, 2 for 100, 2.26 for 182, and an error for a non-positive multiple', () => {
+    expect(ticksAboveOne(1)).toBe(0)
+    expect(ticksAboveOne(100)).toBeCloseTo(2, 12)
+    expect(ticksAboveOne(182)).toBeCloseTo(2.26, 2)
+    expect(() => ticksAboveOne(0)).toThrow(RangeError)
+    expect(() => ticksAboveOne(-3)).toThrow(RangeError)
   })
 })
