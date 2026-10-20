@@ -5,6 +5,7 @@ import { HubbleTensionExperiment } from './components/HubbleTensionExperiment'
 import { EvolvingDarkEnergyExperiment } from './components/EvolvingDarkEnergyExperiment'
 import { LumpinessExperiment } from './components/LumpinessExperiment'
 import { NeutrinoMassExperiment } from './components/NeutrinoMassExperiment'
+import { EarliestGalaxiesExperiment } from './components/EarliestGalaxiesExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -629,6 +630,15 @@ const chapters: Chapter[] = [
     learned:
       "Neutrinos left over from the Big Bang fill space, and the sky can weigh them, because even a tiny mass changes how the universe expanded and how matter clumped. For three equal masses adding up to 0.06 eV, the neutrinos turn from light-like to matter-like about 74 million years after the Big Bang, long after the microwave background was released (380,000 years). They make up well under 1 percent of the matter, and smooth the smallest clumps by about 3.6 percent. Oscillation experiments set a floor on the total of about 0.059 eV, or 0.10 eV if the masses are in the inverted order. The sky's ceiling has come down from 0.12 eV (Planck, 2018) to 0.0642 eV (DESI, March 2025) to 0.0592 eV (DESI, July 2026), almost level with the normal-ordering floor (0.0588 eV) and below the inverted-ordering floor (0.1004 eV). DESI's March 2025 paper reported a 3 sigma tension with the floor, and allowing a changing dark energy relaxes the limit to 0.163 eV. Possible explanations are a data or analysis choice, a different dark energy, or new neutrino physics; none is established. This model shows why a tiny mass leaves a mark, not DESI's limit itself. Contested, as of October 2026.",
     next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+  },
+  {
+    title: 'How early can galaxies form?',
+    group: 'Frontier and Beyond',
+    Component: EarliestGalaxiesExperiment,
+    // PLACEHOLDER (Step 2). The real chapter summary is drafted with the tutor (a later step) and approved line by line (CLAUDE.md §28.1).
+    // It is never shown until then, because the summary appears only after the tutor's explanation, which is not built yet.
+    learned: 'Placeholder: the chapter summary is written with the tutor, in a later step.',
+    next: 'Placeholder: the next experiment is named once it has an approved specification.',
   },
 ]
 
