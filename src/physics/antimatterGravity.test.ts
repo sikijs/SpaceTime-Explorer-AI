@@ -13,6 +13,7 @@ import {
   sigmasFrom,
   timeToFall,
   TRAP_LENGTH_M,
+  twoSidedChance,
   upOrDown,
 } from './antimatterGravity'
 
@@ -174,6 +175,28 @@ describe('out-of-range input (test 10)', () => {
     expect(() => sigmaNeeded(0.1, 0)).toThrow(RangeError)
     expect(() => upOrDown(Number.POSITIVE_INFINITY)).toThrow(RangeError)
     expect(() => runAntimatterGravity(1, 0, 0.1)).toThrow(RangeError)
+  })
+})
+
+describe('the chance from a bell curve (added in Step 5)', () => {
+  // The reference values come from Python's math.erfc(z / sqrt 2), not from this module.
+  it('is 1 at 0 sigma and falls as the number of sigma grows', () => {
+    expect(twoSidedChance(0)).toBeCloseTo(1, 7)
+    expect(twoSidedChance(1)).toBeGreaterThan(twoSidedChance(2))
+    expect(twoSidedChance(2)).toBeGreaterThan(twoSidedChance(5))
+  })
+  it('matches the reference values, including the far tail', () => {
+    const rel = (value: number, reference: number) => Math.abs(value - reference) / reference
+    expect(rel(twoSidedChance(1.2126), 0.2252827889)).toBeLessThan(1e-5)
+    expect(rel(twoSidedChance(1.96), 0.0499957903)).toBeLessThan(1e-5)
+    expect(rel(twoSidedChance(3), 0.002699796063)).toBeLessThan(1e-5)
+    expect(rel(twoSidedChance(3.638), 0.0002747634252)).toBeLessThan(1e-5)
+    expect(rel(twoSidedChance(5), 5.733031438e-7)).toBeLessThan(1e-5)
+    expect(rel(twoSidedChance(8.488), 2.102235705e-17)).toBeLessThan(1e-5)
+  })
+  it('throws a RangeError for a negative or non-finite number of sigma', () => {
+    expect(() => twoSidedChance(-1)).toThrow(RangeError)
+    expect(() => twoSidedChance(Number.NaN)).toThrow(RangeError)
   })
 })
 

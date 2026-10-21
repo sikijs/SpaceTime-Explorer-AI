@@ -541,7 +541,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
 ]
 
 // ---- The results tables and the paper links (after the run) ----
-function ResultsTable({ head, rows, minWidth }: { head: string[]; rows: string[][]; minWidth: number }) {
+export function ResultsTable({ head, rows, minWidth }: { head: string[]; rows: string[][]; minWidth: number }) {
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: `${minWidth}px`, fontSize: '0.875rem' }}>

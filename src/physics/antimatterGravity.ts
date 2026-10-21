@@ -55,6 +55,22 @@ export function sigmasFrom(measured: number, sigma: number, possibility: number)
   return Math.abs(measured - possibility) / sigma
 }
 
+// The chance, from a bell curve (a normal distribution), of a result at least this many sigma from the measured value, in either direction: erfc(z / sqrt 2).
+// The complementary error function is Numerical Recipes' erfcc (a Chebyshev fit, relative error below 1.2e-7 everywhere, so the far tail is accurate too).
+// A bell curve is this experiment's simplification, as the specification says; the paper's own method for its 2.9e-4 differs slightly.
+// Defined for x >= 0 only, which is all that twoSidedChance needs.
+function erfc(z: number): number {
+  const t = 1 / (1 + 0.5 * z)
+  const poly =
+    -z * z - 1.26551223 +
+    t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277))))))))
+  return t * Math.exp(poly)
+}
+export function twoSidedChance(sigmas: number): number {
+  if (!Number.isFinite(sigmas) || sigmas < 0) throw new RangeError('The number of sigma must not be negative')
+  return erfc(sigmas / Math.SQRT2)
+}
+
 // Whether a possibility is compatible with a measurement. The edges are the experiment's own choice: 3 and 5 are the "hint" and "discovery" bars of
 // Experiments 1 and 2 of this group, and 2 is the common rule of thumb for "compatible" (the specification's decision 8).
 export type Compatibility = 'compatible' | 'borderline' | 'disfavoured' | 'ruledOut'

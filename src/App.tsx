@@ -662,19 +662,21 @@ const chapters: Chapter[] = [
     Component: WideBinariesExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's,
     // for a pair of 1.5 Suns) or a published one (the abstracts of arXiv:2311.03436, 2305.04613, 2309.10404, 2601.21728, 2603.11015 and 2602.24035).
-    // "What's next" says nothing about Experiment 8 until it has an approved specification.
+    // "What's next" points to Experiment 8 (the owner approved fixing it on 2026-10-21; wording for the owner's approval).
     learned:
       "Two stars very far apart orbit slowly, at v = √(G × M ÷ s): a pair of 1.5 Suns moves at about 1,154 m/s at 1,000 AU and only about 365 m/s at 10,000 AU, where the pull is about 8.9 × 10^-11 m/s², 0.74 of a₀ and about 110 billion times weaker than the Earth's. If a modified law of gravity made that pull 1.4 times as strong, the speed would be √1.4 = 1.183 times higher, about 18 percent (432 m/s in place of 365), and not 40 percent, because the square of the speed follows the pull. Dark matter would add almost nothing inside a pair (about 1.3 × 10^-4 of a Sun inside 30,000 AU, a rough estimate), so a speed-up would not be hidden mass. But hidden companions can fake one: if 1 pair in 5 is secretly a triple moving twice as fast, the average is 0.8 × 1 + 0.2 × 2 = 1.20, a fake boost of 20 percent, and about 18.3 percent of triples would fake the whole expected boost. As of October 2026 the published results disagree: Banik and colleagues (2024, 8,611 binaries) report that Newton's law is preferred at 19 sigma; Chae (2023, 26,615 binaries) reports a boost of 1.43 ± 0.06 at 10 sigma and Chae (2024, 2,463 binaries) about 5 sigma; and the same 36 binaries gave γ = 1.60 (Chae and colleagues, 2026) and γ = 1.00 when Saad and Ting modelled the orbits forward, and 1.56 with another way of working out the separation; Cookson and colleagues (2026) report no 20 percent enhancement in their cleanest sample. This experiment is a simple model: it did not analyse any Gaia data, decide between the teams, or say whether gravity changes or whether dark matter exists in some other form. Contested, as of October 2026.",
-    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+    next: 'The next experiment asks a different question about gravity: does antimatter, matter’s mirror image, fall down, fall up, or fall at a different rate, and what can a measurement with a give or take really tell us?',
   },
   {
     title: 'Does antimatter fall down?',
     group: 'Frontier and Beyond',
     Component: AntimatterGravityExperiment,
-    // PLACEHOLDER (Step 2). The real chapter summary is drafted with the tutor (a later step) and approved line by line (CLAUDE.md §28.1).
-    // It is never shown until then, because the summary appears only after the tutor's explanation, which is not built yet.
-    learned: 'Placeholder: the chapter summary is written with the tutor, in a later step.',
-    next: 'Placeholder: the next experiment is named once it has an approved specification.',
+    // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a
+    // published one (Nature 621, 716-722, and arXiv:2503.22471, whose plans are as of March 2025). "What's next" says nothing about Experiment 9 until it has
+    // an approved specification.
+    learned:
+      "A ratio says how strongly gravity pulls on antimatter compared with ordinary matter: 1 means it falls like ordinary matter (4.9 metres in the first second), 0 means no pull, and −1 means it rises as far as matter falls. ALPHA measured (0.75 ± 0.13 ± 0.16) g in 2023, and this experiment combines the two give-or-takes into one, √(0.13² + 0.16²) = 0.206 (its own simplification). The ratio −1 is 8.49 sigma from the measurement, so falling up with the full strength of g is ruled out. No gravity (ratio 0) is 3.64 sigma away, disfavoured. And the ratio 1 is only 1.21 sigma away, which is compatible: the measurement cannot rule it out. That is why 0.75 does not show that antimatter falls more slowly, and does not show that it falls exactly like matter either. The same 0.75 with an error bar of ±0.10 would be 2.5 sigma from 1, and to see a difference of 1 percent at 3 sigma the error bar would have to be 0.0033. As of October 2026 the evidence is strong that antihydrogen is attracted to the Earth, to within about 20 percent (a December 2025 review says about 25 percent); the team says a precision of 1 percent or better is possible in the existing machine, while the December review says it needs ten-fold cuts in two sources of systematic error, and other experiments, AEgIS and GBAR, plan different methods. This experiment did not re-analyse ALPHA's data, model the trap or the simulation, or claim a new law of gravity. Strong evidence that antihydrogen is attracted to the Earth; Open: whether it falls exactly as ordinary matter does, as of October 2026.",
+    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
   },
 ]
 
