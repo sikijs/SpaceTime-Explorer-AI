@@ -1,11 +1,13 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { fallDistance, G_EARTH, timeToFall, TRAP_LENGTH_M } from '../physics/antimatterGravity'
+import type { FallsUpAnswer, ReadingAnswer } from '../physics/antimatterGravity'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 8 (docs/experiments/frontier-and-beyond/08-does-antimatter-fall-down.md).
-// Step 2 builds the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of the ALPHA-g trap (an
+// Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only locks them in for now. Step 2 builds the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of the ALPHA-g trap (an
 // illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 with its guide. The predictions, Run, the other two
 // pictures, the results, the controls, the tutor and the chapter summary come in later steps. All wording is draft for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. The introduction does not give the measured ratio, the sigma values or the verdicts (that
@@ -184,6 +186,19 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Sigma', meaning: 'a way of saying how many give-or-takes a result is from a possibility (Experiment 1 of this group): the bigger the number, the harder it is to say the gap is just chance. About 3 sigma is often called a hint, and 5 sigma is the usual bar for a discovery.' },
 ]
 
+// The two prediction questions' answers (the specification's "Prediction Activity"). The labels do not say which answer is right, and they do not
+// give the reason for the right one (the tutor explains it).
+const FALLS_UP_CHOICES: ReadonlyArray<{ value: FallsUpAnswer; label: string }> = [
+  { value: 'compatible', label: 'Yes, it is compatible' },
+  { value: 'borderline', label: 'It is borderline' },
+  { value: 'ruledOut', label: 'No, it is ruled out' },
+]
+const READING_CHOICES: ReadonlyArray<{ value: ReadingAnswer; label: string }> = [
+  { value: 'slower', label: 'Yes, it falls about 25 percent more slowly' },
+  { value: 'cannotTell', label: 'No, the measurement cannot tell' },
+  { value: 'exactlyLikeMatter', label: 'No, it shows that it falls exactly like matter' },
+]
+
 const lookForTrap: LookFor[] = [
   {
     look: 'the two rose barriers at the top and bottom, and the green arrows that leave through them.',
@@ -204,6 +219,16 @@ const lookForTrap: LookFor[] = [
 
 export function AntimatterGravityExperiment(_props: AntimatterGravityExperimentProps) {
   const timeAtTrapLength = timeToFall(1, TRAP_LENGTH_M) as number
+  const [fallsUpPrediction, setFallsUpPrediction] = useState<FallsUpAnswer | null>(null)
+  const [readingPrediction, setReadingPrediction] = useState<ReadingAnswer | null>(null)
+  // Step 3 only locks the predictions in; the five-stage run is the next step.
+  const [hasRun, setHasRun] = useState(false)
+  const bothPredicted = fallsUpPrediction !== null && readingPrediction !== null
+  function startOver() {
+    setFallsUpPrediction(null)
+    setReadingPrediction(null)
+    setHasRun(false)
+  }
 
   return (
     <div>
@@ -353,6 +378,80 @@ export function AntimatterGravityExperiment(_props: AntimatterGravityExperimentP
 
         <ReferencePanel entries={REFERENCE_ENTRIES} />
 
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says
+            which answer is right, gives a sigma, or says what the measurement found. */}
+        {(
+          [
+            {
+              title: 'Prediction 1: could antimatter fall up?',
+              text: (
+                <>
+                  The ALPHA team measured the acceleration of antihydrogen as a <strong>ratio</strong> to the acceleration of ordinary matter:{' '}
+                  <strong>0.75, give or take about 0.2</strong>. A ratio of 1 means “falls like ordinary matter”, and a ratio of{' '}
+                  <strong>−1 means “falls up, as hard as ordinary matter falls down”</strong>. Is the measurement compatible with antimatter falling up?
+                </>
+              ),
+              choices: FALLS_UP_CHOICES,
+              value: fallsUpPrediction,
+              set: (v: FallsUpAnswer) => setFallsUpPrediction(v),
+            },
+            {
+              title: 'Prediction 2: what does 0.75 tell us?',
+              text: (
+                <>
+                  Does a measurement of <strong>0.75, give or take about 0.2</strong>, show that antimatter falls more slowly than ordinary matter?
+                </>
+              ),
+              choices: READING_CHOICES,
+              value: readingPrediction,
+              set: (v: ReadingAnswer) => setReadingPrediction(v),
+            },
+          ] as const
+        ).map((question) => (
+          <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              {question.text} You are not graded, and a guess is fine.
+            </p>
+            <div>
+              {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                <button
+                  key={choice.value}
+                  type="button"
+                  onClick={() => (question.set as (v: never) => void)(choice.value as never)}
+                  disabled={hasRun}
+                  className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+              {question.value !== null
+                ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                : 'Choose an option to continue'}
+            </p>
+          </div>
+        ))}
+
+        <button type="button" className="action-button" onClick={() => setHasRun(true)} disabled={!bothPredicted || hasRun} style={{ padding: '0.6rem 1.5rem' }}>
+          Run
+        </button>
+        {hasRun && (
+          <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+            Start over
+          </button>
+        )}
+        {!bothPredicted && !hasRun && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+        )}
+        {hasRun && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>
+            Your predictions are recorded and not marked here. The pictures that build up after Run are not built yet (next step).
+          </p>
+        )}
+
         {/* Picture 1 (Step 2: the skeleton). Ordinary matter's curve and the trap-length line are drawn; the other curves come with Run. */}
         <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
           <svg
@@ -443,7 +542,7 @@ export function AntimatterGravityExperiment(_props: AntimatterGravityExperimentP
         </div>
 
         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1.5rem', marginBottom: 0 }}>
-          The predictions, the run, the other pictures, the results, the controls, the tutor and the summary are not built yet (later steps).
+          The run, the other pictures, the results, the controls, the tutor and the summary are not built yet (later steps).
         </p>
       </div>
     </div>
