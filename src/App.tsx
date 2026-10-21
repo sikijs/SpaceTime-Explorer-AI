@@ -9,6 +9,7 @@ import { EarliestGalaxiesExperiment } from './components/EarliestGalaxiesExperim
 import { DarkMatterSearchesExperiment } from './components/DarkMatterSearchesExperiment'
 import { WideBinariesExperiment } from './components/WideBinariesExperiment'
 import { AntimatterGravityExperiment } from './components/AntimatterGravityExperiment'
+import { ClockHeightExperiment } from './components/ClockHeightExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -672,10 +673,20 @@ const chapters: Chapter[] = [
     group: 'Frontier and Beyond',
     Component: AntimatterGravityExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a
-    // published one (Nature 621, 716-722, and arXiv:2503.22471, whose plans are as of March 2025). "What's next" says nothing about Experiment 9 until it has
-    // an approved specification.
+    // published one (Nature 621, 716-722, and arXiv:2503.22471, whose plans are as of March 2025). "What's next" points to Experiment 9 (the owner asked for it on 2026-10-21; wording for the owner's approval).
     learned:
       "A ratio says how strongly gravity pulls on antimatter compared with ordinary matter: 1 means it falls like ordinary matter (4.9 metres in the first second), 0 means no pull, and −1 means it rises as far as matter falls. ALPHA measured (0.75 ± 0.13 ± 0.16) g in 2023, and this experiment combines the two give-or-takes into one, √(0.13² + 0.16²) = 0.206 (its own simplification). The ratio −1 is 8.49 sigma from the measurement, so falling up with the full strength of g is ruled out. No gravity (ratio 0) is 3.64 sigma away, disfavoured. And the ratio 1 is only 1.21 sigma away, which is compatible: the measurement cannot rule it out. That is why 0.75 does not show that antimatter falls more slowly, and does not show that it falls exactly like matter either. The same 0.75 with an error bar of ±0.10 would be 2.5 sigma from 1, and to see a difference of 1 percent at 3 sigma the error bar would have to be 0.0033. As of October 2026 the evidence is strong that antihydrogen is attracted to the Earth, to within about 20 percent (a December 2025 review says about 25 percent); the team says a precision of 1 percent or better is possible in the existing machine, while the December review says it needs ten-fold cuts in two sources of systematic error, and other experiments, AEgIS and GBAR, plan different methods. This experiment did not re-analyse ALPHA's data, model the trap or the simulation, or claim a new law of gravity. Strong evidence that antihydrogen is attracted to the Earth; Open: whether it falls exactly as ordinary matter does, as of October 2026.",
+    next: 'The next experiment asks another question about gravity, this time with time: can a clock tell how high it is, and how small a height difference can the best clocks now notice?',
+  },
+  {
+    title: 'Can a clock tell how high it is?',
+    group: 'Frontier and Beyond',
+    Component: ClockHeightExperiment,
+    // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a
+    // published one (Bothwell et al., Nature 602, 420-424; Zheng et al., Nature Communications 14; the BIPM's Resolution 4 of the 28th CGPM). "What's next"
+    // says nothing about Experiment 10 until it has an approved specification.
+    learned:
+      "A clock that is higher ticks a little faster than one lower down, by the fraction g × h ÷ c²: 9.81 × 1 ÷ (8.988 × 10^16) = 1.09 × 10^-16 for 1 metre, a straight line on the picture, because ten times the height gives ten times the fraction. The tiny fraction adds up: 3.44 nanoseconds after a year for 1 metre, 34.4 picoseconds for 1 centimetre and 3.44 picoseconds for 1 millimetre (31,557,600 seconds in a year). A clock's precision turns the rule round into the smallest height it can notice: a clock good to 10^-18 notices 9.2 millimetres, one good to 10^-19 notices 0.92 millimetre, and the JILA clock's 7.6 × 10^-21 would notice 0.070 millimetre. In 2022 JILA compared the top and bottom of a cloud of about 100,000 strontium atoms about a millimetre tall: the effect, 1.09 × 10^-19, was 14.4 times its precision. In the Wisconsin team's 2022 to 2023 measurement across 1 centimetre, 12.4 ± 0.7 ± 2.5 (in units of 10^-19 per centimetre) was 0.58 sigma from the expected 10.9, which is compatible. The two clocks tick at different rates when compared; neither slows time in an absolute way. Clocks have already measured height differences in field tests, as proofs of principle (about 1,000 metres in 2018 and 450 metres in 2020), but measuring heights with clocks is not yet routine, and redefining the second is a plan: on 13 to 15 October 2026 the 28th CGPM did not adopt a new definition and asked for a proposal in 2030, noting no consensus on which atom or atoms to use. This experiment is a simple model with one constant g: it does not model an optical clock, analyse any laboratory's data, or show that the second will be redefined. Settled: a higher clock ticks faster, seen across about a millimetre, a centimetre and, in field tests, hundreds of metres to a kilometre; Demonstrated in principle, not yet routine: measuring heights with clocks; Planned: redefining the second, as of October 2026.",
     next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
   },
 ]
