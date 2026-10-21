@@ -2,25 +2,32 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   A0,
+  AU_M,
   contaminatedRatio,
   darkMatterInsideSolarMasses,
   fractionToFake,
+  G,
   GAMMA_MOND_WIDE_BINARY,
   orbitalSpeed,
   PUBLISHED_RESULTS,
   pullInA0,
   pullOnPair,
+  runWideBinaries,
+  SOLAR_MASS_KG,
   speedBoost,
   speedBoostPercent,
 } from '../physics/wideBinaries'
 import type { BoostRange, ContaminationRange } from '../physics/wideBinaries'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { WideBinariesTutor } from './WideBinariesTutor'
 
 // Frontier and Beyond, Experiment 7 (docs/experiments/frontier-and-beyond/07-wide-binary-stars.md).
 // Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of two stars orbiting
 // (an illustration, not data), the collapsed "Words and formulas" panel and Picture 1's skeleton. Step 3 built the two predictions. Step 4
-// builds the five-stage run (Picture 1 filled in over stages 1 to 3, Picture 2 in stage 4, Picture 3 in stage 5), each with a guide. The
-// results, the controls, the tutor and the chapter summary come in later steps. The run's timer only paces the display (CLAUDE.md §11). All wording is draft for the
+// builds the five-stage run (Picture 1 filled in over stages 1 to 3, Picture 2 in stage 4, Picture 3 in stage 5), each with a guide. Step 5
+// builds the results (two tables for the pair of Picture 1 and the example of Prediction 2, a table of the published results, the formulas in the
+// panel and the paper links, all after the run). Step 6 builds the two controls (a pair's mass and separation; the share of triples and how
+// much faster a triple moves), which change Pictures 1 and 2, Tables 1a and 1b and the panel's examples. Step 7 builds the tutor (WideBinariesTutor.tsx). Step 8 builds the chapter summary (in App.tsx), shown after the tutor's explanation. The run's timer only paces the display (CLAUDE.md §11). All wording is draft for the
 // owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. The introduction does not say how much faster a pull of 1.4
 // makes the stars move, or how much a hidden fraction of pairs fakes (that is what the two predictions ask, §12). The interface only displays
 // numbers from src/physics (CLAUDE.md §9); the only calculation here is where a point is drawn.
@@ -164,33 +171,36 @@ const P1_LEFT = 95
 const P1_RIGHT = 520
 const P1_TOP = 56
 const P1_BOTTOM = 210
-const P1_HEIGHT = 312
+const P1_HEIGHT = 330
 const P1_MIN_AU = 500
 const P1_MAX_AU = 30000
-const P1_MAX_SPEED = 2000 // m/s, the top of the vertical axis (the stronger-pull line reaches about 1,930 at 500 AU)
 const P1_MASS = 1.5 // solar masses: the experiment's own choice, not a published value
 const P1_PAIR_AU = 10000 // the pair that is marked (the same pair as Prediction 1; the learner's own pair comes with the controls)
 const auToX = (au: number) => P1_LEFT + (Math.log(au / P1_MIN_AU) / Math.log(P1_MAX_AU / P1_MIN_AU)) * (P1_RIGHT - P1_LEFT)
-const speedToY = (speed: number) => P1_BOTTOM - (speed / P1_MAX_SPEED) * (P1_BOTTOM - P1_TOP)
 
 // A curve of the speed against the separation, from the physics module; `factor` is 1 for Newton's law.
-const speedCurve = (factor: number) => {
+const speedCurve = (mass: number, factor: number, axisMax: number) => {
   const points: string[] = []
   const steps = 120
   for (let i = 0; i <= steps; i++) {
     const au = P1_MIN_AU * Math.pow(P1_MAX_AU / P1_MIN_AU, i / steps)
-    points.push(`${i === 0 ? 'M' : 'L'}${auToX(au).toFixed(1)},${speedToY(orbitalSpeed(P1_MASS, au) * factor).toFixed(1)}`)
+    const y = P1_BOTTOM - ((orbitalSpeed(mass, au) * factor) / axisMax) * (P1_BOTTOM - P1_TOP)
+    points.push(`${i === 0 ? 'M' : 'L'}${auToX(au).toFixed(1)},${y.toFixed(1)}`)
   }
   return points.join(' ')
 }
-const NEWTON_POINTS = speedCurve(1)
-const BOOST_POINTS = speedCurve(speedBoost(GAMMA_MOND_WIDE_BINARY))
+// The top of the vertical axis: the stronger-pull line at 500 AU, rounded up to a multiple of 500, and never below 2,000 (a heavier pair is faster).
+const speedAxisMax = (mass: number) => Math.max(2000, Math.ceil((orbitalSpeed(mass, P1_MIN_AU) * speedBoost(GAMMA_MOND_WIDE_BINARY)) / 500) * 500)
 const formatPull = (value: number) => (value >= 10 ? value.toFixed(0) : value >= 1 ? value.toFixed(1) : value.toFixed(2))
 
-function PictureOne({ stage }: { stage: number }) {
+function PictureOne({ stage, mass, separationAu }: { stage: number; mass: number; separationAu: number }) {
   const boost = speedBoost(GAMMA_MOND_WIDE_BINARY)
-  const pairX = auToX(P1_PAIR_AU)
-  const newtonSpeed = orbitalSpeed(P1_MASS, P1_PAIR_AU)
+  const axisMax = speedAxisMax(mass)
+  const speedToY = (speed: number) => P1_BOTTOM - (speed / axisMax) * (P1_BOTTOM - P1_TOP)
+  const speedTicks: number[] = []
+  for (let v = 0; v <= axisMax; v += axisMax > 2000 ? 500 : 400) speedTicks.push(v)
+  const pairX = auToX(separationAu)
+  const newtonSpeed = orbitalSpeed(mass, separationAu)
   const boostedSpeed = newtonSpeed * boost
   return (
     <svg
@@ -209,7 +219,7 @@ function PictureOne({ stage }: { stage: number }) {
       <line x1={P1_LEFT} y1={P1_BOTTOM} x2={P1_RIGHT} y2={P1_BOTTOM} stroke={TEXT_COLOR} strokeWidth={1.5} />
       <line x1={P1_LEFT} y1={P1_TOP} x2={P1_LEFT} y2={P1_BOTTOM} stroke={TEXT_COLOR} strokeWidth={1.5} />
       {[500, 1000, 2000, 5000, 10000, 30000].map((au) => {
-        const pull = pullInA0(P1_MASS, au)
+        const pull = pullInA0(mass, au)
         return (
           <g key={au}>
             <line x1={auToX(au)} y1={P1_BOTTOM} x2={auToX(au)} y2={P1_BOTTOM + 6} stroke={TEXT_COLOR} />
@@ -224,7 +234,7 @@ function PictureOne({ stage }: { stage: number }) {
           </g>
         )
       })}
-      {[0, 400, 800, 1200, 1600, 2000].map((speed) => (
+      {speedTicks.map((speed) => (
         <g key={speed}>
           <line x1={P1_LEFT - 6} y1={speedToY(speed)} x2={P1_LEFT} y2={speedToY(speed)} stroke={TEXT_COLOR} />
           <text x={P1_LEFT - 10} y={speedToY(speed) + 3} fill={TEXT_COLOR} fontSize="10" textAnchor="end">
@@ -245,13 +255,13 @@ function PictureOne({ stage }: { stage: number }) {
       </text>
 
       {/* The lines (from the physics module). The stronger-pull line is parallel to Newton's: it is drawn at a fixed ratio. */}
-      {stage >= 3 && <path d={BOOST_POINTS} fill="none" stroke={BOOST_COLOR} strokeWidth={2.5} strokeDasharray="7 4" />}
-      <path d={NEWTON_POINTS} fill="none" stroke={NEWTON_COLOR} strokeWidth={2.5} />
+      {stage >= 3 && <path d={speedCurve(mass, boost, axisMax)} fill="none" stroke={BOOST_COLOR} strokeWidth={2.5} strokeDasharray="7 4" />}
+      <path d={speedCurve(mass, 1, axisMax)} fill="none" stroke={NEWTON_COLOR} strokeWidth={2.5} />
 
       {/* The key, on the canvas. */}
       <line x1={270} y1={66} x2={295} y2={66} stroke={NEWTON_COLOR} strokeWidth={2.5} />
       <text x={302} y={70} fill={NEWTON_COLOR} fontSize="10" fontWeight="bold">
-        Newton’s law, pair of {P1_MASS} Suns
+        Newton’s law, pair of {mass} Suns
       </text>
       {stage >= 3 && (
         <>
@@ -267,32 +277,25 @@ function PictureOne({ stage }: { stage: number }) {
           </text>
         </>
       )}
-
-      {/* The marked pair, 10,000 AU apart. */}
       {stage >= 1 && (
-        <>
-          <line x1={pairX} y1={stage >= 3 ? 150 : 144} x2={pairX} y2={speedToY(stage >= 3 ? boostedSpeed : newtonSpeed) - 5} stroke={MUTED_COLOR} strokeDasharray="2 3" />
-          <circle cx={pairX} cy={speedToY(newtonSpeed)} r={5} fill={NEWTON_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
-          {stage >= 3 && <circle cx={pairX} cy={speedToY(boostedSpeed)} r={5} fill={BOOST_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />}
-          {stage < 3 ? (
-            <text x={pairX} y={140} fill={TEXT_COLOR} fontSize="10" textAnchor="middle">
-              a pair {P1_PAIR_AU.toLocaleString('en-US')} AU apart: {newtonSpeed.toFixed(0)} m/s
-            </text>
-          ) : (
-            <>
-              <text x={pairX} y={133} fill={TEXT_COLOR} fontSize="10" textAnchor="middle">
-                a pair {P1_PAIR_AU.toLocaleString('en-US')} AU apart:
-              </text>
-              <text x={pairX} y={146} fill={TEXT_COLOR} fontSize="10" textAnchor="middle">
-                Newton {newtonSpeed.toFixed(0)} m/s, stronger pull {boostedSpeed.toFixed(0)} m/s
-              </text>
-            </>
-          )}
-        </>
+        <text x={270} y={130} fill={TEXT_COLOR} fontSize="10">
+          dots: the pair marked below the picture
+        </text>
       )}
 
+      {/* The marked pair. */}
+      {stage >= 1 && (
+        <>
+          <circle cx={pairX} cy={speedToY(newtonSpeed)} r={5} fill={NEWTON_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
+          {stage >= 3 && <circle cx={pairX} cy={speedToY(boostedSpeed)} r={5} fill={BOOST_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />}
+          <text x={P1_LEFT} y={P1_HEIGHT - 26} fill={TEXT_COLOR} fontSize="10">
+            The pair: {mass} Suns, {separationAu.toLocaleString('en-US')} AU apart. Newton: {newtonSpeed.toFixed(0)} m/s
+            {stage >= 3 ? `. Stronger pull: ${boostedSpeed.toFixed(0)} m/s.` : '.'}
+          </text>
+        </>
+      )}
       <text x={P1_LEFT} y={P1_HEIGHT - 10} fill={MUTED_COLOR} fontSize="10">
-        {stage >= 3 ? `Both lines are for a pair with the mass of ${P1_MASS} Suns (this experiment’s own choice).` : 'The pair’s mass of 1.5 Suns is this experiment’s own choice.'}
+        The mass of {mass} Suns is this experiment’s own choice, not a measured pair.
       </text>
     </svg>
   )
@@ -303,21 +306,30 @@ const P2_LEFT = 70
 const P2_RIGHT = 520
 const P2_TOP = 60
 const P2_BOTTOM = 220
-const P2_HEIGHT = 292
+const P2_HEIGHT = 312
 const P2_MAX_FRACTION = 0.5
-const P2_MIN_RATIO = 1
-const P2_MAX_RATIO = 1.5
-const P2_FRACTION = 0.2 // Prediction 2's example: 1 pair in 5
-const P2_FACTOR = 2 // Prediction 2's example: a hidden-triple pair moves twice as fast (the learner's own factor comes with the controls)
+const DEFAULT_FRACTION_PERCENT = 20 // Prediction 2's example: 1 pair in 5
+const DEFAULT_FACTOR = 2 // Prediction 2's example: a hidden-triple pair moves twice as fast
 const fractionToX = (fraction: number) => P2_LEFT + (fraction / P2_MAX_FRACTION) * (P2_RIGHT - P2_LEFT)
-const ratioToY = (ratio: number) => P2_BOTTOM - ((ratio - P2_MIN_RATIO) / (P2_MAX_RATIO - P2_MIN_RATIO)) * (P2_BOTTOM - P2_TOP)
 
-function PictureTwo() {
+function PictureTwo({ fraction, factor }: { fraction: number; factor: number }) {
   const expected = speedBoost(GAMMA_MOND_WIDE_BINARY)
-  const matchFraction = fractionToFake(speedBoostPercent(GAMMA_MOND_WIDE_BINARY), P2_FACTOR)
-  const examplePoint = contaminatedRatio(P2_FRACTION, P2_FACTOR)
-  const linePoints = [0, 0.1, 0.2, 0.3, 0.4, 0.5].map((f) => `${f === 0 ? 'M' : 'L'}${fractionToX(f).toFixed(1)},${ratioToY(contaminatedRatio(f, P2_FACTOR)).toFixed(1)}`).join(' ')
-  const bx = fractionToX(matchFraction)
+  const lineEnd = contaminatedRatio(P2_MAX_FRACTION, factor)
+  const ratioMax = lineEnd <= 1.5 ? 1.5 : Math.ceil(lineEnd * 5 - 1e-9) / 5 // 1.5 for a factor up to 2, then in steps of 0.2
+  const ratioToY = (ratio: number) => P2_BOTTOM - ((ratio - 1) / (ratioMax - 1)) * (P2_BOTTOM - P2_TOP)
+  const ratioTicks: number[] = []
+  for (let r = 1; r <= ratioMax + 1e-9; r += ratioMax > 1.5 ? 0.2 : 0.1) ratioTicks.push(Number(r.toFixed(1)))
+  const needed = factor > 1 ? fractionToFake(speedBoostPercent(GAMMA_MOND_WIDE_BINARY), factor) : null
+  const ringShown = needed !== null && needed <= P2_MAX_FRACTION
+  const ratio = contaminatedRatio(fraction, factor)
+  const linePoints = [0, 0.1, 0.2, 0.3, 0.4, 0.5].map((f) => `${f === 0 ? 'M' : 'L'}${fractionToX(f).toFixed(1)},${ratioToY(contaminatedRatio(f, factor)).toFixed(1)}`).join(' ')
+  const dotX = fractionToX(fraction)
+  const dotY = ratioToY(ratio)
+  const bx = needed !== null ? fractionToX(Math.min(needed, P2_MAX_FRACTION)) : 0
+  const dotLabelBelow = dotY + 14 < P2_BOTTOM - 4
+  // The expected-speed label goes below its line when the purple line is above it at the right and there is room, and above the line otherwise.
+  const expectedLabelBelow = lineEnd > expected && ratioToY(expected) + 32 <= P2_BOTTOM - 2
+  const expectedLabelY = expectedLabelBelow ? ratioToY(expected) + 16 : ratioToY(expected) - 20
   return (
     <svg
       width={VIEW_WIDTH}
@@ -340,11 +352,11 @@ function PictureTwo() {
           </text>
         </g>
       ))}
-      {[1, 1.1, 1.2, 1.3, 1.4, 1.5].map((ratio) => (
-        <g key={ratio}>
-          <line x1={P2_LEFT - 6} y1={ratioToY(ratio)} x2={P2_LEFT} y2={ratioToY(ratio)} stroke={TEXT_COLOR} />
-          <text x={P2_LEFT - 10} y={ratioToY(ratio) + 3} fill={TEXT_COLOR} fontSize="10" textAnchor="end">
-            {ratio.toFixed(1)}
+      {ratioTicks.map((tick) => (
+        <g key={tick}>
+          <line x1={P2_LEFT - 6} y1={ratioToY(tick)} x2={P2_LEFT} y2={ratioToY(tick)} stroke={TEXT_COLOR} />
+          <text x={P2_LEFT - 10} y={ratioToY(tick) + 3} fill={TEXT_COLOR} fontSize="10" textAnchor="end">
+            {tick.toFixed(1)}
           </text>
         </g>
       ))}
@@ -357,10 +369,10 @@ function PictureTwo() {
 
       {/* The speed that the MOND papers expect (the same boost as Picture 1), and the line for hidden triples. */}
       <line x1={P2_LEFT} y1={ratioToY(expected)} x2={P2_RIGHT} y2={ratioToY(expected)} stroke={BOOST_COLOR} strokeWidth={2} strokeDasharray="7 4" />
-      <text x={P2_RIGHT - 6} y={ratioToY(expected) + 16} fill={BOOST_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
+      <text x={P2_RIGHT - 6} y={expectedLabelY} fill={BOOST_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
         speed the MOND papers expect:
       </text>
-      <text x={P2_RIGHT - 6} y={ratioToY(expected) + 29} fill={BOOST_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
+      <text x={P2_RIGHT - 6} y={expectedLabelY + 13} fill={BOOST_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
         {expected.toFixed(2)} × Newton’s
       </text>
       <path d={linePoints} fill="none" stroke={HIDDEN_COLOR} strokeWidth={2.5} />
@@ -368,25 +380,39 @@ function PictureTwo() {
         purple line: the sample’s average speed when each hidden triple
       </text>
       <text x={P2_LEFT + 8} y={P2_TOP + 17} fill={HIDDEN_COLOR} fontSize="10" fontWeight="bold">
-        moves {P2_FACTOR} times as fast as a true pair
+        moves {factor} times as fast as a true pair
       </text>
 
-      {/* Prediction 2's example, and where the purple line meets the expected speed. */}
-      <circle cx={fractionToX(P2_FRACTION)} cy={ratioToY(examplePoint)} r={5} fill={HIDDEN_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
-      <text x={fractionToX(P2_FRACTION) - 9} y={ratioToY(examplePoint) - 14} fill={TEXT_COLOR} fontSize="10" textAnchor="end">
-        1 pair in 5, twice as fast: {examplePoint.toFixed(2)}
+      {/* The learner's choice (it starts at Prediction 2's example), and where the purple line meets the expected speed. */}
+      <circle cx={dotX} cy={dotY} r={5} fill={HIDDEN_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
+      <text x={dotX + 9} y={dotLabelBelow ? dotY + 14 : dotY - 9} fill={TEXT_COLOR} fontSize="10">
+        your choice
       </text>
-      <line x1={bx} y1={ratioToY(expected)} x2={bx} y2={P2_BOTTOM} stroke={TEXT_COLOR} strokeDasharray="3 3" />
-      <circle cx={bx} cy={ratioToY(expected)} r={4} fill="none" stroke={TEXT_COLOR} strokeWidth={2} />
-      <text x={bx + 8} y={P2_BOTTOM - 22} fill={TEXT_COLOR} fontSize="10">
-        {(matchFraction * 100).toFixed(1)} percent triples
-      </text>
-      <text x={bx + 8} y={P2_BOTTOM - 10} fill={TEXT_COLOR} fontSize="10">
-        already give {expected.toFixed(2)}
-      </text>
+      {ringShown && needed !== null && (
+        <>
+          <line x1={bx} y1={ratioToY(expected)} x2={bx} y2={P2_BOTTOM} stroke={TEXT_COLOR} strokeDasharray="3 3" />
+          <circle cx={bx} cy={ratioToY(expected)} r={4} fill="none" stroke={TEXT_COLOR} strokeWidth={2} />
+          <text x={bx + 8} y={P2_BOTTOM - 22} fill={TEXT_COLOR} fontSize="10" stroke="#0b1020" strokeWidth={3} paintOrder="stroke">
+            {(needed * 100).toFixed(1)} percent triples
+          </text>
+          <text x={bx + 8} y={P2_BOTTOM - 10} fill={TEXT_COLOR} fontSize="10" stroke="#0b1020" strokeWidth={3} paintOrder="stroke">
+            already give {expected.toFixed(2)}
+          </text>
+        </>
+      )}
+      {!ringShown && (
+        <text x={P2_LEFT + 8} y={P2_TOP + 33} fill={TEXT_COLOR} fontSize="10">
+          {needed === null
+            ? 'A triple that moves no faster cannot fake a boost: the line is flat at 1.00.'
+            : `It would take ${(needed * 100).toFixed(0)} percent triples to reach the expected speed: more than this picture shows.`}
+        </text>
+      )}
 
+      <text x={P2_LEFT} y={P2_HEIGHT - 26} fill={TEXT_COLOR} fontSize="10">
+        The dot: {(fraction * 100).toFixed(0)} percent triples, each {factor} times as fast: average {ratio.toFixed(2)} × Newton’s.
+      </text>
       <text x={P2_LEFT} y={P2_HEIGHT - 10} fill={MUTED_COLOR} fontSize="10">
-        A toy model: some pairs move {P2_FACTOR} times as fast; the rest move as Newton’s law says.
+        A toy model: some pairs move faster; the rest move as Newton’s law says.
       </text>
     </svg>
   )
@@ -403,8 +429,10 @@ const P3_HEIGHT = P3_BOTTOM + 70
 const P3_MIN_GAMMA = 0.6
 const P3_MAX_GAMMA = 2
 const gammaToX = (gamma: number) => P3_LEFT + ((gamma - P3_MIN_GAMMA) / (P3_MAX_GAMMA - P3_MIN_GAMMA)) * (P3_RIGHT - P3_LEFT)
-const rangeText = (value: number, plus: number, minus: number) =>
-  plus === minus ? `${value.toFixed(2)} ± ${plus.toFixed(2)}` : `${value.toFixed(2)} (+${plus.toFixed(2)}, −${minus.toFixed(2)})`
+const rangeText = (value: number, plus: number, minus: number, decimals = 2) =>
+  plus === minus
+    ? `${value.toFixed(decimals)} ± ${plus.toFixed(decimals)}`
+    : `${value.toFixed(decimals)} (+${plus.toFixed(decimals)}, −${minus.toFixed(decimals)})`
 
 function PictureThree() {
   const sameBinaryRows = GAMMA_RESULTS.map((result, i) => ({ result, i })).filter(({ result }) => result.binaries === 36)
@@ -512,6 +540,95 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Sigma', meaning: 'a way of saying how sure a result is (Experiment 1 of this group): the bigger the number, the less likely the result is just chance. About 3 sigma is often called evidence, and 5 sigma is the usual bar for a discovery.' },
 ]
 
+// ---- The results tables and the paper links (after the run) ----
+function ResultsTable({ head, rows, minWidth }: { head: string[]; rows: string[][]; minWidth: number }) {
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: `${minWidth}px`, fontSize: '0.875rem' }}>
+        <thead>
+          <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+            {head.map((heading) => (
+              <th key={heading} style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                {heading}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row[0]} style={{ borderBottom: '1px solid var(--border-color, #ccc)', verticalAlign: 'top' }}>
+              {row.map((cell, i) => (
+                <td key={i} style={{ padding: '0.4rem 0.5rem 0.4rem 0', color: i === 0 || i === 1 ? undefined : 'var(--text-muted)' }}>
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// Plain-language wording for Table 2, so that a learner is not shown the module's shorthand. Keyed by the result's name and year; the numbers
+// themselves come from PUBLISHED_RESULTS. Drawn from the abstracts read on 2026-10-20 (draft wording for the owner's review).
+const TABLE_TEXT: Record<string, { reported: string; says: string }> = {
+  'Chae|2023': {
+    reported: 'the observed pull ÷ the pull Newton’s law predicts, at pulls of about 7 × 10⁻¹¹ m/s²',
+    says: 'a deviation from Newton’s law, at 10 sigma',
+  },
+  'Chae|2024': {
+    reported: 'the observed pull ÷ the predicted pull, at pulls at or below 10⁻¹⁰ m/s²',
+    says: 'a deviation at about 5 sigma. Beyond 5,000 AU the speeds were 1.20 times Newton’s (give or take 0.06 statistical and 0.05 systematic).',
+  },
+  'Chae and colleagues|2026': {
+    reported: 'the gravity boost factor γ',
+    says: 'from the latest version (September 2026). The paper says the result is dominated by two systems whose speeds are above the escape speed that Newton’s law gives.',
+  },
+  'Saad and Ting (forward-modelled orbits)|2026': {
+    reported: 'γ for the same 36 binaries, with their orbits modelled forward',
+    says: 'consistent with Newton’s law (γ = 1)',
+  },
+  'Saad and Ting (geometric de-projection)|2026': {
+    reported: 'γ for the same 36 binaries, with the separation worked out another way',
+    says: 'this way of working out the separation gives back the first team’s value',
+  },
+  'Banik and colleagues|2024': {
+    reported: 'α_grav, a number that is 0 for Newton’s law and 1 for MOND',
+    says: 'Newton’s law is preferred, at 19 sigma',
+  },
+  'Chae|2025': {
+    reported: 'an “anomaly” in the pull, from three-dimensional velocities',
+    says: 'an anomaly at pulls below 10⁻⁹ m/s² that agrees with MOND',
+  },
+  'Pittordis, Sutherland and Shepherd|2025': {
+    reported: 'how well Newtonian and MOND models fit the data',
+    says: 'Newtonian models fit significantly better, with a caveat that the population of triple stars needs to be understood better',
+  },
+  'Saglia and colleagues|2025': {
+    reported: 'orbital velocities, using radial velocities from the HARPS instrument',
+    says: 'consistent with Newtonian dynamics; a limited sample',
+  },
+  'Cookson and colleagues|2026': {
+    reported: 'the speeds in a high-purity sample within 130 parsecs',
+    says: 'no 20 percent enhancement; Newtonian gravity is up to 1,500 times more likely than MOND for the cleanest sample',
+  },
+}
+
+// The papers of Table 2 (arXiv numbers from the specification's source table, each address checked on 2026-10-21). They are shown only after
+// the run, because their summaries state what the predictions ask (CLAUDE.md §12).
+const PAPER_LINKS: { id: string; who: string; what: string }[] = [
+  { id: '2305.04613', who: 'Chae, 2023', what: 'a study of 26,615 wide binaries within 200 parsecs that reports a deviation from Newton’s law.' },
+  { id: '2309.10404', who: 'Chae, 2024', what: 'a study of 2,463 “statistically pure” binaries, chosen to keep out pairs with hidden companions.' },
+  { id: '2311.03436', who: 'Banik and colleagues, 2024', what: 'a study of 8,611 wide binaries within 250 parsecs that reports that Newton’s law is preferred.' },
+  { id: '2502.09373', who: 'Chae, 2025', what: 'a study of 312 binaries whose velocities are known in three dimensions.' },
+  { id: '2504.07569', who: 'Pittordis, Sutherland and Shepherd, 2025', what: 'a comparison of Newtonian and MOND models of wide binaries, with a caveat about triple stars.' },
+  { id: '2506.05049', who: 'Saglia and colleagues, 2025', what: 'a study of binaries with radial velocities measured by the HARPS instrument (32 usable pairs).' },
+  { id: '2601.21728', who: 'Chae and colleagues, 2026 (revised September 2026)', what: 'a study of 36 binaries with accurate three-dimensional velocities.' },
+  { id: '2602.24035', who: 'Cookson and colleagues, 2026', what: 'a study of a high-purity sample of wide binaries within 130 parsecs.' },
+  { id: '2603.11015', who: 'Saad and Ting, 2026', what: 'a second analysis of the same 36 binaries, with the orbits worked out in two different ways.' },
+]
+
 // "What to look for": each item says what to look at, what it means and why it matters. The meaning is given after the learner has predicted and
 // run (CLAUDE.md §12); the full explanation, and the verdict on the teams, stay with the tutor.
 interface LookFor {
@@ -535,11 +652,16 @@ function LookForList({ items }: { items: LookFor[] }) {
   )
 }
 
-export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentProps) {
+export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBinariesExperimentProps) {
   const [boostPrediction, setBoostPrediction] = useState<BoostRange | null>(null)
   const [contaminationPrediction, setContaminationPrediction] = useState<ContaminationRange | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  // The controls that appear after the run (the specification's "Learner Controls"). They start at the pictures' own pair and Prediction 2's example.
+  const [mass, setMass] = useState(P1_MASS)
+  const [separationLog, setSeparationLog] = useState(Math.log10(P1_PAIR_AU)) // the slider holds the power of ten of the separation
+  const [fractionPercent, setFractionPercent] = useState(DEFAULT_FRACTION_PERCENT)
+  const [factor, setFactor] = useState(DEFAULT_FACTOR)
   const hasRun = status !== 'idle'
   const bothPredicted = boostPrediction !== null && contaminationPrediction !== null
 
@@ -562,6 +684,10 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
     setContaminationPrediction(null)
     setStatus('idle')
     setStage(0)
+    setMass(P1_MASS)
+    setSeparationLog(Math.log10(P1_PAIR_AU))
+    setFractionPercent(DEFAULT_FRACTION_PERCENT)
+    setFactor(DEFAULT_FACTOR)
   }
   function run() {
     setStage(1)
@@ -576,24 +702,52 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
   const boostFactor = speedBoost(GAMMA_MOND_WIDE_BINARY)
   const boostedAt10000 = speedAt10000 * boostFactor
   const pullA0At1000 = pullInA0(P1_MASS, 1000)
-  const matchFraction = fractionToFake(speedBoostPercent(GAMMA_MOND_WIDE_BINARY), 2)
-  const exampleRatio = contaminatedRatio(0.2, 2)
-  const pullA0At30000 = pullInA0(P1_MASS, 30000)
-  const boostGapAt10000 = boostedAt10000 - speedAt10000
   const boostPercent = speedBoostPercent(GAMMA_MOND_WIDE_BINARY)
-  const addedPer10Percent = contaminatedRatio(0.1, 2) - 1
-  const ratioAt2Percent = contaminatedRatio(0.02, 2)
+  // The learner's own choice (Tables 1a and 1b, Pictures 1 and 2). Every physical number comes from the physics module.
+  const separationAu = Math.min(P1_MAX_AU, Math.max(P1_MIN_AU, Math.round(Math.pow(10, separationLog) / 50) * 50))
+  const mine = runWideBinaries(mass, separationAu, GAMMA_MOND_WIDE_BINARY, fractionPercent / 100, factor)
+  const needed = mine.fractionNeededToFake // null when a triple moves no faster than a true pair
+  const ringShown = needed !== null && needed <= P2_MAX_FRACTION
+  const massKg = mass * SOLAR_MASS_KG // unit conversions, for the worked arithmetic
+  const separationM = separationAu * AU_M
+  const done = status === 'complete'
+  // Formulas with worked examples: shown in the panel only after the run (the specification's "Results").
+  const formulaEntries: { term: string; meaning: string }[] = [
+    {
+      term: 'Orbital speed (formula)',
+      meaning: `v = √(G × M ÷ s), with M the total mass in kilograms, s the separation in metres and G = ${sci(G, 4)}. Example, ${mass} Suns at ${separationAu.toLocaleString('en-US')} AU: v = ${mine.newtonSpeed.toFixed(0)} m/s. Ten times the separation gives about a third of the speed (1 ÷ √10).`,
+    },
+    {
+      term: 'Pull (formula)',
+      meaning: `g = G × M ÷ s². Example, the same pair: g = ${sci(mine.pull)} m/s², which is ${mine.pullInA0.toFixed(2)} a₀ (a₀ = ${sci(A0)} m/s²). Ten times the separation gives a hundredth of the pull.`,
+    },
+    {
+      term: 'Speed boost (formula)',
+      meaning: `if the pull is γ times Newton’s, the speed is √γ times Newton’s, so the percent increase is (√γ − 1) × 100. Example, γ = ${mine.gamma}: √${mine.gamma} = ${boostFactor.toFixed(3)}, so ${mine.speedBoostPercent.toFixed(1)} percent faster: ${mine.newtonSpeed.toFixed(0)} m/s becomes ${mine.boostedSpeed.toFixed(0)} m/s.`,
+    },
+    {
+      term: 'Average speed with hidden triples (formula)',
+      meaning: `average ÷ Newton’s = (1 − f) × 1 + f × k, where f is the share of the “pairs” that are really triples and k is how many times faster a triple moves. The boost it fakes is f × (k − 1) × 100 percent. Example, f = ${mine.fraction.toFixed(2)} and k = ${mine.factor}: ${mine.contaminatedRatio.toFixed(2)}, a fake boost of ${mine.fakeBoostPercent.toFixed(1)} percent.`,
+    },
+    {
+      term: 'Share of triples needed to fake a boost (formula)',
+      meaning: `f = b ÷ (k − 1), where b is the boost to fake, as a fraction. Example, b = ${mine.speedBoostPercent.toFixed(1)} percent and k = ${mine.factor}: ${needed === null ? 'a triple that moves no faster cannot fake a boost.' : `f = ${mine.speedBoostPercent.toFixed(1)} ÷ ${(mine.factor - 1).toFixed(1)} = ${(needed * 100).toFixed(1)} percent.`}`,
+    },
+  ]
+  const pullA0At30000 = pullInA0(mass, 30000)
+  const addedPer10Percent = contaminatedRatio(0.1, mine.factor) - 1
+  const ratioAt2Percent = contaminatedRatio(0.02, mine.factor)
   const lookForPicture1: LookFor[] = [
     {
-      look: 'how steeply the blue curve falls, and how low it is at the right-hand end (a few hundred metres per second).',
+      look: 'how steeply the blue curve falls, and how low it is at the right-hand end.',
       means: 'the wider the pair, the weaker the pull between the stars, and the more slowly they move.',
       matters: 'very wide pairs are the places where gravity is weakest, and weak gravity is where MOND says that Newton’s law could fail. That is why astronomers study them.',
     },
     ...(stage >= 2
       ? [
           {
-            look: 'where the amber numbers start along the separation axis (between 5,000 and 10,000 AU here).',
-            means: `an amber number is a pull below a₀, the small pull where MOND says gravity changes. At 10,000 AU the pull is ${inA0.toFixed(2)} a₀, and at 30,000 AU only ${pullA0At30000.toFixed(2)} a₀.`,
+            look: 'where the amber numbers start along the separation axis (a heavier pair pulls harder, so they start further to the right).',
+            means: `an amber number is a pull below a₀, the small pull where MOND says gravity changes. For the pair marked, at ${separationAu.toLocaleString('en-US')} AU, the pull is ${mine.pullInA0.toFixed(2)} a₀ (${mine.pullInA0 < 1 ? 'amber' : 'not amber'}); at 30,000 AU it is only ${pullA0At30000.toFixed(2)} a₀.`,
             matters: 'only pairs in the amber zone can tell Newton’s law and MOND apart. A close pair, with a pull of tens or hundreds of a₀, is not a test.',
           },
         ]
@@ -602,27 +756,44 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
       ? [
           {
             look: 'how far above the blue curve the rose line sits, and whether the gap looks big or small.',
-            means: `a pull ${GAMMA_MOND_WIDE_BINARY} times as strong makes the speed ${boostFactor.toFixed(2)} times as high, ${boostPercent.toFixed(0)} percent more. At ${P1_PAIR_AU.toLocaleString('en-US')} AU that is about ${boostGapAt10000.toFixed(0)} m/s more, on top of ${speedAt10000.toFixed(0)} m/s. The gap is the same fraction everywhere because the picture is drawn that way.`,
+            means: `a pull ${GAMMA_MOND_WIDE_BINARY} times as strong makes the speed ${boostFactor.toFixed(2)} times as high, ${boostPercent.toFixed(0)} percent more. For the pair marked, at ${separationAu.toLocaleString('en-US')} AU, that is about ${(mine.boostedSpeed - mine.newtonSpeed).toFixed(0)} m/s more, on top of ${mine.newtonSpeed.toFixed(0)} m/s. The gap is the same fraction everywhere because the picture is drawn that way.`,
             matters: 'the effect that astronomers are looking for is small: about a fifth of the speed. To see it, the speeds of the stars must be measured to much better than a fifth, and anything that fakes a fifth (see Picture 2) has to be ruled out.',
           },
         ]
       : []),
   ]
+  const above = mine.contaminatedRatio > boostFactor + 1e-9 ? 'above' : mine.contaminatedRatio < boostFactor - 1e-9 ? 'below' : 'on'
   const lookForPicture2: LookFor[] = [
     {
       look: 'where the purple line crosses the rose dashed line, and the share of triples at the foot of the dotted line.',
-      means: `if hidden triples move twice as fast, a sample in which ${(matchFraction * 100).toFixed(1)} percent of the “pairs” are triples has an average speed of ${boostFactor.toFixed(2)} times Newton’s, the same as the boost the MOND papers expect.`,
-      matters: 'a sample with that many hidden triples would show the expected “boost” even if gravity followed Newton’s law exactly. A team must show that its sample has far fewer.',
+      means:
+        needed === null
+          ? 'your triples move no faster than true pairs (the factor is 1), so the purple line is flat at 1.00 and never reaches the rose line.'
+          : ringShown
+            ? `if hidden triples move ${mine.factor} times as fast, a sample in which ${(needed * 100).toFixed(1)} percent of the “pairs” are triples has an average speed of ${boostFactor.toFixed(2)} times Newton’s, the same as the boost the MOND papers expect.`
+            : `with triples that move only ${mine.factor} times as fast, it would take ${(needed * 100).toFixed(0)} percent of the “pairs” to reach the expected speed: more than the 50 percent that the picture shows, so there is no crossing.`,
+      matters:
+        needed === null
+          ? 'a hidden companion matters only if it changes the speed. The faster a triple moves, the fewer of them are needed.'
+          : ringShown
+            ? 'a sample with that many hidden triples would show the expected “boost” even if gravity followed Newton’s law exactly. A team must show that its sample has far fewer.'
+            : 'the slower the triples, the more of them it takes. The expected boost is easy to fake only if the hidden companions make a pair move a lot faster.',
     },
     {
-      look: 'the purple dot (1 pair in 5) against the rose line.',
-      means: `the dot, at ${exampleRatio.toFixed(2)}, is a little above the rose line. One pair in five is a larger share than the ${(matchFraction * 100).toFixed(1)} percent that is needed.`,
-      matters: 'the share that does the damage is not tiny: it is about one pair in five or six.',
+      look: 'the purple dot (your choice) against the rose line.',
+      means: `the dot, at ${mine.contaminatedRatio.toFixed(2)}, is ${above} the rose line (${boostFactor.toFixed(2)}).${needed !== null ? ` Your share, ${(mine.fraction * 100).toFixed(0)} percent, is ${mine.fraction >= needed ? 'at least' : 'less than'} the ${(needed * 100).toFixed(1)} percent that is needed.` : ''}`,
+      matters:
+        mine.contaminatedRatio >= boostFactor - 1e-9
+          ? 'at this share, the hidden triples alone would produce at least the expected “boost”, with no change to gravity.'
+          : 'at this share, the hidden triples fake only part of the expected boost. Try moving the sliders until the dot reaches the rose line.',
     },
     {
       look: 'how steeply the purple line rises.',
-      means: `each extra 10 percent of triples adds ${addedPer10Percent.toFixed(2)} to the average (because a triple is one whole step, 1.0, above a true pair). Even 2 percent of triples gives ${ratioAt2Percent.toFixed(2)}.`,
-      matters: 'a team has to know its share of hidden triples to within a few percent to measure a boost of about 0.18, and that is hard, because hidden companions cannot be seen. This picture is a toy model, with “twice as fast” chosen for illustration.',
+      means:
+        mine.factor === 1
+          ? 'it does not rise: a triple that moves no faster than a true pair changes nothing.'
+          : `each extra 10 percent of triples adds ${addedPer10Percent.toFixed(2)} to the average (because a triple is ${(mine.factor - 1).toFixed(1)} above a true pair). Even 2 percent of triples gives ${ratioAt2Percent.toFixed(2)}.`,
+      matters: `a team has to know its share of hidden triples to within a few percent to measure a boost of about ${(boostFactor - 1).toFixed(2)}, and that is hard, because hidden companions cannot be seen. This picture is a toy model, with “${mine.factor} times as fast” chosen for illustration.`,
     },
   ]
   const lookForPicture3: LookFor[] = [
@@ -825,7 +996,7 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
           </ul>
         </div>
 
-        <ReferencePanel entries={REFERENCE_ENTRIES} />
+        <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
             says which answer is right, gives the square-root rule, or gives the size of the signal that is being looked for. */}
@@ -906,8 +1077,7 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
               {status === 'complete' && (
                 <span style={{ color: 'var(--text-muted)' }}>
                   {' '}
-                  (all {LAST_STAGE} stages shown). Your predictions are recorded and not marked here. The results, the two controls, the tutor and the
-                  summary are not built yet (later steps).
+                  (all {LAST_STAGE} stages shown). Your predictions are recorded and not marked here.
                 </span>
               )}
             </>
@@ -930,7 +1100,7 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
 
         {/* Picture 1: Newton's curve and a marked pair from stage 1, the pull row from stage 2, the stronger-pull line from stage 3. */}
         <div style={{ marginBottom: '1rem' }}>
-          <PictureOne stage={stage} />
+          <PictureOne stage={stage} mass={mass} separationAu={separationAu} />
         </div>
         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
           <p style={paragraph}>
@@ -941,8 +1111,8 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
           </p>
           <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
             <li>
-              <strong>The blue curve</strong> is Newton’s law, v = √(G × M ÷ s), for a pair with the mass of {P1_MASS} Suns (the mass is this experiment’s
-              own choice). It falls as the separation grows: a wider pair moves more slowly, because gravity between the stars is weaker.
+              <strong>The blue curve</strong> is Newton’s law, v = √(G × M ÷ s), for a pair with the mass of {mass} Suns (the mass is this experiment’s
+              own choice, and you can change it below once the run is over). It falls as the separation grows: a wider pair moves more slowly, because gravity between the stars is weaker.
             </li>
             {stage === 0 && (
               <li>
@@ -952,8 +1122,8 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
             )}
             {stage >= 1 && (
               <li>
-                <strong>The blue dot</strong> marks a pair {P1_PAIR_AU.toLocaleString('en-US')} AU apart. This is the pair in Prediction 1. Its label gives its
-                speed.
+                <strong>The blue dot</strong> marks the pair described under the picture. At first it is the pair in Prediction 1, {P1_PAIR_AU.toLocaleString('en-US')} AU
+                apart; after the run you can choose another. The line under the picture gives its speed.
               </li>
             )}
             {stage >= 2 && (
@@ -972,14 +1142,14 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
             )}
           </ul>
           <p style={paragraph}>
-            <strong>A worked moment.</strong> At 1,000 AU the blue curve gives about {speedAt1000.toFixed(0)} m/s. At 10,000 AU, ten times further, it gives
-            about {speedAt10000.toFixed(0)} m/s. The ratio is {(speedAt10000 / speedAt1000).toFixed(2)}, which is 1 ÷ √10: ten times the distance gives about a
+            <strong>A worked moment.</strong> At 1,000 AU the blue curve gives about {orbitalSpeed(mass, 1000).toFixed(0)} m/s. At 10,000 AU, ten times further, it gives
+            about {orbitalSpeed(mass, 10000).toFixed(0)} m/s. The ratio is {(orbitalSpeed(mass, 10000) / orbitalSpeed(mass, 1000)).toFixed(2)}, which is 1 ÷ √10: ten times the distance gives about a
             third of the speed. A hundred times the distance would give a tenth.
             {stage >= 3 && (
               <>
                 {' '}
-                On the rose line, the pair at {P1_PAIR_AU.toLocaleString('en-US')} AU moves at about {boostedAt10000.toFixed(0)} m/s. Divide it by Newton’s{' '}
-                {speedAt10000.toFixed(0)} m/s and you get {boostFactor.toFixed(2)}, the same ratio at every separation.
+                On the rose line, the pair at {separationAu.toLocaleString('en-US')} AU moves at about {mine.boostedSpeed.toFixed(0)} m/s. Divide it by Newton’s{' '}
+                {mine.newtonSpeed.toFixed(0)} m/s and you get {boostFactor.toFixed(2)}, the same ratio at every separation.
               </>
             )}
           </p>
@@ -993,7 +1163,7 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
         {stage >= 4 && (
           <>
             <div style={{ marginBottom: '1rem' }}>
-              <PictureTwo />
+              <PictureTwo fraction={mine.fraction} factor={mine.factor} />
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               <p style={paragraph}>
@@ -1023,9 +1193,9 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
               <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
                 <li>
                   <strong>The purple line</strong> is the sample’s average speed, for every share of triples, when each triple moves{' '}
-                  <strong>twice as fast</strong> as a true pair (the same “twice as fast” as in Prediction 2). It starts at 1.00 on the left, where there are
-                  no triples, and rises in a straight line to 1.50 on the right, where half of the pairs are triples. “Twice as fast” is a choice made for
-                  illustration. A later step will let you change it.
+                  <strong>{mine.factor} times as fast</strong> as a true pair (in Prediction 2 it was twice as fast; you can change it with the controls below).
+                  It starts at 1.00 on the left, where there are no triples, and rises in a straight line to {contaminatedRatio(P2_MAX_FRACTION, mine.factor).toFixed(2)} on
+                  the right, where half of the pairs are triples. The factor is a choice made for illustration.
                 </li>
                 <li>
                   <strong>The rose dashed line</strong> is the speed that the MOND papers expect, {boostFactor.toFixed(2)} times Newton’s. It is the same boost
@@ -1033,12 +1203,13 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
                   team is looking for.
                 </li>
                 <li>
-                  <strong>The purple dot</strong> is the example of Prediction 2: 1 pair in every 5 (20 percent) is a triple. Its label gives the average
-                  speed at that share.
+                  <strong>The purple dot</strong> is the share and the factor you have chosen. At first it is the example of Prediction 2: 1 pair in every 5
+                  (20 percent) is a triple, and it moves twice as fast. The line under the picture gives the average speed at that share.
                 </li>
                 <li>
                   <strong>The white ring and the dotted line below it</strong> mark the place where the purple line crosses the rose dashed line. Read down
                   the dotted line to the horizontal axis to find the share of triples at which that happens. The label beside it says what that share is.
+                  If the triples are slow, the purple line does not reach the rose line within 50 percent, and the ring is not drawn; the picture then says so.
                 </li>
                 <li>
                   <strong>The words on the picture</strong> repeat this: the purple label names the purple line, the rose label names the dashed line, and the
@@ -1046,11 +1217,17 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
                 </li>
               </ul>
               <p style={paragraph}>
-                <strong>A worked moment.</strong> Take 100 pairs in a study. 80 are true pairs and move at 1.0 times Newton’s speed. 20 are triples and move
-                at 2.0 times. The average is (80 × 1.0 + 20 × 2.0) ÷ 100 = {exampleRatio.toFixed(1)}. That is the purple dot. Try 10 triples instead: (90 × 1.0 +
-                10 × 2.0) ÷ 100 = {contaminatedRatio(0.1, 2).toFixed(1)}, which is the purple line at 10 percent. For the white ring, the share is{' '}
-                {(matchFraction * 100).toFixed(1)} percent: ({((1 - matchFraction) * 100).toFixed(1)} × 1.0 + {(matchFraction * 100).toFixed(1)} × 2.0) ÷ 100 ={' '}
-                {contaminatedRatio(matchFraction, 2).toFixed(2)}, which is the rose line’s height.
+                <strong>A worked moment.</strong> Take 100 pairs in a study. {(100 - mine.fraction * 100).toFixed(0)} are true pairs and move at 1.0 times
+                Newton’s speed. {(mine.fraction * 100).toFixed(0)} are triples and move at {mine.factor} times. The average is (
+                {(100 - mine.fraction * 100).toFixed(0)} × 1.0 + {(mine.fraction * 100).toFixed(0)} × {mine.factor}) ÷ 100 = {mine.contaminatedRatio.toFixed(2)}. That is
+                the purple dot.
+                {ringShown && needed !== null && (
+                  <>
+                    {' '}
+                    For the white ring, the share is {(needed * 100).toFixed(1)} percent: ({((1 - needed) * 100).toFixed(1)} × 1.0 + {(needed * 100).toFixed(1)} ×{' '}
+                    {mine.factor}) ÷ 100 = {contaminatedRatio(needed, mine.factor).toFixed(2)}, which is the rose line’s height.
+                  </>
+                )}
               </p>
               <p style={paragraph}>
                 <strong>An everyday comparison.</strong> Your marks in a class: if 80 of your tests scored 50 and 20 of them scored 100, your average is 60. A
@@ -1141,6 +1318,165 @@ export function WideBinariesExperiment({ onComplete }: WideBinariesExperimentPro
               </p>
             </div>
           </>
+        )}
+
+        {/* After the run: the neutral results and the links kept back until now (they state what the predictions asked, CLAUDE.md §12). Draft
+            wording for the owner's review (§28.1, §29). The results only report; they do not say why (the tutor explains, in a later step). */}
+        {done && (
+          <div style={{ marginTop: '2rem' }}>
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Choose a pair</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              Choose the total mass of the two stars and how far apart they are. The dots in Picture 1 and Table 1a change with your choice, and so do the
+              speeds in the line below. The stronger-pull line is always {GAMMA_MOND_WIDE_BINARY} times the pull of Newton’s law. Your predictions stay as they are.
+            </p>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="pair-mass" style={{ display: 'block', marginBottom: '0.25rem' }}>
+                Total mass: <strong>{mass}</strong> Suns
+              </label>
+              <input id="pair-mass" type="range" min={0.5} max={3} step={0.1} value={mass} onChange={(e) => setMass(Number(e.target.value))} style={{ width: '100%', maxWidth: '420px' }} />
+            </div>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="pair-separation" style={{ display: 'block', marginBottom: '0.25rem' }}>
+                Separation: <strong>{separationAu.toLocaleString('en-US')}</strong> AU (each step multiplies the distance, as on Picture 1’s axis)
+              </label>
+              <input
+                id="pair-separation"
+                type="range"
+                min={Math.log10(P1_MIN_AU)}
+                max={Math.log10(P1_MAX_AU)}
+                step={0.005}
+                value={separationLog}
+                onChange={(e) => setSeparationLog(Number(e.target.value))}
+                style={{ width: '100%', maxWidth: '420px' }}
+              />
+            </div>
+            <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1.5rem' }}>
+              Newton’s speed: <strong>{mine.newtonSpeed.toFixed(0)} m/s</strong>. Pull between the stars: <strong>{sci(mine.pull)} m/s²</strong>, which is{' '}
+              <strong>{mine.pullInA0.toFixed(2)} a₀</strong>. With a pull {GAMMA_MOND_WIDE_BINARY} times as strong: <strong>{mine.boostedSpeed.toFixed(0)} m/s</strong>.
+            </p>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>How many pairs are really triples?</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              Choose what share of the “pairs” in a study are really triples, and how many times faster a triple moves than a true pair (1 means no faster).
+              The purple dot and line in Picture 2 and Table 1b change with your choice. They start at the example of Prediction 2: 20 percent, twice as fast.
+            </p>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="triple-share" style={{ display: 'block', marginBottom: '0.25rem' }}>
+                Share of triples: <strong>{fractionPercent}</strong> percent
+              </label>
+              <input id="triple-share" type="range" min={0} max={50} step={1} value={fractionPercent} onChange={(e) => setFractionPercent(Number(e.target.value))} style={{ width: '100%', maxWidth: '420px' }} />
+            </div>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="triple-factor" style={{ display: 'block', marginBottom: '0.25rem' }}>
+                A triple moves <strong>{factor}</strong> times as fast as a true pair
+              </label>
+              <input id="triple-factor" type="range" min={1} max={3} step={0.1} value={factor} onChange={(e) => setFactor(Number(e.target.value))} style={{ width: '100%', maxWidth: '420px' }} />
+            </div>
+            <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '2rem' }}>
+              The triples fake a boost of <strong>{mine.fakeBoostPercent.toFixed(1)} percent</strong>. The boost that the MOND papers expect is{' '}
+              <strong>{mine.speedBoostPercent.toFixed(1)} percent</strong>.
+            </p>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Results</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+              These tables only report numbers, step by step. Tables 1a and 1b follow the pair and the triples you chose above. Table 2 lists every published
+              result this experiment uses, as the papers state it. Your predictions are not marked here.
+            </p>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 1a: your pair</p>
+            <ResultsTable
+              minWidth={420}
+              head={['Quantity', 'Value', 'How it is worked out']}
+              rows={[
+                ['Total mass of the two stars', `${mass} Suns`, `your choice; ${mass} × ${sci(SOLAR_MASS_KG, 4)} kg = ${sci(massKg, 3)} kg`],
+                ['Separation', `${separationAu.toLocaleString('en-US')} AU`, `your choice; ${separationAu.toLocaleString('en-US')} × ${sci(AU_M, 4)} m = ${sci(separationM, 3)} m`],
+                [
+                  'Newton’s orbital speed',
+                  `${mine.newtonSpeed.toFixed(0)} m/s`,
+                  `√(G × M ÷ s) = √(${sci(G, 4)} × ${sci(massKg, 3)} ÷ ${sci(separationM, 3)}) = √(${sci(mine.newtonSpeed ** 2, 3)}) = ${mine.newtonSpeed.toFixed(0)} m/s`,
+                ],
+                ['Pull between the stars', `${sci(mine.pull, 3)} m/s²`, `G × M ÷ s² = ${sci(G, 4)} × ${sci(massKg, 3)} ÷ (${sci(separationM, 3)})²`],
+                ['Pull in units of a₀', `${mine.pullInA0.toFixed(2)} a₀`, `${sci(mine.pull, 3)} ÷ ${sci(A0)}`],
+                ['Gravity boost factor γ', `${mine.gamma}`, 'the papers’ prediction for wide binaries in the Galaxy'],
+                ['Speed if the pull were γ times as strong', `${mine.boostedSpeed.toFixed(0)} m/s`, `${mine.newtonSpeed.toFixed(0)} × √${mine.gamma} = ${mine.newtonSpeed.toFixed(0)} × ${boostFactor.toFixed(3)}`],
+                ['Difference from Newton’s speed', `${mine.speedBoostPercent.toFixed(1)} percent`, `(${boostFactor.toFixed(3)} − 1) × 100`],
+              ]}
+            />
+
+            <p style={{ fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Table 1b: hidden triples (your choice)</p>
+            <ResultsTable
+              minWidth={420}
+              head={['Quantity', 'Value', 'How it is worked out']}
+              rows={[
+                ['Share of the “pairs” that are really triples', `${(mine.fraction * 100).toFixed(0)} percent`, 'your choice (Prediction 2 had 20 percent: 1 pair in every 5)'],
+                ['How many times faster a triple moves', `${mine.factor} times`, 'your choice (Prediction 2 had 2 times)'],
+                [
+                  'Average speed, as a multiple of Newton’s',
+                  mine.contaminatedRatio.toFixed(2),
+                  `(1 − ${mine.fraction.toFixed(2)}) × 1 + ${mine.fraction.toFixed(2)} × ${mine.factor} = ${(1 - mine.fraction).toFixed(2)} + ${(mine.fraction * mine.factor).toFixed(2)}`,
+                ],
+                ['Boost that the triples fake', `${mine.fakeBoostPercent.toFixed(1)} percent`, `${mine.fraction.toFixed(2)} × (${mine.factor} − 1) × 100`],
+                ['Boost that the MOND papers expect', `${mine.speedBoostPercent.toFixed(1)} percent`, 'from Table 1a'],
+                [
+                  'Share of triples that would fake the expected boost',
+                  needed === null ? 'none could' : `${(needed * 100).toFixed(1)} percent${needed > P2_MAX_FRACTION ? ' (more than Picture 2 shows)' : ''}`,
+                  needed === null
+                    ? 'a triple that moves no faster than a true pair cannot change the average'
+                    : `${mine.speedBoostPercent.toFixed(1)} ÷ (${mine.factor} − 1) = ${mine.speedBoostPercent.toFixed(1)} ÷ ${(mine.factor - 1).toFixed(1)}`,
+                ],
+              ]}
+            />
+
+            <p style={{ fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Table 2: the published results</p>
+            <ResultsTable
+              minWidth={760}
+              head={['Result', 'Binaries', 'What is reported', 'Value', 'What the paper says', 'Source']}
+              rows={PUBLISHED_RESULTS.map((result) => {
+                const text = TABLE_TEXT[`${result.name}|${result.year}`] ?? { reported: result.quantity, says: result.note }
+                return [
+                  `${result.name}, ${result.year}`,
+                  result.binaries === null ? 'not given in the abstract' : result.binaries.toLocaleString('en-US'),
+                  text.reported,
+                  result.value === null ? '–' : rangeText(result.value, result.errorPlus, result.errorMinus, Math.abs(result.value) < 0.1 ? 3 : 2),
+                  text.says,
+                  result.source,
+                ]
+              })}
+            />
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.5rem 0 1.5rem' }}>
+              The numbers come from the papers’ abstracts and are quoted as the papers state them. They measure different things on different samples, so they
+              are not always directly comparable. “–” means that the abstract gives no single value.
+            </p>
+
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>Want to know more?</strong> The scientific papers behind these numbers are listed here now, because their summaries state what the
+              predictions asked. They are written for scientists. Links open in a new tab.
+            </p>
+            <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+              {PAPER_LINKS.map((paper) => (
+                <li key={paper.id}>
+                  <ExternalLink href={`https://arxiv.org/abs/${paper.id}`}>
+                    {paper.who} (arXiv:{paper.id})
+                  </ExternalLink>
+                  : {paper.what}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The chapter summary below the experiment
+            (in App) is shown only once the learner reaches the explanation. */}
+        {done && boostPrediction !== null && contaminationPrediction !== null && (
+          <WideBinariesTutor
+            massSuns={mass}
+            separationAu={separationAu}
+            fraction={mine.fraction}
+            factor={mine.factor}
+            boostPrediction={boostPrediction}
+            contaminationPrediction={contaminationPrediction}
+            onExplained={() => onTutorComplete?.()}
+          />
         )}
       </div>
     </div>
