@@ -704,7 +704,9 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
   const pullA0At1000 = pullInA0(P1_MASS, 1000)
   const boostPercent = speedBoostPercent(GAMMA_MOND_WIDE_BINARY)
   // The learner's own choice (Tables 1a and 1b, Pictures 1 and 2). Every physical number comes from the physics module.
-  const separationAu = Math.min(P1_MAX_AU, Math.max(P1_MIN_AU, Math.round(Math.pow(10, separationLog) / 50) * 50))
+  // The slider moves in steps of 0.005 from its low end, so its last step can fall just short of the high end: the last step counts as 30,000 AU.
+  const separationAu =
+    separationLog > Math.log10(P1_MAX_AU) - 0.005 ? P1_MAX_AU : Math.min(P1_MAX_AU, Math.max(P1_MIN_AU, Math.round(Math.pow(10, separationLog) / 50) * 50))
   const mine = runWideBinaries(mass, separationAu, GAMMA_MOND_WIDE_BINARY, fractionPercent / 100, factor)
   const needed = mine.fractionNeededToFake // null when a triple moves no faster than a true pair
   const ringShown = needed !== null && needed <= P2_MAX_FRACTION
