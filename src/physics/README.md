@@ -1,6 +1,6 @@
 # Physics
 
-This directory holds the physics/simulation engine for SpaceTime Explorer AI.
+This directory holds the physics/simulation engine for Cosmic Horizons.
 
 Rules:
 

@@ -1,10 +1,10 @@
-# Claude Code Instructions — SpaceTime Explorer AI
+# Claude Code Instructions — Cosmic Horizons
 
 > All these concepts are complex. Use simple terms so that a user with just a basic knowledge of science should be able to understand. Make it as detailed as necessary to make the concept clear. Do not assume the user can understand these concepts easily. Explain with examples wherever possible.
 
 ## 1. Read the Project Definition First
 
-The overall vision and purpose of SpaceTime Explorer AI are defined in:
+The overall vision and purpose of Cosmic Horizons are defined in:
 
 `docs/PROJECT.md`
 
@@ -27,7 +27,7 @@ Do not treat this file as a replacement for `PROJECT.md` or the experiment speci
 
 # 2. Claude Code's Role
 
-Claude Code is the implementation assistant for SpaceTime Explorer AI.
+Claude Code is the implementation assistant for Cosmic Horizons.
 
 The human project owner defines:
 

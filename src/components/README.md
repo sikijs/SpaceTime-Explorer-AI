@@ -1,6 +1,6 @@
 # Components
 
-This directory holds React UI components for SpaceTime Explorer AI.
+This directory holds React UI components for Cosmic Horizons.
 
 Rules:
 

@@ -771,7 +771,7 @@ export function App() {
         {isWelcome && (
           <>
             <h1 className="app-title" style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '3rem' }}>
-              SpaceTime Explorer
+              Cosmic Horizons
             </h1>
             <p className="app-subtitle" style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 2rem' }}>
               A short sequence of experiments on relativity — space, time, and motion. Each one builds on the one before it.

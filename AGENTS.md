@@ -1,10 +1,10 @@
-# SpaceTime Explorer AI — Project Instructions
+# Cosmic Horizons — Project Instructions
 
 > All these concepts are complex. Use simple terms so that a user with just a basic knowledge of science should be able to understand. Make it as detailed as necessary to make the concept clear. Do not assume the user can understand these concepts easily. Explain with examples wherever possible.
 
 ## Project Purpose
 
-SpaceTime Explorer AI is an interactive educational laboratory for understanding
+Cosmic Horizons is an interactive educational laboratory for understanding
 relativity, spacetime, gravity, astronomy, aerospace, and cosmology.
 
 Relativity is the central subject. Other space and aerospace topics are used as

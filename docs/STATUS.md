@@ -1,4 +1,4 @@
-# SpaceTime Explorer AI — Development Status Log
+# Cosmic Horizons — Development Status Log
 
 This file holds the detailed per-experiment status history and the chronological milestone log that used to live in `CLAUDE.md` §27. It was moved here, unchanged, to keep `CLAUDE.md` under its size limit. It is not loaded automatically; read it when you need an experiment's history, review dates, or open items. Each experiment specification's "Implementation Notes" remain authoritative for that experiment. `CLAUDE.md` §27 has the compact status table.
 

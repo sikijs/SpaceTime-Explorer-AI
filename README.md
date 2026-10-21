@@ -1,8 +1,8 @@
-# SpaceTime Explorer AI
+# Cosmic Horizons
 
 ## An Interactive Laboratory for Understanding Spacetime and the Universe
 
-SpaceTime Explorer AI is an educational interactive laboratory designed to help
+Cosmic Horizons is an educational interactive laboratory designed to help
 learners understand relativity and its connections to gravity, astronomy,
 aerospace, and cosmology.
 

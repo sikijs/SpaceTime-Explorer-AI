@@ -1,8 +1,8 @@
-# SpaceTime Explorer AI — Project Definition
+# Cosmic Horizons — Project Definition
 
 ## 1. Project Purpose
 
-SpaceTime Explorer AI is an interactive educational application designed to help learners understand relativity and spacetime by **experiencing physical ideas through experiments and simulations**, rather than learning them only through text, formulas, or lectures.
+Cosmic Horizons is an interactive educational application designed to help learners understand relativity and spacetime by **experiencing physical ideas through experiments and simulations**, rather than learning them only through text, formulas, or lectures.
 
 The project is intended to make difficult ideas in relativity easier to understand by allowing the learner to:
 
@@ -35,7 +35,7 @@ Examples include:
 * gravity and curved spacetime
 * the relationship between geometry and physical measurements
 
-SpaceTime Explorer AI should introduce these ideas gradually.
+Cosmic Horizons should introduce these ideas gradually.
 
 The learner should encounter a concept first through a simple physical situation, then gradually move toward more sophisticated situations.
 
@@ -152,7 +152,7 @@ An incorrect prediction can be educational because it creates an opportunity to 
 
 ## 6. Experiments
 
-SpaceTime Explorer AI will be organized around a sequence of interactive experiments.
+Cosmic Horizons will be organized around a sequence of interactive experiments.
 
 Each experiment should introduce or reinforce a specific physical idea.
 
@@ -475,7 +475,7 @@ Whenever a visualization represents a physical quantity, its relationship to the
 
 ## 17. Scope Control
 
-SpaceTime Explorer AI is intended to be developed carefully and incrementally.
+Cosmic Horizons is intended to be developed carefully and incrementally.
 
 The project should not grow simply because a feature sounds interesting.
 
@@ -527,7 +527,7 @@ A development step should normally accomplish one logical objective.
 
 After completing that step, the implementation should be tested and reviewed before proceeding to the next step.
 
-This is particularly important because SpaceTime Explorer AI combines:
+This is particularly important because Cosmic Horizons combines:
 
 * physics
 * software
@@ -561,7 +561,7 @@ Only after those questions have been answered should implementation begin.
 
 ## 21. Definition of Success
 
-SpaceTime Explorer AI will be successful if a learner can use the application to move from:
+Cosmic Horizons will be successful if a learner can use the application to move from:
 
 **"I have read about this concept."**
 
