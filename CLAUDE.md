@@ -292,6 +292,7 @@ Every experiment's animated diagram must, before its UI step is reported done �
    * Describe what appears when, if the diagram changes during a run, in the order the learner sees it.
    * Use short sections or bullet lists, not one dense paragraph.
    * Include a worked moment with real numbers and a "what to look for" list, as in earlier experiments.
+   * Write every "what to look for" item in three parts (owner's rule, 2026-10-21): **Look at** (the thing to look at, named as it is drawn), **What it means** (what that feature tells the learner, in plain words and with the real numbers), and **Why it matters** (its significance for the question the experiment asks). A bare list of things to look at is not enough. Show an item only once its feature is drawn, so that a picture that builds up over stages does not explain a feature before the learner can see it. Give the meaning and the significance, but leave the full mechanism (the "why" behind a relationship) and any verdict between competing results to the tutor (§12, §13).
    * Do not reveal what the experiment shows before the learner has predicted and observed it (§12).
 
    As with other learner-facing wording, the caption is the owner's to approve (§28.1).
@@ -878,7 +879,7 @@ These are the working agreements that have been established in practice.
 Set by the owner on 2026-10-17. The group "Frontier and Beyond" (`docs/experiments/frontier-and-beyond/`) teaches recent discoveries and findings of astronomers and scientists. Its concepts are complex and hard to grasp easily. Three rules apply to **every experiment in the group, all nineteen and any added later**, in its specification and in its interface:
 
 1. **The introduction must be up to date, clear, detailed and in simple terms**, so that a learner with only a basic knowledge of science can understand it. Use real-life examples where they help. Its length is not a problem as long as the extra length helps the learner understand better. It may include links for a learner who wants to know more.
-2. **The caption of every picture follows the same rule** (up to date, clear, detailed, simple terms, real-life examples where they help, no length limit that would cost clarity). This builds on the "How to read this diagram" standard of §14.
+2. **The caption of every picture follows the same rule** (up to date, clear, detailed, simple terms, real-life examples where they help, no length limit that would cost clarity). This builds on the "How to read this diagram" standard of §14. Its "what to look for" items each say what to look at, what it means and why it matters (§14).
 3. **Every experiment page has a "Want to know more?" list of links** (added by the owner on 2026-10-19), so a learner who wants more can click through. The list is part of the introduction's page, visible from the start, and it includes: (a) the original paper or official release behind each result the experiment uses; and (b) for each background idea the introduction explains (for example, what a supernova is), at least one plain-language page from an official source, such as NASA or ESA or the mission's or observatory's own education pages. Each link opens in a new tab and says in a few plain words what the learner will find there.
 
 How to apply them:
