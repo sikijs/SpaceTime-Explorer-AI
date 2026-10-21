@@ -631,12 +631,12 @@ const PAPER_LINKS: { id: string; who: string; what: string }[] = [
 
 // "What to look for": each item says what to look at, what it means and why it matters. The meaning is given after the learner has predicted and
 // run (CLAUDE.md §12); the full explanation, and the verdict on the teams, stay with the tutor.
-interface LookFor {
+export interface LookFor {
   look: ReactNode
   means: ReactNode
   matters: ReactNode
 }
-function LookForList({ items }: { items: LookFor[] }) {
+export function LookForList({ items }: { items: LookFor[] }) {
   return (
     <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
       {items.map((item, i) => (
