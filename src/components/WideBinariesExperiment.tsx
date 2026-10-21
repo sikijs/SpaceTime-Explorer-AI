@@ -890,7 +890,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
             <strong>How fast do they go?</strong> A pair that is far apart moves slowly, just as a satellite high above the Earth moves more slowly than one
             close to it. For a circular orbit, Newton’s law of gravity gives the speed as <strong>v = √(G × M ÷ s)</strong>, where <em>M</em> is the total
             mass of the two stars, <em>s</em> is their separation and <em>G</em> is the number that sets how strong gravity is. Take a pair with the mass of
-            1.5 Suns (a choice made for this experiment, not a measured pair). At 1,000 AU its stars move at about {speedAt1000.toFixed(0)} metres per second,
+            1.5 Suns (a choice made for this experiment, not a measured pair). At 1,000 AU its stars move at about {Math.round(speedAt1000).toLocaleString('en-US')} metres per second,
             and at 10,000 AU at only about {speedAt10000.toFixed(0)} metres per second. Ten times as far apart gives about a third of the speed.
           </p>
 
@@ -920,7 +920,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
           </p>
 
           <p style={paragraph}>
-            <strong>Why it is hard.</strong> The effect being looked for is small, about a fifth in the speed, and the data are messy. A star in a pair can have
+            <strong>Why it is hard.</strong> The effect being looked for is small, and the data are messy. A star in a pair can have
             a <strong>hidden companion</strong>: a third star so close to it that it cannot be told apart, which makes that “pair” move faster than a true pair.
             Pairs are seen from the side at all sorts of angles. Distances and masses have errors. Think of a poll that asks 1,000 people and finds 52
             percent in favour: a few wrong answers, all in one direction, can change the result. A study of thousands of pairs can have tiny random errors
@@ -929,8 +929,8 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
 
           <p style={paragraph}>
             <strong>Where the question stands (October 2026).</strong> Banik and colleagues (2024) analysed 8,611 wide binaries and report that Newton’s law is
-            preferred at 19 sigma. Chae and colleagues report a boost: about 5 sigma in a paper on 2,463 binaries (2023), and in January 2026 a 3 sigma result
-            from 36 binaries whose velocities were measured in three dimensions. In March 2026, Saad and Ting analysed those same 36 binaries in a different
+            preferred at 19 sigma. Chae and colleagues report a boost: about 5 sigma in a paper on 2,463 binaries (2024), and in January 2026 a gravity boost
+            factor of γ = 1.60 (+0.24, −0.14) from 36 binaries whose velocities were measured in three dimensions. In March 2026, Saad and Ting analysed those same 36 binaries in a different
             way and found no boost. In February 2026, Cookson and colleagues reported that their cleanest sample shows none either. Because careful teams
             disagree, the label is <strong>Contested</strong>.
           </p>
@@ -1144,7 +1144,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
             )}
           </ul>
           <p style={paragraph}>
-            <strong>A worked moment.</strong> At 1,000 AU the blue curve gives about {orbitalSpeed(mass, 1000).toFixed(0)} m/s. At 10,000 AU, ten times further, it gives
+            <strong>A worked moment.</strong> At 1,000 AU the blue curve gives about {Math.round(orbitalSpeed(mass, 1000)).toLocaleString('en-US')} m/s. At 10,000 AU, ten times further, it gives
             about {orbitalSpeed(mass, 10000).toFixed(0)} m/s. The ratio is {(orbitalSpeed(mass, 10000) / orbitalSpeed(mass, 1000)).toFixed(2)}, which is 1 ÷ √10: ten times the distance gives about a
             third of the speed. A hundred times the distance would give a tenth.
             {stage >= 3 && (
