@@ -313,7 +313,7 @@ A typical experiment development process is:
 5. Connect the interface to the physics.
 6. Add the learner prediction interaction.
 7. Add the simulation and observation experience.
-8. Add results and interpretation.
+8. Add results and interpretation (including the reading guide in §15, "Reading the results").
 9. Add the AI tutor interaction.
 10. Test the complete learning flow.
 11. Review the experiment against its specification.
@@ -440,6 +440,17 @@ The interface should not require the learner to understand the underlying softwa
 ### Plain language for new ideas
 
 Most learners have no everyday experience of ideas such as reference frames, and they take time for granted. Every specialized term should be explained in plain language, at the point where the learner first needs it and before an experiment relies on it. Each experiment opens with a short introduction that states the question, what will happen, what the learner is asked to do, any new term, and the assumptions being made.
+
+### Reading the results
+
+Added by the owner on 2026-10-22. Results are shown as scientific numbers, and a learner meets them like a patient looking at an X-ray or a blood test: the numbers mean little until they are explained. So every experiment's Results come with a plain-language reading guide, in simple terms and with the real numbers:
+
+1. **A check-up table** that sets what we would expect beside what was found, with a plain reading of each row. It is used only where a real reference exists (a value the same physics predicts, a published value, or a range the sources give), with no invented cut-offs and no verdict such as "healthy" or "abnormal" where there is no accepted range.
+2. **A note under each table** saying what the numbers are, what they mean with the real values, and why they matter, with a daily-life comparison or a short worked calculation where it helps.
+3. **A comparison for any table the learner controls**: the published value beside the learner's value, a plain reading of how they compare, and a short paragraph that updates with the settings. The learner's settings are called trial values or the learner's own numbers.
+4. **The learner's predictions beside the results**: each guess, the question it was about, and where its number is. The page does not say whether the guess was right. The tutor does that, after the learner has looked.
+
+The guide explains what each number means and why it matters. The full mechanism and any verdict between competing explanations stay with the tutor, and the guide never gives away what the learner was asked to predict. Its wording is the human project owner's to approve. It is built so far for Experiment 12 of the Frontier and Beyond group, and adding it to earlier experiments is a decision for the owner.
 
 ### Frontier and Beyond: fuller introductions and captions
 

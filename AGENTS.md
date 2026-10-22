@@ -108,6 +108,7 @@ Experiment specifications should define:
 * Visualization
 * User interaction
 * Learner-facing introduction, including any new terms it must define
+* Results reading guide (see "Results: A Reading Guide")
 * AI tutor behavior
 * Tests
 * Explicit exclusions
@@ -165,6 +166,24 @@ Define every specialized term in plain language before it is used.
 
 Check user-interface changes in a browser, since tests do not cover
 appearance, and report anything that was not verified.
+
+## Results: A Reading Guide
+
+Added by the owner on 2026-10-22. A table of numbers means little to a learner until someone explains it, like an
+X-ray or a blood test. Every experiment's Results panel must come with a plain-language reading guide, written in
+simple terms with the real numbers:
+
+1. A "check-up" table setting what we would expect beside what was found, with a plain reading of each row. Use it
+   only where a real reference exists, with no invented cut-offs and no "healthy" or "abnormal".
+2. A note under each table: what the numbers are, what they mean with the real values, and why they matter.
+3. For a table that follows the learner's controls: a published-value column, a "how yours compares" column and an
+   updating paragraph. Call the learner's settings "trial values" or "your own numbers", never "what-ifs".
+4. The learner's predictions shown beside the results (the guess, the question, where its number is), with no
+   "matched" or "right": the tutor gives that.
+
+The numbers come from the tested physics module. The guide gives meaning and significance but leaves the full
+mechanism and any verdict to the tutor, and never reveals a prediction's answer early. The wording stays the human's to
+approve. Built so far: Experiment 12 of Frontier and Beyond. The earlier experiments do not have it yet.
 
 ## Frontier and Beyond: Introductions and Captions
 

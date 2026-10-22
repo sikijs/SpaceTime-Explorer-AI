@@ -299,6 +299,23 @@ Every experiment's animated diagram must, before its UI step is reported done �
 
 This pattern emerged in earlier experiments only through repeated, after-the-fact owner feedback. Apply it proactively on every new experiment's first UI pass.
 
+## Reading the Results
+
+Set by the owner on 2026-10-22, from Experiment 12. A table of scientific numbers is like an X-ray or a blood test: the learner cannot read it until someone explains it. So **every experiment's Results panel must come with a plain-language reading guide**, drafted the first time and not retrofitted from owner feedback. The guide uses simple terms and gives the real numbers; its length is not limited if it helps. It has these parts, as the experiment's results allow:
+
+1. **A "check-up" table**, near the top of the Results, that sets what we would expect beside what was found, with a plain reading of each row (for example "close", "weak on its own", "not settled"). Use it only where a real reference exists, such as a value the same physics predicts, a published value, or a range the sources give. Do not invent cut-offs such as "close enough", and do not use "healthy", "normal" or "abnormal" for a result that has no accepted range. Say "the same", "more" or "less" when there is no range.
+2. **A note under each table**, headed "What this table tells us". Each item says **what it is**, **what it means with the real numbers**, and **why it matters**, in plain words, with a daily-life comparison or a short worked calculation where it clears up a mechanism (§15). Say how sure the number is when that is the weak link.
+3. **For a table that follows the learner's controls:** a "Published value" column and a "How yours compares" column beside "Your value", and a short paragraph ("What your numbers show") that updates with the settings and says what changed, whether each earlier check still holds, and why. Call the learner's settings "trial values" or "your own numbers", never "what-ifs" (the owner found "what if" confusing). End with a line saying they are trial values and do not say the real system is like that.
+4. **The learner's predictions, shown beside the results**: a short block giving each prediction's guess, the question it was about, and the table row where its number appears, with a small tag on that row. It shows the guess only, never "matched" or "right" (that is the tutor's job, §12, §13), unless the owner decides otherwise for an experiment.
+
+How to apply them:
+
+* Every number in the guide and every comparison comes from the physics module, tested, and the interface only displays it (§9). Add the comparison functions and their tests to the module.
+* The guide may name what each number means and why it matters, but it must not give the full mechanism or a verdict between competing explanations. Those stay with the tutor (§12, §13), and it must not reveal what the learner is asked to predict before they have predicted (§12).
+* The wording is the owner's to approve line by line (§28.1). Draft it, show it, then build it, and check the page in a browser (§28.4).
+* The specification records the guide (§28.2).
+* Built so far: Experiment 12 of Frontier and Beyond (committed `b708678`). Experiments 1 to 11 and the other groups do not have it yet. Whether to add it to them is the owner's decision, one experiment at a time, and is not started.
+
 ---
 
 # 15. Accessibility and Clarity
@@ -463,7 +480,7 @@ Implement prediction, observation, and other educational interactions specified 
 
 ### Step 7 — Results
 
-Display the experimental results clearly.
+Display the experimental results clearly, with the reading guide described in §14 ("Reading the Results"): a check-up, a note under each table, a comparison for tables the learner controls, and the learner's predictions beside the results.
 
 ### Step 8 — AI Tutor
 
@@ -882,11 +899,12 @@ These are the working agreements that have been established in practice.
 
 # 29. Frontier and Beyond: Introductions and Captions
 
-Set by the owner on 2026-10-17. The group "Frontier and Beyond" (`docs/experiments/frontier-and-beyond/`) teaches recent discoveries and findings of astronomers and scientists. Its concepts are complex and hard to grasp easily. Three rules apply to **every experiment in the group, all twenty-four and any added later**, in its specification and in its interface:
+Set by the owner on 2026-10-17. The group "Frontier and Beyond" (`docs/experiments/frontier-and-beyond/`) teaches recent discoveries and findings of astronomers and scientists. Its concepts are complex and hard to grasp easily. Four rules apply to **every experiment in the group, all twenty-four and any added later**, in its specification and in its interface:
 
 1. **The introduction must be up to date, clear, detailed and in simple terms**, so that a learner with only a basic knowledge of science can understand it. Use real-life examples where they help. Its length is not a problem as long as the extra length helps the learner understand better. It may include links for a learner who wants to know more.
 2. **The caption of every picture follows the same rule** (up to date, clear, detailed, simple terms, real-life examples where they help, no length limit that would cost clarity). This builds on the "How to read this diagram" standard of §14. Its "what to look for" items each say what to look at, what it means and why it matters (§14).
 3. **Every experiment page has a "Want to know more?" list of links** (added by the owner on 2026-10-19), so a learner who wants more can click through. The list is part of the introduction's page, visible from the start, and it includes: (a) the original paper or official release behind each result the experiment uses; and (b) for each background idea the introduction explains (for example, what a supernova is), at least one plain-language page from an official source, such as NASA or ESA or the mission's or observatory's own education pages. Each link opens in a new tab and says in a few plain words what the learner will find there.
+4. **Every Results panel has a reading guide** (added by the owner on 2026-10-22): see §14, "Reading the Results". It applies to every experiment, and its wording is drafted to this group's standard of simple terms and real numbers.
 
 How to apply them:
 
