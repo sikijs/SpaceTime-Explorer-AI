@@ -715,7 +715,7 @@ const chapters: Chapter[] = [
     next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
   },
   {
-    title: 'The star that may be about to explode: what is Betelgeuse, and does it have a companion?',
+    title: 'A star near the end of its life: what is Betelgeuse, and does it have a companion?',
     group: 'Frontier and Beyond',
     Component: BetelgeuseCompanionExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a published one

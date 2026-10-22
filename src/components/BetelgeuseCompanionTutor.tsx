@@ -4,11 +4,14 @@ import {
   brightnessRatio,
   chanceOfSigma,
   COMPANION,
+  headsInARow,
   keplerPeriodYears,
-  LIGHT_YEARS_PER_PARSEC,
+  keplerWorking,
   matchingDistancePc,
   oneInChance,
+  parsecsFromLightYears,
   periodAgreementPercent,
+  periodSwingPercent,
   PLANETS,
   radiusAU,
   radiusRangeAU,
@@ -17,6 +20,7 @@ import {
   sigmaAnswer,
   SOLAR_RADII_PER_AU,
   sizeAnswer,
+  widthAU,
 } from '../physics/betelgeuseCompanion'
 import type { Reach, SigmaAnswer } from '../physics/betelgeuseCompanion'
 
@@ -73,20 +77,21 @@ export function BetelgeuseCompanionTutor({ reachPrediction, sigmaPrediction, onE
   const rightReach = sizeAnswer()
   const rightSigma = sigmaAnswer()
   const sigma = COMPANION.reportedSigma
-  const widthAU = BETELGEUSE.angularDiameterMas * BETELGEUSE.distancePc * 0.001
+  const width = widthAU(BETELGEUSE.angularDiameterMas, BETELGEUSE.distancePc)
   const jupiter = PLANETS[4].orbitAU
-  const nasaParsecs = 700 / LIGHT_YEARS_PER_PARSEC // NASA's page says about 700 light-years
+  const nasaParsecs = parsecsFromLightYears(700) // NASA's page says about 700 light-years
   const nasaRadius = radiusAU(BETELGEUSE.angularDiameterMas, nasaParsecs)
-  const cubed = result.modelSeparationAU ** 3
-  const totalMass = BETELGEUSE.massSolar + COMPANION.massSolar
-  const lightCompanion = runBetelgeuseCompanion({ companionMassSolar: 1.17 })
-  const heavyCompanion = runBetelgeuseCompanion({ companionMassSolar: 2.0 })
-  const lightStar = runBetelgeuseCompanion({ betelgeuseMassSolar: BETELGEUSE.massChoicesSolar[0] })
-  const heavyStar = runBetelgeuseCompanion({ betelgeuseMassSolar: BETELGEUSE.massChoicesSolar[2] })
-  const companionSwing = ((lightCompanion.periodYears - heavyCompanion.periodYears) / result.periodYears) * 100
-  const starSwing = ((lightStar.periodYears - heavyStar.periodYears) / result.periodYears) * 100
+  const working = keplerWorking(result.modelSeparationAU, BETELGEUSE.massSolar, COMPANION.massSolar)
+  const companionSwing = periodSwingPercent(
+    { mass1Solar: BETELGEUSE.massSolar, mass2Solar: COMPANION.massChoicesSolar[0] },
+    { mass1Solar: BETELGEUSE.massSolar, mass2Solar: COMPANION.massChoicesSolar[3] },
+  )
+  const starSwing = periodSwingPercent(
+    { mass1Solar: BETELGEUSE.massChoicesSolar[0], mass2Solar: COMPANION.massSolar },
+    { mass1Solar: BETELGEUSE.massChoicesSolar[2], mass2Solar: COMPANION.massSolar },
+  )
   const sunLike = keplerPeriodYears(1, 1, 3e-6) // one year: the Earth round the Sun, as a check of the law
-  const coinsInARow = Math.log2(oneInChance(sigma))
+  const coins = headsInARow(sigma)
   const mismatch = separationMismatchPercent(BETELGEUSE.distancePc)
   const fainterBy = Math.round(brightnessRatio(COMPANION.magnitudeDifference))
   const inside = `${result.planetsInside.slice(0, -1).join(', ')} and ${result.planetsInside[result.planetsInside.length - 1]}`
@@ -160,7 +165,7 @@ export function BetelgeuseCompanionTutor({ reachPrediction, sigmaPrediction, onE
             reach <em>{reachWords[reachPrediction]}</em>. With a radius of {result.radiusAU.toFixed(2)} AU (Table 1) it reaches <em>{reachWords[rightReach]}</em>: the orbits of{' '}
             {inside} are inside it, and Jupiter’s ({jupiter} AU) is not. {reachPrediction === rightReach ? 'Your prediction matched.' : 'Your prediction did not match.'}
             {reachPrediction === 'past Jupiter' &&
-              ` It is a natural thought, because NASA’s page says that if Betelgeuse replaced the Sun it “would stretch past Jupiter’s orbit”. That fits the star’s width across, which is ${(2 * result.radiusAU).toFixed(1)} AU (more than Jupiter’s ${jupiter} AU), but your prediction was about the surface measured from the centre, and that is the radius, half of the width: ${result.radiusAU.toFixed(2)} AU. Even the biggest radius the papers allow, ${range.max.toFixed(1)} AU, stops short of Jupiter.`}
+              ` It is a natural thought, because NASA’s page says that if Betelgeuse replaced the Sun it “would stretch past Jupiter’s orbit”. That fits the star’s width across, which is ${width.toFixed(1)} AU (more than Jupiter’s ${jupiter} AU), but your prediction was about the surface measured from the centre, and that is the radius, half of the width: ${result.radiusAU.toFixed(2)} AU. Even the biggest radius the papers allow, ${range.max.toFixed(1)} AU, stops short of Jupiter.`}
             {reachPrediction === 'inside Earth' &&
               ` It is a natural thought, because we think of stars as small points of light. But Betelgeuse’s radius is ${Math.round(result.radiusSolarRadii)} times the Sun’s, ${result.radiusAU.toFixed(2)} AU, and the Earth is only 1 AU from the centre.`}
             {reachPrediction === 'past Earth' &&
@@ -186,7 +191,7 @@ export function BetelgeuseCompanionTutor({ reachPrediction, sigmaPrediction, onE
           <p style={paragraphStyle}>
             <strong>2. How we know how big it is.</strong> Nobody can hold a ruler to Betelgeuse. What a telescope can measure is the angle the star takes up in the sky: about {BETELGEUSE.angularDiameterMas} milliarcseconds, and
             what the distance measurement gives is {BETELGEUSE.distancePc} parsecs. A coin 2.4 centimetres across held 2.4 metres away takes up 0.01 radians (the width divided by the distance), and turned round, the width is the
-            angle times the distance. For Betelgeuse, in the astronomers’ units where one milliarcsecond at one parsec is 0.001 AU: {BETELGEUSE.angularDiameterMas} × {BETELGEUSE.distancePc} × 0.001 = {widthAU.toFixed(2)} AU across, so the
+            angle times the distance. For Betelgeuse, in the astronomers’ units where one milliarcsecond at one parsec is 0.001 AU: {BETELGEUSE.angularDiameterMas} × {BETELGEUSE.distancePc} × 0.001 = {width.toFixed(2)} AU across, so the
             radius is {result.radiusAU.toFixed(2)} AU, and one AU is {SOLAR_RADII_PER_AU.toFixed(0)} solar radii, so {Math.round(result.radiusSolarRadii)} solar radii. Joyce and others, with their own analysis, give{' '}
             {BETELGEUSE.joyceRadiusSolarRadii} (+116, −62), which agrees.
           </p>
@@ -203,7 +208,7 @@ export function BetelgeuseCompanionTutor({ reachPrediction, sigmaPrediction, onE
 
           <p style={paragraphStyle}>
             <strong>4. What the orbit time can and cannot tell us.</strong> Kepler’s third law says that the time for one orbit, in years, squared equals the distance in AU cubed, divided by the two masses added together in solar masses. With{' '}
-            {result.modelSeparationAU.toFixed(2)} AU, {BETELGEUSE.massSolar} and {COMPANION.massSolar}: {result.modelSeparationAU.toFixed(2)}³ ÷ {totalMass.toFixed(1)} = {cubed.toFixed(1)} ÷ {totalMass.toFixed(1)} = {(cubed / totalMass).toFixed(2)},
+            {result.modelSeparationAU.toFixed(2)} AU, {BETELGEUSE.massSolar} and {COMPANION.massSolar}: {result.modelSeparationAU.toFixed(2)}³ ÷ {working.totalMass.toFixed(1)} = {working.cubed.toFixed(1)} ÷ {working.totalMass.toFixed(1)} = {working.periodSquared.toFixed(2)},
             and the square root is {result.periodYears.toFixed(2)} years, or {Math.round(result.periodDays).toLocaleString('en-US')} days. (As a check of the law, the Earth, at 1 AU round one solar mass, takes {sunLike.toFixed(1)} year.) That is
             within about {Math.ceil(periodAgreementPercent(result.periodDays))} percent of the long cycle in Betelgeuse’s light, quoted as {COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to{' '}
             {COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days. Now notice the see-saw: Betelgeuse is about {(BETELGEUSE.massSolar / COMPANION.massSolar).toFixed(0)} times heavier than the companion, like an adult and a small child on a
@@ -215,14 +220,14 @@ export function BetelgeuseCompanionTutor({ reachPrediction, sigmaPrediction, onE
 
           <p style={paragraphStyle}>
             <strong>5. What “1.5 sigma” means.</strong> Every measurement has noise. Picture 3’s lavender curve shows how big a spot noise alone makes when there is nothing to find: most are small, a few are big. A spot of {sigma} sigma is{' '}
-            {sigma} give-or-takes bigger than the average. Counting only the too-strong direction, noise alone makes a spot at least that strong {oneInText(sigma)}, about as often as getting {Math.round(coinsInARow)} heads in a row when flipping a coin ({Math.round(coinsInARow)} heads in a row is 1 time in {Math.pow(2, Math.round(coinsInARow))}). The usual bar of 5 sigma, by contrast, is {oneInText(5)}, like {Math.round(Math.log2(oneInChance(5)))} heads in a row. A result that noise makes 1 time in 15 is not a discovery; it is
+            {sigma} give-or-takes bigger than the average. Counting only the too-strong direction, noise alone makes a spot at least that strong {oneInText(sigma)}, about as often as getting {coins} heads in a row when flipping a coin ({coins} heads in a row is 1 time in {Math.pow(2, coins)}). The usual bar of 5 sigma, by contrast, is {oneInText(5)}, like {headsInARow(5)} heads in a row. A result that noise makes 1 time in 15 is not a discovery; it is
             something to check, and the team calls it a “probable” detection.
           </p>
 
           <p style={paragraphStyle}>
             <strong>6. Why a spot found where it was predicted counts for more.</strong> Suppose a friend tells you that they will be at gate 4 at noon, and at noon you see someone at gate 4 who might be them. You are more convinced than if you
-            had spent the whole day at the station and picked out a faintly familiar face. In the first case there was one place and one time at which a chance resemblance could fool you; in the second there were thousands. The team’s pictures were
-            taken when the orbit said the companion would be at its farthest from Betelgeuse, and the spot was at the predicted separation ({COMPANION.separationMas} milliarcseconds) and direction ({COMPANION.positionAngleDegrees}° east of north), about the predicted
+            had spent the whole day at the station and picked out a faintly familiar face. In the first case there was one place and one time at which a chance resemblance could fool you; in the second there were thousands. The team’s 2024 pictures were
+            taken within days of the date when the orbit said the companion would be farthest from Betelgeuse, and the spot was at the predicted separation ({COMPANION.separationMas} milliarcseconds) and direction ({COMPANION.positionAngleDegrees}° east of north), about the predicted
             brightness ({COMPANION.magnitudeDifference} magnitudes fainter, about {fainterBy} times), with a mass in the predicted range; the pictures taken in 2020, when the companion was predicted to be behind Betelgeuse, showed none. Five matches are
             more than one sigma alone says. But this experiment does not turn them into a probability, and neither do the papers, so it is a reason to take the idea seriously and to wait for more, not a confirmation.
           </p>

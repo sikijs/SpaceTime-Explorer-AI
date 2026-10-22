@@ -111,6 +111,17 @@ export function matchingDistancePc(): number {
   return modelSeparationAU() / (COMPANION.separationMas * 0.001)
 }
 
+// The width of a star across, twice its radius.
+export function widthAU(angularDiameterMas: number, distancePc: number): number {
+  return 2 * radiusAU(angularDiameterMas, distancePc)
+}
+
+// The distance in parsecs for a distance given in light-years (NASA's page for Betelgeuse says about 700 light-years).
+export function parsecsFromLightYears(lightYears: number): number {
+  requirePositive(lightYears, 'The distance')
+  return lightYears / LIGHT_YEARS_PER_PARSEC
+}
+
 // Kepler's third law in astronomers' units: period (years)^2 = separation (AU)^3 / total mass (solar masses).
 export function keplerPeriodYears(separation: number, mass1Solar: number, mass2Solar: number): number {
   requirePositive(separation, 'The separation')
@@ -120,6 +131,23 @@ export function keplerPeriodYears(separation: number, mass1Solar: number, mass2S
 }
 export function periodDays(separation: number, mass1Solar: number, mass2Solar: number): number {
   return keplerPeriodYears(separation, mass1Solar, mass2Solar) * DAYS_PER_YEAR
+}
+
+// The working of Kepler's third law, step by step, for the worked moments: the separation cubed, the two masses added, and their ratio, which is the period squared.
+export function keplerWorking(separation: number, mass1Solar: number, mass2Solar: number): { cubed: number; totalMass: number; periodSquared: number } {
+  requirePositive(separation, 'The separation')
+  requirePositive(mass1Solar, 'The first mass')
+  requirePositive(mass2Solar, 'The second mass')
+  const cubed = separation * separation * separation
+  const totalMass = mass1Solar + mass2Solar
+  return { cubed, totalMass, periodSquared: cubed / totalMass }
+}
+
+// How much the orbit time changes between two choices of masses, as a percent of the orbit time of the published masses (positive when the first is longer).
+export function periodSwingPercent(first: { mass1Solar: number; mass2Solar: number }, second: { mass1Solar: number; mass2Solar: number }): number {
+  const a = modelSeparationAU()
+  const reference = keplerPeriodYears(a, BETELGEUSE.massSolar, COMPANION.massSolar)
+  return ((keplerPeriodYears(a, first.mass1Solar, first.mass2Solar) - keplerPeriodYears(a, second.mass1Solar, second.mass2Solar)) / reference) * 100
 }
 
 // The chance that noise alone makes a result at least `z` sigma, counting one direction only: the upper tail of the normal curve, Q(z) = erfc(z / sqrt 2) / 2.
@@ -145,6 +173,14 @@ function erfc(x: number): number {
 export function chanceOfSigma(z: number): number {
   if (!Number.isFinite(z) || z < 0) throw new RangeError('The number of sigma must not be negative')
   return 0.5 * erfc(z / Math.SQRT2)
+}
+// The chance as a percent.
+export function chancePercent(z: number): number {
+  return chanceOfSigma(z) * 100
+}
+// The number of heads in a row, when flipping a fair coin, that is about as rare as a result of `z` sigma (counting one direction): log2 of "1 time in N", to the nearest whole flip.
+export function headsInARow(z: number): number {
+  return Math.round(Math.log2(oneInChance(z)))
 }
 // "1 time in N": N is one over the chance.
 export function oneInChance(z: number): number {

@@ -4,7 +4,9 @@ import {
   BETELGEUSE,
   brightnessRatio,
   chanceOfSigma,
+  chancePercent,
   COMPANION,
+  keplerWorking,
   LIGHT_YEARS_PER_PARSEC,
   oneInChance,
   periodAgreementPercent,
@@ -13,6 +15,7 @@ import {
   runBetelgeuseCompanion,
   separationMismatchPercent,
   SOLAR_RADII_PER_AU,
+  widthAU,
 } from '../physics/betelgeuseCompanion'
 import type { Reach, SigmaAnswer } from '../physics/betelgeuseCompanion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
@@ -602,7 +605,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
     {
       look: 'the four marked places on the orbit: behind, in front, and the two greatest-elongation points on the sides.',
       means: 'when the companion is behind Betelgeuse, or in front of it, we cannot tell it apart from the star, which is why the 2020 pictures showed nothing. When it is at the side, as in December 2024, it is as far from the star on the sky as it ever gets, and the next time is 26 November 2027.',
-      matters: 'the team picked the date for its 2024 pictures because the orbit said that was the best time to look, so the spot, if real, had to be at a certain place on a certain date. That is what makes the test fair (Picture 3).',
+      matters: 'the 2024 pictures were taken within days of the date when the orbit said the companion would be farthest from the star, so the spot, if real, had to be at a certain place on a certain date. That is what makes the test fair (Picture 3).',
     },
     {
       look: 'the two numbers at the top left: the time for one orbit worked out with Kepler’s third law, and the long cycle that was observed.',
@@ -613,7 +616,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
   const lookForPictureThree: LookFor[] = [
     {
       look: 'the yellow shaded tail beyond the 1.5 mark.',
-      means: `noise alone, with no companion at all, would make a spot at least ${sigma} sigma strong about ${(chanceOfSigma(sigma) * 100).toFixed(1)} percent of the time, which is 1 time in ${Math.round(oneInChance(sigma))}, counting only spots that are too strong, not too weak.`,
+      means: `noise alone, with no companion at all, would make a spot at least ${sigma} sigma strong about ${chancePercent(sigma).toFixed(1)} percent of the time, which is 1 time in ${Math.round(oneInChance(sigma))}, counting only spots that are too strong, not too weak.`,
       matters: 'a result that noise makes 1 time in 15 is not rare. By itself this spot cannot be called a discovery, and the team calls it a probable detection.',
     },
     {
@@ -628,21 +631,20 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
     },
   ]
   const done = status === 'complete'
-  const widthAU = BETELGEUSE.angularDiameterMas * BETELGEUSE.distancePc * 0.001
-  const cubed = result.modelSeparationAU ** 3
-  const totalMass = BETELGEUSE.massSolar + COMPANION.massSolar
+  const width = widthAU(BETELGEUSE.angularDiameterMas, BETELGEUSE.distancePc)
+  const working = keplerWorking(result.modelSeparationAU, BETELGEUSE.massSolar, COMPANION.massSolar)
   const formulaEntries: { term: string; meaning: string }[] = [
     {
       term: 'The size of a star from its angle and distance (formula)',
-      meaning: `radius = ½ × angular size × distance, with the angle in radians. In the units astronomers use, one milliarcsecond at one parsec is 0.001 AU, so the width in AU is the angle in milliarcseconds times the distance in parsecs times 0.001. Betelgeuse: ${BETELGEUSE.angularDiameterMas} × ${BETELGEUSE.distancePc} × 0.001 = ${widthAU.toFixed(2)} AU across, so the radius is ${result.radiusAU.toFixed(2)} AU, which is ${result.radiusAU.toFixed(2)} × ${SOLAR_RADII_PER_AU.toFixed(1)} = ${Math.round(result.radiusSolarRadii)} solar radii.`,
+      meaning: `radius = ½ × angular size × distance, with the angle in radians. In the units astronomers use, one milliarcsecond at one parsec is 0.001 AU, so the width in AU is the angle in milliarcseconds times the distance in parsecs times 0.001. Betelgeuse: ${BETELGEUSE.angularDiameterMas} × ${BETELGEUSE.distancePc} × 0.001 = ${width.toFixed(2)} AU across, so the radius is ${result.radiusAU.toFixed(2)} AU, which is ${result.radiusAU.toFixed(2)} × ${SOLAR_RADII_PER_AU.toFixed(1)} = ${Math.round(result.radiusSolarRadii)} solar radii.`,
     },
     {
       term: 'A separation from an angle (formula)',
-      meaning: `the same working turns the companion’s separation on the sky into a length: ${COMPANION.separationMas} milliarcseconds × ${BETELGEUSE.distancePc} parsecs × 0.001 = ${result.separationFromAngleAU.toFixed(2)} AU. The model orbit’s separation, ${COMPANION.modelSeparationSolarRadii} solar radii, is ${result.modelSeparationAU.toFixed(2)} AU. The two agree to within ${((Math.abs(result.separationFromAngleAU - result.modelSeparationAU) / result.modelSeparationAU) * 100).toFixed(1)} percent.`,
+      meaning: `the same working turns the companion’s separation on the sky into a length: ${COMPANION.separationMas} milliarcseconds × ${BETELGEUSE.distancePc} parsecs × 0.001 = ${result.separationFromAngleAU.toFixed(2)} AU. The model orbit’s separation, ${COMPANION.modelSeparationSolarRadii} solar radii, is ${result.modelSeparationAU.toFixed(2)} AU. The two agree to within ${Math.abs(separationMismatchPercent(BETELGEUSE.distancePc)).toFixed(1)} percent.`,
     },
     {
       term: 'Kepler’s third law (formula)',
-      meaning: `(time for one orbit in years)² = (distance in AU)³ ÷ (the two masses added, in solar masses). Here ${result.modelSeparationAU.toFixed(2)}³ ÷ (${BETELGEUSE.massSolar} + ${COMPANION.massSolar}) = ${cubed.toFixed(1)} ÷ ${totalMass.toFixed(1)} = ${(cubed / totalMass).toFixed(2)}, and the square root is ${result.periodYears.toFixed(2)} years, which is ${Math.round(result.periodDays).toLocaleString('en-US')} days (one year taken as ${365.25} days). Because Betelgeuse’s mass is so much larger than the companion’s, the sum hardly changes when the companion’s mass changes, so the period cannot weigh the companion.`,
+      meaning: `(time for one orbit in years)² = (distance in AU)³ ÷ (the two masses added, in solar masses). Here ${result.modelSeparationAU.toFixed(2)}³ ÷ (${BETELGEUSE.massSolar} + ${COMPANION.massSolar}) = ${working.cubed.toFixed(1)} ÷ ${working.totalMass.toFixed(1)} = ${working.periodSquared.toFixed(2)}, and the square root is ${result.periodYears.toFixed(2)} years, which is ${Math.round(result.periodDays).toLocaleString('en-US')} days (one year taken as ${365.25} days). Because Betelgeuse’s mass is so much larger than the companion’s, the sum hardly changes when the companion’s mass changes, so the period cannot weigh the companion.`,
     },
     {
       term: 'The chance of noise alone (formula)',
@@ -655,7 +657,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
   ]
   return (
     <div>
-      <h2>Experiment 12 — The Star That May Be About to Explode: What Is Betelgeuse, and Does It Have a Companion?</h2>
+      <h2>Experiment 12 — A Star Near the End of Its Life: What Is Betelgeuse, and Does It Have a Companion?</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>
@@ -812,7 +814,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               <ExternalLink href="https://jpl.nasa.gov/news/nasa-scientist-finds-predicted-companion-star-to-betelgeuse/">
                 NASA: NASA scientist finds predicted companion star to Betelgeuse
               </ExternalLink>
-              : NASA’s account of the July 2025 announcement.
+              : NASA’s account of the July 2025 announcement, with a plain explanation of the speckle imaging.
             </li>
             <li>
               <ExternalLink href="https://science.nasa.gov/universe/what-is-betelgeuse-inside-the-strange-volatile-star">
@@ -821,11 +823,23 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               : a plain account of the star, its size, its dimming and its future.
             </li>
             <li>
+              <ExternalLink href="https://starchild.gsfc.nasa.gov/docs/StarChild/questions/question13.html">NASA StarChild: What makes stars shine</ExternalLink>: a plain account of nuclear
+              fusion in a star’s core.
+            </li>
+            <li>
               <ExternalLink href="https://science.nasa.gov/exoplanets/resources/life-and-death/chapter-6/">NASA: Aging into gianthood</ExternalLink>: how a star becomes a red giant,
               including the Sun’s future.
             </li>
             <li>
               <ExternalLink href="https://science.nasa.gov/universe/stars/">NASA: Stars</ExternalLink>: how a star’s mass decides how it lives and ends.
+            </li>
+            <li>
+              <ExternalLink href="https://www.esa.int/Science_Exploration/Space_Science/Gaia/Parallax">ESA: Parallax</ExternalLink>: how astronomers measure how far away a star is, from the
+              shift in its position as the Earth goes round the Sun.
+            </li>
+            <li>
+              <ExternalLink href="https://esahubble.org/images/heic2014a/">ESA/Hubble: Betelgeuse’s dust cloud</ExternalLink>: ESA’s and NASA’s account of the dimming of 2019 to 2020, with
+              an artist’s picture.
             </li>
             <li>
               <ExternalLink href="https://www.cfa.harvard.edu/news/cfa-scientists-detect-wake-betelgeuses-elusive-companion-star">
@@ -951,7 +965,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
             )}
             <p style={paragraph}>
               <strong>A worked moment.</strong> The star’s angle is {BETELGEUSE.angularDiameterMas} milliarcseconds across, and it is {BETELGEUSE.distancePc} parsecs away. One milliarcsecond at one
-              parsec is 0.001 AU, so the width is {BETELGEUSE.angularDiameterMas} × {BETELGEUSE.distancePc} × 0.001 = {(BETELGEUSE.angularDiameterMas * BETELGEUSE.distancePc * 0.001).toFixed(2)} AU, and the radius, half of
+              parsec is 0.001 AU, so the width is {BETELGEUSE.angularDiameterMas} × {BETELGEUSE.distancePc} × 0.001 = {width.toFixed(2)} AU, and the radius, half of
               that, is {result.radiusAU.toFixed(2)} AU. One AU is {SOLAR_RADII_PER_AU.toFixed(0)} solar radii, so that is {Math.round(result.radiusSolarRadii)} solar radii.
             </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -977,7 +991,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
             </p>
             <p style={paragraph}>
               <strong>A worked moment.</strong> Kepler’s third law: the time for one orbit in years squared equals the distance in AU cubed, divided by the two masses added
-              together in solar masses. Here {result.modelSeparationAU.toFixed(2)}³ ÷ ({BETELGEUSE.massSolar} + {COMPANION.massSolar}) = {(result.modelSeparationAU ** 3 / (BETELGEUSE.massSolar + COMPANION.massSolar)).toFixed(2)}, and the square root
+              together in solar masses. Here {result.modelSeparationAU.toFixed(2)}³ ÷ ({BETELGEUSE.massSolar} + {COMPANION.massSolar}) = {working.periodSquared.toFixed(2)}, and the square root
               of that is {result.periodYears.toFixed(2)} years, which is {Math.round(result.periodDays).toLocaleString('en-US')} days.
             </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -998,7 +1012,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               <strong>How to read Picture 3.</strong> The <strong>lavender curve</strong> shows what noise alone does when there is nothing there to find: spots of many
               sizes, the small ones most often and the big ones rarely. The scale along the bottom is in <strong>sigma</strong>, how many give-or-takes bigger than the
               average noise a spot is. The <strong>yellow shaded tail</strong> is all the spots at least as strong as the reported one ({sigma} sigma), and its size
-              compared with the whole curve is the chance that noise alone makes one: {(chanceOfSigma(sigma) * 100).toFixed(1)} percent, 1 time in {Math.round(oneInChance(sigma))}. This counts only spots that are too strong, not too weak, as in
+              compared with the whole curve is the chance that noise alone makes one: {chancePercent(sigma).toFixed(1)} percent, 1 time in {Math.round(oneInChance(sigma))}. This counts only spots that are too strong, not too weak, as in
               Experiment 1. The <strong>white marker</strong> at 5 sigma is the usual bar for a discovery.
             </p>
             {stage >= 5 && (
@@ -1087,7 +1101,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               head={['Quantity', 'Value', 'Where it comes from']}
               minWidth={560}
               rows={[
-                ['Angular size across', `${BETELGEUSE.angularDiameterMas} milliarcseconds`, 'Howell and others 2025: 40 ± 1.4 (2020) and 41 ± 1.2 (2024); the mean is used'],
+                ['Angular size across', `${BETELGEUSE.angularDiameterMas} milliarcseconds`, 'Howell and others 2025: 40 ± 1.4 (2020) and 41 ± 1.2 (2024); the 2024 value is used'],
                 ['Distance', `${BETELGEUSE.distancePc} parsecs (about ${Math.round(BETELGEUSE.distancePc * LIGHT_YEARS_PER_PARSEC)} light-years)`, `Joyce and others 2020: 168 (+27, −15); the range ${BETELGEUSE.distanceRangePc[0]} to ${BETELGEUSE.distanceRangePc[1]} parsecs is used. NASA’s page says about 700 light-years, so estimates differ`],
                 ['Radius', `${result.radiusAU.toFixed(2)} AU = ${Math.round(result.radiusSolarRadii)} solar radii`, 'worked out here: ½ × angle × distance'],
                 ['Joyce and others’ own radius', `${BETELGEUSE.joyceRadiusSolarRadii} solar radii (+116, −62)`, 'Joyce and others 2020, for comparison'],

@@ -5,15 +5,20 @@ import {
   BETELGEUSE,
   brightnessRatio,
   chanceOfSigma,
+  chancePercent,
   COMPANION,
   DAYS_PER_YEAR,
   LIGHT_YEARS_PER_PARSEC,
   matchingDistancePc,
+  headsInARow,
   keplerPeriodYears,
+  keplerWorking,
   modelSeparationAU,
   oneInChance,
+  parsecsFromLightYears,
   periodAgreementPercent,
   periodDays,
+  periodSwingPercent,
   PLANETS,
   planetsInside,
   radiusAU,
@@ -27,6 +32,7 @@ import {
   sigmaAnswer,
   SOLAR_RADII_PER_AU,
   sizeAnswer,
+  widthAU,
 } from './betelgeuseCompanion'
 
 // Tests for Frontier and Beyond Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md, "Required Physics Tests").
@@ -199,6 +205,38 @@ describe('the angle-based separation against the model orbit at a chosen distanc
     expect(separationMismatchPercent(195)).toBeGreaterThan(separationMismatchPercent(168))
     expect(separationMismatchPercent(153)).toBeLessThan(0)
     expect(() => separationMismatchPercent(0)).toThrow(RangeError)
+  })
+})
+
+describe('the helpers for the worked moments (test 15)', () => {
+  it('has the width across as twice the radius: 41 mas at 168 pc is 6.888 AU', () => {
+    expect(rel(widthAU(41, 168), 6.888)).toBeLessThan(1e-6)
+    expect(widthAU(41, 168)).toBeCloseTo(2 * radiusAU(41, 168), 12)
+  })
+  it('turns light-years into parsecs: 700 light-years is 214.6 pc, and 548 is 168', () => {
+    expect(parsecsFromLightYears(700)).toBeCloseTo(214.62, 1)
+    expect(parsecsFromLightYears(168 * 3.26156)).toBeCloseTo(168, 6)
+    expect(() => parsecsFromLightYears(0)).toThrow(RangeError)
+  })
+  it('works Kepler\'s law step by step: 8.6034 cubed is 636.8, over 19.1 is 33.34, whose root is the period', () => {
+    const w = keplerWorking(modelSeparationAU(), 17.5, 1.6)
+    expect(rel(w.cubed, 636.8)).toBeLessThan(1e-3)
+    expect(w.totalMass).toBeCloseTo(19.1, 12)
+    expect(rel(w.periodSquared, 33.34)).toBeLessThan(1e-3)
+    expect(Math.sqrt(w.periodSquared)).toBeCloseTo(keplerPeriodYears(modelSeparationAU(), 17.5, 1.6), 10)
+    expect(() => keplerWorking(0, 1, 1)).toThrow(RangeError)
+  })
+  it('has the period swing: about 2.2 percent for the companion from 1.17 to 2.0, and about 6.4 percent for Betelgeuse from 16.5 to 19', () => {
+    // 5.841 years (17.5 + 1.17) against 5.715 (17.5 + 2.0), over 5.774: 2.2 percent. 5.9316 (16.5 + 1.6) against 5.5598 (19 + 1.6), over 5.774: 6.44 percent.
+    expect(periodSwingPercent({ mass1Solar: 17.5, mass2Solar: 1.17 }, { mass1Solar: 17.5, mass2Solar: 2.0 })).toBeCloseTo(2.2, 1)
+    expect(periodSwingPercent({ mass1Solar: 16.5, mass2Solar: 1.6 }, { mass1Solar: 19, mass2Solar: 1.6 })).toBeCloseTo(6.44, 1)
+    expect(periodSwingPercent({ mass1Solar: 17.5, mass2Solar: 1.6 }, { mass1Solar: 17.5, mass2Solar: 1.6 })).toBe(0)
+  })
+  it('has 1.5 sigma as 6.68 percent and about 4 heads in a row, 5 sigma as about 22 heads in a row', () => {
+    expect(chancePercent(1.5)).toBeCloseTo(6.68, 2)
+    expect(headsInARow(1.5)).toBe(4)
+    expect(headsInARow(5)).toBe(22)
+    expect(headsInARow(0)).toBe(1)
   })
 })
 
