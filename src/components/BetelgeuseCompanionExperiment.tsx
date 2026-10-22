@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
+import type { Reach, SigmaAnswer } from '../physics/betelgeuseCompanion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md).
+// Step 5 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
 // Step 4 (the interface skeleton) builds the page's skeleton: the status line, the introduction with its new-word list, its assumptions and its "Want to know more?"
 // links, one illustration (how an angle and a distance give a size) with its guide, and the collapsed "Words and formulas" panel. The two predictions, the run, the
 // three pictures, the controls, the results and the tutor are later steps. All wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1), written to the
@@ -145,7 +148,31 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Kepler’s third law', meaning: 'the rule that links an orbit’s size, its period and the masses of the two bodies: the farther apart they are, the longer the orbit takes; the heavier they are, the shorter. The experiment shows it with numbers after the run.' },
 ]
 
+// The two prediction questions' answers (the specification's "Prediction Activity"). The labels do not say which answer is right. The first question has three buttons
+// (the physics module's `Reach` also has "past Earth", which has no button).
+const REACH_CHOICES: ReadonlyArray<{ value: Reach; label: string }> = [
+  { value: 'inside Earth', label: 'Inside Earth’s orbit' },
+  { value: 'past Mars', label: 'Past Mars but not as far as Jupiter' },
+  { value: 'past Jupiter', label: 'Past Jupiter’s orbit' },
+]
+const SIGMA_CHOICES: ReadonlyArray<{ value: SigmaAnswer; label: string }> = [
+  { value: '1 in 2', label: 'About 1 time in 2' },
+  { value: '1 in 15', label: 'About 1 time in 15' },
+  { value: '1 in 3.5 million', label: 'About 1 time in 3.5 million' },
+]
+
 export function BetelgeuseCompanionExperiment() {
+  const [reachPrediction, setReachPrediction] = useState<Reach | null>(null)
+  const [sigmaPrediction, setSigmaPrediction] = useState<SigmaAnswer | null>(null)
+  // Run only records the predictions for now: the run itself, and the pictures, are the next step.
+  const [hasRun, setHasRun] = useState(false)
+  const bothPredicted = reachPrediction !== null && sigmaPrediction !== null
+
+  function startOver() {
+    setReachPrediction(null)
+    setSigmaPrediction(null)
+    setHasRun(false)
+  }
   return (
     <div>
       <h2>Experiment 12 — The Star That May Be About to Explode: What Is Betelgeuse, and Does It Have a Companion?</h2>
@@ -331,8 +358,77 @@ export function BetelgeuseCompanionExperiment() {
 
         <ReferencePanel entries={REFERENCE_ENTRIES} />
 
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
-          The two predictions, and the experiment itself, will appear here.
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
+            right, and neither gives the star's size or the chance. */}
+        {(
+          [
+            {
+              title: 'Prediction 1: how big?',
+              text: (
+                <>
+                  Betelgeuse is a red supergiant. Imagine it replaced the Sun, with its centre where the Sun is. Mercury, Venus, Earth, Mars and Jupiter would be at their
+                  usual distances. How far out would its surface reach?
+                </>
+              ),
+              choices: REACH_CHOICES,
+              value: reachPrediction,
+              set: (v: Reach) => setReachPrediction(v),
+            },
+            {
+              title: 'Prediction 2: how strong is the hint?',
+              text: (
+                <>
+                  The team’s picture shows a faint spot, at the place and time where a companion was predicted, that is <strong>1.5 sigma</strong> (the spot is 1.5
+                  “give-or-takes” stronger than the background noise). If there were really nothing there, and noise alone were responsible, how often would noise make
+                  a spot at least this strong in that place? Count only spots that are too strong, not too weak, as in Experiment 1.
+                </>
+              ),
+              choices: SIGMA_CHOICES,
+              value: sigmaPrediction,
+              set: (v: SigmaAnswer) => setSigmaPrediction(v),
+            },
+          ] as const
+        ).map((question) => (
+          <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              {question.text} You are not graded, and a guess is fine.
+            </p>
+            <div>
+              {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                <button
+                  key={choice.value}
+                  type="button"
+                  onClick={() => (question.set as (v: never) => void)(choice.value as never)}
+                  disabled={hasRun}
+                  className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+              {question.value !== null
+                ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                : 'Choose an option to continue'}
+            </p>
+          </div>
+        ))}
+
+        <button type="button" className="action-button" onClick={() => setHasRun(true)} disabled={!bothPredicted || hasRun} style={{ padding: '0.6rem 1.5rem' }}>
+          Run
+        </button>
+        {hasRun && (
+          <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+            Start over
+          </button>
+        )}
+        {!bothPredicted && !hasRun && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+        )}
+        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
+          {hasRun ? 'Your predictions are recorded and not marked here. The pictures and the results will appear here.' : 'The pictures fill in, one stage at a time, after you press Run.'}
         </p>
       </div>
     </div>
