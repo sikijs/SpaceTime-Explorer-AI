@@ -1,11 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import {
+  BETELGEUSE,
+  brightnessRatio,
+  chanceOfSigma,
+  COMPANION,
+  oneInChance,
+  PLANETS,
+  radiusRangeAU,
+  runBetelgeuseCompanion,
+  SOLAR_RADII_PER_AU,
+} from '../physics/betelgeuseCompanion'
 import type { Reach, SigmaAnswer } from '../physics/betelgeuseCompanion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md).
+// Step 6 builds the five-stage run: Picture 1 fills in at stages 1 and 2, Picture 2 at stage 3 and Picture 3 at stages 4 and 5, each with a guide. The results, the
+// controls, the tutor and the chapter summary are later steps.
 // Step 5 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
 // Step 4 (the interface skeleton) builds the page's skeleton: the status line, the introduction with its new-word list, its assumptions and its "Want to know more?"
 // links, one illustration (how an angle and a distance give a size) with its guide, and the collapsed "Words and formulas" panel. The two predictions, the run, the
@@ -21,6 +34,11 @@ const YOU_COLOR = '#38bdf8' // sky blue: you, the observer
 const ANGLE_COLOR = '#fde047' // yellow: the angle
 const SIZE_COLOR = '#4ade80' // green: the star's real size
 const DISTANCE_COLOR = '#c084fc' // purple: the distance
+const COMPANION_COLOR = '#22d3ee' // cyan: the companion and its orbit
+const BAND_COLOR = '#fdba74' // pale orange: the range of sizes the papers allow
+const NOISE_COLOR = '#a5b4fc' // lavender: the noise curve
+const TAIL_COLOR = '#fde047' // yellow: the tail (the chance of noise alone)
+const PLANET_COLORS: Record<string, string> = { Mercury: '#d4d4d8', Venus: '#fcd34d', Earth: '#38bdf8', Mars: '#f87171', Jupiter: '#fdba74' }
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -148,6 +166,255 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Kepler’s third law', meaning: 'the rule that links an orbit’s size, its period and the masses of the two bodies: the farther apart they are, the longer the orbit takes; the heavier they are, the shorter. The experiment shows it with numbers after the run.' },
 ]
 
+
+// ---- Number formats (every value comes from the physics module) ----
+const millionsText = (value: number) => `${(value / 1e6).toFixed(2)} million`
+
+// ---- The run: five named stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'Betelgeuse in the Solar System', 'How sure is the size?', 'The companion’s orbit', 'How strong is the hint?', 'Predicted in advance']
+
+// ---- Picture 1: Betelgeuse next to the Solar System (drawn to scale). Stage 1: the star and the orbits; stage 2: the range the papers allow ----
+const P1_PX_PER_AU = 40
+const P1_X = 280
+const P1_Y = 284
+
+function PictureOne({ stage }: { stage: number }) {
+  const height = 546
+  const result = runBetelgeuseCompanion()
+  const range = radiusRangeAU()
+  const px = (au: number) => au * P1_PX_PER_AU
+  const labelY = [192, 218, 244, 270] // the left-hand labels of Mercury, Venus, Earth and Mars
+  const inner = PLANETS.slice(0, 4)
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 1, to scale: the Sun at the centre with the orbits of Mercury, Venus, Earth, Mars and Jupiter as circles round it. A large orange disc, Betelgeuse's surface if its centre were at the Sun, covers the orbits of Mercury, Venus, Earth and Mars and stops short of Jupiter's orbit. Its radius is ${result.radiusAU.toFixed(2)} astronomical units${stage >= 2 ? `, and a paler band marks the range of radius the papers allow, ${range.min.toFixed(1)} to ${range.max.toFixed(1)} astronomical units, which also stops short of Jupiter's orbit` : ''}`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 1: Betelgeuse next to the Solar System
+      </text>
+      <SvgLines x={20} y={38} lines={['If Betelgeuse took the Sun’s place, seen from above, to scale']} fill={MUTED_COLOR} />
+
+      {/* Stage 2: the range of radius the papers allow, as a paler band (drawn first, under the star). */}
+      {stage >= 2 && (
+        <g>
+          <circle cx={P1_X} cy={P1_Y} r={px(range.max)} fill={BAND_COLOR} fillOpacity={0.22} stroke={BAND_COLOR} strokeWidth={1.2} strokeDasharray="4 3" />
+          <circle cx={P1_X} cy={P1_Y} r={px(range.min)} fill="#0b1020" fillOpacity={0.0} stroke={BAND_COLOR} strokeWidth={1.2} strokeDasharray="4 3" />
+          <SvgLines x={P1_X} y={P1_Y + px(range.max) + 14} lines={['the paler band: the range of radius', `the papers allow (${range.min.toFixed(1)} to ${range.max.toFixed(1)} AU)`]} fill={BAND_COLOR} bold anchor="middle" size={9} />
+        </g>
+      )}
+
+      {/* Stage 1: Betelgeuse's surface, a large orange disc centred on the Sun. */}
+      {stage >= 1 && (
+        <g>
+          <circle cx={P1_X} cy={P1_Y} r={px(result.radiusAU)} fill={STAR_COLOR} fillOpacity={0.55} stroke={STAR_COLOR} strokeWidth={2.5} />
+          <line x1={P1_X} y1={P1_Y} x2={P1_X + px(result.radiusAU)} y2={P1_Y} stroke={TEXT_COLOR} strokeWidth={1.5} />
+          <SvgLines x={P1_X + 70} y={P1_Y - 8} lines={[`radius ${result.radiusAU.toFixed(2)} AU`, `(${Math.round(result.radiusSolarRadii)} solar radii)`]} fill={TEXT_COLOR} bold anchor="start" size={10} />
+          <SvgLines x={P1_X} y={P1_Y + px(result.radiusAU) - 34} lines={['Betelgeuse’s surface, if its', 'centre were where the Sun is']} fill={TEXT_COLOR} bold anchor="middle" size={10} />
+        </g>
+      )}
+
+      {/* The five orbits (rings), and the planets on them. */}
+      {PLANETS.map((planet) => (
+        <circle key={planet.name} cx={P1_X} cy={P1_Y} r={px(planet.orbitAU)} fill="none" stroke={PLANET_COLORS[planet.name]} strokeWidth={1.2} strokeDasharray={planet.name === 'Jupiter' ? '' : '3 3'} />
+      ))}
+      <SvgLines x={P1_X} y={P1_Y - px(PLANETS[4].orbitAU) - 6} lines={[`Jupiter’s orbit (${PLANETS[4].orbitAU} AU)`]} fill={PLANET_COLORS.Jupiter} bold anchor="middle" />
+      {inner.map((planet, i) => {
+        const dotX = P1_X - px(planet.orbitAU)
+        return (
+          <g key={planet.name}>
+            <circle cx={dotX} cy={P1_Y} r={3.5} fill={PLANET_COLORS[planet.name]} stroke="#0b1020" strokeWidth={1} />
+            <line x1={118} y1={labelY[i] - 4} x2={dotX} y2={P1_Y} stroke={PLANET_COLORS[planet.name]} strokeWidth={0.8} />
+            <SvgLines x={116} y={labelY[i]} lines={[`${planet.name} (${planet.orbitAU} AU)`]} fill={PLANET_COLORS[planet.name]} bold anchor="end" size={10} />
+          </g>
+        )
+      })}
+      <circle cx={P1_X + px(PLANETS[4].orbitAU)} cy={P1_Y} r={4} fill={PLANET_COLORS.Jupiter} stroke="#0b1020" strokeWidth={1} />
+      <SvgLines x={P1_X + px(PLANETS[4].orbitAU) + 7} y={P1_Y + 4} lines={['Jupiter']} fill={PLANET_COLORS.Jupiter} bold anchor="start" size={10} />
+
+      {/* The Sun, at the centre, drawn larger than it is. */}
+      <circle cx={P1_X} cy={P1_Y} r={3} fill="#fbbf24" />
+      <SvgLines x={P1_X + 6} y={P1_Y + 14} lines={['Sun']} fill="#fbbf24" bold anchor="start" size={10} />
+
+      {/* The scale bar. */}
+      <line x1={20} y1={height - 24} x2={20 + P1_PX_PER_AU} y2={height - 24} stroke={TEXT_COLOR} strokeWidth={2} />
+      <SvgLines x={20 + P1_PX_PER_AU + 8} y={height - 20} lines={['= 1 AU, the Earth’s distance from the Sun (about 150 million km)']} fill={MUTED_COLOR} />
+    </svg>
+  )
+}
+
+// ---- Picture 2: the companion's orbit (drawn to scale, seen from above for clarity) ----
+const P2_PX_PER_AU = 21
+const P2_X = 280
+const P2_Y = 300
+
+function PictureTwo() {
+  const height = 566
+  const result = runBetelgeuseCompanion()
+  const px = (au: number) => au * P2_PX_PER_AU
+  const orbit = px(result.modelSeparationAU)
+  const disc = px(result.radiusAU)
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 2, to scale, seen from above: Betelgeuse as an orange disc at the centre, a cyan circle round it for the companion's orbit, ${result.modelSeparationAU.toFixed(1)} astronomical units in radius, which is ${result.separationInBetelgeuseRadii.toFixed(1)} times the star's radius, and a dashed grey circle for Jupiter's orbit for comparison. The companion is marked at four places: behind the star, in front of it, and at its two farthest points to the sides, on 6 December 2024 and on 26 November 2027. An arrow at the bottom shows the direction of the Earth`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 2: the companion’s orbit
+      </text>
+      <SvgLines x={20} y={38} lines={['Seen from above, to scale (from the Earth the orbit is seen nearly edge-on)']} fill={MUTED_COLOR} />
+
+      <circle cx={P2_X} cy={P2_Y} r={px(PLANETS[4].orbitAU)} fill="none" stroke={PLANET_COLORS.Jupiter} strokeWidth={1.2} strokeDasharray="4 4" />
+      <SvgLines x={P2_X} y={P2_Y + px(PLANETS[4].orbitAU) + 14} lines={[`Jupiter’s orbit, for comparison (${PLANETS[4].orbitAU} AU)`]} fill={PLANET_COLORS.Jupiter} bold anchor="middle" size={9} />
+
+      <circle cx={P2_X} cy={P2_Y} r={disc} fill={STAR_COLOR} fillOpacity={0.6} stroke={STAR_COLOR} strokeWidth={2.5} />
+      <SvgLines x={P2_X} y={P2_Y - 4} lines={['Betelgeuse', `(radius ${result.radiusAU.toFixed(2)} AU)`]} fill={TEXT_COLOR} bold anchor="middle" size={10} />
+
+      <circle cx={P2_X} cy={P2_Y} r={orbit} fill="none" stroke={COMPANION_COLOR} strokeWidth={2.5} />
+      <SvgLines x={548} y={74} lines={[`the companion’s orbit: radius ${result.modelSeparationAU.toFixed(1)} AU,`, `${result.separationInBetelgeuseRadii.toFixed(1)} times Betelgeuse’s radius`]} fill={COMPANION_COLOR} bold anchor="end" size={10} />
+      <line x1={470} y1={98} x2={P2_X + orbit * 0.71} y2={P2_Y - orbit * 0.71} stroke={COMPANION_COLOR} strokeWidth={1} strokeDasharray="2 3" />
+
+      {/* Four places on the orbit. The top is behind the star, the bottom in front, the two sides are the points of greatest elongation. */}
+      <circle cx={P2_X} cy={P2_Y - orbit} r={5} fill={COMPANION_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
+      <SvgLines x={P2_X + 12} y={P2_Y - orbit + 36} lines={['behind Betelgeuse:', 'the 2020 pictures,', 'no spot (as predicted)']} fill={TEXT_COLOR} anchor="start" size={9} />
+      <circle cx={P2_X} cy={P2_Y + orbit} r={5} fill={COMPANION_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
+      <SvgLines x={P2_X + 12} y={P2_Y + orbit + 18} lines={['in front of Betelgeuse:', 'crossing its face']} fill={TEXT_COLOR} anchor="start" size={9} />
+      <circle cx={P2_X + orbit} cy={P2_Y} r={5} fill={COMPANION_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
+      <SvgLines x={P2_X + orbit + 8} y={P2_Y + 20} lines={['greatest', 'elongation,', 'one side:', '6 Dec 2024 (the', '2024 pictures:', 'a faint spot)']} fill={TEXT_COLOR} anchor="start" size={9} />
+      <circle cx={P2_X - orbit} cy={P2_Y} r={5} fill={COMPANION_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
+      <SvgLines x={8} y={P2_Y + 20} lines={['greatest', 'elongation,', 'other side:', '26 Nov 2027', '(the next', 'good chance)']} fill={TEXT_COLOR} anchor="start" size={9} />
+
+      {/* The direction of the Earth. */}
+      <line x1={P2_X} y1={height - 8} x2={P2_X} y2={height - 44} stroke={YOU_COLOR} strokeWidth={2} />
+      <path d={`M ${P2_X - 6} ${height - 38} L ${P2_X} ${height - 48} L ${P2_X + 6} ${height - 38}`} fill="none" stroke={YOU_COLOR} strokeWidth={2} />
+      <SvgLines x={P2_X + 12} y={height - 24} lines={['toward the Earth (where we look from)']} fill={YOU_COLOR} bold anchor="start" size={10} />
+
+      {/* The period. */}
+      <SvgLines
+        x={12}
+        y={62}
+        lines={[`Time for one orbit, from Kepler’s third law`, `(Betelgeuse ${BETELGEUSE.massSolar} and the companion ${COMPANION.massSolar} solar masses):`, `${result.periodYears.toFixed(2)} years = ${Math.round(result.periodDays).toLocaleString('en-US')} days`, `The observed long cycle: about ${COMPANION.observedPeriodDays.toLocaleString('en-US')} days`]}
+        fill={TEXT_COLOR}
+        bold
+        size={10}
+      />
+    </svg>
+  )
+}
+
+// ---- Picture 3: how strong is the hint? Stage 4: the noise curve and its tail; stage 5: the five predictions that matched ----
+const P3_LEFT = 40
+const P3_PX_PER_SIGMA = 480 / 9
+const P3_BASE = 232
+const P3_PEAK = 150 // the height of the curve's peak
+const sigmaToX = (z: number) => P3_LEFT + (z + 3.5) * P3_PX_PER_SIGMA
+const bell = (z: number) => Math.exp((-z * z) / 2) / Math.sqrt(2 * Math.PI)
+const sigmaToY = (z: number) => P3_BASE - (bell(z) / bell(0)) * P3_PEAK
+
+const FIVE_MATCHES: { name: string; found: string }[] = [
+  { name: '1. When it appears', found: 'no spot in the 2020 pictures, when the companion was predicted to be behind Betelgeuse, and a faint spot in December 2024, at its greatest elongation' },
+  { name: '2. Separation', found: `${COMPANION.separationMas} milliarcseconds, as predicted` },
+  { name: '3. Direction', found: `${COMPANION.positionAngleDegrees}° east of north, as predicted` },
+  { name: '4. Brightness', found: `about ${COMPANION.magnitudeDifference} magnitudes fainter than Betelgeuse (about ${Math.round(brightnessRatio(COMPANION.magnitudeDifference))} times fainter), as predicted` },
+  { name: '5. Mass', found: 'between 1.4 and 2.0 solar masses, likeliest 1.6, as predicted' },
+]
+
+// Breaks a sentence into lines of at most `width` characters, at spaces (for text inside a drawing).
+function wrapText(text: string, width: number): string[] {
+  const lines: string[] = []
+  let line = ''
+  for (const word of text.split(' ')) {
+    if (line && `${line} ${word}`.length > width) {
+      lines.push(line)
+      line = word
+    } else {
+      line = line ? `${line} ${word}` : word
+    }
+  }
+  if (line) lines.push(line)
+  return lines
+}
+
+function PictureThree({ stage }: { stage: number }) {
+  const height = stage >= 5 ? 566 : 300
+  const z = COMPANION.reportedSigma
+  const points: string[] = []
+  for (let i = 0; i <= 180; i++) {
+    const v = -3.5 + (i * 9) / 180
+    points.push(`${sigmaToX(v).toFixed(1)},${sigmaToY(v).toFixed(1)}`)
+  }
+  const tail: string[] = [`${sigmaToX(z).toFixed(1)},${P3_BASE}`]
+  for (let i = 0; i <= 80; i++) {
+    const v = z + (i * (5.5 - z)) / 80
+    tail.push(`${sigmaToX(v).toFixed(1)},${sigmaToY(v).toFixed(1)}`)
+  }
+  tail.push(`${sigmaToX(5.5).toFixed(1)},${P3_BASE}`)
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 3: a bell curve showing how large a spot random noise alone makes, measured in sigma, with the middle most common. The part of the curve beyond ${z} sigma is shaded yellow: noise alone makes a spot at least that strong about 1 time in ${Math.round(oneInChance(z))}. A marker at 5 sigma shows the usual bar for a discovery, about 1 time in ${millionsText(oneInChance(5))}${stage >= 5 ? '. Below the curve, five boxes list the five things the team predicted in advance and found: when the companion appears, its distance from Betelgeuse, its direction, its brightness and its mass' : ''}`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 3: how strong is the hint?
+      </text>
+      <SvgLines x={20} y={38} lines={['The curve: how big a spot random noise alone would make, with no companion at all']} fill={MUTED_COLOR} />
+
+      {/* Stage 4: the curve (noise alone), the tail beyond the reported spot and the 5 sigma marker. */}
+      {stage >= 4 && (
+        <g>
+          <polygon points={tail.join(' ')} fill={TAIL_COLOR} fillOpacity={0.75} />
+          <polyline points={points.join(' ')} fill="none" stroke={NOISE_COLOR} strokeWidth={2.5} />
+          <line x1={P3_LEFT} y1={P3_BASE} x2={P3_LEFT + 480} y2={P3_BASE} stroke={MUTED_COLOR} />
+          {[-3, -2, -1, 0, 1, 2, 3, 4, 5].map((t) => (
+            <g key={t}>
+              <line x1={sigmaToX(t)} y1={P3_BASE} x2={sigmaToX(t)} y2={P3_BASE + 5} stroke={MUTED_COLOR} />
+              <text x={sigmaToX(t)} y={P3_BASE + 17} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                {t < 0 ? `−${-t}` : t}
+              </text>
+            </g>
+          ))}
+          <SvgLines x={sigmaToX(1)} y={P3_BASE + 32} lines={['size of the spot, in sigma (give-or-takes above the average noise)']} fill={MUTED_COLOR} anchor="middle" />
+          <SvgLines x={sigmaToX(-3.5) + 10} y={78} lines={['noise alone makes spots', 'of all sizes. The middle', '(0) is the most common']} fill={NOISE_COLOR} bold size={10} />
+          <line x1={sigmaToX(z)} y1={P3_BASE} x2={sigmaToX(z)} y2={sigmaToY(z) - 28} stroke={TAIL_COLOR} strokeWidth={2} />
+          <SvgLines x={sigmaToX(z) + 8} y={92} lines={[`the reported spot: ${z} sigma`, `shaded: the chance that noise alone makes`, `a spot at least this strong, 1 time in ${Math.round(oneInChance(z))}`]} fill={TAIL_COLOR} bold size={10} />
+          <line x1={sigmaToX(z) + 6} y1={118} x2={sigmaToX(z) + 14} y2={sigmaToY(z) + 10} stroke={TAIL_COLOR} strokeWidth={1} strokeDasharray="2 3" />
+          <line x1={sigmaToX(5)} y1={P3_BASE} x2={sigmaToX(5)} y2={P3_BASE - 36} stroke={TEXT_COLOR} strokeWidth={2} />
+          <SvgLines x={548} y={P3_BASE - 66} lines={['5 sigma, the usual bar for a', `discovery: 1 time in ${millionsText(oneInChance(5))}`]} fill={TEXT_COLOR} bold anchor="end" size={10} />
+        </g>
+      )}
+
+      {/* Stage 5: the five things the paper says the team predicted, and found. */}
+      {stage >= 5 && (
+        <g>
+          <line x1={20} y1={286} x2={540} y2={286} stroke={MUTED_COLOR} strokeWidth={0.5} />
+          <SvgLines x={20} y={306} lines={['Predicted in advance, and found, in the 2024 pictures (the paper lists these five)']} fill={TEXT_COLOR} bold size={11} />
+          {FIVE_MATCHES.map((row, i) => (
+            <g key={row.name}>
+              <rect x={20} y={320 + i * 46} width={520} height={40} rx={4} fill="none" stroke={COMPANION_COLOR} strokeWidth={1.2} />
+              <SvgLines x={28} y={344 + i * 46} lines={[row.name]} fill={COMPANION_COLOR} bold size={10} />
+              <SvgLines x={150} y={337 + i * 46} lines={wrapText(row.found, 80)} fill={TEXT_COLOR} size={9} />
+            </g>
+          ))}
+        </g>
+      )}
+    </svg>
+  )
+}
+
 // The two prediction questions' answers (the specification's "Prediction Activity"). The labels do not say which answer is right. The first question has three buttons
 // (the physics module's `Reach` also has "past Earth", which has no button).
 const REACH_CHOICES: ReadonlyArray<{ value: Reach; label: string }> = [
@@ -161,18 +428,98 @@ const SIGMA_CHOICES: ReadonlyArray<{ value: SigmaAnswer; label: string }> = [
   { value: '1 in 3.5 million', label: 'About 1 time in 3.5 million' },
 ]
 
-export function BetelgeuseCompanionExperiment() {
+interface BetelgeuseCompanionExperimentProps {
+  onComplete?: () => void
+}
+
+export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanionExperimentProps) {
   const [reachPrediction, setReachPrediction] = useState<Reach | null>(null)
   const [sigmaPrediction, setSigmaPrediction] = useState<SigmaAnswer | null>(null)
-  // Run only records the predictions for now: the run itself, and the pictures, are the next step.
-  const [hasRun, setHasRun] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const hasRun = status !== 'idle'
   const bothPredicted = reachPrediction !== null && sigmaPrediction !== null
+
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) {
+        setStage(stage + 1)
+      } else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
 
   function startOver() {
     setReachPrediction(null)
     setSigmaPrediction(null)
-    setHasRun(false)
+    setStatus('idle')
+    setStage(0)
   }
+  function run() {
+    setStage(1)
+    setStatus('running')
+  }
+
+  // Every number below comes from the physics module (CLAUDE.md §9).
+  const result = runBetelgeuseCompanion()
+  const range = radiusRangeAU()
+  const sigma = COMPANION.reportedSigma
+  const lookForPictureOne: LookFor[] = [
+    {
+      look: 'the large orange disc, and the five rings (the orbits of Mercury, Venus, Earth, Mars and Jupiter), with Jupiter’s ring outside the disc.',
+      means: `Betelgeuse’s surface would be ${result.radiusAU.toFixed(2)} AU from its centre, which is ${Math.round(result.radiusSolarRadii)} times the Sun’s radius. The orbits of ${result.planetsInside.slice(0, -1).join(', ')} and ${result.planetsInside[result.planetsInside.length - 1]} all lie inside it, and Jupiter’s (${PLANETS[4].orbitAU} AU) lies outside it.`,
+      matters: 'a red supergiant is not just a bigger star. If Betelgeuse were at the centre of our Solar System, the Earth and Mars would be inside it. This is what “red supergiant” means in kilometres.',
+    },
+    {
+      look: 'the white line from the centre to the edge of the disc, and its label.',
+      means: `the radius, ${result.radiusAU.toFixed(2)} AU, comes from the star’s angular size (${BETELGEUSE.angularDiameterMas} milliarcseconds) and its distance (${BETELGEUSE.distancePc} parsecs), as in the illustration above: radius = ½ × angle × distance.`,
+      matters: 'nobody can measure the star’s size directly. The size is only as sure as the angle and the distance are, and the paler band, which appears in stage 2, shows how much that matters.',
+    },
+    {
+      look: 'the paler orange band round the disc’s edge, and the dashed rings that mark its inner and outer edges.',
+      means: `the papers allow a distance from about ${BETELGEUSE.distanceRangePc[0]} to ${BETELGEUSE.distanceRangePc[1]} parsecs and an angular size from ${BETELGEUSE.angularDiameterRangeMas[0]} to ${BETELGEUSE.angularDiameterRangeMas[1]} milliarcseconds, so the radius could be anywhere from ${range.min.toFixed(1)} to ${range.max.toFixed(1)} AU.`,
+      matters: `even at the largest size the papers allow, Betelgeuse’s surface stops short of Jupiter’s orbit (${PLANETS[4].orbitAU} AU), and even at the smallest it reaches past Mars (${PLANETS[3].orbitAU} AU). The answer to the question “how far out would it reach?” is firm, even though the exact size is not.`,
+    },
+  ]
+  const lookForPictureTwo: LookFor[] = [
+    {
+      look: 'the cyan circle, the companion’s orbit, compared with the orange disc and with Jupiter’s dashed orbit.',
+      means: `the orbit’s radius is ${result.modelSeparationAU.toFixed(1)} AU, which is ${result.separationInBetelgeuseRadii.toFixed(1)} times Betelgeuse’s radius. The companion goes round outside the star’s surface but well inside the distance of Jupiter from the Sun.`,
+      matters: 'a companion this close must move through the thin outer gas of the swollen star, which is why astronomers talk about its “wake”, and it is why the star’s glare makes it so hard to see.',
+    },
+    {
+      look: 'the four marked places on the orbit: behind, in front, and the two greatest-elongation points on the sides.',
+      means: 'when the companion is behind Betelgeuse, or in front of it, we cannot tell it apart from the star, which is why the 2020 pictures showed nothing. When it is at the side, as in December 2024, it is as far from the star on the sky as it ever gets, and the next time is 26 November 2027.',
+      matters: 'the team picked the date for its 2024 pictures because the orbit said that was the best time to look, so the spot, if real, had to be at a certain place on a certain date. That is what makes the test fair (Picture 3).',
+    },
+    {
+      look: 'the two numbers at the top left: the time for one orbit worked out with Kepler’s third law, and the long cycle that was observed.',
+      means: `the orbit of radius ${result.modelSeparationAU.toFixed(1)} AU, with the two stars’ masses, takes ${result.periodYears.toFixed(2)} years, or ${Math.round(result.periodDays).toLocaleString('en-US')} days; the long cycle measured in Betelgeuse’s light is about ${COMPANION.observedPeriodDays.toLocaleString('en-US')} days. They agree to within ${Math.abs(result.periodMinusObservedPercent).toFixed(1)} percent.`,
+      matters: 'if the companion is real and has this orbit, its orbit time should match the star’s long cycle, and it does. This is a reason to take the idea seriously, but it is not a detection of the companion.',
+    },
+  ]
+  const lookForPictureThree: LookFor[] = [
+    {
+      look: 'the yellow shaded tail beyond the 1.5 mark.',
+      means: `noise alone, with no companion at all, would make a spot at least ${sigma} sigma strong about ${(chanceOfSigma(sigma) * 100).toFixed(1)} percent of the time, which is 1 time in ${Math.round(oneInChance(sigma))}, counting only spots that are too strong, not too weak.`,
+      matters: 'a result that noise makes 1 time in 15 is not rare. By itself this spot cannot be called a discovery, and the team calls it a probable detection.',
+    },
+    {
+      look: 'the white marker at 5 sigma, far out on the right of the curve.',
+      means: `5 sigma is the usual bar for calling something a discovery. Noise alone makes a spot that strong only 1 time in ${millionsText(oneInChance(5))}. The tail beyond it is far too thin to see on the curve.`,
+      matters: 'the reported spot is a long way from that bar, which is why the next step in the picture matters: what else points the same way.',
+    },
+    {
+      look: 'the five boxes below the curve.',
+      means: 'the paper lists five things that were worked out before looking at the pictures, and found: when the companion appears, how far from Betelgeuse, in which direction, how bright and how heavy.',
+      matters: 'a spot found where it was predicted, on the predicted date, is much less likely to be a trick of the noise than a spot found by searching the whole picture. The paper does not combine these into one number, and neither does this experiment; they are a reason to wait for more evidence, not a confirmation.',
+    },
+  ]
   return (
     <div>
       <h2>Experiment 12 — The Star That May Be About to Explode: What Is Betelgeuse, and Does It Have a Companion?</h2>
@@ -416,7 +763,7 @@ export function BetelgeuseCompanionExperiment() {
           </div>
         ))}
 
-        <button type="button" className="action-button" onClick={() => setHasRun(true)} disabled={!bothPredicted || hasRun} style={{ padding: '0.6rem 1.5rem' }}>
+        <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || hasRun} style={{ padding: '0.6rem 1.5rem' }}>
           Run
         </button>
         {hasRun && (
@@ -427,9 +774,118 @@ export function BetelgeuseCompanionExperiment() {
         {!bothPredicted && !hasRun && (
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
         )}
-        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
-          {hasRun ? 'Your predictions are recorded and not marked here. The pictures and the results will appear here.' : 'The pictures fill in, one stage at a time, after you press Run.'}
+        {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+          {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+          {status !== 'idle' && (
+            <>
+              <strong>{status === 'complete' ? 'Run complete' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}`}</strong>
+              {status === 'complete' && (
+                <span style={{ color: 'var(--text-muted)' }}> (all {LAST_STAGE} stages shown). Your predictions are recorded and not marked here.</span>
+              )}
+            </>
+          )}
         </p>
+        {status === 'running' && (
+          <p style={{ fontSize: '0.875rem', marginTop: 0, color: 'var(--text-muted)' }}>
+            {stage === 1 && `Picture 1 shows Betelgeuse’s surface, as if its centre were where the Sun is, with the orbits of the planets drawn to the same scale. Its radius, worked out from its angle and distance, is ${result.radiusAU.toFixed(2)} AU.`}
+            {stage === 2 && `A paler band is added: the range of radius the papers allow, from ${range.min.toFixed(1)} to ${range.max.toFixed(1)} AU, because the distance and the angle are not known exactly.`}
+            {stage === 3 && `Picture 2 appears below Picture 1. It shows the companion’s orbit, ${result.modelSeparationAU.toFixed(1)} AU in radius, and the time one orbit takes, ${result.periodYears.toFixed(2)} years.`}
+            {stage === 4 && `Picture 3 appears below Picture 2. It shows how often noise alone would make a spot as strong as the reported ${sigma} sigma: 1 time in ${Math.round(oneInChance(sigma))}.`}
+            {stage === 5 && 'Five boxes are added to Picture 3: the five things that were predicted in advance and found.'}
+          </p>
+        )}
+
+        {/* Picture 1: the star and the orbits from stage 1, the range from stage 2. */}
+        {hasRun && (
+          <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+            <PictureOne stage={stage} />
+          </div>
+        )}
+        {hasRun && (
+          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            <p style={paragraph}>
+              <strong>How to read Picture 1.</strong> You are looking down on the Solar System from above, and everything is drawn to the same scale: the bar at the
+              bottom left is 1 AU. The tiny amber dot in the middle is the Sun. The five rings are the orbits of Mercury, Venus, Earth, Mars and Jupiter, each with a
+              dot for the planet and its distance from the Sun in AU. The large orange disc is Betelgeuse’s surface, drawn as if the star’s centre were at the Sun’s
+              place, as in Prediction 1.
+            </p>
+            {stage >= 2 && (
+              <p style={paragraph}>
+                <strong>The paler band</strong> (stage 2) is the range of radius that the papers’ uncertainty allows: its inner dashed ring is the smallest radius, {range.min.toFixed(1)}{' '}
+                AU, and its outer ring the largest, {range.max.toFixed(1)} AU.
+              </p>
+            )}
+            <p style={paragraph}>
+              <strong>A worked moment.</strong> The star’s angle is {BETELGEUSE.angularDiameterMas} milliarcseconds across, and it is {BETELGEUSE.distancePc} parsecs away. One milliarcsecond at one
+              parsec is 0.001 AU, so the width is {BETELGEUSE.angularDiameterMas} × {BETELGEUSE.distancePc} × 0.001 = {(BETELGEUSE.angularDiameterMas * BETELGEUSE.distancePc * 0.001).toFixed(2)} AU, and the radius, half of
+              that, is {result.radiusAU.toFixed(2)} AU. One AU is {SOLAR_RADII_PER_AU.toFixed(0)} solar radii, so that is {Math.round(result.radiusSolarRadii)} solar radii.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>What to look for.</strong>
+            </p>
+            <LookForList items={lookForPictureOne.slice(0, stage >= 2 ? 3 : 2)} />
+          </div>
+        )}
+
+        {stage >= 3 && (
+          <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+            <PictureTwo />
+          </div>
+        )}
+        {stage >= 3 && (
+          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            <p style={paragraph}>
+              <strong>How to read Picture 2.</strong> The orange disc is Betelgeuse, the cyan circle is the companion’s orbit and the cyan dots are the companion at four
+              places on it; the companion itself is far too small to draw to scale. The picture looks down on the orbit from above, to the same scale as Picture 1 (the
+              grey dashed circle is Jupiter’s orbit again, for comparison). From the Earth, shown by the blue arrow, the orbit is seen nearly edge-on, so the
+              companion looks as if it moves from one side of the star to the other and back, passing behind and in front of it. <strong>Elongation</strong> is how far
+              apart the two look on the sky, and it is greatest when the companion is at the side.
+            </p>
+            <p style={paragraph}>
+              <strong>A worked moment.</strong> Kepler’s third law: the time for one orbit in years squared equals the distance in AU cubed, divided by the two masses added
+              together in solar masses. Here {result.modelSeparationAU.toFixed(2)}³ ÷ ({BETELGEUSE.massSolar} + {COMPANION.massSolar}) = {(result.modelSeparationAU ** 3 / (BETELGEUSE.massSolar + COMPANION.massSolar)).toFixed(2)}, and the square root
+              of that is {result.periodYears.toFixed(2)} years, which is {Math.round(result.periodDays).toLocaleString('en-US')} days.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>What to look for.</strong>
+            </p>
+            <LookForList items={lookForPictureTwo} />
+          </div>
+        )}
+
+        {stage >= 4 && (
+          <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+            <PictureThree stage={stage} />
+          </div>
+        )}
+        {stage >= 4 && (
+          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            <p style={paragraph}>
+              <strong>How to read Picture 3.</strong> The <strong>lavender curve</strong> shows what noise alone does when there is nothing there to find: spots of many
+              sizes, the small ones most often and the big ones rarely. The scale along the bottom is in <strong>sigma</strong>, how many give-or-takes bigger than the
+              average noise a spot is. The <strong>yellow shaded tail</strong> is all the spots at least as strong as the reported one ({sigma} sigma), and its size
+              compared with the whole curve is the chance that noise alone makes one: {(chanceOfSigma(sigma) * 100).toFixed(1)} percent, 1 time in {Math.round(oneInChance(sigma))}. This counts only spots that are too strong, not too weak, as in
+              Experiment 1. The <strong>white marker</strong> at 5 sigma is the usual bar for a discovery.
+            </p>
+            {stage >= 5 && (
+              <p style={paragraph}>
+                <strong>The five boxes</strong> (stage 5) are the five things the paper says were worked out beforehand and then found in the 2024 pictures. The{' '}
+                <strong>brightness</strong> is given in <strong>magnitudes</strong>, the astronomers’ scale: five magnitudes fainter is exactly 100 times fainter, so {COMPANION.magnitudeDifference} magnitudes is about{' '}
+                {Math.round(brightnessRatio(COMPANION.magnitudeDifference))} times fainter, the {Math.round(brightnessRatio(COMPANION.magnitudeDifference))} coming from 10 raised to the power of 0.4 × {COMPANION.magnitudeDifference}. A
+                <strong> milliarcsecond</strong> is a thousandth of an arcsecond; 52 of them is the angle between the star and the companion on the sky.
+              </p>
+            )}
+            <p style={paragraph}>
+              <strong>A worked moment.</strong> The reported spot is {sigma} sigma. The chance of noise alone making a spot at least that strong is the area of the shaded
+              tail, {chanceOfSigma(sigma).toFixed(4)}, and 1 ÷ {chanceOfSigma(sigma).toFixed(4)} = {oneInChance(sigma).toFixed(1)}, so about 1 time in {Math.round(oneInChance(sigma))}. At 5 sigma the same working gives 1 time in {millionsText(oneInChance(5))}.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>What to look for.</strong>
+            </p>
+            <LookForList items={lookForPictureThree.slice(0, stage >= 5 ? 3 : 2)} />
+          </div>
+        )}
       </div>
     </div>
   )

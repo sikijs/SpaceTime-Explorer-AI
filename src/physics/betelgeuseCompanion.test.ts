@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import {
   AU_PER_PARSEC,
   BETELGEUSE,
+  brightnessRatio,
   chanceOfSigma,
   COMPANION,
   DAYS_PER_YEAR,
@@ -171,6 +172,19 @@ describe('the chance of noise alone (tests 6 and 7)', () => {
   })
   it('rejects a negative number of sigma', () => {
     expect(() => chanceOfSigma(-1)).toThrow(RangeError)
+  })
+})
+
+describe('the brightness scale (test 12)', () => {
+  it('has 5 magnitudes as 100 times, 0 as 1, and 6 as about 251 times', () => {
+    expect(brightnessRatio(0)).toBe(1)
+    expect(brightnessRatio(5)).toBeCloseTo(100, 8)
+    expect(rel(brightnessRatio(6), 251.19)).toBeLessThan(1e-4)
+    expect(brightnessRatio(10)).toBeCloseTo(10000, 6)
+  })
+  it('keeps the companion about 6 magnitudes fainter than Betelgeuse, and rejects a negative difference', () => {
+    expect(COMPANION.magnitudeDifference).toBe(6)
+    expect(() => brightnessRatio(-1)).toThrow(RangeError)
   })
 })
 

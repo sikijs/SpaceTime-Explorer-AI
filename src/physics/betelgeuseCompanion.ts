@@ -47,6 +47,7 @@ export const COMPANION = {
   massSolar: 1.6,
   massChoicesSolar: [1.17, 1.4, 1.6, 2.0] as const,
   reportedSigma: 1.5,
+  magnitudeDifference: 6, // about 6 +/- 1 magnitudes fainter than Betelgeuse (in the blue band, Howell and others)
   observedPeriodDays: 2100,
   greatestElongations: ['2024 Dec 6', '2027 Nov 26', '2030 Nov 15', '2033 Nov 4'] as const,
 }
@@ -134,6 +135,12 @@ export function chanceOfSigma(z: number): number {
 // "1 time in N": N is one over the chance.
 export function oneInChance(z: number): number {
   return 1 / chanceOfSigma(z)
+}
+
+// Astronomers' brightness scale: a difference of m magnitudes is a brightness ratio of 10^(0.4 m), so 5 magnitudes is exactly 100 times and 6 magnitudes about 251 times.
+export function brightnessRatio(magnitudes: number): number {
+  if (!Number.isFinite(magnitudes) || magnitudes < 0) throw new RangeError('The difference in magnitudes must not be negative')
+  return Math.pow(10, 0.4 * magnitudes)
 }
 
 // For the predictions' answers.
