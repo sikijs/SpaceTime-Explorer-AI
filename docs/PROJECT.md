@@ -443,7 +443,7 @@ Most learners have no everyday experience of ideas such as reference frames, and
 
 ### Frontier and Beyond: fuller introductions and captions
 
-The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so three rules apply to every experiment in the group, all nineteen and any added later:
+The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so three rules apply to every experiment in the group, all twenty-four and any added later:
 
 1. **The introduction is up to date, clear and detailed, in simple terms** that a learner with only a basic knowledge of science can follow. It may use real-life examples. Its length is not limited, as long as the extra length helps the learner understand. It may also give links for the learner who wants to know more.
 2. **The caption of every picture follows the same rule:** up to date, clear, detailed and in simple terms, with real-life examples where they help, and as long as it needs to be.

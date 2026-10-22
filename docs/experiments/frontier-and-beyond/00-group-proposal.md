@@ -42,7 +42,7 @@ Physics models reuse modules the project already has, and none needs a physical 
 | 9 | B | Time | Can a clock tell how high it is? ◇ | Settled (measured in 2022) |
 | 10 | B | Aerospace | Does time tick faster on the Moon? | Strong evidence (a calculation) |
 | 11 | B | Aerospace | The fastest spacecraft: how much does its clock lag? ◇ | Settled (a calculation) |
-| 12 | C | Stars | The star that may be about to explode: what is Betelgeuse, and does it have a companion? | Settled (what a red supergiant is); Open (the companion) |
+| 12 | C | Stars | A star near the end of its life: what is Betelgeuse, and does it have a companion? | Settled (what a red supergiant is); Open (the companion) |
 | 13 | C | Stars | Catching a supernova in the act (SN 2023ixf) | Strong evidence (a red supergiant exploded); Contested (its mass) |
 | 14 | C | Stars | What makes a white dwarf explode? (the double-detonation remnant) ◇ | Strong evidence (one remnant); Open (how common) |
 | 15 | C | Stars | How big is a neutron star, and where do they end? | Strong evidence; Open (the lower mass gap) |
@@ -143,7 +143,7 @@ Physics models reuse modules the project already has, and none needs a physical 
 
 *Added at the owner's request (2026-10-22: "add additional experiments for Supernova, White dwarf, Red giants or any other related topics", then "go ahead with five experiments") so that the black hole experiments that follow are preceded by the stars that make them. Order: a star near the end of its life, its explosion, the white dwarf case, the neutron star left by a core collapse, where heavy elements come from, and the case where there is no explosion. Black Holes Experiment 9 already teaches what holds up a dead star's core, so none of these re-teaches it. Every anchor below was confirmed to exist by web search on 2026-10-22, from summaries only; each specification must read the original paper (see "Keeping the facts honest").*
 
-**12. The star that may be about to explode: what is Betelgeuse, and does it have a companion? *(Gemini North, 2025)***
+**12. A star near the end of its life: what is Betelgeuse, and does it have a companion? *(Gemini North, 2025)***
 - **Anchor.** Betelgeuse, a red supergiant in Orion, dimmed sharply in 2019 to 2020 and has a slow brightness cycle of about six years. In July 2025 a NASA-led team using the Gemini North telescope reported a faint companion, named Siwarha, of about 1.6 solar masses on a 5.94-year orbit. The detection is only about **1.5 sigma** (a hint, not a discovery), though it sits where it was predicted to be. **Settled** (Betelgeuse is a red supergiant, near the end of its life); **Open** (the companion). The Sun will become a red giant too, in about five billion years.
 - **Objective.** What a red giant or supergiant is (a star that has used up the hydrogen in its core and swollen), how big one is next to the Solar System, and how to read a 1.5 sigma hint (reusing Experiment 1's sigma).
 - **Model.** Radius from luminosity and temperature (L = 4πR²σT⁴), Kepler's third law for the orbit, and sigma. A rough check puts Betelgeuse's radius at about 3.5 Earth-Sun distances, past Mars and short of Jupiter (to be checked).
