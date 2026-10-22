@@ -6,6 +6,7 @@ import {
   chanceOfSigma,
   COMPANION,
   oneInChance,
+  periodAgreementPercent,
   PLANETS,
   radiusRangeAU,
   runBetelgeuseCompanion,
@@ -13,7 +14,7 @@ import {
 } from '../physics/betelgeuseCompanion'
 import type { Reach, SigmaAnswer } from '../physics/betelgeuseCompanion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { LookForList } from './WideBinariesExperiment'
+import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md).
@@ -169,6 +170,12 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
 
 // ---- Number formats (every value comes from the physics module) ----
 const millionsText = (value: number) => `${(value / 1e6).toFixed(2)} million`
+// A small number in the form 2.87 × 10⁻⁷.
+const SUPERSCRIPT: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' }
+function sciTextShort(value: number): string {
+  const [mantissa, exponent] = value.toExponential(2).split('e')
+  return `${mantissa} × 10${String(Number(exponent)).split('').map((c) => SUPERSCRIPT[c]).join('')}`
+}
 
 // ---- The run: five named stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
 const STAGE_MS = 2600
@@ -303,7 +310,7 @@ function PictureTwo() {
       <SvgLines
         x={12}
         y={62}
-        lines={[`Time for one orbit, from Kepler’s third law`, `(Betelgeuse ${BETELGEUSE.massSolar} and the companion ${COMPANION.massSolar} solar masses):`, `${result.periodYears.toFixed(2)} years = ${Math.round(result.periodDays).toLocaleString('en-US')} days`, `The observed long cycle: about ${COMPANION.observedPeriodDays.toLocaleString('en-US')} days`]}
+        lines={[`Time for one orbit, from Kepler’s third law`, `(Betelgeuse ${BETELGEUSE.massSolar} and the companion ${COMPANION.massSolar} solar masses):`, `${result.periodYears.toFixed(2)} years = ${Math.round(result.periodDays).toLocaleString('en-US')} days`, `The long cycle that was observed: ${COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to ${COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days, depending on the paper`]}
         fill={TEXT_COLOR}
         bold
         size={10}
@@ -499,8 +506,8 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
     },
     {
       look: 'the two numbers at the top left: the time for one orbit worked out with Kepler’s third law, and the long cycle that was observed.',
-      means: `the orbit of radius ${result.modelSeparationAU.toFixed(1)} AU, with the two stars’ masses, takes ${result.periodYears.toFixed(2)} years, or ${Math.round(result.periodDays).toLocaleString('en-US')} days; the long cycle measured in Betelgeuse’s light is about ${COMPANION.observedPeriodDays.toLocaleString('en-US')} days. They agree to within ${Math.abs(result.periodMinusObservedPercent).toFixed(1)} percent.`,
-      matters: 'if the companion is real and has this orbit, its orbit time should match the star’s long cycle, and it does. This is a reason to take the idea seriously, but it is not a detection of the companion.',
+      means: `the orbit of radius ${result.modelSeparationAU.toFixed(1)} AU, with the two stars’ masses, takes ${result.periodYears.toFixed(2)} years, or ${Math.round(result.periodDays).toLocaleString('en-US')} days; the long cycle measured in Betelgeuse’s light is quoted as ${COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to ${COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days, depending on the paper. The orbit time is within about ${Math.ceil(periodAgreementPercent(result.periodDays))} percent of every one of those values.`,
+      matters: 'if the companion is real and has this orbit, its orbit time should match the star’s long cycle, and it is close. This is a reason to take the idea seriously, but it is not a detection of the companion, because the idea was built to explain that cycle.',
     },
   ]
   const lookForPictureThree: LookFor[] = [
@@ -518,6 +525,32 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
       look: 'the five boxes below the curve.',
       means: 'the paper lists five things that were worked out before looking at the pictures, and found: when the companion appears, how far from Betelgeuse, in which direction, how bright and how heavy.',
       matters: 'a spot found where it was predicted, on the predicted date, is much less likely to be a trick of the noise than a spot found by searching the whole picture. The paper does not combine these into one number, and neither does this experiment; they are a reason to wait for more evidence, not a confirmation.',
+    },
+  ]
+  const done = status === 'complete'
+  const widthAU = BETELGEUSE.angularDiameterMas * BETELGEUSE.distancePc * 0.001
+  const cubed = result.modelSeparationAU ** 3
+  const totalMass = BETELGEUSE.massSolar + COMPANION.massSolar
+  const formulaEntries: { term: string; meaning: string }[] = [
+    {
+      term: 'The size of a star from its angle and distance (formula)',
+      meaning: `radius = ½ × angular size × distance, with the angle in radians. In the units astronomers use, one milliarcsecond at one parsec is 0.001 AU, so the width in AU is the angle in milliarcseconds times the distance in parsecs times 0.001. Betelgeuse: ${BETELGEUSE.angularDiameterMas} × ${BETELGEUSE.distancePc} × 0.001 = ${widthAU.toFixed(2)} AU across, so the radius is ${result.radiusAU.toFixed(2)} AU, which is ${result.radiusAU.toFixed(2)} × ${SOLAR_RADII_PER_AU.toFixed(1)} = ${Math.round(result.radiusSolarRadii)} solar radii.`,
+    },
+    {
+      term: 'A separation from an angle (formula)',
+      meaning: `the same working turns the companion’s separation on the sky into a length: ${COMPANION.separationMas} milliarcseconds × ${BETELGEUSE.distancePc} parsecs × 0.001 = ${result.separationFromAngleAU.toFixed(2)} AU. The model orbit’s separation, ${COMPANION.modelSeparationSolarRadii} solar radii, is ${result.modelSeparationAU.toFixed(2)} AU. The two agree to within ${((Math.abs(result.separationFromAngleAU - result.modelSeparationAU) / result.modelSeparationAU) * 100).toFixed(1)} percent.`,
+    },
+    {
+      term: 'Kepler’s third law (formula)',
+      meaning: `(time for one orbit in years)² = (distance in AU)³ ÷ (the two masses added, in solar masses). Here ${result.modelSeparationAU.toFixed(2)}³ ÷ (${BETELGEUSE.massSolar} + ${COMPANION.massSolar}) = ${cubed.toFixed(1)} ÷ ${totalMass.toFixed(1)} = ${(cubed / totalMass).toFixed(2)}, and the square root is ${result.periodYears.toFixed(2)} years, which is ${Math.round(result.periodDays).toLocaleString('en-US')} days (one year taken as ${365.25} days). Because Betelgeuse’s mass is so much larger than the companion’s, the sum hardly changes when the companion’s mass changes, so the period cannot weigh the companion.`,
+    },
+    {
+      term: 'The chance of noise alone (formula)',
+      meaning: `for a result of z sigma, the chance that noise alone makes a result at least that strong, counting only one direction, is the area of the bell curve beyond z. For z = ${sigma} it is ${chanceOfSigma(sigma).toFixed(4)}, so 1 ÷ ${chanceOfSigma(sigma).toFixed(4)} = ${oneInChance(sigma).toFixed(1)}: about 1 time in ${Math.round(oneInChance(sigma))}. For z = 5 it is ${sciTextShort(chanceOfSigma(5))}, which is 1 time in ${millionsText(oneInChance(5))}.`,
+    },
+    {
+      term: 'Magnitudes (formula)',
+      meaning: `a difference of m magnitudes is a brightness ratio of 10 raised to the power of 0.4 × m. Five magnitudes is exactly 100 times; ${COMPANION.magnitudeDifference} magnitudes is 10^(0.4 × ${COMPANION.magnitudeDifference}) = ${brightnessRatio(COMPANION.magnitudeDifference).toFixed(0)} times. A larger magnitude means a fainter object.`,
     },
   ]
   return (
@@ -703,7 +736,7 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
           </ul>
         </div>
 
-        <ReferencePanel entries={REFERENCE_ENTRIES} />
+        <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
             right, and neither gives the star's size or the chance. */}
@@ -884,6 +917,104 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureThree.slice(0, stage >= 5 ? 3 : 2)} />
+          </div>
+        )}
+
+        {/* The results, shown only after the run completes: the status label, three tables, and the links kept back until now. Table 4, the learner's own what-ifs, comes
+            with the controls, a later step. */}
+        {done && (
+          <div style={{ marginTop: '2rem' }}>
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p style={{ ...paragraph, padding: '0.75rem 1rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px', fontSize: '0.875rem' }}>
+              <strong>Where this stands (as of October 2026).</strong> <strong>Settled:</strong> Betelgeuse is a red supergiant, near the end of its life.{' '}
+              <strong>Strong evidence:</strong> it has a companion (several independent signs agree with an orbit of about 6 years), but no clear direct image has
+              confirmed it. <strong>Open:</strong> the companion’s mass (estimates run from about 1.2 to 1.6 solar masses, and one analysis excludes more than about
+              1.5) and its exact nature. The next good chance to see it directly is 26 November 2027.
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>How to read these results.</strong> Table 1 is the size: it comes from an angle and a distance, and it holds across the range the papers allow.
+              Table 2 is the orbit: the separation from the angle on the sky and from the model, and the time one orbit takes with Kepler’s third law, set beside the long
+              cycle that was observed, plus the three different estimates of the companion’s mass, which have not been reconciled. Table 3 is the evidence so far, one
+              row for each source, in the sources’ own cautious words. Nothing here is a confirmation: the experiment explains each number and leaves the weighing of the
+              evidence to the tutor. The “Words and formulas” box now has the formulas worked with these numbers.
+            </p>
+
+            <p style={{ marginBottom: '0.25rem' }}>
+              <strong>Table 1: how big is Betelgeuse?</strong>
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Value', 'Where it comes from']}
+              minWidth={560}
+              rows={[
+                ['Angular size across', `${BETELGEUSE.angularDiameterMas} milliarcseconds`, 'Howell and others 2025: 40 ± 1.4 (2020) and 41 ± 1.2 (2024); the mean is used'],
+                ['Distance', `${BETELGEUSE.distancePc} parsecs (about 548 light-years)`, `Joyce and others 2020: 168 (+27, −15); the range ${BETELGEUSE.distanceRangePc[0]} to ${BETELGEUSE.distanceRangePc[1]} parsecs is used. NASA’s page says about 700 light-years, so estimates differ`],
+                ['Radius', `${result.radiusAU.toFixed(2)} AU = ${Math.round(result.radiusSolarRadii)} solar radii`, 'worked out here: ½ × angle × distance'],
+                ['Joyce and others’ own radius', `${BETELGEUSE.joyceRadiusSolarRadii} solar radii (+116, −62)`, 'Joyce and others 2020, for comparison'],
+                ['Range of radius the papers allow', `${range.min.toFixed(2)} to ${range.max.toFixed(2)} AU`, 'smallest angle at the smallest distance to largest angle at the largest'],
+                ['Planets inside the star (centre at the Sun)', result.planetsInside.join(', '), `Jupiter’s orbit (${PLANETS[4].orbitAU} AU) is outside it, even at the largest radius`],
+              ]}
+            />
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 2: the companion’s orbit.</strong>
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Value', 'Where it comes from']}
+              minWidth={560}
+              rows={[
+                ['Separation from the angle', `${COMPANION.separationMas} milliarcseconds = ${result.separationFromAngleAU.toFixed(2)} AU`, 'Howell and others 2025 (angle), worked out here (× distance)'],
+                ['Model separation', `${COMPANION.modelSeparationSolarRadii} solar radii = ${result.modelSeparationAU.toFixed(2)} AU = ${result.separationInBetelgeuseRadii.toFixed(2)} Betelgeuse radii`, 'Goldberg and others 2024: 1850 ± 70 solar radii; Dupree and others 2026: 2.3 radii'],
+                ['Time for one orbit (Kepler)', `${result.periodYears.toFixed(2)} years = ${Math.round(result.periodDays).toLocaleString('en-US')} days`, `worked out here with Betelgeuse ${BETELGEUSE.massSolar} and the companion ${COMPANION.massSolar} solar masses`],
+                ['The long cycle that was observed', `${COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to ${COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days (about 6 years)`, 'about 2,000 (Dupree and others 2026), about 2,100 (the CfA release), 2,170 (Goldberg and others 2024), “about 6 years” (Howell and others 2025)'],
+                ['Orbit time against the observed cycle', `within ${Math.ceil(periodAgreementPercent(result.periodDays))} percent of every value quoted`, 'worked out here'],
+                ['Companion mass, estimate 1', '1.17 solar masses (M sin i), with an uncertainty of ± 0.7', 'Goldberg and others 2024, from the long cycle and the star’s velocities (M sin i is the mass times the sine of the tilt of the orbit; it is the least the mass can be)'],
+                ['Companion mass, estimate 2', `between 1.4 and 2.0, likeliest ${COMPANION.massSolar} solar masses`, 'Howell and others 2025, from a star-model (isochrone) analysis, assuming a 10-million-year age'],
+                ['Companion mass, a limit', 'masses above about 1.5 solar masses excluded', 'Goldberg and others 2025, far-ultraviolet Hubble spectra'],
+              ]}
+            />
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 3: the evidence so far.</strong> Each source’s own words are in quotation marks.
+            </p>
+            <ResultsTable
+              head={['Source', 'What was looked at', 'What was found (the source’s words)', 'Date']}
+              minWidth={640}
+              rows={[
+                ['Goldberg and others', 'Betelgeuse’s long cycle in its brightness and its velocities', 'a companion of about 1.17 solar masses at about 1850 solar radii explains the 2,170-day cycle; the authors discuss “what would be required to confirm” it', 'August 2024'],
+                ['Howell and others', 'speckle pictures, 2020 and 2024', '“probable” detection; the spot is about 1.5 sigma', 'July 2025'],
+                ['Goldberg and others; O’Grady and others', 'far-ultraviolet and X-ray light from the companion’s place', 'no companion light seen; “exclude masses above ≳1.5 M☉”; an accreting compact object excluded; “likely a low-mass YSO” (a young star)', 'May 2025 (revised September 2025)'],
+                ['Dupree and others', 'spectra of Betelgeuse’s atmosphere (the CfA release: Hubble and two ground observatories, nearly eight years)', '“a trailing and expanding wake”, repeating with the cycle; the CfA release calls it “direct evidence”', 'January 2026'],
+                ['Matthews and others', 'Betelgeuse’s shape in radio waves (VLA and ALMA)', 'a link between the star’s shape and the orbit, “consistent with” the companion disturbing the atmosphere', 'August 2026'],
+              ]}
+            />
+
+            <p style={{ margin: '1.5rem 0 0.5rem' }}>
+              <strong>The papers behind these results.</strong> Kept until now, so that they did not give away the predictions. Links open in a new tab.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.875rem' }}>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2507.15749">Howell and others, “The probable direct-imaging detection of the stellar companion to Betelgeuse”</ExternalLink>{' '}
+                (The Astrophysical Journal Letters, 2025): the speckle pictures. Also <ExternalLink href="https://iopscience.iop.org/article/10.3847/2041-8213/adeaaf">the journal’s page</ExternalLink>.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2408.09089">Goldberg, Joyce and Molnár, “A buddy for Betelgeuse”</ExternalLink> (2024): the long cycle as the sign of a companion.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2505.18375">Goldberg and others, “Betelgeuse, Betelgeuse, Betelgeuse, Betel-buddy?”</ExternalLink> (2025): the Hubble ultraviolet limits.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2505.18376">O’Grady and others, “Betelgeuse’s buddy: X-ray constraints”</ExternalLink> (2025): the X-ray limits.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2601.00470">Dupree and others, “Betelgeuse: detection of the expanding wake of the companion star”</ExternalLink> (2026): the wake.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2608.02847">Matthews and others, “New spatially resolved observations of Betelgeuse from the VLA and ALMA”</ExternalLink> (2026): the radio shape.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2006.09837">Joyce and others, “Standing on the shoulders of giants”</ExternalLink> (The Astrophysical Journal, 2020): Betelgeuse’s distance, radius and mass.
+              </li>
+            </ul>
           </div>
         )}
       </div>

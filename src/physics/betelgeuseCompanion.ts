@@ -49,6 +49,7 @@ export const COMPANION = {
   reportedSigma: 1.5,
   magnitudeDifference: 6, // about 6 +/- 1 magnitudes fainter than Betelgeuse (in the blue band, Howell and others)
   observedPeriodDays: 2100,
+  observedPeriodRangeDays: [2000, 2170] as const, // quoted: ~2000 (Dupree and others 2026), about 2100 (the CfA release, 2026), 2170 (Goldberg and others 2024)
   greatestElongations: ['2024 Dec 6', '2027 Nov 26', '2030 Nov 15', '2033 Nov 4'] as const,
 }
 
@@ -141,6 +142,12 @@ export function oneInChance(z: number): number {
 export function brightnessRatio(magnitudes: number): number {
   if (!Number.isFinite(magnitudes) || magnitudes < 0) throw new RangeError('The difference in magnitudes must not be negative')
   return Math.pow(10, 0.4 * magnitudes)
+}
+
+// How far a period is from the quoted values of the long cycle: the largest difference, as a percent of the quoted value, over the range of values quoted.
+export function periodAgreementPercent(days: number): number {
+  requirePositive(days, 'The period')
+  return Math.max(...COMPANION.observedPeriodRangeDays.map((q) => (Math.abs(days - q) / q) * 100))
 }
 
 // For the predictions' answers.

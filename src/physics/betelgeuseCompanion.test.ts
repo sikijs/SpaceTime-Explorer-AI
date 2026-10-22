@@ -10,6 +10,7 @@ import {
   keplerPeriodYears,
   modelSeparationAU,
   oneInChance,
+  periodAgreementPercent,
   periodDays,
   PLANETS,
   planetsInside,
@@ -172,6 +173,21 @@ describe('the chance of noise alone (tests 6 and 7)', () => {
   })
   it('rejects a negative number of sigma', () => {
     expect(() => chanceOfSigma(-1)).toThrow(RangeError)
+  })
+})
+
+describe('the model period against the quoted values of the long cycle (test 13)', () => {
+  it('is within 6 percent of every value quoted, 2,000 to 2,170 days, and the worst case is the 2,000', () => {
+    const days = periodDays(modelSeparationAU(), 17.5, 1.6)
+    expect(COMPANION.observedPeriodRangeDays).toEqual([2000, 2170])
+    expect(periodAgreementPercent(days)).toBeLessThan(6)
+    expect(rel(periodAgreementPercent(days), ((days - 2000) / 2000) * 100)).toBeLessThan(1e-9)
+  })
+  it('is zero percent away from a period equal to a quoted value only if the other end is also matched, and grows with the difference', () => {
+    expect(periodAgreementPercent(2000)).toBeCloseTo((170 / 2170) * 100, 8)
+    expect(periodAgreementPercent(2170)).toBeCloseTo((170 / 2000) * 100, 8)
+    expect(periodAgreementPercent(3000)).toBeGreaterThan(periodAgreementPercent(2500))
+    expect(() => periodAgreementPercent(0)).toThrow(RangeError)
   })
 })
 
