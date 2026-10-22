@@ -6,6 +6,9 @@ import {
   chanceOfSigma,
   chancePercent,
   COMPANION,
+  compareWithPublished,
+  distanceToLookThisWideMetres,
+  HAIR_WIDTH_MM,
   keplerWorking,
   LIGHT_YEARS_PER_PARSEC,
   oneInChance,
@@ -449,12 +452,12 @@ function PictureThree({ stage, yours }: { stage: number; yours: Yours | null }) 
         </g>
       )}
 
-      {/* The learner's own what-if: a white marker on the curve and a label. */}
+      {/* The learner's own setting: a white marker on the curve and a label. */}
       {yours && stage >= 4 && (
         <g>
           <line x1={sigmaToX(yours.sigma)} y1={P3_BASE} x2={sigmaToX(yours.sigma)} y2={sigmaToY(yours.sigma) - 6} stroke={YOURS_COLOR} strokeWidth={2.5} />
           <path d={`M ${sigmaToX(yours.sigma) - 6} ${sigmaToY(yours.sigma) - 16} L ${sigmaToX(yours.sigma) + 6} ${sigmaToY(yours.sigma) - 16} L ${sigmaToX(yours.sigma)} ${sigmaToY(yours.sigma) - 5} Z`} fill={YOURS_COLOR} />
-          <SvgLines x={548} y={56} lines={[`your what-if (the white marker): ${yours.sigma} sigma,`, `1 time in ${yours.oneIn < 1000 ? Math.round(yours.oneIn) : millionsText(yours.oneIn)}`]} fill={YOURS_COLOR} bold anchor="end" size={10} />
+          <SvgLines x={548} y={56} lines={[`your setting (the white marker): ${yours.sigma} sigma,`, `1 time in ${yours.oneIn < 1000 ? Math.round(yours.oneIn) : millionsText(yours.oneIn)}`]} fill={YOURS_COLOR} bold anchor="end" size={10} />
         </g>
       )}
 
@@ -518,6 +521,13 @@ interface BetelgeuseCompanionExperimentProps {
   onTutorComplete?: () => void
 }
 
+const pct = (n: number): string => {
+  const a = Math.abs(n)
+  return a < 10 ? a.toFixed(1) : String(Math.round(a))
+}
+const isSame = (n: number): boolean => Math.abs(n) < 1e-9
+const massWord = (m: -1 | 0 | 1): string => (m === 0 ? 'the same as' : m < 0 ? 'lighter than' : 'heavier than')
+
 export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: BetelgeuseCompanionExperimentProps) {
   const [reachPrediction, setReachPrediction] = useState<Reach | null>(null)
   const [sigmaPrediction, setSigmaPrediction] = useState<SigmaAnswer | null>(null)
@@ -578,6 +588,13 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
     oneIn: mine.oneIn,
   }
   const mismatch = separationMismatchPercent(distanceChoice)
+  const cmp = compareWithPublished({ distancePc: distanceChoice, betelgeuseMassSolar: betelgeuseMassChoice, companionMassSolar: companionMassChoice, sigma: sigmaChoice })
+  const publishedDays = Math.round(result.periodDays).toLocaleString('en-US')
+  const publishedOneIn = Math.round(cmp.oneInPublished)
+  const oneInText = (x: number): string => (x < 1000 ? String(Math.round(x)) : millionsText(x))
+  const rangeText = `${COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to ${COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days`
+  const allPublished = isSame(cmp.distancePercent) && cmp.betelgeuseMass === 0 && cmp.companionMass === 0 && cmp.sigmaSame
+  const massesChanged = cmp.betelgeuseMass !== 0 || cmp.companionMass !== 0
   const lightYears = distanceChoice * LIGHT_YEARS_PER_PARSEC
   const lookForPictureOne: LookFor[] = [
     {
@@ -1039,8 +1056,8 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
           <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
             <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              Change a setting and watch the white marks in the three pictures above, and Table 4 below, follow it. Each choice is a “what if”: it shows what would
-              happen, and does not say that the real star or signal is like that. The distance and the masses are values that the papers allow or report.
+              Change a setting and watch the white marks in the three pictures above, and Table 4 below, follow it. Each choice is a trial value: it shows what would
+              happen with that number, and does not say that the real star or signal is like that. The distance and the masses are values that the papers allow or report.
             </p>
 
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How far away is Betelgeuse?</p>
@@ -1066,16 +1083,16 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               the time hardly changes. The masses are the papers’ estimates, and this experiment does not choose among them.
             </p>
 
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>What if the spot were stronger? (sigma)</p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How strong is the spot? (sigma)</p>
             <ChoiceButtons options={SIGMA_WHAT_IFS} value={sigmaChoice} onChange={setSigmaChoice} format={(v) => `${v} sigma${v === COMPANION.reportedSigma ? ' (as reported)' : ''}`} />
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
-              A spot of {sigmaChoice} sigma is made by noise alone about 1 time in {mine.oneIn < 1000 ? Math.round(mine.oneIn) : millionsText(mine.oneIn)} (counting one direction). This is a what-if:
+              A spot of {sigmaChoice} sigma is made by noise alone about 1 time in {mine.oneIn < 1000 ? Math.round(mine.oneIn) : millionsText(mine.oneIn)} (counting one direction). This is a trial value:
               the real spot is {sigma} sigma.
             </p>
           </div>
         )}
 
-        {/* The results, shown only after the run completes: the status label, three tables, and the links kept back until now. Table 4, the learner's own what-ifs, comes
+        {/* The results, shown only after the run completes: the status label, three tables, and the links kept back until now. Table 4, the learner's own numbers, comes
             with the controls, a later step. */}
         {done && (
           <div style={{ marginTop: '2rem' }}>
@@ -1086,12 +1103,69 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               confirmed it. <strong>Open:</strong> the companion’s mass (estimates run from about 1.2 to 1.6 solar masses, and one analysis excludes more than about
               1.5) and its exact nature. The next good chance to see it directly is 26 November 2027.
             </p>
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>Your predictions, beside the results.</strong> Before the run you made two predictions. Here they are again, each with the place on this page where its
+                number appears. Compare them yourself. The tutor will go through them with you after the tables.
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>Prediction 1: how big?</strong> You predicted: <strong>{REACH_CHOICES.find((c) => c.value === reachPrediction)?.label}</strong>. The question was how far out
+                Betelgeuse’s surface would reach if it replaced the Sun. Its number is in Table 1, in the rows “Radius” and “Planets inside the star”.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Prediction 2: how strong is the hint?</strong> You predicted: <strong>{SIGMA_CHOICES.find((c) => c.value === sigmaPrediction)?.label}</strong>. The question was
+                how often noise alone would make a spot at least as strong as the reported one. Its number is in the check-up table, in the row “How clear the faint spot is”, and in
+                Picture 3.
+              </p>
+            </div>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              <strong>How to read these results.</strong> Table 1 is the size: it comes from an angle and a distance, and it holds across the range the papers allow.
-              Table 2 is the orbit: the separation from the angle on the sky and from the model, and the time one orbit takes with Kepler’s third law, set beside the long
-              cycle that was observed, plus the three different estimates of the companion’s mass, which have not been reconciled. Table 3 is the evidence so far, one
-              row for each source, in the sources’ own cautious words. Nothing here is a confirmation: the experiment explains each number and leaves the weighing of the
-              evidence to the tutor. The “Words and formulas” box now has the formulas worked with these numbers.
+              <strong>How to read these results.</strong> Think of these tables as a set of test results, and this section as the doctor explaining them. Betelgeuse is a
+              very large, aging star. Some astronomers think a smaller star orbits inside its outer layers. We cannot photograph that star clearly, so the evidence comes as
+              numbers. None of the numbers is a picture of the companion. Each is one clue. The question to keep in mind is:{' '}
+              <strong>do the clues agree with each other, and how strong is each one?</strong>
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              First comes a short check-up that sets what we would expect beside what was found. Then each table has a plain-words note under it. The experiment explains what
+              each number means. It does not decide for you what the evidence adds up to. The tutor will help you with that, after the tables. The “Words and formulas” box
+              now has the formulas worked with these numbers.
+            </p>
+
+            <p style={{ marginBottom: '0.25rem' }}>
+              <strong>The check-up: what we would expect, and what was found</strong>
+            </p>
+            <ResultsTable
+              head={['What was checked', 'What we would expect', 'What was found', 'What this tells us']}
+              minWidth={640}
+              rows={[
+                [
+                  'How long one orbit takes',
+                  `${result.periodYears.toFixed(2)} years (${Math.round(result.periodDays).toLocaleString('en-US')} days), worked out here from the size of the orbit and the stars’ weight with Kepler’s third law`,
+                  `A long cycle in Betelgeuse’s brightness and motion of about ${COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to ${COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days`,
+                  `Close: within ${Math.ceil(periodAgreementPercent(result.periodDays))} percent of every value quoted. The orbit and the cycle fit together.`,
+                ],
+                [
+                  'How big the orbit is',
+                  `${result.modelSeparationAU.toFixed(2)} AU, from the orbit model`,
+                  `${result.separationFromAngleAU.toFixed(2)} AU, from the angle between the two stars on the sky`,
+                  `Close: only ${Math.abs(separationMismatchPercent(BETELGEUSE.distancePc)).toFixed(1)} percent apart. Two different routes give almost the same length.`,
+                ],
+                [
+                  'How clear the faint spot is (the row for Prediction 2)',
+                  'A detection that stands well clear of the noise',
+                  `A spot at ${COMPANION.reportedSigma} sigma. Noise alone would make one this strong about 1 time in ${Math.round(oneInChance(COMPANION.reportedSigma))}`,
+                  'Weak on its own. It is a hint, not a clear picture.',
+                ],
+                [
+                  'How heavy the companion is',
+                  'One agreed value',
+                  `Three estimates from three methods: ${COMPANION.massChoicesSolar[0]}, about ${COMPANION.massSolar} and “not above about 1.5” solar masses`,
+                  'Not settled. The methods have not been reconciled.',
+                ],
+              ]}
+            />
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              A doctor reads each result against a reference. Here the reference is what the same physics predicts. Two rows agree, one is weak and one is unsettled. That is
+              why the status label says “Strong evidence” for the companion, but “Open” for its mass.
             </p>
 
             <p style={{ marginBottom: '0.25rem' }}>
@@ -1103,12 +1177,37 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               rows={[
                 ['Angular size across', `${BETELGEUSE.angularDiameterMas} milliarcseconds`, 'Howell and others 2025: 40 ± 1.4 (2020) and 41 ± 1.2 (2024); the 2024 value is used'],
                 ['Distance', `${BETELGEUSE.distancePc} parsecs (about ${Math.round(BETELGEUSE.distancePc * LIGHT_YEARS_PER_PARSEC)} light-years)`, `Joyce and others 2020: 168 (+27, −15); the range ${BETELGEUSE.distanceRangePc[0]} to ${BETELGEUSE.distanceRangePc[1]} parsecs is used. NASA’s page says about 700 light-years, so estimates differ`],
-                ['Radius', `${result.radiusAU.toFixed(2)} AU = ${Math.round(result.radiusSolarRadii)} solar radii`, 'worked out here: ½ × angle × distance'],
+                ['Radius (the row for Prediction 1)', `${result.radiusAU.toFixed(2)} AU = ${Math.round(result.radiusSolarRadii)} solar radii`, 'worked out here: ½ × angle × distance'],
                 ['Joyce and others’ own radius', `${BETELGEUSE.joyceRadiusSolarRadii} solar radii (+116, −62)`, 'Joyce and others 2020, for comparison'],
                 ['Range of radius the papers allow', `${range.min.toFixed(2)} to ${range.max.toFixed(2)} AU`, 'smallest angle at the smallest distance to largest angle at the largest'],
-                ['Planets inside the star (centre at the Sun)', result.planetsInside.join(', '), `Jupiter’s orbit (${PLANETS[4].orbitAU} AU) is outside it, even at the largest radius`],
+                ['Planets inside the star (centre at the Sun) (the row for Prediction 1)', result.planetsInside.join(', '), `Jupiter’s orbit (${PLANETS[4].orbitAU} AU) is outside it, even at the largest radius`],
               ]}
             />
+
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Where the size comes from.</strong> We can’t hold a ruler to a star, so we use its angle and its distance. Betelgeuse looks{' '}
+                  {BETELGEUSE.angularDiameterMas} milliarcseconds wide. That is about the width of a human hair seen from about{' '}
+                  {(Math.round(distanceToLookThisWideMetres(HAIR_WIDTH_MM, BETELGEUSE.angularDiameterMas) / 10) * 10).toLocaleString('en-US')} metres away, roughly three and a half
+                  football pitches. It is {BETELGEUSE.distancePc} parsecs, about {Math.round(BETELGEUSE.distancePc * LIGHT_YEARS_PER_PARSEC)} light-years, away.
+                </li>
+                <li>
+                  <strong>What it means.</strong> Radius = ½ × angle × distance = {result.radiusAU.toFixed(2)} AU, or about{' '}
+                  {(Math.round(result.radiusSolarRadii / 10) * 10).toLocaleString('en-US')} times the Sun’s radius. If Betelgeuse were placed where our Sun is, its surface
+                  would reach past Mercury, Venus, Earth and Mars. Jupiter, at {PLANETS[4].orbitAU} AU, would still be outside it.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The size sets the scale for everything else in the experiment. An orbit of about {result.modelSeparationAU.toFixed(1)} AU means
+                  the companion would be circling at about {result.separationInBetelgeuseRadii.toFixed(1)} star-radii from the centre, in the thin outer layers.
+                </li>
+                <li>
+                  <strong>How sure is it?</strong> The distance is the weakest number. The papers allow {BETELGEUSE.distanceRangePc[0]} to {BETELGEUSE.distanceRangePc[1]} parsecs,
+                  which puts the radius anywhere from about {range.min.toFixed(1)} to {range.max.toFixed(1)} AU. Across that whole range, Jupiter stays outside.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ margin: '1.5rem 0 0.25rem' }}>
               <strong>Table 2: the companion’s orbit.</strong>
@@ -1128,6 +1227,29 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               ]}
             />
 
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Two routes to one length.</strong> The angle on the sky gives a separation of {result.separationFromAngleAU.toFixed(2)} AU. The orbit model gives{' '}
+                  {result.modelSeparationAU.toFixed(2)} AU. Different methods, nearly the same answer.
+                </li>
+                <li>
+                  <strong>What the orbit time means.</strong> Kepler’s third law links the size of an orbit to how long it takes. For {result.modelSeparationAU.toFixed(2)} AU around
+                  stars weighing about {(BETELGEUSE.massSolar + COMPANION.massSolar).toFixed(1)} Suns together, one lap takes {result.periodYears.toFixed(2)} years. Astronomers saw a
+                  long cycle of about {COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to {COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days (roughly 6
+                  years). Think of a pendulum clock whose swing and a second clock’s tick land on nearly the same beat.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> A calculated orbit time that matches an observed cycle is a reason to take the companion seriously. It is not proof, because
+                  something else in the star could repeat on a similar schedule.
+                </li>
+                <li>
+                  <strong>The three masses.</strong> They come from different methods and give different answers. That is a real open question, not an error in the table.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ margin: '1.5rem 0 0.25rem' }}>
               <strong>Table 3: the evidence so far.</strong> Each source’s own words are in quotation marks.
             </p>
@@ -1143,25 +1265,156 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               ]}
             />
 
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>One row per team</strong>, with the team’s own cautious words in quotation marks.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The rows do not all say the same thing. One team found a faint spot at {COMPANION.reportedSigma} sigma. Another saw no light from
+                  the companion’s place, which is what a faint star would give. Another saw a “wake” in the star’s atmosphere that repeats with the cycle.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The case rests on several different kinds of clue pointing the same way, not on one strong result. Whether they add up is the
+                  question the tutor will help you think through.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ margin: '1.5rem 0 0.25rem' }}>
-              <strong>Table 4: your own what-ifs.</strong> It follows the settings above.
+              <strong>Table 4: your own numbers, checked against the published ones.</strong> It follows the settings above.
             </p>
             <ResultsTable
-              head={['Quantity', 'Your value', 'Notes']}
-              minWidth={560}
+              head={['Quantity', 'Your value', 'Published value', 'How yours compares', 'How it was worked out']}
+              minWidth={900}
               rows={[
-                ['Distance', `${distanceChoice} parsecs (about ${Math.round(lightYears)} light-years)`, 'a what-if within the range of Joyce and others 2020'],
-                ['Radius of Betelgeuse', `${mine.radiusAU.toFixed(2)} AU = ${Math.round(mine.radiusSolarRadii)} solar radii`, `½ × ${BETELGEUSE.angularDiameterMas} × ${distanceChoice} × 0.001`],
-                ['Planets inside the star', mine.planetsInside.join(', '), `Jupiter (${PLANETS[4].orbitAU} AU) is outside`],
-                ['Separation from the angle', `${mine.separationFromAngleAU.toFixed(2)} AU`, `${COMPANION.separationMas} × ${distanceChoice} × 0.001`],
-                ['Model separation', `${mine.modelSeparationAU.toFixed(2)} AU`, 'from the orbit model; it does not depend on the distance'],
-                ['The two compared', `${mismatch >= 0 ? '+' : '−'}${Math.abs(mismatch).toFixed(1)} percent`, mismatch >= 0 ? 'the angle gives the longer length' : 'the angle gives the shorter length'],
-                ['Orbit radius in Betelgeuse radii', mine.separationInBetelgeuseRadii.toFixed(2), 'the model separation over the radius at your distance'],
-                ['Masses', `Betelgeuse ${betelgeuseMassChoice}, companion ${companionMassChoice} solar masses`, 'the papers’ estimates; not a claim about the real stars'],
-                ['Time for one orbit', `${mine.periodYears.toFixed(2)} years = ${Math.round(mine.periodDays).toLocaleString('en-US')} days`, `within ${Math.ceil(periodAgreementPercent(mine.periodDays))} percent of every value quoted for the long cycle`],
-                ['Strength of the spot', `${sigmaChoice} sigma`, `noise alone makes one at least that strong 1 time in ${mine.oneIn < 1000 ? Math.round(mine.oneIn) : millionsText(mine.oneIn)}`],
+                [
+                  'Distance',
+                  `${distanceChoice} parsecs (about ${Math.round(lightYears)} light-years)`,
+                  `${BETELGEUSE.distancePc} parsecs; the papers allow ${BETELGEUSE.distanceRangePc[0]} to ${BETELGEUSE.distanceRangePc[1]}`,
+                  isSame(cmp.distancePercent)
+                    ? 'The same as the published value.'
+                    : `Inside the range the papers allow; ${pct(cmp.distancePercent)} percent ${cmp.distancePercent > 0 ? 'farther' : 'nearer'} than the published value.`,
+                  'a trial value within the range of Joyce and others 2020',
+                ],
+                [
+                  'Radius of Betelgeuse',
+                  `${mine.radiusAU.toFixed(2)} AU = ${Math.round(mine.radiusSolarRadii)} solar radii`,
+                  `${result.radiusAU.toFixed(2)} AU (${Math.round(result.radiusSolarRadii)} solar radii)`,
+                  isSame(cmp.radiusPercent) ? 'The same as the published radius.' : `${pct(cmp.radiusPercent)} percent ${cmp.radiusPercent > 0 ? 'bigger' : 'smaller'} than the published radius.`,
+                  `½ × ${BETELGEUSE.angularDiameterMas} × ${distanceChoice} × 0.001`,
+                ],
+                [
+                  'Planets inside the star',
+                  mine.planetsInside.join(', '),
+                  result.planetsInside.join(', '),
+                  cmp.planetsSame ? 'The same planets are inside.' : `Different: ${mine.planetsInside.join(', ')}.`,
+                  `Jupiter (${PLANETS[4].orbitAU} AU) is outside`,
+                ],
+                [
+                  'Separation from the angle',
+                  `${mine.separationFromAngleAU.toFixed(2)} AU`,
+                  `${result.separationFromAngleAU.toFixed(2)} AU (at ${BETELGEUSE.distancePc} parsecs)`,
+                  isSame(cmp.separationFromAnglePercent)
+                    ? 'The same.'
+                    : `${pct(cmp.separationFromAnglePercent)} percent ${cmp.separationFromAnglePercent > 0 ? 'longer' : 'shorter'} than the published value.`,
+                  `${COMPANION.separationMas} × ${distanceChoice} × 0.001`,
+                ],
+                [
+                  'Model separation',
+                  `${mine.modelSeparationAU.toFixed(2)} AU`,
+                  `${result.modelSeparationAU.toFixed(2)} AU`,
+                  'The same. It does not depend on the distance.',
+                  'from the orbit model',
+                ],
+                [
+                  'The two compared',
+                  `${mismatch >= 0 ? '+' : '−'}${Math.abs(mismatch).toFixed(1)} percent`,
+                  `${cmp.publishedMismatchPercent >= 0 ? '+' : '−'}${Math.abs(cmp.publishedMismatchPercent).toFixed(1)} percent`,
+                  isSame(cmp.mismatchPercent - cmp.publishedMismatchPercent)
+                    ? 'The same as the published pair.'
+                    : `The two routes are ${pct(cmp.mismatchPercent)} percent apart, against ${Math.abs(cmp.publishedMismatchPercent).toFixed(1)} percent for the published values: they agree ${Math.abs(cmp.mismatchPercent) < Math.abs(cmp.publishedMismatchPercent) ? 'better' : 'less well'}.`,
+                  mismatch >= 0 ? 'the angle gives the longer length' : 'the angle gives the shorter length',
+                ],
+                [
+                  'Orbit radius in Betelgeuse radii',
+                  mine.separationInBetelgeuseRadii.toFixed(2),
+                  result.separationInBetelgeuseRadii.toFixed(2),
+                  isSame(cmp.separationInRadiiPercent) ? 'The same.' : `${pct(cmp.separationInRadiiPercent)} percent ${cmp.separationInRadiiPercent > 0 ? 'larger' : 'smaller'} than the published value.`,
+                  'the model separation over the radius at your distance',
+                ],
+                [
+                  'Masses',
+                  `Betelgeuse ${betelgeuseMassChoice}, companion ${companionMassChoice} solar masses`,
+                  `Betelgeuse ${BETELGEUSE.massSolar}, companion ${COMPANION.massSolar}`,
+                  `Betelgeuse: ${massWord(cmp.betelgeuseMass)} the published mass. Companion: ${massWord(cmp.companionMass)} the published mass. Both are inside the range of the papers’ estimates.`,
+                  'the papers’ estimates; not a claim about the real stars',
+                ],
+                [
+                  'Time for one orbit',
+                  `${mine.periodYears.toFixed(2)} years = ${Math.round(mine.periodDays).toLocaleString('en-US')} days`,
+                  `${publishedDays} days (${result.periodYears.toFixed(2)} years); the observed cycle is ${rangeText}`,
+                  `${cmp.periodOutsideByDays === 0 ? 'Inside the observed range.' : `Outside the observed range, ${Math.round(Math.abs(cmp.periodOutsideByDays))} days ${cmp.periodOutsideByDays > 0 ? 'above' : 'below'} its edge.`} ${
+                    isSame(cmp.periodDaysDifference)
+                      ? `The same as the published ${publishedDays} days.`
+                      : `${Math.round(Math.abs(cmp.periodDaysDifference))} days ${cmp.periodDaysDifference > 0 ? 'longer' : 'shorter'} than the published ${publishedDays} days.`
+                  }`,
+                  `Kepler’s third law with your masses`,
+                ],
+                [
+                  'Strength of the spot',
+                  `${sigmaChoice} sigma`,
+                  `${COMPANION.reportedSigma} sigma (1 time in ${publishedOneIn})`,
+                  cmp.sigmaSame
+                    ? 'The same as the published spot.'
+                    : `${sigmaChoice > COMPANION.reportedSigma ? 'Stronger' : 'Weaker'} than the published spot: noise alone makes one this strong 1 time in ${oneInText(mine.oneIn)}, against 1 in ${publishedOneIn}.`,
+                  `noise alone makes one at least that strong 1 time in ${oneInText(mine.oneIn)}`,
+                ],
               ]}
             />
+
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong> It shows how each number moves when you change the distance, the masses or the strength of the spot. Ask yourself:{' '}
+              <em>which of the findings above still hold when I change the inputs, and which do not?</em> A finding that holds across many trial values is sturdier than one that
+              depends on a single choice.
+            </p>
+
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What your numbers show.</strong>{' '}
+                {allPublished && 'Your settings are the published values, so every row matches the published column. Change a setting above and watch which rows move.'}
+              </p>
+              {!isSame(cmp.distancePercent) && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  At {distanceChoice} parsecs the radius is {mine.radiusAU.toFixed(2)} AU, {pct(cmp.radiusPercent)} percent {cmp.radiusPercent > 0 ? 'bigger' : 'smaller'} than the
+                  published value{cmp.planetsSame ? '; the same planets are inside it' : `; the planets inside it are now ${mine.planetsInside.join(', ')}`}. The orbit time does not
+                  change, because the model orbit is a length, not an angle. But the separation worked out from the angle is now {mine.separationFromAngleAU.toFixed(2)} AU,{' '}
+                  {pct(cmp.separationVsModelPercent)} percent {cmp.separationVsModelPercent > 0 ? 'longer' : 'shorter'} than the model’s {mine.modelSeparationAU.toFixed(2)} AU, so the two
+                  routes agree {Math.abs(cmp.mismatchPercent) < Math.abs(cmp.publishedMismatchPercent) ? 'better' : 'less well'} than before: {pct(cmp.mismatchPercent)} percent apart,
+                  against {Math.abs(cmp.publishedMismatchPercent).toFixed(1)}.
+                </p>
+              )}
+              {massesChanged && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  With these masses one orbit takes {Math.round(mine.periodDays).toLocaleString('en-US')} days, {pct(cmp.periodPercent)} percent{' '}
+                  {cmp.periodPercent > 0 ? 'longer' : 'shorter'} than the published {publishedDays}. That is{' '}
+                  {cmp.periodOutsideByDays === 0
+                    ? `inside the observed range of ${rangeText}`
+                    : `outside the observed range, ${Math.round(Math.abs(cmp.periodOutsideByDays))} days ${cmp.periodOutsideByDays > 0 ? 'above' : 'below'} its edge`}
+                  . The masses change the orbit time only a little; the distance does not change it at all.
+                </p>
+              )}
+              {!cmp.sigmaSame && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  A spot of {sigmaChoice} sigma would be made by noise alone about 1 time in {oneInText(mine.oneIn)}, against 1 in {publishedOneIn} for the real spot. This is a trial
+                  value: the real spot is {COMPANION.reportedSigma} sigma.
+                </p>
+              )}
+              <p style={{ margin: 0 }}>
+                These are trial values. They show how the checks respond when a number changes. They do not say that the real star or the real signal is like this.
+              </p>
+            </div>
 
             <p style={{ margin: '1.5rem 0 0.5rem' }}>
               <strong>The papers behind these results.</strong> Kept until now, so that they did not give away the predictions. Links open in a new tab.

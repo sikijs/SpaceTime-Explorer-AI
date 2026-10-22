@@ -6,8 +6,11 @@ import {
   brightnessRatio,
   chanceOfSigma,
   chancePercent,
+  compareWithPublished,
   COMPANION,
   DAYS_PER_YEAR,
+  distanceToLookThisWideMetres,
+  HAIR_WIDTH_MM,
   LIGHT_YEARS_PER_PARSEC,
   matchingDistancePc,
   headsInARow,
@@ -337,5 +340,55 @@ describe('the predictions\' answers and the run (test 11)', () => {
   })
   it('does not change the period when only the distance changes (the model orbit is a length, not an angle)', () => {
     expect(runBetelgeuseCompanion({ distancePc: 195 }).periodDays).toBeCloseTo(runBetelgeuseCompanion().periodDays, 10)
+  })
+  it('says a hair-wide thing looks as wide as Betelgeuse (41 mas) from about 350 metres, and further away looks narrower', () => {
+    const d = distanceToLookThisWideMetres(HAIR_WIDTH_MM, BETELGEUSE.angularDiameterMas)
+    expect(rel(d, 352)).toBeLessThan(0.01)
+    expect(distanceToLookThisWideMetres(HAIR_WIDTH_MM, 20.5)).toBeCloseTo(2 * d, 6)
+  })
+  describe('compareWithPublished', () => {
+    it('is all zeros and "same" at the published values', () => {
+      const c = compareWithPublished()
+      expect(c.distancePercent).toBe(0)
+      expect(c.radiusPercent).toBe(0)
+      expect(c.planetsSame).toBe(true)
+      expect(c.separationFromAnglePercent).toBe(0)
+      expect(c.separationInRadiiPercent).toBe(0)
+      expect(c.betelgeuseMass).toBe(0)
+      expect(c.companionMass).toBe(0)
+      expect(c.periodPercent).toBe(0)
+      expect(c.periodOutsideByDays).toBe(0)
+      expect(c.sigmaSame).toBe(true)
+      expect(c.mismatchPercent).toBeCloseTo(c.publishedMismatchPercent, 12)
+    })
+    it('at 195 parsecs: radius +16.1 percent, angle-separation +16.1 percent, 17.9 percent against the model, period unchanged', () => {
+      const c = compareWithPublished({ distancePc: 195 })
+      expect(rel(c.distancePercent, 16.071)).toBeLessThan(1e-3)
+      expect(rel(c.radiusPercent, 16.071)).toBeLessThan(1e-3)
+      expect(rel(c.separationFromAnglePercent, 16.071)).toBeLessThan(1e-3)
+      expect(rel(c.mismatchPercent, 17.86)).toBeLessThan(2e-3)
+      expect(rel(c.publishedMismatchPercent, 1.5)).toBeLessThan(0.05)
+      expect(c.planetsSame).toBe(true)
+      expect(c.periodPercent).toBeCloseTo(0, 10)
+      expect(c.periodDaysDifference).toBeCloseTo(0, 6)
+    })
+    it('at 153 parsecs the angle gives a shorter separation than the model (negative)', () => {
+      expect(compareWithPublished({ distancePc: 153 }).mismatchPercent).toBeLessThan(0)
+    })
+    it('masses: a lighter companion lengthens the period but stays inside the observed range; the lightest pair goes outside, above', () => {
+      const c = compareWithPublished({ companionMassSolar: 1.17 })
+      expect(c.companionMass).toBe(-1)
+      expect(c.periodPercent).toBeGreaterThan(0)
+      expect(rel(c.periodDaysDifference + 2109.1, 2133)).toBeLessThan(2e-3)
+      expect(c.periodOutsideByDays).toBe(0)
+      const d = compareWithPublished({ companionMassSolar: 1.17, betelgeuseMassSolar: 16.5 })
+      expect(d.betelgeuseMass).toBe(-1)
+      expect(d.periodOutsideByDays).toBeGreaterThan(0)
+      expect(compareWithPublished({ companionMassSolar: 2.0, betelgeuseMassSolar: 19 }).periodOutsideByDays).toBeLessThanOrEqual(0)
+    })
+    it('sigma: flags a change and keeps the published one-in chance', () => {
+      expect(compareWithPublished({ sigma: 3 }).sigmaSame).toBe(false)
+      expect(rel(compareWithPublished({ sigma: 3 }).oneInPublished, 14.97)).toBeLessThan(1e-3)
+    })
   })
 })

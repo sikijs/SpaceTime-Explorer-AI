@@ -116,6 +116,15 @@ export function widthAU(angularDiameterMas: number, distancePc: number): number 
   return 2 * radiusAU(angularDiameterMas, distancePc)
 }
 
+// An everyday comparison for an angle: how far away an object of a given width must be to look that wide, in metres. distance = width / angle (the angle in radians). The
+// hair's width is a general-knowledge figure (about 0.07 mm), not read from a source.
+export const HAIR_WIDTH_MM = 0.07
+export function distanceToLookThisWideMetres(widthMm: number, angularMas: number): number {
+  requirePositive(widthMm, 'The width')
+  requirePositive(angularMas, 'The angle')
+  return widthMm / 1000 / (angularMas / MILLIARCSECONDS_PER_RADIAN)
+}
+
 // The distance in parsecs for a distance given in light-years (NASA's page for Betelgeuse says about 700 light-years).
 export function parsecsFromLightYears(lightYears: number): number {
   requirePositive(lightYears, 'The distance')
@@ -280,5 +289,54 @@ export function runBetelgeuseCompanion(settings: BetelgeuseSettings = {}): Betel
     sigma,
     chanceOfNoise: chanceOfSigma(sigma),
     oneIn: oneInChance(sigma),
+  }
+}
+
+// The learner's trial values set beside the published ones (the defaults of runBetelgeuseCompanion). Every percent is signed, positive when the trial value is the larger, and is
+// of the published value. `mass` fields are -1, 0 or 1 for lighter than, the same as or heavier than the published mass. `periodOutsideByDays` is 0 when the orbit time is inside
+// the observed range, otherwise the days above its upper edge (positive) or below its lower edge (negative). No cut-off such as "close enough" is applied.
+export interface TrialComparison {
+  distancePercent: number
+  radiusPercent: number
+  planetsSame: boolean
+  separationFromAnglePercent: number
+  separationVsModelPercent: number
+  mismatchPercent: number // as separationMismatchPercent, for the trial distance
+  publishedMismatchPercent: number
+  separationInRadiiPercent: number
+  betelgeuseMass: -1 | 0 | 1
+  companionMass: -1 | 0 | 1
+  periodPercent: number
+  periodDaysDifference: number
+  periodOutsideByDays: number
+  sigmaSame: boolean
+  oneInPublished: number
+}
+
+const percentFrom = (value: number, published: number): number => ((value - published) / published) * 100
+const sign = (value: number, published: number): -1 | 0 | 1 => (value < published ? -1 : value > published ? 1 : 0)
+
+export function compareWithPublished(settings: BetelgeuseSettings = {}): TrialComparison {
+  const published = runBetelgeuseCompanion()
+  const mine = runBetelgeuseCompanion(settings)
+  const [low, high] = COMPANION.observedPeriodRangeDays
+  const outside = mine.periodDays > high ? mine.periodDays - high : mine.periodDays < low ? mine.periodDays - low : 0
+  const samePlanets = mine.planetsInside.length === published.planetsInside.length && mine.planetsInside.every((n, i) => n === published.planetsInside[i])
+  return {
+    distancePercent: percentFrom(mine.distancePc, published.distancePc),
+    radiusPercent: percentFrom(mine.radiusAU, published.radiusAU),
+    planetsSame: samePlanets,
+    separationFromAnglePercent: percentFrom(mine.separationFromAngleAU, published.separationFromAngleAU),
+    separationVsModelPercent: percentFrom(mine.separationFromAngleAU, mine.modelSeparationAU),
+    mismatchPercent: separationMismatchPercent(mine.distancePc),
+    publishedMismatchPercent: separationMismatchPercent(published.distancePc),
+    separationInRadiiPercent: percentFrom(mine.separationInBetelgeuseRadii, published.separationInBetelgeuseRadii),
+    betelgeuseMass: sign(settings.betelgeuseMassSolar ?? BETELGEUSE.massSolar, BETELGEUSE.massSolar),
+    companionMass: sign(settings.companionMassSolar ?? COMPANION.massSolar, COMPANION.massSolar),
+    periodPercent: percentFrom(mine.periodDays, published.periodDays),
+    periodDaysDifference: mine.periodDays - published.periodDays,
+    periodOutsideByDays: outside,
+    sigmaSame: mine.sigma === published.sigma,
+    oneInPublished: published.oneIn,
   }
 }
