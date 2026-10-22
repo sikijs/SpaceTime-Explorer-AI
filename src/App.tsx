@@ -12,6 +12,7 @@ import { AntimatterGravityExperiment } from './components/AntimatterGravityExper
 import { ClockHeightExperiment } from './components/ClockHeightExperiment'
 import { LunarClocksExperiment } from './components/LunarClocksExperiment'
 import { FastestSpacecraftExperiment } from './components/FastestSpacecraftExperiment'
+import { BetelgeuseCompanionExperiment } from './components/BetelgeuseCompanionExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -712,6 +713,15 @@ const chapters: Chapter[] = [
     learned:
       "Near the Sun, gravity and motion both slow a clock, and by almost the same amount. Parker Solar Probe, at its closest point (6.17 million km above the Sun's surface, 192.22 km/s), is slowed compared with a clock far from everything by 2.15 × 10^-7 from the Sun's gravity (GM ÷ (r × c²)) and 2.06 × 10^-7 from its motion (v² ÷ (2 × c²)): 4.21 × 10^-7 in all, like two leaks that add. A clock on the Earth is slowed by 1.55 × 10^-8 (the Earth's own gravity, the Sun's gravity at 1 AU, and the Earth's speed round the Sun), so the probe's clock falls behind it by 4.05 × 10^-7, which is 35.0 milliseconds a day at that point (about 36 against a clock far from everything). This is not a steady rate. As the probe moves out on its 88-day oval orbit, gravity's part falls about 16 times and motion's part about 256 times (the probe slows from 192 to 12 km/s, and the part depends on the square of the speed), so in this model the lag shrinks to zero at 0.70 AU and the probe's clock is slightly ahead of the Earth's beyond that (0.1 millisecond a day at the far end, a model number). If the closest-point rate lasted a whole orbit the lag would be 3.08 seconds; averaged over the real orbit it is 0.173 seconds. The distance and speed are NASA's (matched on the passes since, the 29th on 4 September 2026), and the formula has been tested with clocks on the Earth and in orbit; the lag itself is a calculation, and the sources read for this page do not report the mission measuring it. This experiment did not follow the real orbit, include the Sun's spin or shape, or say how the mission keeps or corrects its clock. Status, as of October 2026: Settled (the probe's distance and speed, and the physics); a calculation, not a measurement by this mission (the lag).",
     next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+  },
+  {
+    title: 'The star that may be about to explode: what is Betelgeuse, and does it have a companion?',
+    group: 'Frontier and Beyond',
+    Component: BetelgeuseCompanionExperiment,
+    // Placeholder: the tutor and the chapter summary are later steps (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md), and the summary is shown only
+    // after the tutor's explanation, so these two are not shown yet. The wording will be drafted for the owner's line-by-line approval (CLAUDE.md §28.1).
+    learned: 'Not yet written.',
+    next: 'Not yet written.',
   },
 ]
 
