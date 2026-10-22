@@ -200,6 +200,8 @@ and findings of astronomers and scientists. The ideas are complex, so:
 3. Every experiment page has a "Want to know more?" list of links (owner's rule, 2026-10-19): the original paper or
    official release for each result used, and an official plain-language page (for example NASA or ESA) for each
    background idea the introduction explains. Each link opens in a new tab and says what the learner will find.
+4. Every Results panel has a reading guide (owner's rule, 2026-10-22): see "Results: A Reading Guide" above. It applies
+   to every experiment, in simple terms with the real numbers.
 
 Links go to the original paper or an official release (a mission, observatory or space agency page), and each is fetched and recorded in the experiment's source-status table.
 Neither the introduction nor a caption may reveal what the learner is asked to predict. The wording stays the human's
