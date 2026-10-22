@@ -454,12 +454,13 @@ The guide explains what each number means and why it matters. The full mechanism
 
 ### Frontier and Beyond: fuller introductions and captions
 
-The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so three rules apply to every experiment in the group, all twenty-four and any added later:
+The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so four rules apply to every experiment in the group, all twenty-four and any added later:
 
 1. **The introduction is up to date, clear and detailed, in simple terms** that a learner with only a basic knowledge of science can follow. It may use real-life examples. Its length is not limited, as long as the extra length helps the learner understand. It may also give links for the learner who wants to know more.
 2. **The caption of every picture follows the same rule:** up to date, clear, detailed and in simple terms, with real-life examples where they help, and as long as it needs to be.
    In every experiment's caption (added by the owner on 2026-10-21), each "what to look for" item says **what to look at, what it means and why it matters**, so that the learner learns the significance of each feature and not only where to look. The full mechanism, and any verdict between competing results, stay with the tutor.
 3. **Every experiment page has a "Want to know more?" list of links** (added by the owner on 2026-10-19): the original paper or official release behind each result the experiment uses, and a plain-language page from an official source (such as NASA or ESA, or a mission's or observatory's own pages) for each background idea the introduction explains. Each link opens in a new tab and says what the learner will find there.
+4. **Every Results panel has a reading guide** (added by the owner on 2026-10-22): see "Reading the results" above. It applies to every experiment, and its wording is drafted to this group's standard of simple terms and real numbers.
 
 Links point to the original paper or an official release (a mission, an observatory, a space agency or a collaboration), and each linked source is recorded in the experiment's source-status table. Neither the introduction nor a caption may reveal what the learner is asked to predict. These rules add to, and do not replace, the plain-language rules above.
 
