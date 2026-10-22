@@ -8,6 +8,7 @@ import {
   COMPANION,
   DAYS_PER_YEAR,
   LIGHT_YEARS_PER_PARSEC,
+  matchingDistancePc,
   keplerPeriodYears,
   modelSeparationAU,
   oneInChance,
@@ -189,6 +190,10 @@ describe('the angle-based separation against the model orbit at a chosen distanc
     expect(separationMismatchPercent(153)).toBeCloseTo(((7.956 - 8.60337) / 8.60337) * 100, 3)
     expect(separationMismatchPercent(195)).toBeCloseTo(((10.14 - 8.60337) / 8.60337) * 100, 3)
     expect(Math.abs(separationMismatchPercent(8.60337 / 0.052))).toBeLessThan(1e-3) // 8.60337 / 0.052 = 165.45 pc
+  })
+  it('has the matching distance at 8.6034 / 0.052 = 165.45 pc, where the mismatch is zero', () => {
+    expect(matchingDistancePc()).toBeCloseTo(165.45, 1)
+    expect(Math.abs(separationMismatchPercent(matchingDistancePc()))).toBeLessThan(1e-9)
   })
   it('grows with the distance and has the sign of (angle minus model)', () => {
     expect(separationMismatchPercent(195)).toBeGreaterThan(separationMismatchPercent(168))

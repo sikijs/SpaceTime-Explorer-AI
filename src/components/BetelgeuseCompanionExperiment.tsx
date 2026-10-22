@@ -16,10 +16,12 @@ import {
 } from '../physics/betelgeuseCompanion'
 import type { Reach, SigmaAnswer } from '../physics/betelgeuseCompanion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { BetelgeuseCompanionTutor } from './BetelgeuseCompanionTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md).
+// Step 8 builds the tutor (BetelgeuseCompanionTutor.tsx) and, in App, the chapter summary.
 // Step 7 builds the three controls (the distance, the two masses and the strength of the signal), shown after the run, which add a white mark to each picture, and Table 4.
 // Step 6 builds the five-stage run: Picture 1 fills in at stages 1 and 2, Picture 2 at stage 3 and Picture 3 at stages 4 and 5, each with a guide. The results, the
 // controls, the tutor and the chapter summary are later steps.
@@ -510,9 +512,10 @@ const SIGMA_WHAT_IFS = [1.5, 2, 3, 5] as const
 
 interface BetelgeuseCompanionExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanionExperimentProps) {
+export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: BetelgeuseCompanionExperimentProps) {
   const [reachPrediction, setReachPrediction] = useState<Reach | null>(null)
   const [sigmaPrediction, setSigmaPrediction] = useState<SigmaAnswer | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -1174,6 +1177,11 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
               </li>
             </ul>
           </div>
+        )}
+
+        {/* The tutor, after the results: observe, compare with the predictions, a conceptual question, then the explanation. */}
+        {done && reachPrediction !== null && sigmaPrediction !== null && (
+          <BetelgeuseCompanionTutor reachPrediction={reachPrediction} sigmaPrediction={sigmaPrediction} onExplained={onTutorComplete} />
         )}
       </div>
     </div>

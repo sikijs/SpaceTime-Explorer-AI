@@ -106,6 +106,11 @@ export function separationMismatchPercent(distancePc: number): number {
   return ((separationAU(COMPANION.separationMas, distancePc) - model) / model) * 100
 }
 
+// The distance at which the separation worked out from the angle equals the model orbit's separation: model separation (AU) / (angle in mas x 0.001), in parsecs.
+export function matchingDistancePc(): number {
+  return modelSeparationAU() / (COMPANION.separationMas * 0.001)
+}
+
 // Kepler's third law in astronomers' units: period (years)^2 = separation (AU)^3 / total mass (solar masses).
 export function keplerPeriodYears(separation: number, mass1Solar: number, mass2Solar: number): number {
   requirePositive(separation, 'The separation')

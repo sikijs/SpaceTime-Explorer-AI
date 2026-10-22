@@ -718,10 +718,12 @@ const chapters: Chapter[] = [
     title: 'The star that may be about to explode: what is Betelgeuse, and does it have a companion?',
     group: 'Frontier and Beyond',
     Component: BetelgeuseCompanionExperiment,
-    // Placeholder: the tutor and the chapter summary are later steps (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md), and the summary is shown only
-    // after the tutor's explanation, so these two are not shown yet. The wording will be drafted for the owner's line-by-line approval (CLAUDE.md §28.1).
-    learned: 'Not yet written.',
-    next: 'Not yet written.',
+    // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a published one
+    // (Howell and others 2025; Goldberg and others 2024; Joyce and others 2020; the 2026 papers of Dupree and others and of Matthews and others). "What's next" names no
+    // experiment, because Experiment 13 has no approved specification.
+    learned:
+      "A red supergiant is a star that has used up the hydrogen in its core and swollen, and Betelgeuse is one. Its size comes from an angle and a distance: half of 41 milliarcseconds × 168 parsecs × 0.001 gives a radius of 3.44 AU (741 times the Sun's), so its surface would reach past Mars and stop short of Jupiter, however the distance is chosen within the papers' range of 153 to 195 parsecs. A companion orbiting at 8.60 AU, about 2.5 Betelgeuse radii, would take 5.77 years to go round (Kepler's third law), close to the star's long cycle of about 2,000 to 2,170 days. The orbit time tells us about the total mass, not about how it is shared, so the companion's mass comes from other methods that give different answers, from about 1.2 to 1.6 solar masses, and one analysis excludes more than about 1.5. A faint spot at 1.5 sigma, which noise alone makes about 1 time in 15, is a hint and not a discovery; what makes the claim stronger is that it appeared where five predictions said it would, and that other kinds of data, the wake in the star's gas and the star's shape in radio waves, follow the same cycle. That is strong evidence but not a confirmation, and the next good chance for a direct look is 26 November 2027.",
+    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
   },
 ]
 
