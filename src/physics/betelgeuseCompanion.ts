@@ -14,6 +14,7 @@ export const SOLAR_RADIUS_KM = 695_700
 export const AU_PER_PARSEC = 648_000 / Math.PI
 export const SOLAR_RADII_PER_AU = ASTRONOMICAL_UNIT_KM / SOLAR_RADIUS_KM
 export const DAYS_PER_YEAR = 365.25
+export const LIGHT_YEARS_PER_PARSEC = 3.26156 // about 3.26 light-years in a parsec
 const MILLIARCSECONDS_PER_RADIAN = (180 / Math.PI) * 3600 * 1000
 
 // The planets' orbits as circles (standard values; not read from a source for this page, see the specification's open items).
@@ -96,6 +97,13 @@ export function separationInRadii(separation: number, radius: number): number {
   requirePositive(separation, 'The separation')
   requirePositive(radius, 'The radius')
   return separation / radius
+}
+
+// How far the separation worked out from the angle on the sky (52 mas times the distance) is from the model orbit's separation (1850 solar radii, which does not depend on the
+// distance), as a signed percent of the model's: positive when the angle gives the longer length.
+export function separationMismatchPercent(distancePc: number): number {
+  const model = modelSeparationAU()
+  return ((separationAU(COMPANION.separationMas, distancePc) - model) / model) * 100
 }
 
 // Kepler's third law in astronomers' units: period (years)^2 = separation (AU)^3 / total mass (solar masses).

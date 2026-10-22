@@ -5,11 +5,13 @@ import {
   brightnessRatio,
   chanceOfSigma,
   COMPANION,
+  LIGHT_YEARS_PER_PARSEC,
   oneInChance,
   periodAgreementPercent,
   PLANETS,
   radiusRangeAU,
   runBetelgeuseCompanion,
+  separationMismatchPercent,
   SOLAR_RADII_PER_AU,
 } from '../physics/betelgeuseCompanion'
 import type { Reach, SigmaAnswer } from '../physics/betelgeuseCompanion'
@@ -18,6 +20,7 @@ import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md).
+// Step 7 builds the three controls (the distance, the two masses and the strength of the signal), shown after the run, which add a white mark to each picture, and Table 4.
 // Step 6 builds the five-stage run: Picture 1 fills in at stages 1 and 2, Picture 2 at stage 3 and Picture 3 at stages 4 and 5, each with a guide. The results, the
 // controls, the tutor and the chapter summary are later steps.
 // Step 5 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
@@ -39,6 +42,7 @@ const COMPANION_COLOR = '#22d3ee' // cyan: the companion and its orbit
 const BAND_COLOR = '#fdba74' // pale orange: the range of sizes the papers allow
 const NOISE_COLOR = '#a5b4fc' // lavender: the noise curve
 const TAIL_COLOR = '#fde047' // yellow: the tail (the chance of noise alone)
+const YOURS_COLOR = '#ffffff' // white: the learner's own choice
 const PLANET_COLORS: Record<string, string> = { Mercury: '#d4d4d8', Venus: '#fcd34d', Earth: '#38bdf8', Mars: '#f87171', Jupiter: '#fdba74' }
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -182,12 +186,26 @@ const STAGE_MS = 2600
 const LAST_STAGE = 5
 const STAGE_NAMES = ['', 'Betelgeuse in the Solar System', 'How sure is the size?', 'The companion’s orbit', 'How strong is the hint?', 'Predicted in advance']
 
+// The learner's own choices after the run (every value comes from the physics module).
+interface Yours {
+  distancePc: number
+  radiusAU: number
+  radiusSolarRadii: number
+  betelgeuseMass: number
+  companionMass: number
+  periodYears: number
+  periodDays: number
+  ratio: number
+  sigma: number
+  oneIn: number
+}
+
 // ---- Picture 1: Betelgeuse next to the Solar System (drawn to scale). Stage 1: the star and the orbits; stage 2: the range the papers allow ----
 const P1_PX_PER_AU = 40
 const P1_X = 280
 const P1_Y = 284
 
-function PictureOne({ stage }: { stage: number }) {
+function PictureOne({ stage, yours }: { stage: number; yours: Yours | null }) {
   const height = 546
   const result = runBetelgeuseCompanion()
   const range = radiusRangeAU()
@@ -201,7 +219,7 @@ function PictureOne({ stage }: { stage: number }) {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 1, to scale: the Sun at the centre with the orbits of Mercury, Venus, Earth, Mars and Jupiter as circles round it. A large orange disc, Betelgeuse's surface if its centre were at the Sun, covers the orbits of Mercury, Venus, Earth and Mars and stops short of Jupiter's orbit. Its radius is ${result.radiusAU.toFixed(2)} astronomical units${stage >= 2 ? `, and a paler band marks the range of radius the papers allow, ${range.min.toFixed(1)} to ${range.max.toFixed(1)} astronomical units, which also stops short of Jupiter's orbit` : ''}`}
+      aria-label={`Picture 1, to scale: the Sun at the centre with the orbits of Mercury, Venus, Earth, Mars and Jupiter as circles round it. A large orange disc, Betelgeuse's surface if its centre were at the Sun, covers the orbits of Mercury, Venus, Earth and Mars and stops short of Jupiter's orbit. Its radius is ${result.radiusAU.toFixed(2)} astronomical units${stage >= 2 ? `, and a paler band marks the range of radius the papers allow, ${range.min.toFixed(1)} to ${range.max.toFixed(1)} astronomical units, which also stops short of Jupiter's orbit` : ''}${yours ? `. A white outline shows the radius for the learner's chosen distance of ${yours.distancePc} parsecs, ${yours.radiusAU.toFixed(2)} astronomical units` : ''}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 1: Betelgeuse next to the Solar System
@@ -224,6 +242,14 @@ function PictureOne({ stage }: { stage: number }) {
           <line x1={P1_X} y1={P1_Y} x2={P1_X + px(result.radiusAU)} y2={P1_Y} stroke={TEXT_COLOR} strokeWidth={1.5} />
           <SvgLines x={P1_X + 70} y={P1_Y - 8} lines={[`radius ${result.radiusAU.toFixed(2)} AU`, `(${Math.round(result.radiusSolarRadii)} solar radii)`]} fill={TEXT_COLOR} bold anchor="start" size={10} />
           <SvgLines x={P1_X} y={P1_Y + px(result.radiusAU) - 34} lines={['Betelgeuse’s surface, if its', 'centre were where the Sun is']} fill={TEXT_COLOR} bold anchor="middle" size={10} />
+        </g>
+      )}
+
+      {/* The learner's own distance: a white outline of the radius at that distance. */}
+      {yours && (
+        <g>
+          <circle cx={P1_X} cy={P1_Y} r={px(yours.radiusAU)} fill="none" stroke={YOURS_COLOR} strokeWidth={2.5} strokeDasharray="7 4" />
+          <SvgLines x={P1_X} y={P1_Y - px(yours.radiusAU) + 20} lines={[`your distance: ${yours.distancePc} parsecs,`, `radius ${yours.radiusAU.toFixed(2)} AU`]} fill={YOURS_COLOR} bold anchor="middle" size={10} />
         </g>
       )}
 
@@ -261,7 +287,7 @@ const P2_PX_PER_AU = 21
 const P2_X = 280
 const P2_Y = 300
 
-function PictureTwo() {
+function PictureTwo({ yours }: { yours: Yours | null }) {
   const height = 566
   const result = runBetelgeuseCompanion()
   const px = (au: number) => au * P2_PX_PER_AU
@@ -274,7 +300,7 @@ function PictureTwo() {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 2, to scale, seen from above: Betelgeuse as an orange disc at the centre, a cyan circle round it for the companion's orbit, ${result.modelSeparationAU.toFixed(1)} astronomical units in radius, which is ${result.separationInBetelgeuseRadii.toFixed(1)} times the star's radius, and a dashed grey circle for Jupiter's orbit for comparison. The companion is marked at four places: behind the star, in front of it, and at its two farthest points to the sides, on 6 December 2024 and on 26 November 2027. An arrow at the bottom shows the direction of the Earth`}
+      aria-label={`Picture 2, to scale, seen from above: Betelgeuse as an orange disc at the centre, a cyan circle round it for the companion's orbit, ${result.modelSeparationAU.toFixed(1)} astronomical units in radius, which is ${result.separationInBetelgeuseRadii.toFixed(1)} times the star's radius, and a dashed grey circle for Jupiter's orbit for comparison. The companion is marked at four places: behind the star, in front of it, and at its two farthest points to the sides, on 6 December 2024 and on 26 November 2027. An arrow at the bottom shows the direction of the Earth${yours ? `. In white, the learner's choice: Betelgeuse ${yours.betelgeuseMass} and the companion ${yours.companionMass} solar masses give an orbit time of ${yours.periodYears.toFixed(2)} years, and at ${yours.distancePc} parsecs the orbit's radius is ${yours.ratio.toFixed(1)} times the star's radius` : ''}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 2: the companion’s orbit
@@ -286,6 +312,8 @@ function PictureTwo() {
 
       <circle cx={P2_X} cy={P2_Y} r={disc} fill={STAR_COLOR} fillOpacity={0.6} stroke={STAR_COLOR} strokeWidth={2.5} />
       <SvgLines x={P2_X} y={P2_Y - 4} lines={['Betelgeuse', `(radius ${result.radiusAU.toFixed(2)} AU)`]} fill={TEXT_COLOR} bold anchor="middle" size={10} />
+
+      {yours && <circle cx={P2_X} cy={P2_Y} r={px(yours.radiusAU)} fill="none" stroke={YOURS_COLOR} strokeWidth={2.5} strokeDasharray="7 4" />}
 
       <circle cx={P2_X} cy={P2_Y} r={orbit} fill="none" stroke={COMPANION_COLOR} strokeWidth={2.5} />
       <SvgLines x={548} y={74} lines={[`the companion’s orbit: radius ${result.modelSeparationAU.toFixed(1)} AU,`, `${result.separationInBetelgeuseRadii.toFixed(1)} times Betelgeuse’s radius`]} fill={COMPANION_COLOR} bold anchor="end" size={10} />
@@ -300,6 +328,18 @@ function PictureTwo() {
       <SvgLines x={P2_X + orbit + 8} y={P2_Y + 20} lines={['greatest', 'elongation,', 'one side:', '6 Dec 2024 (the', '2024 pictures:', 'a faint spot)']} fill={TEXT_COLOR} anchor="start" size={9} />
       <circle cx={P2_X - orbit} cy={P2_Y} r={5} fill={COMPANION_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
       <SvgLines x={8} y={P2_Y + 20} lines={['greatest', 'elongation,', 'other side:', '26 Nov 2027', '(the next', 'good chance)']} fill={TEXT_COLOR} anchor="start" size={9} />
+
+      {/* The learner's own choices. */}
+      {yours && (
+        <SvgLines
+          x={12}
+          y={height - 56}
+          lines={[`your choice (white): Betelgeuse ${yours.betelgeuseMass}`, `and the companion ${yours.companionMass} solar masses`, `time for one orbit: ${yours.periodYears.toFixed(2)} years (${Math.round(yours.periodDays).toLocaleString('en-US')} days)`, `at ${yours.distancePc} parsecs the orbit is ${yours.ratio.toFixed(2)} stellar radii`]}
+          fill={YOURS_COLOR}
+          bold
+          size={9}
+        />
+      )}
 
       {/* The direction of the Earth. */}
       <line x1={P2_X} y1={height - 8} x2={P2_X} y2={height - 44} stroke={YOU_COLOR} strokeWidth={2} />
@@ -352,7 +392,7 @@ function wrapText(text: string, width: number): string[] {
   return lines
 }
 
-function PictureThree({ stage }: { stage: number }) {
+function PictureThree({ stage, yours }: { stage: number; yours: Yours | null }) {
   const height = stage >= 5 ? 566 : 300
   const z = COMPANION.reportedSigma
   const points: string[] = []
@@ -404,6 +444,15 @@ function PictureThree({ stage }: { stage: number }) {
         </g>
       )}
 
+      {/* The learner's own what-if: a white marker on the curve and a label. */}
+      {yours && stage >= 4 && (
+        <g>
+          <line x1={sigmaToX(yours.sigma)} y1={P3_BASE} x2={sigmaToX(yours.sigma)} y2={sigmaToY(yours.sigma) - 6} stroke={YOURS_COLOR} strokeWidth={2.5} />
+          <path d={`M ${sigmaToX(yours.sigma) - 6} ${sigmaToY(yours.sigma) - 16} L ${sigmaToX(yours.sigma) + 6} ${sigmaToY(yours.sigma) - 16} L ${sigmaToX(yours.sigma)} ${sigmaToY(yours.sigma) - 5} Z`} fill={YOURS_COLOR} />
+          <SvgLines x={548} y={56} lines={[`your what-if (the white marker): ${yours.sigma} sigma,`, `1 time in ${yours.oneIn < 1000 ? Math.round(yours.oneIn) : millionsText(yours.oneIn)}`]} fill={YOURS_COLOR} bold anchor="end" size={10} />
+        </g>
+      )}
+
       {/* Stage 5: the five things the paper says the team predicted, and found. */}
       {stage >= 5 && (
         <g>
@@ -435,6 +484,30 @@ const SIGMA_CHOICES: ReadonlyArray<{ value: SigmaAnswer; label: string }> = [
   { value: '1 in 3.5 million', label: 'About 1 time in 3.5 million' },
 ]
 
+// A row of choice buttons for one control.
+function ChoiceButtons<T extends number>({ options, value, onChange, format }: { options: ReadonlyArray<T>; value: number; onChange: (v: T) => void; format: (v: T) => string }) {
+  return (
+    <div>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onChange(option)}
+          className={`toggle-button${value === option ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+        >
+          {format(option)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const DISTANCE_CHOICES = [153, 168, 195] as const
+const BETELGEUSE_MASS_CHOICES = BETELGEUSE.massChoicesSolar
+const COMPANION_MASS_CHOICES = COMPANION.massChoicesSolar
+const SIGMA_WHAT_IFS = [1.5, 2, 3, 5] as const
+
 interface BetelgeuseCompanionExperimentProps {
   onComplete?: () => void
 }
@@ -444,6 +517,11 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
   const [sigmaPrediction, setSigmaPrediction] = useState<SigmaAnswer | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  // The controls that appear after the run.
+  const [distanceChoice, setDistanceChoice] = useState<number>(BETELGEUSE.distancePc)
+  const [betelgeuseMassChoice, setBetelgeuseMassChoice] = useState<number>(BETELGEUSE.massSolar)
+  const [companionMassChoice, setCompanionMassChoice] = useState<number>(COMPANION.massSolar)
+  const [sigmaChoice, setSigmaChoice] = useState<number>(COMPANION.reportedSigma)
   const hasRun = status !== 'idle'
   const bothPredicted = reachPrediction !== null && sigmaPrediction !== null
 
@@ -466,6 +544,10 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
     setSigmaPrediction(null)
     setStatus('idle')
     setStage(0)
+    setDistanceChoice(BETELGEUSE.distancePc)
+    setBetelgeuseMassChoice(BETELGEUSE.massSolar)
+    setCompanionMassChoice(COMPANION.massSolar)
+    setSigmaChoice(COMPANION.reportedSigma)
   }
   function run() {
     setStage(1)
@@ -476,6 +558,21 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
   const result = runBetelgeuseCompanion()
   const range = radiusRangeAU()
   const sigma = COMPANION.reportedSigma
+  const mine = runBetelgeuseCompanion({ distancePc: distanceChoice, betelgeuseMassSolar: betelgeuseMassChoice, companionMassSolar: companionMassChoice, sigma: sigmaChoice })
+  const yoursFor: Yours = {
+    distancePc: distanceChoice,
+    radiusAU: mine.radiusAU,
+    radiusSolarRadii: mine.radiusSolarRadii,
+    betelgeuseMass: betelgeuseMassChoice,
+    companionMass: companionMassChoice,
+    periodYears: mine.periodYears,
+    periodDays: mine.periodDays,
+    ratio: mine.separationInBetelgeuseRadii,
+    sigma: sigmaChoice,
+    oneIn: mine.oneIn,
+  }
+  const mismatch = separationMismatchPercent(distanceChoice)
+  const lightYears = distanceChoice * LIGHT_YEARS_PER_PARSEC
   const lookForPictureOne: LookFor[] = [
     {
       look: 'the large orange disc, and the five rings (the orbits of Mercury, Venus, Earth, Mars and Jupiter), with Jupiter’s ring outside the disc.',
@@ -832,7 +929,7 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
         {/* Picture 1: the star and the orbits from stage 1, the range from stage 2. */}
         {hasRun && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureOne stage={stage} />
+            <PictureOne stage={stage} yours={done ? yoursFor : null} />
           </div>
         )}
         {hasRun && (
@@ -863,7 +960,7 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
 
         {stage >= 3 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureTwo />
+            <PictureTwo yours={done ? yoursFor : null} />
           </div>
         )}
         {stage >= 3 && (
@@ -889,7 +986,7 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
 
         {stage >= 4 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureThree stage={stage} />
+            <PictureThree stage={stage} yours={done ? yoursFor : null} />
           </div>
         )}
         {stage >= 4 && (
@@ -920,6 +1017,47 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
           </div>
         )}
 
+        {/* The controls (after the run): the distance, the two masses and the strength of the signal. They add a white mark to each picture and fill Table 4. */}
+        {done && (
+          <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
+            <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              Change a setting and watch the white marks in the three pictures above, and Table 4 below, follow it. Each choice is a “what if”: it shows what would
+              happen, and does not say that the real star or signal is like that. The distance and the masses are values that the papers allow or report.
+            </p>
+
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How far away is Betelgeuse?</p>
+            <ChoiceButtons options={DISTANCE_CHOICES} value={distanceChoice} onChange={setDistanceChoice} format={(v) => `${v} parsecs${v === BETELGEUSE.distancePc ? ' (the paper’s value)' : ''}`} />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              At {distanceChoice} parsecs (about {Math.round(lightYears)} light-years) Betelgeuse’s radius is {mine.radiusAU.toFixed(2)} AU, and the planets inside it are{' '}
+              {mine.planetsInside.join(', ')}. Jupiter’s orbit ({PLANETS[4].orbitAU} AU) is still outside. The size changes with the distance, and the answer to Prediction 1
+              does not.
+            </p>
+
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is Betelgeuse? (solar masses)</p>
+            <ChoiceButtons options={BETELGEUSE_MASS_CHOICES} value={betelgeuseMassChoice} onChange={setBetelgeuseMassChoice} format={(v) => `${v}`} />
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the companion? (solar masses)</p>
+            <ChoiceButtons
+              options={COMPANION_MASS_CHOICES}
+              value={companionMassChoice}
+              onChange={setCompanionMassChoice}
+              format={(v) => `${v}${v === 1.17 ? ' (Goldberg and others)' : v === COMPANION.massSolar ? ' (Howell and others)' : ''}`}
+            />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              With Betelgeuse at {betelgeuseMassChoice} and the companion at {companionMassChoice} solar masses, one orbit of radius {mine.modelSeparationAU.toFixed(2)} AU takes{' '}
+              {mine.periodYears.toFixed(2)} years ({Math.round(mine.periodDays).toLocaleString('en-US')} days). Try the lightest and the heaviest companion with the same Betelgeuse:
+              the time hardly changes. The masses are the papers’ estimates, and this experiment does not choose among them.
+            </p>
+
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>What if the spot were stronger? (sigma)</p>
+            <ChoiceButtons options={SIGMA_WHAT_IFS} value={sigmaChoice} onChange={setSigmaChoice} format={(v) => `${v} sigma${v === COMPANION.reportedSigma ? ' (as reported)' : ''}`} />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
+              A spot of {sigmaChoice} sigma is made by noise alone about 1 time in {mine.oneIn < 1000 ? Math.round(mine.oneIn) : millionsText(mine.oneIn)} (counting one direction). This is a what-if:
+              the real spot is {sigma} sigma.
+            </p>
+          </div>
+        )}
+
         {/* The results, shown only after the run completes: the status label, three tables, and the links kept back until now. Table 4, the learner's own what-ifs, comes
             with the controls, a later step. */}
         {done && (
@@ -947,7 +1085,7 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
               minWidth={560}
               rows={[
                 ['Angular size across', `${BETELGEUSE.angularDiameterMas} milliarcseconds`, 'Howell and others 2025: 40 ± 1.4 (2020) and 41 ± 1.2 (2024); the mean is used'],
-                ['Distance', `${BETELGEUSE.distancePc} parsecs (about 548 light-years)`, `Joyce and others 2020: 168 (+27, −15); the range ${BETELGEUSE.distanceRangePc[0]} to ${BETELGEUSE.distanceRangePc[1]} parsecs is used. NASA’s page says about 700 light-years, so estimates differ`],
+                ['Distance', `${BETELGEUSE.distancePc} parsecs (about ${Math.round(BETELGEUSE.distancePc * LIGHT_YEARS_PER_PARSEC)} light-years)`, `Joyce and others 2020: 168 (+27, −15); the range ${BETELGEUSE.distanceRangePc[0]} to ${BETELGEUSE.distanceRangePc[1]} parsecs is used. NASA’s page says about 700 light-years, so estimates differ`],
                 ['Radius', `${result.radiusAU.toFixed(2)} AU = ${Math.round(result.radiusSolarRadii)} solar radii`, 'worked out here: ½ × angle × distance'],
                 ['Joyce and others’ own radius', `${BETELGEUSE.joyceRadiusSolarRadii} solar radii (+116, −62)`, 'Joyce and others 2020, for comparison'],
                 ['Range of radius the papers allow', `${range.min.toFixed(2)} to ${range.max.toFixed(2)} AU`, 'smallest angle at the smallest distance to largest angle at the largest'],
@@ -985,6 +1123,26 @@ export function BetelgeuseCompanionExperiment({ onComplete }: BetelgeuseCompanio
                 ['Goldberg and others; O’Grady and others', 'far-ultraviolet and X-ray light from the companion’s place', 'no companion light seen; “exclude masses above ≳1.5 M☉”; an accreting compact object excluded; “likely a low-mass YSO” (a young star)', 'May 2025 (revised September 2025)'],
                 ['Dupree and others', 'spectra of Betelgeuse’s atmosphere (the CfA release: Hubble and two ground observatories, nearly eight years)', '“a trailing and expanding wake”, repeating with the cycle; the CfA release calls it “direct evidence”', 'January 2026'],
                 ['Matthews and others', 'Betelgeuse’s shape in radio waves (VLA and ALMA)', 'a link between the star’s shape and the orbit, “consistent with” the companion disturbing the atmosphere', 'August 2026'],
+              ]}
+            />
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 4: your own what-ifs.</strong> It follows the settings above.
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Your value', 'Notes']}
+              minWidth={560}
+              rows={[
+                ['Distance', `${distanceChoice} parsecs (about ${Math.round(lightYears)} light-years)`, 'a what-if within the range of Joyce and others 2020'],
+                ['Radius of Betelgeuse', `${mine.radiusAU.toFixed(2)} AU = ${Math.round(mine.radiusSolarRadii)} solar radii`, `½ × ${BETELGEUSE.angularDiameterMas} × ${distanceChoice} × 0.001`],
+                ['Planets inside the star', mine.planetsInside.join(', '), `Jupiter (${PLANETS[4].orbitAU} AU) is outside`],
+                ['Separation from the angle', `${mine.separationFromAngleAU.toFixed(2)} AU`, `${COMPANION.separationMas} × ${distanceChoice} × 0.001`],
+                ['Model separation', `${mine.modelSeparationAU.toFixed(2)} AU`, 'from the orbit model; it does not depend on the distance'],
+                ['The two compared', `${mismatch >= 0 ? '+' : '−'}${Math.abs(mismatch).toFixed(1)} percent`, mismatch >= 0 ? 'the angle gives the longer length' : 'the angle gives the shorter length'],
+                ['Orbit radius in Betelgeuse radii', mine.separationInBetelgeuseRadii.toFixed(2), 'the model separation over the radius at your distance'],
+                ['Masses', `Betelgeuse ${betelgeuseMassChoice}, companion ${companionMassChoice} solar masses`, 'the papers’ estimates; not a claim about the real stars'],
+                ['Time for one orbit', `${mine.periodYears.toFixed(2)} years = ${Math.round(mine.periodDays).toLocaleString('en-US')} days`, `within ${Math.ceil(periodAgreementPercent(mine.periodDays))} percent of every value quoted for the long cycle`],
+                ['Strength of the spot', `${sigmaChoice} sigma`, `noise alone makes one at least that strong 1 time in ${mine.oneIn < 1000 ? Math.round(mine.oneIn) : millionsText(mine.oneIn)}`],
               ]}
             />
 

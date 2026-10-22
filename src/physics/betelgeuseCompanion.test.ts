@@ -7,6 +7,7 @@ import {
   chanceOfSigma,
   COMPANION,
   DAYS_PER_YEAR,
+  LIGHT_YEARS_PER_PARSEC,
   keplerPeriodYears,
   modelSeparationAU,
   oneInChance,
@@ -20,6 +21,7 @@ import {
   reachOf,
   runBetelgeuseCompanion,
   separationAU,
+  separationMismatchPercent,
   separationInRadii,
   sigmaAnswer,
   SOLAR_RADII_PER_AU,
@@ -48,6 +50,10 @@ describe('the size from an angle and a distance (test 1)', () => {
   it('is proportional to the angle and to the distance', () => {
     expect(radiusAU(82, 168) / radiusAU(41, 168)).toBeCloseTo(2, 10)
     expect(radiusAU(41, 336) / radiusAU(41, 168)).toBeCloseTo(2, 10)
+  })
+  it('has 3.26 light-years in a parsec (so 168 pc is about 548 light-years)', () => {
+    expect(LIGHT_YEARS_PER_PARSEC).toBeCloseTo(3.26156, 5)
+    expect(Math.round(168 * LIGHT_YEARS_PER_PARSEC)).toBe(548)
   })
   it('uses the parsec the way the IAU defines it', () => {
     expect(AU_PER_PARSEC).toBeCloseTo(206264.806, 2)
@@ -173,6 +179,21 @@ describe('the chance of noise alone (tests 6 and 7)', () => {
   })
   it('rejects a negative number of sigma', () => {
     expect(() => chanceOfSigma(-1)).toThrow(RangeError)
+  })
+})
+
+describe('the angle-based separation against the model orbit at a chosen distance (test 14)', () => {
+  it('is +1.5, -7.5 and +17.9 percent at 168, 153 and 195 pc, and zero at the distance where they match (about 165 pc)', () => {
+    // 52 mas x 168 pc x 0.001 = 8.736 AU against 8.6034 AU: +1.54 percent. At 153 pc, 7.956 AU: -7.52 percent. At 195 pc, 10.14 AU: +17.86 percent (hand values, so the checks allow a rounding of 0.001).
+    expect(separationMismatchPercent(168)).toBeCloseTo(((8.736 - 8.60337) / 8.60337) * 100, 3)
+    expect(separationMismatchPercent(153)).toBeCloseTo(((7.956 - 8.60337) / 8.60337) * 100, 3)
+    expect(separationMismatchPercent(195)).toBeCloseTo(((10.14 - 8.60337) / 8.60337) * 100, 3)
+    expect(Math.abs(separationMismatchPercent(8.60337 / 0.052))).toBeLessThan(1e-3) // 8.60337 / 0.052 = 165.45 pc
+  })
+  it('grows with the distance and has the sign of (angle minus model)', () => {
+    expect(separationMismatchPercent(195)).toBeGreaterThan(separationMismatchPercent(168))
+    expect(separationMismatchPercent(153)).toBeLessThan(0)
+    expect(() => separationMismatchPercent(0)).toThrow(RangeError)
   })
 })
 
