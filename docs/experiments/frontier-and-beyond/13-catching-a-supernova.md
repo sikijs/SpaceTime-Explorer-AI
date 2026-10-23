@@ -242,6 +242,8 @@ The group's pattern (`CLAUDE.md` §13): **observe, compare with the predictions,
 
 ## Implementation Notes
 
+**Owner approval (2026-10-23): "wording is all approved", read as covering all the learner-facing wording of the built experiment (introduction, captions, predictions, results, Words panel, links, tutor, chapter summary and the "Solar mass" entry) and Experiment 12's changed "What's next".**
+
 **Built (2026-10-23):** physics model and tests (`src/physics/catchingASupernova.ts`, 41 tests), interface, two predictions, a five-stage run, three pictures, two controls, results with the reading guide, a "Words and formulas" panel, tutor (`CatchingASupernovaTutor.tsx`) and chapter summary. The group's rules of §29 (introduction, captions, "Want to know more?" links) are followed.
 
 **Differences from this specification (approved by the owner on 2026-10-23, read from "approved" after they were listed; the owner has not yet said whether to keep or soften the iron-core wording, see the source table):**
