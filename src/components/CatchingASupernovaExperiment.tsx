@@ -20,11 +20,15 @@ import {
   joulesFromErg,
 } from '../physics/catchingASupernova'
 import type { LightTravelAnswer, VisibleShareAnswer } from '../physics/catchingASupernova'
+import { CatchingASupernovaTutor } from './CatchingASupernovaTutor'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 13 (docs/experiments/frontier-and-beyond/13-catching-a-supernova.md).
+// Step 6 builds the tutor (CatchingASupernovaTutor.tsx) and, in App, the chapter summary.
+// Step 5 builds the three controls (the core, the distance to M101 and the speed of the gas), shown after the run, which add white marks to Pictures 2 and 3, and the results
+// with the reading guide (the check-up, four tables with notes, the predictions beside the results and the held-back paper links).
 // Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (the star's mass estimates) at stages 1 and 2, Picture 2 (the gas it shed) at
 // stage 3 and Picture 3 (where the energy went, and how long ago the light left) at stages 4 and 5. The controls, the results, the tutor and the chapter summary are later steps.
 // Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
@@ -488,9 +492,10 @@ const word = (sign: -1 | 0 | 1, bigger: string, smaller: string, same: string): 
 
 interface CatchingASupernovaExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaExperimentProps) {
+export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: CatchingASupernovaExperimentProps) {
   const [sharePrediction, setSharePrediction] = useState<VisibleShareAnswer | null>(null)
   const [travelPrediction, setTravelPrediction] = useState<LightTravelAnswer | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -1397,6 +1402,10 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
               </li>
             </ul>
           </div>
+        )}
+        {/* The tutor, after the results: observe, compare with the predictions, a conceptual question, then the explanation. */}
+        {done && sharePrediction !== null && travelPrediction !== null && (
+          <CatchingASupernovaTutor sharePrediction={sharePrediction} travelPrediction={travelPrediction} onExplained={onTutorComplete} />
         )}
       </div>
     </div>
