@@ -582,6 +582,17 @@ export function WhiteDwarfExplosionExperiment() {
 
           <p style={paragraph}>
             <strong>Two ways it might explode.</strong> The first idea is the older one. A white dwarf in a close pair takes gas from its partner, and its weight creeps up.
+          <p style={paragraph}>
+            <strong>How a white dwarf is formed.</strong> A star shines because, deep in its centre (its core), it is hot and squeezed enough to join small atoms into bigger
+            ones, which gives off energy. This is called fusion. A star like the Sun spends most of its life, billions of years, joining hydrogen atoms into helium. When the
+            hydrogen in the core runs short, the core shrinks and heats up, and the star’s outer layers swell out into a huge, cool, red star, a red giant. The core then joins
+            helium atoms into carbon and oxygen. A star as light as the Sun cannot squeeze its core hard enough to go any further, so when the helium is used up, fusion
+            stops. The outer layers drift away into space as a glowing cloud, and what is left is the bare core: a hot ball of mostly carbon and oxygen, about as heavy as
+            half the Sun or more but not much bigger than the Earth. That ball is a white dwarf. It is “white” because it starts out extremely hot, and it keeps its heat
+            only from the past: it makes no new energy, so it cools slowly over billions of years, like the embers of a campfire that has no more wood. (Stars much heavier
+            than the Sun end differently: their cores go on fusing until they collapse, as in Experiment 13.)
+          </p>
+
             NASA describes what happens as it nears the limit: “the pressure at the center will exceed the threshold for the carbon and oxygen nuclei to start to fuse
             uncontrollably”, and the white dwarf explodes. Because every white dwarf that explodes this way would start from nearly the same weight, the explosions would
             look much alike, and that is why NASA says astronomers use them as “standard candles”: if you know how bright something really is, how faint it looks tells you how
@@ -702,6 +713,10 @@ export function WhiteDwarfExplosionExperiment() {
             </li>
             <li>
               <ExternalLink href="https://esahubble.org/images/heic0411d/">ESA/Hubble: The Large Magellanic Cloud</ExternalLink>: the small galaxy beside ours where the remnant is.
+            <li>
+              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/dwarfs1.html">NASA Imagine the Universe: White dwarfs</ExternalLink>: how a star like the Sun
+              swells into a red giant, blows off its outer layers and leaves a white dwarf.
+            </li>
             </li>
           </ul>
         </div>
