@@ -14,6 +14,7 @@ import { LunarClocksExperiment } from './components/LunarClocksExperiment'
 import { FastestSpacecraftExperiment } from './components/FastestSpacecraftExperiment'
 import { BetelgeuseCompanionExperiment } from './components/BetelgeuseCompanionExperiment'
 import { CatchingASupernovaExperiment } from './components/CatchingASupernovaExperiment'
+import { WhiteDwarfExplosionExperiment } from './components/WhiteDwarfExplosionExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -736,6 +737,15 @@ const chapters: Chapter[] = [
     learned:
       "A core-collapse supernova is what happens when the core of a very heavy star can no longer hold itself up: it falls in on itself, rebounds, and the outer layers are blown away, leaving a neutron star. SN 2023ixf, in the galaxy M101, was caught in May 2023, and the star had been photographed before it exploded. By a rough estimate the collapse frees about 4.3 × 10^53 erg, about 357 times everything the Sun will give out in its whole life. The blast's motion carries about 1 × 10^51 erg (1 part in 431) and the visible light about 1 × 10^49 erg (1 part in 43,104). Almost all the rest leaves as neutrinos, and none were reported from this supernova. The light we saw left the star 22.3 million years before May 2023, because M101 is 22.3 million light-years away. The first spectra showed dense gas that, at the authors' assumed 50 km/s, was shed 3 to 6 years before the explosion. How heavy the star was is contested: seven estimates run from 8 to 24 solar masses, and a 2026 paper argues that dust could hide about 9 solar masses.",
     next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+  },
+  {
+    title: 'What makes a white dwarf explode? (the double-detonation remnant SNR 0509-67.5)',
+    group: 'Frontier and Beyond',
+    Component: WhiteDwarfExplosionExperiment,
+    // Placeholder: the tutor and the chapter summary are later steps (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md), and the summary is shown
+    // only after the tutor's explanation, so these two are not shown yet. The wording will be drafted for the owner's line-by-line approval (CLAUDE.md §28.1).
+    learned: 'Not yet written.',
+    next: 'Not yet written.',
   },
 ]
 
