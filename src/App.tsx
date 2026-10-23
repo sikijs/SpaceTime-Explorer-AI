@@ -736,16 +736,17 @@ const chapters: Chapter[] = [
     // approved specification.
     learned:
       "A core-collapse supernova is what happens when the core of a very heavy star can no longer hold itself up: it falls in on itself, rebounds, and the outer layers are blown away, leaving a neutron star. SN 2023ixf, in the galaxy M101, was caught in May 2023, and the star had been photographed before it exploded. By a rough estimate the collapse frees about 4.3 × 10^53 erg, about 357 times everything the Sun will give out in its whole life. The blast's motion carries about 1 × 10^51 erg (1 part in 431) and the visible light about 1 × 10^49 erg (1 part in 43,104). Almost all the rest leaves as neutrinos, and none were reported from this supernova. The light we saw left the star 22.3 million years before May 2023, because M101 is 22.3 million light-years away. The first spectra showed dense gas that, at the authors' assumed 50 km/s, was shed 3 to 6 years before the explosion. How heavy the star was is contested: seven estimates run from 8 to 24 solar masses, and a 2026 paper argues that dust could hide about 9 solar masses.",
-    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+    next: 'Experiment 14 turns to the other kind of supernova, the explosion of a white dwarf. It asks whether a white dwarf has to reach its weight limit before it can explode, and looks at what two shells of calcium in an old remnant can tell us.',
   },
   {
     title: 'What makes a white dwarf explode? (the double-detonation remnant SNR 0509-67.5)',
     group: 'Frontier and Beyond',
     Component: WhiteDwarfExplosionExperiment,
-    // Placeholder: the tutor and the chapter summary are later steps (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md), and the summary is shown
-    // only after the tutor's explanation, so these two are not shown yet. The wording will be drafted for the owner's line-by-line approval (CLAUDE.md §28.1).
-    learned: 'Not yet written.',
-    next: 'Not yet written.',
+    // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a published one
+    // (Das and others 2025; Mandal and others 2026). "What's next" names no experiment, because Experiment 15 has no approved specification.
+    learned:
+      "A white dwarf is held up by electron degeneracy pressure, which can hold only up to a limit of about 1.4 Suns' worth of material (1.44 in the model used here), and the heavier it is the smaller it is: 0.6 Suns gives a radius of 1.41 Earth radii, 1.4 Suns only 0.25. Two routes to a Type Ia explosion have been proposed: the white dwarf grows to near the limit, or a thin helium layer ignites first and sets off the core, a double detonation. In SNR 0509-67.5, a remnant 300 to 350 years old in the Large Magellanic Cloud, astronomers found two separate shells of calcium, at 1.73 and 2.06 parsecs from the centre (5.6 and 6.7 light-years), 0.33 parsecs apart. The simulation that matches them has a core of 1.028 Suns and a helium layer of 0.027, 1.055 in all, which is 0.385 Suns (27 percent) below the limit. Radius divided by age gives average speeds of about 4,800 to 6,700 km/s, about 2 percent of the speed of light. That is strong evidence for this one remnant; one author reads the two shells another way, and how many white dwarfs explode like this is open. It matters because a distance worked out from brightness assumes the explosions are alike: a supernova 20 percent dimmer than assumed would give a distance 11.8 percent too large.",
+    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
   },
 ]
 

@@ -5,6 +5,7 @@ import {
   compareWithPublished,
   distanceErrorPercent,
   distanceErrorWorkedExample,
+  distanceTravelledPc,
   doubleDetonationMass,
   earthRadii,
   EARTH_RADIUS_KM,
@@ -20,6 +21,7 @@ import {
   shellSpeedRangeKmS,
   shellSpeedWorkedExample,
   SIZE_ANSWERS,
+  SPEED_OF_LIGHT_KM_S,
   sizeAnswer,
   SPEED_ANSWERS,
   speedAnswer,
@@ -362,6 +364,21 @@ describe('the speed range and the percentage below the limit (test 16)', () => {
       const x = runWhiteDwarfExplosion({ massSolar: m })
       expect(x.percentBelowLimit + x.fractionOfLimit * 100).toBeCloseTo(100, 10)
     }
+  })
+})
+
+describe('how far a steady speed gets in a number of years (test 17)', () => {
+  it('50 km/s for 325 years is about 0.017 parsecs; the speed of light for 325 years is about 99.6 parsecs, which is 325 light-years', () => {
+    expect(distanceTravelledPc(50, 325)).toBeCloseTo((50 * 325 * YEAR_S) / PARSEC_KM, 10)
+    expect(distanceTravelledPc(50, 325)).toBeCloseTo(0.0166, 3)
+    expect(distanceTravelledPc(SPEED_OF_LIGHT_KM_S, 325)).toBeCloseTo(325 / 3.26156, 1)
+    expect(distanceTravelledPc(SPEED_OF_LIGHT_KM_S, 325)).toBeCloseTo(99.6, 1)
+  })
+  it('the outer shell\'s own average speed carries it exactly to its radius, and the distance doubles when the age doubles', () => {
+    expect(distanceTravelledPc(shellSpeedKmS(2.06, 325), 325)).toBeCloseTo(2.06, 10)
+    expect(distanceTravelledPc(50, 650) / distanceTravelledPc(50, 325)).toBeCloseTo(2, 12)
+    expect(() => distanceTravelledPc(0, 325)).toThrow(RangeError)
+    expect(() => distanceTravelledPc(50, -1)).toThrow(RangeError)
   })
 })
 

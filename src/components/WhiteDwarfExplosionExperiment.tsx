@@ -16,10 +16,12 @@ import {
 } from '../physics/whiteDwarfExplosion'
 import type { SizeAnswer, SpeedAnswer } from '../physics/whiteDwarfExplosion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { WhiteDwarfExplosionTutor } from './WhiteDwarfExplosionTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 14 (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md).
+// Step 6 builds the tutor (WhiteDwarfExplosionTutor.tsx) and, in App, the chapter summary.
 // Step 5 builds the three controls (the white dwarf's weight, the remnant's age and a brightness difference), shown after the run, which add white marks to Pictures 1 and 3, and the
 // results with the reading guide (the check-up, four tables with notes, the predictions beside the results and the held-back paper links).
 // Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (white dwarf sizes and the limit) at stage 1, Picture 2 (the two routes) at stages 2 and 3,
@@ -420,7 +422,12 @@ const SPEED_CHOICES: ReadonlyArray<{ value: SpeedAnswer; label: string }> = [
   { value: 'about 300,000 km/s', label: 'About 300,000 kilometres a second (the speed of light)' },
 ]
 
-export function WhiteDwarfExplosionExperiment() {
+interface WhiteDwarfExplosionExperimentProps {
+  onComplete?: () => void
+  onTutorComplete?: () => void
+}
+
+export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: WhiteDwarfExplosionExperimentProps) {
   const [sizePrediction, setSizePrediction] = useState<SizeAnswer | null>(null)
   const [speedPrediction, setSpeedPrediction] = useState<SpeedAnswer | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -438,10 +445,13 @@ export function WhiteDwarfExplosionExperiment() {
     if (status !== 'running') return
     const timer = window.setTimeout(() => {
       if (stage < LAST_STAGE) setStage(stage + 1)
-      else setStatus('complete')
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
     }, STAGE_MS)
     return () => window.clearTimeout(timer)
-  }, [status, stage])
+  }, [status, stage, onComplete])
 
   function startOver() {
     setSizePrediction(null)
@@ -573,16 +583,6 @@ export function WhiteDwarfExplosionExperiment() {
           </p>
 
           <p style={paragraph}>
-            <strong>What a white dwarf is.</strong> NASA says that “a typical white dwarf is half as massive as the Sun, yet only slightly bigger than Earth”. A white dwarf
-            is not making energy any more. What holds it up against its own weight is a rule of nature about electrons: no two of them can be in exactly the same state, so
-            when they are squeezed together they push back, a bit like a theatre where every seat holds one person, however hard you push. This is called{' '}
-            <strong>electron degeneracy pressure</strong>. But it can hold up only so much weight. Chandra gives the limit: “the mass limit for a white dwarf to remain in
-            equilibrium between gravity and electron degeneracy pressure is 1.4 solar masses”. It is named the Chandrasekhar limit, after the scientist who found it.
-          </p>
-
-          <p style={paragraph}>
-            <strong>Two ways it might explode.</strong> The first idea is the older one. A white dwarf in a close pair takes gas from its partner, and its weight creeps up.
-          <p style={paragraph}>
             <strong>How a white dwarf is formed.</strong> A star shines because, deep in its centre (its core), it is hot and squeezed enough to join small atoms into bigger
             ones, which gives off energy. This is called fusion. A star like the Sun spends most of its life, billions of years, joining hydrogen atoms into helium. When the
             hydrogen in the core runs short, the core shrinks and heats up, and the star’s outer layers swell out into a huge, cool, red star, a red giant. The core then joins
@@ -593,6 +593,16 @@ export function WhiteDwarfExplosionExperiment() {
             than the Sun end differently: their cores go on fusing until they collapse, as in Experiment 13.)
           </p>
 
+          <p style={paragraph}>
+            <strong>What a white dwarf is.</strong> NASA says that “a typical white dwarf is half as massive as the Sun, yet only slightly bigger than Earth”. A white dwarf
+            is not making energy any more. What holds it up against its own weight is a rule of nature about electrons: no two of them can be in exactly the same state, so
+            when they are squeezed together they push back, a bit like a theatre where every seat holds one person, however hard you push. This is called{' '}
+            <strong>electron degeneracy pressure</strong>. But it can hold up only so much weight. Chandra gives the limit: “the mass limit for a white dwarf to remain in
+            equilibrium between gravity and electron degeneracy pressure is 1.4 solar masses”. It is named the Chandrasekhar limit, after the scientist who found it.
+          </p>
+
+          <p style={paragraph}>
+            <strong>Two ways it might explode.</strong> The first idea is the older one. A white dwarf in a close pair takes gas from its partner, and its weight creeps up.
             NASA describes what happens as it nears the limit: “the pressure at the center will exceed the threshold for the carbon and oxygen nuclei to start to fuse
             uncontrollably”, and the white dwarf explodes. Because every white dwarf that explodes this way would start from nearly the same weight, the explosions would
             look much alike, and that is why NASA says astronomers use them as “standard candles”: if you know how bright something really is, how faint it looks tells you how
@@ -704,6 +714,10 @@ export function WhiteDwarfExplosionExperiment() {
               limit explodes, and how that differs from a massive star’s collapse.
             </li>
             <li>
+              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/dwarfs1.html">NASA Imagine the Universe: White dwarfs</ExternalLink>: how a star like the Sun
+              swells into a red giant, blows off its outer layers and leaves a white dwarf.
+            </li>
+            <li>
               <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/dwarfs2.html">NASA Imagine the Universe: White dwarf stars</ExternalLink>: how heavy and how big a
               white dwarf is, and what the 1.4-Sun limit means.
             </li>
@@ -713,10 +727,6 @@ export function WhiteDwarfExplosionExperiment() {
             </li>
             <li>
               <ExternalLink href="https://esahubble.org/images/heic0411d/">ESA/Hubble: The Large Magellanic Cloud</ExternalLink>: the small galaxy beside ours where the remnant is.
-            <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/dwarfs1.html">NASA Imagine the Universe: White dwarfs</ExternalLink>: how a star like the Sun
-              swells into a red giant, blows off its outer layers and leaves a white dwarf.
-            </li>
             </li>
           </ul>
         </div>
@@ -1292,6 +1302,10 @@ export function WhiteDwarfExplosionExperiment() {
               </li>
             </ul>
           </div>
+        )}
+        {/* The tutor, after the results: observe, compare with the predictions, a conceptual question, then the explanation. */}
+        {done && sizePrediction !== null && speedPrediction !== null && (
+          <WhiteDwarfExplosionTutor sizePrediction={sizePrediction} speedPrediction={speedPrediction} onExplained={onTutorComplete} />
         )}
       </div>
     </div>

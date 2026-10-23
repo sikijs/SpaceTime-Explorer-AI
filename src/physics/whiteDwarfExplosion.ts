@@ -77,6 +77,12 @@ export function shellSpeedKmS(radiusPc: number, ageYears: number): number {
   requirePositive(ageYears, 'The age')
   return (radiusPc * KM_PER_PARSEC) / (ageYears * SECONDS_PER_YEAR)
 }
+// How far something moving at a steady speed (km/s) gets in a number of years, in parsecs. At the speed of light it is the distance light covers in that time.
+export function distanceTravelledPc(speedKmS: number, ageYears: number): number {
+  requirePositive(speedKmS, 'The speed')
+  requirePositive(ageYears, 'The age')
+  return (speedKmS * ageYears * SECONDS_PER_YEAR) / KM_PER_PARSEC
+}
 // A shell's average speed at the two ends of the published age range (the slowest, at the oldest age, then the fastest, at the youngest), in km/s.
 export function shellSpeedRangeKmS(radiusPc: number): [number, number] {
   const [young, old] = WHITE_DWARF_EXPLOSION.ageRangeYears
