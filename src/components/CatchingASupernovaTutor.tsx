@@ -171,10 +171,14 @@ export function CatchingASupernovaTutor({ sharePrediction, travelPrediction, onE
             Either way, the parts below explain what lies behind the numbers.
           </p>
           <p style={paragraphStyle}>
-            <strong>1. What a core-collapse supernova is.</strong> A star shines because its core makes energy, and that energy pushes outward and holds the star up against its own weight. In a very heavy star a time
-            comes when the core can no longer do this. With nothing holding it up, the core falls in on itself in a fraction of a second. NASA writes: “The core collapses and then rebounds back to its original size,
-            creating a shock wave that travels through the star’s outer layers.” The picture to keep is a ball dropped on a hard floor: it squashes and springs back, and the springing back is what throws the outer layers
-            away. What is left at the centre is a neutron star, about {SUPERNOVA.coreMassSolar} Suns’ worth of material in a ball about {SUPERNOVA.coreRadiusKm} km in radius.
+            <strong>1. What a core-collapse supernova is.</strong> A star shines because its core makes energy, and that energy pushes outward and holds the star up against its own weight. A very heavy star ends with an iron
+            core, which cannot make energy, so it is held up only by electron degeneracy pressure, the resistance of crowded electrons. Past about 1.4 Suns’ worth of material that is not enough, and the core falls in on itself
+            in a fraction of a second, until its centre is as dense as an atomic nucleus and becomes very stiff. It springs back a little, like a ball hitting a hard floor, but it does not return to its old size: that stiff centre is the newborn neutron star. The gas still
+            falling in crashes into it, like cars piling into one that has stopped, and a shock wave runs outward. NASA writes: “The core collapses and then rebounds, creating a shock wave that travels through the star’s outer layers.”
+            The shock does not get far. It is pushing against gas that is still falling in, and it loses energy in breaking up iron nuclei and to escaping neutrinos, so it stalls, about 100 to 200 km from the centre. The newborn
+            neutron star is extremely hot, because the energy of the fall has to go somewhere, and it gives off a flood of neutrinos. A small share of them are stopped by the gas behind the shock, and that heating, like a stove
+            under a pot, is thought to push the shock on again until it throws the outer layers away. Simulations from many groups now produce explosions this way, but the details are still being worked out. What is left at the centre
+            is a neutron star, about {SUPERNOVA.coreMassSolar} Suns’ worth of material in a ball about {SUPERNOVA.coreRadiusKm} km in radius.
           </p>
           <p style={paragraphStyle}>
             <strong>2. Where the energy comes from.</strong> Think of dropping a very heavy weight from a great height: the heavier it is and the farther it falls, the more energy it gives up. The collapsing core is the

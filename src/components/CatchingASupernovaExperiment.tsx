@@ -177,9 +177,10 @@ const lookForDrawing: LookFor[] = [
 
 const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Supernova', meaning: 'the explosion of a star at the end of its life, so bright that it can be seen from millions of light-years away for weeks or months. This experiment is about one kind, a core-collapse supernova, in which a very heavy star’s core collapses. (NASA: “The result is a huge explosion called a supernova.”)' },
-  { term: 'Core collapse', meaning: 'what happens when the core of a very heavy star can no longer hold itself up against its own weight. It falls in on itself in a fraction of a second. NASA says: “The core collapses and then rebounds back to its original size, creating a shock wave that travels through the star’s outer layers.”' },
+  { term: 'Core collapse', meaning: 'what happens when the iron core of a very heavy star grows too heavy for electron degeneracy pressure to hold up. It falls in on itself in a fraction of a second, until the centre is as dense as an atomic nucleus and stiffens. NASA says: “The core collapses and then rebounds, creating a shock wave that travels through the star’s outer layers.”' },
+  { term: 'Electron degeneracy pressure', meaning: 'the resistance of electrons to being crowded together, because no two can be in exactly the same state (like one person to a theatre seat). It holds up the iron core of a heavy star until the core passes about 1.4 Suns’ worth of material. Black Holes Experiment 9 explains it.' },
   { term: 'Neutron star', meaning: 'the very small, very dense ball that is left when a core collapses and holds. NASA: “The remnant core is a superdense neutron star.” It holds about 1.4 Suns’ worth of material in a ball only about 12 kilometres in radius, roughly the size of a city. Black Holes Experiment 9 explains what holds it up.' },
-  { term: 'Rebound and shock wave', meaning: 'think of a ball dropped on a hard floor. It squashes, then springs back. In a supernova the falling material is stopped by the newly formed, extremely dense core and springs back, and the springing back sends a sudden sweep of pressure, a shock wave, outward through the star, like a wave through a crowd that all jump at once.' },
+  { term: 'Rebound and shock wave', meaning: 'the centre of the collapsing core becomes suddenly very stiff, because it is as dense as an atomic nucleus, and springs back a little, like a ball hitting a hard floor (but it does not return to its old size: that stiff centre is the newborn neutron star). The gas still falling in crashes into it, like cars piling into one that has stopped, and the crunch travels outwards as a shock wave, a sudden sweep of pressure. The shock stalls about 100 to 200 km from the centre, because it pushes against falling gas and loses energy breaking up iron nuclei and to escaping neutrinos. The newborn neutron star is extremely hot and gives off a flood of neutrinos; a small share are stopped by the gas behind the shock, and that heating is thought to push the shock on again.' },
   { term: 'Neutrino', meaning: 'a tiny particle with almost no mass and no electric charge that hardly ever interacts with anything. CERN: “It is neutrinos’ weak interaction with matter that makes them almost impossible to detect”, and they can pass through the whole Earth. A supernova makes them in enormous numbers.' },
   { term: 'Red supergiant', meaning: 'a star much heavier than the Sun that has used up the hydrogen in its core and swollen to many times its old size, with a cooler, redder surface (Experiment 12). Betelgeuse is one, and so was the star in this experiment.' },
   { term: 'Progenitor', meaning: 'the star that existed before a supernova, “the one that came before”. Finding it in old pictures is rare, and it is what lets astronomers say what kind of star exploded.' },
@@ -682,11 +683,53 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
 
           <p style={paragraph}>
             <strong>What a supernova is.</strong> A star shines because its core is making energy, and the energy pushing outward holds the star up against its own weight.
-            In a very heavy star, a time comes when the core can no longer do that. With nothing holding it up, the core falls in on itself, in a fraction of a second. NASA
-            describes what happens next: the core collapses and then rebounds, “creating a shock wave that travels through the star’s outer layers”, and the result is “a huge
-            explosion called a supernova”. A good picture is a ball dropped on a hard floor: it squashes, then springs back, and the springing back is what drives the
-            outer layers away. At the centre, “the remnant core is a superdense neutron star”: about 1.4 Suns’ worth of material squeezed into a ball only about 12
-            kilometres in radius, roughly the size of a city. The illustration below shows the three steps.
+            A very heavy star keeps making heavier and heavier elements until its core is mostly iron. Making energy from iron does not work, so the core’s energy source
+            runs out. From then on the core is held up by something else: <strong>electron degeneracy pressure</strong> (Black Holes Experiment 9). An electron is a tiny
+            particle, and no two electrons can be in exactly the same state, so when they are crowded together they resist being crowded more, a bit like the seats in a
+            theatre, where only one person fits in each. That resistance can hold up only so much weight. As the iron core grows, it reaches a limit of roughly 1.4 Suns’ worth
+            of material, and the resistance loses.
+          </p>
+
+          <p style={paragraph}>
+            <strong>The collapse, the bounce and the blast.</strong> Now the core falls in on itself, in a fraction of a second. As it is squeezed, its electrons are pushed
+            into its protons, turning them into neutrons, so the electrons’ resistance disappears and the fall speeds up. It stops only when the centre is squeezed to about
+            the density of an atomic nucleus. There the neutrons resist being crowded more (the same rule, now for neutrons), and the force that holds a nucleus together
+            becomes a push-away at very short range. Suddenly the centre is extremely stiff. It springs back a little, like a ball hitting a hard floor, except that it does
+            not return to its old size: what stays is a tiny ball, the newborn neutron star. NASA calls it “a superdense neutron star”: about 1.4 Suns’ worth of material in a ball only about 12 kilometres
+            in radius, roughly the size of a city. Meanwhile the gas above is still falling in, very fast, and it crashes into this stiff centre. Think of a pile-up on a
+            motorway: the front car stops, the cars behind run into it, and the crunch travels backwards through the line. Here it travels outwards, as a <strong>shock
+            wave</strong>. NASA writes that the core “collapses and then rebounds, creating a shock wave that travels through the star’s outer layers”, and the result is
+            “a huge explosion called a supernova”.
+          </p>
+
+          <p style={paragraph}>
+            <strong>Why the bounce alone is not enough.</strong> The shock wave starts out strong, but it does not get far. Think of pushing a loaded shopping trolley
+            up a slope: the push you start with runs out, and if nothing adds to it, the trolley stops and rolls back. The shock has two problems like that.
+          </p>
+          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>It is pushing against a great weight of gas.</strong> The layers above are still falling inwards, so the shock is moving outwards against a stream
+              of gas coming the other way, like walking up a downward escalator.
+            </li>
+            <li>
+              <strong>It keeps losing energy.</strong> The shock hits iron nuclei, and it takes a lot of energy to break them apart into protons and neutrons, a bit like
+              the effort of pulling apart a stack of magnets stuck together. That energy comes out of the shock. Neutrinos are also made there, and they escape and
+              carry energy away, like heat leaking out of a house through open windows.
+            </li>
+          </ul>
+          <p style={paragraph}>
+            The result is that the shock stalls, only about 100 to 200 kilometres from the centre, and the gas behind it keeps falling in. If nothing else happened, there
+            would be no explosion.
+          </p>
+          <p style={paragraph}>
+            <strong>What is thought to restart it.</strong> Remember where the neutron star came from: it is the stiff centre of the collapsed core, the part that stopped
+            the fall. It was formed in a fraction of a second, from material that had just fallen a long way, and all the energy of that fall has to go somewhere. Much of
+            it heats the newborn neutron star, so it starts out extremely hot, and it gives off a huge flood of neutrinos (some made as electrons were pushed into protons,
+            some made by the heat). A neutrino hardly ever interacts with anything, so almost all of them fly straight out. But there are so many that a small share of them are stopped by the gas between the neutron
+            star and the shock. Each one that is stopped gives that gas a little energy, in the way a stove heats a pot. Hot gas pushes harder, so this heating builds up
+            pressure behind the shock. If the heating wins over the energy the shock is losing and the weight of the gas falling in, the shock is pushed outwards again,
+            through the whole star, and the star is blown apart. Computer simulations from many research groups now produce explosions this way, but the details,
+            including how turbulent and uneven the flow is, are still being worked out. The illustration below shows the three steps.
           </p>
 
           <p style={paragraph}>
@@ -754,7 +797,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
             </p>
             <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
               <li>
-                <strong>Supernova</strong>, <strong>core collapse</strong>, <strong>rebound</strong> and <strong>neutron star</strong>: the explosion, how it starts, and
+                <strong>Supernova</strong>, <strong>core collapse</strong>, <strong>electron degeneracy pressure</strong>, <strong>rebound</strong> and <strong>neutron star</strong>: the explosion, how it starts, and
                 what it leaves behind.
               </li>
               <li>
@@ -798,6 +841,18 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
             <li>
               <ExternalLink href="https://science.nasa.gov/universe/stars/types/">NASA: Star types</ExternalLink>: how a very heavy star ends, with its core collapsing into a
               neutron star and exploding as a supernova.
+            </li>
+            <li>
+              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/supernovae1.html">NASA Imagine the Universe: Supernovae</ExternalLink>: why a heavy star’s iron core
+              has nothing left to burn, and what happens to it.
+            </li>
+            <li>
+              <ExternalLink href="https://heasarc.gsfc.nasa.gov/docs/objects/snrs/snrstext.html">NASA HEASARC: Supernova remnants</ExternalLink>: how the collapsing core squeezes
+              electrons and protons together into neutrons and releases neutrinos.
+            </li>
+            <li>
+              <ExternalLink href="https://arxiv.org/abs/2009.14157">Burrows and Vartanyan, “Core-Collapse Supernova Explosion Theory” (Nature, 2021)</ExternalLink>: a research review,
+              harder reading than the pages above, for the stalled shock and its revival by neutrino heating.
             </li>
             <li>
               <ExternalLink href="https://spaceplace.nasa.gov/light-year/en/">NASA Space Place: What is a light-year?</ExternalLink> What a light-year is, and why looking far
