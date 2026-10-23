@@ -184,7 +184,9 @@ The group's pattern (`CLAUDE.md` §13): **observe, compare with the predictions,
 | Burrows and Vartanyan (2021), *Core-Collapse Supernova Explosion Theory*, Nature 589, 29, arXiv:2009.14157 | The core "implodes within less than a second to neutron-star densities, at which point it rebounds like a spherical piston, generating a shock wave"; "The stalled shock radius initially hovers around 100-200 km", from neutrino losses and the breaking up of infalling nuclei; neutrino heating in the "gain region" behind the shock; abstract: "The delayed neutrino-heating mechanism is emerging as a robust solution, but there remain many issues to address" | Abstract fetched; body text read through an HTML copy (ar5iv), first 100,000 characters (not the last 278); the PDF could not be converted to text |
 | Janka and others (2007), *Theory of Core-Collapse Supernovae*, Phys. Rep. 442, 38, arXiv:astro-ph/0612072 | Abstract only: "the prompt bounce-shock mechanism is not the driver of supernova explosions"; "the delayed neutrino-heating mechanism can produce explosions…" in some stars; for more massive progenitors "still a puzzle" (2006, so older than the Burrows review) | Abstract fetched; the PDF could not be converted to text |
 | NASA's own page on the stalled shock or neutrino heating | — | **None found** (three NASA pages fetched; none mention them). The claims rest on the two research reviews above |
-| What holds up a massive star's iron core (electron degeneracy pressure), and the "roughly 1.4 Suns" limit for that core | — | **No source read for this case**; standard textbook physics, written from memory |
+| Chandra X-ray Observatory, Educational Materials, "Stellar Evolution", the death of a massive star (chandra.harvard.edu/edu/formal/stellar_ev/story/index11.html) | "The mass of the star's iron core approaches 1.4 solar masses - the Chandrasekhar Limit"; the core collapses "in less than a second" from about 8,000 km to about 19 km across, and a shock wave runs outward. It says **radiation pressure** can no longer support the core, not electron degeneracy pressure | Fetched 2026-10-23 (read through a summarising fetch, not verbatim) |
+| Chandra, "Investigating Supernova Remnants", background (chandra.harvard.edu/edu/formal/snr/bg2.html) | "The mass limit for a white dwarf to remain in equilibrium between gravity and electron degeneracy pressure is 1.4 solar masses - the Chandrasekhar limit"; describes the shock wave. Does not say that an iron core is held up by electron degeneracy pressure, and does not describe electrons and protons combining | Fetched 2026-10-23 (read through a summarising fetch) |
+| What holds up a massive star's iron core: electron degeneracy pressure | Two research-paper summaries seen in a search result (not opened) say the iron core is "mostly supported by electron degeneracy pressure" and that electron captures then reduce it. Chandra's two pages give the 1.4 Suns limit for the iron core and define that limit as the electron-degeneracy limit, but neither page says in one sentence that the iron core is held up by electron degeneracy pressure | **Partly sourced**: the 1.4 Suns limit for the iron core is backed by Chandra (the page text says "approaches"); the electron degeneracy wording rests on the pair of Chandra pages and on search summaries |
 | Riess and others (2022), the Cepheid distance to M101: 6.85 ± 0.15 Mpc | Quoted in a search summary of a 2025 paper | **Not read** |
 | ESA/Hubble and NASA pages on SN 2023ixf, a plain NASA page on neutrinos, SN 1987A's neutrino count | — | **Not found or not read** |
 
@@ -209,7 +211,7 @@ The group's pattern (`CLAUDE.md` §13): **observe, compare with the predictions,
 
 ## Open items
 
-- What holds up a massive star's iron core (electron degeneracy pressure) and the "roughly 1.4 Suns" limit have no source read for this case; NASA gives 1.4 only as the white dwarf limit. The stall and neutrino heating rest on Burrows and Vartanyan (2021, read through an HTML copy) and Janka and others (abstract only), not on a NASA page.
+- What holds up a massive star's iron core is only partly sourced (see the Sources table): Chandra gives the 1.4 Suns limit for the iron core but its page names radiation pressure, and no page read says "electron degeneracy pressure" for the iron core in one sentence; the wording on the page follows the standard account. The stall and neutrino heating rest on Burrows and Vartanyan (2021, read through an HTML copy) and Janka and others (abstract only), not on a NASA page.
 - The SN 2023ixf radiated energy `L` is **not** read; the literature range (1–10) × 10⁴⁹ erg is generic.
 - The Sun's whole-life energy (a 10-billion-year lifetime) and `L_sun` have no source read.
 - The Riess distance, and the Kilpatrick, Van Dyk, Jencson and Qin mass values, were seen only in summaries.
@@ -217,7 +219,7 @@ The group's pattern (`CLAUDE.md` §13): **observe, compare with the predictions,
 - No plain NASA or ESA page was found for SN 2023ixf itself, for neutrinos or for SN 1987A's neutrinos.
 - Whether the progenitor has been confirmed gone is unchecked.
 - The claim that "no neutrinos were expected to be detected at this distance" has no source read.
-- It has not been checked in a browser, since nothing is built.
+- It has been checked in Chrome only (2026-10-23, see "Implementation Notes"); not in other browsers, at narrow widths, by keyboard or with a real learner.
 
 ## Decisions for the owner (each on a default; change any you like)
 
@@ -236,4 +238,16 @@ The group's pattern (`CLAUDE.md` §13): **observe, compare with the predictions,
 
 ## Implementation Notes
 
-(None yet: nothing is built. Per §23 Stage 4, implementation starts only after the owner approves this specification, one step at a time, per §6.)
+**Built (2026-10-23):** physics model and tests (`src/physics/catchingASupernova.ts`, 41 tests), interface, two predictions, a five-stage run, three pictures, two controls, results with the reading guide, a "Words and formulas" panel, tutor (`CatchingASupernovaTutor.tsx`) and chapter summary. The group's rules of §29 (introduction, captions, "Want to know more?" links) are followed.
+
+**Differences from this specification (listed for the owner's approval; the owner has not yet approved them):**
+
+1. **Two controls, not three.** The distance control was dropped at the owner's request on 2026-10-23. Table 4 has no distance rows and Picture 3's strip has no white mark. The module no longer has `distanceChoicesMpc` or the distance comparison fields.
+2. **A fuller account of the explosion in the introduction**, as the owner asked on 2026-10-23: the iron core held up by electron degeneracy pressure, the collapse, the bounce, the stalled shock and the revival by neutrino heating, in three paragraphs, with a new "Electron degeneracy pressure" entry in the Words panel and the same account in the tutor's part 1. The ball-on-a-floor picture is kept for the bounce, and a motorway pile-up is used for the shock wave (the specification's "falling bricks" was not used).
+3. **Extra links in "Want to know more?":** NASA Imagine the Universe, NASA HEASARC, the Chandra X-ray Observatory's stellar evolution page, and Burrows and Vartanyan (2021, a research review).
+
+A full line-by-line comparison against this specification is part of the final review (§21 Step 10), which has not been done.
+
+**Complete-flow test in Chrome (2026-10-23, in the Chrome browser, against the dev server):** all 12 prediction pairs (4 answers for the share of light by 3 for the light-travel time) were run to the end: the Run button was enabled once both were chosen, all five stages completed, the results and "Now try it yourself" appeared, the tutor asked its three questions (Continue stayed disabled until text was typed), the eight explanation parts appeared, each prediction was marked "matched" or "did not match" correctly for its own answer (only "About 1 part in 10,000" matches for Prediction 1 and only "About 20 million years" for Prediction 2), the two extra remarks for "A few months" and "About 20 thousand years" appeared only with those answers, and no script errors were logged. The chapter summary did not appear before the explanation (checked with saved progress cleared) and appeared after it, and the saved progress recorded the chapter as explained. All 27 control settings (3 core masses by 3 radii by 3 speeds) were set in turn and Table 4 was compared with a separate calculation: the energy (to the 2 significant figures shown), the light's share (within 0.05 percent), the two gas times (within 0.06 year) and the setting labels all agreed; with the settings back on the published values every row said "the same". The new introduction paragraphs rendered correctly in a screenshot.
+
+**Not checked:** other browsers, narrow widths, keyboard use, or a real learner; the text of the Table 1 to 3 notes and Pictures 1 and 3 against a separate calculation (the test covered Table 4 and the tutor flow); and the comparison with this specification (above).

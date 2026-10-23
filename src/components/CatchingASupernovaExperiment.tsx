@@ -840,6 +840,10 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
               has nothing left to burn, and what happens to it.
             </li>
             <li>
+              <ExternalLink href="https://chandra.harvard.edu/edu/formal/stellar_ev/story/index11.html">Chandra X-ray Observatory: Stellar evolution, the death of a massive star</ExternalLink>:
+              the iron core growing to about 1.4 Suns, collapsing in less than a second, and the shock wave that runs outward.
+            </li>
+            <li>
               <ExternalLink href="https://heasarc.gsfc.nasa.gov/docs/objects/snrs/snrstext.html">NASA HEASARC: Supernova remnants</ExternalLink>: how the collapsing core squeezes
               electrons and protons together into neutrons and releases neutrinos.
             </li>
