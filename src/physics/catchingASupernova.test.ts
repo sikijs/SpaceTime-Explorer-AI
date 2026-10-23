@@ -4,16 +4,23 @@ import {
   CM_PER_AU,
   cmToAU,
   collapseEnergyJ,
+  collapseWorkedExample,
   compareWithPublished,
+  distanceRangeMpc,
+  distanceUncertaintyPercent,
   ergFromJoules,
+  gasTimeWorkedExample,
   inSunLifetimes,
   joulesFromErg,
   lightTravelAnswer,
+  lightOneInRangeOverCores,
+  lightTravelTimesLongerThan,
   lightTravelYears,
   LITERATURE,
   lightYearsFromMpc,
   MASS_2026,
   massEstimates,
+  nearestLog,
   oneInN,
   overlapCount,
   overlaps,
@@ -323,5 +330,70 @@ describe('the reading guide\'s comparisons (test 13)', () => {
     expect(LITERATURE.sn1987aEnergyErg).toEqual([2e53, 3e53])
     expect(LITERATURE.explosionEnergyErg).toEqual([0.7e51, 1.2e51])
     expect(LITERATURE.paperGasYears).toEqual([3, 6])
+  })
+})
+
+describe('the numbers of the worked examples, which the interface only displays (test 14)', () => {
+  it('the collapse example: the mass in kilograms, the radius in metres, G M^2 / R and 3/5 of it for a uniform ball', () => {
+    const w = collapseWorkedExample(1.4, 12)
+    expect(w.massKg).toBeCloseTo(1.4 * MSUN, -20)
+    expect(w.radiusM).toBe(12000)
+    expect(w.energyJ).toBeCloseTo((G * (1.4 * MSUN) ** 2) / 12000, -35)
+    expect(w.energyJ).toBe(collapseEnergyJ(1.4, 12))
+    expect(w.uniformBallEnergyJ / w.energyJ).toBeCloseTo(3 / 5, 12)
+    expect(() => collapseWorkedExample(0, 12)).toThrow(RangeError)
+    expect(() => collapseWorkedExample(1.4, -1)).toThrow(RangeError)
+  })
+  it('the gas example: the speed in cm a second, the time in seconds and in years, agreeing with the module', () => {
+    const w = gasTimeWorkedExample(1e15, 50)
+    expect(w.speedCmS).toBe(5e6)
+    expect(w.seconds).toBeCloseTo(2e8, 0)
+    expect(w.years).toBeCloseTo(1e15 / 5e6 / YEAR, 8)
+    expect(w.years).toBeCloseTo(timeBeforeExplosionYears(1e15, 50), 10)
+    expect(() => gasTimeWorkedExample(1e15, 0)).toThrow(RangeError)
+  })
+  it('the distance range is 6.70 to 7.00 Mpc, a give-or-take of 2.2 percent', () => {
+    const [near, far] = distanceRangeMpc()
+    expect(near).toBeCloseTo(6.7, 10)
+    expect(far).toBeCloseTo(7.0, 10)
+    expect(distanceUncertaintyPercent()).toBeCloseTo((0.15 / 6.85) * 100, 10)
+    expect(SUPERNOVA.distanceUncertaintyMpc).toBe(0.15)
+  })
+  it('the light-travel journey is about 1,117 times longer than 20 thousand years, 0.0011 times 20 million years, and enormously longer than a few months', () => {
+    expect(lightTravelTimesLongerThan('about 20 thousand years')).toBeCloseTo((6.85e6 * 3.26156) / 2e4, 2)
+    expect(lightTravelTimesLongerThan('about 20 million years')).toBeCloseTo((6.85e6 * 3.26156) / 2e7, 6)
+    expect(lightTravelTimesLongerThan('a few months')).toBeCloseTo((6.85e6 * 3.26156) / 0.25, 0)
+  })
+  it('over the nine core settings the light is 1 part in about 38,000 to 106,000, found by a separate loop', () => {
+    let low = Infinity
+    let high = 0
+    for (const m of [1.2, 1.4, 2.0]) {
+      for (const r of [10, 12, 14]) {
+        const oneIn = ((G * (m * MSUN) ** 2) / (r * 1000)) / (1e49 * 1e-7)
+        low = Math.min(low, oneIn)
+        high = Math.max(high, oneIn)
+      }
+    }
+    const range = lightOneInRangeOverCores()
+    expect(range.lowOneIn).toBeCloseTo(low, -1)
+    expect(range.highOneIn).toBeCloseTo(high, -1)
+    expect(range.lowOneIn).toBeLessThan(runCatchingASupernova().lightOneIn)
+    expect(range.highOneIn).toBeGreaterThan(runCatchingASupernova().lightOneIn)
+  })
+})
+
+describe('the nearest answer is the nearest on a scale of powers of ten (test 15)', () => {
+  const answers = [{ oneIn: 2 }, { oneIn: 10 }, { oneIn: 100 }, { oneIn: 10_000 }]
+  it('3,000 is nearer to 10,000 by powers of ten, although a plain distance would choose 100', () => {
+    // Plain distance would choose 100 (|100 - 3000| = 2900 < |10000 - 3000| = 7000); powers of ten choose 10,000 (0.52 steps against 1.48).
+    expect(nearestLog(answers, 3000).oneIn).toBe(10_000)
+  })
+  it('300 is nearer to 100 by powers of ten (0.48 steps against 1.52), and the answer does not depend on the order of the list', () => {
+    expect(nearestLog(answers, 300).oneIn).toBe(100)
+    expect(nearestLog([...answers].reverse(), 300).oneIn).toBe(100)
+    expect(nearestLog([...answers].reverse(), 3000).oneIn).toBe(10_000)
+  })
+  it('an exact match is chosen', () => {
+    for (const a of answers) expect(nearestLog(answers, a.oneIn).oneIn).toBe(a.oneIn)
   })
 })

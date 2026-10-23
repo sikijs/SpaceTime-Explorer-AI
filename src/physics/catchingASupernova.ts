@@ -26,6 +26,7 @@ const KM_PER_CM = 1e-5
 // others 2023). The discovery: 19 May 2023 (Itagaki).
 export const SUPERNOVA = {
   distanceMpc: 6.85,
+  distanceUncertaintyMpc: 0.15, // Riess and others (2022): 6.85 +/- 0.15 Mpc
   coreMassSolar: 1.4,
   coreMassChoicesSolar: [1.2, 1.4, 2.0] as const,
   coreRadiusKm: 12,
@@ -152,7 +153,7 @@ const SHARE_ANSWERS: { label: VisibleShareAnswer; oneIn: number }[] = [
   { label: '1 in 10,000', oneIn: 10_000 },
 ]
 // The button nearest to the true figure, comparing powers of ten.
-function nearestLog<T extends { oneIn: number }>(answers: T[], truth: number): T {
+export function nearestLog<T extends { oneIn: number }>(answers: T[], truth: number): T {
   let best = answers[0]
   for (const a of answers) {
     if (Math.abs(Math.log10(a.oneIn) - Math.log10(truth)) < Math.abs(Math.log10(best.oneIn) - Math.log10(truth))) best = a
@@ -173,6 +174,37 @@ const TRAVEL_ANSWERS: { label: LightTravelAnswer; oneIn: number }[] = [
 ]
 export function lightTravelAnswer(): LightTravelAnswer {
   return nearestLog(TRAVEL_ANSWERS, lightTravelYears(SUPERNOVA.distanceMpc)).label
+}
+
+// How many times longer the light's journey is than a Prediction 2 button's time, as the tutor compares them (20 thousand years against the real 22 million).
+export function lightTravelTimesLongerThan(answer: LightTravelAnswer): number {
+  const years = TRAVEL_ANSWERS.find((a) => a.label === answer)?.oneIn
+  if (years === undefined) throw new RangeError('Not one of the answers')
+  return lightTravelYears(SUPERNOVA.distanceMpc) / years
+}
+
+// The distance to M101 and its give-or-take: the two edges in Mpc, and the give-or-take as a percentage of the distance.
+export function distanceRangeMpc(): [number, number] {
+  return [SUPERNOVA.distanceMpc - SUPERNOVA.distanceUncertaintyMpc, SUPERNOVA.distanceMpc + SUPERNOVA.distanceUncertaintyMpc]
+}
+export function distanceUncertaintyPercent(): number {
+  return (SUPERNOVA.distanceUncertaintyMpc / SUPERNOVA.distanceMpc) * 100
+}
+
+// The numbers of the worked examples, so that the interface only displays them. The collapse: the mass in kilograms, the radius in metres, the energy by G M^2 / R, and the
+// same energy for a ball of the same mass and size with the same density throughout, which is 3/5 of it.
+export function collapseWorkedExample(massSolar: number, radiusKm: number): { massKg: number; radiusM: number; energyJ: number; uniformBallEnergyJ: number } {
+  requirePositive(massSolar, 'The mass')
+  requirePositive(radiusKm, 'The radius')
+  return { massKg: massSolar * SOLAR_MASS_KG, radiusM: radiusKm * 1000, energyJ: collapseEnergyJ(massSolar, radiusKm), uniformBallEnergyJ: 0.6 * collapseEnergyJ(massSolar, radiusKm) }
+}
+// The shed gas: the radius in centimetres, the speed in centimetres a second, the time in seconds and the time in years.
+export function gasTimeWorkedExample(radiusCm: number, speedKmS: number): { radiusCm: number; speedCmS: number; seconds: number; years: number } {
+  requirePositive(radiusCm, 'The radius')
+  requirePositive(speedKmS, 'The speed')
+  const speedCmS = speedKmS / KM_PER_CM
+  const seconds = radiusCm / speedCmS
+  return { radiusCm, speedCmS, seconds, years: seconds / SECONDS_PER_YEAR }
 }
 
 // ---- The learner's choices (the defaults are the published values) ----
@@ -231,6 +263,12 @@ export function runCatchingASupernova(settings: SupernovaSettings = {}): Superno
     gasShellAU: [cmToAU(inner), cmToAU(outer)],
     gasShedYearsBefore: [timeBeforeExplosionYears(inner, windSpeedKmS), timeBeforeExplosionYears(outer, windSpeedKmS)],
   }
+}
+
+// The smallest and largest "1 part in N" for the light over all nine core settings (the three masses by the three radii).
+export function lightOneInRangeOverCores(): { lowOneIn: number; highOneIn: number } {
+  const values = SUPERNOVA.coreMassChoicesSolar.flatMap((m) => SUPERNOVA.coreRadiusChoicesKm.map((r) => runCatchingASupernova({ coreMassSolar: m, coreRadiusKm: r }).lightOneIn))
+  return { lowOneIn: Math.min(...values), highOneIn: Math.max(...values) }
 }
 
 // ---- The reading guide's comparisons (CLAUDE.md §14, "Reading the Results") ----

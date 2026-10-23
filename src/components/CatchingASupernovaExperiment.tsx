@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  collapseWorkedExample,
   compareWithPublished,
+  distanceRangeMpc,
+  distanceUncertaintyPercent,
+  gasTimeWorkedExample,
   inSunLifetimes,
+  lightOneInRangeOverCores,
   LIGHT_YEARS_PER_PARSEC,
   LITERATURE,
   massEstimates,
@@ -11,6 +16,8 @@ import {
   overlaps,
   restShare,
   runCatchingASupernova,
+  SECONDS_PER_YEAR,
+  SOLAR_LUMINOSITY_W,
   SOLAR_MASS_KG,
   SUPERNOVA,
   sunLifetimeEnergyJ,
@@ -175,6 +182,16 @@ const lookForDrawing: LookFor[] = [
   },
 ]
 
+// ---- Number formats (every value comes from the physics module) ----
+const SUPERSCRIPT: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' }
+// A number in the form 4.3 × 10⁵³.
+function sciText(value: number, digits = 1): string {
+  const [mantissa, exponent] = value.toExponential(digits).split('e')
+  return `${mantissa} × 10${String(Number(exponent)).split('').map((c) => SUPERSCRIPT[c]).join('')}`
+}
+const millions = (value: number): string => (value / 1e6).toFixed(1)
+const thousandsComma = (value: number): string => Math.round(value).toLocaleString('en-US')
+
 const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Supernova', meaning: 'the explosion of a star at the end of its life, so bright that it can be seen from millions of light-years away for weeks or months. This experiment is about one kind, a core-collapse supernova, in which a very heavy star’s core collapses. (NASA: “The result is a huge explosion called a supernova.”)' },
   { term: 'Core collapse', meaning: 'what happens when the iron core of a very heavy star grows too heavy for electron degeneracy pressure to hold up. It falls in on itself in a fraction of a second, until the centre is as dense as an atomic nucleus and stiffens. NASA says: “The core collapses and then rebounds, creating a shock wave that travels through the star’s outer layers.”' },
@@ -184,6 +201,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Neutrino', meaning: 'a tiny particle with almost no mass and no electric charge that hardly ever interacts with anything. CERN: “It is neutrinos’ weak interaction with matter that makes them almost impossible to detect”, and they can pass through the whole Earth. A supernova makes them in enormous numbers.' },
   { term: 'Red supergiant', meaning: 'a star much heavier than the Sun that has used up the hydrogen in its core and swollen to many times its old size, with a cooler, redder surface (Experiment 12). Betelgeuse is one, and so was the star in this experiment.' },
   { term: 'Progenitor', meaning: 'the star that existed before a supernova, “the one that came before”. Finding it in old pictures is rare, and it is what lets astronomers say what kind of star exploded.' },
+  { term: 'Solar mass', meaning: `a unit for how heavy stars are. One solar mass is the mass of the Sun, about ${sciText(SOLAR_MASS_KG, 1)} kilograms, so “17 solar masses” means 17 times as heavy as the Sun. A neutron star is about ${SUPERNOVA.coreMassSolar} solar masses squeezed into a ball only about ${SUPERNOVA.coreRadiusKm} kilometres in radius.` },
   { term: 'Initial mass', meaning: 'how heavy a star was when it was born, in solar masses (one solar mass is the Sun’s mass). A star loses material through its life, so its mass just before the explosion is less than its initial mass. “17 solar masses” means 17 times as heavy as the Sun.' },
   { term: 'Circumstellar gas', meaning: 'gas that lies round a star, thrown off by the star itself. A red supergiant keeps shedding its outer layer into space, a bit like a pot boiling over, and the gas drifts away from the star. “Circum-” means “round”.' },
   { term: 'Spectrum', meaning: 'light spread out into its colours, like a rainbow. Each kind of gas leaves its own pattern of bright or dark lines in a spectrum, so a spectrum tells astronomers what a gas is made of, and (from how the lines are shifted) how it is moving.' },
@@ -207,16 +225,6 @@ const TRAVEL_CHOICES: ReadonlyArray<{ value: LightTravelAnswer; label: string }>
   { value: 'about 20 thousand years', label: 'About 20 thousand years' },
   { value: 'about 20 million years', label: 'About 20 million years' },
 ]
-
-// ---- Number formats (every value comes from the physics module) ----
-const SUPERSCRIPT: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' }
-// A number in the form 4.3 × 10⁵³.
-function sciText(value: number, digits = 1): string {
-  const [mantissa, exponent] = value.toExponential(digits).split('e')
-  return `${mantissa} × 10${String(Number(exponent)).split('').map((c) => SUPERSCRIPT[c]).join('')}`
-}
-const millions = (value: number): string => (value / 1e6).toFixed(1)
-const thousandsComma = (value: number): string => Math.round(value).toLocaleString('en-US')
 
 // ---- The run: five named stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
 const STAGE_MS = 2600
@@ -546,9 +554,11 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
   const overallLow = Math.min(...estimates.map((e) => e.lowSolar))
   const overallHigh = top.highSolar
   const [innerCm, outerCm] = SUPERNOVA.gasShellRadiiCm
-  const speedCmS = SUPERNOVA.windSpeedKmS * 1e5
-  const outerSeconds = outerCm / speedCmS
-  const massKg = SUPERNOVA.coreMassSolar * SOLAR_MASS_KG
+  const gasExample = gasTimeWorkedExample(outerCm, SUPERNOVA.windSpeedKmS)
+  const speedCmS = gasExample.speedCmS
+  const outerSeconds = gasExample.seconds
+  const collapseExample = collapseWorkedExample(SUPERNOVA.coreMassSolar, SUPERNOVA.coreRadiusKm)
+  const massKg = collapseExample.massKg
   const lightOneInRounded = Math.round(result.lightOneIn / 1000) * 1000
   const settings = { coreMassSolar: coreMassChoice, coreRadiusKm: coreRadiusChoice, windSpeedKmS: speedChoice }
   const mine = runCatchingASupernova(settings)
@@ -558,9 +568,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
   const yoursTwo: YoursTwo | null = done ? { speed: speedChoice, yearsBefore: mine.gasShedYearsBefore } : null
   const yoursThree: YoursThree | null = done ? { collapseErg: mine.collapseErg } : null
   // The range of the light's share over all nine core settings (for "What your numbers show").
-  const shares = SUPERNOVA.coreMassChoicesSolar.flatMap((m) => SUPERNOVA.coreRadiusChoicesKm.map((r) => runCatchingASupernova({ coreMassSolar: m, coreRadiusKm: r }).lightOneIn))
-  const sharesLow = Math.min(...shares)
-  const sharesHigh = Math.max(...shares)
+  const { lowOneIn: sharesLow, highOneIn: sharesHigh } = lightOneInRangeOverCores()
   const oneInText = (x: number): string => thousandsComma(x)
   const neutrinoRange = `${LITERATURE.neutrinoEnergyErg[0] / 1e53} to ${LITERATURE.neutrinoEnergyErg[1] / 1e53} × 10⁵³`
   const rangeText = (check: { verdict: 'inside' | 'below' | 'above'; factor: number }): string =>
@@ -570,12 +578,11 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
   const wideCheck = whereInRange(ergFromJoules(result.gasMotionJ), LITERATURE.explosionEnergyWideErg)
   const narrowCheck = whereInRange(ergFromJoules(result.gasMotionJ), LITERATURE.explosionEnergyErg)
   const collapseCheck = whereInRange(result.collapseErg, LITERATURE.neutrinoEnergyErg)
-  const farMpc = SUPERNOVA.distanceMpc + 0.15
-  const nearMpc = SUPERNOVA.distanceMpc - 0.15
+  const [nearMpc, farMpc] = distanceRangeMpc()
   const formulaEntries: { term: string; meaning: string }[] = [
     {
       term: 'The energy of a collapse (formula)',
-      meaning: `E = G × M² ÷ R, the gravitational energy of a neutron star of mass M and radius R (G is the gravitational constant, ${sciText(G, 3)} in SI units). For ${SUPERNOVA.coreMassSolar} Suns, M = ${SUPERNOVA.coreMassSolar} × ${sciText(SOLAR_MASS_KG, 3)} kg = ${sciText(massKg)} kg, and R = ${SUPERNOVA.coreRadiusKm * 1000} m, so E = ${sciText(G, 3)} × (${sciText(massKg)})² ÷ ${SUPERNOVA.coreRadiusKm * 1000} = ${sciText(result.collapseJ)} J = ${sciText(result.collapseErg)} erg. It is a rough estimate: a ball of the same mass and size but the same density throughout would give 3/5 of it.`,
+      meaning: `E = G × M² ÷ R, the gravitational energy of a neutron star of mass M and radius R (G is the gravitational constant, ${sciText(G, 3)} in SI units). For ${SUPERNOVA.coreMassSolar} Suns, M = ${SUPERNOVA.coreMassSolar} × ${sciText(SOLAR_MASS_KG, 3)} kg = ${sciText(massKg)} kg, and R = ${collapseExample.radiusM} m, so E = ${sciText(G, 3)} × (${sciText(massKg)})² ÷ ${collapseExample.radiusM} = ${sciText(result.collapseJ)} J = ${sciText(result.collapseErg)} erg. It is a rough estimate: a ball of the same mass and size but the same density throughout would give 3/5 of it.`,
     },
     {
       term: 'A share of the energy (formula)',
@@ -583,7 +590,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
     },
     {
       term: 'The Sun’s whole-life output (formula)',
-      meaning: `the Sun’s power (${sciText(3.828e26, 3)} watts, which is joules a second) times about ten billion years (${sciText(1e10, 0)} × ${thousandsComma(365.25 * 86400)} seconds) = ${sciText(sunLifetimeEnergyJ())} J = ${sciText(sunWhole)} erg. The collapse is ${sciText(result.collapseErg)} ÷ ${sciText(sunWhole)} = about ${Math.round(result.sunLifetimes.collapse)} times that.`,
+      meaning: `the Sun’s power (${sciText(SOLAR_LUMINOSITY_W, 3)} watts, which is joules a second) times about ten billion years (${sciText(1e10, 0)} × ${thousandsComma(SECONDS_PER_YEAR)} seconds) = ${sciText(sunLifetimeEnergyJ())} J = ${sciText(sunWhole)} erg. The collapse is ${sciText(result.collapseErg)} ÷ ${sciText(sunWhole)} = about ${Math.round(result.sunLifetimes.collapse)} times that.`,
     },
     {
       term: 'The light-travel time (formula)',
@@ -1003,7 +1010,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
             <p style={paragraph}>
               <strong>A worked moment.</strong> The outer edge of the gas is {sciText(outerCm)} centimetres from the star, and the gas moves at {result.windSpeedKmS} km/s, which is{' '}
               {sciText(speedCmS)} centimetres a second. Time = distance ÷ speed = {sciText(outerCm)} ÷ {sciText(speedCmS)} = {sciText(outerSeconds)} seconds, and one year is{' '}
-              {thousandsComma(365.25 * 86400)} seconds, so that is {result.gasShedYearsBefore[1].toFixed(1)} years. The inner edge is half as far out ({sciText(innerCm)} cm), so it
+              {thousandsComma(SECONDS_PER_YEAR)} seconds, so that is {result.gasShedYearsBefore[1].toFixed(1)} years. The inner edge is half as far out ({sciText(innerCm)} cm), so it
               takes half as long: {result.gasShedYearsBefore[0].toFixed(1)} years. Think of cars driving away from a traffic light at a steady 50 km/h: the car now 100 km away left
               2 hours ago, and the one 50 km away left 1 hour ago.
             </p>
@@ -1035,7 +1042,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
             )}
             <p style={paragraph}>
               <strong>A worked moment.</strong> The collapse frees about the gravitational energy of a neutron star, G × M² ÷ R. With {SUPERNOVA.coreMassSolar} Suns, M is{' '}
-              {sciText(massKg)} kg, R is {SUPERNOVA.coreRadiusKm * 1000} metres and G is {sciText(G, 3)}, so G × M² ÷ R = {sciText(G, 3)} × ({sciText(massKg)})² ÷ {SUPERNOVA.coreRadiusKm * 1000} ={' '}
+              {sciText(massKg)} kg, R is {collapseExample.radiusM} metres and G is {sciText(G, 3)}, so G × M² ÷ R = {sciText(G, 3)} × ({sciText(massKg)})² ÷ {collapseExample.radiusM} ={' '}
               {sciText(result.collapseJ)} joules, which is {sciText(result.collapseErg)} ergs. The light is {sciText(ergFromJoules(result.lightJ))} ergs, so the light is{' '}
               {sciText(ergFromJoules(result.lightJ))} ÷ {sciText(result.collapseErg)}, about 1 part in {thousandsComma(lightOneInRounded)}. (This is only a rough estimate of the collapse’s
               energy.)
@@ -1266,7 +1273,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
                   showed. Why it did that is still open.
                 </li>
                 <li>
-                  <strong>How sure is it?</strong> The distance is good to about ±{(0.15 / SUPERNOVA.distanceMpc * 100).toFixed(0)} percent ({nearMpc.toFixed(2)} to {farMpc.toFixed(2)} Mpc), so the travel time is 22 million years give or take half a million. The gas
+                  <strong>How sure is it?</strong> The distance is good to about ±{distanceUncertaintyPercent().toFixed(0)} percent ({nearMpc.toFixed(2)} to {farMpc.toFixed(2)} Mpc), so the travel time is 22 million years give or take half a million. The gas
                   times rest on an assumed speed, so they could be longer or shorter in proportion.
                 </li>
               </ul>

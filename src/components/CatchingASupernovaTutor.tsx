@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import {
-  collapseEnergyJ,
+  collapseWorkedExample,
   ergFromJoules,
   G,
+  gasTimeWorkedExample,
   joulesFromErg,
   lightTravelAnswer,
+  lightTravelTimesLongerThan,
   LIGHT_YEARS_PER_PARSEC,
   LITERATURE,
   massEstimates,
@@ -84,13 +86,14 @@ export function CatchingASupernovaTutor({ sharePrediction, travelPrediction, onE
   const lowest = estimates.reduce((a, b) => (a.highSolar < b.highSolar ? a : b))
   const top = estimates.reduce((a, b) => (a.highSolar > b.highSolar ? a : b))
   const overallLow = Math.min(...estimates.map((e) => e.lowSolar))
-  const massKg = SUPERNOVA.coreMassSolar * SOLAR_MASS_KG
+  const collapseExample = collapseWorkedExample(SUPERNOVA.coreMassSolar, SUPERNOVA.coreRadiusKm)
+  const massKg = collapseExample.massKg
   const rest = restShare(result.collapseJ, result.gasMotionJ, result.lightJ)
   const lightHighOneIn = oneInN(joulesFromErg(SUPERNOVA.lightRangeErg[1]), result.collapseJ)
-  const uniformBallErg = ergFromJoules(collapseEnergyJ(SUPERNOVA.coreMassSolar, SUPERNOVA.coreRadiusKm)) * 0.6
+  const uniformBallErg = ergFromJoules(collapseExample.uniformBallEnergyJ)
   const lightPercentOfSun = result.sunLifetimes.light * 100
-  const farFactor = result.lightTravelYears / 2e4
-  const outerSeconds = SUPERNOVA.gasShellRadiiCm[1] / (SUPERNOVA.windSpeedKmS * 1e5)
+  const farFactor = lightTravelTimesLongerThan('about 20 thousand years')
+  const outerSeconds = gasTimeWorkedExample(SUPERNOVA.gasShellRadiiCm[1], SUPERNOVA.windSpeedKmS).seconds
   const separate = estimates.filter((e) => e.who !== lowest.who && !overlaps(e, lowest)).length
 
   return (
@@ -182,8 +185,8 @@ export function CatchingASupernovaTutor({ sharePrediction, travelPrediction, onE
           </p>
           <p style={paragraphStyle}>
             <strong>2. Where the energy comes from.</strong> Think of dropping a very heavy weight from a great height: the heavier it is and the farther it falls, the more energy it gives up. The collapsing core is the
-            same, on a huge scale. The energy it gives up is about G × M² ÷ R, where M is the mass and R the radius. With M = {SUPERNOVA.coreMassSolar} × {sciText(SOLAR_MASS_KG, 3)} = {sciText(massKg)} kg, R = {SUPERNOVA.coreRadiusKm * 1000} m and
-            G = {sciText(G, 3)}, that is {sciText(G, 3)} × ({sciText(massKg)})² ÷ {SUPERNOVA.coreRadiusKm * 1000} = {sciText(result.collapseJ)} joules, or {sciText(result.collapseErg)} erg. Set beside the Sun’s whole-life output
+            same, on a huge scale. The energy it gives up is about G × M² ÷ R, where M is the mass and R the radius. With M = {SUPERNOVA.coreMassSolar} × {sciText(SOLAR_MASS_KG, 3)} = {sciText(massKg)} kg, R = {collapseExample.radiusM} m and
+            G = {sciText(G, 3)}, that is {sciText(G, 3)} × ({sciText(massKg)})² ÷ {collapseExample.radiusM} = {sciText(result.collapseJ)} joules, or {sciText(result.collapseErg)} erg. Set beside the Sun’s whole-life output
             ({sciText(ergFromJoules(sunLifetimeEnergyJ()))} erg), this is about {Math.round(result.sunLifetimes.collapse)} times as much, and reviews quote {LITERATURE.neutrinoEnergyErg[0] / 1e53} to {LITERATURE.neutrinoEnergyErg[1] / 1e53} × 10⁵³ erg for the energy carried off
             by neutrinos, which is close. It is only a rough estimate: a ball of the same mass and size with the same density throughout would give 3/5 of it, {sciText(uniformBallErg)} erg, and a real neutron star needs general
             relativity.
