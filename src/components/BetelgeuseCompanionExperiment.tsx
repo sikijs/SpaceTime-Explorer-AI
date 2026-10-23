@@ -718,7 +718,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
           </p>
 
           <p style={paragraph}>
-            <strong>Betelgeuse.</strong> Betelgeuse is a red supergiant, one of the best-known stars in the sky. Its distance is not known very
+            <strong>Betelgeuse.</strong> Betelgeuse is a red supergiant, and NASA’s release on the companion calls it the closest red supergiant star to the Earth. Its distance is not known very
             exactly: estimates run from about 550 light-years to about 700. It is not steady. NASA says it has a cycle of about 400 days and a longer one of about 5
             years (the team that looked for a companion says about 6), and in 2019 and early 2020 it dimmed sharply, which NASA describes as the star blowing off a giant
             piece of its surface into space. It will eventually explode as a supernova, but NASA says that is not likely for about another 100,000 years, and this
