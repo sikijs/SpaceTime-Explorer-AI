@@ -52,11 +52,10 @@ Functions (proposed): `collapseEnergyJ(massSolar, radiusKm)`, `ergFromJoules`, `
 
 ## Learner Controls
 
-Three controls, shown after the run (as in Experiments 11 and 12). Each is a **trial value**, not a claim about the real star. Each moves a white marker in a picture and a row of the results table.
+Two controls, shown after the run (as in Experiments 11 and 12). A third control, for the distance to M101, was dropped at the owner's request on 2026-10-23: it moved the light-travel time only from about 22 to 23 million years, which taught little. The distance stays fixed at the published 6.85 Mpc. Each is a **trial value**, not a claim about the real star. Each moves a white marker in a picture and a row of the results table.
 
 1. **"How big and how heavy is the collapsing core?"** neutron-star mass 1.2, 1.4 (the usual figure), 2.0 solar masses × radius 10, 12, 14 km (nine settings). Moves the total energy `E` and so the share of light.
-2. **"How far away is M101?"** 6.70, 6.85 (Riess), 7.00 Mpc. Moves the light-travel time (22 to 23 million years).
-3. **"How fast was the gas moving?"** 25, 50 (the paper's assumed value), 100 km/s. Moves the time before the explosion at which the gas was shed: at 25 km/s the same gas was shed 6 to 13 years before; at 100 km/s 1.6 to 3 years.
+2. **"How fast was the gas moving?"** 25, 50 (the paper's assumed value), 100 km/s. Moves the time before the explosion at which the gas was shed: at 25 km/s the same gas was shed 6 to 13 years before; at 100 km/s 1.6 to 3 years.
 
 A control for the **light share** (`L`) is **not** proposed, because the paper's `L` is not yet read; see decision 3.
 
@@ -91,7 +90,7 @@ The introduction does not give: the distance to M101 or the age of the light, or
 
 - **Picture 1: "The star before it exploded" (stage 1 and 2).** The seven published estimates of the star's initial mass, drawn as bars (range) on a scale from about 4 to 26 solar masses, labelled with the team and the method (the stars around it; the star's brightness; its pulsations; the dust), with each method's colour. Stage 2 adds the 2026 result: the light-curve modelling range (5.5–14) and the spectroscopic (17–19) as two wide bands, and the sentence that dust could hide about 9 solar masses (A&A 2026). No verdict. After the run, the learner's choices in the controls do not move this picture (the controls act on Pictures 2 and 3), so the control-box text must say which picture each control moves (the owner's rule, 2026-10-23).
 - **Picture 2: "The gas it shed in its last years" (stage 3).** Seen from above, to scale in astronomical units: the star at the centre (tiny), the planets' orbits out to Neptune (30 AU) as a ring for scale (reuses Experiment 12's scale), and the shell of gas from 33 AU (0.5 × 10¹⁵ cm) to 67 AU (1 × 10¹⁵ cm). A time axis below turns radius into "years before the explosion" at the chosen speed (3.2 to 6.3 years at 50 km/s). The learner's chosen speed is a second set of marks.
-- **Picture 3: "Where did the energy go?" (stage 4 and 5).** A bar chart on a **log scale**: the energy of the collapse (4.3 × 10⁵³ erg), the motion of the gas (1 × 10⁵¹ erg), and the visible light (about 1 × 10⁴⁹ erg, with the range 1–10 shown as a bar's width); beside them, a marker for **the Sun's whole-life output** (1.2 × 10⁵¹ erg), as a ruler everyone can hold. The log scale is explained in the caption (each step up is 100 times more). The chosen core (control 1) adds a white marker. A strip beneath shows the light-travel time: "explosion → light sets out → arrives May 2023" at the chosen distance, in stage 5.
+- **Picture 3: "Where did the energy go?" (stage 4 and 5).** A bar chart on a **log scale**: the energy of the collapse (4.3 × 10⁵³ erg), the motion of the gas (1 × 10⁵¹ erg), and the visible light (about 1 × 10⁴⁹ erg, with the range 1–10 shown as a bar's width); beside them, a marker for **the Sun's whole-life output** (1.2 × 10⁵¹ erg), as a ruler everyone can hold. The log scale is explained in the caption (each step up is 100 times more). The chosen core (control 1) adds a white marker. A strip beneath shows the light-travel time: "explosion → light sets out → arrives May 2023" at the published distance of 6.85 Mpc, in stage 5 (it has no white mark, because the distance control was dropped).
 
 ### Run
 
@@ -153,7 +152,7 @@ Experiment 14 (a white dwarf and a Type Ia supernova: the other kind of supernov
 9. Out-of-range inputs (zero or negative) throw `RangeError`.
 10. The module imports nothing.
 11. `runCatchingASupernova` returns the values for the defaults and for each control setting.
-12. The control settings: nine core settings, three distances and three speeds, each against a separate calculation.
+12. The control settings: nine core settings and three speeds, each against a separate calculation.
 
 ## AI Tutor Behavior (to be drafted once approved)
 

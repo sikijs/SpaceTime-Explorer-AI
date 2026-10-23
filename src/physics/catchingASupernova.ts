@@ -19,14 +19,13 @@ export const LIGHT_YEARS_PER_PARSEC = 3.26156
 export const CM_PER_AU = 1.495978707e13
 const KM_PER_CM = 1e-5
 
-// The published data. Distance to M101: Riess and others (2022), 6.85 +/- 0.15 Mpc (the three choices are the value and its edges). The neutron star: 1.4 solar masses and a
+// The published data. Distance to M101: Riess and others (2022), 6.85 +/- 0.15 Mpc (not a learner control: the distance control was dropped on 2026-10-23). The neutron star: 1.4 solar masses and a
 // radius of about 12 km are the usual figures; the other choices span what is quoted. The gas's motion: 1e51 erg, in the literature range of about (0.5-2)e51 erg (SN 2023ixf
 // analyses give about (0.7-1.2)e51 and (1.0-5.7)e51). The visible light: (1-10)e49 erg is the literature range for a core-collapse supernova; SN 2023ixf's own value is not
 // yet read, so the default is the low end, 1e49 (decision 3 of the specification). The shed gas: dense gas out to (0.5-1)e15 cm at an assumed 50 km/s (Jacobson-Galan and
 // others 2023). The discovery: 19 May 2023 (Itagaki).
 export const SUPERNOVA = {
   distanceMpc: 6.85,
-  distanceChoicesMpc: [6.7, 6.85, 7.0] as const,
   coreMassSolar: 1.4,
   coreMassChoicesSolar: [1.2, 1.4, 2.0] as const,
   coreRadiusKm: 12,
@@ -285,8 +284,6 @@ export interface TrialComparison {
   collapseVsNeutrinoRange: RangeCheck
   lightOneInPublished: number
   lightOneInMine: number
-  distancePercent: number
-  travelYearsDifference: number
   windSpeed: -1 | 0 | 1
   gasTimePercent: number
   gasYearsRounded: [number, number]
@@ -306,8 +303,6 @@ export function compareWithPublished(settings: SupernovaSettings = {}): TrialCom
     collapseVsNeutrinoRange: whereInRange(mine.collapseErg, LITERATURE.neutrinoEnergyErg),
     lightOneInPublished: published.lightOneIn,
     lightOneInMine: mine.lightOneIn,
-    distancePercent: percentFrom(mine.distanceMpc, published.distanceMpc),
-    travelYearsDifference: mine.lightTravelYears - published.lightTravelYears,
     windSpeed: sign(mine.windSpeedKmS, SUPERNOVA.windSpeedKmS),
     gasTimePercent: percentFrom(mine.gasShedYearsBefore[0], published.gasShedYearsBefore[0]),
     gasYearsRounded: rounded,

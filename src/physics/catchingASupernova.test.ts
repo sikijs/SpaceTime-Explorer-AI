@@ -186,7 +186,6 @@ describe('the published data (test 8)', () => {
     expect(SUPERNOVA.lightErg).toBe(1e49)
     expect(SUPERNOVA.gasShellRadiiCm).toEqual([0.5e15, 1e15])
     expect(SUPERNOVA.windSpeedKmS).toBe(50)
-    expect(SUPERNOVA.distanceChoicesMpc).toEqual([6.7, 6.85, 7.0])
     expect(SUPERNOVA.windSpeedChoicesKmS).toEqual([25, 50, 100])
     expect(SUPERNOVA.coreMassChoicesSolar).toEqual([1.2, 1.4, 2.0])
     expect(SUPERNOVA.coreRadiusChoicesKm).toEqual([10, 12, 14])
@@ -237,8 +236,8 @@ describe('the run and the controls (tests 11 and 12)', () => {
     expect(runCatchingASupernova({ coreMassSolar: 2.0 }).collapseJ).toBeGreaterThan(runCatchingASupernova().collapseJ)
     expect(runCatchingASupernova({ coreRadiusKm: 10 }).collapseJ).toBeGreaterThan(runCatchingASupernova().collapseJ)
   })
-  it('the three distances agree with a separate calculation, and the energy does not depend on the distance', () => {
-    for (const d of SUPERNOVA.distanceChoicesMpc) {
+  it('other distances agree with a separate calculation, and the energy does not depend on the distance', () => {
+    for (const d of [6.7, 6.85, 7.0]) {
       const run = runCatchingASupernova({ distanceMpc: d })
       expect(run.lightTravelYears).toBeCloseTo(d * 1e6 * 3.26156, 0)
       expect(run.collapseJ).toBe(runCatchingASupernova().collapseJ)
@@ -298,20 +297,15 @@ describe('the reading guide\'s comparisons (test 13)', () => {
     expect(c.coreMass).toBe(0)
     expect(c.coreRadius).toBe(0)
     expect(c.collapsePercent).toBe(0)
-    expect(c.distancePercent).toBe(0)
-    expect(c.travelYearsDifference).toBe(0)
     expect(c.windSpeed).toBe(0)
     expect(c.gasTimePercent).toBe(0)
     expect(c.lightOneInMine).toBe(c.lightOneInPublished)
   })
-  it('a heavier core, a farther M101 and a slower gas move the comparisons the right way, against separate calculations', () => {
+  it('a heavier core and a slower gas move the comparisons the right way, against separate calculations', () => {
     const heavy = compareWithPublished({ coreMassSolar: 2.0 })
     expect(heavy.coreMass).toBe(1)
     expect(heavy.collapsePercent).toBeCloseTo(((2.0 / 1.4) ** 2 - 1) * 100, 6)
     expect(heavy.lightOneInMine).toBeGreaterThan(heavy.lightOneInPublished)
-    const far = compareWithPublished({ distanceMpc: 7.0 })
-    expect(far.distancePercent).toBeCloseTo(((7.0 - 6.85) / 6.85) * 100, 8)
-    expect(far.travelYearsDifference).toBeCloseTo(0.15e6 * 3.26156, 0)
     const slow = compareWithPublished({ windSpeedKmS: 25 })
     expect(slow.windSpeed).toBe(-1)
     expect(slow.gasTimePercent).toBeCloseTo(100, 8)

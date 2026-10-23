@@ -27,7 +27,7 @@ import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 13 (docs/experiments/frontier-and-beyond/13-catching-a-supernova.md).
 // Step 6 builds the tutor (CatchingASupernovaTutor.tsx) and, in App, the chapter summary.
-// Step 5 builds the three controls (the core, the distance to M101 and the speed of the gas), shown after the run, which add white marks to Pictures 2 and 3, and the results
+// Step 5 builds the two controls (the core and the speed of the gas; a distance control was dropped at the owner's request on 2026-10-23), shown after the run, which add white marks to Pictures 2 and 3, and the results
 // with the reading guide (the check-up, four tables with notes, the predictions beside the results and the held-back paper links).
 // Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (the star's mass estimates) at stages 1 and 2, Picture 2 (the gas it shed) at
 // stage 3 and Picture 3 (where the energy went, and how long ago the light left) at stages 4 and 5. The controls, the results, the tutor and the chapter summary are later steps.
@@ -319,8 +319,6 @@ interface YoursTwo {
 }
 interface YoursThree {
   collapseErg: number
-  distanceMpc: number
-  lightYears: number
 }
 
 function PictureTwo({ yearsBefore, shellAU, speed, yours }: { yearsBefore: [number, number]; shellAU: [number, number]; speed: number; yours: YoursTwo | null }) {
@@ -456,9 +454,6 @@ function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | nul
           <SvgLines x={500} y={440} lines={['the light arrives;', 'it is seen from Earth']} fill={LIGHT_COLOR} anchor="middle" size={9} />
           <SvgLines x={280} y={404} lines={[`${SUPERNOVA.distanceMpc} Mpc = ${millions(run.lightYears)} million light-years`]} fill={TEXT_COLOR} bold anchor="middle" size={10} />
           <SvgLines x={280} y={432} lines={['travel time = distance ÷ the speed of light']} fill={MUTED_COLOR} anchor="middle" size={9} />
-          {yours && (
-            <SvgLines x={280} y={height - 26} lines={[`your setting (white): ${yours.distanceMpc} Mpc = ${millions(yours.lightYears)} million light-years, so the light left ${millions(yours.lightYears)} million years ago`]} fill={YOURS_COLOR} bold anchor="middle" size={10} />
-          )}
           <SvgLines x={280} y={height - 8} lines={['not to scale in time: the strip only shows the order']} fill={MUTED_COLOR} anchor="middle" size={9} />
         </g>
       )}
@@ -504,7 +499,6 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
   // The controls that appear after the run.
   const [coreMassChoice, setCoreMassChoice] = useState<number>(SUPERNOVA.coreMassSolar)
   const [coreRadiusChoice, setCoreRadiusChoice] = useState<number>(SUPERNOVA.coreRadiusKm)
-  const [distanceChoice, setDistanceChoice] = useState<number>(SUPERNOVA.distanceMpc)
   const [speedChoice, setSpeedChoice] = useState<number>(SUPERNOVA.windSpeedKmS)
   const hasRun = status !== 'idle'
   const done = status === 'complete'
@@ -531,7 +525,6 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
     setStage(0)
     setCoreMassChoice(SUPERNOVA.coreMassSolar)
     setCoreRadiusChoice(SUPERNOVA.coreRadiusKm)
-    setDistanceChoice(SUPERNOVA.distanceMpc)
     setSpeedChoice(SUPERNOVA.windSpeedKmS)
   }
   function run() {
@@ -557,13 +550,13 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
   const outerSeconds = outerCm / speedCmS
   const massKg = SUPERNOVA.coreMassSolar * SOLAR_MASS_KG
   const lightOneInRounded = Math.round(result.lightOneIn / 1000) * 1000
-  const settings = { coreMassSolar: coreMassChoice, coreRadiusKm: coreRadiusChoice, distanceMpc: distanceChoice, windSpeedKmS: speedChoice }
+  const settings = { coreMassSolar: coreMassChoice, coreRadiusKm: coreRadiusChoice, windSpeedKmS: speedChoice }
   const mine = runCatchingASupernova(settings)
   const cmp = compareWithPublished(settings)
-  const allPublished = cmp.coreMass === 0 && cmp.coreRadius === 0 && isSame(cmp.distancePercent) && cmp.windSpeed === 0
+  const allPublished = cmp.coreMass === 0 && cmp.coreRadius === 0 && cmp.windSpeed === 0
   const coreChanged = cmp.coreMass !== 0 || cmp.coreRadius !== 0
   const yoursTwo: YoursTwo | null = done ? { speed: speedChoice, yearsBefore: mine.gasShedYearsBefore } : null
-  const yoursThree: YoursThree | null = done ? { collapseErg: mine.collapseErg, distanceMpc: distanceChoice, lightYears: mine.lightYears } : null
+  const yoursThree: YoursThree | null = done ? { collapseErg: mine.collapseErg } : null
   // The range of the light's share over all nine core settings (for "What your numbers show").
   const shares = SUPERNOVA.coreMassChoicesSolar.flatMap((m) => SUPERNOVA.coreRadiusChoicesKm.map((r) => runCatchingASupernova({ coreMassSolar: m, coreRadiusKm: r }).lightOneIn))
   const sharesLow = Math.min(...shares)
@@ -821,7 +814,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other values for the
-            collapsing core, the distance to M101 and the speed of the gas. Nothing here is graded. Your predictions are your own guesses, made before you see anything: they
+            collapsing core and the speed of the gas. Nothing here is graded. Your predictions are your own guesses, made before you see anything: they
             do not change the pictures or the tables, which come from the physics and the published numbers. They are shown again beside the results so you can compare. What
             does change the pictures and Table 4 is the “Now try it yourself” controls, which appear after the run finishes.
           </p>
@@ -1057,7 +1050,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
           </div>
         )}
 
-        {/* The controls (after the run): the core, the distance and the speed of the gas. They add a white mark to Pictures 2 and 3, and fill Table 4. */}
+        {/* The controls (after the run): the core and the speed of the gas. They add a white mark to Pictures 2 and 3, and fill Table 4. */}
         {done && (
           <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
             <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
@@ -1074,12 +1067,6 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
               A core of {coreMassChoice} Suns, {coreRadiusChoice} km in radius, frees {sciText(mine.collapseErg)} erg ({Math.round(mine.sunLifetimes.collapse)} times the Sun’s whole-life output). The light,{' '}
               {sciText(ergFromJoules(mine.lightJ))} erg, is then 1 part in {oneInText(mine.lightOneIn)} of it.
-            </p>
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>How far away is M101? (megaparsecs) It moves the white line under Picture 3.</p>
-            <ChoiceButtons options={SUPERNOVA.distanceChoicesMpc} value={distanceChoice} onChange={setDistanceChoice} format={(v) => `${v} Mpc${v === SUPERNOVA.distanceMpc ? ' (the published value)' : ''}`} />
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
-              At {distanceChoice} Mpc ({millions(mine.lightYears)} million light-years) the light took {millions(mine.lightTravelYears)} million years to arrive. The distance is known to about ± 0.15 Mpc,
-              which changes the time by about half a million years out of 22 million.
             </p>
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How fast was the gas moving? (kilometres a second) It moves the white label in Picture 2.</p>
             <ChoiceButtons options={SUPERNOVA.windSpeedChoicesKmS} value={speedChoice} onChange={setSpeedChoice} format={(v) => `${v} km/s${v === SUPERNOVA.windSpeedKmS ? ' (the authors’ assumption)' : ''}`} />
@@ -1354,24 +1341,6 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
                   `${sciText(ergFromJoules(mine.lightJ))} erg ÷ the collapse’s energy`,
                 ],
                 [
-                  'Distance to M101',
-                  `${distanceChoice} Mpc = ${millions(mine.lightYears)} million light-years`,
-                  `${SUPERNOVA.distanceMpc} Mpc (± 0.15)`,
-                  isSame(cmp.distancePercent)
-                    ? 'The same as the published value.'
-                    : `${pct(cmp.distancePercent)} percent ${cmp.distancePercent > 0 ? 'farther' : 'nearer'} than the published value, ${whereInRange(distanceChoice, [nearMpc, farMpc]).verdict === 'inside' ? 'at the edge of its give-or-take of 0.15 Mpc' : 'outside its give-or-take'}.`,
-                  'a trial value within the give-or-take of Riess and others 2022',
-                ],
-                [
-                  'How long the light took',
-                  `${millions(mine.lightTravelYears)} million years`,
-                  `${millions(result.lightTravelYears)} million years`,
-                  isSame(cmp.travelYearsDifference)
-                    ? 'The same.'
-                    : `${Math.abs(cmp.travelYearsDifference / 1e6).toFixed(2)} million years ${cmp.travelYearsDifference > 0 ? 'longer' : 'shorter'} than the published value.`,
-                  `${distanceChoice} × ${LIGHT_YEARS_PER_PARSEC} million`,
-                ],
-                [
                   'The speed of the gas',
                   `${speedChoice} km/s`,
                   `${SUPERNOVA.windSpeedKmS} km/s (assumed)`,
@@ -1390,7 +1359,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
               ]}
             />
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-              <strong>What this table tells us.</strong> It shows how each number moves when you change the core, the distance or the speed. Ask yourself:{' '}
+              <strong>What this table tells us.</strong> It shows how each number moves when you change the core or the speed. Ask yourself:{' '}
               <em>which of the findings above still hold when I change the inputs, and which do not?</em> A finding that holds across many trial values is sturdier than one that
               depends on a single choice.
             </p>
@@ -1404,13 +1373,6 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
                   With a core of {coreMassChoice} Suns and {coreRadiusChoice} km the collapse frees {sciText(mine.collapseErg)} erg, {pct(cmp.collapsePercent)} percent {cmp.collapsePercent > 0 ? 'more' : 'less'} than the
                   published value. {rangeText(cmp.collapseVsNeutrinoRange)} The light, still {sciText(ergFromJoules(mine.lightJ))} erg, is now 1 part in {oneInText(mine.lightOneIn)} of that. Across all nine core settings
                   the light stays between 1 part in {oneInText(sharesLow)} and 1 part in {oneInText(sharesHigh)}, so the light is a tiny share however the core is chosen.
-                </p>
-              )}
-              {!isSame(cmp.distancePercent) && (
-                <p style={{ margin: '0 0 0.5rem' }}>
-                  At {distanceChoice} Mpc the light took {millions(mine.lightTravelYears)} million years, {Math.abs(cmp.travelYearsDifference / 1e6).toFixed(2)} million {cmp.travelYearsDifference > 0 ? 'more' : 'less'} than the published{' '}
-                  {millions(result.lightTravelYears)}. It is still about twenty-two million years, and nowhere near a few months or a few thousand years, so the distance does not change the answer
-                  to Prediction 2.
                 </p>
               )}
               {cmp.windSpeed !== 0 && (
