@@ -1,9 +1,13 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { LIGHT_YEARS_PER_PARSEC } from '../physics/whiteDwarfExplosion'
+import type { SizeAnswer, SpeedAnswer } from '../physics/whiteDwarfExplosion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 14 (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md).
+// Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
 // Step 2 (the interface skeleton) builds the page's skeleton: the status line, the introduction with its new-word list, its assumptions and its "Want to know more?" links,
 // one illustration (a white dwarf and a close pair) with its guide, and the collapsed "Words and formulas" panel. The two predictions, the run, the three pictures, the
 // controls, the results and the tutor are later steps. All wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. The
@@ -133,7 +137,31 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Parsec', meaning: 'a unit of distance used by astronomers, about 3.26 light-years. A light-year is how far light travels in a year.' },
 ]
 
+// The two prediction questions' answers (the specification's "Prediction Activity"). The labels do not say which answer is right.
+const SIZE_CHOICES: ReadonlyArray<{ value: SizeAnswer; label: string }> = [
+  { value: 'about 0.5 Suns', label: 'About 0.5 Suns' },
+  { value: 'about 1.0 Sun', label: 'About 1.0 Sun' },
+  { value: 'about 1.4 Suns', label: 'About 1.4 Suns (the limit)' },
+]
+const SPEED_CHOICES: ReadonlyArray<{ value: SpeedAnswer; label: string }> = [
+  { value: 'about 50 km/s', label: 'About 50 kilometres a second' },
+  { value: 'about 5,000 km/s', label: 'About 5,000 kilometres a second' },
+  { value: 'about 300,000 km/s', label: 'About 300,000 kilometres a second (the speed of light)' },
+]
+
 export function WhiteDwarfExplosionExperiment() {
+  const [sizePrediction, setSizePrediction] = useState<SizeAnswer | null>(null)
+  const [speedPrediction, setSpeedPrediction] = useState<SpeedAnswer | null>(null)
+  // Run only records the predictions for now: the run itself, and the pictures, are the next step.
+  const [hasRun, setHasRun] = useState(false)
+  const bothPredicted = sizePrediction !== null && speedPrediction !== null
+
+  function startOver() {
+    setSizePrediction(null)
+    setSpeedPrediction(null)
+    setHasRun(false)
+  }
+
   return (
     <div>
       <h2>Experiment 14 — What Makes a White Dwarf Explode? (the double-detonation remnant SNR 0509-67.5)</h2>
@@ -296,8 +324,75 @@ export function WhiteDwarfExplosionExperiment() {
 
         <ReferencePanel entries={REFERENCE_ENTRIES} />
 
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
-          The two predictions, and the experiment itself, will appear here.
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
+            right, and neither gives the white dwarf's mass in the remnant or the shells' speed. */}
+        {(
+          [
+            {
+              title: 'Prediction 1: how heavy was the white dwarf?',
+              text: (
+                <>
+                  A white dwarf cannot be heavier than about 1.4 Suns. In the remnant we study, a white dwarf exploded as a Type Ia supernova. About how heavy was it?
+                </>
+              ),
+              choices: SIZE_CHOICES,
+              value: sizePrediction,
+              set: (v: SizeAnswer) => setSizePrediction(v),
+            },
+            {
+              title: 'Prediction 2: how fast is the debris?',
+              text: (
+                <>
+                  The remnant is about 300 years old, and its outer shell of calcium is about 2 parsecs from the centre, which is about {(2 * LIGHT_YEARS_PER_PARSEC).toFixed(1)} light-years. About
+                  how fast has that outer shell moved, on average?
+                </>
+              ),
+              choices: SPEED_CHOICES,
+              value: speedPrediction,
+              set: (v: SpeedAnswer) => setSpeedPrediction(v),
+            },
+          ] as const
+        ).map((question) => (
+          <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              {question.text} You are not graded, and a guess is fine.
+            </p>
+            <div>
+              {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                <button
+                  key={choice.value}
+                  type="button"
+                  onClick={() => (question.set as (v: never) => void)(choice.value as never)}
+                  disabled={hasRun}
+                  className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+              {question.value !== null
+                ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                : 'Choose an option to continue'}
+            </p>
+          </div>
+        ))}
+
+        <button type="button" className="action-button" onClick={() => setHasRun(true)} disabled={!bothPredicted || hasRun} style={{ padding: '0.6rem 1.5rem' }}>
+          Run
+        </button>
+        {hasRun && (
+          <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+            Start over
+          </button>
+        )}
+        {!bothPredicted && !hasRun && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+        )}
+        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
+          {hasRun ? 'Your predictions are recorded and not marked here. The pictures and the results will appear here.' : 'The pictures fill in, one stage at a time, after you press Run.'}
         </p>
       </div>
     </div>
