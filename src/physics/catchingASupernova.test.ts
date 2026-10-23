@@ -4,16 +4,20 @@ import {
   CM_PER_AU,
   cmToAU,
   collapseEnergyJ,
+  compareWithPublished,
   ergFromJoules,
   inSunLifetimes,
   joulesFromErg,
   lightTravelAnswer,
   lightTravelYears,
+  LITERATURE,
   lightYearsFromMpc,
   MASS_2026,
   massEstimates,
   oneInN,
+  overlapCount,
   overlaps,
+  restShare,
   runCatchingASupernova,
   SECONDS_PER_YEAR,
   shareOf,
@@ -21,6 +25,7 @@ import {
   SUPERNOVA,
   timeBeforeExplosionYears,
   visibleShareAnswer,
+  whereInRange,
 } from './catchingASupernova'
 
 // Independent figures, worked here from the constants written out in full (not from the module's code), so a slip in the module shows.
@@ -254,5 +259,75 @@ describe('the run and the controls (tests 11 and 12)', () => {
     expect(run.sunLifetimes.gasMotion).toBeLessThan(2)
     expect(run.sunLifetimes.collapse).toBeGreaterThan(100)
     expect(run.sunLifetimes.light).toBeLessThan(0.1)
+  })
+})
+
+describe('the reading guide\'s comparisons (test 13)', () => {
+  it('whereInRange: inside, below and above a range, with the factor to the nearest edge', () => {
+    expect(whereInRange(4, [3, 5])).toEqual({ verdict: 'inside', factor: 1 })
+    expect(whereInRange(3, [3, 5]).verdict).toBe('inside')
+    expect(whereInRange(5, [3, 5]).verdict).toBe('inside')
+    expect(whereInRange(1.5, [3, 5])).toEqual({ verdict: 'below', factor: 2 })
+    expect(whereInRange(10, [3, 5])).toEqual({ verdict: 'above', factor: 2 })
+  })
+  it('the collapse energy at the published values is inside the neutrino range, and the nine control settings are classified by a separate rule', () => {
+    expect(whereInRange(runCatchingASupernova().collapseErg, LITERATURE.neutrinoEnergyErg).verdict).toBe('inside')
+    for (const m of SUPERNOVA.coreMassChoicesSolar) for (const r of SUPERNOVA.coreRadiusChoicesKm) {
+      const erg = ergFromJoules(collapseEnergyJ(m, r))
+      const expected = erg < 3e53 ? 'below' : erg > 5e53 ? 'above' : 'inside'
+      expect(compareWithPublished({ coreMassSolar: m, coreRadiusKm: r }).collapseVsNeutrinoRange.verdict).toBe(expected)
+    }
+  })
+  it('the rest of the collapse\'s energy is 99.77 percent, and is the collapse minus the blast and the light', () => {
+    const run = runCatchingASupernova()
+    expect(restShare(run.collapseJ, run.gasMotionJ, run.lightJ) * 100).toBeCloseTo(99.77, 2)
+    expect(restShare(run.collapseJ, run.gasMotionJ, run.lightJ)).toBeCloseTo(1 - run.gasMotionShare - run.lightShare, 12)
+    expect(() => restShare(1, 1, 1)).toThrow(RangeError)
+  })
+  it('overlapCount: the number of the other estimates each one shares a value with, from a separate count', () => {
+    const all = massEstimates()
+    for (const a of all) {
+      const expected = all.filter((b) => b.who !== a.who && a.lowSolar <= b.highSolar && b.lowSolar <= a.highSolar).length
+      expect(overlapCount(a.who)).toBe(expected)
+    }
+    expect(overlapCount('Pledger and Shara')).toBe(1) // only Kilpatrick's 9 to 13 reaches down to 10
+    expect(() => overlapCount('nobody')).toThrow(RangeError)
+  })
+  it('at the published values every comparison says the same', () => {
+    const c = compareWithPublished()
+    expect(c.coreMass).toBe(0)
+    expect(c.coreRadius).toBe(0)
+    expect(c.collapsePercent).toBe(0)
+    expect(c.distancePercent).toBe(0)
+    expect(c.travelYearsDifference).toBe(0)
+    expect(c.windSpeed).toBe(0)
+    expect(c.gasTimePercent).toBe(0)
+    expect(c.lightOneInMine).toBe(c.lightOneInPublished)
+  })
+  it('a heavier core, a farther M101 and a slower gas move the comparisons the right way, against separate calculations', () => {
+    const heavy = compareWithPublished({ coreMassSolar: 2.0 })
+    expect(heavy.coreMass).toBe(1)
+    expect(heavy.collapsePercent).toBeCloseTo(((2.0 / 1.4) ** 2 - 1) * 100, 6)
+    expect(heavy.lightOneInMine).toBeGreaterThan(heavy.lightOneInPublished)
+    const far = compareWithPublished({ distanceMpc: 7.0 })
+    expect(far.distancePercent).toBeCloseTo(((7.0 - 6.85) / 6.85) * 100, 8)
+    expect(far.travelYearsDifference).toBeCloseTo(0.15e6 * 3.26156, 0)
+    const slow = compareWithPublished({ windSpeedKmS: 25 })
+    expect(slow.windSpeed).toBe(-1)
+    expect(slow.gasTimePercent).toBeCloseTo(100, 8)
+    const fast = compareWithPublished({ windSpeedKmS: 100 })
+    expect(fast.gasTimePercent).toBeCloseTo(-50, 8)
+  })
+  it('the gas time rounds to the paper\'s "3 to 6 years" at 50 km/s and not at 25 or 100 km/s', () => {
+    expect(compareWithPublished().gasYearsRounded).toEqual([3, 6])
+    expect(compareWithPublished().gasYearsMatchPaper).toBe(true)
+    expect(compareWithPublished({ windSpeedKmS: 25 }).gasYearsMatchPaper).toBe(false)
+    expect(compareWithPublished({ windSpeedKmS: 100 }).gasYearsMatchPaper).toBe(false)
+  })
+  it('the published literature figures equal the specification\'s', () => {
+    expect(LITERATURE.neutrinoEnergyErg).toEqual([3e53, 5e53])
+    expect(LITERATURE.sn1987aEnergyErg).toEqual([2e53, 3e53])
+    expect(LITERATURE.explosionEnergyErg).toEqual([0.7e51, 1.2e51])
+    expect(LITERATURE.paperGasYears).toEqual([3, 6])
   })
 })

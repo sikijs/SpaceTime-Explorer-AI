@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  compareWithPublished,
   inSunLifetimes,
+  LIGHT_YEARS_PER_PARSEC,
+  LITERATURE,
   massEstimates,
   MASS_2026,
   oneInN,
   overlaps,
+  restShare,
   runCatchingASupernova,
   SOLAR_MASS_KG,
   SUPERNOVA,
   sunLifetimeEnergyJ,
+  whereInRange,
   G,
   ergFromJoules,
   joulesFromErg,
 } from '../physics/catchingASupernova'
 import type { LightTravelAnswer, VisibleShareAnswer } from '../physics/catchingASupernova'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { LookForList } from './WideBinariesExperiment'
+import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 13 (docs/experiments/frontier-and-beyond/13-catching-a-supernova.md).
@@ -46,6 +51,7 @@ const COLLAPSE_COLOR = '#f87171' // red: the energy freed by the collapse
 const LIGHT_COLOR = '#fde047' // yellow: the visible light
 const SUN_COLOR = '#ffffff' // white: the Sun's whole-life output, the yardstick
 const RING_COLOR = '#94a3b8' // grey: Neptune's orbit, for scale
+const YOURS_COLOR = '#ffffff' // white: the learner's own choice
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -180,6 +186,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Light-year', meaning: 'the distance light travels in a year, about 9.5 million million kilometres. NASA says that because light takes time to cross space, looking at a faraway object is looking at it as it was in the past: we see the Sun as it was 8.3 minutes ago.' },
   { term: 'Astronomical unit (AU)', meaning: 'the average distance from the Earth to the Sun, about 150 million kilometres. Neptune, the farthest planet, is about 30 AU from the Sun.' },
   { term: 'Parsec and megaparsec', meaning: 'a parsec is a unit of distance used by astronomers, about 3.26 light-years. A megaparsec (Mpc) is a million parsecs, about 3.26 million light-years.' },
+  { term: 'Log scale', meaning: 'a scale where each step along the axis multiplies the number by 10 instead of adding the same amount. It lets numbers that differ a million-fold fit on one picture. On Picture 3, a bar one step longer is 10 times more energy, and a bar three steps longer is 1,000 times more, so bars that look fairly close can differ enormously.' },
   { term: 'Joule and erg', meaning: 'two units of energy. One joule is about the energy it takes to lift an apple (about 100 grams) 1 metre. An erg is one ten-millionth of a joule, a unit astronomers often use because the energies in space are so huge. The numbers in this experiment come in both, and the experiment shows how to change from one to the other.' },
 ]
 
@@ -301,7 +308,17 @@ const P2_PX_PER_AU = 2.3
 const P2_X = 280
 const P2_Y = 205
 
-function PictureTwo({ yearsBefore, shellAU, speed }: { yearsBefore: [number, number]; shellAU: [number, number]; speed: number }) {
+interface YoursTwo {
+  speed: number
+  yearsBefore: [number, number]
+}
+interface YoursThree {
+  collapseErg: number
+  distanceMpc: number
+  lightYears: number
+}
+
+function PictureTwo({ yearsBefore, shellAU, speed, yours }: { yearsBefore: [number, number]; shellAU: [number, number]; speed: number; yours: YoursTwo | null }) {
   const height = 400
   const px = (au: number) => au * P2_PX_PER_AU
   const [rin, rout] = [px(shellAU[0]), px(shellAU[1])]
@@ -339,6 +356,10 @@ function PictureTwo({ yearsBefore, shellAU, speed }: { yearsBefore: [number, num
       <SvgLines x={P2_X - rout - 6} y={P2_Y - 18} lines={['inner edge of the gas:', `${shellAU[0].toFixed(1)} AU`, `shed ${yearsBefore[0].toFixed(1)} years`, 'before the explosion']} fill={GAS_COLOR} bold anchor="end" size={9} />
       <SvgLines x={P2_X + rout + 6} y={P2_Y - 18} lines={['outer edge of the gas:', `${shellAU[1].toFixed(1)} AU`, `shed ${yearsBefore[1].toFixed(1)} years`, 'before the explosion']} fill={GAS_COLOR} bold size={9} />
       <SvgLines x={P2_X} y={height - 10} lines={[`gas speed taken as ${speed} km/s (the authors’ assumption): time = radius ÷ speed`]} fill={MUTED_COLOR} anchor="middle" />
+      {/* The learner's own speed (after the run): white. */}
+      {yours && (
+        <SvgLines x={P2_X} y={height - 30} lines={[`your setting (white): ${yours.speed} km/s, so the gas was shed ${yours.yearsBefore[0].toFixed(1)} to ${yours.yearsBefore[1].toFixed(1)} years before`]} fill={YOURS_COLOR} bold anchor="middle" size={10} />
+      )}
     </svg>
   )
 }
@@ -346,11 +367,11 @@ function PictureTwo({ yearsBefore, shellAU, speed }: { yearsBefore: [number, num
 // ---- Picture 3: where the energy went, on a log scale (stage 4), and how long ago the light left (stage 5) ----
 const P3_LEFT = 175
 const P3_MIN_LOG = 48
-const P3_MAX_LOG = 54
+const P3_MAX_LOG = 55
 const P3_PX_PER_DECADE = (545 - P3_LEFT) / (P3_MAX_LOG - P3_MIN_LOG)
 const p3x = (erg: number) => P3_LEFT + (Math.log10(erg) - P3_MIN_LOG) * P3_PX_PER_DECADE
 
-function PictureThree({ stage }: { stage: number }) {
+function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | null }) {
   const run = runCatchingASupernova()
   const height = 500
   const collapseErg = run.collapseErg
@@ -379,7 +400,7 @@ function PictureThree({ stage }: { stage: number }) {
       <SvgLines x={20} y={40} lines={['energy on a log scale: each step to the right is 10 times more (1 erg = 0.0000001 joule)']} fill={MUTED_COLOR} />
 
       {/* The log scale. */}
-      {[48, 49, 50, 51, 52, 53, 54].map((e) => (
+      {[48, 49, 50, 51, 52, 53, 54, 55].map((e) => (
         <g key={e}>
           <line x1={p3x(10 ** e)} y1={56} x2={p3x(10 ** e)} y2={axisY} stroke={MUTED_COLOR} strokeOpacity={0.25} strokeDasharray="2 4" />
           <text x={p3x(10 ** e)} y={axisY + 14} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
@@ -404,6 +425,14 @@ function PictureThree({ stage }: { stage: number }) {
       <SvgLines x={p3x(gasErg) + 8} y={164} lines={[`${sciText(gasErg)} erg`]} fill={GAS_COLOR} bold size={11} />
       <SvgLines x={P3_LEFT} y={246} lines={[`${sciText(lightErg)} erg`, `(the pale part: up to ${sciText(lightHigh)})`]} fill={LIGHT_COLOR} bold size={10} />
 
+      {/* The learner's own core (after the run): a white mark on the collapse bar. */}
+      {yours && (
+        <g>
+          <line x1={p3x(yours.collapseErg)} y1={96} x2={p3x(yours.collapseErg)} y2={138} stroke={YOURS_COLOR} strokeWidth={3} />
+          <SvgLines x={p3x(yours.collapseErg)} y={92} lines={[`your setting: ${sciText(yours.collapseErg)} erg`]} fill={YOURS_COLOR} bold anchor="end" size={9} />
+        </g>
+      )}
+
       {/* The Sun's whole-life output: a yardstick. */}
       <line x1={p3x(sunErg)} y1={80} x2={p3x(sunErg)} y2={axisY} stroke={SUN_COLOR} strokeWidth={1.5} strokeDasharray="6 4" />
       <SvgLines x={p3x(sunErg) - 6} y={64} lines={['the Sun’s whole-life output:', `${sciText(sunErg)} erg`]} fill={SUN_COLOR} bold anchor="end" size={9} />
@@ -422,12 +451,40 @@ function PictureThree({ stage }: { stage: number }) {
           <SvgLines x={500} y={440} lines={['the light arrives;', 'it is seen from Earth']} fill={LIGHT_COLOR} anchor="middle" size={9} />
           <SvgLines x={280} y={404} lines={[`${SUPERNOVA.distanceMpc} Mpc = ${millions(run.lightYears)} million light-years`]} fill={TEXT_COLOR} bold anchor="middle" size={10} />
           <SvgLines x={280} y={432} lines={['travel time = distance ÷ the speed of light']} fill={MUTED_COLOR} anchor="middle" size={9} />
+          {yours && (
+            <SvgLines x={280} y={height - 26} lines={[`your setting (white): ${yours.distanceMpc} Mpc = ${millions(yours.lightYears)} million light-years, so the light left ${millions(yours.lightYears)} million years ago`]} fill={YOURS_COLOR} bold anchor="middle" size={10} />
+          )}
           <SvgLines x={280} y={height - 8} lines={['not to scale in time: the strip only shows the order']} fill={MUTED_COLOR} anchor="middle" size={9} />
         </g>
       )}
     </svg>
   )
 }
+
+function ChoiceButtons<T extends number>({ options, value, onChange, format }: { options: ReadonlyArray<T>; value: number; onChange: (v: T) => void; format: (v: T) => string }) {
+  return (
+    <div>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onChange(option)}
+          className={`toggle-button${value === option ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+        >
+          {format(option)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const pct = (n: number): string => {
+  const a = Math.abs(n)
+  return a < 10 ? a.toFixed(1) : String(Math.round(a))
+}
+const isSame = (n: number): boolean => Math.abs(n) < 1e-9
+const word = (sign: -1 | 0 | 1, bigger: string, smaller: string, same: string): string => (sign === 0 ? same : sign < 0 ? smaller : bigger)
 
 interface CatchingASupernovaExperimentProps {
   onComplete?: () => void
@@ -438,7 +495,13 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
   const [travelPrediction, setTravelPrediction] = useState<LightTravelAnswer | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  // The controls that appear after the run.
+  const [coreMassChoice, setCoreMassChoice] = useState<number>(SUPERNOVA.coreMassSolar)
+  const [coreRadiusChoice, setCoreRadiusChoice] = useState<number>(SUPERNOVA.coreRadiusKm)
+  const [distanceChoice, setDistanceChoice] = useState<number>(SUPERNOVA.distanceMpc)
+  const [speedChoice, setSpeedChoice] = useState<number>(SUPERNOVA.windSpeedKmS)
   const hasRun = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = sharePrediction !== null && travelPrediction !== null
 
   // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
@@ -460,6 +523,10 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
     setTravelPrediction(null)
     setStatus('idle')
     setStage(0)
+    setCoreMassChoice(SUPERNOVA.coreMassSolar)
+    setCoreRadiusChoice(SUPERNOVA.coreRadiusKm)
+    setDistanceChoice(SUPERNOVA.distanceMpc)
+    setSpeedChoice(SUPERNOVA.windSpeedKmS)
   }
   function run() {
     setStage(1)
@@ -475,15 +542,63 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
   const pledger = byName('Pledger and Shara')
   const lowest = estimates.reduce((a, b) => (a.highSolar < b.highSolar ? a : b))
   const highest = estimates.reduce((a, b) => (a.lowSolar > b.lowSolar ? a : b))
+  // The overall range of the estimates (not the same as `lowest` and `highest`, which are the pair that share the least).
+  const top = estimates.reduce((a, b) => (a.highSolar > b.highSolar ? a : b))
+  const overallLow = Math.min(...estimates.map((e) => e.lowSolar))
+  const overallHigh = top.highSolar
   const [innerCm, outerCm] = SUPERNOVA.gasShellRadiiCm
   const speedCmS = SUPERNOVA.windSpeedKmS * 1e5
   const outerSeconds = outerCm / speedCmS
   const massKg = SUPERNOVA.coreMassSolar * SOLAR_MASS_KG
   const lightOneInRounded = Math.round(result.lightOneIn / 1000) * 1000
+  const settings = { coreMassSolar: coreMassChoice, coreRadiusKm: coreRadiusChoice, distanceMpc: distanceChoice, windSpeedKmS: speedChoice }
+  const mine = runCatchingASupernova(settings)
+  const cmp = compareWithPublished(settings)
+  const allPublished = cmp.coreMass === 0 && cmp.coreRadius === 0 && isSame(cmp.distancePercent) && cmp.windSpeed === 0
+  const coreChanged = cmp.coreMass !== 0 || cmp.coreRadius !== 0
+  const yoursTwo: YoursTwo | null = done ? { speed: speedChoice, yearsBefore: mine.gasShedYearsBefore } : null
+  const yoursThree: YoursThree | null = done ? { collapseErg: mine.collapseErg, distanceMpc: distanceChoice, lightYears: mine.lightYears } : null
+  // The range of the light's share over all nine core settings (for "What your numbers show").
+  const shares = SUPERNOVA.coreMassChoicesSolar.flatMap((m) => SUPERNOVA.coreRadiusChoicesKm.map((r) => runCatchingASupernova({ coreMassSolar: m, coreRadiusKm: r }).lightOneIn))
+  const sharesLow = Math.min(...shares)
+  const sharesHigh = Math.max(...shares)
+  const oneInText = (x: number): string => thousandsComma(x)
+  const neutrinoRange = `${LITERATURE.neutrinoEnergyErg[0] / 1e53} to ${LITERATURE.neutrinoEnergyErg[1] / 1e53} × 10⁵³`
+  const rangeText = (check: { verdict: 'inside' | 'below' | 'above'; factor: number }): string =>
+    check.verdict === 'inside' ? `Inside the published range for neutrinos (${neutrinoRange} erg).` : `Outside the published range for neutrinos (${neutrinoRange} erg): ${check.verdict} it by a factor of ${check.factor.toFixed(1)}.`
+  const sunWhole = ergFromJoules(sunLifetimeEnergyJ())
+  const rest = restShare(result.collapseJ, result.gasMotionJ, result.lightJ)
+  const wideCheck = whereInRange(ergFromJoules(result.gasMotionJ), LITERATURE.explosionEnergyWideErg)
+  const narrowCheck = whereInRange(ergFromJoules(result.gasMotionJ), LITERATURE.explosionEnergyErg)
+  const collapseCheck = whereInRange(result.collapseErg, LITERATURE.neutrinoEnergyErg)
+  const farMpc = SUPERNOVA.distanceMpc + 0.15
+  const nearMpc = SUPERNOVA.distanceMpc - 0.15
+  const formulaEntries: { term: string; meaning: string }[] = [
+    {
+      term: 'The energy of a collapse (formula)',
+      meaning: `E = G × M² ÷ R, the gravitational energy of a neutron star of mass M and radius R (G is the gravitational constant, ${sciText(G, 3)} in SI units). For ${SUPERNOVA.coreMassSolar} Suns, M = ${SUPERNOVA.coreMassSolar} × ${sciText(SOLAR_MASS_KG, 3)} kg = ${sciText(massKg)} kg, and R = ${SUPERNOVA.coreRadiusKm * 1000} m, so E = ${sciText(G, 3)} × (${sciText(massKg)})² ÷ ${SUPERNOVA.coreRadiusKm * 1000} = ${sciText(result.collapseJ)} J = ${sciText(result.collapseErg)} erg. It is a rough estimate: a ball of the same mass and size but the same density throughout would give 3/5 of it.`,
+    },
+    {
+      term: 'A share of the energy (formula)',
+      meaning: `share = the part ÷ the whole, and “1 part in N” means N = the whole ÷ the part. For the light: ${sciText(ergFromJoules(result.lightJ))} ÷ ${sciText(result.collapseErg)} = ${(result.lightShare * 100).toFixed(4)} percent, so N = ${oneInText(result.lightOneIn)}. For comparison, 1 part in 43,000 is about one minute out of a 30-day month.`,
+    },
+    {
+      term: 'The Sun’s whole-life output (formula)',
+      meaning: `the Sun’s power (${sciText(3.828e26, 3)} watts, which is joules a second) times about ten billion years (${sciText(1e10, 0)} × ${thousandsComma(365.25 * 86400)} seconds) = ${sciText(sunLifetimeEnergyJ())} J = ${sciText(sunWhole)} erg. The collapse is ${sciText(result.collapseErg)} ÷ ${sciText(sunWhole)} = about ${Math.round(result.sunLifetimes.collapse)} times that.`,
+    },
+    {
+      term: 'The light-travel time (formula)',
+      meaning: `time = distance ÷ the speed of light. In the astronomers’ units this is easy: one light-year is how far light goes in one year, so a distance of ${millions(result.lightYears)} million light-years takes ${millions(result.lightTravelYears)} million years. The distance in light-years is the distance in megaparsecs times ${LIGHT_YEARS_PER_PARSEC} million: ${SUPERNOVA.distanceMpc} × ${LIGHT_YEARS_PER_PARSEC} = ${(SUPERNOVA.distanceMpc * LIGHT_YEARS_PER_PARSEC).toFixed(2)} million.`,
+    },
+    {
+      term: 'How long before the explosion the gas was shed (formula)',
+      meaning: `time = radius ÷ speed. For the outer edge: ${sciText(outerCm)} cm ÷ ${sciText(speedCmS)} cm/s = ${sciText(outerSeconds)} s = ${result.gasShedYearsBefore[1].toFixed(1)} years. Doubling the speed halves the time, and doubling the radius doubles it.`,
+    },
+  ]
   const lookForPictureOne: LookFor[] = [
     {
       look: 'the seven orange bars, one for each team’s estimate of the star’s mass when it was born, and the number at the end of each bar.',
-      means: `each bar is the range of masses that team gives, from ${lowest.who}’s ${lowest.lowSolar} to ${lowest.highSolar} Suns up to ${highest.who}’s ${highest.lowSolar} to ${highest.highSolar}. A long bar means the team is less sure. The dot is an estimate with no range quoted.`,
+      means: `each bar is the range of masses that team gives, from ${lowest.who}’s ${lowest.lowSolar} to ${lowest.highSolar} Suns up to ${top.who}’s ${top.lowSolar} to ${top.highSolar}. A long bar means the team is less sure. The dot is an estimate with no range quoted.`,
       matters: 'the star was photographed before it exploded, so you might expect everyone to find the same mass. The mass decides how the star lived and how it died, so it is worth knowing, and the teams do not agree.',
     },
     {
@@ -690,7 +805,7 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
           </ul>
         </div>
 
-        <ReferencePanel entries={REFERENCE_ENTRIES} />
+        <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
             right, and neither gives the share of the light or the distance. */}
@@ -767,14 +882,14 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
             <>
               <strong>{status === 'complete' ? 'Run complete' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}`}</strong>
               {status === 'complete' && (
-                <span style={{ color: 'var(--text-muted)' }}> (all {LAST_STAGE} stages shown). Your predictions are recorded and not marked here. The controls, the results and the tutor will appear here.</span>
+                <span style={{ color: 'var(--text-muted)' }}> (all {LAST_STAGE} stages shown). Your predictions are recorded and not marked here.</span>
               )}
             </>
           )}
         </p>
         {status === 'running' && (
           <p style={{ fontSize: '0.875rem', marginTop: 0, color: 'var(--text-muted)' }}>
-            {stage === 1 && `Picture 1 shows seven teams’ estimates of the star’s mass when it was born, from ${lowest.lowSolar} to ${highest.highSolar} times the Sun’s.`}
+            {stage === 1 && `Picture 1 shows seven teams’ estimates of the star’s mass when it was born, from ${overallLow} to ${overallHigh} times the Sun’s.`}
             {stage === 2 && 'Two more ranges are added, from a 2026 paper that used two methods and a possible effect of dust.'}
             {stage === 3 && `Picture 2 appears below Picture 1. It shows the gas the star shed, out to ${result.gasShellAU[1].toFixed(1)} AU, and how long before the explosion it was shed.`}
             {stage === 4 && 'Picture 3 appears below Picture 2. It shows the energy of the collapse, of the blast and of the light, on a scale where each step is 10 times more.'}
@@ -816,7 +931,7 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
         )}
         {stage >= 3 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureTwo yearsBefore={result.gasShedYearsBefore} shellAU={result.gasShellAU} speed={result.windSpeedKmS} />
+            <PictureTwo yearsBefore={result.gasShedYearsBefore} shellAU={result.gasShellAU} speed={result.windSpeedKmS} yours={yoursTwo} />
           </div>
         )}
         {stage >= 3 && (
@@ -843,7 +958,7 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
         )}
         {stage >= 4 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureThree stage={stage} />
+            <PictureThree stage={stage} yours={yoursThree} />
           </div>
         )}
         {stage >= 4 && (
@@ -879,6 +994,408 @@ export function CatchingASupernovaExperiment({ onComplete }: CatchingASupernovaE
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureThree.slice(0, stage >= 5 ? 4 : 3)} />
+          </div>
+        )}
+
+        {/* The controls (after the run): the core, the distance and the speed of the gas. They add a white mark to Pictures 2 and 3, and fill Table 4. */}
+        {done && (
+          <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
+            <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              Your predictions do not change the pictures or Table 4, because the results come from the physics, not from your guesses. These settings do: change one and watch
+              the white marks in Pictures 2 and 3 above, and Table 4 below, follow it. Picture 1 does not change, because the mass estimates are the teams’, not yours. While every
+              setting is on its published value, Table 4 says “the same” in every row, so change a setting to see it move. Each choice is a trial value: it shows what would
+              happen with that number, and does not say that the real star is like that.
+            </p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the collapsing core? (solar masses) It moves the white mark in Picture 3.</p>
+            <ChoiceButtons options={SUPERNOVA.coreMassChoicesSolar} value={coreMassChoice} onChange={setCoreMassChoice} format={(v) => `${v}${v === SUPERNOVA.coreMassSolar ? ' (the usual value)' : ''}`} />
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How big is the core after it collapses? (radius in kilometres)</p>
+            <ChoiceButtons options={SUPERNOVA.coreRadiusChoicesKm} value={coreRadiusChoice} onChange={setCoreRadiusChoice} format={(v) => `${v} km${v === SUPERNOVA.coreRadiusKm ? ' (the usual value)' : ''}`} />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              A core of {coreMassChoice} Suns, {coreRadiusChoice} km in radius, frees {sciText(mine.collapseErg)} erg ({Math.round(mine.sunLifetimes.collapse)} times the Sun’s whole-life output). The light,{' '}
+              {sciText(ergFromJoules(mine.lightJ))} erg, is then 1 part in {oneInText(mine.lightOneIn)} of it.
+            </p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How far away is M101? (megaparsecs) It moves the white line under Picture 3.</p>
+            <ChoiceButtons options={SUPERNOVA.distanceChoicesMpc} value={distanceChoice} onChange={setDistanceChoice} format={(v) => `${v} Mpc${v === SUPERNOVA.distanceMpc ? ' (the published value)' : ''}`} />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              At {distanceChoice} Mpc ({millions(mine.lightYears)} million light-years) the light took {millions(mine.lightTravelYears)} million years to arrive. The distance is known to about ± 0.15 Mpc,
+              which changes the time by about half a million years out of 22 million.
+            </p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How fast was the gas moving? (kilometres a second) It moves the white label in Picture 2.</p>
+            <ChoiceButtons options={SUPERNOVA.windSpeedChoicesKmS} value={speedChoice} onChange={setSpeedChoice} format={(v) => `${v} km/s${v === SUPERNOVA.windSpeedKmS ? ' (the authors’ assumption)' : ''}`} />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
+              At {speedChoice} km/s the gas now at the inner and outer edges left the star {mine.gasShedYearsBefore[0].toFixed(1)} and {mine.gasShedYearsBefore[1].toFixed(1)} years before the explosion. A faster
+              gas means a shorter time, and the speed was assumed, not measured.
+            </p>
+          </div>
+        )}
+
+        {/* The results, shown only after the run completes: the status label, the predictions again, the check-up, four tables, and the links kept back until now. */}
+        {done && (
+          <div style={{ marginTop: '2rem' }}>
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p style={{ ...paragraph, padding: '0.75rem 1rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px', fontSize: '0.875rem' }}>
+              <strong>Where this stands (as of October 2026).</strong> <strong>Strong evidence:</strong> a red supergiant exploded in M101 in May 2023 (the star was photographed
+              before it blew up, and the first spectra showed gas it had shed). <strong>Strong evidence from theory and from one earlier supernova (SN 1987A):</strong> almost all
+              of a collapse’s energy leaves as neutrinos, although none were reported from SN 2023ixf itself. <strong>Contested:</strong> how heavy the star was (estimates run from about{' '}
+              {overallLow} to about {overallHigh} solar masses). <strong>Open:</strong> why the star shed so much gas in its last years.
+            </p>
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>Your predictions, beside the results.</strong> Before the run you made two predictions. Here they are again, each with the place on this page where its
+                number appears. Compare them yourself. The tutor will go through them with you after the tables.
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>Prediction 1: how much of the energy is visible light?</strong> You predicted: <strong>{SHARE_CHOICES.find((c) => c.value === sharePrediction)?.label}</strong>. The question
+                was what share of the energy freed by the collapse comes out as visible light. Its number is in Table 1, in the row “The visible light”, and in Picture 3.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Prediction 2: when did it really happen?</strong> You predicted: <strong>{TRAVEL_CHOICES.find((c) => c.value === travelPrediction)?.label}</strong>. The question was how long
+                before May 2023 the star really exploded. Its number is in Table 2, in the row “How long the light took”, and in the strip under Picture 3.
+              </p>
+            </div>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>How to read these results.</strong> Think of these tables as a set of test results, and this section as the doctor explaining them. A supernova is far
+              too far away, and too violent, to measure directly, so what we know comes as numbers from many different sources: an energy worked out from a formula, energies
+              measured by teams, a distance, a speed, and a list of estimates of the star’s mass. None of the numbers is a picture of the explosion. The question to keep in mind
+              is: <strong>do the numbers agree with each other, and how strong is each one?</strong>
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              First comes a short check-up that sets what we would expect beside what was found. Then each table has a plain-words note under it. The experiment explains what
+              each number means. It does not decide for you what the evidence adds up to. The tutor will help you with that, after the tables. The “Words and formulas” box
+              now has the formulas worked with these numbers.
+            </p>
+            <p style={{ marginBottom: '0.25rem' }}>
+              <strong>The check-up: what we would expect, and what was found</strong>
+            </p>
+            <ResultsTable
+              head={['What was checked', 'What we would expect', 'What was found', 'What this tells us']}
+              minWidth={640}
+              rows={[
+                [
+                  'The energy the collapse frees',
+                  `${neutrinoRange} erg: the energy carried by neutrinos in a core collapse, in published reviews (about ${LITERATURE.sn1987aEnergyErg[0] / 1e53} to ${LITERATURE.sn1987aEnergyErg[1] / 1e53} × 10⁵³ erg for SN 1987A)`,
+                  `${sciText(result.collapseErg)} erg, worked out here as G × M² ÷ R for ${SUPERNOVA.coreMassSolar} Suns and ${SUPERNOVA.coreRadiusKm} km`,
+                  `${collapseCheck.verdict === 'inside' ? 'Close: inside the published range.' : `Outside the published range, ${collapseCheck.verdict} it by ${collapseCheck.factor.toFixed(1)} times.`} It is a rough estimate, so trust the size, not the last digit.`,
+                ],
+                [
+                  'The energy of the blast (the motion of the gas)',
+                  `${LITERATURE.explosionEnergyErg[0] / 1e51} to ${LITERATURE.explosionEnergyErg[1] / 1e51} × 10⁵¹ erg for SN 2023ixf in one analysis; another analysis gives ${LITERATURE.explosionEnergyWideErg[0] / 1e51} to ${LITERATURE.explosionEnergyWideErg[1] / 1e51} × 10⁵¹`,
+                  `${sciText(ergFromJoules(result.gasMotionJ))} erg, the value used here`,
+                  `${narrowCheck.verdict === 'inside' && wideCheck.verdict === 'inside' ? 'Close: inside both ranges.' : 'Not inside both ranges.'} The two analyses differ, so this number is only good to a factor of a few.`,
+                ],
+                [
+                  'How long before the explosion the gas was shed',
+                  `${LITERATURE.paperGasYears[0]} to ${LITERATURE.paperGasYears[1]} years (Jacobson-Galán and others, 2023)`,
+                  `${result.gasShedYearsBefore[0].toFixed(1)} to ${result.gasShedYearsBefore[1].toFixed(1)} years, from radius ÷ speed at the paper’s assumed ${result.windSpeedKmS} km/s`,
+                  `The same, to the nearest year. This is the paper’s own sum, so it checks the arithmetic, and the speed is an assumption.`,
+                ],
+                [
+                  'How heavy the star was',
+                  'One agreed value',
+                  `Seven estimates from ${overallLow} to ${overallHigh} solar masses, and two 2026 ranges (${MASS_2026.lightCurveRangeSolar[0]} to ${MASS_2026.lightCurveRangeSolar[1]} and ${MASS_2026.spectraRangeSolar[0]} to ${MASS_2026.spectraRangeSolar[1]})`,
+                  `Not settled. The lowest and the highest estimates ${overlaps(lowest, highest) ? 'overlap' : 'share no value'}.`,
+                ],
+                [
+                  'Neutrinos seen from SN 2023ixf',
+                  'From the collapse itself, too few to detect at this distance (Super-Kamiokande’s own estimate was below its threshold, from a search summary)',
+                  'None reported. IceCube searched separately for higher-energy neutrinos from the blast hitting the gas and found only background',
+                  'As expected for the collapse’s burst. The IceCube search is a different question. Both were read in summaries or abstracts only.',
+                ],
+              ]}
+            />
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              A doctor reads each result against a reference. Here the reference is a published value, or what the same physics predicts. Two rows are close, one is the paper’s own
+              sum, one is not settled and one is as expected. That is why the status label says “Strong evidence” for the explosion, “Contested” for the mass and “Open” for why the
+              star shed so much gas.
+            </p>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 1: where did the energy go?</strong>
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Value', 'Where it comes from']}
+              minWidth={560}
+              rows={[
+                [
+                  'The collapse (the energy it frees)',
+                  `${sciText(result.collapseJ)} J = ${sciText(result.collapseErg)} erg = ${Math.round(result.sunLifetimes.collapse)} times the Sun’s whole-life output`,
+                  `worked out here: G × M² ÷ R for ${SUPERNOVA.coreMassSolar} Suns and ${SUPERNOVA.coreRadiusKm} km (an order-of-magnitude estimate)`,
+                ],
+                [
+                  'The blast (the motion of the gas)',
+                  `${sciText(ergFromJoules(result.gasMotionJ))} erg = ${result.sunLifetimes.gasMotion.toFixed(2)} of the Sun’s whole-life output; 1 part in ${oneInText(result.gasMotionOneIn)} of the collapse (${(result.gasMotionShare * 100).toFixed(2)} percent)`,
+                  'the usual range of about 0.5 to 2 × 10⁵¹ erg; SN 2023ixf analyses give 0.7 to 1.2 and 1.0 to 5.7 × 10⁵¹',
+                ],
+                [
+                  'The visible light (the row for Prediction 1)',
+                  `${sciText(ergFromJoules(result.lightJ))} erg = ${result.sunLifetimes.light.toFixed(4)} of the Sun’s whole-life output; 1 part in ${oneInText(result.lightOneIn)} of the collapse (${(result.lightShare * 100).toFixed(4)} percent)`,
+                  `the usual range for a core-collapse supernova, ${sciText(SUPERNOVA.lightRangeErg[0], 0)} to ${sciText(SUPERNOVA.lightRangeErg[1], 0)} erg, taking the bottom; SN 2023ixf’s own value is not used. At the top of the range the light is 1 part in ${oneInText(oneInN(joulesFromErg(SUPERNOVA.lightRangeErg[1]), result.collapseJ))}`,
+                ],
+                [
+                  'What is left over',
+                  `${(rest * 100).toFixed(2)} percent of the collapse’s energy`,
+                  'worked out here: the collapse minus the blast and the light. The reviews say almost all of it is carried by neutrinos (more than about 99 percent)',
+                ],
+                [
+                  'The Sun’s whole-life output (the yardstick)',
+                  `${sciText(sunLifetimeEnergyJ())} J = ${sciText(sunWhole)} erg`,
+                  'the Sun’s power times about ten billion years (standard figures; no source read)',
+                ],
+              ]}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Where the numbers come from.</strong> The collapse’s energy comes from one simple formula: the energy freed as {SUPERNOVA.coreMassSolar} Suns’ worth of material falls into a ball{' '}
+                  {SUPERNOVA.coreRadiusKm} km in radius. Think of dropping a very heavy weight a very long way: the more it weighs and the farther it falls, the more energy it gives
+                  up. The blast and the light are measured by teams, not worked out.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The collapse frees {sciText(result.collapseErg)} erg, about {Math.round(result.sunLifetimes.collapse)} times all the energy the Sun will give out in ten billion
+                  years. The blast’s motion is about one Sun’s lifetime, 1 part in {oneInText(result.gasMotionOneIn)} of the collapse. The light is 1 part in {oneInText(result.lightOneIn)}, which is about one
+                  minute out of a 30-day month. Almost all the rest, {(rest * 100).toFixed(2)} percent, is neither motion nor light.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> What telescopes photograph is a tiny corner of the event. Astronomers had to work out the rest from theory and from the one supernova,
+                  SN 1987A, whose neutrinos were caught. Where the rest goes is for the tutor.
+                </li>
+                <li>
+                  <strong>How sure is it?</strong> The collapse’s energy is the weakest number: a ball of the same mass and size with the same density throughout would give 3/5 of it, and
+                  real neutron stars need general relativity. The light’s value is a range, not a measurement for this star. Either way the light stays a tiny share, between 1 part in{' '}
+                  {oneInText(sharesLow)} and 1 part in {oneInText(sharesHigh)} for all nine core settings below.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 2: when and where?</strong>
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Value', 'Where it comes from']}
+              minWidth={560}
+              rows={[
+                [
+                  'Distance to M101',
+                  `${SUPERNOVA.distanceMpc} Mpc = ${millions(result.lightYears)} million light-years`,
+                  'about 6.85 Mpc in the 2025 review (Jacobson-Galán); Riess and others 2022 (Cepheid stars) give 6.85 ± 0.15. The IceCube paper uses 6.4 Mpc, which is the “21 million light-years” some pages give',
+                ],
+                [
+                  'How long the light took (the row for Prediction 2)',
+                  `${millions(result.lightTravelYears)} million years`,
+                  'worked out here: distance ÷ the speed of light (one light-year takes one year)',
+                ],
+                [
+                  'The edges of the dense gas',
+                  `${sciText(innerCm)} cm and ${sciText(outerCm)} cm = ${result.gasShellAU[0].toFixed(1)} and ${result.gasShellAU[1].toFixed(1)} AU`,
+                  'Jacobson-Galán and others 2023 (the abstract)',
+                ],
+                ['The speed of the gas', `${result.windSpeedKmS} km/s`, 'assumed by the authors, not measured'],
+                [
+                  'How long before the explosion the gas was shed',
+                  `${result.gasShedYearsBefore[0].toFixed(1)} and ${result.gasShedYearsBefore[1].toFixed(1)} years`,
+                  'worked out here: radius ÷ speed. The paper says 3 to 6 years',
+                ],
+              ]}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Light is a messenger from the past.</strong> The explosion was seen in May 2023, but the light had been travelling for {millions(result.lightTravelYears)} million years. It is like seeing a firework
+                  burst long before you hear it, except that the delay is not seconds but millions of years. The star was already gone when we first saw it.
+                </li>
+                <li>
+                  <strong>What the gas times mean.</strong> Gas {result.gasShellAU[1].toFixed(1)} AU out, moving at {result.windSpeedKmS} km/s, left the star {result.gasShedYearsBefore[1].toFixed(1)} years before the explosion. Cars leaving a
+                  traffic light show the same idea: the car now 100 km away left 2 hours ago if it drives at 50 km/h.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> It means a red supergiant was throwing off dense gas in the last few years of its life, much faster than usual, which is what the first spectra
+                  showed. Why it did that is still open.
+                </li>
+                <li>
+                  <strong>How sure is it?</strong> The distance is good to about ±{(0.15 / SUPERNOVA.distanceMpc * 100).toFixed(0)} percent ({nearMpc.toFixed(2)} to {farMpc.toFixed(2)} Mpc), so the travel time is 22 million years give or take half a million. The gas
+                  times rest on an assumed speed, so they could be longer or shorter in proportion.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 3: the star’s mass, estimates side by side.</strong> No estimate is marked right.
+            </p>
+            <ResultsTable
+              head={['Who', 'How they worked it out', 'Mass when born (solar masses)', 'Shares a value with how many of the other six']}
+              minWidth={640}
+              rows={[
+                ...estimates.map((e) => [
+                  `${e.who} (${e.year})`,
+                  METHOD_WORDS[e.who],
+                  e.lowSolar === e.highSolar ? `${e.lowSolar} (no range quoted)` : `${e.lowSolar} to ${e.highSolar}`,
+                  String(estimates.filter((o) => o.who !== e.who && overlaps(e, o)).length),
+                ]),
+                ['A 2026 paper (Astronomy and Astrophysics)', 'modelling the explosion’s light', `${MASS_2026.lightCurveRangeSolar[0]} to ${MASS_2026.lightCurveRangeSolar[1]}`, '(not counted)'],
+                ['The same 2026 paper', 'spectra taken long after the explosion', `${MASS_2026.spectraRangeSolar[0]} to ${MASS_2026.spectraRangeSolar[1]}`, '(not counted)'],
+              ]}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> Each row is one team’s answer to “how heavy was the star when it was born?”, with the range they allow.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The answers run from {overallLow} to {overallHigh} Suns. The last column counts, for each estimate, how many of the other six it shares at least one value with. An estimate that shares a value
+                  with none, or with only one, is far from the rest. The teams used different methods and different assumptions about the dust, so they could differ even if each did careful work.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> A star’s mass decides how it lives and how it ends. NASA says stars of about 8 to 20 times the Sun’s mass end this way, so a star of about 10 Suns would be near the lower edge, and one of about
+                  20 near the upper edge. The disagreement is why the label for the mass is “Contested”.
+                </li>
+                <li>
+                  <strong>How sure is it?</strong> Not very. The 2026 paper’s authors argue that dust round the star hid some of its light, which would push the lower estimates up. This page reports the argument and does not decide
+                  it.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 4: your own numbers, checked against the published ones.</strong> It follows the settings above.
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Your value', 'Published value', 'How yours compares', 'How it was worked out']}
+              minWidth={900}
+              rows={[
+                [
+                  'The collapsing core',
+                  `${coreMassChoice} Suns, ${coreRadiusChoice} km`,
+                  `${SUPERNOVA.coreMassSolar} Suns, ${SUPERNOVA.coreRadiusKm} km`,
+                  coreChanged
+                    ? `Mass: ${word(cmp.coreMass, 'heavier than', 'lighter than', 'the same as')} the usual value. Radius: ${word(cmp.coreRadius, 'larger than', 'smaller than', 'the same as')} the usual value.`
+                    : 'The same as the published core.',
+                  'a trial value (the usual neutron star is about 1.4 Suns and 12 km)',
+                ],
+                [
+                  'The energy the collapse frees',
+                  `${sciText(mine.collapseErg)} erg`,
+                  `${sciText(result.collapseErg)} erg`,
+                  isSame(cmp.collapsePercent)
+                    ? 'The same.'
+                    : `${pct(cmp.collapsePercent)} percent ${cmp.collapsePercent > 0 ? 'more' : 'less'} than the published value. ${rangeText(cmp.collapseVsNeutrinoRange)}`,
+                  'G × M² ÷ R',
+                ],
+                [
+                  'The light as a share of the collapse',
+                  `1 part in ${oneInText(mine.lightOneIn)}`,
+                  `1 part in ${oneInText(cmp.lightOneInPublished)}`,
+                  cmp.lightOneInMine === cmp.lightOneInPublished
+                    ? 'The same.'
+                    : `${cmp.lightOneInMine > cmp.lightOneInPublished ? 'A smaller' : 'A larger'} share than the published one: 1 part in ${oneInText(cmp.lightOneInMine)} against 1 part in ${oneInText(cmp.lightOneInPublished)}.`,
+                  `${sciText(ergFromJoules(mine.lightJ))} erg ÷ the collapse’s energy`,
+                ],
+                [
+                  'Distance to M101',
+                  `${distanceChoice} Mpc = ${millions(mine.lightYears)} million light-years`,
+                  `${SUPERNOVA.distanceMpc} Mpc (± 0.15)`,
+                  isSame(cmp.distancePercent)
+                    ? 'The same as the published value.'
+                    : `${pct(cmp.distancePercent)} percent ${cmp.distancePercent > 0 ? 'farther' : 'nearer'} than the published value, ${whereInRange(distanceChoice, [nearMpc, farMpc]).verdict === 'inside' ? 'at the edge of its give-or-take of 0.15 Mpc' : 'outside its give-or-take'}.`,
+                  'a trial value within the give-or-take of Riess and others 2022',
+                ],
+                [
+                  'How long the light took',
+                  `${millions(mine.lightTravelYears)} million years`,
+                  `${millions(result.lightTravelYears)} million years`,
+                  isSame(cmp.travelYearsDifference)
+                    ? 'The same.'
+                    : `${Math.abs(cmp.travelYearsDifference / 1e6).toFixed(2)} million years ${cmp.travelYearsDifference > 0 ? 'longer' : 'shorter'} than the published value.`,
+                  `${distanceChoice} × ${LIGHT_YEARS_PER_PARSEC} million`,
+                ],
+                [
+                  'The speed of the gas',
+                  `${speedChoice} km/s`,
+                  `${SUPERNOVA.windSpeedKmS} km/s (assumed)`,
+                  cmp.windSpeed === 0 ? 'The same as the assumed speed.' : `${word(cmp.windSpeed, 'Faster', 'Slower', 'The same')} than the assumed speed.`,
+                  'a trial value',
+                ],
+                [
+                  'How long before the explosion the gas was shed',
+                  `${mine.gasShedYearsBefore[0].toFixed(1)} to ${mine.gasShedYearsBefore[1].toFixed(1)} years`,
+                  `${result.gasShedYearsBefore[0].toFixed(1)} to ${result.gasShedYearsBefore[1].toFixed(1)} years (the paper: ${LITERATURE.paperGasYears[0]} to ${LITERATURE.paperGasYears[1]})`,
+                  `${isSame(cmp.gasTimePercent) ? 'The same.' : `${pct(cmp.gasTimePercent)} percent ${cmp.gasTimePercent > 0 ? 'longer' : 'shorter'} than the published value.`} ${
+                    cmp.gasYearsMatchPaper ? 'It rounds to the paper’s “3 to 6 years”.' : `It rounds to ${cmp.gasYearsRounded[0]} to ${cmp.gasYearsRounded[1]} years, not the paper’s “3 to 6”.`
+                  }`,
+                  `radius ÷ ${speedChoice} km/s`,
+                ],
+              ]}
+            />
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong> It shows how each number moves when you change the core, the distance or the speed. Ask yourself:{' '}
+              <em>which of the findings above still hold when I change the inputs, and which do not?</em> A finding that holds across many trial values is sturdier than one that
+              depends on a single choice.
+            </p>
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What your numbers show.</strong>{' '}
+                {allPublished && 'Your settings are the published values, so every row matches the published column. Change a setting above and watch which rows move.'}
+              </p>
+              {coreChanged && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  With a core of {coreMassChoice} Suns and {coreRadiusChoice} km the collapse frees {sciText(mine.collapseErg)} erg, {pct(cmp.collapsePercent)} percent {cmp.collapsePercent > 0 ? 'more' : 'less'} than the
+                  published value. {rangeText(cmp.collapseVsNeutrinoRange)} The light, still {sciText(ergFromJoules(mine.lightJ))} erg, is now 1 part in {oneInText(mine.lightOneIn)} of that. Across all nine core settings
+                  the light stays between 1 part in {oneInText(sharesLow)} and 1 part in {oneInText(sharesHigh)}, so the light is a tiny share however the core is chosen.
+                </p>
+              )}
+              {!isSame(cmp.distancePercent) && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  At {distanceChoice} Mpc the light took {millions(mine.lightTravelYears)} million years, {Math.abs(cmp.travelYearsDifference / 1e6).toFixed(2)} million {cmp.travelYearsDifference > 0 ? 'more' : 'less'} than the published{' '}
+                  {millions(result.lightTravelYears)}. It is still about twenty-two million years, and nowhere near a few months or a few thousand years, so the distance does not change the answer
+                  to Prediction 2.
+                </p>
+              )}
+              {cmp.windSpeed !== 0 && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  At {speedChoice} km/s the gas was shed {mine.gasShedYearsBefore[0].toFixed(1)} to {mine.gasShedYearsBefore[1].toFixed(1)} years before the explosion, {pct(cmp.gasTimePercent)} percent{' '}
+                  {cmp.gasTimePercent > 0 ? 'longer' : 'shorter'} than the published times. {cmp.gasYearsMatchPaper ? 'That still rounds to the paper’s “3 to 6 years”.' : `That rounds to ${cmp.gasYearsRounded[0]} to ${cmp.gasYearsRounded[1]} years, not the paper’s “3 to 6”.`}{' '}
+                  The speed was assumed, so the real times could differ by the same factor. The energy and the distance do not depend on the speed.
+                </p>
+              )}
+              <p style={{ margin: 0 }}>
+                These are trial values. They show how the checks respond when a number changes. They do not say that the real star or the real explosion is like this.
+              </p>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.5rem' }}>
+              <strong>The papers behind these results.</strong> Kept until now, so that they did not give away the predictions. Links open in a new tab.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.875rem' }}>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2306.04721">Jacobson-Galán and others, “SN 2023ixf in Messier 101: Photo-ionization of Dense, Close-in Circumstellar Material in a Nearby Type II Supernova”</ExternalLink>{' '}
+                (2023): the first spectra and the gas the star shed.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2507.08078">Jacobson-Galán, “SN 2023ixf: The Closest Supernova of the Decade”</ExternalLink> (2025): a review of more than 80 studies.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2305.14447">Pledger and Shara, the Hubble pre-explosion image of the progenitor</ExternalLink> (2023): a mass of about 8 to 10 Suns.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2306.04722">Kilpatrick and others, “A Variable Red Supergiant as the Progenitor Candidate”</ExternalLink> (2023): about 11 Suns.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2308.04677">Niu and others, “The dusty red supergiant progenitor and the local environment”</ExternalLink> (2023): 16.2 to 17.4 Suns, and 17 to 19 from the stars around it.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2306.10783">Soraisam and others, “The SN 2023ixf Progenitor in M101: I. Infrared Variability”</ExternalLink> (2023): a pulsation period and 20 ± 4 Suns.
+              </li>
+              <li>
+                <ExternalLink href="https://www.aanda.org/10.1051/0004-6361/202557952">“Unveiling the progenitor of SN 2023ixf: Circumstellar dust and its implications for the red supergiant problem”</ExternalLink>{' '}
+                (Astronomy and Astrophysics, February 2026): the two ranges of the 2026 paper and the dust argument.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2507.07097">Mand and others, “Results from IceCube Follow-up of Nearby Supernova SN2023ixf”</ExternalLink> (2025): the search for high-energy neutrinos.
+              </li>
+            </ul>
           </div>
         )}
       </div>

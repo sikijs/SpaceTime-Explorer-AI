@@ -41,8 +41,8 @@ export const SUPERNOVA = {
 }
 
 // Published estimates of the progenitor's initial mass, in solar masses, each as a range. The Pledger and Shara, Niu, Soraisam values were read in the papers' abstracts. The
-// Kilpatrick (12, +2 -1), Van Dyk, Jencson (17 +/- 4) and Qin (18.1, with no range quoted, so a single value) values come from a search summary of a third paper and have not
-// been read at their own papers (see the open items). The estimates do not all overlap, and this module does not say which is right.
+// Kilpatrick abstract (about 11 solar masses; 11 +/- 2 in a summary of a third paper) was read; the Van Dyk, Jencson (17 +/- 4) and Qin (18.1, with no range quoted, so a single
+// value) values come from a search summary of a third paper and have not been read at their own papers (see the open items). The estimates do not all overlap, and this module does not say which is right.
 export interface MassEstimate {
   who: string
   year: number
@@ -52,7 +52,7 @@ export interface MassEstimate {
 }
 const MASS_ESTIMATES: readonly MassEstimate[] = [
   { who: 'Pledger and Shara', year: 2023, method: 'the star’s brightness before the explosion, against stellar models', lowSolar: 8, highSolar: 10 },
-  { who: 'Kilpatrick and others', year: 2023, method: 'fitting the star’s colours and brightness with dusty models', lowSolar: 11, highSolar: 14 },
+  { who: 'Kilpatrick and others', year: 2023, method: 'fitting the star’s colours and brightness with dusty models', lowSolar: 9, highSolar: 13 },
   { who: 'Van Dyk and others', year: 2024, method: 'method not read (seen in a summary only)', lowSolar: 12, highSolar: 14 },
   { who: 'Niu and others', year: 2023, method: 'the star’s colours and the dust round it; the stars around it gave 17 to 19', lowSolar: 16.2, highSolar: 17.4 },
   { who: 'Jencson and others', year: 2023, method: 'a luminous, dusty, variable star (from the paper’s title)', lowSolar: 13, highSolar: 21 },
@@ -231,5 +231,86 @@ export function runCatchingASupernova(settings: SupernovaSettings = {}): Superno
     windSpeedKmS,
     gasShellAU: [cmToAU(inner), cmToAU(outer)],
     gasShedYearsBefore: [timeBeforeExplosionYears(inner, windSpeedKmS), timeBeforeExplosionYears(outer, windSpeedKmS)],
+  }
+}
+
+// ---- The reading guide's comparisons (CLAUDE.md §14, "Reading the Results") ----
+
+// Published figures to set the results beside. The neutrino energy and SN 1987A's come from search-result excerpts of reviews (arXiv:0804.4350, hep-ph/9707501), not read at the
+// papers; the explosion energies are from two analyses of SN 2023ixf seen in a search summary; the gas time is the abstract of Jacobson-Galan and others (2023), "3-6 years".
+export const LITERATURE = {
+  neutrinoEnergyErg: [3e53, 5e53] as const,
+  sn1987aEnergyErg: [2e53, 3e53] as const,
+  explosionEnergyErg: [0.7e51, 1.2e51] as const,
+  explosionEnergyWideErg: [1.0e51, 5.7e51] as const,
+  paperGasYears: [3, 6] as const,
+}
+
+// Where a value lies against a published range: inside it, or below or above it by this factor (the ratio to the nearest edge, always 1 or more). No cut-off such as
+// "close enough" is applied here.
+export interface RangeCheck {
+  verdict: 'inside' | 'below' | 'above'
+  factor: number
+}
+export function whereInRange(value: number, range: readonly [number, number]): RangeCheck {
+  requirePositive(value, 'The value')
+  if (!(range[0] > 0) || range[0] > range[1]) throw new RangeError('A range must run from its low end to its high end')
+  if (value < range[0]) return { verdict: 'below', factor: range[0] / value }
+  if (value > range[1]) return { verdict: 'above', factor: value / range[1] }
+  return { verdict: 'inside', factor: 1 }
+}
+
+// What is left of the collapse's energy when the blast's motion and the visible light are taken away, as a share of the collapse's energy.
+export function restShare(collapseJ: number, gasMotionJ: number, lightJ: number): number {
+  requirePositive(collapseJ, 'The collapse energy')
+  requirePositive(gasMotionJ, 'The blast energy')
+  requirePositive(lightJ, 'The light energy')
+  if (gasMotionJ + lightJ >= collapseJ) throw new RangeError('The blast and the light cannot be as large as the collapse')
+  return 1 - (gasMotionJ + lightJ) / collapseJ
+}
+
+// How many of the other published mass estimates a given estimate shares some value with (no verdict).
+export function overlapCount(who: string): number {
+  const mine = MASS_ESTIMATES.find((e) => e.who === who)
+  if (!mine) throw new RangeError('No such estimate')
+  return MASS_ESTIMATES.filter((e) => e.who !== who && overlaps(mine, e)).length
+}
+
+// The learner's trial values set beside the published ones (the defaults of runCatchingASupernova). Every percent is signed, positive when the trial value is the larger, and is
+// of the published value. `-1, 0, 1` mean smaller than, the same as or larger than the published value.
+export interface TrialComparison {
+  coreMass: -1 | 0 | 1
+  coreRadius: -1 | 0 | 1
+  collapsePercent: number
+  collapseVsNeutrinoRange: RangeCheck
+  lightOneInPublished: number
+  lightOneInMine: number
+  distancePercent: number
+  travelYearsDifference: number
+  windSpeed: -1 | 0 | 1
+  gasTimePercent: number
+  gasYearsRounded: [number, number]
+  gasYearsMatchPaper: boolean
+}
+const percentFrom = (value: number, published: number): number => ((value - published) / published) * 100
+const sign = (value: number, published: number): -1 | 0 | 1 => (value < published ? -1 : value > published ? 1 : 0)
+
+export function compareWithPublished(settings: SupernovaSettings = {}): TrialComparison {
+  const published = runCatchingASupernova()
+  const mine = runCatchingASupernova(settings)
+  const rounded: [number, number] = [Math.round(mine.gasShedYearsBefore[0]), Math.round(mine.gasShedYearsBefore[1])]
+  return {
+    coreMass: sign(mine.coreMassSolar, SUPERNOVA.coreMassSolar),
+    coreRadius: sign(mine.coreRadiusKm, SUPERNOVA.coreRadiusKm),
+    collapsePercent: percentFrom(mine.collapseJ, published.collapseJ),
+    collapseVsNeutrinoRange: whereInRange(mine.collapseErg, LITERATURE.neutrinoEnergyErg),
+    lightOneInPublished: published.lightOneIn,
+    lightOneInMine: mine.lightOneIn,
+    distancePercent: percentFrom(mine.distanceMpc, published.distanceMpc),
+    travelYearsDifference: mine.lightTravelYears - published.lightTravelYears,
+    windSpeed: sign(mine.windSpeedKmS, SUPERNOVA.windSpeedKmS),
+    gasTimePercent: percentFrom(mine.gasShedYearsBefore[0], published.gasShedYearsBefore[0]),
+    gasYearsRounded: rounded,
+    gasYearsMatchPaper: rounded[0] === LITERATURE.paperGasYears[0] && rounded[1] === LITERATURE.paperGasYears[1],
   }
 }
