@@ -34,6 +34,8 @@ export const WHITE_DWARF_EXPLOSION = {
   massChoicesSolar: [0.6, 1.0, 1.055, 1.2, 1.4] as const,
   ageChoicesYears: [300, 325, 350] as const,
   brightnessChoices: [-0.3, -0.2, -0.1, 0, 0.1] as const, // the fractional change in true brightness (-0.2 is 20 percent dimmer)
+  pictureMassesSolar: [0.6, 1.0, 1.2, 1.4] as const, // the white dwarfs drawn in Picture 1 (the masses of the controls, without the simulation's)
+  pictureBrightnessChanges: [-0.1, -0.2, -0.3] as const, // the changes drawn in the strip of Picture 3
 }
 
 function requirePositive(value: number, what: string): void {
@@ -92,6 +94,18 @@ export function shellSeparationInUncertainties(innerPc: number, outerPc: number,
 export function fractionOfLightSpeed(speedKmS: number): number {
   requirePositive(speedKmS, 'The speed')
   return speedKmS / SPEED_OF_LIGHT_KM_S
+}
+
+// The numbers of the worked examples, so that the interface only displays them. The shell: the radius in kilometres, the age in seconds, and the speed. The brightness: the
+// brightness as a fraction of the assumed, its square root, and the factor and percentage by which the distance is off.
+export function shellSpeedWorkedExample(radiusPc: number, ageYears: number): { radiusKm: number; ageSeconds: number; speedKmS: number; fractionOfLight: number } {
+  const speedKmS = shellSpeedKmS(radiusPc, ageYears)
+  return { radiusKm: radiusPc * KM_PER_PARSEC, ageSeconds: ageYears * SECONDS_PER_YEAR, speedKmS, fractionOfLight: fractionOfLightSpeed(speedKmS) }
+}
+export function distanceErrorWorkedExample(brightnessChange: number): { brightnessFraction: number; squareRoot: number; distanceFactor: number; percent: number } {
+  const percent = distanceErrorPercent(brightnessChange)
+  const brightnessFraction = 1 + brightnessChange
+  return { brightnessFraction, squareRoot: Math.sqrt(brightnessFraction), distanceFactor: 1 / Math.sqrt(brightnessFraction), percent }
 }
 
 // ---- Why it matters: a brightness difference and a distance ----

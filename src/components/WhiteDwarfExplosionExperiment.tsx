@@ -1,12 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { LIGHT_YEARS_PER_PARSEC } from '../physics/whiteDwarfExplosion'
+import {
+  CHANDRASEKHAR_LIMIT_SOLAR_MASSES,
+  distanceErrorPercent,
+  EARTH_RADIUS_KM,
+  KM_PER_PARSEC,
+  distanceErrorWorkedExample,
+  LIGHT_YEARS_PER_PARSEC,
+  runWhiteDwarfExplosion,
+  shellSpeedWorkedExample,
+  WHITE_DWARF_EXPLOSION,
+} from '../physics/whiteDwarfExplosion'
 import type { SizeAnswer, SpeedAnswer } from '../physics/whiteDwarfExplosion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 14 (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md).
+// Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (white dwarf sizes and the limit) at stage 1, Picture 2 (the two routes) at stages 2 and 3,
+// Picture 3 (the two calcium shells, then the distance strip) at stages 4 and 5. The controls, the results and the tutor are later steps.
 // Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
 // Step 2 (the interface skeleton) builds the page's skeleton: the status line, the introduction with its new-word list, its assumptions and its "Want to know more?" links,
 // one illustration (a white dwarf and a close pair) with its guide, and the collapsed "Words and formulas" panel. The two predictions, the run, the three pictures, the
@@ -122,6 +134,200 @@ const lookForDrawing: LookFor[] = [
   },
 ]
 
+// ---- The run: five named stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'How big is a white dwarf?', 'Route 1: growing to the limit', 'Route 2: a double detonation', 'The remnant’s two calcium shells', 'Why distances care']
+
+const LIMIT_COLOR = '#f87171' // red: the limit
+const EARTH_COLOR = '#e2e8f0' // pale: the Earth, for scale
+const SHELL_COLOR = '#34d399' // green: the calcium shells
+const FLASH_COLOR = '#fde047' // bright yellow: ignition
+const ERROR_COLOR = '#fb923c' // orange: a distance error
+const PICTURE_THREE_PX_PER_PC = 80 // the drawing's scale in Picture 3
+
+const thousandsComma = (value: number): string => Math.round(value).toLocaleString('en-US')
+const roundTo = (value: number, step: number): number => Math.round(value / step) * step
+
+// ---- Picture 1: how big is a white dwarf, and where is its limit? ----
+function PictureOne() {
+  const d = WHITE_DWARF_EXPLOSION
+  const height = 390
+  const cy = 125
+  const px = 44 // pixels for one Earth radius
+  const xs = [190, 295, 385, 465]
+  const runs = d.pictureMassesSolar.map((m) => runWhiteDwarfExplosion({ massSolar: m }))
+  const scaleX = (m: number) => 40 + (m / 1.5) * 480
+  const scaleY = 325
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 1, to scale. Five circles in a row: the Earth, and white dwarfs of ${d.pictureMassesSolar.join(', ')} solar masses, which get smaller as they get heavier. Below, a scale of mass from 0 to 1.5 solar masses with the white dwarfs marked and the limit of ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} solar masses marked in red.`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 1: how big is a white dwarf, and where is its limit?
+      </text>
+      <circle cx={70} cy={cy} r={px} fill="none" stroke={EARTH_COLOR} strokeWidth={2} strokeDasharray="5 4" />
+      <SvgLines x={70} y={cy + 4} lines={['Earth']} fill={EARTH_COLOR} bold anchor="middle" />
+      <SvgLines x={70} y={cy + 72} lines={['for scale:', '1 Earth radius']} fill={MUTED_COLOR} anchor="middle" />
+      {runs.map((r, i) => (
+        <g key={i}>
+          <circle cx={xs[i]} cy={cy} r={r.radiusEarths * px} fill={CORE_COLOR} stroke={CORE_COLOR} strokeWidth={2} />
+          <SvgLines x={xs[i]} y={cy + 72} lines={[`${r.massSolar} ${r.massSolar === 1 ? 'Sun' : 'Suns'}`, `radius ${r.radiusEarths.toFixed(2)}`, 'Earth radii', `(${thousandsComma(roundTo(r.radiusKm, 10))} km)`]} fill={TEXT_COLOR} bold anchor="middle" size={9} />
+        </g>
+      ))}
+      <SvgLines x={20} y={scaleY - 22} lines={['How heavy (in Suns):']} fill={TEXT_COLOR} bold />
+      <line x1={scaleX(0)} y1={scaleY} x2={scaleX(1.5)} y2={scaleY} stroke={MUTED_COLOR} strokeWidth={2} />
+      {[0, 0.5, 1.0, 1.5].map((t) => (
+        <g key={t}>
+          <line x1={scaleX(t)} y1={scaleY - 5} x2={scaleX(t)} y2={scaleY + 5} stroke={MUTED_COLOR} strokeWidth={2} />
+          <SvgLines x={scaleX(t)} y={scaleY + 20} lines={[String(t)]} fill={MUTED_COLOR} anchor="middle" />
+        </g>
+      ))}
+      {d.pictureMassesSolar.map((m) => (
+        <circle key={m} cx={scaleX(m)} cy={scaleY} r={5} fill={CORE_COLOR} />
+      ))}
+      <line x1={scaleX(CHANDRASEKHAR_LIMIT_SOLAR_MASSES)} y1={scaleY - 30} x2={scaleX(CHANDRASEKHAR_LIMIT_SOLAR_MASSES)} y2={scaleY + 8} stroke={LIMIT_COLOR} strokeWidth={3} strokeDasharray="4 3" />
+      <SvgLines x={scaleX(CHANDRASEKHAR_LIMIT_SOLAR_MASSES) + 4} y={scaleY - 34} lines={[`the limit: ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES}`]} fill={LIMIT_COLOR} bold anchor="end" />
+      <SvgLines x={20} y={height - 8} lines={['Drawn to scale: the sizes of the white dwarfs and the Earth are in proportion; the mass scale is a separate line.']} fill={MUTED_COLOR} />
+    </svg>
+  )
+}
+
+// ---- Picture 2: two ways to explode (stage 2: route 1; stage 3 adds route 2) ----
+function PictureTwo({ stage }: { stage: number }) {
+  const d = WHITE_DWARF_EXPLOSION
+  const run = runWhiteDwarfExplosion()
+  const height = stage >= 3 ? 420 : 200
+  const xs = [100, 280, 460]
+  const rowA = 100
+  const rowB = 270
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 2, a sketch. Route 1, in three steps: a white dwarf takes gas from a partner star; its weight creeps up towards the limit of ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} solar masses; its centre ignites.${stage >= 3 ? ` Route 2, in three steps: a thin helium layer collects on a white dwarf; the helium layer ignites and a shock runs inward; the shock ignites the core. In the matching simulation the core is ${d.simulationCoreSolar} solar masses and the helium layer ${d.simulationShellSolar}, ${run.simulationMassSolar.toFixed(3)} in all, ${run.simulationGapBelowLimitSolar.toFixed(3)} below the limit.` : ''}`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 2: two ways a white dwarf might explode
+      </text>
+
+      {/* Route 1. */}
+      <SvgLines x={20} y={46} lines={['Route 1: the white dwarf grows to the limit']} fill={TEXT_COLOR} bold size={11} />
+      <circle cx={xs[0] - 38} cy={rowA} r={26} fill={PARTNER_COLOR} fillOpacity={0.85} />
+      <circle cx={xs[0] + 36} cy={rowA} r={14} fill={CORE_COLOR} />
+      <Arrow x1={xs[0] - 8} y1={rowA} x2={xs[0] + 16} y2={rowA} color={GAS_COLOR} />
+      <SvgLines x={xs[0]} y={rowA + 52} lines={['1. It takes gas', 'from a partner']} fill={TEXT_COLOR} bold anchor="middle" size={9} />
+      <Arrow x1={xs[0] + 66} y1={rowA} x2={xs[1] - 70} y2={rowA} color={MUTED_COLOR} />
+      <rect x={xs[1] - 55} y={rowA - 10} width={110} height={20} fill="none" stroke={MUTED_COLOR} strokeWidth={2} />
+      <rect x={xs[1] - 55} y={rowA - 10} width={100} height={20} fill={CORE_COLOR} />
+      <line x1={xs[1] + 50} y1={rowA - 18} x2={xs[1] + 50} y2={rowA + 18} stroke={LIMIT_COLOR} strokeWidth={3} strokeDasharray="4 3" />
+      <SvgLines x={xs[1] + 50} y={rowA - 24} lines={[`limit ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES}`]} fill={LIMIT_COLOR} bold anchor="middle" size={9} />
+      <SvgLines x={xs[1]} y={rowA + 52} lines={['2. Its weight creeps up', 'towards the limit']} fill={TEXT_COLOR} bold anchor="middle" size={9} />
+      <Arrow x1={xs[1] + 74} y1={rowA} x2={xs[2] - 40} y2={rowA} color={MUTED_COLOR} />
+      <circle cx={xs[2]} cy={rowA} r={26} fill={CORE_COLOR} />
+      <circle cx={xs[2]} cy={rowA} r={11} fill={FLASH_COLOR} />
+      <SvgLines x={xs[2]} y={rowA + 52} lines={['3. The centre ignites', 'and the star explodes']} fill={TEXT_COLOR} bold anchor="middle" size={9} />
+
+      {/* Route 2 (from stage 3). */}
+      {stage >= 3 && (
+        <g>
+          <SvgLines x={20} y={rowB - 56} lines={['Route 2: a double detonation']} fill={TEXT_COLOR} bold size={11} />
+          <circle cx={xs[0]} cy={rowB} r={30} fill={HELIUM_COLOR} />
+          <circle cx={xs[0]} cy={rowB} r={25} fill={CORE_COLOR} />
+          <SvgLines x={xs[0]} y={rowB + 52} lines={['1. A thin helium layer', 'collects on the surface']} fill={TEXT_COLOR} bold anchor="middle" size={9} />
+          <Arrow x1={xs[0] + 40} y1={rowB} x2={xs[1] - 52} y2={rowB} color={MUTED_COLOR} />
+          <circle cx={xs[1]} cy={rowB} r={30} fill={FLASH_COLOR} />
+          <circle cx={xs[1]} cy={rowB} r={22} fill={CORE_COLOR} />
+          {[0, 90, 180, 270].map((deg) => {
+            const a = (deg * Math.PI) / 180
+            return <Arrow key={deg} x1={xs[1] + 44 * Math.cos(a)} y1={rowB + 44 * Math.sin(a)} x2={xs[1] + 28 * Math.cos(a)} y2={rowB + 28 * Math.sin(a)} color={FLASH_COLOR} />
+          })}
+          <SvgLines x={xs[1]} y={rowB + 60} lines={['2. The helium layer ignites;', 'a shock runs inward']} fill={TEXT_COLOR} bold anchor="middle" size={9} />
+          <Arrow x1={xs[1] + 56} y1={rowB} x2={xs[2] - 40} y2={rowB} color={MUTED_COLOR} />
+          <circle cx={xs[2]} cy={rowB} r={30} fill={HELIUM_COLOR} fillOpacity={0.5} />
+          <circle cx={xs[2]} cy={rowB} r={22} fill={FLASH_COLOR} />
+          <SvgLines x={xs[2]} y={rowB + 52} lines={['3. The shock ignites', 'the core']} fill={TEXT_COLOR} bold anchor="middle" size={9} />
+          <SvgLines
+            x={20}
+            y={height - 42}
+            lines={['In the matching simulation (Das and others 2025):', `core ${d.simulationCoreSolar} Suns + helium layer ${d.simulationShellSolar} Suns = ${run.simulationMassSolar.toFixed(3)} Suns,`, `which is ${run.simulationGapBelowLimitSolar.toFixed(3)} Suns below the limit of ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES}.`]}
+            fill={HELIUM_COLOR}
+            bold
+            size={10}
+          />
+        </g>
+      )}
+      {stage < 3 && <SvgLines x={20} y={height - 10} lines={['Sketch, not to scale. Route 2 is added at the next stage.']} fill={MUTED_COLOR} />}
+    </svg>
+  )
+}
+
+// ---- Picture 3: the remnant's two calcium shells (stage 4); the distance strip is added at stage 5 ----
+function PictureThree({ stage }: { stage: number }) {
+  const d = WHITE_DWARF_EXPLOSION
+  const run = runWhiteDwarfExplosion()
+  const height = stage >= 5 ? 640 : 450
+  const cx = 280
+  const cy = 225
+  const pxPerPc = PICTURE_THREE_PX_PER_PC
+  const inner = d.innerShellPc * pxPerPc
+  const outer = d.outerShellPc * pxPerPc
+  const changes = d.pictureBrightnessChanges
+  const stripTop = 470
+  const barX = 150
+  const barMax = 220 // pixels for 20 percent
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 3. The remnant seen from the front, to scale: two rings of calcium round a centre, an inner ring ${d.innerShellPc} parsecs out and an outer ring ${d.outerShellPc} parsecs out, with the gap of ${run.shellGapPc.toFixed(2)} parsecs between them.${stage >= 5 ? ` Below, three bars show how far off a distance would be if a supernova were ${changes.map((c) => Math.abs(c) * 100).join(', ')} percent dimmer than assumed: ${changes.map((c) => distanceErrorPercent(c).toFixed(1)).join(', ')} percent too large.` : ''}`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 3: the remnant SNR 0509-67.5, and why distances care
+      </text>
+      <SvgLines x={20} y={42} lines={[`Seen from the front, to scale: 1 parsec is ${PICTURE_THREE_PX_PER_PC} pixels. The remnant is about ${run.ageYears} years old (the paper: 300 to 350).`]} fill={MUTED_COLOR} />
+      <circle cx={cx} cy={cy} r={outer} fill="none" stroke={SHELL_COLOR} strokeWidth={5} strokeOpacity={0.6} />
+      <circle cx={cx} cy={cy} r={inner} fill="none" stroke={SHELL_COLOR} strokeWidth={5} />
+      <circle cx={cx} cy={cy} r={4} fill={FLASH_COLOR} />
+      <SvgLines x={cx + 8} y={cy + 4} lines={['the explosion’s centre']} fill={FLASH_COLOR} bold size={9} />
+      <line x1={cx - inner * Math.cos(Math.PI / 4)} y1={cy - inner * Math.sin(Math.PI / 4)} x2={150} y2={104} stroke={SHELL_COLOR} strokeWidth={1.5} />
+      <SvgLines x={20} y={74} lines={[`inner calcium shell: ${d.innerShellPc} pc`, `(${run.innerShellLightYears.toFixed(1)} light-years)`, `about ${thousandsComma(roundTo(run.innerShellSpeedKmS, 10))} km/s on average`]} fill={SHELL_COLOR} bold size={9} />
+      <line x1={cx + outer * Math.cos(Math.PI / 4)} y1={cy - outer * Math.sin(Math.PI / 4)} x2={410} y2={104} stroke={SHELL_COLOR} strokeWidth={1.5} strokeOpacity={0.6} />
+      <SvgLines x={540} y={74} lines={[`outer calcium shell: ${d.outerShellPc} pc`, `(${run.outerShellLightYears.toFixed(1)} light-years)`, `about ${thousandsComma(roundTo(run.outerShellSpeedKmS, 10))} km/s on average`]} fill={SHELL_COLOR} bold size={9} anchor="end" />
+      <SvgLines x={cx} y={cy + outer + 26} lines={[`gap between the shells: ${run.shellGapPc.toFixed(2)} pc = ${run.shellGapLightYears.toFixed(2)} light-years`]} fill={TEXT_COLOR} bold anchor="middle" size={10} />
+      {stage >= 5 && (
+        <g>
+          <line x1={20} y1={stripTop - 12} x2={VIEW_WIDTH - 20} y2={stripTop - 12} stroke={MUTED_COLOR} strokeWidth={1} />
+          <SvgLines x={20} y={stripTop + 4} lines={['If a supernova were dimmer than assumed, a distance worked out from its brightness would be wrong:']} fill={TEXT_COLOR} bold size={10} />
+          {changes.map((c, i) => {
+            const e = distanceErrorPercent(c)
+            const y = stripTop + 28 + i * 34
+            return (
+              <g key={c}>
+                <SvgLines x={barX - 8} y={y + 12} lines={[`${Math.abs(c) * 100} percent dimmer`]} fill={TEXT_COLOR} bold size={10} anchor="end" />
+                <rect x={barX} y={y} width={(e / 20) * barMax} height={18} fill={ERROR_COLOR} />
+                <SvgLines x={barX + (e / 20) * barMax + 6} y={y + 13} lines={[`distance ${e.toFixed(1)} percent too large`]} fill={ERROR_COLOR} bold size={10} />
+              </g>
+            )
+          })}
+          <SvgLines x={20} y={height - 20} lines={['Trial values, not measured differences between real supernovae.', 'Rule used: brightness falls as 1 ÷ distance², so a small difference gives a distance error about half as big.']} fill={MUTED_COLOR} size={9} />
+        </g>
+      )}
+    </svg>
+  )
+}
+
 const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'White dwarf', meaning: 'the small, dense, slowly cooling ball left when a star like the Sun has used up its fuel. NASA: “A typical white dwarf is half as massive as the Sun, yet only slightly bigger than Earth.” (Black Holes Experiment 9 explains what holds it up.)' },
   { term: 'Electron degeneracy pressure', meaning: 'the resistance of electrons to being crowded together, because no two can be in exactly the same state (like one person to a theatre seat). It is what holds a white dwarf up against its own weight. Chandra: “The complete collapse of the white dwarf is prevented because it is held in equilibrium with gravity by electron degeneracy pressure.”' },
@@ -152,15 +358,91 @@ const SPEED_CHOICES: ReadonlyArray<{ value: SpeedAnswer; label: string }> = [
 export function WhiteDwarfExplosionExperiment() {
   const [sizePrediction, setSizePrediction] = useState<SizeAnswer | null>(null)
   const [speedPrediction, setSpeedPrediction] = useState<SpeedAnswer | null>(null)
-  // Run only records the predictions for now: the run itself, and the pictures, are the next step.
-  const [hasRun, setHasRun] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const hasRun = status !== 'idle'
   const bothPredicted = sizePrediction !== null && speedPrediction !== null
+
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else setStatus('complete')
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage])
 
   function startOver() {
     setSizePrediction(null)
     setSpeedPrediction(null)
-    setHasRun(false)
+    setStatus('idle')
+    setStage(0)
   }
+  function run() {
+    setStage(1)
+    setStatus('running')
+  }
+
+  // Every number below comes from the physics module (CLAUDE.md §9).
+  const result = runWhiteDwarfExplosion()
+  const d = WHITE_DWARF_EXPLOSION
+  const pictureRuns = d.pictureMassesSolar.map((m) => runWhiteDwarfExplosion({ massSolar: m }))
+  const wd12 = pictureRuns[2]
+  const shellExample = shellSpeedWorkedExample(d.outerShellPc, result.ageYears)
+  const brightnessExample = distanceErrorWorkedExample(-0.2)
+  const [dimmer10, dimmer20, dimmer30] = d.pictureBrightnessChanges.map((c) => distanceErrorPercent(c))
+  const wd06 = pictureRuns[0]
+  const wd14 = pictureRuns[3]
+  const percentOfLimit = (result.simulationMassSolar / CHANDRASEKHAR_LIMIT_SOLAR_MASSES) * 100
+  const sigmaGap = result.separationInUncertainties
+
+  const lookForPictureOne: LookFor[] = [
+    {
+      look: `the light blue circles, from the ${wd06.massSolar}-Sun white dwarf on the left to the ${wd14.massSolar}-Sun one on the right.`,
+      means: `the heavier the white dwarf, the smaller it is. The ${wd06.massSolar}-Sun white dwarf is wider than the Earth (${wd06.radiusEarths.toFixed(2)} Earth radii), the ${wd12.massSolar}-Sun one is ${wd12.radiusEarths.toFixed(2)} and the ${wd14.massSolar}-Sun one only ${wd14.radiusEarths.toFixed(2)}, about ${thousandsComma(roundTo(wd14.radiusKm, 10))} km.`,
+      matters: 'a white dwarf holds up more weight only by being squeezed smaller, so a heavier one is a more crushed one. That is why there is a limit: the squeezing cannot go on for ever.',
+    },
+    {
+      look: 'the red dashed line on the line of weight.',
+      means: `the limit, ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns in this model (about 1.4 in NASA’s and Chandra’s pages). No white dwarf can be heavier than this.`,
+      matters: 'the question of this experiment is how close to this line a white dwarf has to get before it can explode.',
+    },
+  ]
+  const lookForPictureTwo: LookFor[] = [
+    {
+      look: 'route 1, step 2: the light blue bar that fills almost all the way to the red dashed line.',
+      means: 'on this route the white dwarf’s weight creeps up towards the limit, and the explosion comes as it nears it.',
+      matters: 'if this were the only route, every Type Ia supernova would start from nearly the same weight, which is why they were expected to look alike.',
+    },
+    {
+      look: 'route 2, step 1: the thin yellow ring round the light blue core.',
+      means: 'a layer of helium on the surface, which on this route ignites first and sends a shock inward to the core (step 2, the yellow arrows).',
+      matters: 'it is a second place where an explosion can start, so the core may not need to be near the limit for the star to be set off.',
+    },
+    {
+      look: `the line of numbers under route 2: core ${d.simulationCoreSolar} Suns + helium layer ${d.simulationShellSolar} Suns.`,
+      means: `these are the weights in the simulation that matches the remnant in Picture 3: ${result.simulationMassSolar.toFixed(3)} Suns in all, ${result.simulationGapBelowLimitSolar.toFixed(3)} Suns below the limit, about ${percentOfLimit.toFixed(0)} percent of it.`,
+      matters: 'it says how heavy a white dwarf has to be on route 2, and so how far below the limit an explosion of this kind can happen. How common it is, is another question that is still open.',
+    },
+  ]
+  const lookForPictureThree: LookFor[] = [
+    {
+      look: 'the two green rings, one inside the other, and the gap line under them.',
+      means: `two separate shells of calcium, ${d.innerShellPc} and ${d.outerShellPc} parsecs from the centre (${result.innerShellLightYears.toFixed(1)} and ${result.outerShellLightYears.toFixed(1)} light-years), with a gap of ${result.shellGapPc.toFixed(2)} parsecs (${result.shellGapLightYears.toFixed(2)} light-years). The measurements give or take ${d.shellUncertaintyPc} parsecs each, so the gap is about ${sigmaGap.toFixed(1)} times their combined give-or-take.`,
+      matters: 'simulations of a double detonation predict two shells of calcium like these, so a pair of shells is the fingerprint the astronomers looked for.',
+    },
+    {
+      look: 'the speeds written beside each ring.',
+      means: `each shell’s distance divided by the remnant’s age: about ${thousandsComma(roundTo(result.innerShellSpeedKmS, 10))} km/s for the inner shell and ${thousandsComma(roundTo(result.outerShellSpeedKmS, 10))} km/s for the outer one, about ${(result.outerShellFractionOfLightSpeed * 100).toFixed(0)} percent of the speed of light. It is an average, because the gas has slowed since the explosion.`,
+      matters: `it turns a distance and a time into a speed, as in Experiment 13, and gives a sense of how violent the explosion was: gas crossing more than ${Math.floor(result.innerShellLightYears)} light-years in about ${result.ageYears} years.`,
+    },
+    {
+      look: 'the three orange bars at the bottom (stage 5).',
+      means: `if a supernova were ${Math.abs(d.pictureBrightnessChanges[0]) * 100}, ${Math.abs(d.pictureBrightnessChanges[1]) * 100} or ${Math.abs(d.pictureBrightnessChanges[2]) * 100} percent dimmer than assumed, a distance worked out from its brightness would come out ${dimmer10.toFixed(1)}, ${dimmer20.toFixed(1)} or ${dimmer30.toFixed(1)} percent too large.`,
+      matters: 'astronomers use Type Ia supernovae as “standard candles”, which only works if the explosions are alike. If they are not, a distance from brightness needs care.',
+    },
+  ]
 
   return (
     <div>
@@ -380,7 +662,7 @@ export function WhiteDwarfExplosionExperiment() {
           </div>
         ))}
 
-        <button type="button" className="action-button" onClick={() => setHasRun(true)} disabled={!bothPredicted || hasRun} style={{ padding: '0.6rem 1.5rem' }}>
+        <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || hasRun} style={{ padding: '0.6rem 1.5rem' }}>
           Run
         </button>
         {hasRun && (
@@ -391,9 +673,128 @@ export function WhiteDwarfExplosionExperiment() {
         {!bothPredicted && !hasRun && (
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
         )}
-        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
-          {hasRun ? 'Your predictions are recorded and not marked here. The pictures and the results will appear here.' : 'The pictures fill in, one stage at a time, after you press Run.'}
+        {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+          {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+          {status !== 'idle' && (
+            <>
+              <strong>{status === 'complete' ? 'Run complete' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}`}</strong>
+              {status === 'complete' && <span style={{ color: 'var(--text-muted)' }}> (all {LAST_STAGE} stages shown). Your predictions are recorded and not marked here.</span>}
+            </>
+          )}
         </p>
+        {status === 'running' && (
+          <p style={{ fontSize: '0.875rem', marginTop: 0, color: 'var(--text-muted)' }}>
+            {stage === 1 && 'Picture 1 shows white dwarfs of four weights drawn to scale beside the Earth, and the limit on a scale of weight.'}
+            {stage === 2 && 'Picture 2 appears below Picture 1. It sketches the first route to an explosion: the white dwarf grows to the limit.'}
+            {stage === 3 && `The second route is added to Picture 2: a double detonation, with the masses of the simulation that matches the remnant.`}
+            {stage === 4 && `Picture 3 appears below Picture 2. It shows the remnant’s two calcium shells, ${d.innerShellPc} and ${d.outerShellPc} parsecs from the centre, and their average speeds.`}
+            {stage === 5 && 'A strip is added to Picture 3: how a brightness difference would carry into a distance.'}
+          </p>
+        )}
+
+        {/* Picture 1 (stage 1 on). */}
+        {hasRun && (
+          <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+            <PictureOne />
+          </div>
+        )}
+        {hasRun && (
+          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            <p style={paragraph}>
+              <strong>How to read Picture 1.</strong> Along the top are five circles drawn to the same scale. The <strong>dashed pale circle</strong> is the Earth, for scale. The{' '}
+              <strong>four light blue circles</strong> are white dwarfs of four different weights, each labelled with its weight in <strong>Suns</strong> (1 Sun is the Sun’s mass),
+              its radius in Earth radii (1 means as wide as the Earth) and its radius in kilometres. Along the bottom is a <strong>line of weight</strong> from 0 to 1.5 Suns. The
+              four blue dots mark the same four white dwarfs, and the <strong>red dashed line</strong> marks the limit, {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns. (NASA and Chandra give the limit as
+              1.4; the model this page reuses from Black Holes Experiment 9 uses {CHANDRASEKHAR_LIMIT_SOLAR_MASSES}. It is the same limit worked out to different accuracy.)
+            </p>
+            <p style={paragraph}>
+              <strong>A worked moment.</strong> The white dwarf of {wd12.massSolar} Suns has a radius of {wd12.radiusEarths.toFixed(2)} Earth radii. One Earth radius is {thousandsComma(EARTH_RADIUS_KM)} km, so that is{' '}
+              {wd12.radiusEarths.toFixed(2)} × {thousandsComma(EARTH_RADIUS_KM)} = about {thousandsComma(roundTo(wd12.radiusKm, 10))} km. The one of {pictureRuns[3].massSolar} Suns has a radius of only {pictureRuns[3].radiusEarths.toFixed(2)} Earth
+              radii, about {thousandsComma(roundTo(pictureRuns[3].radiusKm, 10))} km.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>What to look for.</strong>
+            </p>
+            <LookForList items={lookForPictureOne} />
+          </div>
+        )}
+
+        {/* Picture 2: route 1 from stage 2, route 2 added at stage 3. */}
+        {stage >= 2 && (
+          <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+            <PictureTwo stage={stage} />
+          </div>
+        )}
+        {stage >= 2 && (
+          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            <p style={paragraph}>
+              <strong>How to read Picture 2.</strong> It is a sketch, not to scale, of the two ideas for how a white dwarf might explode. Each route is a row of three steps, read
+              from left to right, joined by grey arrows. <strong>Light blue</strong> is the carbon-oxygen core of the white dwarf, <strong>yellow</strong> is the helium layer,{' '}
+              <strong>orange</strong> is a partner star and the <strong>purple arrow</strong> is gas flowing from it. A <strong>bright yellow centre</strong> means that part has
+              ignited.
+            </p>
+            <p style={paragraph}>
+              <strong>Route 1</strong> (the top row): the white dwarf takes gas from a partner, so its weight creeps up towards the red dashed <strong>limit</strong> in step 2, and
+              when it nears it the centre ignites. {stage >= 3 && (
+                <>
+                  <strong>Route 2</strong> (the bottom row, added at stage 3): a thin helium layer collects on the surface and ignites first, and the <strong>yellow arrows pointing
+                  inward</strong> in step 2 show the shock running inward. In step 3 the shock ignites the core. The line of numbers at the bottom gives the weights of the
+                  simulation that matches the remnant you will see in Picture 3.
+                </>
+              )}
+            </p>
+            {stage >= 3 && (
+              <p style={paragraph}>
+                <strong>A worked moment.</strong> The simulation’s core is {d.simulationCoreSolar} Suns and its helium layer {d.simulationShellSolar} Suns, so the white dwarf is {d.simulationCoreSolar} + {d.simulationShellSolar} ={' '}
+                {result.simulationMassSolar.toFixed(3)} Suns. The limit is {CHANDRASEKHAR_LIMIT_SOLAR_MASSES}, so it is {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} − {result.simulationMassSolar.toFixed(3)} = {result.simulationGapBelowLimitSolar.toFixed(3)} Suns below the limit,
+                or {percentOfLimit.toFixed(0)} percent of it.
+              </p>
+            )}
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>What to look for.</strong>
+            </p>
+            <LookForList items={lookForPictureTwo.slice(0, stage >= 3 ? 3 : 1)} />
+          </div>
+        )}
+
+        {/* Picture 3: the shells from stage 4, the distance strip from stage 5. */}
+        {stage >= 4 && (
+          <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+            <PictureThree stage={stage} />
+          </div>
+        )}
+        {stage >= 4 && (
+          <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            <p style={paragraph}>
+              <strong>How to read Picture 3.</strong> You are looking at the remnant from the front, drawn to one scale (1 <strong>parsec</strong>, about {LIGHT_YEARS_PER_PARSEC} light-years, is {PICTURE_THREE_PX_PER_PC}
+              pixels). The tiny <strong>yellow dot</strong> at the centre is where the explosion happened. The <strong>two green rings</strong> are the two shells of calcium that
+              the telescope found: the bright inner one and the fainter outer one. Each is labelled with its distance from the centre in parsecs and in light-years, and with its
+              <strong> average speed</strong>, which is that distance divided by the remnant’s age. The line under the rings gives the gap between the shells.
+            </p>
+            {stage >= 5 && (
+              <p style={paragraph}>
+                <strong>The three orange bars</strong> (stage 5) are a separate idea. Each bar says how far off a distance would be if a supernova were {Math.abs(d.pictureBrightnessChanges[0]) * 100}, {Math.abs(d.pictureBrightnessChanges[1]) * 100} or {Math.abs(d.pictureBrightnessChanges[2]) * 100} percent dimmer than
+                astronomers had assumed: the longer the bar, the bigger the error. They are trial values, not measured differences between real supernovae.
+              </p>
+            )}
+            <p style={paragraph}>
+              <strong>A worked moment.</strong> The outer shell is {d.outerShellPc} parsecs out, which is {d.outerShellPc} × {thousandsComma(KM_PER_PARSEC / 1e9)} thousand million km = about {(shellExample.radiusKm / 1e12).toFixed(0)} million million km. The
+              remnant is about {result.ageYears} years old, which is about {(shellExample.ageSeconds / 1e9).toFixed(1)} thousand million seconds. Distance ÷ time = {thousandsComma(roundTo(shellExample.speedKmS, 10))} km/s, which is
+              about {(shellExample.fractionOfLight * 100).toFixed(1)} percent of the speed of light.{' '}
+              {stage >= 5 && (
+                <>
+                  For the bars: if a supernova gives out {(brightnessExample.brightnessFraction * 100).toFixed(0)} percent of the light assumed, the distance comes out {brightnessExample.distanceFactor.toFixed(3)} times too large,
+                  because the square root of {brightnessExample.brightnessFraction.toFixed(1)} is {brightnessExample.squareRoot.toFixed(3)} and 1 ÷ {brightnessExample.squareRoot.toFixed(3)} = {brightnessExample.distanceFactor.toFixed(3)}: {brightnessExample.percent.toFixed(1)} percent.
+                </>
+              )}
+            </p>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>What to look for.</strong>
+            </p>
+            <LookForList items={lookForPictureThree.slice(0, stage >= 5 ? 3 : 2)} />
+          </div>
+        )}
       </div>
     </div>
   )

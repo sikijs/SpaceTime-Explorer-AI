@@ -4,6 +4,7 @@ import {
   CHANDRASEKHAR_LIMIT_SOLAR_MASSES,
   compareWithPublished,
   distanceErrorPercent,
+  distanceErrorWorkedExample,
   doubleDetonationMass,
   earthRadii,
   EARTH_RADIUS_KM,
@@ -16,6 +17,7 @@ import {
   shellGap,
   shellSeparationInUncertainties,
   shellSpeedKmS,
+  shellSpeedWorkedExample,
   SIZE_ANSWERS,
   sizeAnswer,
   SPEED_ANSWERS,
@@ -190,6 +192,8 @@ describe('the published data (test 8)', () => {
     expect(d.massChoicesSolar).toEqual([0.6, 1.0, 1.055, 1.2, 1.4])
     expect(d.ageChoicesYears).toEqual([300, 325, 350])
     expect(d.brightnessChoices).toEqual([-0.3, -0.2, -0.1, 0, 0.1])
+    expect(d.pictureMassesSolar).toEqual([0.6, 1.0, 1.2, 1.4])
+    expect(d.pictureBrightnessChanges).toEqual([-0.1, -0.2, -0.3])
   })
 })
 
@@ -309,3 +313,27 @@ describe('the reading guide\'s comparisons (test 13)', () => {
     expect(compareWithPublished({ ageYears: 351 }).ageInsidePublishedRange).toBe(false)
   })
 })
+
+describe('the numbers of the worked examples, which the interface only displays (test 15)', () => {
+  it('the shell example: the radius in km, the age in seconds, the speed, and its fraction of the speed of light', () => {
+    const w = shellSpeedWorkedExample(2.06, 325)
+    expect(w.radiusKm).toBeCloseTo(2.06 * PARSEC_KM, -6)
+    expect(w.ageSeconds).toBeCloseTo(325 * YEAR_S, 0)
+    expect(w.speedKmS).toBeCloseTo(w.radiusKm / w.ageSeconds, 10)
+    expect(w.speedKmS).toBeCloseTo(6198, 0)
+    expect(w.fractionOfLight).toBeCloseTo(6198 / 299792.458, 5)
+    expect(() => shellSpeedWorkedExample(0, 325)).toThrow(RangeError)
+  })
+  it('the brightness example for 20 percent dimmer: 0.8 of the light, its square root 0.894, a distance factor of 1.118, 11.8 percent', () => {
+    const w = distanceErrorWorkedExample(-0.2)
+    expect(w.brightnessFraction).toBeCloseTo(0.8, 12)
+    expect(w.squareRoot).toBeCloseTo(Math.sqrt(0.8), 12)
+    expect(w.squareRoot).toBeCloseTo(0.894, 3)
+    expect(w.distanceFactor).toBeCloseTo(1.118, 3)
+    expect(w.distanceFactor).toBeCloseTo(1 / 0.8944, 3)
+    expect(w.percent).toBeCloseTo(11.8, 1)
+    expect(w.percent).toBeCloseTo((w.distanceFactor - 1) * 100, 10)
+    expect(() => distanceErrorWorkedExample(-1)).toThrow(RangeError)
+  })
+})
+
