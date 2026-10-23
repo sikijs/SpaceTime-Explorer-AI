@@ -1,0 +1,231 @@
+# Experiment 14 (Frontier and Beyond): What Makes a White Dwarf Explode? (the double-detonation remnant SNR 0509-67.5)
+
+**Status: Specification APPROVED by the owner on 2026-10-23 ("approved", read as all twelve decisions on their defaults). Proposed by Claude on 2026-10-23 per `CLAUDE.md` §23 Stages 1 to 3, as the fourteenth experiment of the group (`00-group-proposal.md`, Part C, "how stars live and die", entry 14). Implementation proceeds one step at a time (§6). Every number below was taken from search results or fetched pages and abstracts on 2026-10-23; no paper was read in full except where "Sources read" says otherwise.**
+
+**Status label proposed for the learner (as of October 2026):** *Strong evidence* that this one remnant, SNR 0509-67.5, was made by a "double detonation" of a white dwarf of about 1 solar mass, well below the 1.4-solar-mass limit (two research groups' simulations match its calcium shells and its small-scale structure); *Contested*: a 2025 paper reads the same two calcium shells as the result of instabilities in a different kind of explosion; *Open*: how many Type Ia supernovae explode this way.
+
+---
+
+## Overview
+
+A **white dwarf** is the small, dense, long-lived core left by a star like the Sun. It cannot grow heavier than about **1.4 Suns** (the Chandrasekhar limit, Black Holes Experiment 9). A white dwarf in a close pair can explode as a **Type Ia supernova**, and these explosions are the "standard candles" behind Experiments 1 and 2 of this group: they are bright and similar, so their faintness tells us how far away they are. The textbook story is that the white dwarf takes gas from its partner (or merges with another white dwarf) until it nears 1.4 Suns, and then explodes. If that were the only way, every Type Ia would start from nearly the same mass, which would explain why they look alike.
+
+In July 2025 a team led by Priyam Das and Ivo Seitenzahl used the Very Large Telescope's MUSE instrument on the remnant of a supernova in the Large Magellanic Cloud, **SNR 0509-67.5**, about 300 to 350 years old. They found **two separate shells of calcium**, at radii of 1.73 and 2.06 parsecs. Simulations of a "double detonation" predict exactly that: a thin layer of helium on the white dwarf's surface ignites first, a shock runs inward and ignites the carbon-oxygen core. The matching simulation has a white dwarf of **about 1.03 Suns of core plus 0.027 Suns of helium, about 1.05 Suns in all**. That is well below 1.4. A 2026 analysis of the remnant's small-scale structure points the same way (core about 1 Sun, helium shell above 0.05 Suns).
+
+This experiment asks three questions:
+
+1. **How heavy was the exploding white dwarf, compared with the limit?** The learner sets a white dwarf's mass and sees its size and how far below the limit it is. (The model and the limit are Black Holes 9's.)
+2. **What do two calcium shells tell us?** The learner turns a radius and an age into a speed (distance ÷ time, as in Experiment 13), and sees what two separate shells would mean for a single explosion.
+3. **Why does it matter?** If Type Ia explosions are not all alike, a distance worked out from their brightness needs care. The learner sees how a difference in true brightness carries into a distance (the inverse-square law).
+
+No new physics is introduced: the white dwarf mass-radius relation and limit of Black Holes 9, distance ÷ time (Experiment 13), and the inverse-square law (Experiment 13's tutor, Spacetime Geometry 4). What is new is the evidence and the question it answers.
+
+## Learning Objective
+
+By the end the learner can say, in their own words:
+
+1. A white dwarf is held up by electron degeneracy pressure, which can hold only up to about 1.4 Suns (Black Holes 9); a near-limit white dwarf is far smaller than a lighter one.
+2. Two routes have been proposed for a white dwarf to explode as a Type Ia supernova: **grow to near the limit** (by taking gas or by a merger), or a **double detonation** (a surface helium layer ignites and sets off the core), which can happen **below** the limit.
+3. Why two separate shells of calcium would be a fingerprint of the second route, and what was found in SNR 0509-67.5: shells at 1.73 and 2.06 parsecs, matching a white dwarf of about 1.05 Suns.
+4. That radius ÷ age gives an average speed (about 5,000 to 6,700 km/s here), and what that speed means.
+5. That this is **strong evidence for one remnant, not proof for all Type Ia**: a different reading exists, and how common double detonations are is open.
+6. Why it matters for measuring the universe: a distance from brightness assumes the explosions are alike; if their true brightness differs by some percent, the distance is wrong by about half that percent (an inverse-square law).
+
+## Physical Situation
+
+A white dwarf of about 1 Sun, with a thin helium layer on its surface, sits in a close pair. The helium layer ignites (a "detonation": a burning front moving faster than sound), and a shock runs inward and ignites the carbon-oxygen core. The whole star is blown apart and no remnant star is left. Some 300 years later, the gas it threw out, heated by the shock that runs back inward into it, glows in lines of calcium, sulphur and iron. Calcium made in the helium layer ends up in an outer shell, calcium made in the core in an inner one (Das and others 2025). We see this in the Large Magellanic Cloud, about 160,000 light-years away.
+
+## Physics Model (`src/physics/whiteDwarfExplosion.ts`)
+
+No new physics. Four small calculations, all in the module, all tested. The module reuses `CHANDRASEKHAR_LIMIT_SOLAR_MASSES` (1.44) and `whiteDwarfRadiusKm` from `src/physics/blackHoleFormationExperiment.ts` (decision 4).
+
+| Part | What it computes | Source of the numbers |
+|---|---|---|
+| **A white dwarf's size and its distance from the limit** | `R = 0.0131 R_sun × (M / M_sun)^(-1/3) × sqrt(1 − (M / 1.44 M_sun)^(4/3))` (Black Holes 9). For 0.6, 1.0, 1.055, 1.2 and 1.4 Suns: about 8,970, 5,660, 5,220, 3,980 and 1,560 km, that is 1.41, 0.89, 0.82, 0.63 and 0.25 Earth radii. The gap below the limit: `1.44 − M` (0.385 Suns for 1.055) and `M / 1.44` (73 percent). | The formula is Black Holes 9's own fit (the coefficient 0.0131 is Claude's fit to a numerical integration, approved on 2026-10-12; within about 3 percent to 1.2 Suns and 7 percent to 1.35, so the 1.4 figure is the roughest). NASA: "A typical white dwarf is half as massive as the Sun, yet only slightly bigger than Earth." |
+| **The double-detonation white dwarf** | Core mass + helium shell mass = total: 1.028 + 0.027 = **1.055 Suns** (Das and others 2025, model M10_03); and the 2026 analysis (Mandal and others): a core of about 1 Sun and a shell above 0.05 Suns, so above about 1.05. How far below 1.44 or 1.4. | Das and others, Nature Astronomy (2025), PMC copy, read 2026-10-23; Mandal and others, ApJ (May 2026), abstract |
+| **Shell radius ÷ age = speed** | `v = r ÷ t`, with `r` = 1.73 ± 0.07 pc and 2.06 ± 0.07 pc and `t` = 300 to 350 years. At 300, 325 and 350 years: 5,640, 5,200 and 4,830 km/s (inner shell); 6,710, 6,200 and 5,760 km/s (outer). The gap between the shells: 0.33 pc, 1.08 light-years (the light takes about a year to cross it). | The radii are the paper's; the age "~300–350 yr" is the paper's; **this speed is an average, since the gas has slowed since the explosion** |
+| **Brightness difference to distance error** | If a supernova's true brightness `L_true = (1 + x) × L_assumed`, a distance worked out from the assumed brightness is off by the factor `1 / sqrt(1 + x)`: 20 percent dimmer (x = −0.2) gives a distance 11.8 percent too large; 10 percent dimmer, 5.4 percent too large; 10 percent brighter, 4.7 percent too small. | The inverse-square law (flux = L ÷ 4πd²), as in Experiment 13's tutor. An illustration with **trial values**, not a measurement of any real difference between Type Ia supernovae |
+
+Functions (proposed): `whiteDwarfRadiusKm` (imported), `earthRadii`, `gapBelowLimit(massSolar)`, `fractionOfLimit(massSolar)`, `doubleDetonationMass(coreSolar, shellSolar)`, `shellSpeedKmS(radiusPc, ageYears)`, `shellGap(innerPc, outerPc)`, `distanceErrorPercent(brightnessChange)`, `sizeAnswer()` (Prediction 1) and `speedAnswer()` (Prediction 2), and `runWhiteDwarfExplosion(settings)` returning all the learner's numbers at once. Out-of-range inputs (a mass of 1.44 or more, a zero or negative age, a change of −100 percent or less) throw `RangeError`.
+
+**What the model does not do:** it does not simulate either explosion, does not compute how much nickel is made or how bright the supernova is, does not model the remnant's gas, does not say why the calcium sits where it does, and does not decide between the double detonation and another reading. It uses published masses and radii.
+
+## Learner Controls
+
+Three controls, shown after the run (as in Experiments 11 to 13). Each is a **trial value**, not a claim about the real star. Each moves a white marker in a picture and a row of the results table.
+
+1. **"How heavy is the white dwarf?"** 0.6 (a typical white dwarf: about half the Sun, NASA), 1.0, 1.055 (the simulation's), 1.2, 1.4 Suns. Moves its size in Picture 1 and its gap below the limit.
+2. **"How old is the remnant?"** 300, 325 and 350 years. Moves the shells' speeds in Picture 3.
+3. **"What if the explosions differ in brightness?"** −30, −20, −10, 0, +10 percent. Moves the distance error in the strip of Picture 3.
+
+(Decision 8 asks whether to keep all three; Experiment 13 dropped one that moved a result too little.)
+
+## Prediction Activity
+
+Two predictions, made before pressing Run. The page tells the learner (the owner's rule of 2026-10-23) that predictions are guesses and do not change the pictures or tables. Neither the introduction nor a button gives either answer (§12).
+
+**Prediction 1: how heavy must it be?** *"A white dwarf cannot be heavier than about 1.4 Suns. In the remnant we study, a white dwarf exploded as a Type Ia supernova. About how heavy was it?"* Buttons: **About 0.5 Suns**, **About 1.0 Sun**, **About 1.4 Suns (the limit)**. Right answer: **about 1.0 Sun** (the simulations give about 1.05). The natural wrong answer is the limit, because the textbook story says the white dwarf must reach it, and the tutor ties this to the intro's "two routes". The wording "in the remnant we study" matters: the tutor must not say this holds for every Type Ia.
+
+**Prediction 2: how fast is the debris?** *"The remnant is about 300 years old and its outer shell of calcium is about 2 parsecs from the centre, which is about 6.5 light-years. About how fast has that outer shell moved, on average?"* Buttons: **About 50 kilometres a second**, **About 5,000 kilometres a second**, **About 300,000 kilometres a second (the speed of light)**. Right answer: **about 5,000 km/s** (the model gives 5,760 to 6,710 for the outer shell; 6.5 light-years in 300 years is about 2 percent of the speed of light). A learner who guesses 50 km/s has not counted how far 6.5 light-years is; one who guesses the speed of light has forgotten that light would cover 6.5 light-years in 6.5 years.
+
+## Experiment Behavior
+
+### Introduction (to be drafted to §29 and §14 once approved, for the owner's line-by-line approval)
+
+Outline (everything in plain words, with real-life examples; the full text is drafted after approval):
+
+1. **Status line** and **the question.**
+2. **Where we left off:** Black Holes 9 (what holds up a dead star's core, the white dwarf and its limit); Experiments 1 and 2 of this group (Type Ia supernovae as distance markers); Experiment 13 (a different kind of supernova, a massive star's core collapsing, and the same idea of distance ÷ speed).
+3. **What a white dwarf is** and why it has a limit, in the intro's own words, with a daily-life picture (a typical white dwarf is about as heavy as half the Sun and about the size of the Earth; NASA).
+4. **What a Type Ia supernova is** and the textbook story (a white dwarf grows to near the limit and its centre ignites), then the second route (a thin helium layer ignites first and sets off the core), without saying which one happened.
+5. **What was found** in 2025: the remnant, MUSE, two shells of calcium, and what the simulations say (without giving the mass or the speed, which are the predictions).
+6. **Where the question stands (October 2026):** the status line's three parts.
+7. **New words:** white dwarf (reused), Type Ia supernova, double detonation, helium layer, remnant, parsec (reused), calcium shell, standard candle, inverse-square law (reused).
+8. **What you will do**, with the sentence that predictions are guesses and do not change the pictures or tables, and which controls do.
+9. **What we assume.**
+10. **"Want to know more?"** (§29 rule 3): the Nature Astronomy paper (after the run, because it gives the masses), the ESO release eso2511, NASA Imagine the Universe on white dwarfs and on supernovae, the Chandra stellar-evolution page on white dwarfs, and plain pages on the Large Magellanic Cloud and on standard candles (to be found).
+
+The introduction does not give: the white dwarf's mass in the remnant, the shells' speed, or the radii of the shells.
+
+### Display (three pictures; each with a caption to the §14 standard and a three-part "What to look for")
+
+- **Picture 1: "How big is a white dwarf, and where is its limit?" (stage 1).** White dwarfs drawn to scale as circles next to the Earth (0.6, 1.0, 1.2 and 1.4 Suns: 1.41, 0.89, 0.63 and 0.25 Earth radii), each labelled with its mass and size; a mass scale from 0 to 1.5 Suns with the limit at 1.44 marked, and the learner's chosen mass as a white marker. No explosion route yet.
+- **Picture 2: "Two ways to explode" (stages 2 and 3).** Stage 2: route A, a white dwarf takes gas from a partner (or merges with another) and climbs towards the limit, then ignites in the centre. Stage 3: route B, three steps: a thin helium layer ignites; a shock runs inward; the core ignites. Each step labelled, with the masses of the matching simulation (1.028 + 0.027 Suns) at stage 3. No verdict between routes.
+- **Picture 3: "The remnant, 300 years on" (stages 4 and 5).** Stage 4: the remnant seen from the front as two concentric rings of calcium at 1.73 and 2.06 parsecs (in light-years too), the 0.33-parsec gap marked, and each shell's average speed at the chosen age (control 2). Stage 5: a strip beneath, "if its true brightness differs by x percent, the distance is off by y percent" at the chosen difference (control 3).
+
+### Run
+
+Five stages, paced by a timer that only paces the display (§11): 1 the limit and the sizes (Picture 1); 2 route A (Picture 2); 3 route B (Picture 2); 4 the two shells and their speeds (Picture 3); 5 why distances care (the strip of Picture 3). A short plain line under the picture says what is now added.
+
+### Results (neutral, then explained by the tutor)
+
+Shown only after the run completes: the status label (the three parts above, each with its date); then the **reading guide** of §14 ("Reading the Results"); the controls; then the tutor. All numbers come from the physics module (§9).
+
+**Results reading guide (CLAUDE.md §14, "Reading the Results"; to be drafted and approved):**
+
+1. **The check-up table** (what we would expect, what was found, what this tells us). Proposed rows, each with a real reference:
+   - **Mass of the white dwarf:** 1.055 Suns (Das and others) against a core of about 1 Sun and a shell above 0.05 (Mandal and others): "close; the two analyses agree to within about 1 percent (1.055 against at least 1.05), but the 2026 figure is a lower bound and the two share authors".
+   - **Gap below the limit:** 0.385 Suns below 1.44 (27 percent of the limit): "well below".
+   - **Radii of the two shells:** 1.73 ± 0.07 and 2.06 ± 0.07 pc from the paper, and their gap of 0.33 pc: "two separate peaks (the gap is about 3 times the measurement's give-or-take of 0.07 plus 0.07 combined)": check the arithmetic at the paper.
+   - **Speed from radius ÷ age:** 4,830 to 6,710 km/s: "a rough average, not a measured speed".
+   - **Brightness and distance:** no published reference for the real spread among Type Ia supernovae is given here; the row says "trial values only".
+2. **A note under each table** ("What this table tells us": what it is, what it means with the real numbers, why it matters).
+3. **For the table that follows the controls** (Table 4): "Your value / Published value / How yours compares / How it was worked out", a "What your numbers show" paragraph, and "trial values" wording.
+4. **The learner's predictions beside the results**, with the table row for each (Prediction 1: Table 1's "mass of the white dwarf"; Prediction 2: Table 2's "speed of the outer shell"), and no "matched" or "right" (the tutor's job).
+
+Tables (proposed): **Table 1: the white dwarf** (mass, size in km and Earth radii, gap below the limit, fraction of the limit; the Prediction 1 row; the double-detonation model's masses). **Table 2: the remnant** (the two radii in parsecs and light-years, the age range, the speeds, the gap in light-years; the Prediction 2 row). **Table 3: the two routes side by side** (what each route needs, what each predicts for the calcium, what has been seen; no verdict; the 2025 dissenting reading included in one row). **Table 4: your own numbers, checked against the published ones.** A "Words and formulas" panel (white dwarf, electron degeneracy pressure, Chandrasekhar limit, Type Ia supernova, double detonation, remnant, parsec, calcium shell, standard candle, solar mass, inverse-square law) gains worked formula entries after the run (`R` for a white dwarf, `v = r ÷ t`, the distance error). The held-back paper links follow, then the tutor.
+
+## Expected Observations
+
+- A white dwarf of 1.055 Suns has a radius of about 5,200 km, 0.82 Earth radii, and is 0.385 Suns below the limit of 1.44.
+- A white dwarf of 1.4 Suns is only about 1,560 km across in radius, one quarter of the Earth's.
+- The calcium shells are at 1.73 and 2.06 parsecs (5.6 and 6.7 light-years), a gap of 0.33 parsecs (1.08 light-years).
+- Their average speeds are about 4,800 to 6,700 km/s, depending on the age.
+- A supernova 20 percent dimmer than assumed would give a distance 11.8 percent too large.
+
+## Expected Learner Understanding
+
+The learner leaves able to say: that a white dwarf has a maximum mass because of electron degeneracy pressure, and that near the limit it is much smaller; that there are two proposed routes to a Type Ia explosion; that two separate shells of calcium in one remnant fit the second route and that this means a white dwarf of about 1 Sun exploded; that this is strong evidence for one remnant but not proof that all Type Ia supernovae explode this way, and that how common it is remains open; and why astronomers care, because distances from brightness assume the explosions are alike.
+
+## New Concepts Introduced
+
+Type Ia supernova (as a white dwarf explosion, not a massive star's collapse); double detonation; a shell of a particular element in a remnant as a fingerprint of how the explosion went; the idea that evidence from one object can be strong without being general; standard candle (the idea, as the reason distances depend on brightness); the effect of an unknown brightness difference on a distance.
+
+## Relationship to Previous Experiments
+
+Builds on Black Holes 9 (the white dwarf, electron degeneracy pressure and the limit; its module), Frontier and Beyond Experiments 1 and 2 (Type Ia supernovae as the distance markers behind the Hubble tension and dark energy), Experiment 13 (the other kind of supernova, and distance ÷ speed), and Spacetime Geometry 4 (what we see is the past; light-years).
+
+## Relationship to Later Experiments
+
+Experiment 15 (a neutron star, the other compact star), Experiment 16 (where heavy elements come from, including iron from Type Ia supernovae: the paper's abstract says they "produce more than half of the iron in our Galaxy"), Experiment 17 (a star that vanished). Experiments 1 and 2 are revisited: the learner now knows what Type Ia distances rest on.
+
+## Required Physics Tests (proposed; each must fail when the module is deliberately broken)
+
+1. `whiteDwarfRadiusKm` is the Black Holes 9 function (the module imports it, and its values for 0.6, 1.0, 1.055, 1.2 and 1.4 match a separate calculation); a mass of 1.44 or more throws.
+2. `gapBelowLimit(1.055)` is 0.385 and `fractionOfLimit(1.055)` is 0.733.
+3. `doubleDetonationMass(1.028, 0.027)` is 1.055; the 2026 analysis (1.0 and above 0.05) gives above 1.05.
+4. `shellSpeedKmS(1.73, 300)` is 5,639 and `shellSpeedKmS(2.06, 350)` is 5,755, each against a separate calculation with the parsec and the Julian year written out; the speed halves when the age doubles.
+5. `shellGap(1.73, 2.06)` is 0.33 pc and 1.08 light-years.
+6. `distanceErrorPercent(−0.2)` is 11.8 and `distanceErrorPercent(0.1)` is −4.7; zero change gives zero; a change of −1 or less throws.
+7. `sizeAnswer()` is "about 1.0 Sun" (nearest to 1.055 on a plain scale) and `speedAnswer()` is "about 5,000 km/s" (log-nearest), and the buttons are ordered.
+8. The published data equal the specification's (the radii, the age range, the masses, the limit).
+9. Out-of-range inputs throw `RangeError`.
+10. The module imports only the Black Holes 9 module (no other physics module).
+11. `runWhiteDwarfExplosion` returns the values for the defaults and for each control setting.
+12. The control settings: five masses, three ages and five brightness changes, each against a separate calculation.
+13. The reading guide's comparison functions (where a value sits in a range, how two analyses compare), each against a separate calculation.
+14. The nearest-answer helper separates a log distance from a plain distance (Experiment 13's lesson).
+
+## AI Tutor Behavior (to be drafted once approved)
+
+The group's pattern (`CLAUDE.md` §13): **observe, compare with the predictions, a conceptual question, then the explanation**, each answered before the next. The predictions are marked as matched or not matched in the explanation only. Conceptual question (draft): *"Two teams look at the same remnant. One says the two shells of calcium show a double detonation. Another says they could come from instabilities in a different kind of explosion. What would you want to measure next to tell them apart?"* Explanation parts (each with a daily-life example or short calculation, drafted to §15): (1) why a white dwarf has a limit, and why a near-limit one is so small (a stack of seats, from Black Holes 9); (2) route A, and why it would make Type Ia explosions alike; (3) route B, the double detonation, and why a thin helium layer can set off a core; (4) what two shells of calcium show, and radius ÷ age worked with real numbers; (5) one remnant is not all: the dissenting 2025 reading, the 2026 analysis, and what would settle it, without taking a side beyond the status label; (6) why distances care (the inverse-square law, with a worked 20 percent example, and a plain note that real work corrects for brightness differences only if a source is read, decision 9); (7) what was shown and what was not. It does not say how many Type Ia explosions are double detonations, does not say that the standard-candle method is in trouble, and does not say that this remnant explains the Hubble tension.
+
+### Chapter summary (to be drafted once approved)
+
+"What you learned / What's next": the three questions' results in plain words, and what Experiment 15 does next (the neutron star).
+
+---
+
+## Sources read (2026-10-23; none in full except where noted)
+
+| Source | What was read | Read how |
+|---|---|---|
+| Das, Seitenzahl, Ruiter, Röpke, Pakmor and others (2025), *Calcium in a supernova remnant as a fingerprint of a sub-Chandrasekhar-mass explosion*, Nature Astronomy, doi:10.1038/s41550-025-02589-5 (published 2 July 2025) | Abstract; "a double-shell morphology of highly ionized calcium [Ca XV] and a single shell of sulphur [S XII]"; age "very young (~300–350 yr)"; shells at "1.73 ± 0.07 pc and 2.06 ± 0.07 pc"; model M10_03 with a "carbon–oxygen-rich core mass of 1.028 M☉" and "He-shell mass of 0.027 M☉"; "quadruple detonation" in mergers could give similar structures; type Ia "produce more than half of the iron in our Galaxy" | The PMC copy (PMC12446058), first 100,000 of 100,330 characters, through a summarising fetch; the Nature page redirects to a login and was not opened |
+| ESO release eso2511, "Double detonation: new image shows remains of star destroyed by pair of explosions" (2 July 2025) | "at least some Type Ia supernovae explode through a 'double-detonation' mechanism"; Seitenzahl: "a clear indication that white dwarfs can explode well before they reach the famous Chandrasekhar mass limit"; Type Ia "behave in very consistent ways, and their predictable brightness ... helps astronomers to measure distances in space" | Fetched. The text read gives no age or distance |
+| Mandal, Ghavamian, Das, Seitenzahl, Mohamed and Ruiter (ApJ, 5 May 2026), *Deciphering the Explosion Mechanism of Type Ia Supernovae Using Their Remnants. II*, arXiv:2509.02422 | "a progenitor core mass and a shell mass of 1 solar mass and greater than 0.05 solar mass, respectively"; the substructure sizes are "consistent with a double detonation" | Abstract, fetched (the arXiv page and the journal page) |
+| Soker (2025), *On the progenitor of the type Ia supernova remnant 0509-67.5*, arXiv:2503.04709 | "I attribute the observed double-shell structure in calcium to Rayleigh-Taylor instability"; "lonely white dwarf scenarios"; "I cannot completely rule [other scenarios] out" | Abstract, fetched. **One author's reading; the paper was not read** |
+| Das, Seitenzahl, Laming and others (arXiv:2608.17465, 18 August 2026), *Ejecta clumps revealed by ... MUSE ... of SNR 0509-67.5* | New iron lines; clumps "predominantly due to Rayleigh-Taylor instabilities"; compared with a double-degenerate double-detonation model | Abstract, fetched |
+| Ferrand and others (arXiv:2510.18800, October 2025), *The role of the secondary white dwarf in a double-degenerate double-detonation explosion* | A companion leaves "a conical shadow in the ejecta"; simulations to 1,500 years | Abstract, fetched |
+| NASA Imagine the Universe, "Supernovae" (imagine.gsfc.nasa.gov/science/objects/supernovae1.html) | Type Ia: material flows onto the white dwarf; "approach a mass of 1.4 times that of the Sun ... the pressure at the center will exceed the threshold for the carbon and oxygen nuclei to start to fuse uncontrollably"; "radioactive nickel, which liberates huge amounts of energy, including visible light"; "The evolution of these supernovae tend to all be similar". Does not say "standard candle" or discuss mergers | Fetched 2026-10-23 |
+| NASA Imagine the Universe, "White Dwarf Stars" (imagine.gsfc.nasa.gov/science/objects/dwarfs2.html) | "A typical white dwarf is half as massive as the Sun, yet only slightly bigger than Earth"; the limit "1.4 times the mass of the Sun"; "200,000 times as dense" as the Earth | Fetched 2026-10-23 |
+| Chandra Educational Materials, "Stellar Evolution", white dwarfs (chandra.harvard.edu/edu/formal/stellar_ev/story/index7.html) | "The mass limit for a white dwarf to remain in equilibrium between gravity and electron degeneracy pressure is 1.4 solar masses - the Chandrasekhar limit." Does not discuss Type Ia or standard candles | Fetched 2026-10-23 |
+| The distance to the Large Magellanic Cloud | "About 160,000 light-years" in several NASA, ESA and ESO pages (the range 150,000 to 180,000 in others) | **Search-result summaries only**; no page opened |
+| Type Ia supernovae as standard candles, with nickel-56 setting the brightness | Search summaries of an Astronomy.com article and a physics-teaching page: similar luminosity, nickel-56 decay powers the brightness | **Search results only; no official source read** |
+| Single-detonation and Chandrasekhar-mass alternatives; nickel mass versus white dwarf mass; Type Ia brightness corrections (a width-brightness relation) | — | **Not read.** No numbers for these are used on the page until a source is read (decisions 7 and 9) |
+
+## Conflicts between sources, and how this specification handles them
+
+| Matter | Source A | Source B | Handling |
+|---|---|---|---|
+| Helium shell mass | 0.027 Suns (Das and others, model M10_03) | "greater than 0.05" Suns (Mandal and others 2026) | Quote both, with their method (calcium shells against small-scale structure); the experiment's model uses Das's 1.028 + 0.027 = 1.055 and says the 2026 analysis gives a larger shell (decision 3) |
+| What the two calcium shells mean | A double detonation of a white dwarf of about 1 Sun (Das and others; Mandal and others) | Rayleigh-Taylor instabilities in a lonely white dwarf explosion (Soker 2025, abstract) | State both; the label carries the *Contested* part; neither the page nor the tutor chooses beyond the label |
+| Chandrasekhar limit | 1.4 (NASA, Chandra) | 1.44 (Black Holes 9's module) | The page says "about 1.4"; the model uses 1.44 as Black Holes 9 does, and says so |
+
+## Facts that may change (re-check by the dates shown)
+
+| Fact | Source | Date checked | What could change it |
+|---|---|---|---|
+| The calcium shells' radii and the remnant's age | Das and others (2025) | 2026-10-23 | A reanalysis |
+| The white dwarf's mass (1.055; core about 1, shell above 0.05) | Das and others (2025); Mandal and others (2026) | 2026-10-23 | New simulations or a different match |
+| The dissenting reading of the shells | Soker (2025) | 2026-10-23 | A reply or a new observation |
+| "Strong evidence for one remnant; open how common" | The papers above | 2026-10-23 | A second remnant, or a survey of Type Ia remnants |
+| Whether any other supernova or remnant has shown the same fingerprint | Not found in this session's searches | **not checked** | Individual supernovae are discussed as possible helium-shell double detonations (SN 2018byg, SN 2019eix and SN 2022joj in search results), none read |
+
+## Open items
+
+- The Das and others paper was read through a summarising fetch of its PMC copy; its shell masses, the "quadruple detonation" alternative and the projection argument were not checked against the full text.
+- No plain official page was found or read for Type Ia supernovae as standard candles, or for nickel-56 setting the brightness; the distance to the Large Magellanic Cloud has only search summaries.
+- Nothing is read on how astronomers correct a Type Ia supernova's brightness, so the page says nothing about it (decision 9).
+- The dissenting reading (Soker) was seen only in its abstract; whether other groups dispute the double detonation was not searched beyond one query.
+- How common double detonations are is open; no survey result was found.
+- "Detonation" (a burning front faster than sound) and "a shock runs inward and ignites the core" are standard accounts, written from the paper's abstract and press releases, with no source read that defines "detonation" in plain words.
+- It has not been built, so nothing has been checked in a browser.
+
+## Decisions for the owner (each on a default; change any you like)
+
+1. **The title.** Default: "What makes a white dwarf explode? (the double-detonation remnant SNR 0509-67.5)", the group proposal's. Alternative: a question that hints at the answer ("Must a white dwarf reach its limit to explode?"), rejected because it gives Prediction 1's answer.
+2. **The status label.** Default: the three-part label above (*Strong evidence* / *Contested* / *Open*). Alternative: the group proposal's two-part label (*Strong evidence* for one remnant; *Open* how common), which leaves out the 2025 dissent.
+3. **Which mass to use.** Default: Das and others' 1.028 + 0.027 = 1.055 Suns, with the 2026 analysis (about 1 Sun and above 0.05) shown beside it in Table 1. Alternative: use "about 1 Sun" only.
+4. **Reuse of Black Holes 9's module.** Default: import `CHANDRASEKHAR_LIMIT_SOLAR_MASSES` and `whiteDwarfRadiusKm` (one source of truth; the module's "imports nothing" test becomes "imports only the Black Holes 9 module"). Alternative: copy the formula (a standalone module, as in Experiment 13, but two copies of an approved fit).
+5. **The two predictions.** Default: P1 the mass (three buttons), P2 the speed (three buttons). Alternatives for P1: the group proposal's yes-or-no ("must it reach 1.4 Suns?"); for P2: the number of shells a single explosion would leave.
+6. **Whether to include the dissenting reading** (Soker 2025) in the page and the tutor. Default: yes, in Table 3 and tutor part 5, stated as one author's reading, so the label *Contested* has content. Alternative: leave it out and use *Strong evidence* alone.
+7. **How much of the physics of the two routes to explain.** Default: pictures and plain words only (a helium layer, a shock, the core), with no nickel masses or brightness numbers, because none has a source read. Alternative: read a source on nickel yields from sub-Chandrasekhar explosions and add a number.
+8. **The number of controls.** Default: three (the mass, the age, the brightness difference). Alternative: two, dropping the brightness difference if you think it moves a result too little or strays from the experiment's focus.
+9. **Whether to mention that astronomers correct Type Ia brightness.** Default: not on the page until a plain source is read (a width-brightness relation is said in some sources to correct for it). Alternative: read one and add a sentence, so the "why it matters" section is not misleading about current practice.
+10. **The number of pictures and stages.** Default: three pictures, five stages. Alternative: split Picture 2 into two pictures (one per route).
+11. **How many tutor parts.** Default: seven, as above.
+12. **Link to the Hubble tension.** Default: name Experiments 1 and 2 as users of Type Ia distances and say nothing more. Alternative: compare the size of an 8 percent distance error with the gap of Experiment 1, rejected by default because it could read as a claim that this explains the tension, which the sources do not say.
+
+## Implementation Notes
+
+**Step 1 done (2026-10-23): the physics model and its tests.** `src/physics/whiteDwarfExplosion.ts` and `whiteDwarfExplosion.test.ts` (32 tests, covering the 14 required tests). It imports only the Black Holes 9 module (decision 4). Differences from the draft: the nearest-answer helpers are two (`nearestPlain` for Prediction 1 and `nearestLog` for Prediction 2); the two button tables (`SIZE_ANSWERS`, `SPEED_ANSWERS`) are exported so the buttons can be tested; the module also has `fractionOfLightSpeed` (6,000 km/s is 2 percent of the speed of light, for Prediction 2's tutor), `twoAnalysesComparison` (the 2026 analysis's lower bound against the simulation) and `compareWithPublished`. Twenty-five deliberate breaks of the module were made: 24 fail the tests as they should. One is equivalent for every input the experiment uses and cannot be caught: the plain-scale nearest answer in place of the log one for Prediction 2 (6,198 km/s is nearest to 5,000 either way). (The first run also found that the "size" button table could be changed without any test failing; the tables are now tested and that break is caught.) Nothing else is built: no interface, predictions, results, tutor or summary.
