@@ -815,7 +815,9 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other values
-            for the distance, the masses and the strength of the signal. Nothing here is graded.
+            for the distance, the masses and the strength of the signal. Nothing here is graded. Your predictions are your own guesses, made before you see anything: they do
+            not change the pictures or the tables, which come from the physics and the published numbers. They are shown again beside the results so you can compare. What does
+            change the pictures and Table 4 is the “Now try it yourself” controls, which appear after the run finishes.
           </p>
 
           <p style={paragraph}>
@@ -1061,7 +1063,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
           <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
             <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              Change a setting and watch the white marks in the three pictures above, and Table 4 below, follow it. Each choice is a trial value: it shows what would
+              Your predictions do not change the pictures or Table 4, because the results come from the physics, not from your guesses. These settings do: change one and watch the white marks in the three pictures above, and Table 4 below, follow it. While every setting is on its published value, Table 4 says “the same” in every row, so change a setting to see it move. Each choice is a trial value: it shows what would
               happen with that number, and does not say that the real star or signal is like that. The distance and the masses are values that the papers allow or report.
             </p>
 

@@ -109,6 +109,7 @@ Experiment specifications should define:
 * User interaction
 * Learner-facing introduction, including any new terms it must define
 * Results reading guide (see "Results: A Reading Guide")
+* Note that predictions do not change the results (see "Predictions Do Not Change the Results")
 * AI tutor behavior
 * Tests
 * Explicit exclusions
@@ -184,6 +185,21 @@ simple terms with the real numbers:
 The numbers come from the tested physics module. The guide gives meaning and significance but leaves the full
 mechanism and any verdict to the tutor, and never reveals a prediction's answer early. The wording stays the human's to
 approve. Built so far: Experiment 12 of Frontier and Beyond. The earlier experiments do not have it yet.
+
+## Predictions Do Not Change the Results
+
+Added by the owner on 2026-10-23. A learner's predictions are their own guesses, made before they see anything. They
+never change the pictures, the tables or any number: the results come from the physics. Every experiment with a
+prediction must tell the learner so, in plain words, so that "nothing changed" is not mistaken for a fault:
+
+1. In the introduction, where it says what the learner will do: the predictions are guesses, they do not change the
+   pictures or tables, they are shown again beside the results, and say which controls (if any) do change them. It
+   must not give the answers.
+2. Beside any controls: the predictions do not change the pictures or tables but these settings do, and while every
+   setting is on its published value the comparison table says "the same", so change a setting to see it move.
+
+The wording stays the human's to approve. Built so far: Experiment 12 of Frontier and Beyond. The earlier
+experiments do not have it yet.
 
 ## Frontier and Beyond: Introductions and Captions
 

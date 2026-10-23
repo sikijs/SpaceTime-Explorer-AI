@@ -316,6 +316,16 @@ How to apply them:
 * The specification records the guide (§28.2).
 * Built so far: Experiment 12 of Frontier and Beyond (committed `b708678`). Experiments 1 to 11 and the other groups do not have it yet. Whether to add it to them is the owner's decision, one experiment at a time, and is not started.
 
+## Predictions Do Not Change the Results
+
+Set by the owner on 2026-10-23, from Experiment 12, where a learner changed their predictions, pressed Run, and saw no change in the pictures or the tables. A learner's predictions are their own guesses, made before they see anything. They never change the pictures, the tables or any number, because the results come from the physics (§9) and not from the guesses. The learner must be told this on the page, so that "nothing changed" is not mistaken for a fault. **Every experiment with a prediction must say, in plain words:**
+
+1. **In the introduction** (in the part that says what the learner will do): that the predictions are the learner's own guesses and do not change the pictures or tables, that they are shown again beside the results so the learner can compare, and which controls, if any, do change the pictures and tables. It must not say what the answers are (§12).
+2. **Beside the controls** (if the experiment has controls that follow the learner's settings, such as "Now try it yourself"): that the predictions do not change the pictures or tables, but these settings do, and that while every setting is on its published value the comparison table says "the same" in every row, so the learner should change a setting to see it move.
+3. An experiment with a prediction and no controls says only the first point.
+
+How to apply it: draft the wording the first time (§14), show it for the owner's approval (§28.1), record it in the specification (§28.2), and check the page in a browser (§28.4). Built so far: Experiment 12 of Frontier and Beyond. Experiments 1 to 11 and the other groups do not have it yet. Whether to add it to them is the owner's decision, one experiment at a time, and is not started.
+
 ---
 
 # 15. Accessibility and Clarity
@@ -476,7 +486,7 @@ Connect the UI to the tested physics model.
 
 ### Step 6 — Learner Interaction
 
-Implement prediction, observation, and other educational interactions specified by the experiment.
+Implement prediction, observation, and other educational interactions specified by the experiment. Tell the learner that their predictions do not change the pictures or tables (§14, "Predictions Do Not Change the Results").
 
 ### Step 7 — Results
 

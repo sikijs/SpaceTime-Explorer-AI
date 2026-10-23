@@ -452,6 +452,10 @@ Added by the owner on 2026-10-22. Results are shown as scientific numbers, and a
 
 The guide explains what each number means and why it matters. The full mechanism and any verdict between competing explanations stay with the tutor, and the guide never gives away what the learner was asked to predict. Its wording is the human project owner's to approve. It is built so far for Experiment 12 of the Frontier and Beyond group, and adding it to earlier experiments is a decision for the owner.
 
+### Predictions do not change the results
+
+Added by the owner on 2026-10-23. A learner's predictions are their own guesses, made before they see anything. They never change the pictures, the tables or any number, because the results come from the physics. So every experiment with a prediction tells the learner so, in plain words, to avoid mistaking "nothing changed" for a fault: in the introduction (the predictions are guesses, they do not change the pictures or tables, they are shown again beside the results, and which controls, if any, do change them), and beside any controls (the predictions do not change the pictures or tables but these settings do, and while every setting is on its published value the comparison table says "the same" in every row). The wording never gives away an answer, and it is the human project owner's to approve. It is built so far for Experiment 12 of Frontier and Beyond; the earlier experiments do not have it yet.
+
 ### Frontier and Beyond: fuller introductions and captions
 
 The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so four rules apply to every experiment in the group, all twenty-four and any added later:
