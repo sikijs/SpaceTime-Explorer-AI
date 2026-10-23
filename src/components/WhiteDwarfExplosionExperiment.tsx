@@ -2,21 +2,26 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CHANDRASEKHAR_LIMIT_SOLAR_MASSES,
+  compareWithPublished,
   distanceErrorPercent,
   EARTH_RADIUS_KM,
   KM_PER_PARSEC,
   distanceErrorWorkedExample,
   LIGHT_YEARS_PER_PARSEC,
   runWhiteDwarfExplosion,
+  shellSpeedRangeKmS,
   shellSpeedWorkedExample,
+  twoAnalysesComparison,
   WHITE_DWARF_EXPLOSION,
 } from '../physics/whiteDwarfExplosion'
 import type { SizeAnswer, SpeedAnswer } from '../physics/whiteDwarfExplosion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { LookForList } from './WideBinariesExperiment'
+import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 14 (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md).
+// Step 5 builds the three controls (the white dwarf's weight, the remnant's age and a brightness difference), shown after the run, which add white marks to Pictures 1 and 3, and the
+// results with the reading guide (the check-up, four tables with notes, the predictions beside the results and the held-back paper links).
 // Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (white dwarf sizes and the limit) at stage 1, Picture 2 (the two routes) at stages 2 and 3,
 // Picture 3 (the two calcium shells, then the distance strip) at stages 4 and 5. The controls, the results and the tutor are later steps.
 // Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
@@ -145,14 +150,28 @@ const SHELL_COLOR = '#34d399' // green: the calcium shells
 const FLASH_COLOR = '#fde047' // bright yellow: ignition
 const ERROR_COLOR = '#fb923c' // orange: a distance error
 const PICTURE_THREE_PX_PER_PC = 80 // the drawing's scale in Picture 3
+const YOURS_COLOR = '#ffffff' // white: the learner's own trial value
+
+interface YoursOne {
+  massSolar: number
+  radiusEarths: number
+  radiusKm: number
+}
+interface YoursThree {
+  ageYears: number
+  innerSpeedKmS: number
+  outerSpeedKmS: number
+  brightnessChange: number
+  distanceErrorPercent: number
+}
 
 const thousandsComma = (value: number): string => Math.round(value).toLocaleString('en-US')
 const roundTo = (value: number, step: number): number => Math.round(value / step) * step
 
 // ---- Picture 1: how big is a white dwarf, and where is its limit? ----
-function PictureOne() {
+function PictureOne({ yours }: { yours: YoursOne | null }) {
   const d = WHITE_DWARF_EXPLOSION
-  const height = 390
+  const height = 420
   const cy = 125
   const px = 44 // pixels for one Earth radius
   const xs = [190, 295, 385, 465]
@@ -193,6 +212,13 @@ function PictureOne() {
       ))}
       <line x1={scaleX(CHANDRASEKHAR_LIMIT_SOLAR_MASSES)} y1={scaleY - 30} x2={scaleX(CHANDRASEKHAR_LIMIT_SOLAR_MASSES)} y2={scaleY + 8} stroke={LIMIT_COLOR} strokeWidth={3} strokeDasharray="4 3" />
       <SvgLines x={scaleX(CHANDRASEKHAR_LIMIT_SOLAR_MASSES) + 4} y={scaleY - 34} lines={[`the limit: ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES}`]} fill={LIMIT_COLOR} bold anchor="end" />
+      {yours && (
+        <g>
+          <line x1={scaleX(yours.massSolar)} y1={scaleY - 16} x2={scaleX(yours.massSolar)} y2={scaleY + 8} stroke={YOURS_COLOR} strokeWidth={3} />
+          <circle cx={scaleX(yours.massSolar)} cy={scaleY} r={7} fill="none" stroke={YOURS_COLOR} strokeWidth={3} />
+          <SvgLines x={scaleX(yours.massSolar)} y={scaleY + 42} lines={[`your setting: ${yours.massSolar} Suns`, `radius ${yours.radiusEarths.toFixed(2)} Earth radii (${thousandsComma(roundTo(yours.radiusKm, 10))} km)`]} fill={YOURS_COLOR} bold size={9} anchor="middle" />
+        </g>
+      )}
       <SvgLines x={20} y={height - 8} lines={['Drawn to scale: the sizes of the white dwarfs and the Earth are in proportion; the mass scale is a separate line.']} fill={MUTED_COLOR} />
     </svg>
   )
@@ -271,10 +297,10 @@ function PictureTwo({ stage }: { stage: number }) {
 }
 
 // ---- Picture 3: the remnant's two calcium shells (stage 4); the distance strip is added at stage 5 ----
-function PictureThree({ stage }: { stage: number }) {
+function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | null }) {
   const d = WHITE_DWARF_EXPLOSION
   const run = runWhiteDwarfExplosion()
-  const height = stage >= 5 ? 640 : 450
+  const height = stage >= 5 ? 700 : 470
   const cx = 280
   const cy = 225
   const pxPerPc = PICTURE_THREE_PX_PER_PC
@@ -306,6 +332,9 @@ function PictureThree({ stage }: { stage: number }) {
       <line x1={cx + outer * Math.cos(Math.PI / 4)} y1={cy - outer * Math.sin(Math.PI / 4)} x2={410} y2={104} stroke={SHELL_COLOR} strokeWidth={1.5} strokeOpacity={0.6} />
       <SvgLines x={540} y={74} lines={[`outer calcium shell: ${d.outerShellPc} pc`, `(${run.outerShellLightYears.toFixed(1)} light-years)`, `about ${thousandsComma(roundTo(run.outerShellSpeedKmS, 10))} km/s on average`]} fill={SHELL_COLOR} bold size={9} anchor="end" />
       <SvgLines x={cx} y={cy + outer + 26} lines={[`gap between the shells: ${run.shellGapPc.toFixed(2)} pc = ${run.shellGapLightYears.toFixed(2)} light-years`]} fill={TEXT_COLOR} bold anchor="middle" size={10} />
+      {yours && (
+        <SvgLines x={cx} y={cy + outer + 46} lines={[`your setting (white): age ${yours.ageYears} years: inner shell ${thousandsComma(roundTo(yours.innerSpeedKmS, 10))} km/s, outer shell ${thousandsComma(roundTo(yours.outerSpeedKmS, 10))} km/s`]} fill={YOURS_COLOR} bold anchor="middle" size={9} />
+      )}
       {stage >= 5 && (
         <g>
           <line x1={20} y1={stripTop - 12} x2={VIEW_WIDTH - 20} y2={stripTop - 12} stroke={MUTED_COLOR} strokeWidth={1} />
@@ -321,12 +350,48 @@ function PictureThree({ stage }: { stage: number }) {
               </g>
             )
           })}
+          {yours && (
+            <g>
+              <SvgLines x={barX - 8} y={stripTop + 28 + 3 * 34 + 12} lines={['your setting']} fill={YOURS_COLOR} bold size={10} anchor="end" />
+              <rect x={barX} y={stripTop + 28 + 3 * 34} width={(Math.abs(yours.distanceErrorPercent) / 20) * barMax} height={18} fill={YOURS_COLOR} />
+              <SvgLines
+                x={barX + (Math.abs(yours.distanceErrorPercent) / 20) * barMax + 6}
+                y={stripTop + 28 + 3 * 34 + 13}
+                lines={[yours.brightnessChange === 0 ? 'no difference, no error' : `${Math.abs(yours.brightnessChange) * 100} percent ${yours.brightnessChange < 0 ? 'dimmer' : 'brighter'}: distance ${Math.abs(yours.distanceErrorPercent).toFixed(1)} percent too ${yours.distanceErrorPercent > 0 ? 'large' : 'small'}`]}
+                fill={YOURS_COLOR}
+                bold
+                size={10}
+              />
+            </g>
+          )}
           <SvgLines x={20} y={height - 20} lines={['Trial values, not measured differences between real supernovae.', 'Rule used: brightness falls as 1 ÷ distance², so a small difference gives a distance error about half as big.']} fill={MUTED_COLOR} size={9} />
         </g>
       )}
     </svg>
   )
 }
+
+function ChoiceButtons<T extends number>({ options, value, onChange, format }: { options: ReadonlyArray<T>; value: number; onChange: (v: T) => void; format: (v: T) => string }) {
+  return (
+    <div>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onChange(option)}
+          className={`toggle-button${value === option ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+        >
+          {format(option)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// A signed percentage as an unsigned number, for a sentence such as "12.3 percent larger".
+const pct = (n: number): string => Math.abs(n).toFixed(Math.abs(n) < 10 ? 1 : 0)
+const isSame = (n: number): boolean => Math.abs(n) < 1e-9
 
 const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'White dwarf', meaning: 'the small, dense, slowly cooling ball left when a star like the Sun has used up its fuel. NASA: “A typical white dwarf is half as massive as the Sun, yet only slightly bigger than Earth.” (Black Holes Experiment 9 explains what holds it up.)' },
@@ -360,7 +425,12 @@ export function WhiteDwarfExplosionExperiment() {
   const [speedPrediction, setSpeedPrediction] = useState<SpeedAnswer | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  // The controls that appear after the run.
+  const [massChoice, setMassChoice] = useState<number>(WHITE_DWARF_EXPLOSION.simulationCoreSolar + WHITE_DWARF_EXPLOSION.simulationShellSolar)
+  const [ageChoice, setAgeChoice] = useState<number>(WHITE_DWARF_EXPLOSION.defaultAgeYears)
+  const [brightnessChoice, setBrightnessChoice] = useState<number>(0)
   const hasRun = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = sizePrediction !== null && speedPrediction !== null
 
   // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
@@ -378,6 +448,9 @@ export function WhiteDwarfExplosionExperiment() {
     setSpeedPrediction(null)
     setStatus('idle')
     setStage(0)
+    setMassChoice(runWhiteDwarfExplosion().massSolar)
+    setAgeChoice(WHITE_DWARF_EXPLOSION.defaultAgeYears)
+    setBrightnessChoice(0)
   }
   function run() {
     setStage(1)
@@ -396,7 +469,36 @@ export function WhiteDwarfExplosionExperiment() {
   const wd14 = pictureRuns[3]
   const percentOfLimit = (result.simulationMassSolar / CHANDRASEKHAR_LIMIT_SOLAR_MASSES) * 100
   const sigmaGap = result.separationInUncertainties
+  const settings = { massSolar: massChoice, ageYears: ageChoice, brightnessChange: brightnessChoice }
+  const mine = runWhiteDwarfExplosion(settings)
+  const cmp = compareWithPublished(settings)
+  const allPublished = cmp.mass === 0 && cmp.age === 0 && cmp.brightness === 0
+  const massChanged = cmp.mass !== 0
+  const yoursOne: YoursOne | null = done ? { massSolar: mine.massSolar, radiusEarths: mine.radiusEarths, radiusKm: mine.radiusKm } : null
+  const yoursThree: YoursThree | null =
+    done ? { ageYears: mine.ageYears, innerSpeedKmS: mine.innerShellSpeedKmS, outerSpeedKmS: mine.outerShellSpeedKmS, brightnessChange: mine.brightnessChange, distanceErrorPercent: mine.distanceErrorPercent } : null
+  const twoA = twoAnalysesComparison()
+  const outerRange = shellSpeedRangeKmS(d.outerShellPc)
+  const innerRange = shellSpeedRangeKmS(d.innerShellPc)
+  const sizeLabel = SIZE_CHOICES.find((c) => c.value === sizePrediction)?.label
+  const speedLabel = SPEED_CHOICES.find((c) => c.value === speedPrediction)?.label
+  const dimWord = (x: number): string => (x < 0 ? 'dimmer' : x > 0 ? 'brighter' : 'no different')
+  const [ageLow, ageHigh] = d.ageRangeYears
 
+  const formulaEntries: { term: string; meaning: string }[] = [
+    {
+      term: 'The size of a white dwarf (formula)',
+      meaning: `Black Holes Experiment 9’s formula: R = 0.0131 × (the Sun’s radius) × (M ÷ the Sun’s mass)^(−1/3) × the square root of (1 − (M ÷ ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES})^(4/3)). For M = ${result.simulationMassSolar.toFixed(3)} Suns it gives about ${thousandsComma(roundTo(result.radiusKm, 10))} km, ${result.radiusEarths.toFixed(2)} Earth radii. The square-root term falls to zero at the limit, which is why a white dwarf shrinks as it nears it.`,
+    },
+    {
+      term: 'Average speed (formula)',
+      meaning: `speed = distance ÷ time. For the outer shell: ${d.outerShellPc} parsecs = ${(shellExample.radiusKm / 1e12).toFixed(0)} million million km, divided by ${result.ageYears} years = ${(shellExample.ageSeconds / 1e9).toFixed(1)} thousand million seconds, gives about ${thousandsComma(roundTo(shellExample.speedKmS, 10))} km/s. It is an average over the remnant’s life.`,
+    },
+    {
+      term: 'Brightness and distance (formula)',
+      meaning: `Brightness falls as 1 ÷ distance², so a distance worked out from an assumed brightness is wrong by 1 ÷ the square root of (the true brightness ÷ the assumed brightness). For a supernova that gives ${(brightnessExample.brightnessFraction * 100).toFixed(0)} percent of the assumed light: 1 ÷ ${brightnessExample.squareRoot.toFixed(3)} = ${brightnessExample.distanceFactor.toFixed(3)}, so the distance is ${brightnessExample.percent.toFixed(1)} percent too large.`,
+    },
+  ]
   const lookForPictureOne: LookFor[] = [
     {
       look: `the light blue circles, from the ${wd06.massSolar}-Sun white dwarf on the left to the ${wd14.massSolar}-Sun one on the right.`,
@@ -604,7 +706,7 @@ export function WhiteDwarfExplosionExperiment() {
           </ul>
         </div>
 
-        <ReferencePanel entries={REFERENCE_ENTRIES} />
+        <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
             right, and neither gives the white dwarf's mass in the remnant or the shells' speed. */}
@@ -696,7 +798,7 @@ export function WhiteDwarfExplosionExperiment() {
         {/* Picture 1 (stage 1 on). */}
         {hasRun && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureOne />
+            <PictureOne yours={yoursOne} />
           </div>
         )}
         {hasRun && (
@@ -761,13 +863,13 @@ export function WhiteDwarfExplosionExperiment() {
         {/* Picture 3: the shells from stage 4, the distance strip from stage 5. */}
         {stage >= 4 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureThree stage={stage} />
+            <PictureThree stage={stage} yours={yoursThree} />
           </div>
         )}
         {stage >= 4 && (
           <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             <p style={paragraph}>
-              <strong>How to read Picture 3.</strong> You are looking at the remnant from the front, drawn to one scale (1 <strong>parsec</strong>, about {LIGHT_YEARS_PER_PARSEC} light-years, is {PICTURE_THREE_PX_PER_PC}
+              <strong>How to read Picture 3.</strong> You are looking at the remnant from the front, drawn to one scale (1 <strong>parsec</strong>, about {LIGHT_YEARS_PER_PARSEC.toFixed(2)} light-years, is {PICTURE_THREE_PX_PER_PC}{' '}
               pixels). The tiny <strong>yellow dot</strong> at the centre is where the explosion happened. The <strong>two green rings</strong> are the two shells of calcium that
               the telescope found: the bright inner one and the fainter outer one. Each is labelled with its distance from the centre in parsecs and in light-years, and with its
               <strong> average speed</strong>, which is that distance divided by the remnant’s age. The line under the rings gives the gap between the shells.
@@ -793,6 +895,387 @@ export function WhiteDwarfExplosionExperiment() {
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureThree.slice(0, stage >= 5 ? 3 : 2)} />
+          </div>
+        )}
+
+        {/* The controls (after the run): the white dwarf's weight, the remnant's age and a brightness difference. They add white marks to Pictures 1 and 3, and fill Table 4. */}
+        {done && (
+          <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
+            <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              Your predictions do not change the pictures or Table 4, because the results come from the physics, not from your guesses. These settings do: change one and watch the white
+              marks in Pictures 1 and 3 above, and Table 4 below, follow it. Picture 2 does not change, because it is a sketch of two ideas. While every setting is on its published
+              value (the simulation’s weight, the middle of the paper’s age range, no brightness difference), Table 4 says “the same” in every row, so change a setting to see it move.
+              Each choice is a trial value: it shows what would happen with that number, and does not say that the real white dwarf or the real remnant is like that.
+            </p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the white dwarf? (Suns) It moves the white marker in Picture 1.</p>
+            <ChoiceButtons
+              options={d.massChoicesSolar}
+              value={massChoice}
+              onChange={setMassChoice}
+              format={(v) => `${v}${v === result.simulationMassSolar ? ' (the simulation’s)' : v === d.massChoicesSolar[0] ? ' (a typical white dwarf)' : v === d.massChoicesSolar[d.massChoicesSolar.length - 1] ? ' (just below the limit)' : ''}`}
+            />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              A white dwarf of {mine.massSolar} Suns has a radius of about {thousandsComma(roundTo(mine.radiusKm, 10))} km, {mine.radiusEarths.toFixed(2)} Earth radii. It is {mine.gapBelowLimitSolar.toFixed(3)} Suns below the
+              limit of {CHANDRASEKHAR_LIMIT_SOLAR_MASSES}, {mine.percentBelowLimit.toFixed(0)} percent below it.
+            </p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How old is the remnant? (years) It moves the white labels in Picture 3.</p>
+            <ChoiceButtons options={d.ageChoicesYears} value={ageChoice} onChange={setAgeChoice} format={(v) => `${v} years${v === d.defaultAgeYears ? ' (the middle of the paper’s range)' : ''}`} />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              At {mine.ageYears} years the average speeds are {thousandsComma(roundTo(mine.innerShellSpeedKmS, 10))} km/s for the inner shell and {thousandsComma(roundTo(mine.outerShellSpeedKmS, 10))} km/s for the outer one. An older remnant
+              means the same distance took longer, so a lower average speed. The paper gives the age as {ageLow} to {ageHigh} years.
+            </p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>What if the explosions differ in brightness? It moves the white bar in Picture 3.</p>
+            <ChoiceButtons
+              options={d.brightnessChoices}
+              value={brightnessChoice}
+              onChange={setBrightnessChoice}
+              format={(v) => (v === 0 ? 'No difference (the published value)' : `${Math.abs(v) * 100} percent ${dimWord(v)}`)}
+            />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
+              {mine.brightnessChange === 0
+                ? 'With no difference in brightness there is no error in the distance.'
+                : `A supernova ${Math.abs(mine.brightnessChange) * 100} percent ${dimWord(mine.brightnessChange)} than assumed would give a distance ${Math.abs(mine.distanceErrorPercent).toFixed(1)} percent too ${mine.distanceErrorPercent > 0 ? 'large' : 'small'}. These are trial values, not measured differences.`}
+            </p>
+          </div>
+        )}
+
+        {/* The results, shown only after the run completes: the status label, the predictions again, the check-up, four tables, and the links kept back until now. */}
+        {done && (
+          <div style={{ marginTop: '2rem' }}>
+            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <p style={{ ...paragraph, padding: '0.75rem 1rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px', fontSize: '0.875rem' }}>
+              <strong>Where this stands (as of October 2026).</strong> <strong>Strong evidence:</strong> this one remnant, SNR 0509-67.5, was made by a double detonation of a white dwarf
+              of about {Math.round(result.simulationMassSolar)} Sun, well below the limit (two research groups’ simulations match its calcium shells and its small-scale structure).{' '}
+              <strong>Contested:</strong> a 2025 paper reads the same two calcium shells as the result of instabilities in a different kind of explosion. <strong>Open:</strong> how many Type Ia supernovae
+              explode this way.
+            </p>
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>Your predictions, beside the results.</strong> Before the run you made two predictions. Here they are again, each with the place on this page where its number
+                appears. Compare them yourself. The tutor will go through them with you after the tables.
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>Prediction 1: how heavy was the white dwarf?</strong> You predicted: <strong>{sizeLabel}</strong>. Its number is in Table 1, in the row “The white dwarf’s weight in the
+                remnant”, and under route 2 in Picture 2.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Prediction 2: how fast is the debris?</strong> You predicted: <strong>{speedLabel}</strong>. Its number is in Table 2, in the row “Average speed of the outer
+                shell”, and in the label beside the outer ring in Picture 3.
+              </p>
+            </div>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>How to read these results.</strong> Think of these tables as a set of test results, and this section as the doctor explaining them. A supernova remnant about 150,000 to
+              160,000 light-years away cannot be weighed or timed directly, so what we know comes as numbers from several sources: the sizes of two shells measured by a telescope, a weight
+              taken from a simulation that matches them, and an age. None of the numbers is a picture of the explosion. The question to keep in mind is:{' '}
+              <strong>do the numbers agree with each other, and how strong is each one?</strong>
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              First comes a short check-up that sets what we would expect beside what was found. Then each table has a plain-words note under it. The experiment explains what each number
+              means. It does not decide for you what the evidence adds up to. The tutor will help you with that, after the tables. The “Words and formulas” box now has the formulas worked
+              with these numbers.
+            </p>
+            <p style={{ marginBottom: '0.25rem' }}>
+              <strong>The check-up: what we would expect, and what was found</strong>
+            </p>
+            <ResultsTable
+              head={['What was checked', 'What we would expect', 'What was found', 'What this tells us']}
+              minWidth={640}
+              rows={[
+                [
+                  'The white dwarf’s weight',
+                  `A core of about ${d.analysis2026CoreSolar} Sun and a helium shell of more than ${d.analysis2026ShellAboveSolar} Suns, so at least ${twoA.analysis2026AtLeastSolar.toFixed(2)} Suns (Mandal and others, 2026)`,
+                  `${twoA.simulationSolar.toFixed(3)} Suns: a core of ${d.simulationCoreSolar} plus a helium layer of ${d.simulationShellSolar} (Das and others, 2025)`,
+                  `Close: the two figures differ by about ${Math.abs(twoA.differencePercent).toFixed(1)} percent. The 2026 figure is a lower bound, and the two papers share authors, so this is a check of consistency, not a fully independent one.`,
+                ],
+                [
+                  'How far below the limit',
+                  `If the white dwarf had reached the limit, it would be 0 Suns below it (the limit is ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns here)`,
+                  `${result.simulationGapBelowLimitSolar.toFixed(3)} Suns below the limit, ${result.percentBelowLimit.toFixed(0)} percent below it`,
+                  'Well below the limit. This number comes from the simulation that matches the shells, so it is a result of that match and not a direct weighing.',
+                ],
+                [
+                  'The two calcium shells',
+                  'Two separate peaks, as simulations of a double detonation predict (Das and others, 2025)',
+                  `${d.innerShellPc} ± ${d.shellUncertaintyPc} and ${d.outerShellPc} ± ${d.shellUncertaintyPc} parsecs; the gap is ${result.shellGapPc.toFixed(2)} parsecs`,
+                  `Two separate peaks: the gap is about ${sigmaGap.toFixed(1)} times the combined give-or-take of the two radii (${d.shellUncertaintyPc} and ${d.shellUncertaintyPc} parsecs together).`,
+                ],
+                [
+                  'The speed of each shell',
+                  'No published average speed is used here for comparison',
+                  `${thousandsComma(roundTo(innerRange[0], 10))} to ${thousandsComma(roundTo(innerRange[1], 10))} km/s (inner) and ${thousandsComma(roundTo(outerRange[0], 10))} to ${thousandsComma(roundTo(outerRange[1], 10))} km/s (outer), over the paper’s ages`,
+                  'A rough average: it is the distance divided by the age, and the gas has slowed since the explosion. It is not a measured speed.',
+                ],
+                [
+                  'Brightness and distance',
+                  'No published figure is used here for how much real Type Ia supernovae differ in brightness',
+                  `A supernova ${Math.abs(d.pictureBrightnessChanges[1]) * 100} percent dimmer than assumed gives a distance ${distanceErrorPercent(d.pictureBrightnessChanges[1]).toFixed(1)} percent too large`,
+                  'Trial values only. It shows how a difference in brightness would carry into a distance, and says nothing about how big the real difference is.',
+                ],
+              ]}
+            />
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              A doctor reads each result against a reference. Here the reference is a published figure, or what the same physics predicts. One row is close, one is well below the limit, one
+              is two separate peaks and two have no reference to compare with. That is why the status label says “Strong evidence” for this one remnant, “Contested” for what the two shells
+              mean and “Open” for how common the explosion is.
+            </p>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 1: the white dwarf</strong>
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Value', 'Where it comes from']}
+              minWidth={560}
+              rows={[
+                [
+                  'The white dwarf’s weight in the remnant (the row for Prediction 1)',
+                  `${result.simulationMassSolar.toFixed(3)} Suns = ${d.simulationCoreSolar} (the carbon-oxygen core) + ${d.simulationShellSolar} (the helium layer)`,
+                  `Das and others (2025), the simulation that matches the two shells (model M10_03). A 2026 analysis of the remnant’s small-scale structure (Mandal and others) finds a core of about ${d.analysis2026CoreSolar} Sun and a layer of more than ${d.analysis2026ShellAboveSolar} Suns`,
+                ],
+                [
+                  'The limit',
+                  `${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns (NASA and Chandra say 1.4)`,
+                  'Black Holes Experiment 9’s model, reused here; the same limit worked out to different accuracy',
+                ],
+                [
+                  'How far below the limit',
+                  `${result.simulationGapBelowLimitSolar.toFixed(3)} Suns: ${result.percentBelowLimit.toFixed(0)} percent below it, or ${(result.fractionOfLimit * 100).toFixed(0)} percent of the limit`,
+                  `worked out here: ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} − ${result.simulationMassSolar.toFixed(3)}`,
+                ],
+                [
+                  'The white dwarf’s size',
+                  `a radius of about ${thousandsComma(roundTo(result.radiusKm, 10))} km = ${result.radiusEarths.toFixed(2)} Earth radii`,
+                  'Black Holes Experiment 9’s formula for a white dwarf (a fit to a numerical calculation, good to about 3 percent up to 1.2 Suns and about 7 percent up to 1.35)',
+                ],
+                [
+                  'A typical white dwarf (the yardstick)',
+                  `${pictureRuns[0].massSolar} Suns, a radius of ${pictureRuns[0].radiusEarths.toFixed(2)} Earth radii`,
+                  'NASA says a typical white dwarf is “half as massive as the Sun, yet only slightly bigger than Earth”; this page draws one of 0.6 Suns',
+                ],
+              ]}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>The weight.</strong> What it is: the weight of the white dwarf in the simulation that best matches the two shells, a core plus a thin helium layer. What it means: {result.simulationMassSolar.toFixed(3)} Suns
+                is {result.percentBelowLimit.toFixed(0)} percent below the limit of {CHANDRASEKHAR_LIMIT_SOLAR_MASSES}. The 2026 analysis, which used a different feature of the remnant, finds a similar weight, at least about {twoA.analysis2026AtLeastSolar.toFixed(2)} Suns.
+                Why it matters: if a white dwarf of this weight really exploded, then a white dwarf does not have to reach the limit to explode. The number is not a direct weighing: it is the weight of the model that fits.
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>The size.</strong> What it is: how wide a white dwarf of that weight is. What it means: {result.radiusEarths.toFixed(2)} Earth radii, about {thousandsComma(roundTo(result.radiusKm, 10))} km, which is a little smaller than the Earth. A white dwarf of
+                the limit’s size would be far smaller still. Why it matters: it shows how crushed a white dwarf is, and how little the explosion has to start with. The size comes from a formula, good to about 3 percent here.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>The helium layer.</strong> Das and others’ simulation has a layer of {d.simulationShellSolar} Suns, and the 2026 analysis finds more than {d.analysis2026ShellAboveSolar}. These two do not agree, because they come from different features of the remnant.
+                This page uses the first and says so.
+              </p>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 2: the remnant</strong>
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Value', 'Where it comes from']}
+              minWidth={560}
+              rows={[
+                [
+                  'Radius of the inner calcium shell',
+                  `${d.innerShellPc} ± ${d.shellUncertaintyPc} parsecs = ${result.innerShellLightYears.toFixed(1)} light-years`,
+                  'Das and others (2025): the first of two peaks in the calcium light',
+                ],
+                [
+                  'Radius of the outer calcium shell',
+                  `${d.outerShellPc} ± ${d.shellUncertaintyPc} parsecs = ${result.outerShellLightYears.toFixed(1)} light-years`,
+                  'Das and others (2025): the second peak',
+                ],
+                [
+                  'The gap between the shells',
+                  `${result.shellGapPc.toFixed(2)} parsecs = ${result.shellGapLightYears.toFixed(2)} light-years, about ${sigmaGap.toFixed(1)} times the combined give-or-take`,
+                  'worked out here: the outer radius minus the inner one',
+                ],
+                [
+                  'The remnant’s age',
+                  `${ageLow} to ${ageHigh} years; this page uses ${result.ageYears}, the middle`,
+                  'Das and others (2025), “very young (~300–350 yr)”',
+                ],
+                [
+                  'Average speed of the inner shell',
+                  `${thousandsComma(roundTo(innerRange[0], 10))} to ${thousandsComma(roundTo(innerRange[1], 10))} km/s over the ages; ${thousandsComma(roundTo(result.innerShellSpeedKmS, 10))} km/s at ${result.ageYears} years`,
+                  'worked out here: radius ÷ age (an average, since the gas has slowed)',
+                ],
+                [
+                  'Average speed of the outer shell (the row for Prediction 2)',
+                  `${thousandsComma(roundTo(outerRange[0], 10))} to ${thousandsComma(roundTo(outerRange[1], 10))} km/s over the ages; ${thousandsComma(roundTo(result.outerShellSpeedKmS, 10))} km/s at ${result.ageYears} years, about ${(result.outerShellFractionOfLightSpeed * 100).toFixed(0)} percent of the speed of light`,
+                  'worked out here: radius ÷ age',
+                ],
+                [
+                  'Where the remnant is',
+                  'in the Large Magellanic Cloud, about 150,000 to 160,000 light-years away',
+                  'ESA/Hubble and ESO pages (they differ by about 6 percent)',
+                ],
+              ]}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>The two radii.</strong> What it is: how far from the centre the calcium glows brightest, in two places. What it means: {d.innerShellPc} and {d.outerShellPc} parsecs, about {result.innerShellLightYears.toFixed(1)} and {result.outerShellLightYears.toFixed(1)} light-years. Each
+                is good to about {d.shellUncertaintyPc} parsecs, and the gap of {result.shellGapPc.toFixed(2)} is about {sigmaGap.toFixed(1)} times the two give-or-takes together, so the two peaks are separate. Why it matters: two separate shells are the
+                pattern that simulations of a double detonation predict.
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>The speeds.</strong> What it is: how far each shell has gone divided by the age. What it means: about {thousandsComma(roundTo(result.outerShellSpeedKmS, 100))} km/s for the outer shell, a few percent of the speed of light. For example, {d.outerShellPc} parsecs is about
+                {' '}{result.outerShellLightYears.toFixed(1)} light-years, and in {result.ageYears} years light would go {result.ageYears} light-years, so the shell has gone about {(result.outerShellFractionOfLightSpeed * 100).toFixed(0)} percent as far as light would. Why it matters: it shows how violent the
+                explosion was. The speed is an average, because the gas has slowed since the explosion, so it is not the speed at the start.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>The age.</strong> The paper gives a range, {ageLow} to {ageHigh} years, and this page takes the middle. Changing it changes the speeds, in the opposite direction: an older remnant means a lower average speed.
+              </p>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 3: the two routes side by side</strong>
+            </p>
+            <ResultsTable
+              head={['Route', 'What it needs', 'What has been said about it']}
+              minWidth={640}
+              rows={[
+                [
+                  'Route 1: the white dwarf grows to the limit',
+                  'Gas from a partner (or a merger) until the white dwarf nears 1.4 Suns, and the centre ignites (NASA)',
+                  'The older, textbook route. The sources read here do not say what pattern of calcium it would leave.',
+                ],
+                [
+                  'Route 2: a double detonation',
+                  `A helium layer on the surface that ignites first and sets off the core. The simulation that matches SNR 0509-67.5 has ${result.simulationMassSolar.toFixed(3)} Suns in all`,
+                  'Das and others (2025) and ESO: two shells of calcium, the outer one from the helium layer and the inner one from the core, match what is seen. Mandal and others (2026): the small-scale structure is consistent with it',
+                ],
+                [
+                  'A different reading of the same two shells',
+                  'One author (Soker, 2025) suggests a “lonely white dwarf” explosion (not a double detonation) in which instabilities during the explosion make the two calcium shells',
+                  'Read in its abstract only. The paper says other explanations cannot be completely ruled out. It is why the label says “Contested”',
+                ],
+              ]}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: 0 }}>
+                <strong>What this table tells us.</strong> What it is: the three explanations that have been put forward for what made this remnant, set side by side with what each needs and what has been said about it. What
+                it means: the first is the routine story, the second fits the two shells and a weight below the limit, and the third is another way to get two shells. Why it matters: the experiment does not choose between
+                them. It shows what each says, and the tutor will help you think about what would tell them apart.
+              </p>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 4: your own numbers, checked against the published ones.</strong> It follows the settings above.
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Your value', 'Published value', 'How yours compares', 'How it was worked out']}
+              minWidth={900}
+              rows={[
+                [
+                  'The white dwarf’s weight',
+                  `${mine.massSolar} Suns`,
+                  `${result.simulationMassSolar.toFixed(3)} Suns (the simulation’s)`,
+                  isSame(cmp.massPercent) ? 'The same.' : `${pct(cmp.massPercent)} percent ${cmp.massPercent > 0 ? 'heavier' : 'lighter'} than the simulation’s.`,
+                  'a trial value',
+                ],
+                [
+                  'Its size',
+                  `a radius of about ${thousandsComma(roundTo(mine.radiusKm, 10))} km = ${mine.radiusEarths.toFixed(2)} Earth radii`,
+                  `about ${thousandsComma(roundTo(result.radiusKm, 10))} km = ${result.radiusEarths.toFixed(2)} Earth radii`,
+                  isSame(cmp.radiusPercent) ? 'The same.' : `${pct(cmp.radiusPercent)} percent ${cmp.radiusPercent > 0 ? 'larger' : 'smaller'} than the published one.`,
+                  'Black Holes Experiment 9’s formula for a white dwarf',
+                ],
+                [
+                  'How far below the limit',
+                  `${mine.gapBelowLimitSolar.toFixed(3)} Suns (${mine.percentBelowLimit.toFixed(0)} percent below it)`,
+                  `${result.simulationGapBelowLimitSolar.toFixed(3)} Suns (${result.percentBelowLimit.toFixed(0)} percent below it)`,
+                  isSame(cmp.massPercent) ? 'The same.' : cmp.mass > 0 ? 'Closer to the limit than the published one.' : 'Farther from the limit than the published one.',
+                  `${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} − ${mine.massSolar}`,
+                ],
+                [
+                  'The remnant’s age',
+                  `${mine.ageYears} years`,
+                  `${result.ageYears} years (the middle of the paper’s ${ageLow} to ${ageHigh})`,
+                  isSame(cmp.age) ? 'The same.' : `${cmp.age > 0 ? 'Older' : 'Younger'} than the middle; ${cmp.ageInsidePublishedRange ? 'inside' : 'outside'} the paper’s range.`,
+                  'a trial value',
+                ],
+                [
+                  'Average speed of the outer shell',
+                  `${thousandsComma(roundTo(mine.outerShellSpeedKmS, 10))} km/s`,
+                  `${thousandsComma(roundTo(result.outerShellSpeedKmS, 10))} km/s`,
+                  isSame(cmp.outerSpeedPercent) ? 'The same.' : `${pct(cmp.outerSpeedPercent)} percent ${cmp.outerSpeedPercent > 0 ? 'faster' : 'slower'} than the published one.`,
+                  `${d.outerShellPc} parsecs ÷ ${mine.ageYears} years`,
+                ],
+                [
+                  'A difference in brightness',
+                  mine.brightnessChange === 0 ? 'none' : `${Math.abs(mine.brightnessChange) * 100} percent ${dimWord(mine.brightnessChange)}`,
+                  'none (no published figure is used)',
+                  cmp.brightness === 0 ? 'The same.' : 'Trial value only: there is no published figure to compare it with.',
+                  'a trial value',
+                ],
+                [
+                  'The distance error that follows',
+                  mine.distanceErrorPercent === 0 ? 'none' : `${Math.abs(mine.distanceErrorPercent).toFixed(1)} percent too ${mine.distanceErrorPercent > 0 ? 'large' : 'small'}`,
+                  'none',
+                  isSame(mine.distanceErrorPercent) ? 'The same.' : 'A larger error, in the direction shown.',
+                  `1 ÷ the square root of ${distanceErrorWorkedExample(mine.brightnessChange).brightnessFraction.toFixed(1)}, minus 1`,
+                ],
+              ]}
+            />
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <strong>What this table tells us.</strong> It shows how each number moves when you change the weight, the age or the brightness. Ask yourself:{' '}
+              <em>which of the findings above still hold when I change the inputs, and which do not?</em> A finding that holds across many trial values is sturdier than one that depends on a single choice.
+            </p>
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What your numbers show.</strong>{' '}
+                {allPublished && 'Your settings are the published values, so every row matches the published column. Change a setting above and watch which rows move.'}
+              </p>
+              {massChanged && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  With a white dwarf of {mine.massSolar} Suns the radius is about {thousandsComma(roundTo(mine.radiusKm, 10))} km, {pct(cmp.radiusPercent)} percent {cmp.radiusPercent > 0 ? 'larger' : 'smaller'} than the published one, and it is
+                  {' '}{mine.gapBelowLimitSolar.toFixed(3)} Suns ({mine.percentBelowLimit.toFixed(0)} percent) below the limit. {cmp.mass > 0 ? 'A heavier white dwarf is smaller and nearer the limit.' : 'A lighter white dwarf is larger and farther from the limit.'}
+                  {' '}The simulation that matches the remnant has {result.simulationMassSolar.toFixed(3)} Suns, so this trial weight is not the one that fits the two shells.
+                </p>
+              )}
+              {cmp.age !== 0 && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  At {mine.ageYears} years the outer shell’s average speed is {thousandsComma(roundTo(mine.outerShellSpeedKmS, 10))} km/s, {pct(cmp.outerSpeedPercent)} percent {cmp.outerSpeedPercent > 0 ? 'faster' : 'slower'} than the published {thousandsComma(roundTo(result.outerShellSpeedKmS, 10))}.
+                  It is still about {(mine.outerShellFractionOfLightSpeed * 100).toFixed(0)} percent of the speed of light, so the answer to a question of the kind in Prediction 2 would not change. The age was taken from the paper’s range, so the real speed
+                  could differ by that much.
+                </p>
+              )}
+              {cmp.brightness !== 0 && (
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  A supernova {Math.abs(mine.brightnessChange) * 100} percent {dimWord(mine.brightnessChange)} than assumed would give a distance {Math.abs(mine.distanceErrorPercent).toFixed(1)} percent too {mine.distanceErrorPercent > 0 ? 'large' : 'small'}. A dimmer supernova looks
+                  fainter, so it is taken to be farther away than it is. This is a trial value: how much real Type Ia supernovae differ is not given here.
+                </p>
+              )}
+              <p style={{ margin: 0 }}>
+                These are trial values. They show how the checks respond when a number changes. They do not say that the real white dwarf or the real remnant is like this.
+              </p>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.5rem' }}>
+              <strong>The papers behind these results.</strong> Kept until now, so that they did not give away the predictions. Links open in a new tab.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.875rem' }}>
+              <li>
+                <ExternalLink href="https://doi.org/10.1038/s41550-025-02589-5">Das, Seitenzahl, Ruiter, Röpke, Pakmor and others, “Calcium in a supernova remnant as a fingerprint of a sub-Chandrasekhar-mass explosion”</ExternalLink>{' '}
+                (Nature Astronomy, 2025): the two calcium shells, their radii and the matching simulation.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2509.02422">Mandal, Ghavamian, Das, Seitenzahl, Mohamed and Ruiter, “Deciphering the explosion mechanism of Type Ia SNe using their remnants II”</ExternalLink>{' '}
+                (Astrophysical Journal, 2026): the weight from the remnant’s small-scale structure.
+              </li>
+              <li>
+                <ExternalLink href="https://arxiv.org/abs/2503.04709">Soker, “On the progenitor of the type Ia supernova remnant 0509-67.5”</ExternalLink> (2025): a different reading of the two shells.
+              </li>
+            </ul>
           </div>
         )}
       </div>

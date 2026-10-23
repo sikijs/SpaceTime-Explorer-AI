@@ -17,6 +17,7 @@ import {
   shellGap,
   shellSeparationInUncertainties,
   shellSpeedKmS,
+  shellSpeedRangeKmS,
   shellSpeedWorkedExample,
   SIZE_ANSWERS,
   sizeAnswer,
@@ -334,6 +335,33 @@ describe('the numbers of the worked examples, which the interface only displays 
     expect(w.percent).toBeCloseTo(11.8, 1)
     expect(w.percent).toBeCloseTo((w.distanceFactor - 1) * 100, 10)
     expect(() => distanceErrorWorkedExample(-1)).toThrow(RangeError)
+  })
+})
+
+describe('the speed range and the percentage below the limit (test 16)', () => {
+  it('the outer shell\'s speed runs from 5,755 km/s at 350 years to 6,714 at 300, and the inner shell\'s from 4,833 to 5,639', () => {
+    const [slowOuter, fastOuter] = shellSpeedRangeKmS(2.06)
+    expect(slowOuter).toBeCloseTo((2.06 * PARSEC_KM) / (350 * YEAR_S), 6)
+    expect(fastOuter).toBeCloseTo((2.06 * PARSEC_KM) / (300 * YEAR_S), 6)
+    expect(slowOuter).toBeCloseTo(5755, 0)
+    expect(fastOuter).toBeCloseTo(6714, 0)
+    const [slowInner, fastInner] = shellSpeedRangeKmS(1.73)
+    expect(slowInner).toBeCloseTo(4833, 0)
+    expect(fastInner).toBeCloseTo(5639, 0)
+    expect(slowOuter).toBeLessThan(fastOuter)
+  })
+  it('the default age lies inside that range, so the default speed lies inside it too', () => {
+    const [slow, fast] = shellSpeedRangeKmS(2.06)
+    expect(whereInRange(runWhiteDwarfExplosion().outerShellSpeedKmS, [slow, fast]).verdict).toBe('inside')
+  })
+  it('a white dwarf of 1.055 Suns is 26.7 percent below the limit, and the percentage below plus the fraction of the limit is 100', () => {
+    const r = runWhiteDwarfExplosion()
+    expect(r.percentBelowLimit).toBeCloseTo(((1.44 - 1.055) / 1.44) * 100, 8)
+    expect(r.percentBelowLimit).toBeCloseTo(26.7, 1)
+    for (const m of [0.6, 1.0, 1.2, 1.4]) {
+      const x = runWhiteDwarfExplosion({ massSolar: m })
+      expect(x.percentBelowLimit + x.fractionOfLimit * 100).toBeCloseTo(100, 10)
+    }
   })
 })
 

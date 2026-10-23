@@ -77,6 +77,11 @@ export function shellSpeedKmS(radiusPc: number, ageYears: number): number {
   requirePositive(ageYears, 'The age')
   return (radiusPc * KM_PER_PARSEC) / (ageYears * SECONDS_PER_YEAR)
 }
+// A shell's average speed at the two ends of the published age range (the slowest, at the oldest age, then the fastest, at the youngest), in km/s.
+export function shellSpeedRangeKmS(radiusPc: number): [number, number] {
+  const [young, old] = WHITE_DWARF_EXPLOSION.ageRangeYears
+  return [shellSpeedKmS(radiusPc, old), shellSpeedKmS(radiusPc, young)]
+}
 // The gap between two shells in parsecs and in light-years.
 export function shellGap(innerPc: number, outerPc: number): { pc: number; lightYears: number } {
   requirePositive(innerPc, 'The inner radius')
@@ -167,6 +172,7 @@ export interface WhiteDwarfResult {
   radiusEarths: number
   gapBelowLimitSolar: number
   fractionOfLimit: number
+  percentBelowLimit: number
   simulationMassSolar: number
   simulationGapBelowLimitSolar: number
   ageYears: number
@@ -197,6 +203,7 @@ export function runWhiteDwarfExplosion(settings: WhiteDwarfSettings = {}): White
     radiusEarths: earthRadii(radiusKm),
     gapBelowLimitSolar: gapBelowLimit(massSolar),
     fractionOfLimit: fractionOfLimit(massSolar),
+    percentBelowLimit: (1 - fractionOfLimit(massSolar)) * 100,
     simulationMassSolar,
     simulationGapBelowLimitSolar: gapBelowLimit(simulationMassSolar),
     ageYears,
