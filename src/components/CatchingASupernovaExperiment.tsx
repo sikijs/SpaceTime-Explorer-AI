@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
+import type { LightTravelAnswer, VisibleShareAnswer } from '../physics/catchingASupernova'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 13 (docs/experiments/frontier-and-beyond/13-catching-a-supernova.md).
+// Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
 // Step 2 (the interface skeleton) builds the page's skeleton: the status line, the introduction with its new-word list, its assumptions and its "Want to know more?"
 // links, one illustration (what happens in a core-collapse supernova) with its guide, and the collapsed "Words and formulas" panel. The two predictions, the run, the three
 // pictures, the controls, the results and the tutor are later steps. All wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard
@@ -157,7 +160,31 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Joule and erg', meaning: 'two units of energy. One joule is about the energy it takes to lift an apple (about 100 grams) 1 metre. An erg is one ten-millionth of a joule, a unit astronomers often use because the energies in space are so huge. The numbers in this experiment come in both, and the experiment shows how to change from one to the other.' },
 ]
 
+// The two prediction questions' answers (the specification's "Prediction Activity"). The labels do not say which answer is right.
+const SHARE_CHOICES: ReadonlyArray<{ value: VisibleShareAnswer; label: string }> = [
+  { value: 'about half', label: 'About half' },
+  { value: '1 in 10', label: 'About 1 part in 10 (10 percent)' },
+  { value: '1 in 100', label: 'About 1 part in 100 (1 percent)' },
+  { value: '1 in 10,000', label: 'About 1 part in 10,000 (0.01 percent)' },
+]
+const TRAVEL_CHOICES: ReadonlyArray<{ value: LightTravelAnswer; label: string }> = [
+  { value: 'a few months', label: 'A few months' },
+  { value: 'about 20 thousand years', label: 'About 20 thousand years' },
+  { value: 'about 20 million years', label: 'About 20 million years' },
+]
+
 export function CatchingASupernovaExperiment() {
+  const [sharePrediction, setSharePrediction] = useState<VisibleShareAnswer | null>(null)
+  const [travelPrediction, setTravelPrediction] = useState<LightTravelAnswer | null>(null)
+  // Run only records the predictions for now: the run itself, and the pictures, are the next step.
+  const [hasRun, setHasRun] = useState(false)
+  const bothPredicted = sharePrediction !== null && travelPrediction !== null
+
+  function startOver() {
+    setSharePrediction(null)
+    setTravelPrediction(null)
+    setHasRun(false)
+  }
   return (
     <div>
       <h2>Experiment 13 — Catching a Supernova in the Act: What Exploded, and Where Did the Energy Go? (SN 2023ixf)</h2>
@@ -314,8 +341,76 @@ export function CatchingASupernovaExperiment() {
 
         <ReferencePanel entries={REFERENCE_ENTRIES} />
 
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
-          The two predictions, and the experiment itself, will appear here.
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
+            right, and neither gives the share of the light or the distance. */}
+        {(
+          [
+            {
+              title: 'Prediction 1: how much of the energy is visible light?',
+              text: (
+                <>
+                  A massive star’s core collapses to a neutron star, and the star explodes. The collapse frees a huge amount of energy. About how much of that energy comes
+                  out as the visible light that telescopes photograph?
+                </>
+              ),
+              choices: SHARE_CHOICES,
+              value: sharePrediction,
+              set: (v: VisibleShareAnswer) => setSharePrediction(v),
+            },
+            {
+              title: 'Prediction 2: when did it really happen?',
+              text: (
+                <>
+                  The explosion was first seen from Earth in May 2023, in a galaxy a long way off. About how long before May 2023 did the star really explode? (Light takes
+                  time to cross space.)
+                </>
+              ),
+              choices: TRAVEL_CHOICES,
+              value: travelPrediction,
+              set: (v: LightTravelAnswer) => setTravelPrediction(v),
+            },
+          ] as const
+        ).map((question) => (
+          <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              {question.text} You are not graded, and a guess is fine.
+            </p>
+            <div>
+              {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                <button
+                  key={choice.value}
+                  type="button"
+                  onClick={() => (question.set as (v: never) => void)(choice.value as never)}
+                  disabled={hasRun}
+                  className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                >
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+              {question.value !== null
+                ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                : 'Choose an option to continue'}
+            </p>
+          </div>
+        ))}
+
+        <button type="button" className="action-button" onClick={() => setHasRun(true)} disabled={!bothPredicted || hasRun} style={{ padding: '0.6rem 1.5rem' }}>
+          Run
+        </button>
+        {hasRun && (
+          <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+            Start over
+          </button>
+        )}
+        {!bothPredicted && !hasRun && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+        )}
+        <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
+          {hasRun ? 'Your predictions are recorded and not marked here. The pictures and the results will appear here.' : 'The pictures fill in, one stage at a time, after you press Run.'}
         </p>
       </div>
     </div>
