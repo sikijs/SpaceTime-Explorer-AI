@@ -622,7 +622,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
     },
     {
       look: 'the four marked places on the orbit: behind, in front, and the two greatest-elongation points on the sides.',
-      means: 'when the companion is behind Betelgeuse, or in front of it, we cannot tell it apart from the star, which is why the 2020 pictures showed nothing. When it is at the side, as in December 2024, it is as far from the star on the sky as it ever gets, and the next time is 26 November 2027.',
+      means: 'when the companion is behind Betelgeuse, or in front of it, we cannot tell it apart from the star. The 2020 pictures were taken when the companion was predicted to be behind the star, and they showed no spot, which fits that. When it is at the side, as in December 2024, it is as far from the star on the sky as it ever gets, and the next time is 26 November 2027.',
       matters: 'the 2024 pictures were taken within days of the date when the orbit said the companion would be farthest from the star, so the spot, if real, had to be at a certain place on a certain date. That is what makes the test fair (Picture 3).',
     },
     {
@@ -718,7 +718,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
           </p>
 
           <p style={paragraph}>
-            <strong>Betelgeuse.</strong> Betelgeuse is a red supergiant, and NASA calls it the closest red supergiant to the Earth. Its distance is not known very
+            <strong>Betelgeuse.</strong> Betelgeuse is a red supergiant, one of the best-known stars in the sky. Its distance is not known very
             exactly: estimates run from about 550 light-years to about 700. It is not steady. NASA says it has a cycle of about 400 days and a longer one of about 5
             years (the team that looked for a companion says about 6), and in 2019 and early 2020 it dimmed sharply, which NASA describes as the star blowing off a giant
             piece of its surface into space. It will eventually explode as a supernova, but NASA says that is not likely for about another 100,000 years, and this
@@ -1205,7 +1205,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
                 </li>
                 <li>
                   <strong>Why it matters.</strong> The size sets the scale for everything else in the experiment. An orbit of about {result.modelSeparationAU.toFixed(1)} AU means
-                  the companion would be circling at about {result.separationInBetelgeuseRadii.toFixed(1)} star-radii from the centre, in the thin outer layers.
+                  the companion would be circling at about {result.separationInBetelgeuseRadii.toFixed(1)} star-radii from the centre. That is outside the surface of the simple ball we draw, but a real supergiant’s thin outer atmosphere reaches far beyond its visible edge, so the companion would still be moving through it.
                 </li>
                 <li>
                   <strong>How sure is it?</strong> The distance is the weakest number. The papers allow {BETELGEUSE.distanceRangePc[0]} to {BETELGEUSE.distanceRangePc[1]} parsecs,
