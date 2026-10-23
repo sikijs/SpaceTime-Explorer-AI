@@ -51,12 +51,12 @@ export interface MassEstimate {
   highSolar: number
 }
 const MASS_ESTIMATES: readonly MassEstimate[] = [
-  { who: 'Pledger and Shara', year: 2023, method: 'brightness before the explosion, against stellar models', lowSolar: 8, highSolar: 10 },
-  { who: 'Kilpatrick and others', year: 2023, method: 'the star’s colours and brightness, with dust', lowSolar: 11, highSolar: 14 },
-  { who: 'Van Dyk and others', year: 2024, method: 'the star’s brightness and the stars around it', lowSolar: 12, highSolar: 14 },
+  { who: 'Pledger and Shara', year: 2023, method: 'the star’s brightness before the explosion, against stellar models', lowSolar: 8, highSolar: 10 },
+  { who: 'Kilpatrick and others', year: 2023, method: 'fitting the star’s colours and brightness with dusty models', lowSolar: 11, highSolar: 14 },
+  { who: 'Van Dyk and others', year: 2024, method: 'method not read (seen in a summary only)', lowSolar: 12, highSolar: 14 },
   { who: 'Niu and others', year: 2023, method: 'the star’s colours and the dust round it; the stars around it gave 17 to 19', lowSolar: 16.2, highSolar: 17.4 },
-  { who: 'Jencson and others', year: 2023, method: 'a dusty, luminous star', lowSolar: 13, highSolar: 21 },
-  { who: 'Qin and others', year: 2023, method: 'the star’s colours and brightness (no range quoted)', lowSolar: 18.1, highSolar: 18.1 },
+  { who: 'Jencson and others', year: 2023, method: 'a luminous, dusty, variable star (from the paper’s title)', lowSolar: 13, highSolar: 21 },
+  { who: 'Qin and others', year: 2023, method: 'method not read (seen in a summary only); no range quoted', lowSolar: 18.1, highSolar: 18.1 },
   { who: 'Soraisam and others', year: 2023, method: 'how the star pulsed, over 19 years of infrared pictures', lowSolar: 16, highSolar: 24 },
 ]
 export function massEstimates(): readonly MassEstimate[] {
