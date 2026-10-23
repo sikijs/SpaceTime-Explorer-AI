@@ -617,7 +617,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
   const lookForPictureTwo: LookFor[] = [
     {
       look: 'the cyan circle, the companion’s orbit, compared with the orange disc and with Jupiter’s dashed orbit.',
-      means: `the orbit’s radius is ${result.modelSeparationAU.toFixed(1)} AU, which is ${result.separationInBetelgeuseRadii.toFixed(1)} times Betelgeuse’s radius. The companion goes round outside the star’s surface but well inside the distance of Jupiter from the Sun.`,
+      means: `the orbit’s radius is ${result.modelSeparationAU.toFixed(1)} AU, which is ${result.separationInBetelgeuseRadii.toFixed(1)} times Betelgeuse’s radius. The companion goes round outside the star’s surface. It is also farther from the centre than Jupiter is from the Sun (${PLANETS[4].orbitAU} AU), which is why Jupiter’s dashed circle in the picture lies inside the cyan orbit.`,
       matters: 'a companion this close must move through the thin outer gas of the swollen star, which is why astronomers talk about its “wake”, and it is why the star’s glare makes it so hard to see.',
     },
     {
