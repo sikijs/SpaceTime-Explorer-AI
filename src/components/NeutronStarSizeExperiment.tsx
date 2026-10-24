@@ -8,6 +8,11 @@ import {
   EARTH_RADIUS_KM,
   giveOrTakeInterval,
   ladderEntries,
+  guessCircleRadiusKm,
+  guessGravityInEarths,
+  logScalePosition,
+  predictionOneReal,
+  predictionTwoReal,
   NEUTRON_STAR_DATA,
   NEUTRON_STAR_RADIUS_KM,
   rangeCheck,
@@ -21,24 +26,19 @@ import {
 } from '../physics/neutronStarSize'
 import type { LadderEntry, NeutronStarResult } from '../physics/neutronStarSize'
 import type { GravityAnswer, SizeAnswer } from '../physics/neutronStarSize'
+import { NeutronStarSizeTutor } from './NeutronStarSizeTutor'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 15 (docs/experiments/frontier-and-beyond/15-how-big-is-a-neutron-star.md).
-// Step 5 builds the two controls (the star's radius and weight, shown after the run, which add white marks to Pictures 1 and 3) and the results with the reading guide: the status
-// label, the predictions beside the results (guess only), the check-up table, three tables each with a note, and the held-back paper links. There is no table that follows the
-// controls (specification decision 8). The tutor and the summary are later steps.
-// Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (the neutron star beside its own black-hole radius) at stages 1 and 2, Picture 2 (how close
-// to a black hole: a log-scale ladder) at stage 3, Picture 3 (where neutron stars end: a mass scale of published masses, with no zones) at stages 4 and 5. The timer only paces the
-// display (CLAUDE.md §11). The controls, the results, the tutor and the summary are later steps.
-// Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions and locks the buttons, because the run itself is a
-// later step. The numbers in the questions' text come from src/physics/neutronStarSize.ts. Neither question's text nor any button gives its answer (CLAUDE.md §12).
-// Step 2 (the interface skeleton) builds the page's skeleton: the status line, the introduction with its new-word list, its assumptions and its "Want to know more?" links, one
-// illustration (a pulsar, and NICER watching its pulses) with its guide, and the collapsed "Words and formulas" panel. The two predictions, the run, the three pictures, the
-// controls, the results and the tutor are later steps. All wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. The
-// introduction does not give the ratio of a neutron star's size to its black-hole radius or the strength of gravity on its surface (those are what the predictions and the run
-// show, §12). The interface only displays numbers from src/physics (CLAUDE.md §9); this step shows none, so it imports none.
+// The page has an introduction and four parts. The introduction has the question, the new-word list, the assumptions, the "Want to know more?" links, an illustration of a pulsar and
+// the collapsed "Words and formulas" panel. Part 1 (predict, then watch) has the two predictions, a five-stage run and three pictures, each with a guide; the learner's guesses are
+// drawn on Pictures 1 and 2 beside the real results (the owner's pilot of 2026-10-24), and the real pictures never change. Part 2 (now try it yourself) has two controls, the star's
+// radius and weight, which change two drawings of the learner's own sphere. Part 3 (the results) has the reading guide: the status label, the predictions beside the results (guess
+// only), the check-up table and three tables each with a note. Part 4 is the tutor (NeutronStarSizeTutor.tsx). There is no table that follows the controls (specification
+// decision 8). The timer only paces the display (CLAUDE.md §11). Every number comes from src/physics/neutronStarSize.ts (CLAUDE.md §9). All wording is the owner's to approve
+// line by line (CLAUDE.md §28.1) and is written to the standard of §29. Neither a question's text nor a button gives its answer (CLAUDE.md §12).
 
 const VIEW_WIDTH = 560
 const TEXT_COLOR = '#e2e8f0'
@@ -205,7 +205,7 @@ function PulsarDrawing() {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label="Illustration, not to scale, in two panels. Panel 1, a pulsar: a light violet ball, the neutron star, with a dashed grey line through it for its spin axis, and two orange hot spots on its surface, each with an orange beam of X-rays leaving it. Panel 2, how it is seen: a green box labelled NICER on the International Space Station on the right, an orange beam sweeping towards it from the star on the left, and below them a line with yellow spikes, the X-ray pulses NICER records, one each time the beam sweeps past."
+      aria-label="Illustration, not to scale, in two panels. Panel 1, a pulsar: a light violet sphere, the neutron star, with a dashed grey line through it for its spin axis, and two orange hot spots on its surface, each with an orange beam of X-rays leaving it. Panel 2, how it is seen: a green box labelled NICER on the International Space Station on the right, an orange beam sweeping towards it from the star on the left, and below them a line with yellow spikes, the X-ray pulses NICER records, one each time the beam sweeps past."
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Illustration: a pulsar, and how NICER sees it
@@ -322,8 +322,8 @@ const lookForFork: LookFor[] = [
 
 const lookForDrawing: LookFor[] = [
   {
-    look: 'panel 1: the light violet ball, the two orange spots and the orange arrows leaving them.',
-    means: 'a neutron star is a very small, very dense ball. Two hot spots on its surface shine X-rays in narrow beams, and because the star spins, the beams sweep round the sky.',
+    look: 'panel 1: the light violet sphere, the two orange spots and the orange arrows leaving them.',
+    means: 'a neutron star is a very small, very dense sphere. Two hot spots on its surface shine X-rays in narrow beams, and because the star spins, the beams sweep round the sky.',
     matters: 'the beams are what let us see a star that is far too small to make out in a picture: we do not look at its shape, we watch how its light flickers as it turns.',
   },
   {
@@ -345,15 +345,16 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Red giant', meaning: 'a star that has used up the hydrogen in its centre and has swollen up, with a cooler, redder surface. It is still making energy by fusion. It is a stage in a star’s life, not what is left after it. NASA says the Sun will become one, and that its radius “will become larger than Earth’s orbit”.' },
   { term: 'Red supergiant', meaning: 'the same kind of swelling in a star much heavier than the Sun, which ends up far larger than a red giant. Betelgeuse is one (Experiment 12).' },
   { term: 'White dwarf', meaning: 'the dead core of a light or medium star, left when the star has blown off its outer layers. NASA: “usually Earth-size but hundreds of thousands of times more massive” than the Earth. It makes no new energy, and electrons hold it up (Experiment 14).' },
-  { term: 'Neutron star', meaning: 'the very small, very dense ball left when the core of a massive star collapses (Experiment 13). NASA: “the mass of a sun squished down to the size of a city”, and neutron stars are “formed when a massive star runs out of fuel and collapses”. Neutrons, not electrons, hold it up (Black Holes Experiment 9).' },
+  { term: 'Neutron star', meaning: 'the very small, very dense sphere left when the core of a massive star collapses (Experiment 13). NASA: “the mass of a sun squished down to the size of a city”, and neutron stars are “formed when a massive star runs out of fuel and collapses”. Neutrons, not electrons, hold it up (Black Holes Experiment 9).' },
   { term: 'Pulsar', meaning: 'a neutron star that gives off a beam of radiation as it spins, so that we see a regular pulse, like a lighthouse. NASA: “Pulsars are rotating neutron stars observed to have pulses of radiation at very regular intervals that typically range from milliseconds to seconds.”' },
   { term: 'Millisecond pulsar', meaning: 'a pulsar that spins so fast that its pulses come only milliseconds apart. (A millisecond is a thousandth of a second.) PSR J0437−4715 is one, and it is the nearest and brightest known.' },
   { term: 'NICER', meaning: 'NASA’s Neutron star Interior Composition Explorer, an X-ray telescope on the International Space Station that studies neutron stars. NASA describes it as “an X-ray telescope that studies neutron stars, black holes, and other phenomena”.' },
+  { term: 'The NICER star', meaning: 'the real neutron star PSR J0437−4715, whose size and weight were measured by NASA’s NICER telescope: a radius of 11.36 km and a weight of 1.418 Suns (Choudhury and others, 2024). It is the star drawn in Picture 1. When this page says “the NICER star”, it means this one, and not the imagined stars in the two predictions.' },
   { term: 'Hot spot', meaning: 'a place on a neutron star’s surface, thought to lie near a magnetic pole, that is heated to millions of degrees and shines X-rays. As the star spins, a hot spot comes into view and goes out of view, which makes the pulses NICER records.' },
-  { term: 'Radius', meaning: 'the distance from the centre of a ball to its surface; the width of the ball is twice that. A neutron star is not quite round when it spins, so NICER measures its equatorial radius, the distance from its centre to its surface along the middle, at right angles to the spin axis.' },
-  { term: 'Black-hole radius', meaning: 'the radius a ball of a given mass would have to be squeezed to in order to be a black hole (Black Holes Experiment 1). It is 2GM ÷ c², about 2.95 kilometres for each solar mass.' },
-  { term: 'Compactness', meaning: 'how tightly a ball’s mass is squeezed, compared with how tight a black hole would be. A black hole has the greatest compactness there can be for a ball; an ordinary star has a tiny one. (The formula and the numbers come after the run.)' },
-  { term: 'Surface gravity', meaning: 'how strongly gravity pulls on something at the surface of a ball. On the Earth it makes a falling stone speed up by about 10 metres a second every second.' },
+  { term: 'Radius', meaning: 'the distance from the centre of a sphere to its surface; the width of the sphere is twice that. A neutron star is not quite round when it spins, so NICER measures its equatorial radius, the distance from its centre to its surface along the middle, at right angles to the spin axis.' },
+  { term: 'Black-hole radius', meaning: 'the radius a sphere of a given mass would have to be squeezed to in order to be a black hole (Black Holes Experiment 1). It is 2GM ÷ c², about 2.95 kilometres for each solar mass.' },
+  { term: 'Compactness', meaning: 'how tightly a sphere’s mass is squeezed, compared with how tight a black hole would be. A black hole has the greatest compactness there can be for a sphere; an ordinary star has a tiny one. (The formula and the numbers come after the run.)' },
+  { term: 'Surface gravity', meaning: 'how strongly gravity pulls on something at the surface of a sphere. On the Earth it makes a falling stone speed up by about 10 metres a second every second.' },
   { term: 'Give-or-take', meaning: 'the size of the uncertainty of a measurement, written “11 ± 1” or, when the uncertainty is bigger on one side than the other, with two numbers. It says how far the true value could be from the measured one. (Experiment 1 of this group explains it.)' },
   { term: 'Mass gap', meaning: 'a range of masses in which few compact objects (neutron stars or black holes) have been found, or are expected. The LIGO collaboration describes “a lower mass gap … between 3 and 5 solar masses”.' },
   { term: 'Solar mass', meaning: 'a unit for how heavy stars are. One solar mass is the mass of the Sun, so “1.4 solar masses” means 1.4 times as heavy as the Sun.' },
@@ -384,17 +385,28 @@ const LIGHT_COLOR = '#34d399' // green: GW230529's lighter object
 // ---- Picture 1: the neutron star, drawn to scale, and (from stage 2) the size of a black hole of the same mass ----
 const PICTURE_ONE_PX_PER_KM = 10
 const YOURS_COLOR = '#ffffff' // white: the learner's own trial value
-function PictureOne({ stage }: { stage: number }) {
+const QUESTION_STAR_COLOR = '#22d3ee' // cyan: the imagined star of Prediction 1 (the learner's guess about it is white)
+function PictureOne({ stage, guess }: { stage: number; guess: SizeAnswer | null }) {
   const r = runNeutronStarSize()
   const j = NEUTRON_STAR_DATA.j0437
-  const height = 350
+  const q = predictionOneReal()
+  const height = 372
   const cx = 190
   const cy = 165
   const starPx = r.radiusKm * PICTURE_ONE_PX_PER_KM
+  const questionPx = q.radiusKm * PICTURE_ONE_PX_PER_KM
   const holePx = r.blackHoleRadiusKm * PICTURE_ONE_PX_PER_KM
   const barPx = 10 * PICTURE_ONE_PX_PER_KM
   const edgeX = cx + holePx * Math.cos(Math.PI / 4)
   const edgeY = cy + holePx * Math.sin(Math.PI / 4)
+  const qEdgeX = cx + questionPx * Math.cos(Math.PI / 3)
+  const qEdgeY = cy + questionPx * Math.sin(Math.PI / 3)
+  const showQuestionStar = stage >= 2 && guess !== null
+  const guessBoxX = cx + starPx + 12
+  const guessBoxY = 40
+  const guessBoxW = 226
+  const guessBoxH = 82
+  const guessPx = guess === null ? 0 : guessCircleRadiusKm(guess) * PICTURE_ONE_PX_PER_KM + (guess === 'no' ? 6 : 0)
   return (
     <svg
       width={VIEW_WIDTH}
@@ -402,7 +414,7 @@ function PictureOne({ stage }: { stage: number }) {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 1, drawn to scale. A light violet disc, the neutron star, with a radius of ${r.radiusKm} kilometres. From stage 2, a smaller dashed red circle at its centre, the radius of a black hole of the same mass, ${r.blackHoleRadiusKm.toFixed(2)} kilometres, with the ratio ${r.ratio.toFixed(2)} written beside it. A scale bar under the star is 10 kilometres long.`}
+      aria-label={`Picture 1, drawn to scale. A light violet disc, the neutron star, with a radius of ${r.radiusKm} kilometres. From stage 2, a smaller dashed red circle at its centre, the radius of a black hole of the same mass, ${r.blackHoleRadiusKm.toFixed(2)} kilometres, with the ratio ${r.ratio.toFixed(2)} written beside it.${showQuestionStar ? ` A cyan dashed circle, the imagined star of Prediction 1, with a radius of ${q.radiusKm} kilometres, drawn at the same centre, with its ratio to its own black-hole radius of ${q.blackHoleRadiusKm.toFixed(2)} kilometres, ${q.ratio.toFixed(2)}, and your guess for it, drawn as a white dashed circle joined by a line to a white box, ${guess === 'yes' ? 'yes, it would be a black hole' : 'no, it would still be bigger than a black hole'}.` : ''} A scale bar under the star is 10 kilometres long.`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 1: a neutron star next to its own black hole (to scale)
@@ -412,12 +424,29 @@ function PictureOne({ stage }: { stage: number }) {
       <line x1={cx} y1={cy} x2={cx + starPx} y2={cy} stroke="#0b1020" strokeWidth={1.5} strokeDasharray="4 3" />
       <SvgLines x={cx + starPx + 8} y={cy - 18} lines={[`radius ${r.radiusKm} km`, `(${(2 * r.radiusKm).toFixed(1)} km across)`]} fill={STAR_COLOR} bold />
       <SvgLines x={cx + starPx + 8} y={cy + 8} lines={[`NICER’s give-or-take:`, `+${j.radiusPlusKm}, −${j.radiusMinusKm} km`]} fill={MUTED_COLOR} />
+      {showQuestionStar && (
+        // The learner's guess, drawn first so that the red black-hole circle (4.19 km) rides on top of a "yes" guess (4.13 km): a wide white ring with red dashes on it, not a muddle of dots.
+        <circle cx={cx} cy={cy} r={guessPx} fill="none" stroke={YOURS_COLOR} strokeWidth={guess === 'yes' ? 8 : 3} strokeDasharray={guess === 'yes' ? undefined : '3 3'} />
+      )}
       {stage >= 2 && (
         <g>
           <circle cx={cx} cy={cy} r={holePx} fill="#0b1020" fillOpacity={0.55} stroke={BLACK_HOLE_COLOR} strokeWidth={2.5} strokeDasharray="6 4" />
           <line x1={edgeX} y1={edgeY} x2={cx + starPx + 8} y2={cy + 52} stroke={BLACK_HOLE_COLOR} strokeWidth={1.5} />
           <SvgLines x={cx + starPx + 12} y={cy + 56} lines={[`a black hole of the same mass:`, `radius only ${r.blackHoleRadiusKm.toFixed(2)} km`]} fill={BLACK_HOLE_COLOR} bold />
           <SvgLines x={cx + starPx + 12} y={cy + 92} lines={[`radius ÷ black-hole radius`, `= ${r.ratio.toFixed(2)}`]} fill={PULSE_COLOR} bold />
+        </g>
+      )}
+      {showQuestionStar && (
+        <g>
+          <circle cx={cx} cy={cy} r={questionPx} fill={QUESTION_STAR_COLOR} fillOpacity={0.2} stroke={QUESTION_STAR_COLOR} strokeWidth={4} strokeDasharray="8 4" />
+          <line x1={cx + guessPx * Math.cos(-Math.PI / 4)} y1={cy + guessPx * Math.sin(-Math.PI / 4)} x2={guessBoxX} y2={guessBoxY + 30} stroke={YOURS_COLOR} strokeWidth={2} />
+          <rect x={guessBoxX} y={guessBoxY} width={guessBoxW} height={guessBoxH} rx={6} fill={YOURS_COLOR} stroke={MUTED_COLOR} strokeWidth={2} />
+          <text x={guessBoxX + 10} y={guessBoxY + 20} fill="#0b1020" fontSize="13" fontWeight="bold">YOUR GUESS</text>
+          <text x={guessBoxX + 10} y={guessBoxY + 38} fill="#0b1020" fontSize="11" fontWeight="bold">for the 6 km star (cyan circle):</text>
+          <text x={guessBoxX + 10} y={guessBoxY + 55} fill="#0b1020" fontSize="11" fontWeight="bold">{guess === 'yes' ? 'yes, it would be a black hole' : 'no, still bigger than a black hole'}</text>
+          <text x={guessBoxX + 10} y={guessBoxY + 72} fill="#0b1020" fontSize="11" fontWeight="bold">{guess === 'yes' ? '(white circle: black-hole size)' : '(white ring: outside black-hole size)'}</text>
+          <line x1={qEdgeX} y1={qEdgeY} x2={cx + starPx + 8} y2={cy + 128} stroke={QUESTION_STAR_COLOR} strokeWidth={1.5} />
+          <SvgLines x={cx + starPx + 12} y={cy + 134} lines={['the star in your question (imagined):', `radius ${q.radiusKm} km, squeezed from 12 km`, `${q.radiusKm} ÷ ${q.blackHoleRadiusKm.toFixed(2)} = ${q.ratio.toFixed(2)}`]} fill={QUESTION_STAR_COLOR} bold />
         </g>
       )}
       <line x1={cx - barPx / 2} y1={cy + starPx + 22} x2={cx + barPx / 2} y2={cy + starPx + 22} stroke={TEXT_COLOR} strokeWidth={2.5} />
@@ -428,7 +457,7 @@ function PictureOne({ stage }: { stage: number }) {
   )
 }
 
-// ---- Drawing A (Part 2): the learner's trial ball, to the scale of Picture 1, with its own black-hole radius and the NICER star as a grey reference ring ----
+// ---- Drawing A (Part 2): the learner's trial sphere, to the scale of Picture 1, with its own black-hole radius and the NICER star as a grey reference ring ----
 function TrialStarDrawing({ yours }: { yours: NeutronStarResult }) {
   const j = NEUTRON_STAR_DATA.j0437
   const height = 350
@@ -447,15 +476,15 @@ function TrialStarDrawing({ yours }: { yours: NeutronStarResult }) {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Drawing A, drawn to scale. A violet disc with a white outline, your trial ball, of radius ${yours.radiusKm} kilometres; a dashed red circle, the black-hole radius for ${yours.massSolar} Suns, ${yours.blackHoleRadiusKm.toFixed(2)} kilometres; and a dashed grey ring, the NICER star, ${j.radiusKm} kilometres, for reference. ${yours.insideHorizon ? 'The ball is inside its own black-hole radius, so it would be a black hole.' : `The ball is ${yours.ratio.toFixed(2)} times wider than a black hole of its weight.`}`}
+      aria-label={`Drawing A, drawn to scale. A violet disc with a white outline, your trial sphere, of radius ${yours.radiusKm} kilometres; a dashed red circle, the black-hole radius for ${yours.massSolar} Suns, ${yours.blackHoleRadiusKm.toFixed(2)} kilometres; and a dashed grey ring, the NICER star, ${j.radiusKm} kilometres, for reference. ${yours.insideHorizon ? 'The sphere is inside its own black-hole radius, so it would be a black hole.' : `The sphere is ${yours.ratio.toFixed(2)} times wider than a black hole of its weight.`}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
-        Drawing A: your trial ball next to its own black hole (to scale)
+        Drawing A: your trial sphere next to its own black hole (to scale)
       </text>
       <circle cx={cx} cy={cy} r={refPx} fill="none" stroke={MUTED_COLOR} strokeWidth={1.5} strokeDasharray="5 4" />
       <circle cx={cx} cy={cy} r={starPx} fill={STAR_COLOR} fillOpacity={0.35} stroke={YOURS_COLOR} strokeWidth={2.5} />
       <circle cx={cx} cy={cy} r={holePx} fill="#0b1020" fillOpacity={0.55} stroke={BLACK_HOLE_COLOR} strokeWidth={2.5} strokeDasharray="6 4" />
-      <SvgLines x={335} y={cy - 78} lines={['your ball (white outline):', `${yours.massSolar} Suns, radius ${yours.radiusKm} km`]} fill={YOURS_COLOR} bold />
+      <SvgLines x={335} y={cy - 78} lines={['your sphere (white outline):', `${yours.massSolar} Suns, radius ${yours.radiusKm} km`]} fill={YOURS_COLOR} bold />
       <SvgLines x={335} y={cy - 40} lines={['its black-hole radius (red):', `${yours.blackHoleRadiusKm.toFixed(2)} km`]} fill={BLACK_HOLE_COLOR} bold />
       <SvgLines
         x={335}
@@ -476,9 +505,11 @@ function TrialStarDrawing({ yours }: { yours: NeutronStarResult }) {
 // ---- Picture 2: how close to a black hole: radius ÷ black-hole radius on a log scale ----
 const LADDER_COLORS: Record<LadderEntry['id'], string> = { earth: '#38bdf8', sun: '#fbbf24', 'white-dwarf': '#93c5fd', 'neutron-star': STAR_COLOR, 'black-hole': BLACK_HOLE_COLOR }
 const LADDER_DECADES = 9
-function PictureTwo() {
+const PICTURE_TWO_LADDER_HEIGHT = 360
+const PICTURE_TWO_GRAVITY_HEIGHT = 290
+function PictureTwo({ gravityGuess }: { gravityGuess: GravityAnswer | null }) {
   const entries = ladderEntries()
-  const height = 360
+  const height = PICTURE_TWO_LADDER_HEIGHT + PICTURE_TWO_GRAVITY_HEIGHT
   const x0 = 235
   const pxPerDecade = 290 / LADDER_DECADES
   const top = 62
@@ -497,7 +528,7 @@ function PictureTwo() {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 2. Five horizontal bars on a scale that grows by a factor of ten at each step, showing how many times wider than its own black-hole radius each object is: the Earth ${sci(entries[0].ratio)}, the Sun ${sci(entries[1].ratio)}, a white dwarf of 1 Sun ${sci(entries[2].ratio)}, the neutron star ${entries[3].ratio.toFixed(2)}, and a black hole 1.`}
+      aria-label={`Picture 2. Five horizontal bars on a scale that grows by a factor of ten at each step, showing how many times wider than its own black-hole radius each object is: the Earth ${sci(entries[0].ratio)}, the Sun ${sci(entries[1].ratio)}, a white dwarf of 1 Sun ${sci(entries[2].ratio)}, the neutron star ${entries[3].ratio.toFixed(2)}, and a black hole 1. Below them, a second logarithmic line from 1 to 1 trillion, showing how many times stronger gravity is on the surface of the star in Prediction 2 than on the Earth: a yellow marker for the real value, ${sci(predictionTwoReal().gravityInEarths)}, calculated here, and, if you guessed, a white marker and box for your guess.`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 2: how close to being a black hole?
@@ -525,8 +556,61 @@ function PictureTwo() {
           </g>
         )
       })}
-      <SvgLines x={20} y={height - 8} lines={['Only how many times wider, not an area or a volume. The scale is logarithmic.']} fill={MUTED_COLOR} />
+      <SvgLines x={20} y={PICTURE_TWO_LADDER_HEIGHT - 8} lines={['Only how many times wider, not an area or a volume. The scale is logarithmic.']} fill={MUTED_COLOR} />
+      <GravityPanel guess={gravityGuess} top={PICTURE_TWO_LADDER_HEIGHT} />
     </svg>
+  )
+}
+
+// ---- Picture 2, second panel: how strong is gravity on the surface? The real value of Prediction 2's star and the learner's guess, on one log scale ----
+const GRAVITY_SCALE_POWER = 12
+const REAL_VALUE_COLOR = '#fde047' // yellow: the real, calculated value
+function GravityPanel({ guess, top }: { guess: GravityAnswer | null; top: number }) {
+  const real = predictionTwoReal()
+  const x0 = 40
+  const width = 480
+  const axisY = 170
+  const xAt = (value: number) => x0 + width * logScalePosition(value, 0, GRAVITY_SCALE_POWER)
+  const ticks = [
+    { power: 0, label: '1 (the Earth)' },
+    { power: 3, label: '1,000' },
+    { power: 6, label: '1 million' },
+    { power: 9, label: '1 billion' },
+    { power: 12, label: '1 trillion' },
+  ]
+  const guessValue = guess === null ? null : guessGravityInEarths(guess)
+  const guessX = guessValue === null ? 0 : xAt(guessValue)
+  const boxW = 210
+  const boxX = Math.min(Math.max(guessX - boxW / 2, 20), VIEW_WIDTH - boxW - 20)
+  const realX = xAt(real.gravityInEarths)
+  const guessLabel = guess === null ? '' : guess
+  return (
+    <g transform={`translate(0, ${top})`}>
+      <line x1={0} y1={0} x2={VIEW_WIDTH} y2={0} stroke={MUTED_COLOR} strokeWidth={1} strokeDasharray="4 4" />
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Lower half of Picture 2: how strong is gravity on the surface?
+      </text>
+      <SvgLines x={20} y={40} lines={[`for the star in Prediction 2 (${real.massSolar} Suns, ${real.radiusKm} km radius): times the Earth’s surface gravity`]} fill={MUTED_COLOR} />
+      <line x1={x0} y1={axisY} x2={x0 + width} y2={axisY} stroke={TEXT_COLOR} strokeWidth={2} />
+      {ticks.map((t) => (
+        <g key={t.power}>
+          <line x1={xAt(10 ** t.power)} y1={axisY - 6} x2={xAt(10 ** t.power)} y2={axisY + 6} stroke={TEXT_COLOR} strokeWidth={2} />
+          <SvgLines x={xAt(10 ** t.power)} y={axisY + 22} lines={[t.label]} fill={MUTED_COLOR} anchor={t.power === 0 ? 'start' : t.power === GRAVITY_SCALE_POWER ? 'end' : 'middle'} />
+        </g>
+      ))}
+      {guess !== null && (
+        <g>
+          <polygon points={`${guessX - 9},${axisY - 26} ${guessX + 9},${axisY - 26} ${guessX},${axisY - 8}`} fill={YOURS_COLOR} stroke="#0b1020" strokeWidth={1.5} />
+          <line x1={guessX} y1={axisY - 26} x2={guessX} y2={axisY - 40} stroke={YOURS_COLOR} strokeWidth={2} />
+          <rect x={boxX} y={axisY - 100} width={boxW} height={60} rx={6} fill={YOURS_COLOR} stroke={MUTED_COLOR} strokeWidth={2} />
+          <text x={boxX + 10} y={axisY - 80} fill="#0b1020" fontSize="13" fontWeight="bold">YOUR GUESS</text>
+          <text x={boxX + 10} y={axisY - 62} fill="#0b1020" fontSize="11" fontWeight="bold">{guessLabel}</text>
+          <text x={boxX + 10} y={axisY - 48} fill="#0b1020" fontSize="11" fontWeight="bold">(the white triangle)</text>
+        </g>
+      )}
+      <polygon points={`${realX - 9},${axisY + 58} ${realX + 9},${axisY + 58} ${realX},${axisY + 40}`} fill={REAL_VALUE_COLOR} stroke="#0b1020" strokeWidth={1.5} />
+      <SvgLines x={x0 + width} y={axisY + 76} lines={[`the real value: ${sci(real.gravityInEarths)} times the Earth’s`, 'calculated here from the mass and radius (not measured)']} fill={REAL_VALUE_COLOR} bold anchor="end" />
+    </g>
   )
 }
 
@@ -552,7 +636,7 @@ function PictureThree({ stage, yoursMass, name = 'Picture 3', title = 'Picture 3
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`${name}. A scale of mass in Suns from 0 to 5. A grey band from ${gapLo} to ${gapHi} Suns is the mass gap. A violet marker at ${d.j0437.massSolar} Suns is the neutron star NICER measured. A yellow block from ${estLo} to ${estHi} Suns is one team's estimate of the most a neutron star can weigh.${stage >= 5 ? ` From stage 5, an orange bar from ${pLo.toFixed(1)} to ${pHi.toFixed(1)} Suns is the heavier object of the event GW230529, and a green bar from ${sLo.toFixed(1)} to ${sHi.toFixed(1)} Suns is the lighter one.` : ''}`}
+      aria-label={`${name}. A scale of mass in Suns from 0 to 5. A grey band from ${gapLo} to ${gapHi} Suns is the mass gap. A violet marker at ${d.j0437.massSolar} Suns is the NICER star. A yellow block from ${estLo} to ${estHi} Suns is one team's estimate of the most a neutron star can weigh.${stage >= 5 ? ` From stage 5, an orange bar from ${pLo.toFixed(1)} to ${pHi.toFixed(1)} Suns is the heavier object of the event GW230529, and a green bar from ${sLo.toFixed(1)} to ${sHi.toFixed(1)} Suns is the lighter one.` : ''}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         {title}
@@ -568,7 +652,7 @@ function PictureThree({ stage, yoursMass, name = 'Picture 3', title = 'Picture 3
       ))}
       <SvgLines x={mx(2.5)} y={axisY + 36} lines={['mass in Suns (1 Sun = the mass of the Sun)']} fill={MUTED_COLOR} anchor="middle" />
 
-      {/* The neutron star NICER measured. */}
+      {/* The NICER star. */}
       <SvgLines x={mx(0)} y={96} lines={[`PSR J0437−4715 (NICER): ${d.j0437.massSolar} ± ${d.j0437.massUncertaintySolar} Suns`]} fill={STAR_COLOR} bold />
       <line x1={mx(massLo)} y1={112} x2={mx(massHi)} y2={112} stroke={STAR_COLOR} strokeWidth={3} />
       <circle cx={mx(d.j0437.massSolar)} cy={112} r={6} fill={STAR_COLOR} stroke="#0b1020" strokeWidth={1.5} />
@@ -601,6 +685,7 @@ function PictureThree({ stage, yoursMass, name = 'Picture 3', title = 'Picture 3
 const PART_ONE_COLOR = '#2563eb'
 const PART_TWO_COLOR = '#7c3aed'
 const PART_THREE_COLOR = '#0f766e'
+const PART_FOUR_COLOR = '#b45309'
 function StepHeader({ step, title, accent, lead }: { step: string; title: string; accent: string; lead: ReactNode }) {
   return (
     <div style={{ marginBottom: '1.25rem' }}>
@@ -650,9 +735,10 @@ const GRAVITY_CHOICES: ReadonlyArray<{ value: GravityAnswer; label: string }> = 
 
 interface NeutronStarSizeExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperimentProps) {
+export function NeutronStarSizeExperiment({ onComplete, onTutorComplete }: NeutronStarSizeExperimentProps) {
   const [sizePrediction, setSizePrediction] = useState<SizeAnswer | null>(null)
   const [gravityPrediction, setGravityPrediction] = useState<GravityAnswer | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -697,6 +783,8 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
   const j = d.j0437
   const mine = runNeutronStarSize({ massSolar: massChoice, radiusKm: radiusChoice })
   const check = runCheckUp()
+  const real2 = predictionTwoReal()
+  const q1 = predictionOneReal()
   const p1 = runNeutronStarSize({ massSolar: d.predictionMassSolar, radiusKm: d.predictionSqueezedRadiusKm })
   const p2 = runNeutronStarSize({ massSolar: d.predictionMassSolar, radiusKm: d.predictionGravityRadiusKm })
   const clockEx = clockWorkedExample(result.massSolar, result.radiusKm)
@@ -756,14 +844,14 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
     {
       look: 'the white-outlined disc and the red dashed circle.',
       means: mine.insideHorizon
-        ? `the red circle (${mine.blackHoleRadiusKm.toFixed(2)} km) is as big as or bigger than the disc (${mine.radiusKm} km), so the ball has been squeezed inside its own black-hole radius.`
-        : `the disc (${mine.radiusKm} km) is ${mine.ratio.toFixed(2)} times wider than the red circle (${mine.blackHoleRadiusKm.toFixed(2)} km), so the ball is bigger than a black hole of its weight.`,
-      matters: 'a ball becomes a black hole when it is squeezed until its disc is no wider than the red circle. How near the disc is to the red circle shows how near the ball is to that.',
+        ? `the red circle (${mine.blackHoleRadiusKm.toFixed(2)} km) is as big as or bigger than the disc (${mine.radiusKm} km), so the sphere has been squeezed inside its own black-hole radius.`
+        : `the disc (${mine.radiusKm} km) is ${mine.ratio.toFixed(2)} times wider than the red circle (${mine.blackHoleRadiusKm.toFixed(2)} km), so the sphere is bigger than a black hole of its weight.`,
+      matters: 'a sphere becomes a black hole when it is squeezed until its disc is no wider than the red circle. How near the disc is to the red circle shows how near the sphere is to that.',
     },
     {
       look: 'the red circle, when you change the weight but not the radius.',
       means: `the red circle grows by ${blackHoleRadiusKm(1).toFixed(3)} km for each Sun: it is ${blackHoleRadiusKm(d.massChoicesSolar[0]).toFixed(2)} km for ${d.massChoicesSolar[0]} Suns and ${blackHoleRadiusKm(d.massChoicesSolar[d.massChoicesSolar.length - 1]).toFixed(2)} km for ${d.massChoicesSolar[d.massChoicesSolar.length - 1]} Suns.`,
-      matters: 'at the same radius, a heavier ball is closer to being a black hole, because its black-hole radius is bigger.',
+      matters: 'at the same radius, a heavier sphere is closer to being a black hole, because its black-hole radius is bigger.',
     },
   ]
   const lookForDrawingB: LookFor[] = [
@@ -805,7 +893,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
 
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={paragraph}>
-            <strong>The question.</strong> A neutron star is what is left when a massive star explodes: more matter than the Sun squeezed into a ball about as wide as a city. How
+            <strong>The question.</strong> A neutron star is what is left when a massive star explodes: more matter than the Sun squeezed into a sphere about as wide as a city. How
             do we know how big it is, when it is far too small and far away to see as a disc? And how close is it to being a black hole? Recent measurements give a size to within
             about a kilometre, and one gravitational-wave event may have found something just heavier than any neutron star.
           </p>
@@ -813,7 +901,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
           <p style={paragraph}>
             <strong>Where we left off.</strong> In Experiment 13 you saw a massive star’s core collapse and leave a neutron star behind. In Black Holes Experiment 9 you saw that
             neutrons hold such a core up, but only up to a limit, and that a white dwarf (Experiment 14) is held up by electrons instead. In Black Holes Experiment 1 you met the
-            black-hole radius: the size a ball of a given mass would have to shrink to in order to become a black hole. Here you will use all three ideas.
+            black-hole radius: the size a sphere of a given mass would have to shrink to in order to become a black hole. Here you will use all three ideas.
           </p>
 
           <p style={paragraph}>
@@ -965,7 +1053,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
           <p style={paragraph}>
             <strong>A short calculation.</strong> A white dwarf is about as wide as the Earth, which is about 12,700 kilometres. A neutron star is about 20 kilometres across.
             12,700 ÷ 20 is about 640, so a neutron star is some 600 times narrower than a white dwarf, even though NASA says it holds more than the Sun’s mass, where a typical white
-            dwarf holds about half the Sun’s. The weight is squeezed into a far smaller ball. For comparison, a black hole of 3 Suns would have a radius of only about {BLACK_HOLE_THREE_SUNS_KM.toFixed(1)} km (2.95
+            dwarf holds about half the Sun’s. The weight is squeezed into a far smaller sphere. For comparison, a black hole of 3 Suns would have a radius of only about {BLACK_HOLE_THREE_SUNS_KM.toFixed(1)} km (2.95
             km for each Sun), so about {(2 * BLACK_HOLE_THREE_SUNS_KM).toFixed(0)} km across, a little narrower still than a neutron star, though much heavier.
           </p>
 
@@ -996,7 +1084,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
                 <strong>The two panels</strong> show two things: 1, a pulsar, which is a spinning neutron star with beams; 2, a telescope seeing its pulses.
               </li>
               <li>
-                <strong>The light violet ball</strong> is the neutron star. <strong>The dashed grey line</strong> is its spin axis, the line it turns round.
+                <strong>The light violet sphere</strong> is the neutron star. <strong>The dashed grey line</strong> is its spin axis, the line it turns round.
               </li>
               <li>
                 <strong>The orange dots and arrows</strong> are the hot spots and the beams of X-rays leaving them. A longer arrow would mean nothing here: the arrows only show the
@@ -1057,7 +1145,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
                 stage, its heavy-star version, and the dead core of a light or medium star.
               </li>
               <li>
-                <strong>Neutron star</strong>, <strong>pulsar</strong> and <strong>millisecond pulsar</strong>: the dense ball, a neutron star that gives pulses, and one that
+                <strong>Neutron star</strong>, <strong>pulsar</strong> and <strong>millisecond pulsar</strong>: the dense sphere, a neutron star that gives pulses, and one that
                 spins very fast.
               </li>
               <li>
@@ -1078,14 +1166,15 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other values for the
-            star’s radius and weight. Nothing here is graded. Your predictions are your own guesses, made before you see anything: they do not change the pictures or the tables,
-            which come from the physics and the published numbers. They are shown again beside the results so you can compare. The page has three parts: first you predict and watch the pictures, then, in a part of its own called “Now
-            try it yourself”, you can choose a radius and a weight for an imaginary ball and watch two drawings of your own follow your choices, and last come the results. The pictures
-            of the run and the results tables never change; only the two drawings in “Now try it yourself” follow your choices.
+            star’s radius and weight. Nothing here is graded. Your predictions are your own guesses, made before you see anything.{' '}
+            They never change the real pictures or the tables, which come from the physics and the published numbers. Your guesses are drawn on top of the real pictures, in white, so
+            you can compare each guess with the real result. They are shown again beside the results too. The page has three parts: first you predict and watch the pictures, then, in a part of its own called “Now
+            try it yourself”, you can choose a radius and a weight for an imaginary sphere and watch two drawings of your own follow your choices, and last come the results. {' '}
+            The real pictures and the results tables never change. Your white guess marks appear on Pictures 1 and 2, and the two drawings in “Now try it yourself” follow your choices.
           </p>
 
           <p style={paragraph}>
-            <strong>What we assume.</strong> This experiment is a simple model. It treats a neutron star as a smooth ball that is not spinning, and it takes the star’s radius as a
+            <strong>What we assume.</strong> This experiment is a simple model. It treats a neutron star as a smooth sphere that is not spinning, and it takes the star’s radius as a
             number that is given, not worked out from what the matter inside is made of. It uses the black-hole radius of Black Holes Experiment 1 and the clock slowing of Black
             Holes Experiment 2. It does not simulate how NICER makes its measurement, does not work out the most a neutron star can weigh, and does not decide what the heavier
             object in GW230529 is.
@@ -1149,8 +1238,9 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
             lead={
               <>
                 <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions, press Run, and watch three pictures build up one stage at a
-                time. The pictures show fixed things (the star NICER measured, some everyday objects, and the published masses). They are the same for everyone, and nothing you do later
-                on this page changes them.
+                time. The pictures show fixed things: the real neutron star that NASA’s NICER X-ray telescope measured, other objects it is compared with (the Earth, the Sun and a white dwarf), and the
+                masses scientists have published for neutron stars. They are the same for everyone. When the run reaches stage 2, your guesses are drawn on them in white, so you can see how each guess compares with the real result. The real
+                pictures stay the same whatever you guess.
               </>
             }
           />
@@ -1235,7 +1325,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
         </p>
         {status === 'running' && (
           <p style={{ fontSize: '0.875rem', marginTop: 0, color: 'var(--text-muted)' }}>
-            {stage === 1 && 'Picture 1 shows the neutron star NICER measured, drawn to scale.'}
+            {stage === 1 && 'Picture 1 shows the NICER star, drawn to scale.'}
             {stage === 2 && 'A dashed red circle is added to Picture 1: the size a black hole of the same mass would have.'}
             {stage === 3 && 'Picture 2 appears below Picture 1. It compares how close five objects are to being a black hole.'}
             {stage === 4 && 'Picture 3 appears below Picture 2. It is a scale of mass, with the published masses marked on it.'}
@@ -1246,20 +1336,34 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
         {/* Picture 1 (stage 1 on; the black-hole circle from stage 2). */}
         {hasRun && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureOne stage={stage} />
+            <PictureOne stage={stage} guess={sizePrediction} />
           </div>
         )}
         {hasRun && (
           <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             <p style={paragraph}>
-              <strong>How to read Picture 1.</strong> It shows the neutron star NICER measured (PSR J0437−4715), <strong>drawn to scale</strong>: every {PICTURE_ONE_PX_PER_KM} pixels across is 1
+              <strong>Where the real picture comes from.</strong> The <strong>violet star</strong>, which this page calls <strong>“the NICER star”</strong>, its radius ({j.radiusKm} km, give or take +{j.radiusPlusKm} and −{j.radiusMinusKm}) and its
+              mass ({j.massSolar} Suns, give or take {j.massUncertaintySolar}) were <strong>measured</strong> for the real star PSR J0437−4715 by NASA’s NICER X-ray telescope (Choudhury and
+              others, 2024; see the links under “Want to know more?”).
+              {stage >= 2 && (
+                <>
+                  {' '}
+                  The <strong>red black-hole circle is calculated here</strong>, not measured: it is the size a black hole of the same mass would have. The <strong>cyan dashed circle is not a real
+                  star</strong>. It is the imagined star from Prediction 1, squeezed to {NEUTRON_STAR_DATA.predictionSqueezedRadiusKm} km, and its black-hole radius is also calculated.
+                </>
+              )}
+            </p>
+            <p style={paragraph}>
+              <strong>How to read Picture 1.</strong> It shows the NICER star (PSR J0437−4715), <strong>drawn to scale</strong>: every {PICTURE_ONE_PX_PER_KM} pixels across is 1
               kilometre (km). The <strong>light violet disc</strong> is the star, and the <strong>dashed line</strong> from its centre to its edge is its <strong>radius</strong>, the
               distance from the centre to the surface. The <strong>white bar</strong> at the bottom is a scale bar 10 km long, so you can compare the star with a distance you know.
               {stage >= 2 && (
                 <>
                   {' '}
-                  The <strong>dashed red circle</strong> (stage 2) is the <strong>black-hole radius</strong> for the same mass: the radius a ball of {result.massSolar} Suns would have if it were squeezed until it
-                  became a black hole (Black Holes Experiment 1). The <strong>yellow numbers</strong> beside it are the star’s radius divided by that black-hole radius.
+                  The <strong>dashed red circle</strong> (stage 2) is the <strong>black-hole radius</strong> for the same mass: the radius a sphere of {result.massSolar} Suns would have if it were squeezed until it
+                  became a black hole (Black Holes Experiment 1). The <strong>yellow numbers</strong> beside it are the star’s radius divided by that black-hole radius. The <strong>cyan dashed circle</strong> is
+                  the imagined star of Prediction 1, drawn to the same scale and at the same centre, with the same sum written beside it, and the <strong>white box</strong> at the top right repeats your guess. Your guess is drawn as a <strong>white dashed circle</strong>, joined to that box by a line: if you guessed “yes”, it is at the black-hole size ({q1.blackHoleRadiusKm.toFixed(2)} km), the biggest the star could be and still be a black hole; if you guessed “no”, it is a ring just outside the {q1.radiusKm} km circle, outside the black-hole size. A “no” has no size of its own, so that ring only marks where you think the star lies.
+                  Nothing here says whether the guess was right.
                 </>
               )}
             </p>
@@ -1284,7 +1388,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
         {/* Picture 2 (stage 3 on). */}
         {stage >= 3 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureTwo />
+            <PictureTwo gravityGuess={gravityPrediction} />
           </div>
         )}
         {stage >= 3 && (
@@ -1305,6 +1409,17 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureTwo} />
+            <p style={paragraph}>
+              <strong>The lower half of Picture 2: how strong is gravity on the surface?</strong> The line is on a <strong>logarithmic scale</strong> like the one above: each tick is 1,000 times more than the one
+              before, and <strong>1</strong> is the gravity at the Earth’s surface. The <strong>yellow triangle</strong> below the line is the real value for the star in Prediction 2 ({real2.massSolar} Suns,{' '}
+              {real2.radiusKm} km radius): about {sci(real2.gravityInEarths)} times the Earth’s. The <strong>white triangle and box</strong> above the line repeat your guess. Nothing here says whether
+              the guess was right.
+            </p>
+            <p style={paragraph}>
+              <strong>Where the real value comes from.</strong> It is <strong>calculated here</strong>, not measured: g = GM ÷ R² (Newton’s value, only a guide at this strength) for an{' '}
+              <strong>imagined star</strong> of {real2.massSolar} Suns and {real2.radiusKm} km radius, divided by the Earth’s 9.81 m/s². No measurement of the surface gravity of a real neutron
+              star was read for this page.
+            </p>
           </div>
         )}
 
@@ -1318,7 +1433,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
           <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             <p style={paragraph}>
               <strong>How to read Picture 3.</strong> Along the bottom is a scale of <strong>mass in Suns</strong> (1 Sun is the mass of the Sun), from 0 to 5, with {PICTURE_THREE_PX_PER_SUN} pixels for each Sun. The{' '}
-              <strong>violet marker and short bar</strong> is the neutron star NICER measured. The <strong>yellow block</strong> is one team’s 2026 estimate of the most a neutron star can weigh. The{' '}
+              <strong>violet marker and short bar</strong> is the NICER star. The <strong>yellow block</strong> is one team’s 2026 estimate of the most a neutron star can weigh. The{' '}
               <strong>grey band</strong> is the <strong>mass gap</strong>, the range of masses where the LIGO collaboration says few compact objects are expected. Nothing here is a
               zone that says what an object <em>is</em>: the picture only marks published masses.
               {stage >= 5 && (
@@ -1350,7 +1465,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
 
       </div>
 
-        {/* Part 2, a section of its own (after the run): the learner's trial ball. Its two drawings follow the controls; nothing in Part 1 does. There is no table that follows the controls
+        {/* Part 2, a section of its own (after the run): the learner's trial sphere. Its two drawings follow the controls; nothing in Part 1 does. There is no table that follows the controls
             (specification decision 8). */}
         {done && (
           <PageSection
@@ -1360,30 +1475,36 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
             lead={
               <>
                 <strong>What we are about to do.</strong> The experiment above is finished, and its pictures are fixed. This part is separate from it: a small workshop where you choose a radius and a
-                weight for an imaginary ball, and two drawings of your own follow your choices. It has no connection to your predictions (those were guesses about the two stars in the
-                questions, and they do not appear here), and it does not change the pictures above or the results below. The one thing to explore is how a ball’s size and weight decide
+                weight for an imaginary sphere, and two drawings of your own follow your choices. It has no connection to your predictions (they were guesses about the two stars in the
+                questions, and your guess marks do not appear here), and it does not change the pictures above or the results below. The one thing to explore is how a sphere’s size and weight decide
                 how close it is to being a black hole.
               </>
             }
           >
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              Your predictions do not change these drawings or the tables; these two settings change the two drawings below. Each choice is a trial value: it shows what would happen
-              with that number, and does not say that a real neutron star is like that. Here the radius and the weight are chosen separately, but a real star’s radius depends on its
-              weight in ways this experiment does not model.
+              <strong>Your guesses from Part 1 have no effect here.</strong> They do not change these drawings or the results tables. Only the two settings below change the drawings.
             </p>
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>How wide is the ball? (radius, km) It changes the white-outlined disc in Drawing A.</p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>These are your own trial numbers, not real measurements.</strong> For example, you could choose a radius of 6 km and a weight of 2 Suns, and the drawings will show what
+              that sphere would look like next to its own black hole. That does not mean a real neutron star is like that.
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>One thing to know.</strong> Here you pick the radius and the weight separately, so you can mix any pair. In real stars the two are linked: a star’s weight helps decide how
+              wide it is. This experiment does not model that link, so a pair you pick may not be one that a real star could have.
+            </p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How wide is the sphere? (radius, km) It changes the white-outlined disc in Drawing A.</p>
             <ChoiceButtons
               options={d.radiusChoicesKm}
               value={radiusChoice}
               onChange={setRadiusChoice}
               format={(v) => `${v} km${v === j.radiusKm ? ' (NICER’s value for J0437)' : v === d.j0614RadiusRangeKm[1] ? ' (the top of J0614’s range)' : ''}`}
             />
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the ball? (Suns) It changes the red circle in Drawing A and the white line in Drawing B.</p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the sphere? (Suns) It changes the red circle in Drawing A and the white line in Drawing B.</p>
             <ChoiceButtons options={d.massChoicesSolar} value={massChoice} onChange={setMassChoice} format={(v) => `${v} Suns${v === j.massSolar ? ' (J0437)' : ''}`} />
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
               {mine.insideHorizon
-                ? `A ball of ${mine.massSolar} Suns squeezed to a radius of ${mine.radiusKm} km would be inside its own black-hole radius of ${mine.blackHoleRadiusKm.toFixed(2)} km. It would be a black hole, with no surface where a clock could sit. These are trial values.`
-                : `A ball of ${mine.massSolar} Suns and a radius of ${mine.radiusKm} km has a black-hole radius of ${mine.blackHoleRadiusKm.toFixed(2)} km, so it is ${mine.ratio.toFixed(2)} times wider than a black hole of its mass. Gravity at its surface would be ${sci(mine.gravityInEarths)} times the Earth’s (Newton’s value, only a guide), and a clock there would tick at ${mine.clockRate!.toFixed(3)} of the rate of a distant clock, ${mine.clockSlowerPercent!.toFixed(1)} percent slower. These are trial values, not measurements.`}
+                ? `A sphere of ${mine.massSolar} Suns squeezed to a radius of ${mine.radiusKm} km would be inside its own black-hole radius of ${mine.blackHoleRadiusKm.toFixed(2)} km. It would be a black hole, with no surface where a clock could sit. These are trial values.`
+                : `A sphere of ${mine.massSolar} Suns and a radius of ${mine.radiusKm} km has a black-hole radius of ${mine.blackHoleRadiusKm.toFixed(2)} km, so it is ${mine.ratio.toFixed(2)} times wider than a black hole of its mass. Gravity at its surface would be ${sci(mine.gravityInEarths)} times the Earth’s (Newton’s value, only a guide), and a clock there would tick at ${mine.clockRate!.toFixed(3)} of the rate of a distant clock, ${mine.clockSlowerPercent!.toFixed(1)} percent slower. These are trial values, not measurements.`}
             </p>
 
             <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
@@ -1391,15 +1512,15 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               <p style={paragraph}>
-                <strong>How to read Drawing A.</strong> It is drawn to the same scale as Picture 1 (every {PICTURE_ONE_PX_PER_KM} pixels is 1 kilometre), but it shows your ball and not NICER’s star. The{' '}
-                <strong>violet disc with a white outline</strong> is a ball with the radius you chose. The <strong>red dashed circle</strong> is the black-hole radius for the weight you
+                <strong>How to read Drawing A.</strong> It is drawn to the same scale as Picture 1 (every {PICTURE_ONE_PX_PER_KM} pixels is 1 kilometre), but it shows your sphere and not NICER’s star. The{' '}
+                <strong>violet disc with a white outline</strong> is a sphere with the radius you chose. The <strong>red dashed circle</strong> is the black-hole radius for the weight you
                 chose, which is {blackHoleRadiusKm(1).toFixed(3)} km for each Sun. The <strong>grey dashed ring</strong> is the NICER star’s radius, {j.radiusKm} km, kept for reference. The <strong>white bar</strong> is 10 km long. The{' '}
-                <strong>yellow numbers</strong> are your ball’s radius divided by its black-hole radius.
+                <strong>yellow numbers</strong> are your sphere’s radius divided by its black-hole radius.
               </p>
               <p style={paragraph}>
-                <strong>A worked moment.</strong> With {mine.massSolar} Suns, the black-hole radius is {blackHoleRadiusKm(1).toFixed(3)} × {mine.massSolar} = {mine.blackHoleRadiusKm.toFixed(2)} km. Your ball’s radius is {mine.radiusKm} km, so {mine.radiusKm} ÷{' '}
+                <strong>A worked moment.</strong> With {mine.massSolar} Suns, the black-hole radius is {blackHoleRadiusKm(1).toFixed(3)} × {mine.massSolar} = {mine.blackHoleRadiusKm.toFixed(2)} km. Your sphere’s radius is {mine.radiusKm} km, so {mine.radiusKm} ÷{' '}
                 {mine.blackHoleRadiusKm.toFixed(2)} = {mine.ratio.toFixed(2)}
-                {mine.insideHorizon ? ', which is 1 or less, so this ball would be a black hole.' : ', which is more than 1, so this ball would not be a black hole.'}
+                {mine.insideHorizon ? ', which is 1 or less, so this sphere would be a black hole.' : ', which is more than 1, so this sphere would not be a black hole.'}
               </p>
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
                 <strong>What to look for.</strong>
@@ -1439,9 +1560,20 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
             accent={PART_THREE_COLOR}
             lead={
               <>
-                <strong>What we are about to do.</strong> Here we set down the numbers behind the experiment in tables, so that you can compare them with your predictions. The tables are about three
-                fixed things: the star NICER measured, the two stars in your predictions, and the published measurements. They do not change with your predictions, and they do not change with
-                the settings you chose in Part 2. First comes where things stand, then a check-up, then the tables.
+                <strong>What we are about to do.</strong> In Part 1 you made two predictions at the start: Prediction 1 (would the 6 km star be a black hole?) and Prediction 2 (how strong is
+                gravity on the surface of the 1.4-Sun, 12 km star?). Here are the real numbers, in three tables, so you can compare your guesses with them.
+                <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>Table 1</strong> is about the real neutron star that NASA’s NICER telescope measured (“the NICER star”, the star in Picture 1).
+                  </li>
+                  <li>
+                    <strong>Table 2</strong> is about the two imagined stars in your predictions. The answers to Prediction 1 and Prediction 2 are in this table.
+                  </li>
+                  <li>
+                    <strong>Table 3</strong> is the published measurements from scientists, such as the heaviest weight a neutron star may have.
+                  </li>
+                </ul>
+                None of these tables changes with your guesses, or with the settings you chose in Part 2. Before the tables, you will first see where things stand today, then a short check-up.
               </>
             }
           >
@@ -1497,7 +1629,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
                 ],
                 [
                   'The ratio to the black-hole radius',
-                  'A ratio of 1 or less would mean the ball is a black hole',
+                  'A ratio of 1 or less would mean the sphere is a black hole',
                   `${result.ratio.toFixed(2)}`,
                   `Above 1: the star is ${result.ratio.toFixed(2)} times wider than a black hole of its mass would be, so it is not one. A ratio of exactly 1 is the black hole itself.`,
                 ],
@@ -1546,7 +1678,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
             </p>
 
             <p style={{ margin: '1.5rem 0 0.25rem' }}>
-              <strong>Table 1: the neutron star NICER measured</strong>
+              <strong>Table 1: the NICER star</strong>
             </p>
             <ResultsTable
               head={['Quantity', 'Value', 'Where it comes from']}
@@ -1559,7 +1691,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
                 ['Compactness', `${result.compactness.toFixed(3)} (a black hole’s is 0.5)`, 'worked out here: r_s ÷ (2R)'],
                 ['Gravity at the surface', `${sci(result.surfaceGravityMS2)} m/s², which is ${sci(result.gravityInEarths)} times the Earth’s`, 'worked out here: GM ÷ R² (Newton’s value, only a guide at this strength)'],
                 ['A clock on the surface', `${result.clockRate!.toFixed(3)} of the rate of a distant clock, ${result.clockSlowerPercent!.toFixed(1)} percent slower`, 'worked out here: √(1 − r_s ÷ R) (Black Holes Experiment 2)'],
-                ['Average density', `${sci(result.densityKgM3)} kg per cubic metre`, 'worked out here: weight ÷ volume of a ball'],
+                ['Average density', `${sci(result.densityKgM3)} kg per cubic metre`, 'worked out here: weight ÷ volume of a sphere'],
                 ['A sugar cube of it', `${sci(result.sugarCubeKg)} kg; NASA says “about 1 trillion kilograms”`, 'worked out here: density × 1 cubic centimetre; NASA Imagine the Universe'],
               ]}
             />
@@ -1580,7 +1712,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
               </p>
               <p style={{ margin: 0 }}>
                 <strong>The density.</strong> What it is: the weight divided by the volume. What it means: a sugar cube of this material would weigh about {sugarCubeMillionTonnes(result.massSolar, result.radiusKm).toFixed(0)} million tonnes, in the
-                same range as NASA’s “about 1 trillion kilograms”. Why it matters: it shows how much matter is packed into so small a ball.
+                same range as NASA’s “about 1 trillion kilograms”. Why it matters: it shows how much matter is packed into so small a sphere.
               </p>
             </div>
 
@@ -1595,7 +1727,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
                 ['Its black-hole radius', `${p1.blackHoleRadiusKm.toFixed(2)} km`, 'worked out here: 2GM ÷ c² (Black Holes Experiment 1)'],
                 [
                   'Its radius ÷ black-hole radius (the row for Prediction 1)',
-                  `${p1.ratio.toFixed(2)}; a ball with a ratio of 1 or less is a black hole`,
+                  `${p1.ratio.toFixed(2)}; a sphere with a ratio of 1 or less is a black hole`,
                   `worked out here: ${p1.radiusKm} ÷ ${p1.blackHoleRadiusKm.toFixed(2)}. You predicted: ${sizeLabel}`,
                 ],
                 ['Prediction 2’s star', `${p2.massSolar} Suns, radius ${p2.radiusKm} km`, 'the question’s own numbers'],
@@ -1609,7 +1741,7 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
             <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
               <p style={{ margin: 0 }}>
                 <strong>What this table tells us.</strong> What it is: the two stars that the predictions asked about, each worked out with the same formulas as Table 1. What it means: squeezed to {p1.radiusKm} km, a
-                ball of {p1.massSolar} Suns has a radius {p1.ratio.toFixed(2)} times its black-hole radius of {p1.blackHoleRadiusKm.toFixed(2)} km; and on the surface of a ball of {p2.massSolar} Suns and {p2.radiusKm} km, gravity is {sci(p2.gravityInEarths)} times the
+                sphere of {p1.massSolar} Suns has a radius {p1.ratio.toFixed(2)} times its black-hole radius of {p1.blackHoleRadiusKm.toFixed(2)} km; and on the surface of a sphere of {p2.massSolar} Suns and {p2.radiusKm} km, gravity is {sci(p2.gravityInEarths)} times the
                 Earth’s. Why it matters: the first shows where the line for becoming a black hole lies for this weight, and the second shows how extreme a neutron star’s gravity is. The tutor will go through your
                 guesses with you.
               </p>
@@ -1668,6 +1800,40 @@ export function NeutronStarSizeExperiment({ onComplete }: NeutronStarSizeExperim
                 (2024): GW230529 and its two masses.
               </li>
             </ul>
+          </PageSection>
+        )}
+
+        {/* Part 4, the tutor (after the results): observe, compare with the predictions, a conceptual question, then the explanation. */}
+        {done && sizePrediction !== null && gravityPrediction !== null && (
+          <PageSection
+            step="Part 4"
+            title="The tutor"
+            accent={PART_FOUR_COLOR}
+            lead={
+              <>
+                <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+                <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the
+                    real results. Third, it asks one bigger question, about the heavier object in the gravitational-wave event GW230529. Type a few words for each. Nothing is graded, and a short
+                    answer is fine.
+                  </li>
+                  <li>
+                    <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses were right until you have answered all three, so you can think it through first.
+                  </li>
+                  <li>
+                    <strong>Then the explanation.</strong> The tutor marks each of your two predictions as matched or not matched, and then goes through what lies behind the numbers in seven short
+                    parts: what holds a neutron star up, how its size was measured, how close it is to a black hole, how strong its gravity is, why there is a heaviest neutron star, and what GW230529
+                    is. Some parts use a worked sum or an everyday comparison.
+                  </li>
+                  <li>
+                    <strong>After the explanation,</strong> a short summary of what you learned appears below.
+                  </li>
+                </ul>
+              </>
+            }
+          >
+            <NeutronStarSizeTutor sizePrediction={sizePrediction} gravityPrediction={gravityPrediction} onExplained={onTutorComplete} />
           </PageSection>
         )}
     </div>

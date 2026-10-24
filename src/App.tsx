@@ -16,6 +16,7 @@ import { BetelgeuseCompanionExperiment } from './components/BetelgeuseCompanionE
 import { CatchingASupernovaExperiment } from './components/CatchingASupernovaExperiment'
 import { WhiteDwarfExplosionExperiment } from './components/WhiteDwarfExplosionExperiment'
 import { NeutronStarSizeExperiment } from './components/NeutronStarSizeExperiment'
+import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -105,6 +106,25 @@ const groupOverviews: Record<string, string> = {
     'This group follows black holes from several sides: how small something must be to become one, what happens to time, orbits, light and a falling traveler near one, what spin changes, where black holes come from, and how one might end.',
   'Frontier and Beyond':
     'This group follows recent results that are still being tested: where measurements disagree, where something unexpected has been seen, and what a result must show before it counts as a discovery. Each experiment says how settled its result is, as of October 2026.',
+}
+
+// The chapter summary of Frontier and Beyond Experiment 15 (wording approved by the owner on 2026-10-24). Every number is read from the experiment's physics module, so the
+// text cannot drift from the page.
+function neutronStarSummary(): string {
+  const r = runNeutronStarSize()
+  const q = predictionOneReal()
+  const d = NEUTRON_STAR_DATA
+  const minutes = surfaceMinutesPerDistantHour(r.massSolar, r.radiusKm)
+  // "about 20 percent": the slowdown (20.5) to the nearest 5, as in the approved wording.
+  return (
+    `A neutron star is tiny and very dense. The one NICER measured has a radius of ${r.radiusKm} km (give or take about 1 km) and a weight of ${r.massSolar} Suns: more than the Sun’s weight ` +
+    `squeezed into the size of a city. It is only ${r.ratio.toFixed(2)} times wider than a black hole of its own weight would be (${r.radiusKm} km compared with ${r.blackHoleRadiusKm.toFixed(2)} km), ` +
+    `and a black hole would be exactly 1. So a neutron star is close to being a black hole, but it is not one. Even a ${q.massSolar}-Sun star squeezed to ${q.radiusKm} km would still be ` +
+    `${q.ratio.toFixed(2)} times wider than its black-hole size. Gravity at the surface is about 100 billion times the Earth’s, and a clock there runs about ` +
+    `${Math.round((r.clockSlowerPercent ?? 0) / 5) * 5} percent slow, counting about ${(minutes ?? 0).toFixed(1)} minutes in an hour. These two figures are calculated here, not measured. NICER found the size by ` +
+    `watching X-ray pulses from hot spots as the star spins, like a lighthouse. Two things are still open: how heavy a neutron star can be before it collapses (one 2026 estimate is ` +
+    `${d.maximumMassEstimateRangeSolar[0]} to ${d.maximumMassEstimateRangeSolar[1]} Suns, and it depends on assumptions), and what the heavier object in GW230529 is, a neutron star or a black hole.`
+  )
 }
 
 const chapters: Chapter[] = [
@@ -753,10 +773,10 @@ const chapters: Chapter[] = [
     title: 'How big is a neutron star, and where do they end? (NICER and GW230529)',
     group: 'Frontier and Beyond',
     Component: NeutronStarSizeExperiment,
-    // Placeholder chapter summary (Step 2): the real one is drafted in a later step, for the owner's line-by-line approval (CLAUDE.md §28.1). It is shown only after the
-    // learner reaches the tutor's explanation, which is not built yet, so it does not appear.
-    learned: 'Summary to be written once the experiment is built.',
-    next: 'Summary to be written once the experiment is built.',
+    // Chapter summary, wording approved by the owner on 2026-10-24 (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's). "What's next" names no
+    // experiment, because Experiment 16 has no approved specification.
+    learned: neutronStarSummary(),
+    next: 'None yet, because Experiment 16 has no approved specification.',
   },
 ]
 
