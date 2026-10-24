@@ -944,7 +944,7 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
               At {mine.ageYears} years the average speeds are {thousandsComma(roundTo(mine.innerShellSpeedKmS, 10))} km/s for the inner shell and {thousandsComma(roundTo(mine.outerShellSpeedKmS, 10))} km/s for the outer one. An older remnant
               means the same distance took longer, so a lower average speed. The paper gives the age as {ageLow} to {ageHigh} years.
             </p>
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>What if the explosions differ in brightness? It moves the white bar in Picture 3.</p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How much dimmer or brighter is the supernova than assumed? (percent) It moves the white bar in Picture 3.</p>
             <ChoiceButtons
               options={d.brightnessChoices}
               value={brightnessChoice}
