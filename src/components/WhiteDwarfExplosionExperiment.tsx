@@ -863,7 +863,8 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
             </p>
             <p style={paragraph}>
               <strong>Route 1</strong> (the top row): the white dwarf takes gas from a partner, so its weight creeps up towards the red dashed <strong>limit</strong> in step 2, and
-              when it nears it the centre ignites. {stage >= 3 && (
+              when it nears it the centre ignites. The centre is mostly carbon and oxygen, which are fuel that was never burnt. The extra weight squeezes the centre harder, and near
+              the limit it is squeezed enough for carbon to start fusing. {stage >= 3 && (
                 <>
                   <strong>Route 2</strong> (the bottom row, added at stage 3): a thin helium layer collects on the surface and ignites first, and the <strong>yellow arrows pointing
                   inward</strong> in step 2 show the shock running inward. In step 3 the shock ignites the core. The line of numbers at the bottom gives the weights of the

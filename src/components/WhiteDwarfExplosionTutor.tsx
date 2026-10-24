@@ -158,7 +158,12 @@ export function WhiteDwarfExplosionTutor({ sizePrediction, speedPrediction, onEx
           </p>
           <p style={paragraphStyle}>
             <strong>2. Route 1: the white dwarf grows to the limit.</strong> NASA describes it: gas flows onto the white dwarf from a partner, and as it nears 1.4 Suns “the pressure at the center will exceed the
-            threshold for the carbon and oxygen nuclei to start to fuse uncontrollably”. Think of filling ten bottles to the same line: they all weigh nearly the same. If every white dwarf exploded when it reached the same
+            threshold for the carbon and oxygen nuclei to start to fuse uncontrollably”. <strong>Why does the centre ignite?</strong> Inside a white dwarf the carbon and oxygen are fuel that the star could not burn when it was making
+            energy, because its core was never squeezed hard enough. Fusion needs the nuclei pushed very close together. Each bit of gas from the partner adds weight, and the weight squeezes
+            the centre harder. Near the limit, the centre is squeezed enough for the nuclei to start to fuse. Then comes the “uncontrollably” in NASA’s sentence. In an ordinary star, heat makes
+            the gas expand and cool, which keeps fusion steady. A white dwarf is held up by electron degeneracy pressure, which hardly changes with heat, so the star does not expand and cool.
+            The fusion makes heat, the heat speeds up the fusion, and so on. It is like a pot with its lid clamped on, where an open pan could bubble over and cool. The result is a runaway,
+            and the star explodes. Think of filling ten bottles to the same line: they all weigh nearly the same. If every white dwarf exploded when it reached the same
             weight, the explosions would give out nearly the same energy, and that is why NASA says astronomers use Type Ia supernovae as “standard candles”. This was the older idea, and it would explain why the explosions look alike.
           </p>
           <p style={paragraphStyle}>
