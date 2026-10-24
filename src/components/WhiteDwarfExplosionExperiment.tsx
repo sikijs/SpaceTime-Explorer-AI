@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CHANDRASEKHAR_LIMIT_SOLAR_MASSES,
-  compareWithPublished,
   distanceErrorPercent,
   EARTH_RADIUS_KM,
   KM_PER_PARSEC,
@@ -392,8 +391,6 @@ function ChoiceButtons<T extends number>({ options, value, onChange, format }: {
 }
 
 // A signed percentage as an unsigned number, for a sentence such as "12.3 percent larger".
-const pct = (n: number): string => Math.abs(n).toFixed(Math.abs(n) < 10 ? 1 : 0)
-const isSame = (n: number): boolean => Math.abs(n) < 1e-9
 
 const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'White dwarf', meaning: 'the small, dense, slowly cooling ball left when a star like the Sun has used up its fuel. NASA: “A typical white dwarf is half as massive as the Sun, yet only slightly bigger than Earth.” (Black Holes Experiment 9 explains what holds it up.)' },
@@ -481,9 +478,6 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
   const sigmaGap = result.separationInUncertainties
   const settings = { massSolar: massChoice, ageYears: ageChoice, brightnessChange: brightnessChoice }
   const mine = runWhiteDwarfExplosion(settings)
-  const cmp = compareWithPublished(settings)
-  const allPublished = cmp.mass === 0 && cmp.age === 0 && cmp.brightness === 0
-  const massChanged = cmp.mass !== 0
   const yoursOne: YoursOne | null = done ? { massSolar: mine.massSolar, radiusEarths: mine.radiusEarths, radiusKm: mine.radiusKm } : null
   const yoursThree: YoursThree | null =
     done ? { ageYears: mine.ageYears, innerSpeedKmS: mine.innerShellSpeedKmS, outerSpeedKmS: mine.outerShellSpeedKmS, brightnessChange: mine.brightnessChange, distanceErrorPercent: mine.distanceErrorPercent } : null
@@ -687,7 +681,7 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other values for the
             white dwarf’s weight, the remnant’s age and a difference in brightness. Nothing here is graded. Your predictions are your own guesses, made before you see
             anything: they do not change the pictures or the tables, which come from the physics and the published numbers. They are shown again beside the results so you can
-            compare. What does change the pictures and Table 4 is the “Now try it yourself” controls, which appear after the run finishes.
+            compare. What does change the pictures is the “Now try it yourself” controls, which appear after the run finishes.
           </p>
 
           <p style={paragraph}>
@@ -924,14 +918,13 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
           </div>
         )}
 
-        {/* The controls (after the run): the white dwarf's weight, the remnant's age and a brightness difference. They add white marks to Pictures 1 and 3, and fill Table 4. */}
+        {/* The controls (after the run): the white dwarf's weight, the remnant's age and a brightness difference. They add white marks to Pictures 1 and 3. */}
         {done && (
           <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
             <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              Your predictions do not change the pictures or Table 4, because the results come from the physics, not from your guesses. These settings do: change one and watch the white
-              marks in Pictures 1 and 3 above, and Table 4 below, follow it. Picture 2 does not change, because it is a sketch of two ideas. While every setting is on its published
-              value (the simulation’s weight, the middle of the paper’s age range, no brightness difference), Table 4 says “the same” in every row, so change a setting to see it move.
+              Your predictions do not change the pictures, because the results come from the physics, not from your guesses. These settings do: change one and watch the white
+              marks in Pictures 1 and 3 above follow it. Picture 2 does not change, because it is a sketch of two ideas.
               Each choice is a trial value: it shows what would happen with that number, and does not say that the real white dwarf or the real remnant is like that.
             </p>
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the white dwarf? (Suns) It moves the white marker in Picture 1.</p>
@@ -1191,98 +1184,6 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
                 <strong>What this table tells us.</strong> What it is: the three explanations that have been put forward for what made this remnant, set side by side with what each needs and what has been said about it. What
                 it means: the first is the routine story, the second fits the two shells and a weight below the limit, and the third is another way to get two shells. Why it matters: the experiment does not choose between
                 them. It shows what each says, and the tutor will help you think about what would tell them apart.
-              </p>
-            </div>
-
-            <p style={{ margin: '1.5rem 0 0.25rem' }}>
-              <strong>Table 4: your own numbers, checked against the published ones.</strong> It follows the settings above.
-            </p>
-            <ResultsTable
-              head={['Quantity', 'Your value', 'Published value', 'How yours compares', 'How it was worked out']}
-              minWidth={900}
-              rows={[
-                [
-                  'The white dwarf’s weight',
-                  `${mine.massSolar} Suns`,
-                  `${result.simulationMassSolar.toFixed(3)} Suns (the simulation’s)`,
-                  isSame(cmp.massPercent) ? 'The same.' : `${pct(cmp.massPercent)} percent ${cmp.massPercent > 0 ? 'heavier' : 'lighter'} than the simulation’s.`,
-                  'a trial value',
-                ],
-                [
-                  'Its size',
-                  `a radius of about ${thousandsComma(roundTo(mine.radiusKm, 10))} km = ${mine.radiusEarths.toFixed(2)} Earth radii`,
-                  `about ${thousandsComma(roundTo(result.radiusKm, 10))} km = ${result.radiusEarths.toFixed(2)} Earth radii`,
-                  isSame(cmp.radiusPercent) ? 'The same.' : `${pct(cmp.radiusPercent)} percent ${cmp.radiusPercent > 0 ? 'larger' : 'smaller'} than the published one.`,
-                  'Black Holes Experiment 9’s formula for a white dwarf',
-                ],
-                [
-                  'How far below the limit',
-                  `${mine.gapBelowLimitSolar.toFixed(3)} Suns (${mine.percentBelowLimit.toFixed(0)} percent below it)`,
-                  `${result.simulationGapBelowLimitSolar.toFixed(3)} Suns (${result.percentBelowLimit.toFixed(0)} percent below it)`,
-                  isSame(cmp.massPercent) ? 'The same.' : cmp.mass > 0 ? 'Closer to the limit than the published one.' : 'Farther from the limit than the published one.',
-                  `${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} − ${mine.massSolar}`,
-                ],
-                [
-                  'The remnant’s age',
-                  `${mine.ageYears} years`,
-                  `${result.ageYears} years (the middle of the paper’s ${ageLow} to ${ageHigh})`,
-                  isSame(cmp.age) ? 'The same.' : `${cmp.age > 0 ? 'Older' : 'Younger'} than the middle; ${cmp.ageInsidePublishedRange ? 'inside' : 'outside'} the paper’s range.`,
-                  'a trial value',
-                ],
-                [
-                  'Average speed of the outer shell',
-                  `${thousandsComma(roundTo(mine.outerShellSpeedKmS, 10))} km/s`,
-                  `${thousandsComma(roundTo(result.outerShellSpeedKmS, 10))} km/s`,
-                  isSame(cmp.outerSpeedPercent) ? 'The same.' : `${pct(cmp.outerSpeedPercent)} percent ${cmp.outerSpeedPercent > 0 ? 'faster' : 'slower'} than the published one.`,
-                  `${d.outerShellPc} parsecs ÷ ${mine.ageYears} years`,
-                ],
-                [
-                  'A difference in brightness',
-                  mine.brightnessChange === 0 ? 'none' : `${Math.abs(mine.brightnessChange) * 100} percent ${dimWord(mine.brightnessChange)}`,
-                  'none (no published figure is used)',
-                  cmp.brightness === 0 ? 'The same.' : 'Trial value only: there is no published figure to compare it with.',
-                  'a trial value',
-                ],
-                [
-                  'The distance error that follows',
-                  mine.distanceErrorPercent === 0 ? 'none' : `${Math.abs(mine.distanceErrorPercent).toFixed(1)} percent too ${mine.distanceErrorPercent > 0 ? 'large' : 'small'}`,
-                  'none',
-                  isSame(mine.distanceErrorPercent) ? 'The same.' : 'A larger error, in the direction shown.',
-                  `1 ÷ the square root of ${distanceErrorWorkedExample(mine.brightnessChange).brightnessFraction.toFixed(1)}, minus 1`,
-                ],
-              ]}
-            />
-            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-              <strong>What this table tells us.</strong> It shows how each number moves when you change the weight, the age or the brightness. Ask yourself:{' '}
-              <em>which of the findings above still hold when I change the inputs, and which do not?</em> A finding that holds across many trial values is sturdier than one that depends on a single choice.
-            </p>
-            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-              <p style={{ margin: '0 0 0.5rem' }}>
-                <strong>What your numbers show.</strong>{' '}
-                {allPublished && 'Your settings are the published values, so every row matches the published column. Change a setting above and watch which rows move.'}
-              </p>
-              {massChanged && (
-                <p style={{ margin: '0 0 0.5rem' }}>
-                  With a white dwarf of {mine.massSolar} Suns the radius is about {thousandsComma(roundTo(mine.radiusKm, 10))} km, {pct(cmp.radiusPercent)} percent {cmp.radiusPercent > 0 ? 'larger' : 'smaller'} than the published one, and it is
-                  {' '}{mine.gapBelowLimitSolar.toFixed(3)} Suns ({mine.percentBelowLimit.toFixed(0)} percent) below the limit. {cmp.mass > 0 ? 'A heavier white dwarf is smaller and nearer the limit.' : 'A lighter white dwarf is larger and farther from the limit.'}
-                  {' '}The simulation that matches the remnant has {result.simulationMassSolar.toFixed(3)} Suns, so this trial weight is not the one that fits the two shells.
-                </p>
-              )}
-              {cmp.age !== 0 && (
-                <p style={{ margin: '0 0 0.5rem' }}>
-                  At {mine.ageYears} years the outer shell’s average speed is {thousandsComma(roundTo(mine.outerShellSpeedKmS, 10))} km/s, {pct(cmp.outerSpeedPercent)} percent {cmp.outerSpeedPercent > 0 ? 'faster' : 'slower'} than the published {thousandsComma(roundTo(result.outerShellSpeedKmS, 10))}.
-                  It is still about {(mine.outerShellFractionOfLightSpeed * 100).toFixed(0)} percent of the speed of light, so the answer to a question of the kind in Prediction 2 would not change. The age was taken from the paper’s range, so the real speed
-                  could differ by that much.
-                </p>
-              )}
-              {cmp.brightness !== 0 && (
-                <p style={{ margin: '0 0 0.5rem' }}>
-                  A supernova {Math.abs(mine.brightnessChange) * 100} percent {dimWord(mine.brightnessChange)} than assumed would give a distance {Math.abs(mine.distanceErrorPercent).toFixed(1)} percent too {mine.distanceErrorPercent > 0 ? 'large' : 'small'}. A dimmer supernova looks
-                  fainter, so it is taken to be farther away than it is. This is a trial value: how much real Type Ia supernovae differ is not given here.
-                </p>
-              )}
-              <p style={{ margin: 0 }}>
-                These are trial values. They show how the checks respond when a number changes. They do not say that the real white dwarf or the real remnant is like this.
               </p>
             </div>
 
