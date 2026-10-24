@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import {
   CHANDRASEKHAR_LIMIT_SOLAR_MASSES,
-  compareWithPublished,
   distanceErrorPercent,
   distanceErrorWorkedExample,
   distanceTravelledPc,
@@ -271,7 +270,7 @@ describe('the run and the controls (tests 11 and 12)', () => {
   })
 })
 
-describe('the reading guide\'s comparisons (test 13)', () => {
+describe('the reading guide\'s range check (test 13)', () => {
   it('whereInRange: inside, below and above a range, with the factor to the nearest edge', () => {
     expect(whereInRange(5, [3, 8])).toEqual({ verdict: 'inside', factor: 1 })
     expect(whereInRange(1.5, [3, 8])).toEqual({ verdict: 'below', factor: 2 })
@@ -286,34 +285,6 @@ describe('the reading guide\'s comparisons (test 13)', () => {
     for (const t of [300, 325, 350]) expect(whereInRange(shellSpeedKmS(2.06, t), [slow, fast]).verdict).toBe('inside')
     expect(whereInRange(shellSpeedKmS(2.06, 290), [slow, fast]).verdict).toBe('above')
     expect(whereInRange(shellSpeedKmS(2.06, 360), [slow, fast]).verdict).toBe('below')
-  })
-  it('at the published values every comparison says the same', () => {
-    const c = compareWithPublished()
-    expect(c.mass).toBe(0)
-    expect(c.massPercent).toBe(0)
-    expect(c.radiusPercent).toBe(0)
-    expect(c.age).toBe(0)
-    expect(c.outerSpeedPercent).toBe(0)
-    expect(c.ageInsidePublishedRange).toBe(true)
-    expect(c.brightness).toBe(0)
-  })
-  it('a heavier white dwarf, an older remnant and a dimmer supernova move the comparisons the right way, against separate calculations', () => {
-    const heavy = compareWithPublished({ massSolar: 1.4 })
-    expect(heavy.mass).toBe(1)
-    expect(heavy.massPercent).toBeCloseTo(((1.4 - 1.055) / 1.055) * 100, 8)
-    expect(heavy.radiusPercent).toBeCloseTo(((radiusByHand(1.4) - radiusByHand(1.055)) / radiusByHand(1.055)) * 100, 6)
-    expect(heavy.radiusPercent).toBeLessThan(0)
-    const old = compareWithPublished({ ageYears: 350 })
-    expect(old.age).toBe(1)
-    expect(old.outerSpeedPercent).toBeCloseTo(((1 / 350 - 1 / 325) / (1 / 325)) * 100, 8)
-    expect(old.outerSpeedPercent).toBeLessThan(0)
-    expect(compareWithPublished({ brightnessChange: -0.2 }).brightness).toBe(-1)
-  })
-  it('an age outside the published 300 to 350 years is flagged', () => {
-    expect(compareWithPublished({ ageYears: 300 }).ageInsidePublishedRange).toBe(true)
-    expect(compareWithPublished({ ageYears: 350 }).ageInsidePublishedRange).toBe(true)
-    expect(compareWithPublished({ ageYears: 299 }).ageInsidePublishedRange).toBe(false)
-    expect(compareWithPublished({ ageYears: 351 }).ageInsidePublishedRange).toBe(false)
   })
 })
 

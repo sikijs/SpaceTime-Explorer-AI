@@ -250,32 +250,3 @@ export function twoAnalysesComparison(): { simulationSolar: number; analysis2026
   const analysis2026AtLeastSolar = doubleDetonationMass(d.analysis2026CoreSolar, d.analysis2026ShellAboveSolar)
   return { simulationSolar, analysis2026AtLeastSolar, differencePercent: ((analysis2026AtLeastSolar - simulationSolar) / simulationSolar) * 100 }
 }
-
-// The learner's trial values set beside the published ones. Every percent is signed, positive when the trial value is the larger, and is of the published value. `-1, 0, 1` mean
-// smaller than, the same as or larger than the published value.
-export interface TrialComparison {
-  mass: -1 | 0 | 1
-  massPercent: number
-  radiusPercent: number
-  age: -1 | 0 | 1
-  outerSpeedPercent: number
-  ageInsidePublishedRange: boolean
-  brightness: -1 | 0 | 1
-}
-const percentFrom = (value: number, published: number): number => ((value - published) / published) * 100
-const sign = (value: number, published: number): -1 | 0 | 1 => (value < published ? -1 : value > published ? 1 : 0)
-
-export function compareWithPublished(settings: WhiteDwarfSettings = {}): TrialComparison {
-  const published = runWhiteDwarfExplosion()
-  const mine = runWhiteDwarfExplosion(settings)
-  const [low, high] = WHITE_DWARF_EXPLOSION.ageRangeYears
-  return {
-    mass: sign(mine.massSolar, published.massSolar),
-    massPercent: percentFrom(mine.massSolar, published.massSolar),
-    radiusPercent: percentFrom(mine.radiusKm, published.radiusKm),
-    age: sign(mine.ageYears, published.ageYears),
-    outerSpeedPercent: percentFrom(mine.outerShellSpeedKmS, published.outerShellSpeedKmS),
-    ageInsidePublishedRange: mine.ageYears >= low && mine.ageYears <= high,
-    brightness: sign(mine.brightnessChange, 0),
-  }
-}

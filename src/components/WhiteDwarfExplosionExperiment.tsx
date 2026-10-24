@@ -22,7 +22,7 @@ import type { LookFor } from './WideBinariesExperiment'
 // Frontier and Beyond, Experiment 14 (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md).
 // Step 6 builds the tutor (WhiteDwarfExplosionTutor.tsx) and, in App, the chapter summary.
 // Step 5 builds the three controls (the white dwarf's weight, the remnant's age and a brightness difference), shown after the run, which add white marks to Pictures 1 and 3, and the
-// results with the reading guide (the check-up, four tables with notes, the predictions beside the results and the held-back paper links).
+// results with the reading guide (the check-up, three tables with notes, the predictions beside the results and the held-back paper links).
 // Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (white dwarf sizes and the limit) at stage 1, Picture 2 (the two routes) at stages 2 and 3,
 // Picture 3 (the two calcium shells, then the distance strip) at stages 4 and 5. The controls, the results and the tutor are later steps.
 // Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
@@ -30,7 +30,7 @@ import type { LookFor } from './WideBinariesExperiment'
 // one illustration (a white dwarf and a close pair) with its guide, and the collapsed "Words and formulas" panel. The two predictions, the run, the three pictures, the
 // controls, the results and the tutor are later steps. All wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. The
 // introduction does not give the white dwarf's mass in the remnant, the shells' radii or their speed (those are what the predictions and the run show, §12). The interface only
-// displays numbers from src/physics (CLAUDE.md §9); this step shows none of the results.
+// displays numbers from src/physics (CLAUDE.md §9).
 
 const VIEW_WIDTH = 560
 const TEXT_COLOR = '#e2e8f0'
@@ -959,7 +959,7 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
           </div>
         )}
 
-        {/* The results, shown only after the run completes: the status label, the predictions again, the check-up, four tables, and the links kept back until now. */}
+        {/* The results, shown only after the run completes: the status label, the predictions again, the check-up, three tables, and the links kept back until now. */}
         {done && (
           <div style={{ marginTop: '2rem' }}>
             <h3 style={{ marginTop: 0 }}>Results</h3>
