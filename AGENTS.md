@@ -109,7 +109,7 @@ Experiment specifications should define:
 * User interaction
 * Learner-facing introduction, including any new terms it must define
 * Results reading guide (see "Results: A Reading Guide")
-* Note that predictions do not change the results (see "Predictions Do Not Change the Results")
+* Where each prediction's guess is drawn beside the real result, and the note that predictions never change the real results (see "Predictions and the Real Results")
 * AI tutor behavior
 * Tests
 * Explicit exclusions
@@ -188,21 +188,34 @@ The numbers come from the tested physics module. The guide gives meaning and sig
 mechanism and any verdict to the tutor, and never reveals a prediction's answer early. The wording stays the human's to
 approve. Built so far: Experiment 12 of Frontier and Beyond. The earlier experiments do not have it yet.
 
-## Predictions Do Not Change the Results
+## Predictions and the Real Results
 
-Added by the owner on 2026-10-23. A learner's predictions are their own guesses, made before they see anything. They
-never change the pictures, the tables or any number: the results come from the physics. Every experiment with a
-prediction must tell the learner so, in plain words, so that "nothing changed" is not mistaken for a fault:
+Set by the owner on 2026-10-24, from the pilot on Experiment 15, replacing the rule of 2026-10-23 ("Predictions Do Not
+Change the Results"). The real results come from the physics and never change with a learner's guess, and the learner is
+told so in plain words. The guess itself is drawn on the real picture, beside the real result, so it is easy to compare.
+Every experiment with a prediction:
 
-1. In the introduction, where it says what the learner will do: the predictions are guesses, they do not change the
-   pictures or tables, they are shown again beside the results, and say which controls (if any) do change them. It
-   must not give the answers.
-2. Beside any controls: the predictions do not change the pictures or tables but these settings do. If there is a
-   comparison table for the settings, also say that while every setting is on its published value it says "the same",
-   so change a setting to see it move.
+1. Keeps the real pictures, tables and numbers fixed.
+2. Draws the guess on the real picture where its answer lives, as a separate, clearly labelled mark in white, with a
+   prominent "YOUR GUESS" box joined to it by a line. White always means the learner's guess; anything imagined for the
+   question is drawn in another colour and called "imagined". The mark shows the guess only: no "right", "wrong" or
+   "matched" (the tutor marks the predictions in its explanation, and nowhere earlier).
+3. Makes the mark follow the guess. Where a guess has no size of its own (yes or no), it is drawn as a marker and the
+   caption says so.
+4. Draws the mark only once the feature beside it is drawn.
+5. Puts it in the same picture as the real result. If the predicted quantity has no picture, it becomes a half or panel
+   of the nearest picture, on its own scale and with its own title, not a separate picture.
+6. Gives every picture that carries a guess mark a "Where the real picture comes from" line that separates what was
+   measured, what was calculated here and what was imagined for the question.
+7. Tells the learner in the introduction that the predictions never change the real pictures or tables, that the guesses
+   are drawn on them in white and shown again beside the results, and which controls (if any) change which drawings;
+   beside any controls it says that the guesses do not change the drawings or tables but these settings do.
+8. Takes every number for the marks from the tested physics module.
 
-The wording stays the human's to approve. Built so far: Experiment 12 of Frontier and Beyond. The earlier
-experiments do not have it yet.
+The wording stays the human's to approve. Built so far: Experiment 15 of Frontier and Beyond (commits `9ac8311` to
+`72c84d7`). It applies to every new experiment. Experiments 1 to 14 and the other groups still follow the earlier rule
+(guesses shown only as text); the owner will audit and update them one at a time after the project is complete, and
+until then they are left as they are.
 
 ## Frontier and Beyond: Introductions and Captions
 
