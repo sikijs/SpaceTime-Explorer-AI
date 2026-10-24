@@ -33,6 +33,8 @@ export const NEUTRON_STAR_DATA = {
   // NASA Imagine the Universe: "about 20 kilometers across" (a radius of about 10 km) and a sugar cube of "about 1 trillion kilograms".
   nasaDiameterKm: 20,
   nasaSugarCubeKg: 1e12,
+  // NASA/HEASARC NICER note (22 August 2024): the radius has "5-8% uncertainties".
+  nasaRadiusUncertaintyPercent: [5, 8] as const,
   // A 2026 preprint (Kasza and others, arXiv:2605.00437), read only through a news story: the maximum mass is 2.2 to 2.3 solar masses under its assumptions.
   maximumMassEstimateRangeSolar: [2.2, 2.3] as const,
   // GW230529 (LIGO-Virgo-KAGRA, arXiv:2404.04248, abstract read 2026-10-24): "component masses 2.5-4.5 and 1.2-2.0 M_sun (all measurements quoted at the 90% credible level)". The
@@ -47,6 +49,8 @@ export const NEUTRON_STAR_DATA = {
   predictionMassSolar: 1.4,
   predictionSqueezedRadiusKm: 6,
   predictionGravityRadiusKm: 12,
+  // The tutor's worked example: a person of this mass (an everyday figure, not a published one).
+  examplePersonKg: 70,
 }
 
 function requirePositive(value: number, what: string): void {
@@ -291,6 +295,86 @@ export const GRAVITY_ANSWERS: { label: GravityAnswer; value: number }[] = [
 export function gravityAnswer(): GravityAnswer {
   const d = NEUTRON_STAR_DATA
   return nearestLog(GRAVITY_ANSWERS, gravityInEarths(d.predictionMassSolar, d.predictionGravityRadiusKm)).label
+}
+
+// ---- The real results the learner's guesses are drawn beside (pilot, specification "Pilot: the learner's guess drawn beside the real result") ----
+
+// Prediction 1's real result: the 1.4-Sun star squeezed to 6 km. A star of the question, not a measured one; its black-hole radius and ratio are calculated.
+export interface PredictionOneReal {
+  massSolar: number
+  radiusKm: number
+  blackHoleRadiusKm: number
+  ratio: number
+  insideHorizon: boolean
+}
+export function predictionOneReal(): PredictionOneReal {
+  const { predictionMassSolar: massSolar, predictionSqueezedRadiusKm: radiusKm } = NEUTRON_STAR_DATA
+  return {
+    massSolar,
+    radiusKm,
+    blackHoleRadiusKm: horizonRadiusKm(massSolar),
+    ratio: radiusRatio(massSolar, radiusKm),
+    insideHorizon: isInsideHorizon(massSolar, radiusKm),
+  }
+}
+
+// Prediction 2's real result: calculated from the mass and radius (g = GM / R^2), not a measured surface gravity.
+export interface PredictionTwoReal {
+  massSolar: number
+  radiusKm: number
+  gravityInEarths: number
+}
+export function predictionTwoReal(): PredictionTwoReal {
+  const { predictionMassSolar: massSolar, predictionGravityRadiusKm: radiusKm } = NEUTRON_STAR_DATA
+  return { massSolar, radiusKm, gravityInEarths: gravityInEarths(massSolar, radiusKm) }
+}
+
+// Prediction 1's guess as a circle: "yes" is drawn at the black-hole radius of the question's mass (the largest size at which the star would be a black hole);
+// "no" is drawn at the question's own radius (6 km), which lies outside it. A marker, not a measurement.
+export function guessCircleRadiusKm(answer: SizeAnswer): number {
+  const d = NEUTRON_STAR_DATA
+  if (answer === 'yes') return horizonRadiusKm(d.predictionMassSolar)
+  if (answer === 'no') return d.predictionSqueezedRadiusKm
+  throw new RangeError('Not one of the answers')
+}
+
+// How many times larger the real surface gravity is than a gravity button's value (the tutor's words for a guess that missed). 1 is a match.
+export function gravityRealOverGuess(answer: GravityAnswer): number {
+  return predictionTwoReal().gravityInEarths / guessGravityInEarths(answer)
+}
+
+// What a person of the given mass would be pulled with, as a weight in tonnes, where gravity is the given number of Earths (the tutor's worked example).
+export function personWeightTonnes(personKg: number, gravityEarths: number): number {
+  requirePositive(personKg, 'personKg')
+  requirePositive(gravityEarths, 'gravityEarths')
+  return (personKg * gravityEarths) / 1000
+}
+
+// The 2026 maximum-mass estimate (low and high edge) as a multiple of the NICER star's weight (the tutor's worked sum for the heaviest neutron star).
+export function maximumMassOverNicerMass(): [number, number] {
+  const d = NEUTRON_STAR_DATA
+  return [d.maximumMassEstimateRangeSolar[0] / d.j0437.massSolar, d.maximumMassEstimateRangeSolar[1] / d.j0437.massSolar]
+}
+
+// How far the lowest possible weight of GW230529's heavier object lies above the top of the maximum-mass estimate, in Suns (the tutor's worked sum for GW230529).
+export function gwHeavierLowestAboveEstimateSolar(): number {
+  const d = NEUTRON_STAR_DATA
+  return d.gw230529Primary.lowSolar - d.maximumMassEstimateRangeSolar[1]
+}
+
+// What a gravity button says, in Earths, so the guess can be drawn on the same scale as the real value.
+export function guessGravityInEarths(answer: GravityAnswer): number {
+  const found = GRAVITY_ANSWERS.find((a) => a.label === answer)
+  if (!found) throw new RangeError('Not one of the answers')
+  return found.value
+}
+
+// Where a value sits along a log scale from 10^minPower to 10^maxPower: 0 at the left end, 1 at the right end (clamped).
+export function logScalePosition(value: number, minPower: number, maxPower: number): number {
+  requirePositive(value, 'value')
+  if (!(maxPower > minPower)) throw new RangeError('maxPower must be above minPower')
+  const t = (Math.log10(value) - minPower) / (maxPower - minPower)
+  return Math.min(1, Math.max(0, t))
 }
 
 // ---- The learner's choices (the defaults are NICER's values for PSR J0437-4715) ----

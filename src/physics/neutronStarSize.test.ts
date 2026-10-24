@@ -9,6 +9,15 @@ import {
   distanceInGiveOrTakes,
   EARTH_SURFACE_GRAVITY_M_S2,
   gravityAnswer,
+  guessCircleRadiusKm,
+  gravityRealOverGuess,
+  gwHeavierLowestAboveEstimateSolar,
+  maximumMassOverNicerMass,
+  guessGravityInEarths,
+  personWeightTonnes,
+  logScalePosition,
+  predictionOneReal,
+  predictionTwoReal,
   GRAVITY_ANSWERS,
   giveOrTakeInterval,
   gravityInEarths,
@@ -381,5 +390,84 @@ describe('out-of-range inputs and imports (tests 11 and 12)', () => {
     expect(imports.length).toBe(2)
     expect(imports.some((l) => l.includes("'./blackHoleSizeExperiment'"))).toBe(true)
     expect(imports.some((l) => l.includes("'./blackHoleFormationExperiment'"))).toBe(true)
+  })
+})
+
+describe('the real results the guesses are drawn beside (pilot)', () => {
+  it('Prediction 1: the 6 km star of the question has a 4.13 km black-hole radius, a ratio of 1.45, and is not inside it', () => {
+    const r = predictionOneReal()
+    expect(r.massSolar).toBe(1.4)
+    expect(r.radiusKm).toBe(6)
+    expect(r.blackHoleRadiusKm).toBeCloseTo(4.13, 2)
+    expect(r.ratio).toBeCloseTo(6 / r.blackHoleRadiusKm, 10)
+    expect(r.ratio).toBeCloseTo(1.45, 2)
+    expect(r.insideHorizon).toBe(false)
+  })
+  it('Prediction 2: the real value is calculated from mass and radius, about 1.3e11 Earths', () => {
+    const r = predictionTwoReal()
+    expect(r.massSolar).toBe(1.4)
+    expect(r.radiusKm).toBe(12)
+    expect(r.gravityInEarths).toBe(gravityInEarths(1.4, 12))
+    expect(r.gravityInEarths / 1e11).toBeCloseTo(1.316, 2)
+  })
+  it('each gravity button gives its value in Earths, and a wrong label is refused', () => {
+    expect(guessGravityInEarths('about 10 times')).toBe(10)
+    expect(guessGravityInEarths('about a thousand times')).toBe(1e3)
+    expect(guessGravityInEarths('about 100 billion times')).toBe(1e11)
+    expect(() => guessGravityInEarths('about a million times' as never)).toThrow(RangeError)
+  })
+  it('the log scale places values by powers of ten, so the real value sits just right of the 100-billion button', () => {
+    expect(logScalePosition(1, 0, 12)).toBe(0)
+    expect(logScalePosition(1e12, 0, 12)).toBe(1)
+    expect(logScalePosition(1e6, 0, 12)).toBeCloseTo(0.5, 10)
+    expect(logScalePosition(1e11, 0, 12)).toBeCloseTo(11 / 12, 10)
+    const real = logScalePosition(predictionTwoReal().gravityInEarths, 0, 12)
+    expect(real).toBeGreaterThan(logScalePosition(1e11, 0, 12))
+    expect(real).toBeLessThan(logScalePosition(1e12, 0, 12))
+    expect(logScalePosition(1e-3, 0, 12)).toBe(0) // clamped
+    expect(logScalePosition(1e15, 0, 12)).toBe(1)
+  })
+  it('the log scale refuses a non-positive value and an empty range', () => {
+    expect(() => logScalePosition(0, 0, 12)).toThrow(RangeError)
+    expect(() => logScalePosition(10, 5, 5)).toThrow(RangeError)
+  })
+  it('Prediction 1\'s guess circle: "yes" at the 4.13 km black-hole radius, "no" at the 6 km of the question, outside it; a wrong label is refused', () => {
+    expect(guessCircleRadiusKm('yes')).toBeCloseTo(4.13, 2)
+    expect(guessCircleRadiusKm('yes')).toBe(predictionOneReal().blackHoleRadiusKm)
+    expect(guessCircleRadiusKm('no')).toBe(6)
+    expect(guessCircleRadiusKm('no')).toBeGreaterThan(guessCircleRadiusKm('yes'))
+    expect(() => guessCircleRadiusKm('maybe' as never)).toThrow(RangeError)
+  })
+  it('the real gravity over each gravity button: about 1.3e10 over "about 10", 1.3e8 over "a thousand", 1.3 over "100 billion"', () => {
+    const real = predictionTwoReal().gravityInEarths
+    expect(gravityRealOverGuess('about 10 times')).toBeCloseTo(real / 10, 0)
+    expect(gravityRealOverGuess('about a thousand times')).toBeCloseTo(real / 1e3, 0)
+    expect(gravityRealOverGuess('about 100 billion times')).toBeCloseTo(1.316, 2)
+  })
+  it('a 70 kg person where gravity is 1.3e11 Earths is pulled like about 9 billion tonnes; non-positive inputs are refused', () => {
+    expect(personWeightTonnes(70, 1e11)).toBeCloseTo(7e9, 0)
+    expect(personWeightTonnes(70, predictionTwoReal().gravityInEarths) / 1e9).toBeCloseTo(9.21, 2)
+    expect(() => personWeightTonnes(0, 1e11)).toThrow(RangeError)
+    expect(() => personWeightTonnes(70, -1)).toThrow(RangeError)
+  })
+  it('the NASA radius-uncertainty range is 5 to 8 percent, and the published give-or-takes are in that region', () => {
+    expect(NEUTRON_STAR_DATA.nasaRadiusUncertaintyPercent).toEqual([5, 8])
+    const j = NEUTRON_STAR_DATA.j0437
+    expect((j.radiusMinusKm / j.radiusKm) * 100).toBeGreaterThan(5)
+    expect((j.radiusPlusKm / j.radiusKm) * 100).toBeLessThan(9)
+  })
+  it('the tutor\'s example person is 70 kg', () => {
+    expect(NEUTRON_STAR_DATA.examplePersonKg).toBe(70)
+  })
+  it('the 2.2 to 2.3 Sun estimate is 1.55 to 1.62 times the NICER star\'s 1.418 Suns', () => {
+    const [lo, hi] = maximumMassOverNicerMass()
+    expect(lo).toBeCloseTo(2.2 / 1.418, 10)
+    expect(hi).toBeCloseTo(2.3 / 1.418, 10)
+    expect(lo.toFixed(2)).toBe('1.55')
+    expect(hi.toFixed(2)).toBe('1.62')
+  })
+  it('GW230529\'s heavier object, at its lowest 2.5 Suns, is 0.2 Suns above the top of the estimate, as the check-up says', () => {
+    expect(gwHeavierLowestAboveEstimateSolar()).toBeCloseTo(0.2, 10)
+    expect(gwHeavierLowestAboveEstimateSolar()).toBeCloseTo(runCheckUp().gwHeavierVersusEstimate.distance, 10)
   })
 })
