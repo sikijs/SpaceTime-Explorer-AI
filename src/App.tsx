@@ -15,6 +15,7 @@ import { FastestSpacecraftExperiment } from './components/FastestSpacecraftExper
 import { BetelgeuseCompanionExperiment } from './components/BetelgeuseCompanionExperiment'
 import { CatchingASupernovaExperiment } from './components/CatchingASupernovaExperiment'
 import { WhiteDwarfExplosionExperiment } from './components/WhiteDwarfExplosionExperiment'
+import { NeutronStarSizeExperiment } from './components/NeutronStarSizeExperiment'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -747,6 +748,15 @@ const chapters: Chapter[] = [
     learned:
       "A white dwarf is held up by electron degeneracy pressure, which can hold only up to a limit of about 1.4 Suns' worth of material (1.44 in the model used here), and the heavier it is the smaller it is: 0.6 Suns gives a radius of 1.41 Earth radii, 1.4 Suns only 0.25. Two routes to a Type Ia explosion have been proposed: the white dwarf grows to near the limit, or a thin helium layer ignites first and sets off the core, a double detonation. In SNR 0509-67.5, a remnant 300 to 350 years old in the Large Magellanic Cloud, astronomers found two separate shells of calcium, at 1.73 and 2.06 parsecs from the centre (5.6 and 6.7 light-years), 0.33 parsecs apart. The simulation that matches them has a core of 1.028 Suns and a helium layer of 0.027, 1.055 in all, which is 0.385 Suns (27 percent) below the limit. Radius divided by age gives average speeds of about 4,800 to 6,700 km/s, about 2 percent of the speed of light. That is strong evidence for this one remnant; one author reads the two shells another way, and how many white dwarfs explode like this is open. It matters because a distance worked out from brightness assumes the explosions are alike: a supernova 20 percent dimmer than assumed would give a distance 11.8 percent too large.",
     next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+  },
+  {
+    title: 'How big is a neutron star, and where do they end? (NICER and GW230529)',
+    group: 'Frontier and Beyond',
+    Component: NeutronStarSizeExperiment,
+    // Placeholder chapter summary (Step 2): the real one is drafted in a later step, for the owner's line-by-line approval (CLAUDE.md §28.1). It is shown only after the
+    // learner reaches the tutor's explanation, which is not built yet, so it does not appear.
+    learned: 'Summary to be written once the experiment is built.',
+    next: 'Summary to be written once the experiment is built.',
   },
 ]
 
