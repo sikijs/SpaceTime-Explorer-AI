@@ -177,7 +177,9 @@ simple terms with the real numbers:
 1. A "check-up" table setting what we would expect beside what was found, with a plain reading of each row. Use it
    only where a real reference exists, with no invented cut-offs and no "healthy" or "abnormal".
 2. A note under each table: what the numbers are, what they mean with the real values, and why they matter.
-3. For a table that follows the learner's controls: a published-value column, a "how yours compares" column and an
+3. Optional (since 2026-10-23): for a table that follows the learner's controls, only where a real reference exists and
+   the comparison shows something the pictures do not; if the controls only move marks in the pictures, leave it out.
+   Where used: a published-value column, a "how yours compares" column and an
    updating paragraph. Call the learner's settings "trial values" or "your own numbers", never "what-ifs".
 4. The learner's predictions shown beside the results (the guess, the question, where its number is), with no
    "matched" or "right": the tutor gives that.
@@ -195,8 +197,9 @@ prediction must tell the learner so, in plain words, so that "nothing changed" i
 1. In the introduction, where it says what the learner will do: the predictions are guesses, they do not change the
    pictures or tables, they are shown again beside the results, and say which controls (if any) do change them. It
    must not give the answers.
-2. Beside any controls: the predictions do not change the pictures or tables but these settings do, and while every
-   setting is on its published value the comparison table says "the same", so change a setting to see it move.
+2. Beside any controls: the predictions do not change the pictures or tables but these settings do. If there is a
+   comparison table for the settings, also say that while every setting is on its published value it says "the same",
+   so change a setting to see it move.
 
 The wording stays the human's to approve. Built so far: Experiment 12 of Frontier and Beyond. The earlier
 experiments do not have it yet.
