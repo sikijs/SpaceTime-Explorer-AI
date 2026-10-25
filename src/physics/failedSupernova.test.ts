@@ -265,6 +265,26 @@ describe('the run (required test 12)', () => {
       }
     }
   })
+  it('returns the percentages, dots, one-in-N and range verdict for each control setting (separate calculation)', () => {
+    for (const off of FAILED_SUPERNOVA_DATA.thrownOffChoicesSolar) {
+      const r = runFailedSupernova({ thrownOffSolar: off })
+      expect(r.collapsedPercent).toBeCloseTo(((5 - off) / 5) * 100, 10)
+      expect(r.thrownOffPercent).toBeCloseTo((off / 5) * 100, 10)
+      expect(r.collapsedPercent + r.thrownOffPercent).toBeCloseTo(100, 10)
+    }
+    const expected = { 4: { dots: 4, oneIn: 25 }, 16: { dots: 16, oneIn: 6.25 }, 39: { dots: 39, oneIn: 100 / 39 } } as const
+    for (const count of FAILED_SUPERNOVA_DATA.failedPerHundredChoices) {
+      const r = runFailedSupernova({ failedPerHundred: count })
+      expect(r.filledDots).toBe(expected[count].dots)
+      expect(r.oneStarInEvery).toBeCloseTo(expected[count].oneIn, 10)
+      expect(r.failedVersusRange).toBe('inside')
+    }
+    expect(runFailedSupernova({ failedPerHundred: 0 }).oneStarInEvery).toBeNull()
+    expect(runFailedSupernova({ failedPerHundred: 0 }).failedVersusRange).toBe('below')
+    expect(runFailedSupernova({ failedPerHundred: 3 }).failedVersusRange).toBe('below')
+    expect(runFailedSupernova({ failedPerHundred: 50 }).failedVersusRange).toBe('above')
+    expect(runFailedSupernova({ failedPerHundred: 15.6 }).filledDots).toBe(16)
+  })
 })
 
 describe('out-of-range inputs (required test 11)', () => {

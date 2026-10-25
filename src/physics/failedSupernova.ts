@@ -310,10 +310,17 @@ export interface FailedSupernovaResult {
   thrownOffSolar: number
   remnantSolar: number
   fractionCollapsed: number
+  collapsedPercent: number
+  thrownOffPercent: number
   outcome: CoreOutcome
   overLimits: RemnantOverLimits
   thrownOffNeededForNeutronStarSolar: number
   failedPerHundred: number
+  // The dots filled in the 100-dot drawing for the learner's count, and "1 massive star in every N" (none when the count is 0).
+  filledDots: number
+  oneStarInEvery: number | null
+  // Whether the learner's count is below, inside or above the survey's 90 percent range (4 to 39).
+  failedVersusRange: 'below' | 'inside' | 'above'
   failedRange: { low: number; central: number; high: number }
   pushOneInRange: { lowOneIn: number; highOneIn: number }
   neutrinoMassLossSolar: number
@@ -325,16 +332,22 @@ export function runFailedSupernova(settings: FailedSupernovaSettings = {}): Fail
   const failedPerHundred = settings.failedPerHundred ?? failedRange().central
   if (!Number.isFinite(failedPerHundred) || failedPerHundred < 0 || failedPerHundred > 100) throw new RangeError('The count must be between 0 and 100')
   const remnantSolar = remnantMassSolar(d.terminalMassSolar, thrownOffSolar)
+  const range = failedRange()
   return {
     starSolar: d.terminalMassSolar,
     thrownOffSolar,
     remnantSolar,
     fractionCollapsed: remnantSolar / d.terminalMassSolar,
+    collapsedPercent: (remnantSolar / d.terminalMassSolar) * 100,
+    thrownOffPercent: (thrownOffSolar / d.terminalMassSolar) * 100,
     outcome: coreOutcome(remnantSolar),
     overLimits: remnantOverLimits(remnantSolar),
     thrownOffNeededForNeutronStarSolar: thrownOffNeededForNeutronStar(d.terminalMassSolar),
     failedPerHundred,
-    failedRange: failedRange(),
+    filledDots: Math.round(failedPerHundred),
+    oneStarInEvery: failedPerHundred > 0 ? 100 / failedPerHundred : null,
+    failedVersusRange: failedPerHundred < range.low - 1e-9 ? 'below' : failedPerHundred > range.high + 1e-9 ? 'above' : 'inside',
+    failedRange: range,
     pushOneInRange: pushOneInRange(),
     neutrinoMassLossSolar: neutrinoMassLossSolar(),
   }

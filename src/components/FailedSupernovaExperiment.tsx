@@ -11,11 +11,12 @@ import {
   massPicture,
   pushOneInRange,
   remnantOverLimits,
+  runFailedSupernova,
   SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
   supernovaSpreadFactor,
   timeline,
 } from '../physics/failedSupernova'
-import type { CountAnswer, PushAnswer } from '../physics/failedSupernova'
+import type { CountAnswer, FailedSupernovaResult, PushAnswer } from '../physics/failedSupernova'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
@@ -24,7 +25,7 @@ import type { LookFor } from './WideBinariesExperiment'
 // STEPS 2 to 4 (the interface skeleton, the predictions, and the run with its three pictures): this file has the status line, the introduction, one illustration (an ordinary
 // supernova beside a failed one) with its guide, the new-word list, the collapsed "Words and formulas" panel, the "Want to know more?" links, the two predictions, and Part 1: a
 // five-stage run that builds three pictures (what telescopes saw; what is left of the star and how strong the push was; how many stars fail). The learner's guesses are drawn on
-// Pictures 2 and 3 in white, beside the real results (the owner's rule of 2026-10-24, CLAUDE.md §14), and the real pictures never change. It has no controls, results, tutor or
+// Pictures 2 and 3 in white, beside the real results (the owner's rule of 2026-10-24, CLAUDE.md §14), and the real pictures never change. STEP 5a adds Part 2 (two controls with a drawing each, shown after the run). It has no results, tutor or
 // summary yet; those are later steps (CLAUDE.md §6). The timer only paces the display (CLAUDE.md §11). Every number comes from src/physics/failedSupernova.ts (CLAUDE.md §9). The page is built to the plan in the specification: an introduction and four parts (predict and watch, now try it yourself, the results, the
 // tutor). The few published numbers the introduction states are read from src/physics/failedSupernova.ts (CLAUDE.md §9). All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1) and is written to the standard of §29. Nothing here gives the answer to either prediction (CLAUDE.md §12): not the strength of the push, and not
@@ -502,6 +503,137 @@ function PictureThree({ guess }: { guess: CountAnswer | null }) {
   )
 }
 
+// ---- Part 2: the learner's own trial values (two drawings that follow the two controls; the real pictures never change) ----
+const PART_TWO_COLOR = '#0d9488'
+const TRIAL_COLOR = '#34d399' // green: imagined for the question (a trial value)
+const UNCERTAIN_COLOR = '#f59e0b'
+// "1 Sun", "0.1 Suns"; and "25" or "6.3" (one decimal place, without a needless ".0").
+function sunsLabel(n: number): string {
+  return `${n} ${n === 1 ? 'Sun' : 'Suns'}`
+}
+function oneIn(n: number | null): string {
+  return n === null ? '' : String(Number(n.toFixed(1)))
+}
+function outcomeColor(outcome: FailedSupernovaResult['outcome']): string {
+  return outcome === 'black-hole' ? BLACK_HOLE_COLOR : outcome === 'neutron-star' ? NEUTRON_STAR_COLOR : UNCERTAIN_COLOR
+}
+function outcomeWords(outcome: FailedSupernovaResult['outcome']): string {
+  return outcome === 'black-hole'
+    ? 'a black hole (nothing known can hold up so much weight)'
+    : outcome === 'neutron-star'
+      ? 'a neutron star (neutrons can hold up this much weight)'
+      : 'uncertain (between the weight neutrons surely hold up and the weight nothing known can)'
+}
+
+function DrawingA({ mine }: { mine: FailedSupernovaResult }) {
+  const m = massPicture()
+  const barY = 114
+  const height = 292
+  const colour = outcomeColor(mine.outcome)
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Drawing A, your trial. A star of ${mine.starSolar} Suns throws off ${sunsLabel(mine.thrownOffSolar)} and ${mine.remnantSolar.toFixed(2)} Suns stay collapsed, ${mine.collapsedPercent.toFixed(0)} percent of the star. The collapsed part is drawn as a bar on a scale from 0 to 6 Suns, with blue marks at ${m.neutronStarTopSolar}, ${m.estimateLowSolar} to ${m.estimateHighSolar} and ${m.blackHoleBottomSolar} Suns and a grey dashed line at the discovery paper's ${m.remnantSolar.toFixed(1)} Suns. The remnant would be ${outcomeWords(mine.outcome)}. These are trial values, not measurements.`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Drawing A: your trial, how much of the star is thrown off?
+      </text>
+      <SvgLines x={20} y={44} lines={['imagined for the question: the star’s weight is the paper’s 5 Suns, the thrown-off weight is your choice']} fill={MUTED_COLOR} />
+      <rect x={massX(0)} y={barY} width={massX(mine.remnantSolar) - massX(0)} height={28} fill={colour} stroke="#0b1020" strokeWidth={1.5} />
+      {mine.thrownOffSolar > 0 && (
+        <rect x={massX(mine.remnantSolar)} y={barY} width={massX(mine.starSolar) - massX(mine.remnantSolar)} height={28} fill={FLASH_COLOR} stroke="#0b1020" strokeWidth={1.5} />
+      )}
+      <rect x={massX(m.estimateLowSolar)} y={barY - 6} width={massX(m.estimateHighSolar) - massX(m.estimateLowSolar)} height={40} fill={LIMIT_COLOR} fillOpacity={0.55} stroke={LIMIT_COLOR} strokeWidth={1.5} />
+      <line x1={massX(m.neutronStarTopSolar)} y1={barY - 36} x2={massX(m.neutronStarTopSolar)} y2={barY + 34} stroke={LIMIT_COLOR} strokeWidth={2} strokeDasharray="5 3" />
+      <line x1={massX(m.blackHoleBottomSolar)} y1={barY - 36} x2={massX(m.blackHoleBottomSolar)} y2={barY + 34} stroke={LIMIT_COLOR} strokeWidth={2} strokeDasharray="5 3" />
+      <line x1={massX(m.remnantSolar)} y1={barY - 10} x2={massX(m.remnantSolar)} y2={barY + 38} stroke={OTHER_PAPER_COLOR} strokeWidth={2} strokeDasharray="2 3" />
+      <SvgLines x={massX(m.neutronStarTopSolar) - 6} y={barY - 40} lines={[`up to ${m.neutronStarTopSolar.toFixed(1)}:`, 'neutrons can hold it up']} fill={LIMIT_COLOR} bold anchor="end" />
+      <SvgLines x={massX(m.blackHoleBottomSolar) + 6} y={barY - 52} lines={[`above ${m.blackHoleBottomSolar.toFixed(1)}:`, 'nothing known can', 'hold it up']} fill={LIMIT_COLOR} bold />
+      <line x1={massX(0)} y1={barY + 44} x2={massX(6)} y2={barY + 44} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {[0, 1, 2, 3, 4, 5, 6].map((t) => (
+        <g key={t}>
+          <line x1={massX(t)} y1={barY + 44} x2={massX(t)} y2={barY + 50} stroke={MUTED_COLOR} strokeWidth={1.5} />
+          <SvgLines x={massX(t)} y={barY + 64} lines={[String(t)]} fill={TEXT_COLOR} anchor="middle" />
+        </g>
+      ))}
+      <SvgLines x={massX(6) + 16} y={barY + 64} lines={['Suns']} fill={MUTED_COLOR} />
+      <rect x={40} y={barY + 80} width={12} height={12} fill={colour} />
+      <SvgLines x={58} y={barY + 90} lines={[`collapsed (your trial): ${mine.remnantSolar.toFixed(2)} Suns, ${mine.collapsedPercent.toFixed(0)} percent of the star`]} fill={colour} bold />
+      <rect x={40} y={barY + 98} width={12} height={12} fill={FLASH_COLOR} />
+      <SvgLines x={58} y={barY + 108} lines={[`thrown off (your choice): ${sunsLabel(mine.thrownOffSolar)}, ${mine.thrownOffPercent.toFixed(0)} percent`]} fill={FLASH_COLOR} bold />
+      <rect x={40} y={barY + 116} width={12} height={12} fill={LIMIT_COLOR} fillOpacity={0.55} stroke={LIMIT_COLOR} />
+      <SvgLines x={58} y={barY + 126} lines={[`${m.estimateLowSolar} to ${m.estimateHighSolar} Suns: one 2026 estimate of the most a neutron star can weigh`]} fill={LIMIT_COLOR} bold />
+      <line x1={40} y1={barY + 140} x2={52} y2={barY + 140} stroke={OTHER_PAPER_COLOR} strokeWidth={2} strokeDasharray="2 3" />
+      <SvgLines x={58} y={barY + 144} lines={[`grey dashed line: the discovery paper’s ${m.remnantSolar.toFixed(1)} Suns, kept for comparison`]} fill={OTHER_PAPER_COLOR} bold />
+    </svg>
+  )
+}
+
+function DrawingB({ mine }: { mine: FailedSupernovaResult }) {
+  const range = mine.failedRange
+  const height = 430
+  const boxX = 332
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Drawing B, your trial. One hundred dots, each one massive star, with the first ${mine.filledDots} drawn in green: your trial count of ${mine.failedPerHundred} failing in every 100. Grey rings mark dots ${range.low.toFixed(0)}, ${range.central.toFixed(0)} and ${range.high.toFixed(0)}, the survey's low end, central count and high end. These are trial values, not measurements.`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Drawing B: your trial, how many of 100 massive stars fail?
+      </text>
+      <SvgLines x={20} y={42} lines={['imagined for the question: the count is your choice; dots are counted along each row, from the top left']} fill={MUTED_COLOR} />
+      {Array.from({ length: 100 }, (_, k) => k + 1).map((i) => {
+        const c = dotCenter(i)
+        return <circle key={i} cx={c.x} cy={c.y} r={10} fill={i <= mine.filledDots ? TRIAL_COLOR : '#334155'} stroke="#0b1020" strokeWidth={1} />
+      })}
+      {[range.low, range.central, range.high].map((v) => {
+        const c = dotCenter(Math.round(v))
+        return <circle key={v} cx={c.x} cy={c.y} r={14} fill="none" stroke={OTHER_PAPER_COLOR} strokeWidth={2.5} strokeDasharray="3 2" />
+      })}
+      <rect x={boxX} y={80} width={12} height={12} fill={TRIAL_COLOR} />
+      <SvgLines x={boxX + 18} y={90} lines={[`1 to ${mine.filledDots}: your trial count`]} fill={TRIAL_COLOR} bold />
+      <rect x={boxX} y={102} width={12} height={12} fill="#334155" />
+      <SvgLines x={boxX + 18} y={112} lines={['grey: not counted as failing']} fill={MUTED_COLOR} bold />
+      <circle cx={boxX + 6} cy={132} r={7} fill="none" stroke={OTHER_PAPER_COLOR} strokeWidth={2.5} strokeDasharray="3 2" />
+      <SvgLines x={boxX + 18} y={136} lines={['grey rings: the survey’s', `${range.low.toFixed(0)}, ${range.central.toFixed(0)} and ${range.high.toFixed(0)}`]} fill={OTHER_PAPER_COLOR} bold />
+      <SvgLines x={20} y={DOT_Y0 + 9 * DOT_STEP + 38} lines={[mine.oneStarInEvery === null ? 'Your trial count is 0: no massive star fails.' : `Your trial count means 1 massive star in every ${oneIn(mine.oneStarInEvery)} fails.`]} fill={TRIAL_COLOR} bold />
+    </svg>
+  )
+}
+
+const lookForDrawingA: LookFor[] = [
+  {
+    look: 'the length of the coloured bar, and where its right-hand end falls against the blue marks (2.0, 2.2 to 2.3 and 3.0).',
+    means: 'the bar is the weight that stays collapsed, the star’s 5 Suns minus the amount you chose to throw off. Throw off little and the bar ends beyond 3.0, so the remnant is a black hole. Throw off 3 Suns and it ends at 2.0, the most neutrons are sure to hold up.',
+    matters: 'the question the experiment asks is whether a star can end without a flash. This shows how much of the star would have to be pushed out to leave a neutron star instead: at least 3 Suns, which is 60 percent of it.',
+  },
+  {
+    look: 'the grey dashed line at 4.9 Suns, against the end of your bar.',
+    means: 'it is the weight the discovery paper estimates stayed collapsed in the real star. With the paper’s 0.1 Sun thrown off, your bar ends exactly on it.',
+    matters: 'it lets you see how far your trial value is from the paper’s. It is the paper’s estimate, not a weighing of the star.',
+  },
+]
+const lookForDrawingB: LookFor[] = [
+  {
+    look: 'the green dots, and the three grey rings on the dots at 4, 16 and 39.',
+    means: 'the green dots are your trial count. The rings are the survey’s low end, best count and high end, so you can see whether your count sits inside the range the survey allows.',
+    matters: 'the survey could only say the true number lies between 4 and 39 in 100, because it rests on one detection. Moving your count shows how wide that gap is in dots.',
+  },
+  {
+    look: 'the line under the dots, “1 massive star in every …”.',
+    means: 'it turns your count into the same idea as “1 in N”: 16 in 100 is about 1 star in every 6, and 4 in 100 is 1 in every 25.',
+    matters: 'a small count out of 100 can sound tiny, but “1 in 25” is something an astronomer watching many stars for years could hope to see.',
+  },
+]
+
 const lookForPictureOne: LookFor[] = [
   {
     look: 'the first three rows (2012, 2014 to 2016, and from 2014).',
@@ -581,6 +713,33 @@ function StepHeader({ step, title, accent, lead }: { step: string; title: string
   )
 }
 
+function PageSection({ step, title, accent, lead, children }: { step: string; title: string; accent: string; lead: ReactNode; children: ReactNode }) {
+  return (
+    <section className="exp-card" style={{ marginTop: '2.5rem', padding: '1.5rem', borderTop: `6px solid ${accent}` }}>
+      <StepHeader step={step} title={title} accent={accent} lead={lead} />
+      {children}
+    </section>
+  )
+}
+
+function ChoiceButtons({ options, value, onChange, format }: { options: ReadonlyArray<number>; value: number; onChange: (v: number) => void; format: (v: number) => string }) {
+  return (
+    <div>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onChange(option)}
+          className={`toggle-button${value === option ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+        >
+          {format(option)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 interface FailedSupernovaExperimentProps {
   onComplete?: () => void
   onTutorComplete?: () => void
@@ -592,6 +751,9 @@ export function FailedSupernovaExperiment({ onComplete }: FailedSupernovaExperim
   const limit = SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES
   const [pushPrediction, setPushPrediction] = useState<PushAnswer | null>(null)
   const [countPrediction, setCountPrediction] = useState<CountAnswer | null>(null)
+  const [thrownOffChoice, setThrownOffChoice] = useState<number>(FAILED_SUPERNOVA_DATA.thrownOffSolar)
+  const [failedChoice, setFailedChoice] = useState<number>(failedRange().central)
+  const mine = runFailedSupernova({ thrownOffSolar: thrownOffChoice, failedPerHundred: failedChoice })
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const hasRun = status !== 'idle'
@@ -614,6 +776,8 @@ export function FailedSupernovaExperiment({ onComplete }: FailedSupernovaExperim
   function startOver() {
     setPushPrediction(null)
     setCountPrediction(null)
+    setThrownOffChoice(FAILED_SUPERNOVA_DATA.thrownOffSolar)
+    setFailedChoice(failedRange().central)
     setStatus('idle')
     setStage(0)
   }
@@ -1076,6 +1240,105 @@ export function FailedSupernovaExperiment({ onComplete }: FailedSupernovaExperim
           </div>
         )}
       </div>
+
+        {/* Part 2, a section of its own (after the run): the learner's trial values. Its two drawings follow the controls; nothing in Part 1 does. There is no table that follows the
+            controls (specification decision 8). DRAFT wording for the owner's approval (CLAUDE.md §28.1). */}
+        {done && (
+          <PageSection
+            step="Part 2"
+            title="Now try it yourself"
+            accent={PART_TWO_COLOR}
+            lead={
+              <>
+                <strong>What we are about to do.</strong> The experiment above is finished, and its pictures are fixed. This part is separate from it: a small workshop with two settings, each
+                with a drawing of its own that follows your choice. It has no connection to your predictions (your white guess marks do not appear here), and it does not change the pictures
+                above or the results below. Two things to explore: how much of the star would have to be thrown off to leave a neutron star instead of a black hole, and what a different count
+                of failing stars would look like.
+              </>
+            }
+          >
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>Your guesses from Part 1 have no effect here.</strong> They do not change these drawings or the results tables. Only the two settings below change the drawings.
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>These are your own trial values, not real measurements.</strong> The weights on the buttons are numbers you pick to try out, like turning a dial to see how a drawing changes. None
+              of them is a measurement. The real star is the one in Part 1: the discovery paper estimates that it weighed about 5 Suns at the end of its life and that at most about 0.1 Sun was thrown
+              off, so about 4.9 Suns stayed collapsed. If you choose 3 Suns, the drawing does a simple subtraction, 5 − 3 = 2 Suns, and draws a bar that ends at 2.0, which is the most weight that
+              neutrons are sure to hold up. That is a picture of an imagined star that threw off 3 Suns. It does not say that the real star did. The grey dashed line at 4.9 Suns stays in the drawing,
+              so you can always see the paper’s estimate next to your trial.
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>One thing to know.</strong> In a real star, nobody sets how much is thrown off. It is the result of a tug-of-war: the shock pushes the outer layers outward while the star’s
+              gravity pulls them back, and whatever gets away is the amount thrown off. This experiment does not calculate that tug-of-war. The drawing only subtracts the number you pick from the
+              star’s 5 Suns. So each button is something you can try, but the page does not check whether a real star’s shock could actually throw off that much. Use the drawing to see what each
+              amount would mean for the weight left behind, not to decide what a real star could do.
+            </p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How much of the star is thrown off? (Suns) It changes the bar in Drawing A.</p>
+            <ChoiceButtons
+              options={FAILED_SUPERNOVA_DATA.thrownOffChoicesSolar}
+              value={thrownOffChoice}
+              onChange={setThrownOffChoice}
+              format={(v) => `${sunsLabel(v)}${v === d.thrownOffSolar ? ' (the paper’s)' : v === d.envelopeMassSolar ? ' (all of its hydrogen-rich outer layer)' : ''}`}
+            />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
+              {`Throwing off ${sunsLabel(mine.thrownOffSolar)} of the star’s ${sunsLabel(mine.starSolar)} would leave ${sunsLabel(Number(mine.remnantSolar.toFixed(2)))} collapsed, ${mine.collapsedPercent.toFixed(0)} percent of the star. That would be ${outcomeWords(mine.outcome)}. These are trial values, not measurements.`}
+            </p>
+
+            <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+              <DrawingA mine={mine} />
+            </div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              <p style={paragraph}>
+                <strong>How to read Drawing A.</strong> It uses the same scale as the upper half of Picture 2: a ruler of weight in Suns, from 0 to 6. The star at the end of its life weighs {mine.starSolar} Suns.
+                The <strong>long bar</strong> is the part that stays collapsed. It is coloured by what that weight could become: <strong>red</strong> for a black hole, <strong>violet</strong> for a neutron star,
+                <strong> amber</strong> if it is uncertain. The <strong>short yellow bar</strong> at its right-hand end is the part you chose to throw off, and it disappears when you choose 0. The{' '}
+                <strong>blue marks</strong> are the limits from earlier experiments: up to 2.0 Suns neutrons can hold a core up, 2.2 to 2.3 is one 2026 estimate of the most a neutron star can weigh, and above 3.0 nothing known can
+                hold it up. The <strong>grey dashed line</strong> is the discovery paper’s estimate for the real star, {massPicture().remnantSolar.toFixed(1)} Suns, kept for comparison. Everything coloured here is imagined for the question, not measured.
+              </p>
+              <p style={paragraph}>
+                <strong>A worked moment.</strong> The star weighs {mine.starSolar} Suns and you chose to throw off {mine.thrownOffSolar}, so {mine.starSolar} − {mine.thrownOffSolar} = {mine.remnantSolar.toFixed(2)} Suns stay collapsed. As a share of the star,
+                {' '}{mine.remnantSolar.toFixed(2)} ÷ {mine.starSolar} = {(mine.fractionCollapsed).toFixed(2)}, or {mine.collapsedPercent.toFixed(0)} percent. To leave only 2.0 Suns, the most that neutrons are sure to hold up, you would have to
+                throw off {mine.thrownOffNeededForNeutronStarSolar} Suns.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What to look for.</strong>
+              </p>
+              <LookForList items={lookForDrawingA} />
+            </div>
+
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How many of every hundred massive stars fail? (stars) It changes the green dots in Drawing B.</p>
+            <ChoiceButtons
+              options={FAILED_SUPERNOVA_DATA.failedPerHundredChoices}
+              value={failedChoice}
+              onChange={setFailedChoice}
+              format={(v) => `${v} in 100${v === mine.failedRange.central ? ' (the survey’s central value)' : v === mine.failedRange.low ? ' (the low end of its range)' : v === mine.failedRange.high ? ' (the high end)' : ''}`}
+            />
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
+              {`${mine.failedPerHundred} in 100 means 1 massive star in every ${oneIn(mine.oneStarInEvery)} fails. The survey’s own range is ${mine.failedRange.low.toFixed(0)} to ${mine.failedRange.high.toFixed(0)} in 100, and your trial count is ${mine.failedVersusRange} it. These are trial values, not measurements.`}
+            </p>
+
+            <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+              <DrawingB mine={mine} />
+            </div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={paragraph}>
+                <strong>How to read Drawing B.</strong> It uses the same 100 dots as Picture 3: each dot is one massive star, counted along each row from the top left. The <strong>green dots</strong> are your trial
+                count, the stars you chose to count as failing. The <strong>grey dots</strong> are not counted. The <strong>grey dashed rings</strong> sit on dots {mine.failedRange.low.toFixed(0)}, {mine.failedRange.central.toFixed(0)} and {mine.failedRange.high.toFixed(0)}: the low end, the central
+                count and the high end of the survey’s range, kept for comparison. Nothing in this drawing is a measurement: the green dots are imagined for the question.
+              </p>
+              <p style={paragraph}>
+                <strong>A worked moment.</strong> You chose {mine.failedPerHundred} in 100, so {mine.filledDots} dots are green. As “1 in N”, 100 ÷ {mine.failedPerHundred} = {oneIn(mine.oneStarInEvery)}, so about 1 massive star in every {oneIn(mine.oneStarInEvery)} would fail.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What to look for.</strong>
+              </p>
+              <LookForList items={lookForDrawingB} />
+              <p style={{ ...paragraph, marginTop: '1rem' }}>
+                <strong>These are trial values.</strong> They show what a different choice would look like. They do not say that real stars are like that.
+              </p>
+            </div>
+          </PageSection>
+        )}
     </div>
   )
 }
