@@ -690,7 +690,7 @@ const chapters: Chapter[] = [
     // "What's next" says nothing about Experiment 6 until it has an approved specification (Decision 12).
     learned:
       "A redshift of 14.44, the most distant galaxy confirmed with a spectrum (MoM-z14), means its light was stretched 15.44 times on the way to us, so ultraviolet light that left at 121.6 nm arrived at about 1,877 nm, in the near-infrared, which is why Webb was needed. In the model, that light left about 284 million years after the Big Bang (the paper says 280), only about 2 percent of the universe's present age of 13.8 billion years. It travelled for about 13.5 billion years, and the galaxy was about 2.2 billion light-years away when the light left and is about 33.85 billion light-years away now. The survey behind it implies about 182 times the number of bright galaxies the models used before Webb predicted, in a range from 77 to 511 times, which is one survey's estimate. The age and the distance come from how the universe expands, so the puzzle is how galaxies could form so early, not the age shown here. Proposed explanations include short, strong bursts of star formation and very efficient early star formation. None is settled. This model gives ages and distances. It does not model how galaxies form, so it cannot say which explanation is right. Strong evidence that these galaxies exist; Open: what built them so fast, as of October 2026.",
-    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+    next: 'The next experiment turns to dark matter and asks where it is: what can a search that finds nothing still teach us?',
   },
   {
     title: 'Where is the dark matter?',
@@ -701,7 +701,7 @@ const chapters: Chapter[] = [
     // approved specification.
     learned:
       "A search that sees nothing still teaches something: it rules out every interaction strong enough that seeing nothing would have been less than a 1-in-10 accident. That limit sits where a search would expect about 2.3 bumps, so a particle ten times weaker, searched for ten times longer, is expected to give the same 2.3, and more data tests weaker interactions. With no background, LZ's limit of 2.2 × 10^-48 cm² after 280 live days would fall to about 6.2 × 10^-49 cm² after 1,000, and with a background that grows with the data, only to about 1.2 × 10^-48 cm² (two idealised rules, not LZ's forecast). Neutrinos from the Sun are a real signal and also a background: LZ saw the boron-8 kind at 4.5 sigma, above PandaX-4T's 2.64 and XENONnT's 2.73. LZ's 2026 search reported one event at 248 keV, at 3.4 sigma where it appeared. Counting all the places the search looked, LZ gives 2.6 sigma, below the 3 sigma of evidence (about 14 independent places would do this, as an illustration). The collaboration says the event does not establish a dark matter origin, so it is a hint, not a discovery, and what it is remains open. This experiment is a counting model: it does not reproduce LZ's limits, and it cannot say what the event is. Strong evidence about what dark matter is not; Open: what it is, and what one unexplained event means, as of October 2026.",
-    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+    next: 'The next experiment asks a different question about dark matter: do we need it at all, or does gravity itself change? It looks at pairs of stars that orbit very far apart.',
   },
   {
     title: 'Do we need dark matter, or does gravity change?',
@@ -755,7 +755,7 @@ const chapters: Chapter[] = [
     // Experiment 12 has no approved specification.
     learned:
       "Near the Sun, gravity and motion both slow a clock, and by almost the same amount. Parker Solar Probe, at its closest point (6.17 million km above the Sun's surface, 192.22 km/s), is slowed compared with a clock far from everything by 2.15 × 10^-7 from the Sun's gravity (GM ÷ (r × c²)) and 2.06 × 10^-7 from its motion (v² ÷ (2 × c²)): 4.21 × 10^-7 in all, like two leaks that add. A clock on the Earth is slowed by 1.55 × 10^-8 (the Earth's own gravity, the Sun's gravity at 1 AU, and the Earth's speed round the Sun), so the probe's clock falls behind it by 4.05 × 10^-7, which is 35.0 milliseconds a day at that point (about 36 against a clock far from everything). This is not a steady rate. As the probe moves out on its 88-day oval orbit, gravity's part falls about 16 times and motion's part about 256 times (the probe slows from 192 to 12 km/s, and the part depends on the square of the speed), so in this model the lag shrinks to zero at 0.70 AU and the probe's clock is slightly ahead of the Earth's beyond that (0.1 millisecond a day at the far end, a model number). If the closest-point rate lasted a whole orbit the lag would be 3.08 seconds; averaged over the real orbit it is 0.173 seconds. The distance and speed are NASA's (matched on the passes since, the 29th on 4 September 2026), and the formula has been tested with clocks on the Earth and in orbit; the lag itself is a calculation, and the sources read for this page do not report the mission measuring it. This experiment did not follow the real orbit, include the Sun's spin or shape, or say how the mission keeps or corrects its clock. Status, as of October 2026: Settled (the probe's distance and speed, and the physics); a calculation, not a measurement by this mission (the lag).",
-    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+    next: 'Experiment 12 turns from clocks to the stars themselves. It looks at Betelgeuse, a star near the end of its life, and asks whether it has a companion hiding next to it.',
   },
   {
     title: 'A star near the end of its life: what is Betelgeuse, and does it have a companion?',
@@ -787,7 +787,7 @@ const chapters: Chapter[] = [
     // (Das and others 2025; Mandal and others 2026). "What's next" names no experiment, because Experiment 15 has no approved specification.
     learned:
       "A white dwarf is held up by electron degeneracy pressure, which can hold only up to a limit of about 1.4 Suns' worth of material (1.44 in the model used here), and the heavier it is the smaller it is: 0.6 Suns gives a radius of 1.41 Earth radii, 1.4 Suns only 0.25. Two routes to a Type Ia explosion have been proposed: the white dwarf grows to near the limit, or a thin helium layer ignites first and sets off the core, a double detonation. In SNR 0509-67.5, a remnant 300 to 350 years old in the Large Magellanic Cloud, astronomers found two separate shells of calcium, at 1.73 and 2.06 parsecs from the centre (5.6 and 6.7 light-years), 0.33 parsecs apart. The simulation that matches them has a core of 1.028 Suns and a helium layer of 0.027, 1.055 in all, which is 0.385 Suns (27 percent) below the limit. Radius divided by age gives average speeds of about 4,800 to 6,700 km/s, about 2 percent of the speed of light. That is strong evidence for this one remnant; one author reads the two shells another way, and how many white dwarfs explode like this is open. It matters because a distance worked out from brightness assumes the explosions are alike: a supernova 20 percent dimmer than assumed would give a distance 11.8 percent too large.",
-    next: 'This is the latest experiment of the group built so far. The next ones will appear here once they have an approved specification.',
+    next: 'Experiment 15 turns from white dwarfs to neutron stars, the other dense leftovers of stars. It asks how big a neutron star is, and how heavy one can be before nothing can hold it up.',
   },
   {
     title: 'How big is a neutron star, and where do they end? (NICER and GW230529)',
@@ -796,7 +796,7 @@ const chapters: Chapter[] = [
     // Chapter summary, wording approved by the owner on 2026-10-24 (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's). "What's next" names no
     // experiment, because Experiment 16 has no approved specification.
     learned: neutronStarSummary(),
-    next: 'None yet, because Experiment 16 has no approved specification.',
+    next: 'Experiment 17 asks about a star that may have ended without a bright explosion: can a star’s core collapse into a black hole while the star simply fades from view?',
   },
   {
     title: 'A star that vanished: can a star become a black hole without exploding? (M31-2014-DS1)',
