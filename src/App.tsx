@@ -18,6 +18,7 @@ import { WhiteDwarfExplosionExperiment } from './components/WhiteDwarfExplosionE
 import { NeutronStarSizeExperiment } from './components/NeutronStarSizeExperiment'
 import { FailedSupernovaExperiment } from './components/FailedSupernovaExperiment'
 import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
+import { FAILED_SUPERNOVA_DATA, runCheckUp, SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES } from './physics/failedSupernova'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -125,6 +126,24 @@ function neutronStarSummary(): string {
     `${Math.round((r.clockSlowerPercent ?? 0) / 5) * 5} percent slow, counting about ${(minutes ?? 0).toFixed(1)} minutes in an hour. These two figures are calculated here, not measured. NICER found the size by ` +
     `watching X-ray pulses from hot spots as the star spins, like a lighthouse. Two things are still open: how heavy a neutron star can be before it collapses (one 2026 estimate is ` +
     `${d.maximumMassEstimateRangeSolar[0]} to ${d.maximumMassEstimateRangeSolar[1]} Suns, and it depends on assumptions), and what the heavier object in GW230529 is, a neutron star or a black hole.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 17 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// drift from the page.
+function failedSupernovaSummary(): string {
+  const c = runCheckUp()
+  const d = FAILED_SUPERNOVA_DATA
+  const thousands = (n: number) => Math.round(n).toLocaleString('en-US')
+  return (
+    `Can a star’s core collapse and nothing bright happen? The star M31-2014-DS1, in the Andromeda galaxy, brightened a little in infrared light from 2014, then faded in visible light by ` +
+    `more than ${thousands(c.visibleFadeFactor)} times, and no bright supernova was seen. That part is strong evidence. The discovery team estimates that the star weighed about ${c.starSolar} Suns at the ` +
+    `end of its life and that at most about ${c.thrownOffSolar} Sun was thrown off, so about ${c.remnantSolar.toFixed(1)} Suns (${c.collapsedPercent.toFixed(0)} percent) stayed collapsed. That is ${c.overEstimateTop.toFixed(1)} times the top of one estimate ` +
+    `of the most a neutron star can weigh (${d.maximumMassEstimateRangeSolar[1]} Suns) and above the ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES.toFixed(1)} Suns above which nothing known can hold a core up, so by those limits it would be a black hole. ` +
+    `The push that followed the collapse was only 1 in ${thousands(c.pushOneIn.lowOneIn)} to 1 in ${thousands(c.pushOneIn.highOneIn)} of a typical supernova’s, too weak to throw the outer layers out, and with too little push there is no flash. ` +
+    `What the object is, is contested: the discovery team says a black hole hidden in dust, and two other 2026 papers read it as two stars that merged. X-rays, which the discovery team expects in about ` +
+    `${d.xrayWaitYears} years, and later infrared pictures could help settle it. How often massive stars end this way is open: one survey found ${c.failedRange.central.toFixed(0)} in every 100, but the range is ` +
+    `${c.failedRange.low.toFixed(0)} to ${c.failedRange.high.toFixed(0)}, because it rests on one clearly detected failed supernova. The weights and the push are estimates from a model, not measurements.`
   )
 }
 
@@ -783,10 +802,8 @@ const chapters: Chapter[] = [
     title: 'A star that vanished: can a star become a black hole without exploding? (M31-2014-DS1)',
     group: 'Frontier and Beyond',
     Component: FailedSupernovaExperiment,
-    // Placeholder. The chapter summary is a later step (the specification's "Chapter summary"); it is not shown, because it appears only once the tutor's explanation, which is
-    // not built yet, has been reached.
-    learned: 'The chapter summary of Experiment 17 is not written yet.',
-    next: 'None yet.',
+    learned: failedSupernovaSummary(),
+    next: 'None yet, because Experiment 18 has no approved specification.',
   },
 ]
 

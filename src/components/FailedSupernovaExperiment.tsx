@@ -28,8 +28,8 @@ import type { LookFor } from './WideBinariesExperiment'
 // STEPS 2 to 4 (the interface skeleton, the predictions, and the run with its three pictures): this file has the status line, the introduction, one illustration (an ordinary
 // supernova beside a failed one) with its guide, the new-word list, the collapsed "Words and formulas" panel, the "Want to know more?" links, the two predictions, and Part 1: a
 // five-stage run that builds three pictures (what telescopes saw; what is left of the star and how strong the push was; how many stars fail). The learner's guesses are drawn on
-// Pictures 2 and 3 in white, beside the real results (the owner's rule of 2026-10-24, CLAUDE.md §14), and the real pictures never change. STEP 5a adds Part 2 (two controls with a drawing each, shown after the run). STEP 5b adds Part 3 (the results: a status box, the predictions beside the results, a check-up and three tables, each with a note). STEP 6 adds Part 4, the tutor (FailedSupernovaTutor.tsx). It has no chapter
-// summary yet; those are later steps (CLAUDE.md §6). The timer only paces the display (CLAUDE.md §11). Every number comes from src/physics/failedSupernova.ts (CLAUDE.md §9). The page is built to the plan in the specification: an introduction and four parts (predict and watch, now try it yourself, the results, the
+// Pictures 2 and 3 in white, beside the real results (the owner's rule of 2026-10-24, CLAUDE.md §14), and the real pictures never change. STEP 5a adds Part 2 (two controls with a drawing each, shown after the run). STEP 5b adds Part 3 (the results: a status box, the predictions beside the results, a check-up and three tables, each with a note). STEP 6 adds Part 4, the tutor (FailedSupernovaTutor.tsx). STEP 7's chapter summary is in src/App.tsx (failedSupernovaSummary). It has no
+// complete-flow test or final review yet; those are later steps (CLAUDE.md §6). The timer only paces the display (CLAUDE.md §11). Every number comes from src/physics/failedSupernova.ts (CLAUDE.md §9). The page is built to the plan in the specification: an introduction and four parts (predict and watch, now try it yourself, the results, the
 // tutor). The few published numbers the introduction states are read from src/physics/failedSupernova.ts (CLAUDE.md §9). All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1) and is written to the standard of §29. Nothing here gives the answer to either prediction (CLAUDE.md §12): not the strength of the push, and not
 // how many stars fail. The papers that give those numbers are listed only after the run.
@@ -1571,7 +1571,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
                     shown. Some parts use a worked sum or an everyday comparison.
                   </li>
                   <li>
-                    <strong>After the explanation,</strong> a short summary of what you learned will appear below (it is not written yet).
+                    <strong>After the explanation,</strong> a short summary of what you learned appears below.
                   </li>
                 </ul>
               </>
