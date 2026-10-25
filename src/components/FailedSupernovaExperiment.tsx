@@ -10,7 +10,9 @@ import {
   logScalePosition,
   massPicture,
   pushOneInRange,
+  readings,
   remnantOverLimits,
+  runCheckUp,
   runFailedSupernova,
   SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
   supernovaSpreadFactor,
@@ -18,14 +20,14 @@ import {
 } from '../physics/failedSupernova'
 import type { CountAnswer, FailedSupernovaResult, PushAnswer } from '../physics/failedSupernova'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { LookForList } from './WideBinariesExperiment'
+import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 17 (docs/experiments/frontier-and-beyond/17-a-star-that-vanished.md).
 // STEPS 2 to 4 (the interface skeleton, the predictions, and the run with its three pictures): this file has the status line, the introduction, one illustration (an ordinary
 // supernova beside a failed one) with its guide, the new-word list, the collapsed "Words and formulas" panel, the "Want to know more?" links, the two predictions, and Part 1: a
 // five-stage run that builds three pictures (what telescopes saw; what is left of the star and how strong the push was; how many stars fail). The learner's guesses are drawn on
-// Pictures 2 and 3 in white, beside the real results (the owner's rule of 2026-10-24, CLAUDE.md §14), and the real pictures never change. STEP 5a adds Part 2 (two controls with a drawing each, shown after the run). It has no results, tutor or
+// Pictures 2 and 3 in white, beside the real results (the owner's rule of 2026-10-24, CLAUDE.md §14), and the real pictures never change. STEP 5a adds Part 2 (two controls with a drawing each, shown after the run). STEP 5b adds Part 3 (the results: a status box, the predictions beside the results, a check-up and three tables, each with a note). It has no tutor or
 // summary yet; those are later steps (CLAUDE.md §6). The timer only paces the display (CLAUDE.md §11). Every number comes from src/physics/failedSupernova.ts (CLAUDE.md §9). The page is built to the plan in the specification: an introduction and four parts (predict and watch, now try it yourself, the results, the
 // tutor). The few published numbers the introduction states are read from src/physics/failedSupernova.ts (CLAUDE.md §9). All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1) and is written to the standard of §29. Nothing here gives the answer to either prediction (CLAUDE.md §12): not the strength of the push, and not
@@ -505,6 +507,7 @@ function PictureThree({ guess }: { guess: CountAnswer | null }) {
 
 // ---- Part 2: the learner's own trial values (two drawings that follow the two controls; the real pictures never change) ----
 const PART_TWO_COLOR = '#0d9488'
+const PART_THREE_COLOR = '#7c3aed'
 const TRIAL_COLOR = '#34d399' // green: imagined for the question (a trial value)
 const UNCERTAIN_COLOR = '#f59e0b'
 // "1 Sun", "0.1 Suns"; and "25" or "6.3" (one decimal place, without a needless ".0").
@@ -754,6 +757,10 @@ export function FailedSupernovaExperiment({ onComplete }: FailedSupernovaExperim
   const [thrownOffChoice, setThrownOffChoice] = useState<number>(FAILED_SUPERNOVA_DATA.thrownOffSolar)
   const [failedChoice, setFailedChoice] = useState<number>(failedRange().central)
   const mine = runFailedSupernova({ thrownOffSolar: thrownOffChoice, failedPerHundred: failedChoice })
+  // The results (Part 3) use the paper's own numbers, so they never follow the guesses or the Part 2 settings.
+  const check = runCheckUp()
+  const pushLabel = PUSH_CHOICES.find((c) => c.value === pushPrediction)?.label.toLowerCase() ?? ''
+  const countLabel = COUNT_CHOICES.find((c) => c.value === countPrediction)?.label.toLowerCase() ?? ''
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const hasRun = status !== 'idle'
@@ -1335,6 +1342,204 @@ export function FailedSupernovaExperiment({ onComplete }: FailedSupernovaExperim
               <LookForList items={lookForDrawingB} />
               <p style={{ ...paragraph, marginTop: '1rem' }}>
                 <strong>These are trial values.</strong> They show what a different choice would look like. They do not say that real stars are like that.
+              </p>
+            </div>
+          </PageSection>
+        )}
+
+        {/* Part 3, a section of its own (after the run): the results. Its numbers are fixed: they do not follow the predictions or Part 2's settings. DRAFT wording for the owner's
+            approval (CLAUDE.md §28.1). */}
+        {done && (
+          <PageSection
+            step="Part 3"
+            title="The results"
+            accent={PART_THREE_COLOR}
+            lead={
+              <>
+                <strong>What we are about to do.</strong> In Part 1 you made two predictions: Prediction 1 (how much energy does the failed supernova’s push have, compared with a typical
+                supernova’s?) and Prediction 2 (how many of every 100 massive stars fail like this?). Here are the real numbers, in three tables, so you can compare your guesses with them.
+                <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>Table 1</strong> is about the star M31-2014-DS1 and about how common failed supernovae may be. The answers to both predictions are in this table.
+                  </li>
+                  <li>
+                    <strong>Table 2</strong> lists the published papers and releases behind the numbers, and says how strong each one is.
+                  </li>
+                  <li>
+                    <strong>Table 3</strong> sets the two readings of the star side by side: a black hole, or two stars that merged.
+                  </li>
+                </ul>
+                None of these tables changes with your guesses, or with the settings you chose in Part 2. Before the tables you will first see where things stand today, then a short check-up.
+              </>
+            }
+          >
+            <p style={{ ...paragraph, padding: '0.75rem 1rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px', fontSize: '0.875rem' }}>
+              <strong>Where this stands (as of October 2026).</strong> <strong>Strong evidence:</strong> the star M31-2014-DS1 in the Andromeda galaxy brightened a little in infrared light from
+              2014, then faded in visible light by a factor of more than {thousands(check.visibleFadeFactor)}, and no bright supernova was seen. <strong>Contested:</strong> what it became. The
+              team that found it says a black hole (<em>Science</em>, February 2026); two other 2026 papers read it as two stars that merged. <strong>Open:</strong> how often massive stars end
+              without exploding: published estimates run from about {check.failedRange.low.toFixed(0)} in 100 to about {check.failedRange.high.toFixed(0)} in 100.
+            </p>
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>Your predictions, beside the results.</strong> Before the run you made two predictions. Here they are again, each with the place on this page where its number appears.
+                Compare them yourself. The tutor will go through them with you after the tables.
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>Prediction 1: how much energy does the push have?</strong> You predicted: <strong>{pushLabel}</strong>. Its number is in Table 1, in the row “The push, compared with a
+                typical supernova’s”.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Prediction 2: how often?</strong> You predicted: <strong>{countLabel}</strong>. Its number is in Table 1, in the row “How many of every 100 massive stars fail”.
+              </p>
+            </div>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>How to read these results.</strong> Think of these tables as a set of test results, and this section as the doctor explaining them. Nobody weighed this star or measured the
+              energy of its push with an instrument. The weights and the push are estimates the discovery team worked out from how the star’s light changed, and how common failed supernovae are comes
+              from one survey that found only one clear case. So each number comes with its own give-or-take, and some are stronger than others. The question to keep in mind is:{' '}
+              <strong>do the numbers agree with each other, and how strong is each one?</strong>
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              First comes a short check-up that sets what we would expect beside what was found. Then each table has a plain-words note under it. The experiment explains what each number means.
+              It does not decide for you what the star became: the two readings are set side by side in Table 3, and the tutor will help you think about them, after the tables.
+            </p>
+            <p style={{ marginBottom: '0.25rem' }}>
+              <strong>The check-up: what we would expect, and what was found</strong>
+            </p>
+            <ResultsTable
+              head={['What was checked', 'What we would expect', 'What was found', 'What this tells us']}
+              minWidth={760}
+              rows={[
+                [
+                  'What stays collapsed, against the limits',
+                  `Black Holes Experiment 9: above ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES.toFixed(1)} Suns nothing known can hold a core up. Experiment 15: one 2026 estimate of the most a neutron star can weigh is ${d.maximumMassEstimateRangeSolar[0]} to ${d.maximumMassEstimateRangeSolar[1]} Suns`,
+                  `${check.remnantSolar.toFixed(1)} Suns (the paper’s estimate), ${check.collapsedPercent.toFixed(0)} percent of the star`,
+                  `Above both: ${check.overSureBlackHole.toFixed(2)} times the ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES.toFixed(1)} limit and ${check.overEstimateTop.toFixed(2)} times the top of the estimate. By these limits, that much weight would be a black hole.`,
+                ],
+                [
+                  'The push, against an ordinary supernova’s',
+                  `An ordinary supernova (Experiment 13): about ${pow10Label(51)} erg, so a ratio of 1 to 1`,
+                  `${pow10Label(47)} to ${pow10Label(48)} erg: 1 in ${thousands(check.pushOneIn.lowOneIn)} to 1 in ${thousands(check.pushOneIn.highOneIn)} of that`,
+                  `Much weaker: ${thousands(check.pushTimesWeaker.low)} to ${thousands(check.pushTimesWeaker.high)} times less. The other 2026 paper gives a lower range (1 in ${thousands(check.apjlPushOneIn.lowOneIn)} to 1 in ${thousands(check.apjlPushOneIn.highOneIn)}), so the two ranges meet only at 1 in ${thousands(check.pushRangesOverlapAtOneIn ?? 0)}. The sources differ.`,
+                ],
+                [
+                  'The fade in 2024, against a similar star',
+                  `NGC 6946-BH1, the first candidate: about ${check.ngc6946PercentRange[0].toFixed(0)} to ${check.ngc6946PercentRange[1].toFixed(0)} percent of its old light left (JWST, 2024; read only in a summary)`,
+                  `About ${check.jwstPercent.toFixed(0)} percent of the old light left, in infrared (JWST, 2024)`,
+                  `Below that range by ${check.fadeVersusNgc6946.distance.toFixed(0)} percentage points (the gap between 7 percent and 10 percent is 3 points). The first candidate kept ${check.ngc6946TimesJwst.low.toFixed(1)} to ${check.ngc6946TimesJwst.high.toFixed(1)} times as much of its light. Both faded to a small share, but not to the same share.`,
+                ],
+                [
+                  'How common, against two other estimates',
+                  `The 2017 press estimate: “as many as ${check.press2017Percent.toFixed(0)} percent”. An earlier 7-year survey: ${check.sevenYear.central.toFixed(0)} in 100 (${check.sevenYear.low.toFixed(0)} to ${check.sevenYear.high.toFixed(0)})`,
+                  `${check.failedRange.central.toFixed(0)} in 100 (${check.failedRange.low.toFixed(0)} to ${check.failedRange.high.toFixed(0)}), the 11-year survey, 90 percent range`,
+                  `Inside each other’s ranges: ${check.press2017Percent.toFixed(0)} lies inside ${check.failedRange.low.toFixed(0)} to ${check.failedRange.high.toFixed(0)}, and ${check.failedRange.central.toFixed(0)} lies inside ${check.sevenYear.low.toFixed(0)} to ${check.sevenYear.high.toFixed(0)}. They do not contradict each other, but the ranges are wide.`,
+                ],
+              ]}
+            />
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              A doctor reads each result against a reference. Row 1 is set against limits from earlier experiments, row 2 against an ordinary supernova, and rows 3 and 4 against other published
+              results. None of the rows says what the star is: that is why the status label says “Contested” for what it became. Table 3 sets out the two readings.
+            </p>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 1: the star, the push, the fade and how common</strong>
+            </p>
+            <ResultsTable
+              head={['Quantity', 'Value', 'Where it comes from']}
+              minWidth={600}
+              rows={[
+                ['The star at the end of its life', `about ${check.starSolar} Suns`, 'De and others (2026): the discovery team’s estimate'],
+                ['Thrown off', `at most about ${check.thrownOffSolar} Sun, ${check.thrownOffPercent.toFixed(0)} percent of the star`, 'De and others (2026): the discovery team’s estimate'],
+                ['Collapsed', `${check.remnantSolar.toFixed(1)} Suns, ${check.collapsedPercent.toFixed(0)} percent of the star`, `worked out here: ${check.starSolar} − ${check.thrownOffSolar}`],
+                [
+                  'Collapsed, against the limits',
+                  `${check.overSureBlackHole.toFixed(2)} times ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES.toFixed(1)} Suns; ${check.overEstimateTop.toFixed(2)} times ${d.maximumMassEstimateRangeSolar[1]} Suns`,
+                  `worked out here: ${check.remnantSolar.toFixed(1)} ÷ ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES.toFixed(1)} and ${check.remnantSolar.toFixed(1)} ÷ ${d.maximumMassEstimateRangeSolar[1]} (Black Holes Experiment 9; Experiment 15)`,
+                ],
+                [
+                  'What would have to be thrown off to leave a neutron star',
+                  `at least ${check.thrownOffNeededSolar.toFixed(1)} Suns, ${check.thrownOffNeededPercent.toFixed(0)} percent of the star`,
+                  `worked out here: ${check.starSolar} − 2.0, the most weight neutrons are sure to hold up`,
+                ],
+                [
+                  'The push, compared with a typical supernova’s (the row for Prediction 1)',
+                  `${pow10Label(47)} to ${pow10Label(48)} erg, which is 1 in ${thousands(check.pushOneIn.lowOneIn)} to 1 in ${thousands(check.pushOneIn.highOneIn)} of a typical supernova’s ${pow10Label(51)} erg`,
+                  `De and others (2026) for the push; the ${pow10Label(51)} is Experiment 13’s. You predicted: ${pushLabel}`,
+                ],
+                [
+                  'The fade',
+                  `visible light more than ${thousands(check.visibleFadeFactor)} times fainter than in 2012; about ${check.jwstPercent.toFixed(0)} percent of the old light left in infrared in 2024`,
+                  'De and others (2026) (Hubble); De and others, ApJ Letters (2026), through AAS Nova’s summary (JWST)',
+                ],
+                [
+                  'How many of every 100 massive stars fail (the row for Prediction 2)',
+                  `${check.failedRange.central.toFixed(0)} in 100, with a 90 percent range of ${check.failedRange.low.toFixed(0)} to ${check.failedRange.high.toFixed(0)}; about 1 star in every ${oneIn(check.oneStarInEvery)}`,
+                  `Neustadt and others (2021); it rests on one clearly detected failed supernova. You predicted: ${countLabel}`,
+                ],
+              ]}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What stays collapsed.</strong> What it is: how much of the star’s weight did not get thrown out. What it means: of the {check.starSolar} Suns, at most {check.thrownOffSolar} Sun was thrown off, so{' '}
+                {check.starSolar} − {check.thrownOffSolar} = {check.remnantSolar.toFixed(1)} Suns stayed, which is {check.collapsedPercent.toFixed(0)} percent. Why it matters: {check.remnantSolar.toFixed(1)} Suns is above every limit from earlier experiments, so a black hole is the
+                result those limits point to. To leave a neutron star instead, at least {check.thrownOffNeededSolar.toFixed(1)} Suns ({check.thrownOffNeededPercent.toFixed(0)} percent) would have to be thrown off, {check.thrownOffNeededOverPaper.toFixed(0)} times more than the paper’s estimate. How sure the number is: it is an estimate from a model of the
+                star, not a weighing, and the limits are rough teaching limits.
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>The push.</strong> What it is: the energy the shock gave the star’s outer layers. What it means: {pow10Label(47)} to {pow10Label(48)} erg, against {pow10Label(51)} for a typical supernova. That is {thousands(check.pushTimesWeaker.low)} to {thousands(check.pushTimesWeaker.high)} times less. For example, {thousands(check.pushTimesWeaker.low)} times less is like a full bathtub (about 200 litres) set beside one cup of water (about 0.2 litre), and the
+                push is even smaller than that. Why it matters: a push this small does not throw the outer layers away, so there is no bright flash, which is what the telescopes saw. How sure
+                the number is: the two 2026 papers give different ranges, and nobody measured the push directly.
+              </p>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>The fade.</strong> What it is: how much of the star’s light was left. What it means: in visible light it dropped by more than {thousands(check.visibleFadeFactor)} times, but a space telescope still found about {check.jwstPercent.toFixed(0)} percent of the old light in infrared, like a
+                lamp turned down to {check.jwstPercent.toFixed(0)} percent of its brightness, not switched off. Why it matters: something is still giving off light there, and both readings have to explain it.
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>How many fail.</strong> What it is: how many of every 100 massive stars end without a bright explosion. What it means: the best count is {check.failedRange.central.toFixed(0)} in 100, but the range is {check.failedRange.low.toFixed(0)} to {check.failedRange.high.toFixed(0)}, and the top of the range is {check.topOverBottom.toFixed(1)} times the bottom ({check.failedRange.high.toFixed(0)} ÷ {check.failedRange.low.toFixed(0)}). Why it matters: a range that wide
+                is what you get when only one event has been seen. It rests on one clearly detected failed supernova, so it is the weakest number on this page.
+              </p>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 2: the published papers and releases, and how strong each is</strong>
+            </p>
+            <ResultsTable
+              head={['Source', 'What it reports', 'How strong it is']}
+              minWidth={640}
+              rows={[
+                ['De and others, Science (12 February 2026; arXiv:2410.14778)', 'the star’s history; about 13 Suns at birth and about 5 at the end; the push of 10⁴⁷ to 10⁴⁸ erg; at most about 0.1 Sun thrown off; about 98 percent collapsed or fell back', 'the discovery team’s own paper. Read through its abstract and the first half only. The weights and the push are estimates from a model'],
+                ['De and others, ApJ Letters 999, L25 (2026)', 'about 7 percent of the old light left in 2024; a push “one hundred-millionth to one ten-thousandth” of a typical supernova’s; X-rays “no sooner than about 27 years”', 'read only through AAS Nova’s summary'],
+                ['Beasor and others (arXiv:2601.05317, 2026)', 'a luminous mid-infrared source persists at the same place; no X-rays; asymmetric dust; a merger “also seems to provide a plausible explanation”', 'a different team’s paper, accepted to a journal; read through its abstract only'],
+                ['Soker (arXiv:2601.14497, 2026)', 'argues that the black-hole reading needs less than 1 percent of the bound material accreted and predicts about ten times too much radiation; favours dust ejected by a pair of stars', 'one author’s argument; read through its abstract only'],
+                ['Neustadt and others, MNRAS 508, 516 (2021)', 'about 16 in 100 massive stars (4 to 39, 90 percent range), from 27 galaxies over 11 years', 'a survey; its abstract says it found only one clearly detected failed supernova'],
+                ['NASA JPL release (12 February 2026)', 'the star brightened in infrared in 2014 and by 2023 was more than 10,000 times fainter in visible light; 2.5 million light-years away', 'an official release; a plain summary of the discovery team’s work'],
+                ['Ohio State University news (25 May 2017)', 'the first candidate, NGC 6946-BH1: 25 Suns, brightened in 2009, gone by 2015; “as many as 30 percent” of massive stars may collapse quietly', 'a 2017 news release; it says it is “too early” to know for sure'],
+              ]}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: 0 }}>
+                <strong>What this table tells us.</strong> What it is: the papers and releases that the pictures and numbers come from, each with what it reports. What it means: the discovery team’s papers give the
+                weights, the push and the fade; a different team’s paper and one author’s argument give another reading; a survey gives how common; and news releases give the first candidate and a plain summary. Why it
+                matters: the numbers on this page come from abstracts and summaries, not from the full papers (the right-hand column says what was read), and the strongest-sounding numbers, the weights and the push, are estimates from a model, not
+                measurements by an instrument. The only direct observations are the star’s light, which several telescopes recorded.
+              </p>
+            </div>
+
+            <p style={{ margin: '1.5rem 0 0.25rem' }}>
+              <strong>Table 3: the two readings, side by side</strong>
+            </p>
+            <ResultsTable
+              head={['Topic', 'A black hole (the discovery team)', 'Two stars that merged (two other teams)', 'Who says so']}
+              minWidth={760}
+              rows={readings().map((row) => [row.topic, row.blackHole, row.merger, row.source])}
+            />
+            <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <p style={{ margin: 0 }}>
+                <strong>What this table tells us.</strong> What it is: what each side says about the same observations. What it means: both sides use the same telescope observations (the fade, the infrared glow
+                and the lack of X-rays so far) and disagree about what caused them. Why it matters: a disagreement like this is settled by new observations, such as X-rays (the discovery team says they should appear in about 27
+                years) and later infrared pictures. This page does not choose between the readings, because the papers do not settle it yet.
               </p>
             </div>
           </PageSection>

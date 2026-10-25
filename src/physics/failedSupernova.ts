@@ -352,3 +352,140 @@ export function runFailedSupernova(settings: FailedSupernovaSettings = {}): Fail
     neutrinoMassLossSolar: neutrinoMassLossSolar(),
   }
 }
+
+// ---- The reading guide's comparisons (CLAUDE.md §14, "Reading the Results") ----
+
+// Where a value lies against a published range: inside it, or below or above it by this distance (in the value's own unit, to the nearest edge). No cut-off such as "close enough".
+export interface RangeCheck {
+  verdict: 'inside' | 'below' | 'above'
+  distance: number
+}
+export function rangeCheck(value: number, low: number, high: number): RangeCheck {
+  if (!Number.isFinite(value)) throw new RangeError('The value must be a finite number')
+  if (!Number.isFinite(low) || !Number.isFinite(high) || low > high) throw new RangeError('A range must run from its low end to its high end')
+  if (value < low) return { verdict: 'below', distance: low - value }
+  if (value > high) return { verdict: 'above', distance: value - high }
+  return { verdict: 'inside', distance: 0 }
+}
+
+// The interval a value with a give-or-take covers, [value - minus, value + plus], in the value's own unit.
+export function giveOrTakeInterval(value: number, plus: number, minus: number): [number, number] {
+  if (!Number.isFinite(value) || !Number.isFinite(plus) || !Number.isFinite(minus) || plus < 0 || minus < 0) throw new RangeError('A give-or-take must be finite and not negative')
+  return [value - minus, value + plus]
+}
+
+// Everything the check-up and the tables show, for the paper's own numbers (the page's defaults), in one place. Nothing here follows the learner's guesses or settings.
+export interface CheckUp {
+  // What stays collapsed.
+  starSolar: number
+  thrownOffSolar: number
+  remnantSolar: number
+  collapsedPercent: number
+  thrownOffPercent: number
+  remnantOutcome: CoreOutcome
+  overSureBlackHole: number
+  overEstimateTop: number
+  thrownOffNeededSolar: number
+  thrownOffNeededPercent: number
+  thrownOffNeededOverPaper: number // how many times more than the paper's thrown-off mass would have to be thrown off
+  // The push against an ordinary supernova's.
+  pushOneIn: { lowOneIn: number; highOneIn: number }
+  pushTimesWeaker: { low: number; high: number }
+  apjlPushOneIn: { lowOneIn: number; highOneIn: number }
+  pushRangesOverlapAtOneIn: number | null // where the two papers' ranges touch (1 in N), or null if they do not overlap
+  // The fade.
+  jwstPercent: number
+  ngc6946PercentRange: [number, number]
+  fadeVersusNgc6946: RangeCheck // in percentage points
+  ngc6946TimesJwst: { low: number; high: number }
+  visibleFadeFactor: number
+  // How common.
+  failedRange: { low: number; central: number; high: number }
+  sevenYear: { central: number; low: number; high: number }
+  press2017Percent: number
+  press2017VersusRange: RangeCheck
+  sevenYearCentralVersusRange: RangeCheck
+  centralVersusSevenYearRange: RangeCheck
+  topOverBottom: number
+  oneStarInEvery: number
+}
+export function runCheckUp(): CheckUp {
+  const d = FAILED_SUPERNOVA_DATA
+  const r = runFailedSupernova()
+  const push = pushOneInRange()
+  const apjl = apjlPushOneInRange()
+  const range = failedRange()
+  const [ngcLowFraction, ngcHighFraction] = d.ngc6946FractionRange
+  const sevenYearInterval = giveOrTakeInterval(d.failedFractionSevenYear.value * 100, d.failedFractionSevenYear.plus * 100, d.failedFractionSevenYear.minus * 100)
+  // The two papers' "1 in N" ranges: ours runs from 1,000 to 10,000, theirs from 10,000 to 100 million. They share the point 1 in 10,000, and no more.
+  const overlapLow = Math.max(push.lowOneIn, apjl.lowOneIn)
+  const overlapHigh = Math.min(push.highOneIn, apjl.highOneIn)
+  return {
+    starSolar: r.starSolar,
+    thrownOffSolar: r.thrownOffSolar,
+    remnantSolar: r.remnantSolar,
+    collapsedPercent: r.collapsedPercent,
+    thrownOffPercent: r.thrownOffPercent,
+    remnantOutcome: r.outcome,
+    overSureBlackHole: r.overLimits.overSureBlackHole,
+    overEstimateTop: r.overLimits.overEstimateTop,
+    thrownOffNeededSolar: r.thrownOffNeededForNeutronStarSolar,
+    thrownOffNeededPercent: (r.thrownOffNeededForNeutronStarSolar / r.starSolar) * 100,
+    thrownOffNeededOverPaper: r.thrownOffNeededForNeutronStarSolar / r.thrownOffSolar,
+    pushOneIn: push,
+    pushTimesWeaker: { low: push.lowOneIn, high: push.highOneIn },
+    apjlPushOneIn: apjl,
+    pushRangesOverlapAtOneIn: overlapLow <= overlapHigh ? overlapLow : null,
+    jwstPercent: d.jwstFractionOfProgenitor * 100,
+    ngc6946PercentRange: [ngcLowFraction * 100, ngcHighFraction * 100],
+    fadeVersusNgc6946: rangeCheck(d.jwstFractionOfProgenitor * 100, ngcLowFraction * 100, ngcHighFraction * 100),
+    ngc6946TimesJwst: { low: ngcLowFraction / d.jwstFractionOfProgenitor, high: ngcHighFraction / d.jwstFractionOfProgenitor },
+    visibleFadeFactor: d.visibleFadeFactor,
+    failedRange: range,
+    sevenYear: { central: d.failedFractionSevenYear.value * 100, low: sevenYearInterval[0], high: sevenYearInterval[1] },
+    press2017Percent: d.failedFractionPress2017 * 100,
+    press2017VersusRange: rangeCheck(d.failedFractionPress2017 * 100, range.low, range.high),
+    sevenYearCentralVersusRange: rangeCheck(d.failedFractionSevenYear.value * 100, range.low, range.high),
+    centralVersusSevenYearRange: rangeCheck(range.central, sevenYearInterval[0], sevenYearInterval[1]),
+    topOverBottom: range.high / range.low,
+    oneStarInEvery: 100 / range.central,
+  }
+}
+
+// ---- The two readings (data only: what each team says, with no calculation and no verdict) ----
+
+export interface ReadingRow {
+  topic: string
+  blackHole: string
+  merger: string
+  source: string
+}
+const READINGS: readonly ReadingRow[] = [
+  {
+    topic: 'What the object is',
+    blackHole: 'a star that collapsed into a black hole, with most of its outer layers falling back in and a little thrown out, hidden in dust',
+    merger: 'two stars that merged, leaving a dust-covered star that still shines',
+    source: 'De and others (2026); Beasor and others (2026); Soker (2026)',
+  },
+  {
+    topic: 'X-rays',
+    blackHole: 'none seen so far, because the dust blocks them; they should appear in about 27 years',
+    merger: 'none seen, which the authors say disfavours a black hole powering the light',
+    source: 'De and others (2026, as summarised by AAS Nova); Beasor and others (2026)',
+  },
+  {
+    topic: 'The dust',
+    blackHole: 'the dust and the weak ejection together hide the black hole',
+    merger: 'asymmetric dust, thrown out by a pair of stars',
+    source: 'De and others (2026); Beasor and others (2026); Soker (2026)',
+  },
+  {
+    topic: 'What each team says about the other’s reading',
+    blackHole: 'the discovery team answers that the weak ejection and the dust hide a black hole, and that X-rays should appear in about 27 years',
+    merger: 'Soker says the black-hole reading needs less than 1 percent of the bound material to be accreted and a backflow that is not shut off for over 10 years, and that it predicts radiation about ten times above what is seen',
+    source: 'De and others (2026); Soker (2026)',
+  },
+]
+export function readings(): readonly ReadingRow[] {
+  return READINGS
+}

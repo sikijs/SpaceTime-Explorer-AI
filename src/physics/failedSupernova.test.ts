@@ -28,6 +28,10 @@ import {
   remnantMassSolar,
   remnantOutcome,
   remnantOverLimits,
+  rangeCheck,
+  giveOrTakeInterval,
+  readings,
+  runCheckUp,
   supernovaSpreadFactor,
   runFailedSupernova,
   thrownOffNeededForNeutronStar,
@@ -313,5 +317,74 @@ describe('imports (required test 10)', () => {
     const source = readFileSync(new URL('./failedSupernova.ts', import.meta.url), 'utf8')
     const imports = [...source.matchAll(/^import\b[^\n]*?['"]([^'"]+)['"]\s*$/gm)].map((m) => m[1])
     expect(imports.sort()).toEqual(['./blackHoleFormationExperiment', './catchingASupernova'])
+  })
+})
+
+describe('the reading guide comparisons (CLAUDE.md §14)', () => {
+  it('rangeCheck says inside, below or above, with the distance to the nearest edge', () => {
+    expect(rangeCheck(5, 2, 8)).toEqual({ verdict: 'inside', distance: 0 })
+    expect(rangeCheck(2, 2, 8).verdict).toBe('inside')
+    expect(rangeCheck(1, 2, 8)).toEqual({ verdict: 'below', distance: 1 })
+    expect(rangeCheck(10, 2, 8)).toEqual({ verdict: 'above', distance: 2 })
+    expect(() => rangeCheck(1, 8, 2)).toThrow(RangeError)
+    expect(() => rangeCheck(NaN, 2, 8)).toThrow(RangeError)
+  })
+  it('giveOrTakeInterval runs from value - minus to value + plus', () => {
+    expect(giveOrTakeInterval(16, 23, 12)).toEqual([4, 39])
+    expect(() => giveOrTakeInterval(1, -1, 0)).toThrow(RangeError)
+  })
+  it('runCheckUp gives the paper’s mass numbers against the limits (separate calculation)', () => {
+    const c = runCheckUp()
+    expect(c.remnantSolar).toBeCloseTo(4.9, 12)
+    expect(c.remnantOutcome).toBe('black-hole')
+    expect(c.overSureBlackHole).toBeCloseTo(4.9 / 3, 12)
+    expect(c.overEstimateTop).toBeCloseTo(4.9 / 2.3, 12)
+    expect(c.thrownOffNeededSolar).toBe(3)
+    expect(c.thrownOffNeededPercent).toBeCloseTo(60, 10)
+    expect(c.thrownOffNeededOverPaper).toBeCloseTo(30, 10)
+    expect(c.collapsedPercent).toBeCloseTo(98, 10)
+  })
+  it('runCheckUp gives the push as 1 in 1,000 to 1 in 10,000, touching the other paper’s range only at 1 in 10,000', () => {
+    const c = runCheckUp()
+    expect(c.pushOneIn.lowOneIn).toBeCloseTo(1000, 6)
+    expect(c.pushOneIn.highOneIn).toBeCloseTo(10000, 6)
+    expect(c.pushTimesWeaker.low).toBeCloseTo(1000, 6)
+    expect(c.pushTimesWeaker.high).toBeCloseTo(10000, 6)
+    expect(c.apjlPushOneIn.lowOneIn).toBeCloseTo(1e4, 6)
+    expect(c.apjlPushOneIn.highOneIn).toBeCloseTo(1e8, 0)
+    expect(c.pushRangesOverlapAtOneIn).toBeCloseTo(1e4, 6)
+  })
+  it('runCheckUp gives the fade below NGC 6946-BH1’s 10 to 15 percent, by 3 points, 1.4 to 2.1 times', () => {
+    const c = runCheckUp()
+    expect(c.jwstPercent).toBeCloseTo(7, 10)
+    expect(c.fadeVersusNgc6946.verdict).toBe('below')
+    expect(c.fadeVersusNgc6946.distance).toBeCloseTo(3, 10)
+    expect(c.ngc6946TimesJwst.low).toBeCloseTo(10 / 7, 10)
+    expect(c.ngc6946TimesJwst.high).toBeCloseTo(15 / 7, 10)
+    expect(c.visibleFadeFactor).toBe(1e4)
+  })
+  it('runCheckUp gives how common against the other estimates (each inside the other’s range)', () => {
+    const c = runCheckUp()
+    expect(c.failedRange.low).toBeCloseTo(4, 10)
+    expect(c.failedRange.high).toBeCloseTo(39, 10)
+    expect(c.sevenYear.central).toBeCloseTo(14, 10)
+    expect(c.sevenYear.low).toBeCloseTo(4, 10)
+    expect(c.sevenYear.high).toBeCloseTo(47, 10)
+    expect(c.press2017Percent).toBeCloseTo(30, 10)
+    expect(c.press2017VersusRange.verdict).toBe('inside')
+    expect(c.sevenYearCentralVersusRange.verdict).toBe('inside')
+    expect(c.centralVersusSevenYearRange.verdict).toBe('inside')
+    expect(c.topOverBottom).toBeCloseTo(39 / 4, 10)
+    expect(c.oneStarInEvery).toBeCloseTo(6.25, 10)
+  })
+  it('readings lists the topics in order, each with both sides and a source', () => {
+    const r = readings()
+    expect(r.map((x) => x.topic)).toEqual(['What the object is', 'X-rays', 'The dust', 'What each team says about the other’s reading'])
+    for (const row of r) {
+      expect(row.blackHole.length).toBeGreaterThan(10)
+      expect(row.merger.length).toBeGreaterThan(10)
+      expect(row.source.length).toBeGreaterThan(5)
+    }
+    expect(r[1].blackHole).toContain('27 years')
   })
 })
