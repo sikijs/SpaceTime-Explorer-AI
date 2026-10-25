@@ -33,6 +33,7 @@ import {
   readings,
   runCheckUp,
   neutrinoMassWorked,
+  pushWorkedExample,
   pushGuessGap,
   countGuessGap,
   supernovaSpreadFactor,
@@ -353,6 +354,8 @@ describe('the reading guide comparisons (CLAUDE.md §14)', () => {
     expect(c.pushOneIn.highOneIn).toBeCloseTo(10000, 6)
     expect(c.pushTimesWeaker.low).toBeCloseTo(1000, 6)
     expect(c.pushTimesWeaker.high).toBeCloseTo(10000, 6)
+    expect(c.pushTicksBelow.low).toBeCloseTo(3, 10)
+    expect(c.pushTicksBelow.high).toBeCloseTo(4, 10)
     expect(c.apjlPushOneIn.lowOneIn).toBeCloseTo(1e4, 6)
     expect(c.apjlPushOneIn.highOneIn).toBeCloseTo(1e8, 0)
     expect(c.pushRangesOverlapAtOneIn).toBeCloseTo(1e4, 6)
@@ -377,7 +380,9 @@ describe('the reading guide comparisons (CLAUDE.md §14)', () => {
     expect(c.press2017VersusRange.verdict).toBe('inside')
     expect(c.sevenYearCentralVersusRange.verdict).toBe('inside')
     expect(c.centralVersusSevenYearRange.verdict).toBe('inside')
-    expect(c.topOverBottom).toBeCloseTo(39 / 4, 10)
+    expect(c.topOverBottom).toBe(9.75)
+    expect(c.failedRange).toEqual({ low: 4, central: 16, high: 39 })
+    expect(c.topOverBottom.toFixed(1)).toBe('9.8')
     expect(c.oneStarInEvery).toBeCloseTo(6.25, 10)
   })
   it('readings lists the topics in order, each with both sides and a source', () => {
@@ -428,5 +433,25 @@ describe('the tutor’s worked numbers', () => {
   })
   it('the X-ray wait is the 27 years the discovery team quotes', () => {
     expect(FAILED_SUPERNOVA_DATA.xrayWaitYears).toBe(27)
+  })
+})
+
+describe('the page’s published figures and Prediction 1’s worked example', () => {
+  it('holds the progenitor’s light and temperature and the survey’s size as published', () => {
+    expect(FAILED_SUPERNOVA_DATA.progenitorLuminositySolar).toBe(1e5)
+    expect(FAILED_SUPERNOVA_DATA.progenitorTemperatureK).toBe(4500)
+    expect(FAILED_SUPERNOVA_DATA.survey).toEqual({ galaxies: 27, years: 11 })
+  })
+  it('pushWorkedExample works the 100-unit example (a separate calculation)', () => {
+    const w = pushWorkedExample()
+    expect(w.typical).toBe(100)
+    expect(w.weakest).toBeCloseTo(50, 10)
+    expect(w.strongest).toBeCloseTo(200, 10)
+    expect(w.sameUnits).toBeCloseTo(100, 10)
+    expect(w.hundredthUnits).toBeCloseTo(1, 10)
+    expect(w.tenThousandthUnits).toBeCloseTo(0.01, 10)
+    expect(w.weakestOverHundredth).toBeCloseTo(50, 8)
+    expect(w.weakestOverTenThousandth).toBeCloseTo(5000, 6)
+    expect(() => pushWorkedExample(0)).toThrow(RangeError)
   })
 })

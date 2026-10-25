@@ -10,11 +10,14 @@ import {
   logScalePosition,
   massPicture,
   pushOneInRange,
+  pushWorkedExample,
   readings,
+  remnantMassSolar,
   remnantOverLimits,
   runCheckUp,
   runFailedSupernova,
   SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
+  SURE_NEUTRON_STAR_TOP_SOLAR_MASSES,
   supernovaSpreadFactor,
   timeline,
 } from '../physics/failedSupernova'
@@ -182,27 +185,31 @@ const lookForVanishing: LookFor[] = [
   },
 ]
 
-const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
+// The Words entries that quote a published figure read it from the module (CLAUDE.md §9).
+function referenceEntries(): { term: string; meaning: string }[] {
+  const d = FAILED_SUPERNOVA_DATA
+  return [
   { term: 'Failed supernova', meaning: 'the idea that a massive star’s core collapses but the push that follows is too weak to throw the outer layers out, so most of the star falls back in. If the collapsed part is heavy enough, it is a black hole, and to a telescope the star would simply dim and disappear. NASA’s JPL describes it as a star that “blinked out”.' },
   { term: 'Supernova', meaning: 'the explosion of a star at the end of its life, so bright that it can be seen from millions of light-years away for weeks or months. This experiment is about the stars that might skip it. (NASA: “The result is a huge explosion called a supernova.”)' },
   { term: 'Core collapse', meaning: 'what happens when the core of a very heavy star can no longer be held up and falls in on itself in a fraction of a second (Experiment 13). NASA says: “The core collapses and then rebounds, creating a shock wave that travels through the star’s outer layers.”' },
   { term: 'Shock', meaning: 'a sudden wave of push that runs outward through a star’s gas, like the front of a blast. In an ordinary supernova it is strong enough to throw the outer layers out. In a failed supernova the idea is that it is too weak.' },
   { term: 'Neutrino', meaning: 'a tiny particle with almost no mass and no electric charge that hardly ever interacts with anything. A collapsing core makes them in enormous numbers, and they carry off most of its energy (Experiment 13).' },
   { term: 'Progenitor', meaning: 'the star that existed before an explosion or a disappearance, “the one that came before”. Old pictures of a star are what let astronomers say what kind of star it was.' },
-  { term: 'Yellow supergiant', meaning: 'a very large, very bright star that is hotter than a red supergiant. The discovery paper gives about 100,000 times the Sun’s light and a surface temperature of about 4,500 kelvin for the star in this experiment. (Experiment 12 introduced red supergiants.)' },
-  { term: 'Outer layers (envelope)', meaning: 'the gas that surrounds a star’s core. In a supernova it is thrown out. In a failed supernova the idea is that it falls back. The paper gives the star’s outer layer of hydrogen gas in this experiment as about 0.28 Suns.' },
+  { term: 'Yellow supergiant', meaning: `a very large, very bright star that is hotter than a red supergiant. The discovery paper gives about ${d.progenitorLuminositySolar.toLocaleString('en-US')} times the Sun’s light and a surface temperature of about ${d.progenitorTemperatureK.toLocaleString('en-US')} kelvin for the star in this experiment. (Experiment 12 introduced red supergiants.)` },
+  { term: 'Outer layers (envelope)', meaning: `the gas that surrounds a star’s core. In a supernova it is thrown out. In a failed supernova the idea is that it falls back. The paper gives the star’s outer layer of hydrogen gas in this experiment as about ${d.envelopeMassSolar} Suns.` },
   { term: 'Fallback', meaning: 'outer gas that falls back in towards the centre after a weak push, instead of being thrown out into space. It adds to the weight of the core that has collapsed.' },
   { term: 'Black hole', meaning: 'what is left when the core of a star is too heavy for anything known to hold it up, so that it falls in until nothing, not even light, can escape (Black Holes Experiments 1 and 9). NASA: “nothing – not even light – can escape.”' },
-  { term: 'Neutron star', meaning: 'the very small, very dense sphere left when the core of a massive star collapses and neutrons stop the squeeze (Experiments 13 and 15). Black Holes Experiment 9 says that above about 3 Suns nothing known can hold such a core up.' },
+  { term: 'Neutron star', meaning: `the very small, very dense sphere left when the core of a massive star collapses and neutrons stop the squeeze (Experiments 13 and 15). Black Holes Experiment 9 says that above about ${SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES.toFixed(0)} Suns nothing known can hold such a core up.` },
   { term: 'Accretion', meaning: 'matter falling onto an object and being squeezed and heated on the way. Gas falling onto a black hole can glow brightly in X-rays, which is one way astronomers look for one. The discovery paper says that such X-rays have not been seen from this star.' },
   { term: 'Infrared light', meaning: 'light with longer waves than the red light we can see. NASA: “the human eye cannot see it, but humans can detect it as heat.” Warm dust glows in it, and infrared “can pass through dense regions of gas and dust in space with less scattering and absorption”.' },
   { term: 'Mid-infrared', meaning: 'a middle part of the infrared range. This is the range in which the star in this experiment was seen to brighten in 2014.' },
   { term: 'Dust (a dust shroud)', meaning: 'a cloud of tiny solid grains. It can block visible light and then glow in the infrared, so a star hidden inside a dust cloud can vanish from ordinary pictures and still show up in infrared ones.' },
   { term: 'Merger (of two stars)', meaning: 'two stars that have been circling each other come together and join into one. Two 2026 papers suggest that the star in this experiment may have ended this way, hidden by dust, instead of becoming a black hole.' },
   { term: 'Give-or-take', meaning: 'the size of the uncertainty of a measurement, written “11 ± 1” or, when the uncertainty is bigger on one side than the other, with two numbers. It says how far the true value could be from the measured one. (Experiment 1 of this group explains it.)' },
-  { term: 'Solar mass', meaning: 'a unit for how heavy stars are. One solar mass is the mass of the Sun, so “13 solar masses” means 13 times as heavy as the Sun.' },
+  { term: 'Solar mass', meaning: `a unit for how heavy stars are. One solar mass is the mass of the Sun, so “${d.initialMassSolar} solar masses” means ${d.initialMassSolar} times as heavy as the Sun.` },
   { term: 'Light-year', meaning: 'the distance light travels in a year, about 9.5 million million kilometres. Looking at something far away is looking at it as it was in the past.' },
-]
+  ]
+}
 
 // ---- Number formats (display only) ----
 const SUPERSCRIPT: Record<string, string> = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻' }
@@ -614,86 +621,117 @@ function DrawingB({ mine }: { mine: FailedSupernovaResult }) {
   )
 }
 
-const lookForDrawingA: LookFor[] = [
-  {
-    look: 'the length of the coloured bar, and where its right-hand end falls against the blue marks (2.0, 2.2 to 2.3 and 3.0).',
-    means: 'the bar is the weight that stays collapsed, the star’s 5 Suns minus the amount you chose to throw off. Throw off little and the bar ends beyond 3.0, so the remnant is a black hole. Throw off 3 Suns and it ends at 2.0, the most neutrons are sure to hold up.',
-    matters: 'the question the experiment asks is whether a star can end without a flash. This shows how much of the star would have to be pushed out to leave a neutron star instead: at least 3 Suns, which is 60 percent of it.',
-  },
-  {
-    look: 'the grey dashed line at 4.9 Suns, against the end of your bar.',
-    means: 'it is the weight the discovery paper estimates stayed collapsed in the real star. With the paper’s 0.1 Sun thrown off, your bar ends exactly on it.',
-    matters: 'it lets you see how far your trial value is from the paper’s. It is the paper’s estimate, not a weighing of the star.',
-  },
-]
-const lookForDrawingB: LookFor[] = [
-  {
-    look: 'the green dots, and the three grey rings on the dots at 4, 16 and 39.',
-    means: 'the green dots are your trial count. The rings are the survey’s low end, best count and high end, so you can see whether your count sits inside the range the survey allows.',
-    matters: 'the survey could only say the true number lies between 4 and 39 in 100, because it rests on one detection. Moving your count shows how wide that gap is in dots.',
-  },
-  {
-    look: 'the line under the dots, “1 massive star in every …”.',
-    means: 'it turns your count into the same idea as “1 in N”: 16 in 100 is about 1 star in every 6, and 4 in 100 is 1 in every 25.',
-    matters: 'a small count out of 100 can sound tiny, but “1 in 25” is something an astronomer watching many stars for years could hope to see.',
-  },
-]
+// The "What to look for" lists read every number from the physics module (CLAUDE.md §9), so the text cannot drift from the page.
+function lookForDrawingA(): LookFor[] {
+  const c = runCheckUp()
+  const m = massPicture()
+  const top = SURE_NEUTRON_STAR_TOP_SOLAR_MASSES.toFixed(1)
+  const bottom = SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES.toFixed(1)
+  const est = `${m.estimateLowSolar} to ${m.estimateHighSolar}`
+  return [
+    {
+      look: `the length of the coloured bar, and where its right-hand end falls against the blue marks (${top}, ${est} and ${bottom}).`,
+      means: `the bar is the weight that stays collapsed, the star’s ${c.starSolar} Suns minus the amount you chose to throw off. Throw off little and the bar ends beyond ${bottom}, so the remnant is a black hole. Throw off ${c.thrownOffNeededSolar} Suns and it ends at ${top}, the most neutrons are sure to hold up.`,
+      matters: `the question the experiment asks is whether a star can end without a flash. This shows how much of the star would have to be pushed out to leave a neutron star instead: at least ${c.thrownOffNeededSolar} Suns, which is ${c.thrownOffNeededPercent.toFixed(0)} percent of it.`,
+    },
+    {
+      look: `the grey dashed line at ${m.remnantSolar.toFixed(1)} Suns, against the end of your bar.`,
+      means: `it is the weight the discovery paper estimates stayed collapsed in the real star. With the paper’s ${c.thrownOffSolar} Sun thrown off, your bar ends exactly on it.`,
+      matters: 'it lets you see how far your trial value is from the paper’s. It is the paper’s estimate, not a weighing of the star.',
+    },
+  ]
+}
+function lookForDrawingB(): LookFor[] {
+  const c = runCheckUp()
+  const r = c.failedRange
+  return [
+    {
+      look: `the green dots, and the three grey rings on the dots at ${r.low.toFixed(0)}, ${r.central.toFixed(0)} and ${r.high.toFixed(0)}.`,
+      means: 'the green dots are your trial count. The rings are the survey’s low end, best count and high end, so you can see whether your count sits inside the range the survey allows.',
+      matters: `the survey could only say the true number lies between ${r.low.toFixed(0)} and ${r.high.toFixed(0)} in 100, because it rests on one detection. Moving your count shows how wide that gap is in dots.`,
+    },
+    {
+      look: 'the line under the dots, “1 massive star in every …”.',
+      means: `it turns your count into the same idea as “1 in N”: ${r.central.toFixed(0)} in 100 is about 1 star in every ${oneIn(100 / r.central)}, and ${r.low.toFixed(0)} in 100 is 1 in every ${oneIn(100 / r.low)}.`,
+      matters: `a small count out of 100 can sound tiny, but “1 in ${oneIn(100 / r.low)}” is something an astronomer watching many stars for years could hope to see.`,
+    },
+  ]
+}
 
-const lookForPictureOne: LookFor[] = [
-  {
-    look: 'the first three rows (2012, 2014 to 2016, and from 2014).',
-    means: 'in 2012 the star was very bright, about 100,000 times the Sun’s light. From 2014 its mid-infrared light rose by about 50 percent over about 2 years, while its total light stayed constant for about 1,000 days.',
-    matters: 'a supernova would have made a star many times brighter for weeks or months (Experiment 13). Nothing like that is drawn here: the total light stayed constant, and the paper reports no luminous optical outburst.',
-  },
-  {
-    look: 'the last three rows (2016 to 2019, 2022 to 2023, and 2024).',
-    means: 'the star faded by more than a factor of 100, then could not be detected in visible light, but an infrared telescope (JWST) still saw about 7 percent of its old light in 2024.',
-    matters: 'the star went almost dark in ordinary pictures, but not completely: something is still giving off infrared light there. That leftover glow is the clue every explanation has to account for.',
-  },
-]
+function lookForPictureOne(): LookFor[] {
+  const marks = timeline()
+  return [
+    {
+      look: 'the first three rows (2012, 2014 to 2016, and from 2014).',
+      means: `2012: ${marks[0].text}. 2014 to 2016: ${marks[1].text}. From 2014: ${marks[2].text}.`,
+      matters: 'a supernova would have made a star many times brighter for weeks or months (Experiment 13). Nothing like that is drawn here: the total light stayed constant, and the paper reports no luminous optical outburst.',
+    },
+    {
+      look: 'the last three rows (2016 to 2019, 2022 to 2023, and 2024).',
+      means: `2016 to 2019: ${marks[3].text}. 2022 to 2023: ${marks[4].text}. 2024: ${marks[5].text}.`,
+      matters: 'the star went almost dark in ordinary pictures, but not completely: something is still giving off infrared light there. That leftover glow is the clue every explanation has to account for.',
+    },
+  ]
+}
 
-const lookForPictureTwoMass: LookFor[] = [
-  {
-    look: 'the red bar, and the three blue marks along the scale (2.0, 2.2 to 2.3, and 3.0).',
-    means: 'the part of the star that stayed collapsed, 4.9 Suns, is heavier than every one of the blue marks: 4.9 ÷ 3.0 = 1.63 times the weight above which nothing known can hold a core up.',
-    matters: 'a core that heavy would have to fall in until it was a black hole (Black Holes Experiment 9). If much less had stayed collapsed, a neutron star could have been left instead.',
-  },
-  {
-    look: 'the short yellow bar at the right-hand end of the star.',
-    means: 'at most about 0.1 Sun, about 2 percent of the star, was thrown off. The other 98 percent stayed.',
-    matters: 'this is what “failed” means here: the push did not get the star’s outer layers out. Almost all of them fell back and added their weight to the collapsed core.',
-  },
-]
-const lookForPictureTwoPush: LookFor[] = [
-  {
-    look: 'the orange bar and the yellow bar, and the gap between them on the scale.',
-    means: 'the failed supernova’s shock has 10⁴⁷ to 10⁴⁸ erg, 3 to 4 ticks to the left of a typical supernova’s 10⁵¹: 1,000 to 10,000 times less.',
-    matters: 'a push that small is not enough for a bright explosion, so no flash is expected, which is what Picture 1 shows.',
-  },
-  {
-    look: 'the grey bar, which reaches further left than the orange one.',
-    means: 'another 2026 paper’s wording, as AAS Nova summarises it, puts the push lower still, 10⁴³ to 10⁴⁷ erg. The two sources differ about how small the push was.',
-    matters: 'the exact size of the push is an estimate from a model, and it is not settled. Both sources put it far below a typical supernova’s.',
-  },
-  {
-    look: 'the white triangle, its dashed line, and the white box.',
-    means: 'they are your guess for Prediction 1, drawn on the same scale and carried down through all three bars so you can see where it falls.',
-    matters: 'comparing your guess with the bars is the point of the picture. It shows only your guess: it does not say whether it was right.',
-  },
-]
+function lookForPictureTwoMass(): LookFor[] {
+  const c = runCheckUp()
+  const m = massPicture()
+  const top = SURE_NEUTRON_STAR_TOP_SOLAR_MASSES.toFixed(1)
+  const bottom = SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES.toFixed(1)
+  return [
+    {
+      look: `the red bar, and the three blue marks along the scale (${top}, ${m.estimateLowSolar} to ${m.estimateHighSolar}, and ${bottom}).`,
+      means: `the part of the star that stayed collapsed, ${c.remnantSolar.toFixed(1)} Suns, is heavier than every one of the blue marks: ${c.remnantSolar.toFixed(1)} ÷ ${bottom} = ${c.overSureBlackHole.toFixed(2)} times the weight above which nothing known can hold a core up.`,
+      matters: 'a core that heavy would have to fall in until it was a black hole (Black Holes Experiment 9). If much less had stayed collapsed, a neutron star could have been left instead.',
+    },
+    {
+      look: 'the short yellow bar at the right-hand end of the star.',
+      means: `at most about ${c.thrownOffSolar} Sun, about ${c.thrownOffPercent.toFixed(0)} percent of the star, was thrown off. The other ${c.collapsedPercent.toFixed(0)} percent stayed.`,
+      matters: 'this is what “failed” means here: the push did not get the star’s outer layers out. Almost all of them fell back and added their weight to the collapsed core.',
+    },
+  ]
+}
+function lookForPictureTwoPush(): LookFor[] {
+  const c = runCheckUp()
+  const d = FAILED_SUPERNOVA_DATA
+  const apjl = apjlPushErgRange()
+  const tick = (n: number) => String(Math.round(n))
+  return [
+    {
+      look: 'the orange bar and the yellow bar, and the gap between them on the scale.',
+      means: `the failed supernova’s shock has ${pow10Label(Math.round(Math.log10(d.weakShockErgRange[0])))} to ${pow10Label(Math.round(Math.log10(d.weakShockErgRange[1])))} erg, ${tick(c.pushTicksBelow.low)} to ${tick(c.pushTicksBelow.high)} ticks to the left of a typical supernova’s ${pow10Label(Math.round(Math.log10(d.supernovaGasErg)))}: ${thousands(c.pushTimesWeaker.low)} to ${thousands(c.pushTimesWeaker.high)} times less.`,
+      matters: 'a push that small is not enough for a bright explosion, so no flash is expected, which is what Picture 1 shows.',
+    },
+    {
+      look: 'the grey bar, which reaches further left than the orange one.',
+      means: `another 2026 paper’s wording, as AAS Nova summarises it, puts the push lower still, ${pow10Label(Math.round(Math.log10(apjl[0])))} to ${pow10Label(Math.round(Math.log10(apjl[1])))} erg. The two sources differ about how small the push was.`,
+      matters: 'the exact size of the push is an estimate from a model, and it is not settled. Both sources put it far below a typical supernova’s.',
+    },
+    {
+      look: 'the white triangle, its dashed line, and the white box.',
+      means: 'they are your guess for Prediction 1, drawn on the same scale and carried down through all three bars so you can see where it falls.',
+      matters: 'comparing your guess with the bars is the point of the picture. It shows only your guess: it does not say whether it was right.',
+    },
+  ]
+}
 
-const lookForPictureThree: LookFor[] = [
-  {
-    look: 'the shades of red, from bright to faint.',
-    means: 'the survey’s best count is 16 in every 100 massive stars, but it can only say that the true number lies between 4 and 39.',
-    matters: 'a count that rests on a single detection cannot be pinned down: the top of the range is almost 10 times the bottom. So how often stars fail is still open.',
-  },
-  {
-    look: 'the white outlines and the white box.',
-    means: 'they are your guess for Prediction 2, drawn over the same dots, so you can see how many of the red dots your outline covers.',
-    matters: 'it shows only your guess, and the picture does not say whether it was right. A guess of “less than 1 in every 100” has no dots of its own, so it outlines only the first dot, as a marker.',
-  },
-]
+function lookForPictureThree(): LookFor[] {
+  const c = runCheckUp()
+  const r = c.failedRange
+  return [
+    {
+      look: 'the shades of red, from bright to faint.',
+      means: `the survey’s best count is ${r.central.toFixed(0)} in every 100 massive stars, but it can only say that the true number lies between ${r.low.toFixed(0)} and ${r.high.toFixed(0)}.`,
+      matters: `a count that rests on a single detection cannot be pinned down: the top of the range is ${c.topOverBottom.toFixed(1)} times the bottom. So how often stars fail is still open.`,
+    },
+    {
+      look: 'the white outlines and the white box.',
+      means: 'they are your guess for Prediction 2, drawn over the same dots, so you can see how many of the red dots your outline covers.',
+      matters: 'it shows only your guess, and the picture does not say whether it was right. A guess of “less than 1 in every 100” has no dots of its own, so it outlines only the first dot, as a marker.',
+    },
+  ]
+}
 
 // The two prediction questions' answers (the specification's "Prediction Activity"). The labels do not say which answer is right.
 const PUSH_CHOICES: ReadonlyArray<{ value: PushAnswer; label: string }> = [
@@ -761,6 +799,8 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
   const mine = runFailedSupernova({ thrownOffSolar: thrownOffChoice, failedPerHundred: failedChoice })
   // The results (Part 3) use the paper's own numbers, so they never follow the guesses or the Part 2 settings.
   const check = runCheckUp()
+  const worked = pushWorkedExample()
+  const tidy = (n: number) => String(Number(n.toFixed(2)))
   const pushLabel = PUSH_CHOICES.find((c) => c.value === pushPrediction)?.label.toLowerCase() ?? ''
   const countLabel = COUNT_CHOICES.find((c) => c.value === countPrediction)?.label.toLowerCase() ?? ''
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -884,7 +924,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
           <p style={paragraph}>
             <strong>How astronomers look.</strong> A flash is easy to find: a supernova is bright enough to be seen from millions of light-years away. A star that quietly disappears is much harder, because
             there is nothing to see. So teams watch many bright stars in nearby galaxies, year after year, and look for one that fades and does not come back. One survey, with the Large
-            Binocular Telescope, has watched luminous stars in 27 nearby galaxies for 11 years. Space telescopes watching in infrared light have helped too: NASA’s NEOWISE
+            Binocular Telescope, has watched luminous stars in {FAILED_SUPERNOVA_DATA.survey.galaxies} nearby galaxies for {FAILED_SUPERNOVA_DATA.survey.years} years. Space telescopes watching in infrared light have helped too: NASA’s NEOWISE
             telescope recorded the sky in infrared light for years. A star that has gone missing is not proof of a black hole, though. A star can also be hidden by a cloud of dust, or
             two stars can merge and look very different afterwards, so each candidate has to be checked against these other possibilities.
           </p>
@@ -977,7 +1017,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
           </ul>
         </div>
 
-        <ReferencePanel entries={REFERENCE_ENTRIES} />
+        <ReferencePanel entries={referenceEntries()} />
 
         <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${PART_ONE_COLOR}` }}>
           <StepHeader
@@ -1005,9 +1045,9 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
                   Supernovae differ from one another in size and brightness, so by “a typical supernova” we mean a typical core-collapse supernova, the kind you met in Experiment 13. In
                   one of these, the shock gives the star’s outer layers a very large amount of energy to throw them out into space. Supernovae are not all the same: a strong one can
                   have up to {supernovaSpreadFactor()} times the energy of a typical one, and a weak one about half. That is a small difference compared with the differences between the
-                  choices below, which are much bigger. For example, say a typical supernova has 100 units of energy. (We use 100 only because it is a round number that makes the sums easy. These are not real units of energy.) Others
-                  then range from 50 to 200. “About the same” means about 100 units, which covers that whole range. “About 1 in 100” means one hundredth of 100, which is about 1 unit, and
-                  that is 50 times below even the weakest normal supernova. “About 1 in 10,000” means one ten-thousandth of 100, which is about 0.01 units, and that is 5,000 times below it. In a failed supernova the core collapses in the
+                  choices below, which are much bigger. For example, say a typical supernova has {worked.typical} units of energy. (We use {worked.typical} only because it is a round number that makes the sums easy. These are not real units of energy.) Others
+                  then range from {tidy(worked.weakest)} to {tidy(worked.strongest)}. “About the same” means about {tidy(worked.sameUnits)} units, which covers that whole range. “About 1 in 100” means one hundredth of {worked.typical}, which is about {tidy(worked.hundredthUnits)} unit, and
+                  that is {tidy(worked.weakestOverHundredth)} times below even the weakest normal supernova. “About 1 in 10,000” means one ten-thousandth of {worked.typical}, which is about {tidy(worked.tenThousandthUnits)} units, and that is {thousands(worked.weakestOverTenThousandth)} times below it. In a failed supernova the core collapses in the
                   same way, but the shock gives the outer layers less energy, and it is not enough to throw them out. (Energy is what it takes to push something against gravity: the
                   more energy, the bigger the push.) How does the energy the failed supernova’s shock gives them compare with a typical supernova’s? The buttons say what share of a
                   typical supernova’s energy the failed one has: “about the same” means equal, and “about 1 in 100” means one hundredth as much.
@@ -1123,7 +1163,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>What to look for.</strong>
             </p>
-            <LookForList items={lookForPictureOne.slice(0, stage >= 2 ? 2 : 1)} />
+            <LookForList items={lookForPictureOne().slice(0, stage >= 2 ? 2 : 1)} />
           </div>
         )}
 
@@ -1178,7 +1218,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>What to look for.</strong>
             </p>
-            <LookForList items={stage >= 4 ? [...lookForPictureTwoMass, ...lookForPictureTwoPush] : lookForPictureTwoMass} />
+            <LookForList items={stage >= 4 ? [...lookForPictureTwoMass(), ...lookForPictureTwoPush()] : lookForPictureTwoMass()} />
           </div>
         )}
 
@@ -1192,8 +1232,8 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
           <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             <p style={paragraph}>
               <strong>Where the real picture comes from.</strong> The central count of {countRange.central.toFixed(0)} in 100 and the 90 percent range of {countRange.low.toFixed(0)} to {countRange.high.toFixed(0)} are a published estimate from an
-              11-year survey of 27 nearby galaxies (Neustadt and others, 2021), turned into a fraction of the stars it watched: <strong>measured</strong> by the survey, but resting on only{' '}
-              <strong>one</strong> clearly detected failed supernova. The dots are only a way of drawing a fraction (16 percent as 16 dots out of 100): that part is <strong>calculated here</strong>. Nothing in
+              {FAILED_SUPERNOVA_DATA.survey.years}-year survey of {FAILED_SUPERNOVA_DATA.survey.galaxies} nearby galaxies (Neustadt and others, 2021), turned into a fraction of the stars it watched: <strong>measured</strong> by the survey, but resting on only{' '}
+              <strong>one</strong> clearly detected failed supernova. The dots are only a way of drawing a fraction ({countRange.central.toFixed(0)} percent as {countRange.central.toFixed(0)} dots out of 100): that part is <strong>calculated here</strong>. Nothing in
               this picture is imagined.
             </p>
             <p style={paragraph}>
@@ -1210,7 +1250,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>What to look for.</strong>
             </p>
-            <LookForList items={lookForPictureThree} />
+            <LookForList items={lookForPictureThree()} />
           </div>
         )}
         {done && (
@@ -1271,15 +1311,15 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
             </p>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               <strong>These are your own trial values, not real measurements.</strong> The weights on the buttons are numbers you pick to try out, like turning a dial to see how a drawing changes. None
-              of them is a measurement. The real star is the one in Part 1: the discovery paper estimates that it weighed about 5 Suns at the end of its life and that at most about 0.1 Sun was thrown
-              off, so about 4.9 Suns stayed collapsed. If you choose 3 Suns, the drawing does a simple subtraction, 5 − 3 = 2 Suns, and draws a bar that ends at 2.0, which is the most weight that
-              neutrons are sure to hold up. That is a picture of an imagined star that threw off 3 Suns. It does not say that the real star did. The grey dashed line at 4.9 Suns stays in the drawing,
+              of them is a measurement. The real star is the one in Part 1: the discovery paper estimates that it weighed about {d.terminalMassSolar} Suns at the end of its life and that at most about {d.thrownOffSolar} Sun was thrown
+              off, so about {massPicture().remnantSolar.toFixed(1)} Suns stayed collapsed. If you choose {check.thrownOffNeededSolar} Suns, the drawing does a simple subtraction, {d.terminalMassSolar} − {check.thrownOffNeededSolar} = {remnantMassSolar(d.terminalMassSolar, check.thrownOffNeededSolar)} Suns, and draws a bar that ends at {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES.toFixed(1)}, which is the most weight that
+              neutrons are sure to hold up. That is a picture of an imagined star that threw off {check.thrownOffNeededSolar} Suns. It does not say that the real star did. The grey dashed line at {massPicture().remnantSolar.toFixed(1)} Suns stays in the drawing,
               so you can always see the paper’s estimate next to your trial.
             </p>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               <strong>One thing to know.</strong> In a real star, nobody sets how much is thrown off. It is the result of a tug-of-war: the shock pushes the outer layers outward while the star’s
               gravity pulls them back, and whatever gets away is the amount thrown off. This experiment does not calculate that tug-of-war. The drawing only subtracts the number you pick from the
-              star’s 5 Suns. So each button is something you can try, but the page does not check whether a real star’s shock could actually throw off that much. Use the drawing to see what each
+              star’s {d.terminalMassSolar} Suns. So each button is something you can try, but the page does not check whether a real star’s shock could actually throw off that much. Use the drawing to see what each
               amount would mean for the weight left behind, not to decide what a real star could do.
             </p>
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How much of the star is thrown off? (Suns) It changes the bar in Drawing A.</p>
@@ -1312,7 +1352,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
                 <strong>What to look for.</strong>
               </p>
-              <LookForList items={lookForDrawingA} />
+              <LookForList items={lookForDrawingA()} />
             </div>
 
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How many of every hundred massive stars fail? (stars) It changes the green dots in Drawing B.</p>
@@ -1341,7 +1381,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
                 <strong>What to look for.</strong>
               </p>
-              <LookForList items={lookForDrawingB} />
+              <LookForList items={lookForDrawingB()} />
               <p style={{ ...paragraph, marginTop: '1rem' }}>
                 <strong>These are trial values.</strong> They show what a different choice would look like. They do not say that real stars are like that.
               </p>
@@ -1432,7 +1472,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
                 [
                   'How common, against two other estimates',
                   `The 2017 press estimate: “as many as ${check.press2017Percent.toFixed(0)} percent”. An earlier 7-year survey: ${check.sevenYear.central.toFixed(0)} in 100 (${check.sevenYear.low.toFixed(0)} to ${check.sevenYear.high.toFixed(0)})`,
-                  `${check.failedRange.central.toFixed(0)} in 100 (${check.failedRange.low.toFixed(0)} to ${check.failedRange.high.toFixed(0)}), the 11-year survey, 90 percent range`,
+                  `${check.failedRange.central.toFixed(0)} in 100 (${check.failedRange.low.toFixed(0)} to ${check.failedRange.high.toFixed(0)}), the ${d.survey.years}-year survey, 90 percent range`,
                   `Inside each other’s ranges: ${check.press2017Percent.toFixed(0)} lies inside ${check.failedRange.low.toFixed(0)} to ${check.failedRange.high.toFixed(0)}, and ${check.failedRange.central.toFixed(0)} lies inside ${check.sevenYear.low.toFixed(0)} to ${check.sevenYear.high.toFixed(0)}. They do not contradict each other, but the ranges are wide.`,
                 ],
               ]}
@@ -1511,13 +1551,13 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
               head={['Source', 'What it reports', 'How strong it is']}
               minWidth={640}
               rows={[
-                ['De and others, Science (12 February 2026; arXiv:2410.14778)', 'the star’s history; about 13 Suns at birth and about 5 at the end; the push of 10⁴⁷ to 10⁴⁸ erg; at most about 0.1 Sun thrown off; about 98 percent collapsed or fell back', 'the discovery team’s own paper. Read through its abstract and the first half only. The weights and the push are estimates from a model'],
-                ['De and others, ApJ Letters 999, L25 (2026)', 'about 7 percent of the old light left in 2024; a push “one hundred-millionth to one ten-thousandth” of a typical supernova’s; X-rays “no sooner than about 27 years”', 'read only through AAS Nova’s summary'],
+                ['De and others, Science (12 February 2026; arXiv:2410.14778)', `the star’s history; about ${d.initialMassSolar} Suns at birth and about ${d.terminalMassSolar} at the end; the push of ${pow10Label(Math.round(Math.log10(d.weakShockErgRange[0])))} to ${pow10Label(Math.round(Math.log10(d.weakShockErgRange[1])))} erg; at most about ${d.thrownOffSolar} Sun thrown off; about ${check.collapsedPercent.toFixed(0)} percent collapsed or fell back`, 'the discovery team’s own paper. Read through its abstract and the first half only. The weights and the push are estimates from a model'],
+                ['De and others, ApJ Letters 999, L25 (2026)', `about ${check.jwstPercent.toFixed(0)} percent of the old light left in 2024; a push “one hundred-millionth to one ten-thousandth” of a typical supernova’s; X-rays “no sooner than about ${d.xrayWaitYears} years”`, 'read only through AAS Nova’s summary'],
                 ['Beasor and others (arXiv:2601.05317, 2026)', 'a luminous mid-infrared source persists at the same place; no X-rays; asymmetric dust; a merger “also seems to provide a plausible explanation”', 'a different team’s paper, accepted to a journal; read through its abstract only'],
                 ['Soker (arXiv:2601.14497, 2026)', 'argues that the black-hole reading needs less than 1 percent of the bound material accreted and predicts about ten times too much radiation; favours dust ejected by a pair of stars', 'one author’s argument; read through its abstract only'],
-                ['Neustadt and others, MNRAS 508, 516 (2021)', 'about 16 in 100 massive stars (4 to 39, 90 percent range), from 27 galaxies over 11 years', 'a survey; its abstract says it found only one clearly detected failed supernova'],
-                ['NASA JPL release (12 February 2026)', 'the star brightened in infrared in 2014 and by 2023 was more than 10,000 times fainter in visible light; 2.5 million light-years away', 'an official release; a plain summary of the discovery team’s work'],
-                ['Ohio State University news (25 May 2017)', 'the first candidate, NGC 6946-BH1: 25 Suns, brightened in 2009, gone by 2015; “as many as 30 percent” of massive stars may collapse quietly', 'a 2017 news release; it says it is “too early” to know for sure'],
+                ['Neustadt and others, MNRAS 508, 516 (2021)', `about ${check.failedRange.central.toFixed(0)} in 100 massive stars (${check.failedRange.low.toFixed(0)} to ${check.failedRange.high.toFixed(0)}, 90 percent range), from ${d.survey.galaxies} galaxies over ${d.survey.years} years`, 'a survey; its abstract says it found only one clearly detected failed supernova'],
+                ['NASA JPL release (12 February 2026)', `the star brightened in infrared in 2014 and by 2023 was more than ${thousands(check.visibleFadeFactor)} times fainter in visible light; ${d.m31DistanceMillionLightYears} million light-years away`, 'an official release; a plain summary of the discovery team’s work'],
+                ['Ohio State University news (25 May 2017)', `the first candidate, NGC 6946-BH1: ${d.ngc6946.massSolar} Suns, brightened in ${d.ngc6946.brightenedYear}, gone by ${d.ngc6946.goneYear}; “as many as ${check.press2017Percent.toFixed(0)} percent” of massive stars may collapse quietly`, 'a 2017 news release; it says it is “too early” to know for sure'],
               ]}
             />
             <div style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>

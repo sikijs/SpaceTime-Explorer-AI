@@ -21,6 +21,11 @@ export const FAILED_SUPERNOVA_DATA = {
   // De and others (2026, Science), arXiv:2410.14778: initial mass about 13, terminal mass about 5, hydrogen-rich envelope about 0.28 Suns; shock 1e47 to 1e48 erg;
   // ejected mass <~ 0.1 Suns; about 98 percent collapses or falls back.
   initialMassSolar: 13,
+  // The progenitor (De and others 2026): about 1e5 Suns of light (the module's 2012 timeline mark says the same) and a surface temperature of about 4,500 K.
+  progenitorLuminositySolar: 1e5,
+  progenitorTemperatureK: 4500,
+  // The survey behind "how common" (Neustadt and others 2021, abstract): 27 galaxies watched for 11 years.
+  survey: { galaxies: 27, years: 11 },
   terminalMassSolar: 5,
   envelopeMassSolar: 0.28,
   thrownOffSolar: 0.1,
@@ -152,10 +157,12 @@ export function failedCountOutOf100(fraction: number): number {
 // The survey's 90 percent range as counts out of 100, 4 to 39 (0.16 - 0.12 and 0.16 + 0.23), and its central count, 16.
 export function failedRange(): { low: number; central: number; high: number } {
   const f = FAILED_SUPERNOVA_DATA.failedFraction
+  // Rounded to 9 decimal places so that sums such as 0.16 - 0.12 do not leave floating-point noise (0.04000000000000001), which would turn 39 / 4 = 9.75 into 9.7499999.
+  const clean = (x: number) => Math.round(x * 1e9) / 1e9
   return {
-    low: failedCountOutOf100(f.value - f.minus),
-    central: failedCountOutOf100(f.value),
-    high: failedCountOutOf100(f.value + f.plus),
+    low: clean(failedCountOutOf100(f.value - f.minus)),
+    central: clean(failedCountOutOf100(f.value)),
+    high: clean(failedCountOutOf100(f.value + f.plus)),
   }
 }
 
@@ -393,6 +400,7 @@ export interface CheckUp {
   // The push against an ordinary supernova's.
   pushOneIn: { lowOneIn: number; highOneIn: number }
   pushTimesWeaker: { low: number; high: number }
+  pushTicksBelow: { low: number; high: number } // how many ticks (factors of 10) the push's range sits to the left of a typical supernova's energy
   apjlPushOneIn: { lowOneIn: number; highOneIn: number }
   pushRangesOverlapAtOneIn: number | null // where the two papers' ranges touch (1 in N), or null if they do not overlap
   // The fade.
@@ -436,6 +444,7 @@ export function runCheckUp(): CheckUp {
     thrownOffNeededOverPaper: r.thrownOffNeededForNeutronStarSolar / r.thrownOffSolar,
     pushOneIn: push,
     pushTimesWeaker: { low: push.lowOneIn, high: push.highOneIn },
+    pushTicksBelow: { low: Math.log10(push.lowOneIn), high: Math.log10(push.highOneIn) },
     apjlPushOneIn: apjl,
     pushRangesOverlapAtOneIn: overlapLow <= overlapHigh ? overlapLow : null,
     jwstPercent: d.jwstFractionOfProgenitor * 100,
@@ -537,4 +546,35 @@ export function countGuessGap(answer: CountAnswer): CountGuessGap {
   if (central >= low && central <= high) return { verdict: 'inside', times: 1 }
   if (high < central) return { verdict: 'below', times: central / high }
   return { verdict: 'above', times: low / central }
+}
+
+// Prediction 1's worked example: a round "typical supernova" of 100 units (an illustration, not a real energy), the weakest and strongest normal supernova (a factor of
+// supernovaSpreadFactor() either way), and what each button means in those units: "about the same" is the typical 100, "about 1 in 100" is 1 unit and "about 1 in 10,000" is 0.01
+// units. The last two numbers say how many times below the weakest normal supernova each of those two buttons is.
+export interface PushWorkedExample {
+  typical: number
+  weakest: number
+  strongest: number
+  sameUnits: number
+  hundredthUnits: number
+  tenThousandthUnits: number
+  weakestOverHundredth: number
+  weakestOverTenThousandth: number
+}
+export function pushWorkedExample(typical: number = 100): PushWorkedExample {
+  if (!Number.isFinite(typical) || typical <= 0) throw new RangeError('The typical energy must be positive')
+  const spread = supernovaSpreadFactor()
+  const weakest = typical / spread
+  const hundredthUnits = typical / guessPushOneIn('about 1 in 100')
+  const tenThousandthUnits = typical / guessPushOneIn('about 1 in 10,000')
+  return {
+    typical,
+    weakest,
+    strongest: typical * spread,
+    sameUnits: typical / guessPushOneIn('about the same'),
+    hundredthUnits,
+    tenThousandthUnits,
+    weakestOverHundredth: weakest / hundredthUnits,
+    weakestOverTenThousandth: weakest / tenThousandthUnits,
+  }
 }
