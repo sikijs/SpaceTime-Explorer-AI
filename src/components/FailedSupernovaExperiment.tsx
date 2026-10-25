@@ -20,6 +20,7 @@ import {
 } from '../physics/failedSupernova'
 import type { CountAnswer, FailedSupernovaResult, PushAnswer } from '../physics/failedSupernova'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { FailedSupernovaTutor } from './FailedSupernovaTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
@@ -27,7 +28,7 @@ import type { LookFor } from './WideBinariesExperiment'
 // STEPS 2 to 4 (the interface skeleton, the predictions, and the run with its three pictures): this file has the status line, the introduction, one illustration (an ordinary
 // supernova beside a failed one) with its guide, the new-word list, the collapsed "Words and formulas" panel, the "Want to know more?" links, the two predictions, and Part 1: a
 // five-stage run that builds three pictures (what telescopes saw; what is left of the star and how strong the push was; how many stars fail). The learner's guesses are drawn on
-// Pictures 2 and 3 in white, beside the real results (the owner's rule of 2026-10-24, CLAUDE.md §14), and the real pictures never change. STEP 5a adds Part 2 (two controls with a drawing each, shown after the run). STEP 5b adds Part 3 (the results: a status box, the predictions beside the results, a check-up and three tables, each with a note). It has no tutor or
+// Pictures 2 and 3 in white, beside the real results (the owner's rule of 2026-10-24, CLAUDE.md §14), and the real pictures never change. STEP 5a adds Part 2 (two controls with a drawing each, shown after the run). STEP 5b adds Part 3 (the results: a status box, the predictions beside the results, a check-up and three tables, each with a note). STEP 6 adds Part 4, the tutor (FailedSupernovaTutor.tsx). It has no chapter
 // summary yet; those are later steps (CLAUDE.md §6). The timer only paces the display (CLAUDE.md §11). Every number comes from src/physics/failedSupernova.ts (CLAUDE.md §9). The page is built to the plan in the specification: an introduction and four parts (predict and watch, now try it yourself, the results, the
 // tutor). The few published numbers the introduction states are read from src/physics/failedSupernova.ts (CLAUDE.md §9). All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1) and is written to the standard of §29. Nothing here gives the answer to either prediction (CLAUDE.md §12): not the strength of the push, and not
@@ -508,6 +509,7 @@ function PictureThree({ guess }: { guess: CountAnswer | null }) {
 // ---- Part 2: the learner's own trial values (two drawings that follow the two controls; the real pictures never change) ----
 const PART_TWO_COLOR = '#0d9488'
 const PART_THREE_COLOR = '#7c3aed'
+const PART_FOUR_COLOR = '#0066cc'
 const TRIAL_COLOR = '#34d399' // green: imagined for the question (a trial value)
 const UNCERTAIN_COLOR = '#f59e0b'
 // "1 Sun", "0.1 Suns"; and "25" or "6.3" (one decimal place, without a needless ".0").
@@ -748,8 +750,8 @@ interface FailedSupernovaExperimentProps {
   onTutorComplete?: () => void
 }
 
-// onComplete is called when the run reaches its end. onTutorComplete is not used yet: the tutor is a later step.
-export function FailedSupernovaExperiment({ onComplete }: FailedSupernovaExperimentProps) {
+// onComplete is called when the run reaches its end. onTutorComplete is called when the learner reaches the tutor's explanation.
+export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: FailedSupernovaExperimentProps) {
   const d = FAILED_SUPERNOVA_DATA
   const limit = SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES
   const [pushPrediction, setPushPrediction] = useState<PushAnswer | null>(null)
@@ -1542,6 +1544,40 @@ export function FailedSupernovaExperiment({ onComplete }: FailedSupernovaExperim
                 years) and later infrared pictures. This page does not choose between the readings, because the papers do not settle it yet.
               </p>
             </div>
+          </PageSection>
+        )}
+
+        {/* Part 4, the tutor (after the results): observe, compare with the predictions, a conceptual question, then the explanation. DRAFT wording for the owner's approval. */}
+        {done && pushPrediction !== null && countPrediction !== null && (
+          <PageSection
+            step="Part 4"
+            title="The tutor"
+            accent={PART_FOUR_COLOR}
+            lead={
+              <>
+                <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+                <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the
+                    real results. Third, it asks one bigger question, about how two teams could tell their readings of the star apart. Type a few words for each. Nothing is graded, and a short answer
+                    is fine.
+                  </li>
+                  <li>
+                    <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses were right until you have answered all three, so you can think it through first.
+                  </li>
+                  <li>
+                    <strong>Then the explanation.</strong> The tutor marks each of your two predictions as matched or not matched, and then goes through what lies behind the numbers in seven short
+                    parts: why a collapse does not always end in a flash, what stays collapsed, why the push is so weak, what the telescopes saw, the two readings, how common this may be, and what was and was not
+                    shown. Some parts use a worked sum or an everyday comparison.
+                  </li>
+                  <li>
+                    <strong>After the explanation,</strong> a short summary of what you learned will appear below (it is not written yet).
+                  </li>
+                </ul>
+              </>
+            }
+          >
+            <FailedSupernovaTutor pushPrediction={pushPrediction} countPrediction={countPrediction} onExplained={onTutorComplete} />
           </PageSection>
         )}
     </div>

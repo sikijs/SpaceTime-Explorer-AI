@@ -48,6 +48,8 @@ export const FAILED_SUPERNOVA_DATA = {
   failedFractionPress2017: 0.3,
   // The ApJL paper's wording, as AAS Nova gives it: "one hundred-millionth to one ten-thousandth" of a typical supernova's energy, as fractions.
   apjlEnergyFractionRange: [1e-8, 1e-4] as const,
+  // De and others (ApJ Letters, 2026), as summarised by AAS Nova: X-rays "no sooner than about 27 years" (the discovery team's answer to the lack of X-rays so far).
+  xrayWaitYears: 27,
   // The learner's choices.
   thrownOffChoicesSolar: [0, 0.1, 0.28, 1, 3] as const,
   failedPerHundredChoices: [4, 16, 39] as const,
@@ -488,4 +490,51 @@ const READINGS: readonly ReadingRow[] = [
 ]
 export function readings(): readonly ReadingRow[] {
   return READINGS
+}
+
+// ---- The tutor's worked numbers (tutor only) ----
+
+// The neutrino sum written out: E = G M^2 / R for Experiment 13's neutron star (in joules), c^2, and the mass E / c^2 in kilograms and in Suns (about 0.24; the published range
+// is about 0.2 to 0.5).
+export interface NeutrinoMassWorked {
+  energyJ: number
+  cSquared: number
+  massKg: number
+  massSolar: number
+}
+export function neutrinoMassWorked(): NeutrinoMassWorked {
+  const d = FAILED_SUPERNOVA_DATA
+  const energyJ = collapseEnergyJ(d.collapseMassSolar, d.collapseRadiusKm)
+  const cSquared = SPEED_OF_LIGHT_M_S * SPEED_OF_LIGHT_M_S
+  const massKg = energyJ / cSquared
+  return { energyJ, cSquared, massKg, massSolar: massKg / SOLAR_MASS_KG }
+}
+
+// How a push guess compares with the paper's range (1 in 1,000 to 1 in 10,000): "stronger" means the guess is a stronger push than the whole range, by this many times at the
+// near end and at the far end; "inside" means the guess's "1 in N" lies in the range.
+export interface PushGuessGap {
+  verdict: 'stronger' | 'inside' | 'weaker'
+  nearTimes: number
+  farTimes: number
+}
+export function pushGuessGap(answer: PushAnswer): PushGuessGap {
+  const n = guessPushOneIn(answer)
+  const { lowOneIn, highOneIn } = pushOneInRange()
+  if (n < lowOneIn) return { verdict: 'stronger', nearTimes: lowOneIn / n, farTimes: highOneIn / n }
+  if (n > highOneIn) return { verdict: 'weaker', nearTimes: n / highOneIn, farTimes: n / lowOneIn }
+  return { verdict: 'inside', nearTimes: 1, farTimes: 1 }
+}
+
+// How a count guess compares with the survey's central count: "below" means the guess's whole band is under the central count, and the central count is this many times the top of
+// the band; "above" means the band is over it, and the bottom of the band is this many times the central count; "inside" means the band holds the central count.
+export interface CountGuessGap {
+  verdict: 'below' | 'inside' | 'above'
+  times: number
+}
+export function countGuessGap(answer: CountAnswer): CountGuessGap {
+  const [low, high] = guessCountBand(answer)
+  const central = failedRange().central
+  if (central >= low && central <= high) return { verdict: 'inside', times: 1 }
+  if (high < central) return { verdict: 'below', times: central / high }
+  return { verdict: 'above', times: low / central }
 }

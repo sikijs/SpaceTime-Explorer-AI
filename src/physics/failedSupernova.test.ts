@@ -32,6 +32,9 @@ import {
   giveOrTakeInterval,
   readings,
   runCheckUp,
+  neutrinoMassWorked,
+  pushGuessGap,
+  countGuessGap,
   supernovaSpreadFactor,
   runFailedSupernova,
   thrownOffNeededForNeutronStar,
@@ -386,5 +389,44 @@ describe('the reading guide comparisons (CLAUDE.md §14)', () => {
       expect(row.source.length).toBeGreaterThan(5)
     }
     expect(r[1].blackHole).toContain('27 years')
+  })
+})
+
+describe('the tutor’s worked numbers', () => {
+  it('neutrinoMassWorked writes the sum out (a separate calculation with G, c and the Sun’s mass)', () => {
+    const w = neutrinoMassWorked()
+    const G = 6.674e-11
+    const sun = 1.989e30
+    const energy = (G * (1.4 * sun) ** 2) / 12e3 // Experiment 13's core: 1.4 Suns, 12 km
+    expect(w.energyJ / energy).toBeGreaterThan(0.97)
+    expect(w.energyJ / energy).toBeLessThan(1.03)
+    expect(w.cSquared).toBeCloseTo(299792458 ** 2, 0)
+    expect(w.massKg).toBeCloseTo(w.energyJ / w.cSquared, 6)
+    expect(w.massSolar).toBeCloseTo(neutrinoMassLossSolar(), 12)
+    expect(w.massSolar).toBeGreaterThan(0.2)
+    expect(w.massSolar).toBeLessThan(0.5)
+  })
+  it('pushGuessGap says how each button compares with 1 in 1,000 to 1 in 10,000', () => {
+    const same = pushGuessGap('about the same')
+    expect(same.verdict).toBe('stronger')
+    expect(same.nearTimes).toBeCloseTo(1000, 6)
+    expect(same.farTimes).toBeCloseTo(10000, 6)
+    const hundred = pushGuessGap('about 1 in 100')
+    expect(hundred.verdict).toBe('stronger')
+    expect(hundred.nearTimes).toBeCloseTo(10, 6)
+    expect(hundred.farTimes).toBeCloseTo(100, 6)
+    expect(pushGuessGap('about 1 in 10,000').verdict).toBe('inside')
+  })
+  it('countGuessGap says how each button compares with the survey’s central 16', () => {
+    const few = countGuessGap('fewer than 1')
+    expect(few.verdict).toBe('below')
+    expect(few.times).toBeCloseTo(16, 10)
+    expect(countGuessGap('about 10 to 20')).toEqual({ verdict: 'inside', times: 1 })
+    const half = countGuessGap('about half')
+    expect(half.verdict).toBe('above')
+    expect(half.times).toBeCloseTo(40 / 16, 10)
+  })
+  it('the X-ray wait is the 27 years the discovery team quotes', () => {
+    expect(FAILED_SUPERNOVA_DATA.xrayWaitYears).toBe(27)
   })
 })
