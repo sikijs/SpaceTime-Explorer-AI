@@ -959,8 +959,8 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
               and black holes.
             </li>
             <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/supernovae1.html">NASA Imagine the Universe: Supernovae</ExternalLink>: why a heavy star’s core
-              collapses and what the explosion is like.
+              <ExternalLink href="https://spaceplace.nasa.gov/supernova/en/">NASA Space Place: What is a supernova?</ExternalLink>: why a very heavy star’s core
+              gives way and what the explosion is like.
             </li>
             <li>
               <ExternalLink href="https://science.nasa.gov/universe/black-holes/">NASA: Black holes</ExternalLink>: what a black hole is, how one forms from a massive star, and what
