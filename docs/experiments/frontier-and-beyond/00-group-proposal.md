@@ -46,7 +46,7 @@ Physics models reuse modules the project already has, and none needs a physical 
 | 13 | C | Stars | Catching a supernova in the act (SN 2023ixf) | Strong evidence (a red supergiant exploded); Contested (its mass) |
 | 14 | C | Stars | What makes a white dwarf explode? (the double-detonation remnant) ◇ | Strong evidence (one remnant); Open (how common) |
 | 15 | C | Stars | How big is a neutron star, and where do they end? | Strong evidence; Open (the lower mass gap) |
-| 16 | C | Stars | Where does gold come from? (the magnetar flare of 2004) ◇ | Contested |
+| 16 | C | Stars | ~~Where does gold come from? (the magnetar flare of 2004)~~ **DROPPED 2026-10-25 at the owner's decision** (draft spec kept, set aside; see `16-where-does-gold-come-from.md`) | (was Contested) |
 | 17 | C | Stars | A star that vanished: can a star become a black hole without exploding? (M31-2014-DS1) | Open |
 | 18 | D | Black holes and gravitational waves | Does a black hole's surface area ever shrink? | Strong evidence |
 | 19 | D | Black holes and gravitational waves | Do black holes ring like bells? | Strong evidence (to tens of percent) |
