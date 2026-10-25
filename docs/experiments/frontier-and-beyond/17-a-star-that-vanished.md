@@ -1,0 +1,294 @@
+# Experiment 17 (Frontier and Beyond): A Star That Vanished: Can a Star Become a Black Hole Without Exploding? (M31-2014-DS1)
+
+**Status: Specification APPROVED by the owner on 2026-10-25 ("approved", read as all twelve decisions on their defaults). PROPOSED by Claude on 2026-10-25 per `CLAUDE.md` §23 Stages 1 to 3, as the seventeenth experiment of the group (`00-group-proposal.md`, Part C, "how stars live and die", entry 17). Steps 1 to 4 (the physics model and its tests; the interface skeleton and introduction; the two predictions; the run and three pictures) are built (see "Implementation Notes"); nothing else is. Implementation proceeds one step at a time (§6). The number 17 is kept after Experiment 16 was dropped on 2026-10-25 (the owner has not yet decided whether to close the gap). Every number below was taken from abstracts and summarising fetches on 2026-10-25; no paper was read in full (see "Sources read").**
+
+**Corrections to the group proposal (found while reading the sources).**
+
+1. **The status label should not be *Open*.** The proposal says "Open: other explanations ... have not been excluded". Since the proposal, two 2026 papers have argued against the black-hole reading: Beasor and others (arXiv:2601.05317, accepted to MNRAS), from JWST, Submillimeter Array and Chandra observations, find that "a luminous mid-infrared source persists at the same location a decade after the star faded" and "no X-ray emission is detected, disfavoring the hypothesis that the late-time luminosity is powered by accretion onto a BH", and say a stellar merger "also seems to provide a plausible explanation"; and Soker (arXiv:2601.14497, revised 23 July 2026) concludes "The fading event M31-2014-DS1 does not support the failed-supernova scenario." The discovery team answers in a further paper (De and others, ApJ Letters 999, L25, 2026) that the weak ejection and the dust hide the black hole, and that X-rays would be visible "no sooner than about 27 years from now" (AAS Nova's wording). This is a live dispute between data-rich teams, so the label is *Contested*. This is how the group handles Experiments 1, 2 and 3.
+2. **"A yellow supergiant of about a dozen solar masses".** The Science paper's arXiv version gives an initial mass of about 13 Suns, a terminal mass of about 5 Suns (after losing mass) and a hydrogen-rich envelope of about 0.28 Suns. The search summary said "about 12". The page uses the paper's figures and says "about 13".
+3. **"The mass gap of Experiment 20".** The 5-Sun object is not in Experiment 15's "mass gap" of 3 to 5 Suns (it sits at the top edge). The page does not claim a connection to the gap.
+
+**Status label proposed for the learner (as of October 2026):** *Strong evidence* that the star M31-2014-DS1 in the Andromeda galaxy brightened in infrared from 2014 and then faded in visible light by a factor of more than 10,000, with no bright supernova seen; *Contested*: whether it became a black hole (the discovery team, in *Science*, February 2026) or is still a dust-hidden star after a merger (two 2026 papers); *Open*: how often massive stars fail to explode (published estimates run from about 4 in 100 to about 40 in 100).
+
+---
+
+## Overview
+
+Experiment 13 followed a star that exploded as a supernova: its core collapsed, most of the energy left as neutrinos, and the shock threw the star's outer layers out as a bright flash. This experiment asks the opposite question: **can a star's core collapse and nothing bright happen?** The idea (the "failed supernova") is that the shock fades before it can blow the outer layers away. Most of the star then falls back onto the collapsed core, which, if it is heavy enough, becomes a **black hole**. To a telescope the star would simply **dim and disappear**, with no flash.
+
+Two candidates have been found by watching hundreds of thousands of bright stars in nearby galaxies. One is a star of about 25 Suns in the galaxy NGC 6946 that brightened in 2009 and was gone by 2015 (Adams, Kochanek and others, 2017). The other, **M31-2014-DS1**, is in the Andromeda galaxy, about 2.5 million light-years away. In 2014 NASA's NEOWISE telescope saw it brighten by about 50 percent in the mid-infrared over about 2 years. Between 2016 and 2019 it faded by a factor of more than 100, and by 2023 it was fainter than the progenitor by more than 10,000 times in visible light. Kishalay De and others (*Science*, 12 February 2026) interpret it as a **failed supernova**: a star of about 13 Suns that had lost mass to about 5 Suns, whose core collapsed; a weak shock of about 10⁴⁷ to 10⁴⁸ erg threw off at most about 0.1 Sun of gas; and about 98 percent of the star collapsed or fell back, leaving a black hole of about 5 Suns hidden inside a dusty shroud. JWST later found the object extremely red and faint, about 7 percent of the progenitor's light, with a deep dust absorption feature and no X-rays from Chandra.
+
+Not everyone agrees. Beasor and others (2026) and Soker (2026) read the same light as a merger of two stars that left a dust-covered, still-shining star, and note that a black hole eating gas should shine in X-rays (none seen). The discovery team replies that the dust blocks the X-rays, and that they should appear in about 27 years.
+
+This experiment asks three questions:
+
+1. **Why would a star disappear instead of exploding?** The learner sees the mass bookkeeping: the weight of what is left against the weight neutrons can hold up (Experiment 15, Black Holes 9).
+2. **How weak would the push be?** The learner compares the energy of a failed supernova's weak shock with an ordinary supernova's (Experiment 13).
+3. **How often might it happen, and what do we see?** The learner counts how many of a hundred massive stars could fail (published estimates and their give-or-take) and reads the timeline of what telescopes saw.
+
+No new physics. The model is **bookkeeping and comparison**: masses against Black Holes 9's limits (as Experiment 15 did), energies against Experiment 13's, and counting with a give-or-take (Experiment 1). What is new is the evidence, a dispute that is still open, and the habit of asking what each explanation predicts and what would settle it.
+
+## Learning Objective
+
+By the end the learner can say, in their own words:
+
+1. A massive star ends when its core collapses. Most of the time the shock this makes throws off the outer layers as a supernova (Experiment 13). A failed supernova is the case where the shock is too weak, and the outer layers fall back.
+2. What is left depends on weight: if more than about 2 to 3 Suns stays collapsed, nothing known can hold it up, so it must be a black hole (Black Holes 9, Experiment 15). For M31-2014-DS1 the paper's 5 Suns is far above that.
+3. The weak shock's energy (about 10⁴⁷ to 10⁴⁸ erg) is 1,000 to 10,000 times less than an ordinary supernova's (about 10⁵¹ erg), so no bright flash is expected.
+4. What a telescope saw: a small brightening in infrared in 2014, a fade of more than 100 times in 2016 to 2019, nothing in visible light by 2022 to 2023, and a faint, very red, dusty source in infrared that is still there.
+5. The same light has two readings: a black hole inside a dusty shroud, or a merger remnant, a dust-covered star. Each predicts something different (X-rays, whether the infrared glow keeps fading), and the disagreement is not settled as of October 2026.
+6. How common failures might be: about 16 in 100 massive stars (4 to 39 in 100 at 90 percent confidence, from one survey with one clear detection), and why the give-or-take is so large.
+
+## Physical Situation
+
+A star of about 13 Suns at birth, a yellow supergiant (about 100,000 times the Sun's light, a surface temperature of about 4,500 K) with a thin hydrogen envelope of about 0.28 Suns, at the end of its life. Its core collapses (Experiment 13), neutrinos carry away most of the energy, and the sudden loss of gravitational pull (the neutrinos carry away about 0.2 to 0.5 Suns' worth of mass-energy from the centre: Nadezhin, Lovegrove and Woosley) sends a weak outward pulse. In a "failed" supernova that pulse is too weak to blow the star apart. The model treats this as one event with the paper's numbers and **does not simulate** it. We see it from about 2.5 million light-years away.
+
+## Physics Model (`src/physics/failedSupernova.ts`, proposed)
+
+**Bookkeeping and comparison only.** All numbers are published values or arithmetic on them, in the module, tested. It imports the limits and `coreOutcome` from `src/physics/blackHoleFormationExperiment.ts` (Black Holes 9) and the ordinary supernova's 10⁵¹ erg from `src/physics/catchingASupernova.ts` (Experiment 13), and nothing else.
+
+| Part | What it computes | Source of the numbers |
+|---|---|---|
+| **What stays collapsed** | `remnant = star − thrown off`. For the paper's 5 Suns and ≲ 0.1 Suns thrown off: **4.9 Suns**, about **98 percent** of the star. Against Black Holes 9: above 3 Suns is "sure black hole", up to 2 is "sure neutron star" and 2.2 to 2.3 is a published estimate of the top (Experiment 15). 4.9 ÷ 2.3 = **2.1 times** that estimate. How much would have to be thrown off for a neutron star to remain: more than **2.9 Suns** (5 − 2.0 = 3.0 for the "sure" limit). | De and others (2026): terminal mass ≈ 5, ejected ≲ 0.1, "≈98% ... collapses or falls back". The limits are Black Holes 9's and Experiment 15's |
+| **The push compared with a supernova's** | `ratio = weak shock ÷ ordinary supernova`: 10⁴⁷ ÷ 10⁵¹ = **1 in 10,000**; 10⁴⁸ ÷ 10⁵¹ = **1 in 1,000**. | De and others (2026) (10⁴⁷ to 10⁴⁸ erg); the 10⁵¹ erg is Experiment 13's figure (the module's own range 0.5 to 2 × 10⁵¹). See "Conflicts between sources" for AAS Nova's lower figure |
+| **The mass the neutrinos carry off** | `Δm = E ÷ c²`, using Experiment 13's own collapse energy for 1.4 Suns and 12 km (about 4.3 × 10⁴⁶ J): **0.24 Suns**, inside the published range of about 0.2 to 0.5. A tutor number only (decision 4). | Experiment 13's module and the formula E = mc² (Spacetime Geometry 5); the 0.2 to 0.5 range is from Lovegrove and Woosley's work as quoted in search summaries only |
+| **The fade** | `faded to` as fractions: JWST 2024 about **7 percent** of the progenitor's light (all wavelengths, from AAS Nova's summary of De and others); the visible light **more than 10,000 times** fainter than the 2012 progenitor (Hubble); NGC 6946-BH1 about **10 to 15 percent** of its progenitor's light (JWST, 2024; search summary). | As quoted. The module records these as published data and does no calculation on them beyond ratios |
+| **How common** | `n = f × 100` stars of every hundred massive stars: **16** (+23, −12) → **4 to 39** (90 percent confidence); the earlier 7-year survey gave 0.14 (+0.33, −0.10); the 2017 press story said "as many as 30 percent". De and others estimate the chance of finding at least one event in their own search at 1 to 20 percent. | Neustadt and others (2021), abstract (0.16 +0.23 −0.12, one clearly detected failed supernova); the 7-year value from a search summary; the 30 percent from OSU's 2017 article |
+| **The 2014 to 2024 timeline** | The published dates and factors (2014 +50 percent MIR over about 2 years; constant bolometric luminosity for about 1,000 days; a fall of more than 10 times over the next 1,000 days; faded by more than 100 between 2016 and 2019; undetectable optically in 2022 to 2023). | De and others (2026), as returned by a summarising fetch of the arXiv HTML (the first half only) |
+| **Two readings** | A small table: what each reading predicts (X-rays; whether the infrared keeps fading; dust shape). **No calculation.** | Beasor and others (2026); Soker (2026); De and others (2026) |
+| **A nearest-answer helper** | log-nearest for the energy question (Experiment 13's lesson), plain-nearest for the count. | Arithmetic |
+
+Functions (proposed): `remnantMassSolar(starSolar, thrownOffSolar)`, `fractionCollapsed`, `remnantOutcome` (via `coreOutcome`), `thrownOffNeededForNeutronStar(starSolar)`, `weakShockOverSupernova(energyErg)`, `neutrinoMassLossSolar()`, `failedCountOutOf100(fraction)` and `failedRange()`, `timeline()` (the published dates), `readings()` (the two readings' predictions, as data), `pushAnswer()` and `countAnswer()` (the predictions), `logScalePosition`, and `runFailedSupernova(settings)` returning all the learner's numbers at once. Non-positive inputs and a thrown-off mass above the star's mass throw `RangeError`.
+
+**What the model does not do:** it does not simulate the collapse, the shock, the fallback or the dust, does not compute the black hole's accretion or X-rays, does not decide between the black-hole and merger readings, does not compute the star's binding energy (decision 4), does not say how many black holes in the Galaxy came this way, and does not model neutrinos beyond one number.
+
+## Learner Controls
+
+Shown after the run, in a separate part (as in Experiment 15). Each is a **trial value**, not a claim about a real star.
+
+1. **"How much of the star is thrown off? (Suns)"** 0, 0.1 (the paper's), 0.28 (all of its hydrogen envelope), 1, 3. Moves the remnant's mass and its place against the limits in a drawing of its own. A trial value: a real star's thrown-off mass is a result of its collapse and the model does not link them.
+2. **"How many of every hundred massive stars fail? (stars)"** 4, 16 (the survey's central value), 39. Moves the highlighted dots in a drawing of its own.
+
+Two controls (decision 7).
+
+## Prediction Activity
+
+Two predictions, made before pressing Run, **built to `CLAUDE.md` §14 "Predictions and the Real Results"**: the real pictures and tables never change; each guess is drawn in white on the real picture beside the real value, in a box labelled "YOUR GUESS" joined by a line; the introduction says so.
+
+**Prediction 1: how strong is the push?** *"In an ordinary supernova, the gas is thrown out with about 10⁵¹ erg of energy (Experiment 13). In a failed supernova the star's core collapses too, but the push that tries to throw off the outer layers is weaker. About how strong is it compared with an ordinary supernova's?"* Buttons: **About the same**, **About 1 in 100**, **About 1 in 10,000**. Right answer (log-nearest; the paper's 10⁴⁷ to 10⁴⁸ erg is 1 in 1,000 to 1 in 10,000): **about 1 in 10,000**. The natural wrong answer is "about the same" because "the core collapse is the same". **Drawn:** a white marker on the log energy scale in Picture 2, beside the published range (10⁴⁷ to 10⁴⁸ erg, which is **not a measurement but the paper's model estimate**, and the page says so) and Experiment 13's 10⁵¹.
+
+**Prediction 2: how often?** *"Astronomers have watched many bright stars in nearby galaxies for years, looking for stars that vanish like this. By a 'massive star' we mean one heavy enough that its core collapses at the end of its life. Of every 100 massive stars, about how many do you think could end by failing like this, with no bright explosion?"* (Changed at Step 3: "hundreds of thousands" had no source.) Buttons: **Fewer than 1**, **About 10 to 20**, **About half**. Right answer: **about 10 to 20** (0.16, with 4 to 39 at 90 percent). **Drawn:** the guess as a white band over the 100 dots in Picture 3, beside the real 16 and its 4 to 39 band; the caption says the real value rests on **one** clear detection.
+
+Neither the introduction nor a button gives either answer (§12). The page tells the learner these are guesses and that they do not change the real pictures or tables.
+
+## Experiment Behavior
+
+### Introduction (to be drafted to §29 and §14 once approved)
+
+Outline (plain words, daily-life examples; the full text is drafted after approval):
+
+1. **Status line** and **the question:** can a star end without a flash?
+2. **Where we left off:** Experiments 12 and 13 (a heavy star's core collapses; neutrinos carry off most of the energy; the shock throws out the outer layers), Experiment 15 and Black Holes 9 (what can hold a core up; above about 3 Suns nothing known can).
+3. **The idea of a failed supernova,** with a daily-life comparison (a firework that fizzles and sinks, or a wave that does not reach the shore) clearly labelled as an analogy, and what the telescope would see (a star dimming, not a flash).
+4. **How astronomers look:** monitoring many bright stars for years, looking for one that vanishes (the LBT survey, NEOWISE); what a "false alarm" looks like (a star that is only hidden by dust, a merger).
+5. **What was found:** NGC 6946-BH1 and M31-2014-DS1 (without the numbers that are the predictions' answers).
+6. **Where the question stands (October 2026):** the three-part status label, saying plainly that two teams disagree.
+7. **New words:** failed supernova, progenitor, yellow supergiant, envelope, fallback, infrared (reused), mid-infrared, dust shroud, merger (of two stars), accretion, and "give-or-take" (reused).
+8. **What you will do,** with the §14 sentences.
+9. **What we assume:** the model is bookkeeping with the paper's numbers.
+10. **"Want to know more?"** (§29 rule 3): see "Links".
+
+The introduction does not give: the energy of the weak push (Prediction 1) or the fraction of stars that fail (Prediction 2), and it holds back the papers that give them until after the run.
+
+### Display (three pictures; each with a caption to the §14 standard and a three-part "What to look for")
+
+- **Picture 1: "What telescopes saw, 2005 to 2024" (stages 1 and 2).** A time line of the published marks only: the progenitor's steady glow; 2014, the mid-infrared brightening of about 50 percent; the plateau of about 1,000 days; the fade of more than 100 times between 2016 and 2019; 2022 to 2023, nothing in visible light (more than 10,000 times fainter); 2024, about 7 percent of the progenitor's light, in infrared. **No curve is drawn between the marks, because no data points were read.** "Where the real picture comes from" line: **measured** by NASA's NEOWISE, Hubble, Keck and JWST (named, as in the paper); **interpreted by the paper's authors**; and what was not seen (no X-rays, no bright flash). No guess is drawn here.
+- **Picture 2: "How much is left, and how strong was the push?" (stages 3 and 4).** The upper half is a mass bar of the star (5 Suns at the end, 13 at birth), split into "thrown off (at most about 0.1)" and "collapsed (about 4.9)", with marks for the limits (2.0, 2.2 to 2.3, 3.0). The lower half, on its own log scale of energy, shows 10⁵¹ erg (an ordinary supernova, from Experiment 13), the paper's weak push of 10⁴⁷ to 10⁴⁸ erg, and the learner's guess (Prediction 1) in white. The two halves have separate scales and titles, as in Experiment 15. "Where the real picture comes from": the 5 Suns, ≲ 0.1 and the push are **the paper's estimates**, not weighings or direct measurements; the 10⁵¹ is Experiment 13's; the limits are Black Holes 9's and a 2026 preprint's.
+- **Picture 3: "How many stars fail?" (stage 5).** A grid of 100 dots (one massive star each) with 16 highlighted and a band for 4 to 39, the learner's guess (Prediction 2) in white, and a note that the real value rests on one clearly detected failed supernova. "Where the real picture comes from": **measured** by the survey (Neustadt and others, 2021) with its confidence range; **calculated here** is only the counting.
+
+### Run
+
+Five stages, paced by a timer that only paces the display (§11): 1 the star and its history (Picture 1, the progenitor and the 2014 brightening); 2 the fade (Picture 1, the rest); 3 what is left (Picture 2, the mass half); 4 how weak the push was (Picture 2, the energy half); 5 how many fail (Picture 3). A short plain line under each picture says what is now added. The guess marks appear only once the feature beside them is drawn (§14).
+
+### Results (neutral, then explained by the tutor)
+
+Shown only after the run completes: the status label (three parts, each with its date); the predictions beside the results (the guess and the table row, never "matched"); the **reading guide** (§14); then Part 2 (the controls) and the tutor, in separate parts as in Experiment 15.
+
+1. **The check-up table**, each row with a real reference:
+   - **What stays collapsed:** 4.9 Suns against Black Holes 9's "sure black hole" above 3.0 and Experiment 15's 2.2 to 2.3 estimate: "well above both, by 1.6 to 2.1 times" (computed).
+   - **The weak push against an ordinary supernova's:** 1 in 1,000 to 1 in 10,000 against 1 in 1 for an ordinary one: "much less"; against AAS Nova's wording (1 in 10,000 to 1 in 100 million): "not the same, the sources differ".
+   - **Fade:** 7 percent of the progenitor's light by 2024 against NGC 6946-BH1's 10 to 15 percent: "the same order".
+   - **Failed fraction:** 16 in 100 (4 to 39) against the 2017 estimate of "as many as 30 percent" and the 7-year survey's 14 (+33, −10): "inside each other's ranges".
+   - **What each reading predicts** (no numbers, no verdict): X-rays; whether the infrared source keeps fading; whether a bright optical outburst would have been seen in a merger.
+2. **A note under each table** headed "What this table tells us" (what it is, what it means with real numbers, why it matters, §14).
+3. **The learner's predictions beside the results,** the guess only.
+4. **No table that follows the controls** (they only move marks in drawings of their own; §14, decision 8).
+
+Tables (proposed): **Table 1: the star, the push and the fade** (the mass bookkeeping, the push ratio, the fade). **Table 2: the published measurements** (the Science and ApJL papers, Beasor and others, Soker, Neustadt and others, the NGC 6946 candidate, each with "how strong this is" and what kind of source it is). **Table 3: the two readings** (what each predicts, no verdict). A "Words and formulas" panel gains worked entries (`remnant = star − thrown off`, `ratio`, `Δm = E ÷ c²`).
+
+## Expected Observations
+
+- A 5-Sun star that throws off about 0.1 Sun keeps about 4.9 Suns collapsed, about 2.1 times Experiment 15's estimate of the heaviest neutron star.
+- The weak push is 1 in 1,000 to 1 in 10,000 of an ordinary supernova's energy.
+- The visible light fell by more than 10,000 times, the total light to about 7 percent, in infrared.
+- About 16 of every 100 massive stars may fail, with a range of 4 to 39.
+
+## Expected Learner Understanding
+
+That a star can end without a flash if its shock fails and enough mass falls back to form a black hole; that this would look like a star slowly vanishing; that two candidates exist and the best one is disputed between a black hole and a merger remnant; and that how often it happens is only roughly known.
+
+## New Concepts Introduced
+
+Failed supernova; fallback; progenitor; yellow supergiant; envelope; dust shroud; asking what each reading predicts.
+
+## Relationship to Previous Experiments
+
+Builds on Experiments 12 and 13 of this group (a heavy star's core collapse, neutrinos, the shock), 15 (what holds a core up, the heaviest neutron star), 1 (give-or-take, contested results), Black Holes 1 and 9 (black holes and what forms them), and Spacetime Geometry 5 (E = mc²).
+
+## Relationship to Later Experiments
+
+Experiment 18 (a black hole's surface area, GW250114) and Experiment 20 (black holes that should not exist), which also ask where black holes come from.
+
+## Required Physics Tests (proposed; each must fail when the module is deliberately broken)
+
+1. `remnantMassSolar(5, 0.1)` is 4.9 and `fractionCollapsed(5, 0.1)` is 0.98.
+2. `remnantOutcome` for 4.9 is "black-hole" (via Black Holes 9's `coreOutcome`), for 2.0 is "neutron-star" and for 2.5 is "uncertain".
+3. `thrownOffNeededForNeutronStar(5)` is 3.0 (the "sure" limit of 2.0).
+4. `weakShockOverSupernova(1e47)` is 1e-4 and `(1e48)` is 1e-3.
+5. `neutrinoMassLossSolar()` is about 0.24 (against a separate calculation with G, c and the Sun's mass written out) and is inside 0.2 to 0.5.
+6. `failedCountOutOf100(0.16)` is 16 and `failedRange()` is 4 to 39.
+7. `timeline()` equals the published values and is in order.
+8. `pushAnswer()` is "1 in 10,000" and `countAnswer()` is "10 to 20", each by the log-nearest rule; the helper separates a log distance from a plain distance (Experiment 13's lesson).
+9. `logScalePosition` places each button's value at the right place on its scale.
+10. The module imports only Black Holes 9's and Experiment 13's modules.
+11. Out-of-range inputs throw `RangeError`.
+12. `runFailedSupernova` returns the values for the defaults and for every control setting (five thrown-off masses by three counts), each against a separate calculation.
+
+## AI Tutor Behavior (to be drafted once approved)
+
+The group's pattern (`CLAUDE.md` §13): **observe, compare with the predictions, a conceptual question, then the explanation**, each answered before the next. The prompts point to the white marks by name (§14). The predictions are marked as matched or not matched in the explanation only (the owner's choice, as in Experiment 15). Conceptual question (draft): *"Two teams looked at the same faint, red, dusty object. One says a black hole is hiding in the dust; another says two stars merged and a star is hiding in it. What would you look for to tell them apart?"* Explanation parts (each with a daily-life example or short calculation, §15): (1) why a collapse does not always explode (the weak shock, 0.24 Suns' worth of neutrino energy, worked); (2) what stays collapsed and why it is a black hole (4.9 ÷ 2.3 = 2.1); (3) why the push is so weak (1 in 10,000, worked) and why no flash; (4) what the telescopes saw, and what each mark means; (5) the two readings, what each predicts, and what would settle it (X-rays in about 27 years; the infrared glow's future; neutrinos can no longer be tested for this star); (6) how common, and why the give-or-take is large (one detection); (7) what was shown and what was not. It does not decide between the readings, does not say how many black holes came this way, and does not say the star "became a black hole" as a fact.
+
+### Chapter summary (to be drafted once approved)
+
+"What you learned / What's next": the three questions' results in plain words; "What's next" points to Experiment 18 only if its specification is approved by then. The numbers come from the module (§9).
+
+---
+
+## Links ("Want to know more?", §29 rule 3; to be fetched and recorded before approval of the wording)
+
+Fetched on 2026-10-25 and found: the arXiv pages of De and others (2410.14778, the *Science* paper; held back until after the run), Beasor and others (2601.05317), Soker (2601.14497), Suwa and others (2504.19510, the neutrino test; abstract only) and Neustadt and others (2104.03318); NASA JPL's NEOWISE release (a plain page, "Archival Data From NASA's NEOWISE Tracks Star Turning Into Black Hole", 12 February 2026); AAS Nova's summary of the JWST and Chandra paper (an American Astronomical Society page, plain); OSU's 2017 news story on NGC 6946-BH1. **Not yet fetched:** the Science paper's own page (DOI 10.1126/science.adt4853), the ApJL paper (De and others, ApJL 999, L25; only AAS Nova's summary read), the NASA Hubble page on NGC 6946-BH1, and a plain official page for black holes (Experiment 15 used NASA's "Black holes", fetched 2026-10-24) and for supernovae.
+
+## Sources read (2026-10-25; none in full)
+
+| Source | What was read | Read how |
+|---|---|---|
+| De and others (2026), *Disappearance of a massive star in the Andromeda Galaxy due to formation of a black hole*, Science 391, 689 (12 February 2026); arXiv:2410.14778 (v2, revised 11 February 2026) | Abstract; progenitor L ≈ 10⁵ Suns, T ≈ 4,500 K, yellow supergiant; initial mass ≈ 13, terminal ≈ 5 Suns, envelope ≈ 0.28; MIR +50 percent over ≈ 2 years from 2014; fade by ≳ 100 between 2016 and 2019; ≳ 10⁴ fainter in the HST from the 2012 progenitor; shock 10⁴⁷ to 10⁴⁸ erg; ejected ≲ 0.1 Suns; ≈ 98 percent collapsed or fell back; chance of finding at least one event in the search 1 to 20 percent | Abstract plus a summarising fetch of the first 100,000 characters of the 200,823-character arXiv HTML. **The second half was not read** |
+| De and others (2026), *Fading into Darkness*, ApJL 999, L25 | About 7 percent of the progenitor's light by 2024; energy "one hundred-millionth to one ten-thousandth" of a typical supernova; X-rays "no sooner than about 27 years"; JWST and Chandra | **Through AAS Nova's summary only** (aasnova.org, 4 March 2026) |
+| Beasor and others (2026), arXiv:2601.05317, accepted to MNRAS | A luminous mid-infrared source persists a decade after the fade; no X-rays; asymmetric dust; merger "also seems to provide a plausible explanation"; the bolometric luminosity is a lower limit | Abstract through a summarising fetch. The paper's numbers were not read |
+| Soker (2026), arXiv:2601.14497 (revised 23 July 2026) | The black-hole scenario needs under 1 percent of the bound material accreted and a backflow not shut off for over 10 years; predicted radiation about an order of magnitude above the observed; favours dust ejection in a binary | Abstract through a summarising fetch |
+| Suwa and others (2025), *Neutrino Constraints on Black Hole Formation in M31*, arXiv:2504.19510 | A failed supernova's neutrinos would be a short, intense burst that ends abruptly at black hole formation | Abstract only; not used on the page unless read |
+| Neustadt and others (2021), *The search for failed supernovae with the Large Binocular Telescope*, MNRAS 508, 516 | Failed fraction f = 0.16 (+0.23, −0.12) at 90 percent; 27 galaxies, 11 years; two candidates (N6946-BH1, M101-OC1); "only one clearly detected failed SN" | Abstract through a summarising fetch |
+| NASA JPL NEOWISE release (12 February 2026) | The star "suddenly brightened in infrared light in 2014, but by 2023 ... dimmed in visible light by more than a factor of 10,000"; 2.5 million light-years; "a weak shockwave" | Fetched 2026-10-25 (summarising) |
+| OSU news (25 May 2017) | NGC 6946-BH1: 25 Suns; brightened 2009; gone by 2015; "as many as 30 percent" may collapse quietly; "too early in the project to know for sure" | Fetched 2026-10-25 (summarising) |
+| NGC 6946-BH1's JWST result (about 10 to 15 percent of the progenitor's light) | | **Search summary only** |
+| The Nadezhin mechanism; neutrino mass loss of about 0.2 to 0.5 Suns; about 10⁴⁷ erg for a red supergiant | Search summaries of Lovegrove and Woosley (2013) and Fernández and others (2018) | **No paper was opened.** Used in the tutor only |
+| The earlier survey's 0.14 (+0.33, −0.10) | | Search summary only |
+| The full Science paper's second half; the ApJ Letters paper; Beasor's numbers; Soker's reasoning in full; X-ray observations' limits; NGC 6946-BH1 papers | — | **Not read** |
+
+## Conflicts between sources, and how this specification handles them
+
+| Matter | Source A | Source B | Handling |
+|---|---|---|---|
+| What the object is | A black hole in a dusty shroud (De and others, *Science* 2026) | A dust-covered merger remnant (Beasor and others; Soker) | Contested. Show both, with what each predicts, no verdict |
+| The weak push's energy | 10⁴⁷ to 10⁴⁸ erg (De and others, arXiv) | "One hundred-millionth to one ten-thousandth" of a typical supernova, 10⁴³ to 10⁴⁷ erg (AAS Nova's summary of the ApJL paper) | Use the *Science* paper's range for Prediction 1 and say the second paper's range is lower; the answer's button ("about 1 in 10,000") stays inside both ranges |
+| The star's initial mass | About 13 Suns (the arXiv text) | "About a dozen" or "about 12" (the proposal and a search summary) | Use 13 and say so |
+| How common | 0.16 (+0.23, −0.12) (2021, one detection) | "As many as 30 percent" (2017); 0.14 (+0.33, −0.10) (7 years) | Use the 2021 value as the main one; list the others in a table; stress the one detection |
+| X-rays | None seen; explained by dust (De and others) | None seen; disfavours a black hole (Beasor and others) | Same observation, two readings; the tutor does not choose |
+
+## Facts that may change (re-check by the dates shown)
+
+| Fact | Source | Date checked | What could change it |
+|---|---|---|---|
+| The object's nature | De and others; Beasor and others; Soker | 2026-10-25 | New JWST epochs, X-ray detection (about 2053 on the quoted 27 years), a rebuttal paper |
+| The fade (7 percent by 2024) | AAS Nova's summary | 2026-10-25 | Later JWST epochs |
+| The failed fraction | Neustadt and others (2021) | 2026-10-25 | A longer LBT baseline, more candidates |
+| The NGC 6946 candidate's status | Search summary | **not checked at source** | New observations |
+| Whether newer results exist | Limited search | 2026-10-25 | Any |
+
+## Open items (known before approval)
+
+- No paper was read in full; the *Science* paper's second half and both the ApJL paper and Beasor's numbers are unread.
+- The mechanism's numbers (neutrino mass loss 0.2 to 0.5 Suns, 10⁴⁷ erg) come from search summaries of Lovegrove and Woosley and related papers, not the papers.
+- The 5-Sun remnant against Black Holes 9's limits reuses their rough zones; these are teaching limits, not a measurement.
+- NGC 6946-BH1's JWST fade, the earlier 0.14 and 2017's 30 percent have no primary source read.
+- No plain official page for "failed supernova" beyond NASA JPL's release; no plain official pages for yellow supergiants, dust or mergers.
+- The "firework fizzling" comparison is my own and has no source.
+- A merger reading's predictions (what it would show in the next decade) are not read in detail; the page lists only what the abstracts say.
+- The wording is the owner's to approve line by line (§28.1).
+
+## Decisions for the owner (each on a default; change any you like)
+
+1. **The title.** Default: the proposal's, "A star that vanished: can a star become a black hole without exploding? (M31-2014-DS1)". It does not give an answer away.
+2. **The status label.** Default: three parts (*Strong evidence* for what was seen, *Contested* for what it is, *Open* for how often). The proposal had *Open*; the 2026 papers changed this (correction 1). Alternative: *Open* alone.
+3. **Whether to say "became a black hole".** Default: the page says "may have become", gives the *Science* paper's claim as the discovery team's reading and the other as the other teams' reading, with no verdict. Alternative: follow the *Science* paper's title ("due to formation of a black hole"), which says more than the dispute allows.
+4. **The mechanism numbers.** Default: the neutrino mass loss (0.24 Suns, computed from Experiment 13's module) appears in the tutor only, labelled as a textbook idea with the published 0.2 to 0.5 range, and no binding-energy calculation for the envelope is built (I estimated one at about 10⁴⁶ erg, which I would not put on the page without a source). Alternative: add the envelope's binding energy to the model, which needs a source.
+5. **Prediction 1.** Default: a three-button log choice on the weak push's strength (about the same, 1 in 100, 1 in 10,000). Alternative: the proposal's yes or no on "a bright flash", which is less informative and is revealed by the introduction's own idea.
+6. **Prediction 2.** Default: three buttons on how many of 100 massive stars may fail (fewer than 1, 10 to 20, about half). Alternative: leave the count to the tutor, which would remove Picture 3's guess.
+7. **The number of controls.** Default: two (thrown-off mass, count). Alternative: add the star's initial mass as a third, rejected as the model has no link from the initial mass to the thrown-off mass.
+8. **A table that follows the controls.** Default: no (§14 item 3 of "Reading the Results"; they only move marks in drawings). Alternative: a "your numbers" table; Experiments 14 and 15 argue against it.
+9. **How much to say about the two readings.** Default: a table of what each predicts (X-rays, the infrared fading, an optical outburst), without numbers and without a verdict. Alternative: leave the merger reading to the tutor only.
+10. **NGC 6946-BH1.** Default: mention as the first candidate, with its published 25 Suns and 2009 to 2015 dates (OSU), and no JWST figure (search summary only). Alternative: leave it out.
+11. **The number of pictures, stages and tutor parts.** Default: three pictures, five stages, seven tutor parts.
+12. **The neutrino test.** Default: one sentence saying a nearby failed supernova's neutrinos would be a short burst that stops abruptly (Suwa and others, abstract), and that none could be tested for this star. Alternative: leave it out (abstract-only source).
+
+## Not built
+
+Built: the physics model and its tests (Step 1), the interface skeleton with the introduction (Step 2), the two predictions (Step 3) and the five-stage run with its three pictures (Step 4). Not built: the controls, results, tutor and chapter summary.
+
+## Implementation Notes
+
+**Step 1 done (2026-10-25): the physics model and its tests.** `src/physics/failedSupernova.ts` and `failedSupernova.test.ts` (25 tests, covering the 12 required tests). The module imports only the Black Holes 9 and Experiment 13 modules (checked by a test). Nothing else is built: no interface, predictions, run, pictures, controls, results, tutor or summary.
+
+Numbers the module gives (each checked in the tests against a separate calculation where one exists): a 5-Sun star that throws off 0.1 Sun keeps 4.9 Suns (98 percent), which Black Holes 9's zones call a black hole; 4.9 is 1.63 times Black Holes 9's "sure black hole" bottom (3.0) and 2.13 times the top of Experiment 15's 2.2-to-2.3 estimate; 3.0 Suns or more must be thrown off for a "sure neutron star" (2.0 or less) to remain; the weak push is 1 in 1,000 to 1 in 10,000 of Experiment 13's 10⁵¹ erg (the ApJL paper's wording gives 1 in 10,000 to 1 in 100 million); the neutrinos carry off 0.24 Suns' worth of mass-energy from Experiment 13's collapse, inside the published 0.2 to 0.5; 16 of every 100 massive stars may fail, with a range of 4 to 39. Prediction 1's answer is "about 1 in 10,000" (the middle of the paper's range on a log scale is 1 in 3,162), and Prediction 2's is "about 10 to 20".
+
+Differences from the specification (for the owner's approval):
+1. The Physics Model table says "more than **2.9** Suns (5 − 2.0 = 3.0)", which contradicts itself. The module gives **3.0** (a remnant of exactly 2.0 is still a "sure neutron star" in Black Holes 9), and the required test says 3.0. The "2.9" in the table was an error.
+2. The module writes the speed of light, the 2.2-to-2.3 estimate and the other published numbers itself rather than importing them, to keep to the two imports named (Experiment 15's module is not imported). It uses Experiment 13's `SUPERNOVA` constants, `collapseEnergyJ` and the solar mass.
+3. The timeline's second mark ("the total light stays constant for about 1,000 days") has **no end date** (`endYear: null`), because the paper gives a duration, not a date; the first mark's end year, 2016, is the start plus the paper's "about 2 years".
+4. Added helpers the specification did not list: `remnantOverLimits`, `pushOneInRange`, `apjlPushOneInRange` (for the conflicts row), `pushMiddleOneIn`, `guessPushErg`, `guessPushOneIn`, `guessCountBand`, `countRealOverGuess`, and an optional argument to `countAnswer` (so the plain-distance rule can be tested away from the real value). The count buttons' bands ([0, 1], [10, 20], [40, 60]) are markers for drawing the guess, not measurements.
+5. The `thrownOffChoicesSolar` (0, 0.1, 0.28, 1, 3) and `failedPerHundredChoices` (4, 16, 39) are in the module as the controls' choices.
+
+Twenty deliberate breaks of the module were made (a formula changed, a constant changed, a published number changed, a boundary or guard removed, a nearest-answer rule swapped, a log scale made linear, an extra import added); all twenty fail the tests. Two survived at first and were fixed: the import test's pattern missed a bare `import './x'` line, and `countAnswer` gave the same answer under a log rule at the real value, so it now takes an optional count and is tested at 5 and 40. `tsc --noEmit -p tsconfig.app.json` passes and all 1,387 tests pass.
+
+**Step 2 done (2026-10-25): the interface skeleton and the introduction** (`src/components/FailedSupernovaExperiment.tsx`, wired into `src/App.tsx` as the last chapter of Frontier and Beyond, with a placeholder summary that does not show, because the explanation it waits for is not built). It has: the three-part status line; the introduction (the question; where we left off; the idea of a failed supernova, with a thrown-ball comparison and its sums, 20 × 20 ÷ 20 = 20 m, 5 × 5 ÷ 20 = 1.25 m, 30 × 30 ÷ 20 = 45 m, labelled as only a comparison; how astronomers look; what was found, including that two 2026 papers disagree with the discovery team; where the question stands; the new-word list; what you will do, with the §14 sentences; what we assume); one illustration, "an ordinary supernova beside a failed one" (rows A and B, with every shape, arrow and colour explained in a "How to read this illustration" guide, a worked moment and three three-part "What to look for" items); the collapsed "Words and formulas" panel (19 entries); and the "Want to know more?" list (five plain pages, all fetched or reused from earlier experiments). Every published number on the page is read from the module (the 2.5 million light-years, the NGC 6946 star's 25 Suns and 2009 to 2015, the 10,000-fold fade, the 3-Sun limit); two small additions to the module and its test for this (`m31DistanceMillionLightYears`, `ngc6946`, and a re-export of `SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES`). All wording is draft for the owner's approval.
+
+Differences from the specification and outline (for the owner's approval): (1) the page states the 2014 brightening, the 10,000-fold fade, the *Science* paper's claim and the two disagreeing papers in "What was found", which gives the *story* but none of the predictions' answers (checked: the page contains none of "1 in 10,000", 16 in 100, 30 percent, 10⁴⁷, 0.16 or 98 percent); (2) the NASA JPL NEOWISE release is **held back until after the run** (its closing line speaks of "a common mechanism", which could read as a hint to Prediction 2), along with every paper, AAS Nova's summary and OSU's 2017 story; (3) the page says the discovery team "replies that dust would hide the X-rays too, and that they should become visible in time", from De and others' abstract and AAS Nova's "no sooner than about 27 years"; the 27 years is not on the page; (4) the Words panel's "Yellow supergiant" entry says "hotter than a red supergiant" and gives the paper's 4,500 kelvin, which is cooler than the Sun's surface (about 5,800 K), so the word "yellow" may confuse a learner; the page does not explain it, and whether to is the owner's call.
+
+Checked in Chrome: the page loads with no console errors; the illustration draws and the first view showed the "the core collapses" and "what a telescope sees" labels sitting on their arrows and a row A caption touching the divider, both fixed and re-checked; the Words panel opens with 19 entries; the five links are the ones listed; the page does not scroll sideways at the window's width. Not checked: narrow widths, other browsers, keyboard use, a real learner. **No source was read for:** "hundreds of thousands of bright stars" (the specification's Prediction 2 text, and the proposal, say this; the page says "many bright stars" instead, and the Prediction 2 wording must be changed at Step 3); that two stars merging "throw out a cloud of dust" in general (only the abstracts' "dust ejection from binary interaction" and "stellar merger" were read); the thrown-ball comparison (an analogy); "a supernova is bright enough to be seen from millions of light-years away" (taken from Experiment 13's approved Words entry). Also noted: Experiment 15's "What's next" still says "None yet, because Experiment 16 has no approved specification", which is now out of date (Experiment 16 was dropped and Experiment 17 exists); changing it is learner-facing wording and is the owner's call.
+
+**Step 2 approved by the owner (2026-10-25, "approved"), covering the introduction, the illustration and its guide, the Words panel and the links as drafted.** The four questions put to the owner with Step 2 were not answered one by one; on the strength of "approved", the page keeps them as they were built: the "Yellow supergiant" entry is not expanded, the NASA JPL release and the papers stay held back until after the run, the unsourced "hundreds of thousands" was replaced (see Step 3), and Experiment 15's "What's next" is untouched.
+
+**Step 3 done (2026-10-25): the two predictions** (in `FailedSupernovaExperiment.tsx`, below the Words panel). Prediction 1 (how strong is the push of a failed supernova compared with an ordinary supernova's? About the same / About 1 in 100 / About 1 in 10,000) and Prediction 2 (of every 100 massive stars, about how many could end by failing like this? Fewer than 1 / About 10 to 20 / About half (about 50)), worded as in "Prediction Activity", each with "You are not graded, and a guess is fine." Run stays off until both are answered; Run only records the predictions, locks the buttons and shows "Your predictions are recorded and not marked here."; Start over clears both. Neither the text nor any button gives its answer. The buttons' values and the answers come from the physics module (`PUSH_ANSWERS`, `COUNT_ANSWERS`); the page itself shows no number from either.
+
+Differences from the specification (for the owner's approval): (1) Prediction 1's text does not give the 10⁵¹ erg figure that the specification's draft had, because the erg is not defined on this page and Experiment 13's number is not needed for the question; the real figure appears in Picture 2 after the run. (2) Prediction 2's text now says "many bright stars" and defines a "massive star" in one sentence (the specification's "hundreds of thousands" had no source), and ends "with no bright explosion". (3) The third button of Prediction 2 reads "About half (about 50)" so the learner sees the number its band stands for. (4) Run records only: no stages, pictures or results exist yet.
+
+Checked in Chrome: all nine answer pairs (three pushes by three counts) were selected, run, locked (every answer button disabled, Run disabled), shown as recorded and cleared by Start over (no selection left, Run disabled again); Run is disabled at the start and with one answer; no console errors; the page contains no "right answer" or answer wording. Not checked: narrow widths, other browsers, keyboard use, a real learner. The wording of "About 1 in 100" and "About 1 in 10,000" (one part in a hundred, or in ten thousand, of an ordinary supernova's push) is not explained on the page; a learner may need that, and it is the owner's call. The wording is draft for the owner's approval. Not built: the run, the three pictures, the controls, the results, the tutor and the summary.
+
+**Prediction 2 reworded (2026-10-25, at the owner's question "how can there be fewer than 1 supernova"; draft approved by the owner).** The question now reads "Think of a very large group of massive stars. In every 100 of them, on average, about how many do you think end by failing like this, with no bright explosion?", with a note that "Less than 1 in every 100" means you would have to watch more than 100 massive stars to find one. The buttons are now "Less than 1 in every 100", "About 10 to 20 in every 100" and "About half: about 50 in every 100", because a count below 1 reads as an impossible fraction of a star when it is a rate. The answer values (`'fewer than 1'` and so on), the physics and the white marker are unchanged; the Picture 3 caption and the Picture 2 guess note say "less than 1 in every 100". Tests and the earlier spec lines (80, 236, 271) still use the old short names, which are the module's internal labels.
+
+**Prediction 1 reworded (2026-10-25, at the owner's question "you are comparing which push against which push", and the owner's addition that "each supernova can be different in size, brightness, etc."; the draft is for the owner's approval).** The question now says that "a typical supernova" means a typical core-collapse supernova (Experiment 13); that in one the shock gives the outer layers a very large amount of energy; that the amount varies from one supernova to the next by up to about a factor of 2 either way, far less than the gaps between the buttons; that in a failed supernova the shock gives the outer layers less energy, not enough to throw them out; a one-line note that energy is what it takes to push something against gravity; and that each button says what share of a typical supernova's energy the failed one has ("about the same" means equal, "about 1 in 100" means one hundredth as much). The title is now "Prediction 1: how much energy does the push have?". The factor of 2 comes from the module (`supernovaSpreadFactor`, the geometric half-width of Experiment 13's range of 0.5 to 2 × 10⁵¹ erg; one new test, 26 in all, one deliberate break caught; `supernovaGasErgRange` added to the data). Experiment 13's range is a literature range that Experiment 13 itself notes has no single source; the page does not give the 10⁵¹ erg figure here. **Spread sentence rewritten and a worked example added (2026-10-25, draft approved by the owner; the example's wording is for approval).** "up to about a factor of 2 either way" became "a strong one can have up to 2 times the energy of a typical one, and a weak one about half", followed by an example with a typical supernova of 100 units (others 50 to 200): "about the same" covers that whole range, "about 1 in 100" (1 unit) is 50 times below the weakest, and "about 1 in 10,000" (0.01 units) is 5,000 times below it. The example now also says where the 100 comes from ("We use 100 only because it is a round number that makes the sums easy. These are not real units of energy.") and works each share out in words ("one hundredth of 100, which is about 1 unit"; "one ten-thousandth of 100, which is about 0.01 units"), added at the owner's request on 2026-10-25 and approved by the owner ("the paragraph is a bit bigger, but I prefer it"). The example's numbers (100, 50, 200, 50, 5,000, 1, 0.01) are typed in the interface, not taken from the module, which is against §9 and is open. The paragraph is long; whether to split it is the owner's call. Checked in Chrome: the text renders, the three buttons are unchanged and no answer is given. Type-check and all 1,388 tests pass.
+
+**Step 3 wording approved by the owner (2026-10-25)**, including the reworded Prediction 1 (the "typical supernova" wording with the factor of 2).
+
+**Step 4 done (2026-10-25): the five-stage run and the three pictures** (in `FailedSupernovaExperiment.tsx`; the module gains `apjlPushErgRange`, `failedDots`, `guessDots` and `massPicture`, a label on every timeline mark, a 2012 timeline mark and an export of `SURE_NEUTRON_STAR_TOP_SOLAR_MASSES`, with tests, now 31 in the module and 1,393 in all). A "Part 1: Predict, then watch" header (a lead paragraph, written during the build) sits above the predictions. Stages (2.6 seconds each, a timer that only paces the display, §11): 1 the star and its history (Picture 1, the first three rows); 2 the fade (Picture 1, the last three); 3 what is left of the star (Picture 2, upper half); 4 how weak was the push (Picture 2, lower half, and **your guess for Prediction 1**); 5 how many stars fail (Picture 3, and **your guess for Prediction 2**). Run completion calls `onComplete` (the chapter's check mark). Each picture has a "Where the real picture comes from" paragraph that separates what was **measured**, what is **the paper's estimate**, what was **calculated here** and what is imagined (nothing is), a "How to read" paragraph that names every shape, colour and unit, a worked moment with real numbers and three-part "What to look for" items shown only once their feature is drawn (§14). After the run completes, a list of seven papers and releases is shown under the pictures (De and others on arXiv, AAS Nova, NASA JPL's NEOWISE release, Beasor and others, Soker, Neustadt and others, OSU 2017): all seven pages were fetched on 2026-10-25, and the list is held back until after the run because it gives the numbers the predictions ask for.
+
+How the guesses are drawn (§14, "Predictions and the Real Results"): **Prediction 1** is a white triangle on the log energy scale at the energy its answer stands for (10⁵¹, 10⁴⁹ or 10⁴⁷ erg, from `guessPushErg`), a white dashed line carried down through the three bars, and a white "YOUR GUESS" box joined to the triangle by a line, beside the yellow, orange and grey real bars; the caption says the triangle is only a marker. **Prediction 2** is a white outline on the dots its answer stands for (dots 11 to 20 for "about 10 to 20", 41 to 60 for "about half"; `guessDots`) and a white box joined by a line; "fewer than 1" outlines only the first dot, as a marker, and the caption says so. No picture says "right", "wrong" or "matched".
+
+Differences from the specification (for the owner's approval): (1) Picture 1 has six rows, not five: a 2012 row (the star as it was before, about 100,000 times the Sun's light, the paper's progenitor luminosity) was added, and the plateau row is drawn as 1,000 days from 2014 (1,000 ÷ 365.25 = 2.74 years, so about 2016.7), which replaces the Step 1 note that it has no end date; (2) Picture 2's lower half has a third, grey bar for the other paper's wording (10⁴³ to 10⁴⁷ erg, from AAS Nova's "one hundred-millionth to one ten-thousandth" of a typical supernova's energy), so that the conflict in the sources is visible and not only written; (3) Picture 3 has three shades of red (bright to 4, medium to 16, faint to 39) for the low end, the central count and the high end of the survey's 90 percent range; (4) the specification's "a note that the real value rests on one detection" is a line in the picture and in its caption; (5) the page lists the seven papers after the run (the specification had them as a "Links" note); (6) Picture 1's 2012 label and the 2024 label come from the module's timeline, not from the specification's table of five marks; (7) an "erg" is defined only in the Picture 2 caption ("a small unit of energy"), not in the Words box, and Experiment 13's own definition was not checked.
+
+Checked in Chrome: the run goes through stages 1 to 5 and then "Run complete", with the pictures appearing at the right stages (2, 3 and 4 pictures in turn, counting the illustration); **all nine prediction pairs** were run, and for every pair the white triangle was at the right place on the scale (x = 466.7, 360 or 253.3, from a separate calculation of 40 + 480 × (log₁₀ erg − 43) ÷ 9), the number and position of the outlined dots was right (1 dot, 10 dots from dot 11, 20 dots from dot 41), the boxes named the guess, no page text said "right", "wrong" or "matched", and **Picture 1 and the real parts of Pictures 2 and 3 (with the white marks removed) were identical across all nine pairs**; no console errors. Layout faults seen and fixed: Picture 2's subtitle overlapped the "above 3.0" label, "Suns" touched the 6, the guess box text overflowed its box, the dashed guess line was drawn over the row labels, and Picture 3's legend ran off the right edge; one wording slip fixed (the 98 percent had been called both the paper's estimate and "calculated here"). Not checked: narrow widths (the pictures are 560 px wide and shrink with the window, as in the group's other experiments, so their small labels become smaller), other browsers, keyboard use, a real learner.
+
+Eight deliberate breaks of the new module functions were made: five are caught; three survive and are **equivalent breaks** (`guessDots` using `round` for `floor` and removing its minimum of 1, and `failedDots` using `floor` for `round`, give the same answers for every value this experiment uses: bands starting at 0, 10 and 40 and ending at 1, 20 and 60, and the counts 4.0, 16.0 and 39.0).
+
+Open (new): "the star as it was before: about 100,000 times the Sun's light" is placed at 2012 from the paper's progenitor luminosity and a summary that mentions HST imaging "from 2012"; the paper's own text for that was not read; the "In 2012 the star was very bright" in the look-for item has the same source; "a supernova would have made a star many times brighter for weeks or months" is Experiment 13's wording; "a push that small is not enough for a bright explosion" is the specification's reading, not a sentence in a paper; the "top of the range is almost 10 times the bottom" is arithmetic (39 ÷ 4 = 9.75). The "Part 1" lead paragraph is new wording for the owner's approval, as is every caption, look-for item, stage line and the list of papers. Not built: the controls, the results, the tutor and the summary.
+

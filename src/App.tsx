@@ -16,6 +16,7 @@ import { BetelgeuseCompanionExperiment } from './components/BetelgeuseCompanionE
 import { CatchingASupernovaExperiment } from './components/CatchingASupernovaExperiment'
 import { WhiteDwarfExplosionExperiment } from './components/WhiteDwarfExplosionExperiment'
 import { NeutronStarSizeExperiment } from './components/NeutronStarSizeExperiment'
+import { FailedSupernovaExperiment } from './components/FailedSupernovaExperiment'
 import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
@@ -777,6 +778,15 @@ const chapters: Chapter[] = [
     // experiment, because Experiment 16 has no approved specification.
     learned: neutronStarSummary(),
     next: 'None yet, because Experiment 16 has no approved specification.',
+  },
+  {
+    title: 'A star that vanished: can a star become a black hole without exploding? (M31-2014-DS1)',
+    group: 'Frontier and Beyond',
+    Component: FailedSupernovaExperiment,
+    // Placeholder. The chapter summary is a later step (the specification's "Chapter summary"); it is not shown, because it appears only once the tutor's explanation, which is
+    // not built yet, has been reached.
+    learned: 'The chapter summary of Experiment 17 is not written yet.',
+    next: 'None yet.',
   },
 ]
 
