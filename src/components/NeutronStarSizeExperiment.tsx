@@ -1202,24 +1202,16 @@ export function NeutronStarSizeExperiment({ onComplete, onTutorComplete }: Neutr
               about its centre.
             </li>
             <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/dwarfs1.html">NASA Imagine the Universe: White dwarfs</ExternalLink>: how a star like the Sun swells
+              <ExternalLink href="https://chandra.harvard.edu/xray_sources/white_dwarfs.html">NASA’s Chandra X-ray Observatory: White dwarfs</ExternalLink>: how a star like the Sun swells
               into a red giant and leaves a white dwarf.
             </li>
             <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/neutron_stars.html">NASA Imagine the Universe: Neutron stars</ExternalLink>: how a neutron star
-              forms, how big and how dense it is.
-            </li>
-            <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/pulsars1.html">NASA Imagine the Universe: Pulsars</ExternalLink>: why a spinning neutron star
-              gives regular pulses, with the lighthouse picture.
+              <ExternalLink href="https://chandra.harvard.edu/xray_sources/neutron_stars.html">NASA’s Chandra X-ray Observatory: Neutron stars</ExternalLink>: how a neutron star
+              forms when the centre of a massive star collapses, and why a spinning one gives regular pulses, like a rotating lighthouse beam.
             </li>
             <li>
               <ExternalLink href="https://science.nasa.gov/mission/nicer/">NASA: NICER</ExternalLink>: what the X-ray telescope on the Space Station is, and what it has found
               about neutron stars.
-            </li>
-            <li>
-              <ExternalLink href="https://heasarc.gsfc.nasa.gov/docs/nicer/science_nuggets/20240822.html">NASA NICER science note: PSR J0437−4715</ExternalLink>: how the 2024
-              measurement was made, in NASA’s own words.
             </li>
             <li>
               <ExternalLink href="https://ligo.org/science-summaries/GW230529/">LIGO: GW230529, the merger of a neutron star and an unknown compact object</ExternalLink>: the

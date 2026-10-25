@@ -843,16 +843,12 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
               neutron star and exploding as a supernova.
             </li>
             <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/supernovae1.html">NASA Imagine the Universe: Supernovae</ExternalLink>: why a heavy star’s iron core
-              has nothing left to burn, and what happens to it.
+              <ExternalLink href="https://chandra.harvard.edu/xray_sources/supernovas.html">NASA’s Chandra X-ray Observatory: Supernovas and supernova remnants</ExternalLink>: the
+              two kinds of supernova, including the collapse of a massive star’s core.
             </li>
             <li>
               <ExternalLink href="https://chandra.harvard.edu/edu/formal/stellar_ev/story/index11.html">Chandra X-ray Observatory: Stellar evolution, the death of a massive star</ExternalLink>:
               the iron core growing to about 1.4 Suns, collapsing in less than a second, and the shock wave that runs outward.
-            </li>
-            <li>
-              <ExternalLink href="https://heasarc.gsfc.nasa.gov/docs/objects/snrs/snrstext.html">NASA HEASARC: Supernova remnants</ExternalLink>: how the collapsing core squeezes
-              electrons and protons together into neutrons and releases neutrinos.
             </li>
             <li>
               <ExternalLink href="https://arxiv.org/abs/2009.14157">Burrows and Vartanyan, “Core-Collapse Supernova Explosion Theory” (Nature, 2021)</ExternalLink>: a research review,

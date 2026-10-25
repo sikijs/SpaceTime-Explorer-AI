@@ -704,16 +704,12 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
               Type Ia supernova is, and how astronomers use it as a “standard candle” to find distances.
             </li>
             <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/supernovae1.html">NASA Imagine the Universe: Supernovae</ExternalLink>: how a white dwarf near the
-              limit explodes, and how that differs from a massive star’s collapse.
+              <ExternalLink href="https://chandra.harvard.edu/xray_sources/supernovas.html">NASA’s Chandra X-ray Observatory: Supernovas and supernova remnants</ExternalLink>: the
+              two kinds of supernova, a white dwarf’s explosion and a massive star’s collapse.
             </li>
             <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/dwarfs1.html">NASA Imagine the Universe: White dwarfs</ExternalLink>: how a star like the Sun
-              swells into a red giant, blows off its outer layers and leaves a white dwarf.
-            </li>
-            <li>
-              <ExternalLink href="https://imagine.gsfc.nasa.gov/science/objects/dwarfs2.html">NASA Imagine the Universe: White dwarf stars</ExternalLink>: how heavy and how big a
-              white dwarf is, and what the 1.4-Sun limit means.
+              <ExternalLink href="https://chandra.harvard.edu/xray_sources/white_dwarfs.html">NASA’s Chandra X-ray Observatory: White dwarfs</ExternalLink>: how a star like the Sun
+              swells into a red giant and leaves a white dwarf, how dense it is, and what the 1.4-Sun limit means.
             </li>
             <li>
               <ExternalLink href="https://chandra.harvard.edu/edu/formal/stellar_ev/story/index7.html">Chandra X-ray Observatory: Stellar evolution, white dwarfs</ExternalLink>:
