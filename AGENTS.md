@@ -219,7 +219,7 @@ until then they are left as they are.
 
 ## Frontier and Beyond: Introductions and Captions
 
-The "Frontier and Beyond" group (every experiment in it, all twenty-four and any added later) teaches recent discoveries
+The "Frontier and Beyond" group (every experiment in it, all twenty-three that remain after Experiment 16 was dropped on 2026-10-25, and any added later) teaches recent discoveries
 and findings of astronomers and scientists. The ideas are complex, so:
 
 1. Each introduction must be up to date, clear and detailed, in simple terms for a learner with basic science

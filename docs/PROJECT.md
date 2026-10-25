@@ -452,13 +452,24 @@ Added by the owner on 2026-10-22. Results are shown as scientific numbers, and a
 
 The guide explains what each number means and why it matters. The full mechanism and any verdict between competing explanations stay with the tutor, and the guide never gives away what the learner was asked to predict. Its wording is the human project owner's to approve. It is built so far for Experiment 12 of the Frontier and Beyond group, and adding it to earlier experiments is a decision for the owner.
 
-### Predictions do not change the results
+### Predictions and the real results
 
-Added by the owner on 2026-10-23. A learner's predictions are their own guesses, made before they see anything. They never change the pictures, the tables or any number, because the results come from the physics. So every experiment with a prediction tells the learner so, in plain words, to avoid mistaking "nothing changed" for a fault: in the introduction (the predictions are guesses, they do not change the pictures or tables, they are shown again beside the results, and which controls, if any, do change them), and beside any controls (the predictions do not change the pictures or tables but these settings do, and, where the experiment has a comparison table for the settings, that while every setting is on its published value it says "the same" in every row). The wording never gives away an answer, and it is the human project owner's to approve. It is built so far for Experiment 12 of Frontier and Beyond; the earlier experiments do not have it yet.
+Set by the owner on 2026-10-24, from the pilot on Experiment 15 of Frontier and Beyond, and replacing the owner's rule of 2026-10-23 ("Predictions do not change the results"). A learner's predictions are their own guesses, made before they see anything. The real pictures, tables and numbers come from the physics and never change with a guess, and the learner is told so in plain words, so that "nothing changed" is not mistaken for a fault. The guess itself is no longer only a line of text beside the results: it is **drawn on the real picture, beside the real result**, so that it is easy to compare. Every experiment with a prediction:
+
+1. Keeps the real pictures, tables and numbers fixed.
+2. Draws the guess on the real picture where its answer lives, as a separate, clearly labelled mark in white, with a prominent "YOUR GUESS" box joined to it by a line. White always means the learner's guess; anything imagined for the question is drawn in another colour and called "imagined". The mark shows the guess only: no "right", "wrong" or "matched". The tutor marks the predictions in its explanation, and nowhere earlier.
+3. Makes the mark follow the guess. Where a guess has no size of its own (yes or no), it is drawn as a marker and the caption says so.
+4. Draws the mark only once the feature beside it is drawn.
+5. Puts it in the same picture as the real result. If the predicted quantity has no picture, it becomes a half or panel of the nearest picture, on its own scale and with its own title.
+6. Gives every picture that carries a guess mark a "Where the real picture comes from" line that separates what was measured, what was calculated here and what was imagined for the question.
+7. Tells the learner in the introduction that the predictions never change the real pictures or tables, that the guesses are drawn on them in white and shown again beside the results, and which controls (if any) change which drawings; beside any controls it says that the guesses do not change the drawings or tables but these settings do.
+8. Takes every number for the marks from the tested physics module.
+
+The wording is the human project owner's to approve. It is built so far for Experiments 15 and 17 of Frontier and Beyond and applies to every new experiment. Experiments 1 to 14 and the other groups still follow the earlier rule (their guesses are shown only as text beside the results, and each says that predictions do not change the pictures or tables); the owner decided to audit and update them one at a time after the project is complete.
 
 ### Frontier and Beyond: fuller introductions and captions
 
-The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so four rules apply to every experiment in the group, all twenty-four and any added later:
+The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so four rules apply to every experiment in the group, all twenty-three that remain after Experiment 16 was dropped on 2026-10-25, and any added later:
 
 1. **The introduction is up to date, clear and detailed, in simple terms** that a learner with only a basic knowledge of science can follow. It may use real-life examples. Its length is not limited, as long as the extra length helps the learner understand. It may also give links for the learner who wants to know more.
 2. **The caption of every picture follows the same rule:** up to date, clear, detailed and in simple terms, with real-life examples where they help, and as long as it needs to be.
