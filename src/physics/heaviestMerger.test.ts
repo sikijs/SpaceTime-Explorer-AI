@@ -1,0 +1,255 @@
+import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import {
+  GAP_MEASURED_LOW_SOLAR,
+  GAP_THEORY_SOLAR,
+  GW231123,
+  ladder,
+  massRuler,
+  merge,
+  mergedRealSolar,
+  mergerCheckUp,
+  MASS_CHOICES_SOLAR,
+  POSSIBLE_CHOICES,
+  possibleAnswer,
+  possibleMarker,
+  RADIATED_SHARE,
+  ROUND_CHOICES,
+  SIMPLE_MERGER_SPIN,
+  spinAnswer,
+  spinGaps,
+  SPIN_GUESS_CHOICES,
+  spinGuessGap,
+  spinRange,
+  spinScale,
+  trial,
+  zoneOf,
+  guessSpin,
+  realTotalSolar,
+} from './heaviestMerger'
+
+describe('merging', () => {
+  it('two black holes of 40 Suns make 76, smaller than the sum (test 1)', () => {
+    expect(merge(40, 40)).toBeCloseTo(76, 6)
+    expect(merge(40, 40)).toBeLessThan(80)
+  })
+
+  it('with no radiated share the masses simply add, and a share takes that fraction of the total off', () => {
+    expect(merge(30, 50, 0)).toBe(80)
+    expect(merge(30, 50, 0.25)).toBeCloseTo(60, 9)
+  })
+
+  it('uses the 5 percent share by default', () => {
+    expect(RADIATED_SHARE).toBe(0.05)
+    expect(merge(100, 100)).toBeCloseTo(190, 9)
+  })
+
+  it('rejects masses that are not positive and shares outside 0 to below 1', () => {
+    expect(() => merge(0, 10)).toThrow(RangeError)
+    expect(() => merge(10, -1)).toThrow(RangeError)
+    expect(() => merge(10, 10, 1)).toThrow(RangeError)
+    expect(() => merge(10, 10, -0.1)).toThrow(RangeError)
+    expect(() => merge(Number.NaN, 10)).toThrow(RangeError)
+  })
+})
+
+describe('the gap', () => {
+  it('names the zone of 30, 76, 137 and 206 Suns (test 2)', () => {
+    expect(zoneOf(30)).toBe('below')
+    expect(zoneOf(76)).toBe('in')
+    expect(zoneOf(137)).toBe('above')
+    expect(zoneOf(206)).toBe('above')
+  })
+
+  it('counts both edges, 60 and 130, as inside the gap', () => {
+    expect(zoneOf(59.999)).toBe('below')
+    expect(zoneOf(60)).toBe('in')
+    expect(zoneOf(130)).toBe('in')
+    expect(zoneOf(130.001)).toBe('above')
+  })
+
+  it('holds the theory edges and the measured lower edge as separate numbers', () => {
+    expect(GAP_THEORY_SOLAR).toEqual({ low: 60, high: 130 })
+    expect(GAP_MEASURED_LOW_SOLAR).toEqual({ value: 44, plus: 5, minus: 4 })
+  })
+})
+
+describe('climbing', () => {
+  it('30 Suns climbs 30, 57, 108.3, 205.77 (about 205.8), and the count of original black holes is 1, 2, 4, 8 (test 3)', () => {
+    const steps = ladder(30, 3)
+    expect(steps.map((s) => s.massSolar)).toEqual([30, 57, 108.3, 205.77].map((x) => expect.closeTo(x, 6)))
+    expect(steps.map((s) => s.originalCount)).toEqual([1, 2, 4, 8])
+    expect(steps.map((s) => s.zone)).toEqual(['below', 'below', 'in', 'above'])
+    expect(steps.map((s) => s.generation)).toEqual([0, 1, 2, 3])
+  })
+
+  it('20 Suns ends at 137.18 (about 137.2) after three rounds, always rises, and doubling the start doubles every step (test 4)', () => {
+    const a = ladder(20, 3)
+    expect(a[3].massSolar).toBeCloseTo(137.18, 6)
+    for (let i = 1; i < a.length; i++) expect(a[i].massSolar).toBeGreaterThan(a[i - 1].massSolar)
+    const b = ladder(40, 3)
+    for (let i = 0; i < a.length; i++) expect(b[i].massSolar).toBeCloseTo(2 * a[i].massSolar, 6)
+  })
+
+  it('each step is the merge of two equal black holes from the step before', () => {
+    const steps = ladder(40, 4)
+    for (let i = 1; i < steps.length; i++) {
+      expect(steps[i].massSolar).toBeCloseTo(merge(steps[i - 1].massSolar, steps[i - 1].massSolar), 6)
+    }
+  })
+
+  it('zero rounds is just the starting black hole, and bad rounds are rejected', () => {
+    expect(ladder(30, 0)).toHaveLength(1)
+    expect(() => ladder(30, -1)).toThrow(RangeError)
+    expect(() => ladder(30, 1.5)).toThrow(RangeError)
+  })
+})
+
+describe('the real event (test 5)', () => {
+  it('holds the published values', () => {
+    expect(GW231123.masses[0]).toEqual({ value: 137, plus: 22, minus: 17 })
+    expect(GW231123.masses[1]).toEqual({ value: 103, plus: 20, minus: 52 })
+    expect(GW231123.spins[0].value).toBe(0.9)
+    expect(GW231123.spins[1].value).toBe(0.8)
+    expect(GW231123.redshift.value).toBe(0.39)
+    expect(GW231123.lighterInGapPercent).toBe(83)
+    expect(GW231123.totalRangeSolar).toEqual([190, 265])
+    expect(GW231123.finalRangeSolar).toEqual([182, 251])
+  })
+
+  it('the two masses sum to 240, inside the published total range', () => {
+    const c = mergerCheckUp()
+    expect(realTotalSolar()).toBe(240)
+    expect(c.totalSolar).toBe(240)
+    expect(c.totalInRange).toBe(true)
+  })
+
+  it('the arithmetic on the real masses gives 228, inside the published final range', () => {
+    const c = mergerCheckUp()
+    expect(mergedRealSolar()).toBeCloseTo(228, 6)
+    expect(c.mergedInRange).toBe(true)
+  })
+
+  it('a share large enough to push the merged mass out of the final range is reported as outside', () => {
+    expect(mergedRealSolar(0.25)).toBeLessThan(GW231123.finalRangeSolar[0])
+  })
+
+  it('the rough subtraction of best fits gives 15 Suns, 6.25 percent of 240', () => {
+    const c = mergerCheckUp()
+    expect(c.impliedRadiatedSolar).toBe(15)
+    expect(c.impliedRadiatedShare).toBeCloseTo(0.0625, 9)
+  })
+})
+
+describe('the spins (test 6)', () => {
+  it('the simple-merger spin is 0.686 and the gaps to the measured spins are about 0.21 and 0.11', () => {
+    expect(SIMPLE_MERGER_SPIN).toBe(0.686)
+    const g = spinGaps()
+    expect(g.gaps[0]).toBeCloseTo(0.214, 9)
+    expect(g.gaps[1]).toBeCloseTo(0.114, 9)
+    expect(g.measured).toEqual([0.9, 0.8])
+  })
+
+  it('the measured ranges run 0.71 to 1.0 and 0.29 to 1.0, and never pass 1', () => {
+    const a = spinRange(0)
+    const b = spinRange(1)
+    expect(a[0]).toBeCloseTo(0.71, 9)
+    expect(a[1]).toBe(1)
+    expect(b[0]).toBeCloseTo(0.29, 9)
+    expect(b[1]).toBe(1)
+  })
+})
+
+describe('the trial values (test 7)', () => {
+  it('40 Suns after 1 round is 76 and lands in the gap', () => {
+    const t = trial(40, 1)
+    expect(t.finalSolar).toBeCloseTo(76, 6)
+    expect(t.finalZone).toBe('in')
+    expect(t.firstInGapGeneration).toBe(1)
+  })
+
+  it('every control setting follows the ladder, and the first generation in the gap is found', () => {
+    for (const m of MASS_CHOICES_SOLAR) {
+      for (const r of ROUND_CHOICES) {
+        const t = trial(m, r)
+        const steps = ladder(m, r)
+        expect(t.steps).toEqual(steps)
+        expect(t.finalSolar).toBe(steps[r].massSolar)
+        const first = steps.find((s) => s.zone === 'in')
+        expect(t.firstInGapGeneration).toBe(first ? first.generation : null)
+      }
+    }
+  })
+
+  it('50 Suns jumps over the gap (50 to 95 to 180.5): the first round already lands in it, the second above', () => {
+    const t = trial(50, 2)
+    expect(t.steps.map((s) => s.zone)).toEqual(['below', 'in', 'above'])
+  })
+
+  it('a climb that never reaches the gap reports null', () => {
+    expect(trial(20, 1).firstInGapGeneration).toBeNull()
+  })
+})
+
+describe('the predictions (test 8)', () => {
+  it('prediction 1: two black holes below the gap can merge into one inside it, so the answer is yes', () => {
+    expect(possibleAnswer()).toBe('yes')
+    expect(POSSIBLE_CHOICES).toContain(possibleAnswer())
+  })
+
+  it('the markers follow the guess: no is below not sure, which is below yes', () => {
+    expect(possibleMarker('no')).toBe(-1)
+    expect(possibleMarker('unsure')).toBe(0)
+    expect(possibleMarker('yes')).toBe(1)
+  })
+
+  it('prediction 2: 0.7 is the button nearest 0.686, and three buttons are below it and three at or above', () => {
+    expect(spinAnswer()).toBe(0.7)
+    expect(SPIN_GUESS_CHOICES.filter((c) => c < SIMPLE_MERGER_SPIN)).toHaveLength(3)
+    expect(SPIN_GUESS_CHOICES.filter((c) => c > SIMPLE_MERGER_SPIN)).toHaveLength(3)
+  })
+
+  it('the spin mark follows the guess, and different guesses give different marks', () => {
+    const marks = SPIN_GUESS_CHOICES.map((c) => guessSpin(c))
+    expect(new Set(marks).size).toBe(SPIN_GUESS_CHOICES.length)
+    expect(guessSpin(0.3)).toBe(0.3)
+  })
+
+  it('the gap from the simple-merger value is the guess minus 0.686, with no verdict', () => {
+    expect(spinGuessGap(0.9).fromSimple).toBeCloseTo(0.214, 9)
+    expect(spinGuessGap(0.1).fromSimple).toBeCloseTo(-0.586, 9)
+    expect(Object.keys(spinGuessGap(0.5))).toEqual(['guess', 'fromSimple'])
+  })
+
+  it('a guess never changes any real value', () => {
+    const before = JSON.stringify([massRuler(), spinScale(), mergerCheckUp(), spinGaps()])
+    spinGuessGap(0.99)
+    possibleMarker('no')
+    expect(JSON.stringify([massRuler(), spinScale(), mergerCheckUp(), spinGaps()])).toBe(before)
+  })
+})
+
+describe('the pictures', () => {
+  it('the mass ruler puts the heavier black hole and the final one above the gap and the lighter one in it', () => {
+    const r = massRuler()
+    expect(r.marks.map((m) => m.zone)).toEqual(['above', 'in', 'above'])
+    expect(r.marks[1].lowSolar).toBe(51)
+    expect(r.marks[1].highSolar).toBe(123)
+    expect(r.axisMaxSolar).toBeGreaterThanOrEqual(r.marks[2].highSolar)
+    expect(r.lighterInGapPercent).toBe(83)
+  })
+
+  it('the spin scale holds the simple-merger value and both measured spins with their ranges', () => {
+    const s = spinScale()
+    expect(s.simple).toBe(0.686)
+    expect(s.measured.map((m) => m.value)).toEqual([0.9, 0.8])
+    expect(s.measured[1].low).toBeCloseTo(0.29, 9)
+  })
+})
+
+describe('the module', () => {
+  it('imports nothing', () => {
+    const src = readFileSync(new URL('./heaviestMerger.ts', import.meta.url), 'utf8')
+    expect(src).not.toMatch(/^import /m)
+  })
+})
