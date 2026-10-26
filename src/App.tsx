@@ -18,6 +18,8 @@ import { WhiteDwarfExplosionExperiment } from './components/WhiteDwarfExplosionE
 import { NeutronStarSizeExperiment } from './components/NeutronStarSizeExperiment'
 import { FailedSupernovaExperiment } from './components/FailedSupernovaExperiment'
 import { HorizonAreaLawExperiment } from './components/HorizonAreaLawExperiment'
+import { BlackHoleRingdownExperiment } from './components/BlackHoleRingdownExperiment'
+import { checkUp as ringdownCheckUp, FASTER_SPIN, GW250114_RINGDOWN, pitchGuessResult, ringingWorked, SECOND_TONE_SIGNIFICANCE } from './physics/blackHoleRingdown'
 import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
 import { FAILED_SUPERNOVA_DATA, runCheckUp, SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES } from './physics/failedSupernova'
 import { areaScalingWorked, checkUp as areaLawCheckUp, GW250114, massPicture } from './physics/horizonAreaLaw'
@@ -166,6 +168,25 @@ function horizonAreaLawSummary(): string {
     `radiate: about ${c.ceiling.ceilingPercent.toFixed(1)} percent at the measured spin, and GW250114 radiated ${c.ceiling.sharePercent.toFixed(1)}. This is strong evidence, from one very clear event, that a prediction of general relativity holds; ` +
     `it is not a new law. The masses and spins were fitted from the signal and the areas here are calculated from them, the press and the formula differ by ${c.areaAfter.pressOverFormulaPercent.toFixed(1)} percent about the area after, and the ` +
     `scientists’ own figures were not read for this page. So the direction, up, is firm, and the size is not known to the last digit.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 19 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// drift from the page.
+function blackHoleRingdownSummary(): string {
+  const w = ringingWorked()
+  const c = ringdownCheckUp()
+  const p = pitchGuessResult('higher')
+  return (
+    `Do black holes ring like bells? Just after two black holes merge, the one they make is shaken, and it settles by giving off gravitational waves with a pitch and a fade time, like a struck bell. ` +
+    `For the black hole that GW250114 made (${GW250114_RINGDOWN.finalMassSolar} Suns, spin ${GW250114_RINGDOWN.finalSpin}), a published formula gives a pitch of ${Math.round(w.frequencyHz)} Hz in its own frame, which is ` +
+    `${c.pitch.calculated.toFixed(1)} Hz as the detectors recorded it after the redshift stretch of ${w.stretch.toFixed(2)}, and a fade time of ${c.fadeTime.calculated.toFixed(2)} ms. The detectors measured ` +
+    `${c.pitch.measured.toFixed(1)} Hz and ${c.fadeTime.measured.toFixed(2)} ms, which differ from the calculation by ${Math.abs(c.pitch.percent).toFixed(1)} and ${Math.abs(c.fadeTime.percent).toFixed(1)} percent, inside the measured give-or-take. ` +
+    `A heavier black hole rings lower (doubling the mass halves the pitch, from ${Math.round(w.frequencyHz)} Hz to ${Math.round(w.doubledMassFrequencyHz)} Hz), and a faster spin raises the pitch (${Math.round(p.fastHz)} Hz at spin ${FASTER_SPIN}, ` +
+    `${p.ratio.toFixed(2)} times as high) and makes the ringing last longer. The ringing of GW250114’s black hole fades to a third of its size in about ${w.swingsToFade.toFixed(1)} swing, so it is a very dull bell. ` +
+    `General relativity says that a settled black hole has no features beyond its mass and spin (“no hair”), so its pitch and fade time are fixed by those two numbers, and the ringing is a test of them. ` +
+    `For the main tone the test was passed, to a few percent. This is strong evidence, from one very clear event, that a prediction of general relativity holds; it is not a new law. The second, faster-fading tone is weaker ` +
+    `evidence (${SECOND_TONE_SIGNIFICANCE.earlierPercent} to ${SECOND_TONE_SIGNIFICANCE.laterPercent} percent, depending on the analysis), the formula is itself good only to a few percent, and the give-or-takes of the mass and spin are not combined on this page.`
   )
 }
 
@@ -831,10 +852,18 @@ const chapters: Chapter[] = [
     title: 'Does a black hole’s surface area ever shrink? (GW250114 and Hawking’s area theorem)',
     group: 'Frontier and Beyond',
     Component: HorizonAreaLawExperiment,
-    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" names no experiment, because
-    // Experiment 19 has no approved specification.
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: horizonAreaLawSummary(),
-    next: 'None yet, because Experiment 19 has no approved specification.',
+    next: 'Experiment 19 asks what the new black hole does after the merger. Just after two black holes merge, the one they make is shaken, and it rings, a little like a struck bell. Does the pitch of that ringing match what the black hole’s mass and spin say it should be?',
+  },
+  {
+    title: 'Do black holes ring like bells? (GW250114’s ringdown and the “no-hair” test)',
+    group: 'Frontier and Beyond',
+    Component: BlackHoleRingdownExperiment,
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" names no experiment, because
+    // Experiment 20 has no approved specification.
+    learned: blackHoleRingdownSummary(),
+    next: 'None yet, because Experiment 20 has no approved specification.',
   },
 ]
 
