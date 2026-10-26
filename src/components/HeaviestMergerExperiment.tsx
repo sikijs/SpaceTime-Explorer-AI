@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, POSSIBLE_CHOICES, SPIN_GUESS_CHOICES } from '../physics/heaviestMerger'
+import { exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, SPIN_GUESS_CHOICES } from '../physics/heaviestMerger'
 import type { PossibleChoice, SpinGuessChoice } from '../physics/heaviestMerger'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 20 (docs/experiments/frontier-and-beyond/20-the-heaviest-merger.md).
-// STEPS 2 and 3 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
+// STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Picture 1): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
 // "the gap") with its guide, the new-word list, the collapsed "Words and formulas" panel and the "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, results, tutor or
 // chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here
 // says that merging can fill the gap, what a merger's remnant spin is, or what the spins of GW231123 were (CLAUDE.md §12): those are the predictions' answers and the run's results.
@@ -19,7 +19,10 @@ const MUTED_COLOR = '#94a3b8'
 const STAR_COLOR = '#fbbf24' // amber: a star
 const BLACK_HOLE_COLOR = '#f87171' // red: a black hole and its horizon
 const BLAST_COLOR = '#fb923c' // orange: an explosion
-const GAP_COLOR = '#e879f9' // pink-purple: the gap
+const GAP_COLOR = '#e879f9' // pink-purple: the gap (from theory)
+const MEASURED_COLOR = '#34d399' // green: a value measured by the detectors
+const IMAGINED_COLOR = '#2dd4bf' // teal: imagined for the question, and calculated here from imagined values
+const YOURS_COLOR = '#ffffff' // white: the learner's guess
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -113,6 +116,163 @@ function TwoEndingsDrawing() {
   )
 }
 
+
+// ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 4
+const STAGE_NAMES = ['', 'The two black holes that merged', 'The black hole they made', 'The gap', 'A check by hand']
+const STAGE_LINES = [
+  '',
+  'Picture 1, panel A, draws the two black holes that merged, as the teams measured them, each with its give-or-take.',
+  'Panel A now shows the black hole that they made.',
+  'Panel A now shows the gap, in pink: the range from theory, and the lower edge measured in a 2025 study.',
+  'Panel B does a check by hand with two imagined black holes. Your guess for Prediction 1 is drawn on it in white.',
+]
+
+const P_X0 = 60
+const P_X1 = 520
+const P_W = P_X1 - P_X0
+
+const POSSIBLE_PHRASE: Record<PossibleChoice, string> = { no: 'no, it could not', yes: 'yes, it could', unsure: 'not sure' }
+const POSSIBLE_GLYPH: Record<PossibleChoice, string> = { no: '✗', yes: '✓', unsure: '?' }
+
+function PictureOne({ stage, possibleGuess }: { stage: number; possibleGuess: PossibleChoice | null }) {
+  const ruler = massRuler()
+  const ex = exampleMerger()
+  const x = (m: number) => P_X0 + (m / ruler.axisMaxSolar) * P_W
+  const ticks = [0, 50, 100, 150, 200, 250, 300]
+  const rowY = [112, 164, 216]
+  const axisA = 250
+  const topA = 72
+  const panelB = 312
+  const rowB = 352
+  const axisB = 412
+  const height = stage >= 4 ? 462 : 292
+  const gap = ruler.gapTheory
+  const low = ruler.gapMeasuredLow
+  const labels = ['Heavier black hole', 'Lighter black hole', 'The black hole they made']
+  const marks = ruler.marks.slice(0, stage >= 2 ? 3 : 2)
+  const bandA = stage >= 3 && (
+    <g>
+      <rect x={x(gap.low)} y={topA} width={x(gap.high) - x(gap.low)} height={axisA - topA} fill={GAP_COLOR} opacity={0.18} />
+      <line x1={x(low.value)} y1={topA} x2={x(low.value)} y2={axisA} stroke={GAP_COLOR} strokeWidth={2} strokeDasharray="5 4" />
+      <line x1={x(low.value - low.minus)} y1={topA + 4} x2={x(low.value + low.plus)} y2={topA + 4} stroke={GAP_COLOR} strokeWidth={3} />
+      <SvgLines x={x(low.value) - 6} y={topA + 16} lines={['measured lower edge:', `${low.value} (+${low.plus}, −${low.minus})`]} fill={GAP_COLOR} size={9} anchor="end" />
+    </g>
+  )
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 1, a ruler of black hole masses in Suns from 0 to ${ruler.axisMaxSolar}. Panel A, measured: the heavier black hole, about ${ruler.marks[0].massSolar} Suns, range ${ruler.marks[0].lowSolar} to ${ruler.marks[0].highSolar}; the lighter, about ${ruler.marks[1].massSolar}, range ${ruler.marks[1].lowSolar} to ${ruler.marks[1].highSolar}.${
+        stage >= 2 ? ` The black hole they made, more than ${GW231123.finalBestFitSolar}, range ${ruler.marks[2].lowSolar} to ${ruler.marks[2].highSolar}.` : ''
+      }${stage >= 3 ? ` A pink band for the gap from ${gap.low} to ${gap.high} Suns, and a dashed pink line for the lower edge measured in a 2025 study, ${low.value}.` : ''}${
+        stage >= 4 ? ` Panel B, imagined: two black holes of ${ex.startSolar} Suns, below the gap, make one of ${ex.resultSolar} Suns, inside the gap.${possibleGuess ? ` Your guess for Prediction 1, ${POSSIBLE_PHRASE[possibleGuess]}, is drawn in white as a marker.` : ''}` : ''
+      }`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 1: the merger on a ruler of masses
+      </text>
+      <SvgLines x={20} y={40} lines={['masses in Suns (the Sun is 1), as they were at the black holes’ own place and time']} fill={MUTED_COLOR} />
+
+      <SvgLines x={P_X0} y={62} lines={['A. GW231123, as measured']} fill={TEXT_COLOR} bold size={11} />
+      {bandA}
+      {marks.map((m, i) => (
+        <g key={m.label}>
+          <SvgLines
+            x={i === 2 ? x(m.highSolar) : x(m.lowSolar)}
+            y={rowY[i] - 14}
+            lines={[`${labels[i]}: ${i === 2 ? 'more than ' : 'about '}${m.massSolar} (${m.lowSolar} to ${m.highSolar})`]}
+            fill={MEASURED_COLOR}
+            size={10}
+            bold
+            anchor={i === 2 ? 'end' : 'start'}
+          />
+          <line x1={x(m.lowSolar)} y1={rowY[i]} x2={x(m.highSolar)} y2={rowY[i]} stroke={MEASURED_COLOR} strokeWidth={3} />
+          <line x1={x(m.lowSolar)} y1={rowY[i] - 6} x2={x(m.lowSolar)} y2={rowY[i] + 6} stroke={MEASURED_COLOR} strokeWidth={2} />
+          <line x1={x(m.highSolar)} y1={rowY[i] - 6} x2={x(m.highSolar)} y2={rowY[i] + 6} stroke={MEASURED_COLOR} strokeWidth={2} />
+          <circle cx={x(m.massSolar)} cy={rowY[i]} r={6} fill={MEASURED_COLOR} />
+        </g>
+      ))}
+      {stage >= 3 && <SvgLines x={x(ruler.marks[1].highSolar) + 10} y={rowY[1] + 4} lines={[`${ruler.lighterInGapPercent} percent chance`, 'this one is in the gap']} fill={GAP_COLOR} size={9} />}
+      <line x1={P_X0} y1={axisA} x2={P_X1} y2={axisA} stroke={MUTED_COLOR} strokeWidth={1} />
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={x(t)} y1={axisA} x2={x(t)} y2={axisA + 5} stroke={MUTED_COLOR} />
+          <SvgLines x={x(t)} y={axisA + 17} lines={[String(t)]} fill={MUTED_COLOR} size={9} anchor="middle" />
+        </g>
+      ))}
+      <SvgLines x={P_X1} y={axisA + 31} lines={['mass in Suns']} fill={MUTED_COLOR} size={9} anchor="end" />
+      {stage >= 3 && <SvgLines x={P_X0} y={axisA + 31} lines={[`pink band: the gap from theory, ${gap.low} to ${gap.high}`]} fill={GAP_COLOR} size={9} />}
+
+      {stage >= 4 && (
+        <g>
+          <SvgLines x={P_X0} y={panelB} lines={['B. A check by hand (imagined starting masses, calculated here)']} fill={TEXT_COLOR} bold size={11} />
+          <rect x={x(gap.low)} y={panelB + 10} width={x(gap.high) - x(gap.low)} height={axisB - panelB - 10} fill={GAP_COLOR} opacity={0.18} />
+          <SvgLines x={x(ex.startSolar) - 8} y={rowB - 14} lines={[`two black holes of ${ex.startSolar}`]} fill={IMAGINED_COLOR} size={10} bold anchor="middle" />
+          <circle cx={x(ex.startSolar)} cy={rowB - 4} r={6} fill={IMAGINED_COLOR} />
+          <circle cx={x(ex.startSolar)} cy={rowB + 8} r={6} fill={IMAGINED_COLOR} />
+          <line x1={x(ex.startSolar) + 12} y1={rowB + 2} x2={x(ex.resultSolar) - 14} y2={rowB + 2} stroke={TEXT_COLOR} strokeWidth={2} />
+          <polygon points={`${x(ex.resultSolar) - 8},${rowB + 2} ${x(ex.resultSolar) - 18},${rowB - 4} ${x(ex.resultSolar) - 18},${rowB + 8}`} fill={TEXT_COLOR} />
+          <circle cx={x(ex.resultSolar)} cy={rowB + 2} r={8} fill={IMAGINED_COLOR} />
+          <SvgLines x={x(ex.resultSolar) + 14} y={rowB - 8} lines={[`${ex.startSolar} + ${ex.startSolar} = ${ex.sumSolar}, minus ${Math.round(ex.share * 100)} percent`, `(${ex.radiatedSolar} Suns sent out as waves) = ${ex.resultSolar}`]} fill={IMAGINED_COLOR} size={10} bold />
+          {possibleGuess && (
+            <g>
+              <text x={x(ex.resultSolar)} y={rowB + 42} fill={YOURS_COLOR} fontSize={26} fontWeight="bold" textAnchor="middle">
+                {POSSIBLE_GLYPH[possibleGuess]}
+              </text>
+              <line x1={x(ex.resultSolar) + 12} y1={rowB + 32} x2={x(ex.resultSolar) + 26} y2={rowB + 32} stroke={YOURS_COLOR} strokeWidth={2} />
+              <rect x={x(ex.resultSolar) + 26} y={rowB + 18} width={230} height={28} rx={4} fill="#0b1020" stroke={YOURS_COLOR} strokeWidth={2.5} />
+              <SvgLines x={x(ex.resultSolar) + 141} y={rowB + 36} lines={[`YOUR GUESS: ${POSSIBLE_PHRASE[possibleGuess]}`]} fill={YOURS_COLOR} bold size={10} anchor="middle" />
+            </g>
+          )}
+          <line x1={P_X0} y1={axisB} x2={P_X1} y2={axisB} stroke={MUTED_COLOR} strokeWidth={1} />
+          {ticks.map((t) => (
+            <g key={t}>
+              <line x1={x(t)} y1={axisB} x2={x(t)} y2={axisB + 5} stroke={MUTED_COLOR} />
+              <SvgLines x={x(t)} y={axisB + 17} lines={[String(t)]} fill={MUTED_COLOR} size={9} anchor="middle" />
+            </g>
+          ))}
+          <SvgLines x={P_X1} y={axisB + 31} lines={['mass in Suns']} fill={MUTED_COLOR} size={9} anchor="end" />
+        </g>
+      )}
+    </svg>
+  )
+}
+
+
+function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { title: string; intro: ReactNode; bullets: ReactNode[]; worked: ReactNode; lookFor: LookFor[]; whereFrom: ReactNode }) {
+  return (
+    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' }}>
+      <p style={paragraph}>
+        <strong>How to read {title}.</strong> {intro}
+      </p>
+      <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+        {bullets.map((b, i) => (
+          <li key={i}>{b}</li>
+        ))}
+      </ul>
+      <p style={paragraph}>
+        <strong>A worked moment.</strong> {worked}
+      </p>
+      {lookFor.length > 0 && (
+        <>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <strong>What to look for.</strong>
+          </p>
+          <LookForList items={lookFor} />
+        </>
+      )}
+      <p style={{ ...paragraph, marginTop: '0.75rem' }}>
+        <strong>Where the real picture comes from.</strong> {whereFrom}
+      </p>
+    </div>
+  )
+}
+
 const lookForEndings: LookFor[] = [
   {
     look: 'the amber star on the left of panel 1, the arrow, and the small dark circle with a red outline on its right.',
@@ -161,18 +321,49 @@ const SPIN_LABELS: Record<SpinGuessChoice, string> = {
   0.99: 'About 0.99 (almost as fast as is possible)',
 }
 
-export function HeaviestMergerExperiment() {
+interface HeaviestMergerExperimentProps {
+  onComplete?: () => void
+}
+
+export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimentProps) {
   const g = GW231123
   const [heavier, lighter] = g.masses
   const [possibleGuess, setPossibleGuess] = useState<PossibleChoice | null>(null)
   const [spinGuess, setSpinGuess] = useState<SpinGuessChoice | null>(null)
-  const [recorded, setRecorded] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = possibleGuess !== null && spinGuess !== null
+
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+
   const startOver = () => {
     setPossibleGuess(null)
     setSpinGuess(null)
-    setRecorded(false)
+    setStatus('idle')
+    setStage(0)
   }
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
+  // Every number in the captions comes from the physics module (CLAUDE.md §9).
+  const ruler = massRuler()
+  const ex = exampleMerger()
+  const check = mergerCheckUp()
+  const [mHeavy, mLight, mFinal] = ruler.marks
   return (
     <div>
       <h2>Experiment 20 — Black Holes That Should Not Exist: The Heaviest Merger (GW231123)</h2>
@@ -420,7 +611,7 @@ export function HeaviestMergerExperiment() {
             </div>
           ))}
 
-          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
             Run
           </button>
           {recorded && (
@@ -431,11 +622,66 @@ export function HeaviestMergerExperiment() {
           {!bothPredicted && !recorded && (
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
           )}
-          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
-            {recorded
-              ? 'Your predictions are recorded and not marked here. The run and its pictures are built in a later step.'
-              : 'The pictures fill in, one stage at a time, after you press Run (built in a later step).'}
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The picture fills in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
+                {done ? 'Picture 1 is drawn. Your predictions are recorded and not marked here. The picture of the spins is not built yet (a later step).' : STAGE_LINES[stage]}
+              </span>
+            )}
           </p>
+
+          {stage >= 1 && (
+            <div>
+              <PictureOne stage={stage} possibleGuess={possibleGuess} />
+              <CaptionBlock
+                title="Picture 1"
+                intro={`It is a ruler of black hole masses, in Suns, from 0 to ${ruler.axisMaxSolar}. A mark further to the right is a heavier black hole. Panel A draws the real merger, GW231123, one feature at a time. Panel B, which appears last, is a check that you can follow by hand.`}
+                bullets={[
+                  <><strong>Each green line with a dot</strong> in panel A is a black hole. The dot is the teams’ best estimate of its mass. <strong>The line</strong> is its give-or-take: the range in which the teams say the true mass lies, with a 90 percent chance (9 chances in 10). The two black holes that merged are called the heavier and the lighter. “Suns” means times the mass of the Sun.</>,
+                  ...(stage >= 2 ? [<><strong>The third green line</strong> is the black hole that the merger made.</>] : []),
+                  ...(stage >= 3 ? [
+                    <><strong>The pink band</strong> is the gap as theory gives it, from {ruler.gapTheory.low} to {ruler.gapTheory.high} Suns: black holes of those masses are not expected to be left by a single star. <strong>The dashed pink line</strong> is the lower edge of the gap that a 2025 study of the black holes the detectors had seen found instead, {ruler.gapMeasuredLow.value} (+{ruler.gapMeasuredLow.plus}, −{ruler.gapMeasuredLow.minus}), with a short bar for its own give-or-take. <strong>The pink note</strong> says how likely the teams think it is that the lighter black hole is in the gap.</>,
+                  ] : []),
+                  ...(stage >= 4 ? [
+                    <><strong>In panel B, the teal dots, the arrow and the larger teal dot</strong> are imagined for the question: two black holes of {ex.startSolar} Suns, each below the gap, merge into one. The arrow points to the black hole they make. The note beside it does the sum: {ex.startSolar} + {ex.startSolar} = {ex.sumSolar}, minus {Math.round(ex.share * 100)} percent (about {ex.radiatedSolar} Suns sent out as gravitational waves) leaves {ex.resultSolar}. The {Math.round(ex.share * 100)} percent is an assumption, taken from GW250114 in Experiment 18. For GW231123 itself, the best estimates give a total of {check.totalSolar} Suns before and about {GW231123.finalBestFitSolar} after, so about {check.impliedRadiatedSolar} Suns, or {(check.impliedRadiatedShare * 100).toFixed(1)} percent, were lost. That is a rough subtraction of best estimates, not a measurement.</>,
+                    <><strong>The white mark and the box “YOUR GUESS”</strong> are your answer to Prediction 1. A yes or a no has no size or position of its own, so the white mark is only a marker, a tick for yes, a cross for no and a question mark for not sure, drawn beside the result of the sum. Where it sits means nothing.</>,
+                  ] : []),
+                ]}
+                worked={
+                  stage < 3 ? (
+                    <>The heavier black hole’s dot is at {mHeavy.massSolar} Suns and its line runs from {mHeavy.lowSolar} to {mHeavy.highSolar}. So the true mass could be a little more or less than {mHeavy.massSolar}: the teams say there is a 90 percent chance that it lies between {mHeavy.lowSolar} and {mHeavy.highSolar}. The lighter black hole’s line runs from {mLight.lowSolar} to {mLight.highSolar}, much longer, because its mass is much less certain.</>
+                  ) : stage < 4 ? (
+                    <>The lighter black hole’s dot, {mLight.massSolar} Suns, is inside the pink band, which starts at {ruler.gapTheory.low}. Its line runs from {mLight.lowSolar} to {mLight.highSolar}, so part of its range is below the band’s start, and the teams put the chance that it is in the gap at {ruler.lighterInGapPercent} percent. The heavier black hole’s dot, {mHeavy.massSolar}, is just above the band, which ends at {ruler.gapTheory.high}, but its line (from {mHeavy.lowSolar}) reaches into it.</>
+                  ) : (
+                    <>Take two black holes of {ex.startSolar} Suns. Added together they are {ex.startSolar} + {ex.startSolar} = {ex.sumSolar} Suns. About {Math.round(ex.share * 100)} percent of that, {ex.radiatedSolar} Suns, leaves as gravitational waves, so the one they make is {ex.sumSolar} − {ex.radiatedSolar} = {ex.resultSolar} Suns. The band starts at {ruler.gapTheory.low}, and {ex.resultSolar} is more than that and less than {ruler.gapTheory.high}.</>
+                  )
+                }
+                lookFor={[
+                  { look: 'the two green lines with dots in panel A, one for each black hole that merged.', means: `the heavier black hole is about ${mHeavy.massSolar} Suns (${mHeavy.lowSolar} to ${mHeavy.highSolar}) and the lighter about ${mLight.massSolar} (${mLight.lowSolar} to ${mLight.highSolar}).`, matters: 'the give-or-take is part of the result. The lighter black hole’s line is much longer than the heavier one’s, so its mass is much less certain, and that matters for whether it is in the gap.' },
+                  ...(stage >= 2 ? [
+                    { look: 'the third green line, for the black hole they made.', means: `it is more than ${GW231123.finalBestFitSolar} Suns (${mFinal.lowSolar} to ${mFinal.highSolar}). The two before add up to ${check.totalSolar}, so about ${check.impliedRadiatedSolar} Suns fewer ended up in the black hole (a rough subtraction of best estimates).`, matters: 'merging two black holes makes one that is a little lighter than the two added together. That is what Prediction 1 is about, because the black hole you are asked about is a merged one.' },
+                  ] : []),
+                  ...(stage >= 3 ? [
+                    { look: 'the pink band, the dashed pink line and the green lines against them.', means: `the lighter black hole’s best estimate, ${mLight.massSolar}, is inside the band and the heavier one’s, ${mHeavy.massSolar}, is just above it, while the black hole they made, more than ${GW231123.finalBestFitSolar}, is far above it. The dashed line, ${ruler.gapMeasuredLow.value}, shows that the real lower edge of the gap may be lower than theory says.`, matters: 'single stars are not expected to leave black holes in the gap, so black holes in it, or above it, need another explanation. That is what makes the merger so puzzling, and what the rest of this experiment is about.' },
+                  ] : []),
+                  ...(stage >= 4 ? [
+                    { look: 'the teal dots, the arrow and the larger teal dot inside the pink band in panel B.', means: `two black holes of ${ex.startSolar} Suns, each below the band, give one of ${ex.resultSolar} Suns after the merger, which is inside the band.`, matters: 'a black hole inside the gap does not by itself show that a single star made it. Whether this is how the black holes of GW231123 were made is not settled. It is one of several explanations, set out later.' },
+                    ...(possibleGuess ? [{ look: 'the white mark and the box “YOUR GUESS”.', means: `your answer to Prediction 1 (${POSSIBLE_PHRASE[possibleGuess]}), drawn beside the result of the sum. It is only a marker, so its place shows no verdict.`, matters: 'you can see your guess beside the calculated result. The tutor goes through Prediction 1 with you later.' }] : []),
+                  ] : []),
+                ]}
+                whereFrom={
+                  <>
+                    <strong>Measured:</strong> the masses and their give-or-takes, and the chance that the lighter black hole is in the gap ({ruler.lighterInGapPercent} percent), by the LIGO, Virgo and KAGRA teams. This page’s numbers come from LIGO’s summary page and from a search summary of the paper’s abstract, not from the paper itself, so each should be checked against it.
+                    {stage >= 3 ? <> The band ({ruler.gapTheory.low} to {ruler.gapTheory.high}) is the range LIGO’s summary quotes from theory; the lower edge ({ruler.gapMeasuredLow.value}, +{ruler.gapMeasuredLow.plus}, −{ruler.gapMeasuredLow.minus}) is from a 2025 catalogue analysis by the same teams, read only through search summaries.</> : null}
+                    {stage >= 4 ? <> <strong>Calculated here:</strong> the sum in panel B ({ex.startSolar} + {ex.startSolar} − {ex.radiatedSolar} = {ex.resultSolar}). <strong>Imagined for the question:</strong> the two black holes of {ex.startSolar} Suns, and the {Math.round(ex.share * 100)} percent radiated, which is assumed from GW250114. The white mark is your guess.</> : <> <strong>Calculated here:</strong> nothing yet. <strong>Imagined for the question:</strong> nothing yet.</>}
+                  </>
+                }
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

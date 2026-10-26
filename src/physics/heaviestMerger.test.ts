@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import {
   GAP_MEASURED_LOW_SOLAR,
   GAP_THEORY_SOLAR,
+  exampleMerger,
   GW231123,
   ladder,
   massRuler,
@@ -226,6 +227,26 @@ describe('the predictions (test 8)', () => {
     spinGuessGap(0.99)
     possibleMarker('no')
     expect(JSON.stringify([massRuler(), spinScale(), mergerCheckUp(), spinGaps()])).toBe(before)
+  })
+})
+
+describe('the worked example on Picture 1', () => {
+  it('two black holes of 40 Suns are below the gap, sum to 80, lose 4 and make 76, which is inside it', () => {
+    const e = exampleMerger()
+    expect(e.startSolar).toBe(40)
+    expect(e.sumSolar).toBe(80)
+    expect(e.radiatedSolar).toBeCloseTo(4, 9)
+    expect(e.resultSolar).toBeCloseTo(76, 9)
+    expect(e.startZone).toBe('below')
+    expect(e.resultZone).toBe('in')
+  })
+
+  it('agrees with merge, with the radiated share and with the prediction answer', () => {
+    const e = exampleMerger()
+    expect(e.resultSolar).toBe(merge(e.startSolar, e.startSolar))
+    expect(e.share).toBe(RADIATED_SHARE)
+    expect(e.sumSolar - e.radiatedSolar).toBeCloseTo(e.resultSolar, 9)
+    expect(possibleAnswer()).toBe(e.startZone === 'below' && e.resultZone === 'in' ? 'yes' : 'no')
   })
 })
 

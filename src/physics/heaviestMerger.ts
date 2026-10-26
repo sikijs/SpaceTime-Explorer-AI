@@ -231,6 +231,32 @@ export function possibleAnswer(): PossibleChoice {
   return below && lands ? 'yes' : 'no'
 }
 
+export interface ExampleMerger {
+  startSolar: number
+  sumSolar: number
+  radiatedSolar: number
+  resultSolar: number
+  share: number
+  startZone: Zone
+  resultZone: Zone
+}
+
+// The worked example drawn on Picture 1 beside the real black holes: two black holes of 40 Suns (imagined for the question) and what merging them gives.
+export function exampleMerger(): ExampleMerger {
+  const start = POSSIBLE_EXAMPLE_SOLAR
+  const sum = round9(start + start)
+  const result = merge(start, start)
+  return {
+    startSolar: start,
+    sumSolar: sum,
+    radiatedSolar: round9(sum - result),
+    resultSolar: result,
+    share: RADIATED_SHARE,
+    startZone: zoneOf(start),
+    resultZone: zoneOf(result),
+  }
+}
+
 // For drawing the guess in white. A yes or no has no size of its own: -1, 0 or +1 for no, not sure and yes (only a marker).
 export function possibleMarker(choice: PossibleChoice): -1 | 0 | 1 {
   return choice === 'no' ? -1 : choice === 'yes' ? 1 : 0
