@@ -8,7 +8,7 @@
 // This module imports only the Black Holes 1 and Black Holes 4 modules.
 
 import { horizonRadiusKm } from './blackHoleSizeExperiment'
-import { CRITICAL_AIM_IN_HORIZON_RADII } from './lightNearBlackHoleExperiment'
+import { CRITICAL_AIM_IN_HORIZON_RADII, lightPath } from './lightNearBlackHoleExperiment'
 
 export const KM_PER_PARSEC = 3.0856775814913673e13
 const MICROARCSEC_PER_RADIAN = (180 / Math.PI) * 3600 * 1e6
@@ -274,4 +274,60 @@ export function ratioRulerPosition(ratio: number): number {
 export function sizeGuessMarker(id: SizeChoiceId): { ratio: number; position: number } {
   const ratio = sizeChoiceRatio(id)
   return { ratio, position: ratioRulerPosition(ratio) }
+}
+
+// ---- Picture 2 (Step 5b): beams of light past one black hole, the capture limit, and Prediction 2's guess ----
+
+// The beams drawn: aims in horizon radii (r_s = 1), three below the capture limit (2.598) and four above it. They are imagined for the picture.
+export const PICTURE_TWO_BEAM_AIMS = [1.5, 2, 2.5, 2.7, 3.2, 4, 6] as const
+// The picture's view runs out to this many horizon radii from the centre (enough for the biggest guess, 10 times as wide).
+export const PICTURE_TWO_VIEW_RADIUS = 11
+
+export interface PictureTwoBeam {
+  aim: number
+  outcome: 'captured' | 'escapes'
+  bendDegrees: number | null // the total bend if it escapes
+  // The part of the path inside the view, in horizon radii, seen from above with the light coming in from the right.
+  points: Array<{ x: number; y: number }>
+}
+
+export interface PictureTwo {
+  viewRadius: number
+  horizonRadius: 1
+  shadowRadius: number // the capture limit, in horizon radii
+  shadowOverHorizon: number
+  beams: PictureTwoBeam[]
+}
+
+function beamInView(aim: number): PictureTwoBeam {
+  const path = lightPath(aim)
+  let first = path.points.findIndex((p) => p.distanceInHorizonRadii <= PICTURE_TWO_VIEW_RADIUS)
+  if (first < 0) first = path.points.length - 1
+  let last = path.points.length - 1
+  while (last > first && path.points[last].distanceInHorizonRadii > PICTURE_TWO_VIEW_RADIUS) last--
+  first = Math.max(first - 1, 0)
+  const points: Array<{ x: number; y: number }> = []
+  for (let i = first; i <= last; i += 3) points.push({ x: path.points[i].x, y: path.points[i].y })
+  points.push({ x: path.points[last].x, y: path.points[last].y })
+  return {
+    aim,
+    outcome: path.outcome,
+    bendDegrees: path.bendRadians === null ? null : (path.bendRadians * 180) / Math.PI,
+    points,
+  }
+}
+
+export function pictureTwo(): PictureTwo {
+  return {
+    viewRadius: PICTURE_TWO_VIEW_RADIUS,
+    horizonRadius: 1,
+    shadowRadius: CRITICAL_AIM_IN_HORIZON_RADII,
+    shadowOverHorizon: shadowOverHorizon(),
+    beams: PICTURE_TWO_BEAM_AIMS.map(beamInView),
+  }
+}
+
+// Prediction 2's guess as a circle round the same centre: if the dark patch is `times` as wide as the edge, its radius is `times` horizon radii.
+export function horizonGuessMarker(choice: HorizonChoice): { times: number; radiusInHorizonRadii: number } {
+  return { times: choice, radiusInHorizonRadii: choice }
 }

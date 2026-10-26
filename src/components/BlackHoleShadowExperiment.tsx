@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { HORIZON_CHOICES, SIZE_CHOICES, massRatio, pictureOne, ratioRulerPosition, sizeGuessMarker, RATIO_RULER_MIN, RATIO_RULER_MAX } from '../physics/blackHoleShadow'
+import { HORIZON_CHOICES, SIZE_CHOICES, massRatio, pictureOne, pictureTwo, horizonGuessMarker, ratioRulerPosition, sizeGuessMarker, RATIO_RULER_MIN, RATIO_RULER_MAX } from '../physics/blackHoleShadow'
 import type { HorizonChoice, SizeChoiceId } from '../physics/blackHoleShadow'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 21 (docs/experiments/frontier-and-beyond/21-black-hole-shadow.md).
-// STEPS 2, 4 and 5a (the interface skeleton and the introduction, the two predictions, then the run and Picture 1): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
-// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 with Prediction 1's guess. It has no Picture 2, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
+// STEPS 2, 4, 5a and 5b (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
+// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (eight stages), Picture 1 with Prediction 1's guess and Picture 2 with Prediction 2's guess. It has no Part 2, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
 // the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how big either shadow looks in the sky, how the two compare, or how much
 // wider than the horizon the shadow is (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (the ESO page, which shows both images,
 // and the papers) are listed only after the run, in a later step. The introduction has no illustration; the pictures come with the run.
@@ -76,8 +76,8 @@ function SvgLines({ x, y, lines, fill, size = 10, bold = false, anchor = 'start'
 
 // ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
 const STAGE_MS = 2600
-const LAST_STAGE = 5
-const STAGE_NAMES = ['', 'The two black holes', 'Their horizons', 'Their shadows, calculated', 'The rings, measured', 'The comparison']
+const LAST_STAGE = 8
+const STAGE_NAMES = ['', 'The two black holes', 'Their horizons', 'Their shadows, calculated', 'The rings, measured', 'The comparison', 'One black hole, seen from above', 'Beams of light', 'The shadow’s edge']
 const STAGE_LINES = [
   '',
   'The two black holes the Event Horizon Telescope has imaged. Their masses and distances are published numbers.',
@@ -85,6 +85,9 @@ const STAGE_LINES = [
   'The dashed cyan circles are the shadows, calculated here from each black hole’s mass and distance.',
   'The orange rings are what the telescope measured. The pale band round each is its give-or-take.',
   'Panel B compares how wide the two shadows look. Your guess is the white box.',
+  'Picture 2 shows one black hole, seen from above. The dark circle is its edge, the event horizon. All distances use one unit: the distance from the black hole’s centre to its edge.',
+  'Beams of light aimed past the black hole at different distances. The red beams are captured. The green beams escape, bent by gravity.',
+  'The dashed cyan circle is the shadow’s edge, calculated here. Your guess for Prediction 2 is the white circle.',
 ]
 
 const SIZE_PHRASE: Record<SizeChoiceId, string> = {
@@ -217,6 +220,104 @@ function PictureOne({ stage, sizeGuess }: { stage: number; sizeGuess: SizeChoice
   )
 }
 
+
+const BEAM_CAPTURED_COLOR = '#f87171' // red: a beam that is captured
+const BEAM_ESCAPES_COLOR = '#34d399' // green: a beam that gets away
+
+// Picture 2: one black hole seen from above, with beams of light coming in from the right, the capture limit (the shadow's edge) and Prediction 2's guess circle.
+function PictureTwoSvg({ stage, horizonGuess }: { stage: number; horizonGuess: HorizonChoice | null }) {
+  const pic = pictureTwo()
+  const ppr = 21 // pixels per horizon radius
+  const cx = 280
+  const cy = 262
+  const height = 610
+  const px = (x: number) => cx + x * ppr
+  const py = (y: number) => cy - y * ppr
+  const guess = horizonGuess !== null ? horizonGuessMarker(horizonGuess) : null
+  const beams = stage >= 7 ? pic.beams : []
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 2. One black hole seen from above, with light coming in from the right. All distances are in one unit, the radius of the black hole's edge (centre to edge). ${
+        stage >= 6 ? 'A dark violet circle is the black hole’s edge. ' : ''
+      }${
+        stage >= 7
+          ? `Beams of light are aimed past it: red beams aimed ${pic.beams.filter((b) => b.outcome === 'captured').map((b) => b.aim).join(', ')} are captured, and green beams aimed ${pic.beams.filter((b) => b.outcome === 'escapes').map((b) => b.aim).join(', ')} escape, bent. `
+          : ''
+      }${
+        stage >= 8
+          ? `A dashed cyan circle, ${n1(pic.shadowOverHorizon)} times as wide as the edge, is the shadow's edge, calculated.${
+              horizonGuess !== null ? ` Your guess for Prediction 2, ${horizonGuess} times as wide as the edge, is a white dashed circle.` : ''
+            }`
+          : ''
+      }`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 2: light near one black hole
+      </text>
+      <SvgLines x={20} y={38} lines={['A bird’s-eye view. Light comes in from the right. Distances are in units of the edge’s radius (centre to edge).']} fill={MUTED_COLOR} />
+
+      {beams.map((b) => (
+        <polyline
+          key={b.aim}
+          points={b.points.map((p) => `${px(p.x)},${py(p.y)}`).join(' ')}
+          fill="none"
+          stroke={b.outcome === 'captured' ? BEAM_CAPTURED_COLOR : BEAM_ESCAPES_COLOR}
+          strokeWidth={2}
+        />
+      ))}
+      {stage >= 8 && (
+        <g>
+          <circle cx={cx} cy={cy} r={pic.shadowRadius * ppr} fill="none" stroke="#0b1020" strokeWidth={5} />
+          <circle cx={cx} cy={cy} r={pic.shadowRadius * ppr} fill="none" stroke={CALC_COLOR} strokeWidth={2.5} strokeDasharray="7 5" />
+          {guess && (
+            <circle cx={cx} cy={cy} r={guess.radiusInHorizonRadii * ppr} fill="none" stroke={YOURS_COLOR} strokeWidth={3} strokeDasharray="3 5" />
+          )}
+        </g>
+      )}
+      {stage >= 6 && <circle cx={cx} cy={cy} r={pic.horizonRadius * ppr} fill="#05070f" stroke={BLACK_HOLE_COLOR} strokeWidth={2.5} />}
+      {stage >= 7 &&
+        [...pic.beams]
+          .sort((m, n) => n.aim - m.aim)
+          .map((b, i) => {
+            const color = b.outcome === 'captured' ? BEAM_CAPTURED_COLOR : BEAM_ESCAPES_COLOR
+            const start = b.points[0]
+            const labelY = py(PICTURE_TWO_FIRST_AIM) + i * 14
+            return (
+              <g key={b.aim}>
+                <line x1={px(start.x)} y1={py(start.y)} x2={512} y2={labelY - 3} stroke={color} strokeWidth={0.75} strokeOpacity={0.7} />
+                <SvgLines x={516} y={labelY} lines={[`aim ${b.aim}`]} fill={color} size={9} />
+              </g>
+            )
+          })}
+
+      {stage >= 6 && <SvgLines x={20} y={cy + 246} lines={['violet circle: the black hole’s edge (its radius is 1 unit)']} fill={BLACK_HOLE_COLOR} size={10} bold />}
+      {stage >= 7 && <SvgLines x={20} y={cy + 261} lines={['red beams: captured. green beams: escape, bent.', '“aim”: how far from the centre a beam would pass if gravity did nothing.']} fill={TEXT_COLOR} size={9} />}
+      {stage >= 8 && (
+        <SvgLines
+          x={20}
+          y={cy + 289}
+          lines={[`cyan dashed circle: the shadow’s edge, calculated here, ${n1(pic.shadowOverHorizon)} times as wide as the edge`]}
+          fill={CALC_COLOR}
+          size={10}
+          bold
+        />
+      )}
+      {stage >= 8 && guess && horizonGuess !== null && (
+        <g>
+          <rect x={20} y={cy + 300} width={400} height={26} rx={4} fill="#0b1020" stroke={YOURS_COLOR} strokeWidth={2.5} />
+          <SvgLines x={220} y={cy + 317} lines={[`YOUR GUESS (white circle): ${horizonGuess} times as wide as the edge`]} fill={YOURS_COLOR} bold size={10} anchor="middle" />
+        </g>
+      )}
+    </svg>
+  )
+}
+const PICTURE_TWO_FIRST_AIM = 6.5
+
 const captionParagraph = { marginTop: 0, marginBottom: '0.75rem' } as const
 
 function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { title: string; intro: ReactNode; bullets: ReactNode[]; worked: ReactNode | null; lookFor: LookFor[]; whereFrom: ReactNode }) {
@@ -305,6 +406,7 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
   }
   const pic = pictureOne()
   const [sgrRow, m87Row] = pic.rows
+  const pic2 = pictureTwo()
   return (
     <div>
       <h2>Experiment 21 — Can We Photograph a Black Hole’s Shadow? (Event Horizon Telescope)</h2>
@@ -602,7 +704,7 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
                 {done
-                  ? 'Picture 1 is drawn. Your predictions are recorded and not marked here. The picture of the shadow and the horizon (Picture 2) is not built yet (a later step).'
+                  ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here.'
                   : STAGE_LINES[stage]}
               </span>
             )}
@@ -676,6 +778,69 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
                     <strong>Measured (by the Event Horizon Telescope):</strong> the ring sizes, {m87Row.ringMicroarcsec} ± {m87Row.ringUncertainty} µas for M87* and {sgrRow.ringMicroarcsec} ± {sgrRow.ringUncertainty} µas for
                     Sagittarius A*, and the masses and distances behind them. <strong>Calculated here:</strong> the horizons, the shadows and the ratios, from one formula. <strong>Imagined:</strong>{' '}
                     nothing. Your guess is drawn in white and never changes the real picture.
+                  </>
+                }
+              />
+            </div>
+          )}
+
+          {stage >= 6 && (
+            <div>
+              <PictureTwoSvg stage={stage} horizonGuess={horizonGuess} />
+              <CaptionBlock
+                title="Picture 2"
+                intro="It is a bird’s-eye view of one black hole, with beams of light coming in from the right. All distances are measured in one unit: the distance from the black hole’s centre to its edge."
+                bullets={[
+                  ...(stage >= 6 ? [<><strong>The dark circle with a violet outline</strong> is the black hole’s edge (event horizon).</>] : []),
+                  ...(stage >= 7
+                    ? [
+                        <><strong>The red lines</strong> are beams of light that were captured. <strong>The green lines</strong> are beams that got away, bent on the way. How far from the centre a beam would pass if gravity did nothing is its <strong>aim</strong>, written beside each beam.</>,
+                      ]
+                    : []),
+                  ...(stage >= 8
+                    ? [
+                        <><strong>The dashed cyan circle</strong> is the boundary between the aims that are captured and the aims that escape. This is the shadow’s edge. It is calculated here.</>,
+                        <><strong>The white dashed circle and the box</strong> are your guess for Prediction 2. It is only a guessed circle, drawn to compare with the real one.</>,
+                      ]
+                    : []),
+                ]}
+                worked={
+                  stage >= 7 ? (
+                    <>
+                      A beam aimed {pic2.beams[2].aim} units from the centre is captured. One aimed at {pic2.beams[3].aim} escapes, but is bent by about {Math.round(pic2.beams[3].bendDegrees ?? 0)} degrees, almost turned back.
+                      {stage >= 8 ? ' The line between the two is the dashed cyan circle.' : ''}
+                    </>
+                  ) : null
+                }
+                lookFor={[
+                  ...(stage >= 7
+                    ? [
+                        {
+                          look: 'the red and green beams side by side.',
+                          means: 'beams aimed a little closer in are captured, and beams aimed a little further out get away.',
+                          matters: 'it shows that the shadow’s edge is a sharp boundary. The dark patch is exactly the aims that are captured.',
+                        },
+                      ]
+                    : []),
+                  ...(stage >= 8
+                    ? [
+                        {
+                          look: 'the dashed cyan circle against the dark circle.',
+                          means: `the shadow’s circle is about ${n1(pic2.shadowOverHorizon)} times as wide as the edge circle.`,
+                          matters: 'it shows how much of the sky goes dark. The dark patch is not the black hole itself.',
+                        },
+                        {
+                          look: 'the white circle.',
+                          means: 'your guessed width, beside the real one.',
+                          matters: 'it shows at a glance how your guess compares with the real result. The tutor says what that means.',
+                        },
+                      ]
+                    : []),
+                ]}
+                whereFrom={
+                  <>
+                    <strong>Measured:</strong> nothing in this picture is a measurement. <strong>Calculated here:</strong> the beams and the capture limit, from the same calculation as Black Holes Experiment 4, for a
+                    black hole that does not spin. <strong>Imagined:</strong> the beams’ aims, chosen for the picture. Your guess is drawn in white and never changes the real picture.
                   </>
                 }
               />

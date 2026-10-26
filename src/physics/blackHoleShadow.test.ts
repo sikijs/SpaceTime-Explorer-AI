@@ -27,6 +27,10 @@ import {
   horizonAngleMicroarcsec,
   ratioRulerPosition,
   sizeGuessMarker,
+  pictureTwo,
+  horizonGuessMarker,
+  PICTURE_TWO_BEAM_AIMS,
+  PICTURE_TWO_VIEW_RADIUS,
 } from './blackHoleShadow'
 import { horizonRadiusKm } from './blackHoleSizeExperiment'
 
@@ -218,5 +222,49 @@ describe('Picture 1', () => {
     expect(calc).toBeLessThan(sizeGuessMarker('about-the-same').position)
     expect(calc).toBeGreaterThan(sizeGuessMarker('a-little-smaller').position)
     expect(Math.abs(calc - ratioRulerPosition(pic.measuredRatio))).toBeLessThan(0.02)
+  })
+})
+
+describe('Picture 2', () => {
+  it('captures the beams aimed inside 2.598 horizon radii and lets the others escape', () => {
+    const pic = pictureTwo()
+    expect(pic.beams.map((b) => b.aim)).toEqual([...PICTURE_TWO_BEAM_AIMS])
+    for (const b of pic.beams) expect(b.outcome).toBe(b.aim < pic.shadowRadius ? 'captured' : 'escapes')
+    expect(pic.beams.filter((b) => b.outcome === 'captured').length).toBe(3)
+    expect(pic.beams.filter((b) => b.outcome === 'escapes').length).toBe(4)
+  })
+  it('has the shadow radius equal to 3 sqrt(3) / 2 and 2.598 times the edge radius of 1', () => {
+    const pic = pictureTwo()
+    expect(pic.shadowRadius).toBeCloseTo(3 * Math.sqrt(3) / 2, 12)
+    expect(pic.shadowOverHorizon).toBeCloseTo(2.598076, 5)
+    expect(pic.horizonRadius).toBe(1)
+  })
+  it('bends the beam aimed at 2.7 by about 167 degrees (Black Holes Experiment 4) and gives no bend for a captured beam', () => {
+    const pic = pictureTwo()
+    const b27 = pic.beams.find((b) => b.aim === 2.7)!
+    expect(b27.bendDegrees).toBeCloseTo(167.27, 0)
+    for (const b of pic.beams.filter((x) => x.outcome === 'captured')) expect(b.bendDegrees).toBeNull()
+  })
+  it('bends the beams less the further out they are aimed', () => {
+    const bends = pictureTwo().beams.filter((b) => b.outcome === 'escapes').map((b) => b.bendDegrees as number)
+    expect(bends).toEqual([...bends].sort((a, b) => b - a))
+  })
+  it('keeps each path inside (or just at) the view, and ends captured beams at the edge', () => {
+    const pic = pictureTwo()
+    for (const b of pic.beams) {
+      for (const p of b.points.slice(1)) expect(Math.hypot(p.x, p.y)).toBeLessThanOrEqual(PICTURE_TWO_VIEW_RADIUS + 0.5)
+      expect(b.points.length).toBeGreaterThan(5)
+      if (b.outcome === 'captured') {
+        const end = b.points[b.points.length - 1]
+        expect(Math.hypot(end.x, end.y)).toBeCloseTo(1, 6)
+      }
+    }
+  })
+  it('draws each guess as a circle with that many horizon radii, and the biggest guess fits in the view', () => {
+    for (const c of HORIZON_CHOICES) {
+      expect(horizonGuessMarker(c).radiusInHorizonRadii).toBe(c)
+      expect(horizonGuessMarker(c).radiusInHorizonRadii).toBeLessThanOrEqual(PICTURE_TWO_VIEW_RADIUS)
+    }
+    expect(horizonGuessMarker(3).radiusInHorizonRadii).not.toBeCloseTo(pictureTwo().shadowRadius, 1)
   })
 })
