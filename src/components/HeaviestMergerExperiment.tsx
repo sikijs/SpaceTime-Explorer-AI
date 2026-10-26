@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, guessSpin, massGapRows, ORIGIN_FIGURES, shareComparison, LOG_AXIS_MAX_SOLAR, LOG_AXIS_MIN_SOLAR, MASS_CHOICES_SOLAR, ROUND_CHOICES, SPIN_GUESS_CHOICES, spinPicture, trialPicture } from '../physics/heaviestMerger'
+import { pushGrowth, exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, guessSpin, massGapRows, ORIGIN_FIGURES, shareComparison, LOG_AXIS_MAX_SOLAR, LOG_AXIS_MIN_SOLAR, MASS_CHOICES_SOLAR, ROUND_CHOICES, SPIN_GUESS_CHOICES, spinPicture, trialPicture } from '../physics/heaviestMerger'
 import type { PossibleChoice, SpinGuessChoice } from '../physics/heaviestMerger'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { HeaviestMergerTutor } from './HeaviestMergerTutor'
@@ -224,8 +224,8 @@ function PictureOne({ stage, possibleGuess }: { stage: number; possibleGuess: Po
           <SvgLines x={x(ex.startSolar) - 8} y={rowB - 14} lines={[`two black holes of ${ex.startSolar}`]} fill={IMAGINED_COLOR} size={10} bold anchor="middle" />
           <circle cx={x(ex.startSolar)} cy={rowB - 4} r={6} fill={IMAGINED_COLOR} />
           <circle cx={x(ex.startSolar)} cy={rowB + 8} r={6} fill={IMAGINED_COLOR} />
-          <line x1={x(ex.startSolar) + 12} y1={rowB + 2} x2={x(ex.resultSolar) - 14} y2={rowB + 2} stroke={TEXT_COLOR} strokeWidth={2} />
-          <polygon points={`${x(ex.resultSolar) - 8},${rowB + 2} ${x(ex.resultSolar) - 18},${rowB - 4} ${x(ex.resultSolar) - 18},${rowB + 8}`} fill={TEXT_COLOR} />
+          <line x1={x(ex.startSolar) + 12} y1={rowB + 2} x2={x(ex.resultSolar) - 14} y2={rowB + 2} stroke={IMAGINED_COLOR} strokeWidth={2} />
+          <polygon points={`${x(ex.resultSolar) - 8},${rowB + 2} ${x(ex.resultSolar) - 18},${rowB - 4} ${x(ex.resultSolar) - 18},${rowB + 8}`} fill={IMAGINED_COLOR} />
           <circle cx={x(ex.resultSolar)} cy={rowB + 2} r={8} fill={IMAGINED_COLOR} />
           <SvgLines x={x(ex.resultSolar) + 14} y={rowB - 8} lines={[`${ex.startSolar} + ${ex.startSolar} = ${ex.sumSolar}, minus ${Math.round(ex.share * 100)} percent`, `(${ex.radiatedSolar} Suns sent out as waves) = ${ex.resultSolar}`]} fill={IMAGINED_COLOR} size={10} bold />
           {possibleGuess && (
@@ -466,13 +466,8 @@ function referenceEntries(): { term: string; meaning: string }[] {
     { term: 'Black hole merger', meaning: 'two black holes that have been circling each other come together and join into one black hole. A merger sends out gravitational waves (Gravitational Waves Experiments 1 to 4).' },
     { term: 'Gravitational waves', meaning: 'ripples in space itself, made when heavy objects such as black holes move fast. They carry energy away from the objects that make them.' },
     { term: 'Spin', meaning: 'how fast a black hole turns. In Black Holes Experiment 8 it is a number from 0 (not turning) up to just under 1 (turning as fast as is possible).' },
-    { term: 'Source frame', meaning: 'a mass worked out for the black hole as it was at its own place and time. Because the universe is expanding, a signal from far away arrives stretched, and the mass that the stretched signal seems to give is larger. Scientists correct for this, and the masses on this page are the corrected ones.' },
     { term: 'Give-or-take', meaning: 'the size of the uncertainty of a measurement, written “11 ± 1”. It says how far the true value could be from the measured one. (Experiment 1 of this group explains it.)' },
-    { term: 'Redshift', meaning: 'the stretching of a signal that has travelled a long way across the expanding universe (Cosmology Experiment 1). A larger redshift means a farther, older source.' },
-    { term: 'Hierarchical merger', meaning: 'a merger of black holes that were themselves made by earlier mergers. The word “hierarchical” means “in steps” or “in layers”.' },
-    { term: 'Primordial black hole', meaning: 'a black hole that, in one proposal, formed in the very early universe, not from a star. Nobody has found one for certain.' },
     { term: 'Gravitational lensing', meaning: 'the bending of light, or of other waves, by the gravity of something heavy that lies between us and the source (Cosmology Experiment 7). It can make a source look brighter, and so heavier, than it is.' },
-    { term: 'Signal-to-noise ratio', meaning: 'a number for how clearly a signal stands out from the random background noise in a detector. Think of a friend talking at a party: the louder their voice is compared with the chatter, the more clearly you hear them.' },
   ]
 }
 
@@ -494,6 +489,7 @@ interface HeaviestMergerExperimentProps {
 export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: HeaviestMergerExperimentProps) {
   const g = GW231123
   const [heavier, lighter] = g.masses
+  const push = pushGrowth(2)
   const [possibleGuess, setPossibleGuess] = useState<PossibleChoice | null>(null)
   const [spinGuess, setSpinGuess] = useState<SpinGuessChoice | null>(null)
   const [massChoice, setMassChoice] = useState<number>(40)
@@ -594,7 +590,7 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
           </ul>
           <p style={paragraph}>
             In a star like the Sun, almost all of the holding up is done by the gas, and light’s share is small. But the two do not grow at the same rate as the star gets hotter. Double the
-            temperature and the gas’s push doubles, while the light’s push grows 16 times. The heavier a star is, the hotter its middle, so in the very heaviest stars the light does a large
+            temperature and the gas’s push {push.gasFactor === 2 ? 'doubles' : `grows ${push.gasFactor} times`}, while the light’s push grows {push.lightFactor} times. The heavier a star is, the hotter its middle, so in the very heaviest stars the light does a large
             share of the holding up. Compare a tent that stays up because air is blown into it: the air’s push holds the cloth up, and in these stars part of that “air” is light.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -677,28 +673,19 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
                 the heaviest stars completely.
               </li>
               <li>
-                <strong>Hierarchical merger</strong> and <strong>primordial black hole</strong>: two of the proposed explanations for black holes this heavy. They are explained after the run.
-              </li>
-              <li>
-                <strong>Gravitational lensing</strong>: the bending of waves by something heavy in between, which is another proposed explanation.
-              </li>
-              <li>
-                <strong>Source frame</strong> and <strong>redshift</strong>: how a mass is corrected for the stretching of a signal that travelled across the expanding universe.
-              </li>
-              <li>
                 <strong>Solar mass</strong>, <strong>supernova</strong>, <strong>black hole merger</strong>, <strong>gravitational waves</strong>, <strong>spin</strong>, <strong>give-or-take</strong> and{' '}
-                <strong>signal-to-noise ratio</strong>: units and ideas from earlier experiments.
+                <strong>gravitational lensing</strong>: units and ideas from earlier experiments.
               </li>
             </ul>
           </div>
 
           <p style={paragraph}>
-            <strong>What you will do.</strong> You will make two predictions and press Run. Later steps will draw the pictures one stage at a time, and then let you try other values in a part of
-            its own. Nothing here is graded. Your predictions are your own guesses, made before you see anything. They never change the real pictures or the tables, which come from the
-            physics and the published numbers. Your guesses will be drawn on top of the real pictures, in white, so you can compare each guess with the real result, and they will be shown again
-            beside the results. The page will have four parts: first you predict and watch the pictures; then, in “Now try it yourself”, you can choose the mass of two black holes and the number
-            of rounds of merging, and watch a drawing of your own follow your choices; then come the results; and last a tutor asks you some questions. The real pictures and the results tables
-            never change. Your white guess marks appear on the real pictures, and only the drawing in “Now try it yourself” follows your choices.
+            <strong>What you will do.</strong> You will make two predictions and press Run to watch the pictures build up one stage at a time, and then try other values in a part of its own.
+            Nothing here is graded. Your predictions are your own guesses, made before you see anything. They never change the real pictures or the tables, which come from the physics and the
+            published numbers. Your guesses are drawn on top of the real pictures, in white, so you can compare each guess with the real result, and they are shown again beside the results. The
+            page has four parts: first you predict and watch the pictures; then, in “Now try it yourself”, you can choose the mass of the starting black holes and the number of rounds of merging, and
+            watch a drawing of your own follow your choices; then come the results; and last a tutor asks you some questions. The real pictures and the results tables never change. Your white guess
+            marks appear on the real pictures, and only the drawing in “Now try it yourself” follows your choices.
           </p>
 
           <p style={paragraph}>
@@ -806,7 +793,7 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. The controls, the results and the tutor are built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Try Part 2 below, then read the results in Part 3.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -1082,7 +1069,7 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
                   what: `the total of the two black holes before the merger, and the mass of the one after, set beside the ranges that the teams published. The “after” expectation is arithmetic only: the sum minus ${Math.round(ex.share * 100)} percent.`,
                   means: `${n1(check.totalSolar)} Suns is inside the range ${check.totalRange[0]} to ${check.totalRange[1]}, and ${n1(check.mergedSolar)} is inside ${check.finalRange[0]} to ${check.finalRange[1]}. A merger gives a black hole a little lighter than the two added together, as in Experiment 18.`,
                   matters: 'it shows that the simple sum-minus-a-little rule used in the pictures is consistent with the real merger, within its wide give-or-takes. The same rule is what lets two black holes below the gap make one inside it.',
-                  sure: `the ranges are wide (the total’s spans ${check.totalRange[1] - check.totalRange[0]} Suns), so many other rules would also fit inside them. The ranges come from LIGO’s summary page, not from the paper itself.`,
+                  sure: `the ranges are wide (the range for the total spans ${check.totalRange[1] - check.totalRange[0]} Suns), so many other rules would also fit inside them. The ranges come from LIGO’s summary page, not from the paper itself.`,
                 },
                 {
                   name: 'The share row',
@@ -1184,6 +1171,32 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
               ]}
             />
 
+            <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>Some words for Table 5.</strong> They were held back until now, because some of them hint at what your predictions were about.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Hierarchical merger:</strong> a merger of black holes that were themselves made by earlier mergers. “Hierarchical” means “in steps” or “in layers”.
+                </li>
+                <li>
+                  <strong>First-generation black hole:</strong> a black hole made directly by a star dying, and not by an earlier merger.
+                </li>
+                <li>
+                  <strong>Primordial black hole:</strong> a black hole that, in one proposal, formed in the very early universe, not from a star. Nobody has found one for certain.
+                </li>
+                <li>
+                  <strong>False-alarm probability:</strong> the chance that a signal that looks like this would turn up by accident, when the idea being tested (here, lensing) is not true. A probability below {ORIGIN_FIGURES.lensingFalseAlarmBelowPercent} percent means it would turn up by accident fewer than {ORIGIN_FIGURES.lensingFalseAlarmBelowPercent} time in 100.
+                </li>
+                <li>
+                  <strong>Sigma:</strong> a unit for how unlikely a result would be by chance alone: the more sigma, the less likely it is an accident (Experiment 1 of this group explains it). The paper pairs a false-alarm probability below {ORIGIN_FIGURES.lensingFalseAlarmBelowPercent} percent with about {ORIGIN_FIGURES.lensingSigmaAtLeast} sigma or more.
+                </li>
+                <li>
+                  <strong>Bayes factor:</strong> a number for how many times better one reading of the data explains it than another. A Bayes factor of 100 means about a hundred times better.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 5. What has been proposed to explain GW231123 (as of October 2026)</p>
             <ResultsTable
               minWidth={680}
@@ -1219,7 +1232,7 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
               items={[
                 {
                   name: 'The explanations table',
-                  what: 'four ideas that scientists have proposed for how a merger like GW231123 could arise, with the main figure each paper reports. A Bayes factor is a number for how much better the data fit one reading than another: 100 means about a hundred times better.',
+                  what: 'four ideas that scientists have proposed for how a merger like GW231123 could arise, with the main figure each paper reports.',
                   means: 'they are not all about the same thing. Two (earlier mergers, primordial black holes) are about how such heavy, fast-spinning black holes were made. The other two (lensing, overlapping signals) say that the signal has been misread, so the masses and spins may be different from the ones in Table 2.',
                   matters: 'two of the ideas could change how big the puzzle is: if the signal was lensed, the true masses could be lower than in Table 2, and if it was two signals, each black hole may be lighter than it looks.',
                   sure: 'not settled. No paper in this table was read in full, the sources disagree on how likely each idea is, and this page does not choose between them. The tutor goes through them with you.',

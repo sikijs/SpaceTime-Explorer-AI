@@ -23,6 +23,7 @@ import {
   spinGuessGap,
   spinRange,
   spinPicture,
+  pushGrowth,
   climbFacts,
   possibleGuessResult,
   spinGuessResult,
@@ -480,6 +481,24 @@ describe('Part 4: the tutor', () => {
       const steps = ladder(m, 12)
       expect(steps.some((s) => s.zone === 'in')).toBe(true)
     }
+  })
+})
+
+describe('the two pushes that hold a star up', () => {
+  it('doubling the temperature doubles the gas’s push and makes the light’s push 16 times as large', () => {
+    const g = pushGrowth(2)
+    expect(g.gasFactor).toBe(2)
+    expect(g.lightFactor).toBe(16)
+  })
+
+  it('light’s push grows faster than the gas’s for any factor above 1, and they agree at 1', () => {
+    expect(pushGrowth(1).lightFactor).toBe(pushGrowth(1).gasFactor)
+    for (const f of [1.5, 2, 3, 10]) expect(pushGrowth(f).lightFactor).toBeGreaterThan(pushGrowth(f).gasFactor)
+  })
+
+  it('rejects a factor that is not positive', () => {
+    expect(() => pushGrowth(0)).toThrow(RangeError)
+    expect(() => pushGrowth(-2)).toThrow(RangeError)
   })
 })
 

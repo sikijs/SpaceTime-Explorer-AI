@@ -573,3 +573,20 @@ export function climbFacts(share: number = RADIATED_SHARE): ClimbFacts {
     twentyStartingCount: lad[3].originalCount,
   }
 }
+
+// ---- The introduction's comparison of the two pushes that hold a star up ----
+
+export interface PushGrowth {
+  temperatureFactor: number
+  // Gas pressure grows in step with the temperature.
+  gasFactor: number
+  // Light (radiation) pressure grows as the fourth power of the temperature.
+  lightFactor: number
+}
+
+export function pushGrowth(temperatureFactor: number): PushGrowth {
+  if (!Number.isFinite(temperatureFactor) || !(temperatureFactor > 0)) {
+    throw new RangeError('The temperature factor must be a positive, finite number.')
+  }
+  return { temperatureFactor, gasFactor: temperatureFactor, lightFactor: temperatureFactor ** 4 }
+}
