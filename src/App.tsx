@@ -20,6 +20,7 @@ import { FailedSupernovaExperiment } from './components/FailedSupernovaExperimen
 import { HorizonAreaLawExperiment } from './components/HorizonAreaLawExperiment'
 import { BlackHoleRingdownExperiment } from './components/BlackHoleRingdownExperiment'
 import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
+import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperiment'
 import { climbFacts, exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, ORIGIN_FIGURES, spinPicture } from './physics/heaviestMerger'
 import { checkUp as ringdownCheckUp, FASTER_SPIN, GW250114_RINGDOWN, pitchGuessResult, ringingWorked, SECOND_TONE_SIGNIFICANCE } from './physics/blackHoleRingdown'
 import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
@@ -818,7 +819,7 @@ const chapters: Chapter[] = [
     group: 'Frontier and Beyond',
     Component: FastestSpacecraftExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a
-    // published one (NASA's pages of 18 December 2025 and 10 September 2026, the Guinness World Records entry). "What's next" names no experiment, because
+    // published one (NASA's pages of 18 December 2025 and 10 September 2026, the Guinness World Records entry). "What's next" named no experiment, because
     // Experiment 12 has no approved specification.
     learned:
       "Near the Sun, gravity and motion both slow a clock, and by almost the same amount. Parker Solar Probe, at its closest point (6.17 million km above the Sun's surface, 192.22 km/s), is slowed compared with a clock far from everything by 2.15 × 10^-7 from the Sun's gravity (GM ÷ (r × c²)) and 2.06 × 10^-7 from its motion (v² ÷ (2 × c²)): 4.21 × 10^-7 in all, like two leaks that add. A clock on the Earth is slowed by 1.55 × 10^-8 (the Earth's own gravity, the Sun's gravity at 1 AU, and the Earth's speed round the Sun), so the probe's clock falls behind it by 4.05 × 10^-7, which is 35.0 milliseconds a day at that point (about 36 against a clock far from everything). This is not a steady rate. As the probe moves out on its 88-day oval orbit, gravity's part falls about 16 times and motion's part about 256 times (the probe slows from 192 to 12 km/s, and the part depends on the square of the speed), so in this model the lag shrinks to zero at 0.70 AU and the probe's clock is slightly ahead of the Earth's beyond that (0.1 millisecond a day at the far end, a model number). If the closest-point rate lasted a whole orbit the lag would be 3.08 seconds; averaged over the real orbit it is 0.173 seconds. The distance and speed are NASA's (matched on the passes since, the 29th on 4 September 2026), and the formula has been tested with clocks on the Earth and in orbit; the lag itself is a calculation, and the sources read for this page do not report the mission measuring it. This experiment did not follow the real orbit, include the Sun's spin or shape, or say how the mission keeps or corrects its clock. Status, as of October 2026: Settled (the probe's distance and speed, and the physics); a calculation, not a measurement by this mission (the lag).",
@@ -892,10 +893,18 @@ const chapters: Chapter[] = [
     title: 'Black holes that should not exist: the heaviest merger (GW231123)',
     group: 'Frontier and Beyond',
     Component: HeaviestMergerExperiment,
-    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" names no experiment, because
-    // Experiment 21 has no approved specification.
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" named no experiment, because
+    // Experiment 21 (the shadow) now has one: this "What's next" is draft wording for the owner's approval.
     learned: heaviestMergerSummary(),
-    next: 'None yet, because Experiment 21 has no approved specification.',
+    next: 'Experiment 21 asks how a black hole looks from Earth. Light bent into a black hole leaves a dark shadow against the glowing gas around it, and the Event Horizon Telescope has photographed two of them. How big should such a shadow look?',
+  },
+  {
+    title: 'Can we photograph a black hole’s shadow? (Event Horizon Telescope)',
+    group: 'Frontier and Beyond',
+    Component: BlackHoleShadowExperiment,
+    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
+    learned: 'The chapter summary of this experiment is not written yet.',
+    next: 'None yet, because Experiment 22 has no approved specification.',
   },
 ]
 
