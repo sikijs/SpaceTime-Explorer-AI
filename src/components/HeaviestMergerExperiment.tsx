@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, guessSpin, SPIN_GUESS_CHOICES, spinPicture } from '../physics/heaviestMerger'
+import { exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, guessSpin, LOG_AXIS_MAX_SOLAR, LOG_AXIS_MIN_SOLAR, MASS_CHOICES_SOLAR, ROUND_CHOICES, SPIN_GUESS_CHOICES, spinPicture, trialPicture } from '../physics/heaviestMerger'
 import type { PossibleChoice, SpinGuessChoice } from '../physics/heaviestMerger'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 20 (docs/experiments/frontier-and-beyond/20-the-heaviest-merger.md).
-// STEPS 2 to 5 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
+// STEPS 2 to 6 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, Picture 2, then Part 2: the learner's own climb): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
 // "the gap") with its guide, the new-word list, the collapsed "Words and formulas" panel and the "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, results, tutor or
 // chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here
 // says that merging can fill the gap, what a merger's remnant spin is, or what the spins of GW231123 were (CLAUDE.md §12): those are the predictions' answers and the run's results.
@@ -136,6 +136,7 @@ const P_X1 = 520
 const P_W = P_X1 - P_X0
 
 const GAP_ARROW_COLOR = '#fbbf24' // amber: how much higher a measured spin is than the simple-merger value
+const PART_TWO_COLOR = '#0d9488'
 const CALC_COLOR = '#38bdf8' // sky blue: a published result that this page uses but did not calculate
 
 const POSSIBLE_PHRASE: Record<PossibleChoice, string> = { no: 'no, it could not', yes: 'yes, it could', unsure: 'not sure' }
@@ -328,6 +329,65 @@ function PictureTwo({ stage, spinGuess }: { stage: number; spinGuess: SpinGuessC
   )
 }
 
+// Part 2's drawing: the learner's own climb. Everything in it is imagined for the question (teal), except the green ticks (the real black holes) and the pink band (the gap from theory).
+function ClimbDrawing({ trial }: { trial: ReturnType<typeof trialPicture> }) {
+  const left = 60
+  const right = 520
+  const w = right - left
+  const x = (pos: number) => left + pos * w
+  const top = 84
+  const rowGap = 54
+  const n = trial.rows.length
+  const rowY = (g: number) => top + (n - 1 - g) * rowGap + 20
+  const axisY = top + n * rowGap + 16
+  const height = axisY + 70
+  const zoneWord = { below: 'below the gap', in: 'in the gap', above: 'above the gap' }
+  const ticks = [10, 20, 50, 100, 200, 500, 1000]
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Drawing A, your own climb. A scale of masses in Suns from ${LOG_AXIS_MIN_SOLAR} to ${LOG_AXIS_MAX_SOLAR}, going up in steps of ten, with a pink band for the gap. Starting with black holes of ${trial.startSolar} Suns and ${trial.rounds} ${trial.rounds === 1 ? 'round' : 'rounds'} of merging, the masses are ${trial.rows.map((r) => `${Number(r.massSolar.toFixed(1))} (${zoneWord[r.zone]})`).join(', ')}. Green ticks mark the real black holes of GW231123.`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Drawing A: your own climb (imagined)
+      </text>
+      <SvgLines x={20} y={40} lines={[`starting black holes of ${trial.startSolar} Suns, ${trial.rounds} ${trial.rounds === 1 ? 'round' : 'rounds'} of merging`, 'each round merges two equal black holes from the round before']} fill={MUTED_COLOR} />
+      <rect x={x(trial.gapPositions.low)} y={top - 6} width={x(trial.gapPositions.high) - x(trial.gapPositions.low)} height={axisY - top + 6} fill={GAP_COLOR} opacity={0.18} />
+      {trial.rows.map((r, i) => {
+        const dotX = x(r.position)
+        const y = rowY(r.generation)
+        const prev = i > 0 ? trial.rows[i - 1] : null
+        const textRight = dotX < 300
+        const text = r.generation === 0 ? `Round 0: ${Number(r.massSolar.toFixed(1))} Suns, ${zoneWord[r.zone]}` : `Round ${r.generation}: ${Number(r.massSolar.toFixed(1))} Suns, ${zoneWord[r.zone]}`
+        return (
+          <g key={r.generation}>
+            {prev && <line x1={x(prev.position)} y1={rowY(prev.generation)} x2={dotX} y2={y} stroke={IMAGINED_COLOR} strokeWidth={1.5} strokeDasharray="3 3" />}
+            <circle cx={dotX} cy={y} r={7} fill={IMAGINED_COLOR} />
+            <SvgLines x={textRight ? dotX + 12 : dotX - 12} y={textRight ? y + 16 : y - 18} lines={[text, `${r.originalCount} starting black ${r.originalCount === 1 ? 'hole' : 'holes'} combined`]} fill={IMAGINED_COLOR} size={10} bold anchor={textRight ? 'start' : 'end'} />
+          </g>
+        )
+      })}
+      <line x1={left} y1={axisY} x2={right} y2={axisY} stroke={MUTED_COLOR} strokeWidth={1} />
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={x((Math.log10(t) - 1) / 2)} y1={axisY} x2={x((Math.log10(t) - 1) / 2)} y2={axisY + 5} stroke={MUTED_COLOR} />
+          <SvgLines x={x((Math.log10(t) - 1) / 2)} y={axisY + 17} lines={[t.toLocaleString('en-US')]} fill={MUTED_COLOR} size={9} anchor="middle" />
+        </g>
+      ))}
+      {trial.realTicks.map((t) => (
+        <line key={t.label} x1={x(t.position)} y1={axisY - 10} x2={x(t.position)} y2={axisY + 3} stroke={MEASURED_COLOR} strokeWidth={3} />
+      ))}
+      <SvgLines x={left} y={axisY + 33} lines={[`green ticks: GW231123’s black holes (${trial.realTicks.map((t) => t.massSolar).join(', ')} Suns)`]} fill={MEASURED_COLOR} size={9} />
+      <SvgLines x={left} y={axisY + 46} lines={[`pink band: the gap from theory, ${GAP_THEORY_SOLAR.low} to ${GAP_THEORY_SOLAR.high} Suns`]} fill={GAP_COLOR} size={9} />
+      <SvgLines x={right} y={axisY + 59} lines={['mass in Suns (steps of ten)']} fill={MUTED_COLOR} size={9} anchor="end" />
+    </svg>
+  )
+}
+
 function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { title: string; intro: ReactNode; bullets: ReactNode[]; worked: ReactNode; lookFor: LookFor[]; whereFrom: ReactNode }) {
   return (
     <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' }}>
@@ -414,6 +474,8 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
   const [heavier, lighter] = g.masses
   const [possibleGuess, setPossibleGuess] = useState<PossibleChoice | null>(null)
   const [spinGuess, setSpinGuess] = useState<SpinGuessChoice | null>(null)
+  const [massChoice, setMassChoice] = useState<number>(40)
+  const [roundsChoice, setRoundsChoice] = useState<number>(1)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -436,6 +498,8 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
   const startOver = () => {
     setPossibleGuess(null)
     setSpinGuess(null)
+    setMassChoice(40)
+    setRoundsChoice(1)
     setStatus('idle')
     setStage(0)
   }
@@ -449,6 +513,8 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
   const check = mergerCheckUp()
   const [mHeavy, mLight, mFinal] = ruler.marks
   const spic = spinPicture()
+  const mine = trialPicture(massChoice, roundsChoice)
+  const masses = mine.rows.map((r) => Number(r.massSolar.toFixed(1)))
   return (
     <div>
       <h2>Experiment 20 — Black Holes That Should Not Exist: The Heaviest Merger (GW231123)</h2>
@@ -805,6 +871,88 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
             </div>
           )}
         </div>
+
+        {done && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${PART_TWO_COLOR}` }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: PART_TWO_COLOR }}>Part 2: Now try it yourself</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> In Picture 1 you saw two imagined black holes of {ex.startSolar} Suns merge. Here you can choose how heavy the starting black holes are and how many
+              rounds of merging to follow, and watch one drawing show the climb, beside the real black holes of GW231123. The real pictures above do not change, and your two guesses do not change this
+              drawing: only the two settings below do.
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>These are your own trial values, not real events.</strong> Each button is a number to try. For example, if you choose {mine.startSolar} Suns and {mine.rounds}{' '}
+              {mine.rounds === 1 ? 'round' : 'rounds'}, you start with {mine.startingCount} black holes of {mine.startSolar} Suns and the last merger makes one of {masses[masses.length - 1]} Suns. Real black holes
+              would rarely meet in such an orderly way: this is a simple picture to show the arithmetic. It is imagined for the question, and it is drawn in teal.
+            </p>
+
+            {(
+              [
+                {
+                  title: 'How heavy is each starting black hole? (in Suns, the mass of the Sun; all are below the gap)',
+                  choices: MASS_CHOICES_SOLAR.map((v) => ({ value: v, label: v === ex.startSolar ? `${v} (as in Picture 1)` : `${v}` })),
+                  value: massChoice,
+                  set: setMassChoice,
+                },
+                {
+                  title: 'How many rounds of merging? (each round merges two equal black holes made in the round before)',
+                  choices: ROUND_CHOICES.map((v) => ({ value: v, label: v === 1 ? '1 round' : `${v} rounds` })),
+                  value: roundsChoice,
+                  set: setRoundsChoice,
+                },
+              ] as const
+            ).map((control) => (
+              <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                <div>
+                  {control.choices.map((choice) => (
+                    <button
+                      key={choice.value}
+                      type="button"
+                      onClick={() => (control.set as (v: number) => void)(choice.value)}
+                      className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                      style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                    >
+                      {choice.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <ClimbDrawing trial={mine} />
+            <CaptionBlock
+              title="Drawing A"
+              intro={`It shows the climb that your two trial values give, on a ruler of masses in Suns that goes up in steps of ten (10, 100, 1,000), so that a black hole of ${LOG_AXIS_MIN_SOLAR} Suns and one of hundreds fit together. Round 0, at the bottom, is the starting black holes. Each round above it is the black hole made by merging two equal black holes from the round before. It is imagined for the question, not observed.`}
+              bullets={[
+                <><strong>The teal dots</strong> are black holes in your climb, one for each round. Each is joined by a dotted teal line to the one before it. The words beside a dot give its mass, say whether it is below, in or above the gap, and say how many of the starting black holes were combined to make it.</>,
+                <><strong>The pink band</strong> is the gap from theory, {GAP_THEORY_SOLAR.low} to {GAP_THEORY_SOLAR.high} Suns, as in Picture 1. <strong>The green ticks</strong> on the ruler are the real black holes of GW231123: {mine.realTicks.map((t) => t.massSolar).join(', ')} Suns. They do not move when you change a setting.</>,
+                <><strong>The ruler goes up in steps of ten</strong>, so equal distances along it mean equal multiples of mass, not equal amounts. That is why a round that nearly doubles the mass always moves the dot the same distance to the right.</>,
+              ]}
+              worked={
+                <>
+                  You chose {mine.startSolar} Suns and {mine.rounds} {mine.rounds === 1 ? 'round' : 'rounds'}.{' '}
+                  {mine.rows
+                    .slice(1)
+                    .map((r) => `Round ${r.generation}: ${Number((r.sumSolar! / 2).toFixed(1))} + ${Number((r.sumSolar! / 2).toFixed(1))} = ${Number(r.sumSolar!.toFixed(1))}, minus ${Math.round(ex.share * 100)} percent (${Number(r.radiatedSolar!.toFixed(2))} Suns) = ${Number(r.massSolar.toFixed(1))}.`)
+                    .join(' ')}{' '}
+                  Each round doubles the number of starting black holes that went into the result, so {mine.rounds} {mine.rounds === 1 ? 'round needs' : 'rounds need'} {mine.startingCount} starting black holes in all.
+                </>
+              }
+              lookFor={[
+                { look: 'the teal dots rising from the bottom, and the pink band.', means: `with ${mine.startSolar} Suns and ${mine.rounds} ${mine.rounds === 1 ? 'round' : 'rounds'} the masses are ${masses.join(', ')} Suns, and ${mine.inGapCount} of the ${mine.rows.length} black holes ${mine.inGapCount === 1 ? 'is' : 'are'} in the gap.`, matters: 'this is the arithmetic that Prediction 1 asked about: black holes made by merging can land in the gap, even though each starting black hole is below it.' },
+                { look: 'the green ticks, and the teal dot at the top.', means: `your last black hole is ${masses[masses.length - 1]} Suns, which is ${mine.finalOverHeavier.toFixed(2)} times the heavier real black hole of GW231123 (${mine.realTicks[1].massSolar} Suns).`, matters: 'starting black holes below the gap can reach masses like those of GW231123 in a few rounds. That shows only that the arithmetic allows it, not that it happened.' },
+                { look: 'the words “starting black holes combined” beside each dot.', means: `the black hole at the top of your climb is made from ${mine.startingCount} starting black holes.`, matters: 'the more rounds, the more earlier black holes have to have met, and whether that happened for GW231123 is not known. It is one of the explanations that come later.' },
+              ]}
+              whereFrom={
+                <>
+                  <strong>Real:</strong> the green ticks are the masses of the black holes of GW231123 ({mine.realTicks.map((t) => t.massSolar).join(', ')} Suns), by the LIGO, Virgo and KAGRA teams (the first two from LIGO’s summary and a search summary of the paper’s abstract, and the last a best estimate). The pink band is the gap from theory ({GAP_THEORY_SOLAR.low} to {GAP_THEORY_SOLAR.high}), as LIGO’s summary quotes it.{' '}
+                  <strong>Calculated here:</strong> each round’s mass, from the sum and the {Math.round(ex.share * 100)} percent sent out as waves. <strong>Imagined for the question:</strong> everything in teal: the starting black holes, the rounds, and the assumption that the {Math.round(ex.share * 100)} percent (taken from GW250114) holds for every round. Nothing in the teal was observed.
+                </>
+              }
+            />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -23,6 +23,10 @@ import {
   spinGuessGap,
   spinRange,
   spinPicture,
+  logPosition,
+  trialPicture,
+  LOG_AXIS_MAX_SOLAR,
+  LOG_AXIS_MIN_SOLAR,
   SPIN_AXIS_MAX,
   spinScale,
   trial,
@@ -295,6 +299,86 @@ describe('Picture 2: the spins', () => {
       expect(c).toBeLessThanOrEqual(SPIN_AXIS_MAX)
     }
     expect(spinAnswer()).toBe(0.7)
+  })
+})
+
+describe('Drawing A: the learner’s climb', () => {
+  it('the log scale puts 10 Suns at 0, 100 at one half and 1,000 at 1, and rises with mass', () => {
+    expect(logPosition(LOG_AXIS_MIN_SOLAR)).toBeCloseTo(0, 9)
+    expect(logPosition(100)).toBeCloseTo(0.5, 9)
+    expect(logPosition(LOG_AXIS_MAX_SOLAR)).toBeCloseTo(1, 9)
+    expect(logPosition(60)).toBeLessThan(logPosition(130))
+  })
+
+  it('every control setting stays on the scale', () => {
+    for (const m of MASS_CHOICES_SOLAR) {
+      for (const r of ROUND_CHOICES) {
+        const t = trialPicture(m, r)
+        for (const row of t.rows) {
+          expect(row.position).toBeGreaterThanOrEqual(0)
+          expect(row.position).toBeLessThanOrEqual(1)
+        }
+      }
+    }
+  })
+
+  it('30 Suns and 3 rounds: 30, 57, 108.3, 205.77 with sums 60, 114, 216.6 and radiated 3, 5.7, 10.83', () => {
+    const t = trialPicture(30, 3)
+    expect(t.rows.map((r) => r.massSolar)).toEqual([30, 57, 108.3, 205.77].map((x) => expect.closeTo(x, 6)))
+    expect(t.rows[0].sumSolar).toBeNull()
+    expect(t.rows[1].sumSolar).toBeCloseTo(60, 9)
+    expect(t.rows[2].sumSolar).toBeCloseTo(114, 9)
+    expect(t.rows[3].sumSolar).toBeCloseTo(216.6, 9)
+    expect(t.rows[1].radiatedSolar).toBeCloseTo(3, 9)
+    expect(t.rows[3].radiatedSolar).toBeCloseTo(10.83, 9)
+    expect(t.startingCount).toBe(8)
+    expect(t.inGapCount).toBe(1)
+    expect(t.finalZone).toBe('above')
+  })
+
+  it('agrees with the trial and the ladder at every control setting', () => {
+    for (const m of MASS_CHOICES_SOLAR) {
+      for (const r of ROUND_CHOICES) {
+        const p = trialPicture(m, r)
+        const t = trial(m, r)
+        expect(p.finalSolar).toBe(t.finalSolar)
+        expect(p.finalZone).toBe(t.finalZone)
+        expect(p.rows.map((x) => x.massSolar)).toEqual(t.steps.map((x) => x.massSolar))
+        expect(p.startingCount).toBe(2 ** r)
+      }
+    }
+  })
+
+  it('compares the last black hole with the heavier real one (40 Suns, 3 rounds: 274.36 ÷ 137 = 2.0026)', () => {
+    const p = trialPicture(40, 3)
+    expect(p.finalSolar).toBeCloseTo(274.36, 6)
+    expect(p.finalOverHeavier).toBeCloseTo(274.36 / 137, 9)
+  })
+
+  it('holds the gap edges and the real black holes on the same scale, in order', () => {
+    const p = trialPicture(40, 1)
+    expect(p.gapPositions.low).toBeCloseTo(logPosition(60), 9)
+    expect(p.gapPositions.high).toBeCloseTo(logPosition(130), 9)
+    expect(p.realTicks.map((t) => t.massSolar)).toEqual([103, 137, 225])
+    expect(p.realTicks[0].position).toBeLessThan(p.realTicks[1].position)
+    expect(p.realTicks[1].position).toBeLessThan(p.realTicks[2].position)
+  })
+
+  it('the real ticks and the gap do not change with the settings', () => {
+    const base = JSON.stringify([trialPicture(40, 1).realTicks, trialPicture(40, 1).gapPositions])
+    for (const m of MASS_CHOICES_SOLAR) {
+      for (const r of ROUND_CHOICES) {
+        const t = trialPicture(m, r)
+        expect(JSON.stringify([t.realTicks, t.gapPositions])).toBe(base)
+      }
+    }
+  })
+
+  it('the number of black holes in the gap equals the count of in-gap rows', () => {
+    const p = trialPicture(20, 3)
+    expect(p.rows.map((r) => r.zone)).toEqual(['below', 'below', 'in', 'above'])
+    expect(p.inGapCount).toBe(1)
+    expect(trialPicture(20, 1).inGapCount).toBe(0)
   })
 })
 

@@ -386,3 +386,68 @@ export function spinPicture(): SpinPicture {
   })
   return { axisMax: SPIN_AXIS_MAX, simple: SIMPLE_MERGER_SPIN, rows }
 }
+
+// ---- Drawing A (Part 2): the learner's own climb ----
+
+// The drawing's mass scale goes up in steps of ten, from 10 to 1,000 Suns, so that the smallest starting black hole and the largest result fit together.
+export const LOG_AXIS_MIN_SOLAR = 10
+export const LOG_AXIS_MAX_SOLAR = 1000
+
+// Where a mass sits on that scale, from 0 (10 Suns) to 1 (1,000 Suns).
+export function logPosition(massSolar: number): number {
+  checkMass(massSolar)
+  return (Math.log10(massSolar) - Math.log10(LOG_AXIS_MIN_SOLAR)) / (Math.log10(LOG_AXIS_MAX_SOLAR) - Math.log10(LOG_AXIS_MIN_SOLAR))
+}
+
+export interface ClimbRow extends LadderStep {
+  position: number
+  // For a round after the first: the two black holes of the round before added together, and the Suns sent out as waves.
+  sumSolar: number | null
+  radiatedSolar: number | null
+}
+
+export interface RealTick {
+  label: string
+  massSolar: number
+  position: number
+}
+
+export interface TrialPicture {
+  startSolar: number
+  rounds: number
+  rows: ClimbRow[]
+  finalSolar: number
+  finalZone: Zone
+  startingCount: number
+  inGapCount: number
+  // The last black hole's mass as a multiple of the heavier real black hole of GW231123.
+  finalOverHeavier: number
+  gapPositions: { low: number; high: number }
+  realTicks: RealTick[]
+}
+
+export function trialPicture(startSolar: number, rounds: number, share: number = RADIATED_SHARE): TrialPicture {
+  const steps = ladder(startSolar, rounds, share)
+  const rows = steps.map((st, i): ClimbRow => {
+    const prev = i === 0 ? null : steps[i - 1].massSolar
+    const sum = prev === null ? null : round9(2 * prev)
+    return { ...st, position: logPosition(st.massSolar), sumSolar: sum, radiatedSolar: sum === null ? null : round9(sum - st.massSolar) }
+  })
+  const last = steps[steps.length - 1]
+  return {
+    startSolar,
+    rounds,
+    rows,
+    finalSolar: last.massSolar,
+    finalZone: last.zone,
+    startingCount: 2 ** rounds,
+    inGapCount: steps.filter((st) => st.zone === 'in').length,
+    finalOverHeavier: last.massSolar / GW231123.masses[0].value,
+    gapPositions: { low: logPosition(GAP_THEORY_SOLAR.low), high: logPosition(GAP_THEORY_SOLAR.high) },
+    realTicks: [
+      { label: 'lighter black hole', massSolar: GW231123.masses[1].value, position: logPosition(GW231123.masses[1].value) },
+      { label: 'heavier black hole', massSolar: GW231123.masses[0].value, position: logPosition(GW231123.masses[0].value) },
+      { label: 'the black hole they made', massSolar: GW231123.finalBestFitSolar, position: logPosition(GW231123.finalBestFitSolar) },
+    ],
+  }
+}
