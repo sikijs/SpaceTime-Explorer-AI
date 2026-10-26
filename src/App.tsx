@@ -17,8 +17,10 @@ import { CatchingASupernovaExperiment } from './components/CatchingASupernovaExp
 import { WhiteDwarfExplosionExperiment } from './components/WhiteDwarfExplosionExperiment'
 import { NeutronStarSizeExperiment } from './components/NeutronStarSizeExperiment'
 import { FailedSupernovaExperiment } from './components/FailedSupernovaExperiment'
+import { HorizonAreaLawExperiment } from './components/HorizonAreaLawExperiment'
 import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
 import { FAILED_SUPERNOVA_DATA, runCheckUp, SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES } from './physics/failedSupernova'
+import { areaScalingWorked, checkUp as areaLawCheckUp, GW250114, massPicture } from './physics/horizonAreaLaw'
 import { Experiment1 } from './components/Experiment1'
 import { Experiment2 } from './components/Experiment2'
 import { Experiment3 } from './components/Experiment3'
@@ -144,6 +146,26 @@ function failedSupernovaSummary(): string {
     `What the object is, is contested: the discovery team says a black hole hidden in dust, and two other 2026 papers read it as two stars that merged. X-rays, which the discovery team expects in about ` +
     `${d.xrayWaitYears} years, and later infrared pictures could help settle it. How often massive stars end this way is open: one survey found ${c.failedRange.central.toFixed(0)} in every 100, but the range is ` +
     `${c.failedRange.low.toFixed(0)} to ${c.failedRange.high.toFixed(0)}, because it rests on one clearly detected failed supernova. The weights and the push are estimates from a model, not measurements.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 18 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// drift from the page.
+function horizonAreaLawSummary(): string {
+  const c = areaLawCheckUp()
+  const m = massPicture()
+  const w = areaScalingWorked()
+  const thousands = (n: number) => Math.round(n).toLocaleString('en-US')
+  return (
+    `Does a black hole’s surface area ever shrink? In ${GW250114.detected.slice(3)} the LIGO detectors recorded GW250114, the clearest gravitational-wave signal so far, from two black holes of ` +
+    `${m.massesBeforeSolar[0]} and ${m.massesBeforeSolar[1]} Suns that merged into one of ${m.massAfterSolar} Suns. About ${m.radiatedSolar.toFixed(1)} Suns’ worth of energy (${c.mass.lessByPercent.toFixed(1)} percent of the mass) ` +
+    `left as gravitational waves, so the new black hole was lighter. But its horizon area was larger: ${thousands(c.areaBefore.formulaKm2)} km² before and ${thousands(c.areaAfter.formulaKm2)} km² after by this page’s formula, ` +
+    `${c.areaChange.formulaRatio.toFixed(2)} times as much (about ${thousands(c.areaBefore.pressKm2)} and ${thousands(c.areaAfter.pressKm2)} in a press release, ${c.areaChange.pressRatio.toFixed(2)} times). The reason is that a black hole’s area goes ` +
+    `as the square of its mass: ${m.massesBeforeSolar[0]}² + ${m.massesBeforeSolar[1]}² = ${thousands(w.sumOfSquares)} before, against ${m.massAfterSolar}² × ${w.spinFactorAfter.toFixed(2)} = ${thousands(w.afterInSameUnits)} after. That is consistent with the area theorem ` +
+    `that Stephen Hawking proved in 1971: in general relativity, the combined area of black hole horizons can only grow, never shrink. The theorem puts a ceiling on how much of its mass a merger can ` +
+    `radiate: about ${c.ceiling.ceilingPercent.toFixed(1)} percent at the measured spin, and GW250114 radiated ${c.ceiling.sharePercent.toFixed(1)}. This is strong evidence, from one very clear event, that a prediction of general relativity holds; ` +
+    `it is not a new law. The masses and spins were fitted from the signal and the areas here are calculated from them, the press and the formula differ by ${c.areaAfter.pressOverFormulaPercent.toFixed(1)} percent about the area after, and the ` +
+    `scientists’ own figures were not read for this page. So the direction, up, is firm, and the size is not known to the last digit.`
   )
 }
 
@@ -803,7 +825,16 @@ const chapters: Chapter[] = [
     group: 'Frontier and Beyond',
     Component: FailedSupernovaExperiment,
     learned: failedSupernovaSummary(),
-    next: 'None yet, because Experiment 18 has no approved specification.',
+    next: 'Experiment 18 asks a different question about black holes. When two black holes merge, a little of their mass leaves as gravitational waves, so the new black hole is lighter. Does the surface of the black hole shrink too?',
+  },
+  {
+    title: 'Does a black hole’s surface area ever shrink? (GW250114 and Hawking’s area theorem)',
+    group: 'Frontier and Beyond',
+    Component: HorizonAreaLawExperiment,
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" names no experiment, because
+    // Experiment 19 has no approved specification.
+    learned: horizonAreaLawSummary(),
+    next: 'None yet, because Experiment 19 has no approved specification.',
   },
 ]
 
