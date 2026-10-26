@@ -1,12 +1,14 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123 } from '../physics/heaviestMerger'
+import { GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, POSSIBLE_CHOICES, SPIN_GUESS_CHOICES } from '../physics/heaviestMerger'
+import type { PossibleChoice, SpinGuessChoice } from '../physics/heaviestMerger'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 20 (docs/experiments/frontier-and-beyond/20-the-heaviest-merger.md).
-// STEP 2 (the interface skeleton and the introduction): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
-// "the gap") with its guide, the new-word list, the collapsed "Words and formulas" panel and the "Want to know more?" links. It has no predictions, run, pictures, results, tutor or
+// STEPS 2 and 3 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
+// "the gap") with its guide, the new-word list, the collapsed "Words and formulas" panel and the "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, results, tutor or
 // chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here
 // says that merging can fill the gap, what a merger's remnant spin is, or what the spins of GW231123 were (CLAUDE.md §12): those are the predictions' answers and the run's results.
 // The links that give them away (LIGO's summary, the Monash article, the papers) are listed only after the run, in a later step.
@@ -149,9 +151,28 @@ function referenceEntries(): { term: string; meaning: string }[] {
   ]
 }
 
+const POSSIBLE_LABELS: Record<PossibleChoice, string> = { no: 'No, it could not', yes: 'Yes, it could', unsure: 'Not sure' }
+const SPIN_LABELS: Record<SpinGuessChoice, string> = {
+  0.1: 'About 0.1 (hardly turning)',
+  0.3: 'About 0.3',
+  0.5: 'About 0.5 (half-way)',
+  0.7: 'About 0.7',
+  0.9: 'About 0.9 (very fast)',
+  0.99: 'About 0.99 (almost as fast as is possible)',
+}
+
 export function HeaviestMergerExperiment() {
   const g = GW231123
   const [heavier, lighter] = g.masses
+  const [possibleGuess, setPossibleGuess] = useState<PossibleChoice | null>(null)
+  const [spinGuess, setSpinGuess] = useState<SpinGuessChoice | null>(null)
+  const [recorded, setRecorded] = useState(false)
+  const bothPredicted = possibleGuess !== null && spinGuess !== null
+  const startOver = () => {
+    setPossibleGuess(null)
+    setSpinGuess(null)
+    setRecorded(false)
+  }
   return (
     <div>
       <h2>Experiment 20 — Black Holes That Should Not Exist: The Heaviest Merger (GW231123)</h2>
@@ -303,6 +324,15 @@ export function HeaviestMergerExperiment() {
           </div>
 
           <p style={paragraph}>
+            <strong>What you will do.</strong> You will make two predictions and press Run. Later steps will draw the pictures one stage at a time, and then let you try other values in a part of
+            its own. Nothing here is graded. Your predictions are your own guesses, made before you see anything. They never change the real pictures or the tables, which come from the
+            physics and the published numbers. Your guesses will be drawn on top of the real pictures, in white, so you can compare each guess with the real result, and they will be shown again
+            beside the results. The page will have four parts: first you predict and watch the pictures; then, in “Now try it yourself”, you can choose the mass of two black holes and the number
+            of rounds of merging, and watch a drawing of your own follow your choices; then come the results; and last a tutor asks you some questions. The real pictures and the results tables
+            never change. Your white guess marks appear on the real pictures, and only the drawing in “Now try it yourself” follows your choices.
+          </p>
+
+          <p style={paragraph}>
             <strong>What we assume.</strong> This experiment uses the masses and spins that the teams published for GW231123, with their give-or-takes, and some simple arithmetic about merging.
             It does not simulate stars, star clusters or the signal itself, and it does not decide how such heavy black holes came to exist. The answers to the predictions you will make are not
             given here.
@@ -326,9 +356,87 @@ export function HeaviestMergerExperiment() {
 
         <ReferencePanel entries={referenceEntries()} />
 
-        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          The predictions, the run, the pictures, the results and the tutor are built in later steps.
-        </p>
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is right. */}
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed
+            things: the measured masses and spins of one merger, and some arithmetic about how black holes merge. They are the same for everyone. When they are drawn, your guesses appear on
+            them in white, so you can see how each guess compares with the real result. The real pictures stay the same whatever you guess.
+          </p>
+
+          {(
+            [
+              {
+                title: 'Prediction 1: can two black holes below the gap merge into one inside it?',
+                text: (
+                  <>
+                    Imagine two black holes, each made when one star died, so that each black hole came from its own star. Both are lighter than the gap, so neither is in it. The two
+                    black holes circle each other and merge into one black hole. In a merger, a little of the mass leaves as gravitational waves, so the new black hole is a bit lighter than the two together. Could the black hole that they make be
+                    inside the gap?
+                  </>
+                ),
+                choices: POSSIBLE_CHOICES.map((value) => ({ value, label: POSSIBLE_LABELS[value] })),
+                value: possibleGuess,
+                set: (v: string) => setPossibleGuess(v as PossibleChoice),
+              },
+              {
+                title: 'Prediction 2: how fast does the black hole made by two equal, non-spinning black holes spin?',
+                text: (
+                  <>
+                    Spin is a number from 0 (not turning) to just under 1 (turning as fast as is possible). Imagine two black holes of the same mass, neither of them spinning, circling each
+                    other and merging into one. About what spin does the new black hole have? This is a separate guess from Prediction 1, so your two answers do not have to agree with each
+                    other.
+                  </>
+                ),
+                choices: SPIN_GUESS_CHOICES.map((value) => ({ value: String(value), label: SPIN_LABELS[value] })),
+                value: spinGuess === null ? null : String(spinGuess),
+                set: (v: string) => setSpinGuess(Number(v) as SpinGuessChoice),
+              },
+            ] as const
+          ).map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</p>
+              <div>
+                {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => (question.set as (v: string) => void)(choice.value)}
+                    disabled={recorded}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null
+                  ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                  : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+          )}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
+            {recorded
+              ? 'Your predictions are recorded and not marked here. The run and its pictures are built in a later step.'
+              : 'The pictures fill in, one stage at a time, after you press Run (built in a later step).'}
+          </p>
+        </div>
       </div>
     </div>
   )
