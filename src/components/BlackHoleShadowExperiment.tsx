@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { HORIZON_CHOICES, SIZE_CHOICES } from '../physics/blackHoleShadow'
+import type { HorizonChoice, SizeChoiceId } from '../physics/blackHoleShadow'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
 // Frontier and Beyond, Experiment 21 (docs/experiments/frontier-and-beyond/21-black-hole-shadow.md).
-// STEP 2 (the interface skeleton and the introduction): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
-// and the "Want to know more?" links. It has no predictions, run, pictures, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
+// STEPS 2 and 4 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
+// and the "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
 // the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how big either shadow looks in the sky, how the two compare, or how much
 // wider than the horizon the shadow is (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (the ESO page, which shows both images,
 // and the papers) are listed only after the run, in a later step. The introduction has no illustration; the pictures come with the run.
@@ -36,7 +39,32 @@ function referenceEntries(): { term: string; meaning: string }[] {
   ]
 }
 
+const SIZE_LABELS: Record<SizeChoiceId, string> = {
+  'much-bigger': 'Much bigger (about 10 times as wide)',
+  'a-little-bigger': 'A little bigger (about 1.5 times as wide)',
+  'about-the-same': 'About the same width',
+  'a-little-smaller': 'A little smaller (about 1.5 times narrower)',
+  'much-smaller': 'Much smaller (about 10 times narrower)',
+}
+const HORIZON_LABELS: Record<HorizonChoice, string> = {
+  1: 'The same width (1 times)',
+  1.5: 'About 1.5 times as wide',
+  2: 'About 2 times as wide',
+  3: 'About 3 times as wide',
+  5: 'About 5 times as wide',
+  10: 'About 10 times as wide',
+}
+
 export function BlackHoleShadowExperiment() {
+  const [sizeGuess, setSizeGuess] = useState<SizeChoiceId | null>(null)
+  const [horizonGuess, setHorizonGuess] = useState<HorizonChoice | null>(null)
+  const [recorded, setRecorded] = useState(false)
+  const bothPredicted = sizeGuess !== null && horizonGuess !== null
+  const startOver = () => {
+    setSizeGuess(null)
+    setHorizonGuess(null)
+    setRecorded(false)
+  }
   return (
     <div>
       <h2>Experiment 21 — Can We Photograph a Black Hole’s Shadow? (Event Horizon Telescope)</h2>
@@ -220,6 +248,15 @@ export function BlackHoleShadowExperiment() {
           </div>
 
           <p style={paragraph}>
+            <strong>What you will do.</strong> You will make two predictions and press Run. Later steps will draw the pictures one stage at a time, and then let you try other values in a part of
+            its own. Nothing here is graded. Your predictions are your own guesses, made before you see anything. They never change the real pictures or the tables, which come from the
+            physics and the published numbers. Your guesses will be drawn on top of the real pictures, in white, so you can compare each guess with the real result, and they will be shown again
+            beside the results. The page will have four parts: first you predict and watch the pictures; then, in “Now try it yourself”, you can choose the mass and the distance of a black hole of
+            your own and watch a drawing of its shadow follow your choices; then come the results; and last a tutor asks you some questions. The real pictures and the results tables never change.
+            Your white guess marks appear on the real pictures, and only the drawing in “Now try it yourself” follows your choices.
+          </p>
+
+          <p style={paragraph}>
             <strong>What we assume.</strong> This experiment uses the masses, distances and ring sizes that the EHT teams published, with their give-or-takes, and one formula for the size of the
             shadow of a black hole that is not spinning. It does not model the glowing gas, the telescope, how the pictures are made, or the effect of spin on the shadow. The answers to the predictions
             you will make are not given here.
@@ -243,9 +280,87 @@ export function BlackHoleShadowExperiment() {
 
         <ReferencePanel entries={referenceEntries()} />
 
-        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          The predictions, the run, the pictures, the results and the tutor are built in later steps.
-        </p>
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is right. */}
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed things:
+            the published masses, distances and ring sizes of two black holes, and a calculation of the size of a shadow. They are the same for everyone. When they are drawn, your guesses appear on
+            them in white, so you can see how each guess compares with the real result. The real pictures stay the same whatever you guess.
+          </p>
+
+          {(
+            [
+              {
+                title: 'Prediction 1: which black hole’s shadow looks wider in our sky?',
+                text: (
+                  <>
+                    Sagittarius A* has about 4 million times the mass of the Sun, and it is about 8.15 kiloparsecs away. M87* has about 6.5 billion times the mass of the Sun, which is about
+                    1,600 times as much, but it is about 16.8 megaparsecs away, which is about 2,100 times as far. Compared with the shadow of Sagittarius A*, would the shadow of M87* look
+                    wider, narrower or about the same, as seen from Earth?
+                  </>
+                ),
+                choices: SIZE_CHOICES.map((c) => ({ value: c.id as string, label: SIZE_LABELS[c.id] })),
+                value: sizeGuess as string | null,
+                set: (v: string) => setSizeGuess(v as SizeChoiceId),
+              },
+              {
+                title: 'Prediction 2: how wide is the dark patch compared with the black hole’s edge?',
+                text: (
+                  <>
+                    Take one black hole. Its edge, the event horizon, is a circle, and the dark patch (its shadow) is a larger or smaller circle round the same centre. Measure each across its
+                    full width. How many times as wide as the black hole’s edge is the dark patch? This is a separate guess from Prediction 1, so your two answers do not have to agree with each
+                    other.
+                  </>
+                ),
+                choices: HORIZON_CHOICES.map((c) => ({ value: String(c), label: HORIZON_LABELS[c] })),
+                value: horizonGuess === null ? null : String(horizonGuess),
+                set: (v: string) => setHorizonGuess(Number(v) as HorizonChoice),
+              },
+            ] as const
+          ).map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</p>
+              <div>
+                {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => (question.set as (v: string) => void)(choice.value)}
+                    disabled={recorded}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null
+                  ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                  : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+          )}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
+            {recorded
+              ? 'Your predictions are recorded and not marked here. The run and its pictures are built in a later step.'
+              : 'The pictures fill in, one stage at a time, after you press Run (built in a later step).'}
+          </p>
+        </div>
       </div>
     </div>
   )
