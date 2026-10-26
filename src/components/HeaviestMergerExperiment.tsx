@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, guessSpin, LOG_AXIS_MAX_SOLAR, LOG_AXIS_MIN_SOLAR, MASS_CHOICES_SOLAR, ROUND_CHOICES, SPIN_GUESS_CHOICES, spinPicture, trialPicture } from '../physics/heaviestMerger'
+import { exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, guessSpin, massGapRows, ORIGIN_FIGURES, shareComparison, LOG_AXIS_MAX_SOLAR, LOG_AXIS_MIN_SOLAR, MASS_CHOICES_SOLAR, ROUND_CHOICES, SPIN_GUESS_CHOICES, spinPicture, trialPicture } from '../physics/heaviestMerger'
 import type { PossibleChoice, SpinGuessChoice } from '../physics/heaviestMerger'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { LookForList } from './WideBinariesExperiment'
+import { HeaviestMergerTutor } from './HeaviestMergerTutor'
+import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 20 (docs/experiments/frontier-and-beyond/20-the-heaviest-merger.md).
-// STEPS 2 to 6 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, Picture 2, then Part 2: the learner's own climb): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
+// STEPS 2 to 8 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, Picture 2, Part 2: the learner's own climb, Part 3: the results, then Part 4: the tutor): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
 // "the gap") with its guide, the new-word list, the collapsed "Words and formulas" panel and the "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, results, tutor or
 // chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here
 // says that merging can fill the gap, what a merger's remnant spin is, or what the spins of GW231123 were (CLAUDE.md §12): those are the predictions' answers and the run's results.
@@ -137,6 +138,8 @@ const P_W = P_X1 - P_X0
 
 const GAP_ARROW_COLOR = '#fbbf24' // amber: how much higher a measured spin is than the simple-merger value
 const PART_TWO_COLOR = '#0d9488'
+const PART_THREE_COLOR = '#7c3aed'
+const PART_FOUR_COLOR = '#0066cc'
 const CALC_COLOR = '#38bdf8' // sky blue: a published result that this page uses but did not calculate
 
 const POSSIBLE_PHRASE: Record<PossibleChoice, string> = { no: 'no, it could not', yes: 'yes, it could', unsure: 'not sure' }
@@ -417,6 +420,24 @@ function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { t
   )
 }
 
+function NoteList({ items }: { items: { name: string; what: string; means: string; matters: string; sure: string }[] }) {
+  return (
+    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1rem' }}>
+      <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+        <strong>What this table tells us.</strong>
+      </p>
+      <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+        {items.map((item) => (
+          <li key={item.name} style={{ marginBottom: '0.5rem' }}>
+            <strong>{item.name}:</strong> <strong>What it is:</strong> {item.what} <strong>What it means:</strong> {item.means} <strong>Why it matters:</strong> {item.matters}{' '}
+            <strong>How sure:</strong> {item.sure}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 const lookForEndings: LookFor[] = [
   {
     look: 'the amber star on the left of panel 1, the arrow, and the small dark circle with a red outline on its right.',
@@ -467,9 +488,10 @@ const SPIN_LABELS: Record<SpinGuessChoice, string> = {
 
 interface HeaviestMergerExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimentProps) {
+export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: HeaviestMergerExperimentProps) {
   const g = GW231123
   const [heavier, lighter] = g.masses
   const [possibleGuess, setPossibleGuess] = useState<PossibleChoice | null>(null)
@@ -513,6 +535,11 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
   const check = mergerCheckUp()
   const [mHeavy, mLight, mFinal] = ruler.marks
   const spic = spinPicture()
+  const gapRows = massGapRows()
+  const share = shareComparison()
+  const n1 = (x: number) => String(Number(x.toFixed(1)))
+  const sp2 = (x: number) => x.toFixed(2)
+  const zoneText = { below: 'below the band', in: 'inside the band', above: 'above the band' }
   const mine = trialPicture(massChoice, roundsChoice)
   const masses = mine.rows.map((r) => Number(r.massSolar.toFixed(1)))
   return (
@@ -951,6 +978,309 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
                 </>
               }
             />
+          </div>
+        )}
+
+        {done && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${PART_THREE_COLOR}` }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: PART_THREE_COLOR }}>Part 3: The results</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> Here are the numbers behind the pictures, set out in tables, with a short guide to reading each one. These tables are the real numbers, so they
+              never change with your guesses or with your settings in Part 2.
+            </p>
+
+            <div className="exp-card" style={{ padding: '1rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <strong>Where this stands (as of October 2026).</strong>
+              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Strong evidence</strong> that GW231123 was the heaviest merger of black holes seen so far in gravitational waves, between black holes of about {gapRows[0].massSolar} and {gapRows[1].massSolar} Suns that
+                  were probably spinning fast. The masses and spins have wide give-or-takes, and the total mass depends a little on how the signal is analysed.
+                </li>
+                <li>
+                  <strong>Open:</strong> what made such black holes. Four explanations have been proposed (Table 5). The sources disagree on how likely each is, and this page does not choose between them.
+                </li>
+                <li>
+                  The numbers for the real merger come from LIGO’s summary page and from summaries of the discovery paper’s abstract. The paper itself was not read for this page, so each number should be checked against it.
+                </li>
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <strong>Your predictions, beside the results.</strong> These are your guesses, shown again so that you can find the real number for each. They are not marked here.
+              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Prediction 1</strong> (can two black holes below the gap merge into one inside it?): you guessed <strong>{possibleGuess ? POSSIBLE_PHRASE[possibleGuess] : '…'}</strong>. The real numbers are in
+                  Table 4, in the row “The black hole they make”.
+                </li>
+                <li>
+                  <strong>Prediction 2</strong> (how fast does the black hole made by two equal, non-spinning black holes spin?): you guessed <strong>{spinGuess !== null ? `about ${spinGuess}` : '…'}</strong>. The real number is in
+                  Table 3, in the row “Two equal black holes that do not spin”.
+                </li>
+              </ul>
+            </div>
+
+            <p style={paragraph}>
+              <strong>How to read these results.</strong> A table of numbers is like a blood test: it means little until someone says what each number is and what it is compared with. So each table has a note
+              under it, called “What this table tells us”, that says what the numbers are, what they mean here, why they matter, and how sure we can be of them. The first table is a check-up: it sets each
+              number beside something to compare it with, and says in plain words what the comparison shows. It does not say “good” or “bad”, because none of these numbers has an accepted range.
+              “The band” means the pink band of Picture 1, the gap from theory, {ruler.gapTheory.low} to {ruler.gapTheory.high} Suns.
+            </p>
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 1. Check-up: what we would expect, and what was found</p>
+            <ResultsTable
+              minWidth={640}
+              head={['What we compare', 'What we would expect', 'What was found', 'How to read it']}
+              rows={[
+                [
+                  'Mass before the merger (the two black holes added together)',
+                  `${check.totalRange[0]} to ${check.totalRange[1]} Suns (the range the teams published for the total)`,
+                  `${n1(mHeavy.massSolar)} + ${n1(mLight.massSolar)} = ${n1(check.totalSolar)} Suns (the sum of the two best estimates)`,
+                  check.totalInRange ? 'Inside the published range.' : 'Outside the published range.',
+                ],
+                [
+                  'Mass after the merger',
+                  `${n1(check.totalSolar)} minus ${Math.round(ex.share * 100)} percent = ${n1(check.mergedSolar)} Suns (arithmetic)`,
+                  `more than ${GW231123.finalBestFitSolar} Suns, range ${check.finalRange[0]} to ${check.finalRange[1]} (published)`,
+                  check.mergedInRange ? `The arithmetic’s ${n1(check.mergedSolar)} is inside the published range. The range is wide, so many other values are inside it too.` : 'The arithmetic’s value is outside the published range.',
+                ],
+                [
+                  'Share of the mass sent out as gravitational waves',
+                  `${share.assumedPercent.toFixed(0)} percent (assumed, from GW250114 in Experiment 18)`,
+                  `${share.impliedPercent.toFixed(2)} percent, from (${n1(check.totalSolar)} − ${GW231123.finalBestFitSolar}) ÷ ${n1(check.totalSolar)} (a rough subtraction of best estimates)`,
+                  `${share.differencePoints.toFixed(2)} percentage points apart. Neither is a measured share for GW231123.`,
+                ],
+                [
+                  'Spin of the heavier black hole',
+                  `${sp2(spic.simple)} (the published spin of the black hole that two equal black holes that do not spin make)`,
+                  `${sp2(spic.rows[0].value)} (range ${sp2(spic.rows[0].low)} to ${sp2(spic.rows[0].high)})`,
+                  `${sp2(spic.rows[0].gapFromSimple)} higher. The measured range ${spic.rows[0].rangeIncludesSimple ? 'includes' : 'does not include'} ${sp2(spic.simple)}.`,
+                ],
+                [
+                  'Spin of the lighter black hole',
+                  `${sp2(spic.simple)} (the same published value)`,
+                  `${sp2(spic.rows[1].value)} (range ${sp2(spic.rows[1].low)} to ${sp2(spic.rows[1].high)})`,
+                  `${sp2(spic.rows[1].gapFromSimple)} higher. The measured range ${spic.rows[1].rangeIncludesSimple ? 'includes' : 'does not include'} ${sp2(spic.simple)}.`,
+                ],
+                [
+                  'The lighter black hole, against the gap',
+                  `the band, ${ruler.gapTheory.low} to ${ruler.gapTheory.high} Suns`,
+                  `${n1(gapRows[1].massSolar)} Suns (${n1(gapRows[1].lowSolar)} to ${n1(gapRows[1].highSolar)}), and the teams put the chance that it is in the gap at ${ruler.lighterInGapPercent} percent`,
+                  `The best estimate is ${zoneText[gapRows[1].position.zone]}. Part of the range, from ${n1(gapRows[1].lowSolar)} up to just under ${ruler.gapTheory.low}, is below it.`,
+                ],
+                [
+                  'The heavier black hole, against the gap',
+                  `the band, ${ruler.gapTheory.low} to ${ruler.gapTheory.high} Suns`,
+                  `${n1(gapRows[0].massSolar)} Suns (${n1(gapRows[0].lowSolar)} to ${n1(gapRows[0].highSolar)})`,
+                  `The best estimate is ${gapRows[0].position.aboveBandSolar} Suns ${zoneText[gapRows[0].position.zone]}, and the range ${gapRows[0].rangeOverlapsBand ? 'reaches into it' : 'does not reach it'}.`,
+                ],
+              ]}
+            />
+            <NoteList
+              items={[
+                {
+                  name: 'The mass rows',
+                  what: `the total of the two black holes before the merger, and the mass of the one after, set beside the ranges that the teams published. The “after” expectation is arithmetic only: the sum minus ${Math.round(ex.share * 100)} percent.`,
+                  means: `${n1(check.totalSolar)} Suns is inside the range ${check.totalRange[0]} to ${check.totalRange[1]}, and ${n1(check.mergedSolar)} is inside ${check.finalRange[0]} to ${check.finalRange[1]}. A merger gives a black hole a little lighter than the two added together, as in Experiment 18.`,
+                  matters: 'it shows that the simple sum-minus-a-little rule used in the pictures is consistent with the real merger, within its wide give-or-takes. The same rule is what lets two black holes below the gap make one inside it.',
+                  sure: `the ranges are wide (the total’s spans ${check.totalRange[1] - check.totalRange[0]} Suns), so many other rules would also fit inside them. The ranges come from LIGO’s summary page, not from the paper itself.`,
+                },
+                {
+                  name: 'The share row',
+                  what: `the share of the mass sent out as waves that this page assumed in Picture 1 and Drawing A (${share.assumedPercent.toFixed(0)} percent, from GW250114), set beside what the best estimates of the real merger imply.`,
+                  means: `the best estimates give ${check.impliedRadiatedSolar} Suns lost out of ${n1(check.totalSolar)}, which is ${share.impliedPercent.toFixed(2)} percent, ${share.differencePoints.toFixed(2)} percentage points more than assumed.`,
+                  matters: 'the assumed share is what turned 40 + 40 into 76 and not 80. A different share would move every round of the climb a little. For the four starting masses in Part 2, the first merged black hole is in the same zone at the implied share as at the assumed one.',
+                  sure: 'not very: the best estimates each have a give-or-take, and subtracting them does not combine those. This is a rough check, not a measurement.',
+                },
+                {
+                  name: 'The spin rows',
+                  what: `the spin of each black hole before the merger as the teams measured it, set beside ${sp2(spic.simple)}, the published spin of the black hole made by two equal black holes that do not spin.`,
+                  means: `both best estimates are higher than ${sp2(spic.simple)} (by ${sp2(spic.rows[0].gapFromSimple)} and ${sp2(spic.rows[1].gapFromSimple)}). The heavier one’s whole range is above ${sp2(spic.simple)}, and the lighter one’s range reaches down past it.`,
+                  matters: 'the simple case does not by itself give spins as fast as the best estimates. How such fast spins arose is part of the puzzle of this merger.',
+                  sure: `the heavier black hole’s spin is fairly well pinned (${sp2(spic.rows[0].low)} to ${sp2(spic.rows[0].high)}), the lighter one’s is not (${sp2(spic.rows[1].low)} to ${sp2(spic.rows[1].high)}). The ${sp2(spic.simple)} was read only in a search summary of simulations, not at a paper.`,
+                },
+                {
+                  name: 'The two gap rows',
+                  what: 'where each black hole before the merger sits against the pink band, with its give-or-take and, for the lighter one, the chance the teams give that it is in the gap.',
+                  means: `the lighter black hole’s best estimate, ${n1(gapRows[1].massSolar)}, is inside the band, and ${ruler.lighterInGapPercent} percent of its probability is. The heavier one’s best estimate, ${n1(gapRows[0].massSolar)}, is just above the band, but its range reaches into it.`,
+                  matters: 'single stars are not expected to leave black holes in the gap, so a black hole in it needs another explanation. For the heavier one, the answer depends on where inside its range the true mass lies.',
+                  sure: `the band’s edges are theory (${ruler.gapTheory.low} to ${ruler.gapTheory.high}); a 2025 catalogue analysis put the lower edge nearer ${ruler.gapMeasuredLow.value}, which would put both black holes well above it (Table 2).`,
+                },
+              ]}
+            />
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 2. The three black holes against the gap (measured masses, in Suns)</p>
+            <ResultsTable
+              minWidth={600}
+              head={['Black hole', 'Best estimate (range)', `Against the band (${ruler.gapTheory.low} to ${ruler.gapTheory.high})`, `Against the measured lower edge (${ruler.gapMeasuredLow.value})`]}
+              rows={gapRows.map((r, i) => [
+                r.label,
+                `${i === 2 ? 'more than ' : ''}${n1(r.massSolar)} (${n1(r.lowSolar)} to ${n1(r.highSolar)})`,
+                `${zoneText[r.position.zone]}${r.position.aboveBandSolar !== null ? `, ${n1(r.position.aboveBandSolar)} above its top` : ''}${r.rangeOverlapsBand ? '; the range overlaps the band' : '; the range does not reach the band'}`,
+                `${n1(Math.abs(r.position.overMeasuredEdgeSolar))} ${r.position.overMeasuredEdgeSolar >= 0 ? 'above' : 'below'} it`,
+              ])}
+            />
+            <NoteList
+              items={[
+                {
+                  name: 'The gap table',
+                  what: 'the same three black holes as Picture 1, with how far each is from the two versions of the gap’s edge: the band from theory (a low and a high edge) and the lower edge that a 2025 study of the detectors’ black holes measured, about 44.',
+                  means: `against the measured lower edge, the lighter black hole is ${n1(gapRows[1].position.overMeasuredEdgeSolar)} above it, the heavier ${n1(gapRows[0].position.overMeasuredEdgeSolar)} above it and the one after ${n1(gapRows[2].position.overMeasuredEdgeSolar)} above it, so all three are in or above the gap by that measure.`,
+                  matters: 'whichever edge is used, black holes this heavy are not what single stars are expected to leave. The theory band’s upper edge decides whether the heavier black hole is “in” or “above” the gap, and that edge is not a sharp line.',
+                  sure: 'the masses carry the wide give-or-takes shown. The gap’s edges are the least certain part: one is a theory range, the other a measurement read only through search summaries.',
+                },
+              ]}
+            />
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 3. The spins</p>
+            <ResultsTable
+              minWidth={600}
+              head={['Black hole', 'Spin (range)', `Compared with ${sp2(spic.simple)}`]}
+              rows={[
+                [spic.rows[0].label + ' (measured)', `${sp2(spic.rows[0].value)} (${sp2(spic.rows[0].low)} to ${sp2(spic.rows[0].high)})`, `${sp2(spic.rows[0].gapFromSimple)} higher`],
+                [spic.rows[1].label + ' (measured)', `${sp2(spic.rows[1].value)} (${sp2(spic.rows[1].low)} to ${sp2(spic.rows[1].high)})`, `${sp2(spic.rows[1].gapFromSimple)} higher`],
+                [
+                  `Two equal black holes that do not spin (published)${spinGuess !== null ? ` (Prediction 2: your guess was about ${spinGuess})` : ''}`,
+                  `${sp2(spic.simple)}`,
+                  'the value the others are compared with',
+                ],
+              ]}
+            />
+            <NoteList
+              items={[
+                {
+                  name: 'The spin table',
+                  what: 'the spin of each black hole before the merger as measured, and the published spin of the black hole that a merger of two equal black holes that do not spin makes. Spin runs from 0, not turning, to 1, as fast as is possible.',
+                  means: `the simple merger gives about ${sp2(spic.simple)}. The measured best estimates, ${sp2(spic.rows[0].value)} and ${sp2(spic.rows[1].value)}, are higher. Your guess is named in the last row only so that you can find the real number; the table does not mark it.`,
+                  matters: 'a black hole made by a simple merger of two non-spinning equal black holes is not as fast as the ones that merged here. That is one of the clues scientists use when they look for how these black holes formed.',
+                  sure: `the ${sp2(spic.simple)} is a published result of computer simulations, read only through a search summary. The measured spins come from a summary of the abstract, with the wide ranges shown.`,
+                },
+              ]}
+            />
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 4. Merging by hand (imagined starting masses, calculated here)</p>
+            <ResultsTable
+              minWidth={560}
+              head={['Step', 'Mass (Suns)', 'Where that is']}
+              rows={[
+                [`Two starting black holes, each ${ex.startSolar}`, `${ex.startSolar} each`, zoneText[ex.startZone]],
+                ['Added together', `${ex.startSolar} + ${ex.startSolar} = ${ex.sumSolar}`, 'not a black hole yet: the sum before anything is sent out'],
+                [`Sent out as gravitational waves (${Math.round(ex.share * 100)} percent, assumed)`, `${Number(ex.radiatedSolar.toFixed(2))}`, '–'],
+                [
+                  `The black hole they make${possibleGuess ? ` (Prediction 1: your guess was ${POSSIBLE_PHRASE[possibleGuess]})` : ''}`,
+                  `${ex.sumSolar} − ${Number(ex.radiatedSolar.toFixed(2))} = ${Number(ex.resultSolar.toFixed(2))}`,
+                  zoneText[ex.resultZone],
+                ],
+              ]}
+            />
+            <NoteList
+              items={[
+                {
+                  name: 'The merging table',
+                  what: `the sum from Picture 1, panel B, step by step: two imagined black holes of ${ex.startSolar} Suns, each below the band, are added, a share is taken off for the waves, and the result is placed against the band.`,
+                  means: `the black hole they make has ${Number(ex.resultSolar.toFixed(2))} Suns, which is ${zoneText[ex.resultZone]}, although both starting black holes were ${zoneText[ex.startZone]}. Drawing A in Part 2 carries the same sum through more rounds.`,
+                  matters: 'a black hole in the gap does not by itself show that one star made it: merging can put a black hole there. It does not show that this is how GW231123’s black holes were made.',
+                  sure: `the sum is exact for the numbers used, but ${ex.startSolar} Suns and the ${Math.round(ex.share * 100)} percent are imagined and assumed. The real share depends on the black holes, and for GW231123 the best estimates imply about ${share.impliedPercent.toFixed(1)} percent.`,
+                },
+              ]}
+            />
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 5. What has been proposed to explain GW231123 (as of October 2026)</p>
+            <ResultsTable
+              minWidth={680}
+              head={['Explanation', 'What it says', 'What has been reported', 'How sure']}
+              rows={[
+                [
+                  'Earlier mergers (“hierarchical”)',
+                  'each black hole was itself made by earlier mergers of smaller black holes, probably in a crowded place such as a dense star cluster',
+                  `one analysis counts about ${ORIGIN_FIGURES.firstGenerationCounts[0]} and ${ORIGIN_FIGURES.firstGenerationCounts[1]} first-generation black holes behind the two; another finds it possible, at about ${ORIGIN_FIGURES.hierarchicalClusterChancePercent} percent, that a cluster makes a pair with spins like these`,
+                  'proposed; the sources disagree on how likely it is. Read only through abstracts and summaries.',
+                ],
+                [
+                  'Primordial black holes',
+                  'the black holes formed in the very early universe, not from stars, so the gap does not apply to them',
+                  'a 2025 paper proposes it for GW231123 (arXiv:2508.09965); only its title was read for this page',
+                  'proposed; no primordial black hole has been found for certain.',
+                ],
+                [
+                  'Gravitational lensing',
+                  'something heavy between us and the merger magnified the signal, so the black holes only look as heavy as they do',
+                  `a 2026 analysis favours a lensed reading, with a false-alarm probability below ${ORIGIN_FIGURES.lensingFalseAlarmBelowPercent} percent (about ${ORIGIN_FIGURES.lensingSigmaAtLeast} sigma or more); the total mass would then be ${ORIGIN_FIGURES.lensedTotalRangeSolar[0]} to ${ORIGIN_FIGURES.lensedTotalRangeSolar[1]} Suns, not ${check.totalRange[0]} to ${check.totalRange[1]}`,
+                  'a candidate, not confirmed. Read only through an abstract.',
+                ],
+                [
+                  'Two overlapping signals',
+                  'the signal is really two mergers close together in time, not one',
+                  `a paper (arXiv:2512.17550) finds two overlapping signals favoured over one, with Bayes factors of about ${ORIGIN_FIGURES.overlappingBayesFactorRange[0].toLocaleString('en-US')} to ${ORIGIN_FIGURES.overlappingBayesFactorRange[1].toLocaleString('en-US')}`,
+                  'proposed; only the title and a search summary were read.',
+                ],
+              ]}
+            />
+            <NoteList
+              items={[
+                {
+                  name: 'The explanations table',
+                  what: 'four ideas that scientists have proposed for how a merger like GW231123 could arise, with the main figure each paper reports. A Bayes factor is a number for how much better the data fit one reading than another: 100 means about a hundred times better.',
+                  means: 'they are not all about the same thing. Two (earlier mergers, primordial black holes) are about how such heavy, fast-spinning black holes were made. The other two (lensing, overlapping signals) say that the signal has been misread, so the masses and spins may be different from the ones in Table 2.',
+                  matters: 'two of the ideas could change how big the puzzle is: if the signal was lensed, the true masses could be lower than in Table 2, and if it was two signals, each black hole may be lighter than it looks.',
+                  sure: 'not settled. No paper in this table was read in full, the sources disagree on how likely each idea is, and this page does not choose between them. The tutor goes through them with you.',
+                },
+              ]}
+            />
+
+            <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>The papers and pages behind these numbers.</strong> They were held back until now, because some of them give away what your predictions were about. Links open in a new tab.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <ExternalLink href="https://ligo.org/science-summaries/gw231123/">LIGO: “GW231123: The most massive binary black hole detected through gravitational waves”</ExternalLink>: a short summary with the masses, the final mass, the
+                  spins and why the masses are surprising.
+                </li>
+                <li>
+                  <ExternalLink href="https://ligo.org/detections/gw231123/">LIGO: GW231123</ExternalLink>: the detection page, with the date of the signal and of the announcement.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2507.08219">LIGO, Virgo and KAGRA: “GW231123: a Binary Black Hole Merger with Total Mass 190–265 M☉”</ExternalLink>: the discovery paper. Only its title and author list could be read for this page, so its numbers were taken from summaries.
+                </li>
+                <li>
+                  <ExternalLink href="https://lens.monash.edu/a-forbidden-gap-what-missing-black-holes-reveal-about-exploding-stars/">Monash University: “A ‘forbidden gap’”</ExternalLink> (2 April 2026): a plain-language account of why black holes above about 45
+                  Suns are rare and of how the ones in the gap may have been built by earlier mergers.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2510.14363">“Is GW231123 a hierarchical merger?”</ExternalLink> (arXiv:2510.14363) and{' '}
+                  <ExternalLink href="https://arxiv.org/abs/2604.18709">“Investigating the formation channel of GW231123”</ExternalLink> (arXiv:2604.18709): two papers on the earlier-mergers explanation. Only their abstracts were read.
+                </li>
+                <li>
+                  <ExternalLink href="https://iopscience.iop.org/article/10.3847/2041-8213/ae93b1">“Across the Universe: GW231123 as a Magnified and Diffracted Black Hole Merger”</ExternalLink> (Astrophysical Journal Letters, 25 August 2026): the lensing
+                  reading. Only its abstract was read.
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Part 4, the tutor (after the results): observe, compare with the predictions, a conceptual question, then the explanation. DRAFT wording for the owner's approval. */}
+        {done && possibleGuess !== null && spinGuess !== null && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${PART_FOUR_COLOR}` }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: PART_FOUR_COLOR }}>Part 4: The tutor</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+            </p>
+            <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <li>
+                <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the real
+                results. Third, it asks one bigger question, about how black holes that should not exist could come to exist. Type a few words for each. Nothing is graded, and a short answer is fine.
+              </li>
+              <li>
+                <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses were right until you have answered all three, so you can think it through first.
+              </li>
+              <li>
+                <strong>Then the explanation.</strong> The tutor marks each of your two predictions as matched or not matched, and then goes through what lies behind the numbers in seven short parts: why
+                single stars should not leave these black holes, why merging can fill the gap, what it would take, the clue in the spins, the four proposed explanations, how sure we are, and what was and was
+                not shown. Some parts use a worked sum or an everyday comparison.
+              </li>
+            </ul>
+            <HeaviestMergerTutor possiblePrediction={possibleGuess} spinPrediction={spinGuess} onExplained={onTutorComplete} />
           </div>
         )}
       </div>

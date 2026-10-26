@@ -451,3 +451,125 @@ export function trialPicture(startSolar: number, rounds: number, share: number =
     ],
   }
 }
+
+// ---- Part 3: the results ----
+
+export interface GapPosition {
+  zone: Zone
+  // How far above the top of the theory band (130) the mass is, or null if it is not above it.
+  aboveBandSolar: number | null
+  // How far below the bottom of the theory band (60) the mass is, or null if it is not below it.
+  belowBandSolar: number | null
+  // The mass minus the lower edge that the 2025 catalogue analysis measured (44); negative if below it.
+  overMeasuredEdgeSolar: number
+}
+
+export function gapPosition(massSolar: number): GapPosition {
+  const zone = zoneOf(massSolar)
+  return {
+    zone,
+    aboveBandSolar: zone === 'above' ? round9(massSolar - GAP_THEORY_SOLAR.high) : null,
+    belowBandSolar: zone === 'below' ? round9(GAP_THEORY_SOLAR.low - massSolar) : null,
+    overMeasuredEdgeSolar: round9(massSolar - GAP_MEASURED_LOW_SOLAR.value),
+  }
+}
+
+// Whether a 90 percent range of masses overlaps the theory band at all.
+export function rangeOverlapsGap(lowSolar: number, highSolar: number): boolean {
+  return lowSolar <= GAP_THEORY_SOLAR.high && highSolar >= GAP_THEORY_SOLAR.low
+}
+
+export interface MassGapRow extends MassMark {
+  position: GapPosition
+  rangeOverlapsBand: boolean
+}
+
+export function massGapRows(): MassGapRow[] {
+  return massRuler().marks.map((m) => ({ ...m, position: gapPosition(m.massSolar), rangeOverlapsBand: rangeOverlapsGap(m.lowSolar, m.highSolar) }))
+}
+
+export interface ShareComparison {
+  assumedPercent: number
+  impliedPercent: number
+  // The implied share minus the assumed one, in percentage points.
+  differencePoints: number
+}
+
+// The assumed share against the rough subtraction of GW231123's best estimates (240 before, about 225 after).
+export function shareComparison(): ShareComparison {
+  const c = mergerCheckUp()
+  const assumed = RADIATED_SHARE * 100
+  const implied = c.impliedRadiatedShare * 100
+  return { assumedPercent: assumed, impliedPercent: implied, differencePoints: round9(implied - assumed) }
+}
+
+// The published figures behind the proposed explanations, held as data (read 2026-10-26 through abstracts and search summaries, no paper in full).
+export const ORIGIN_FIGURES = {
+  // arXiv:2510.14363's abstract: "possible (p about 5 percent)" that a binary with spins like these forms in a cluster by hierarchical assembly.
+  hierarchicalClusterChancePercent: 5,
+  // A search summary of papers on hierarchical assembly: successive mergers of about 6 and about 4 first-generation black holes behind the two.
+  firstGenerationCounts: [6, 4] as const,
+  // The 2026 lensing analysis (ApJ Letters, 25 August 2026): a lensed reading favoured with a false-alarm probability below 1 percent (about 2.6 sigma or more), and a total mass of 100 to 180 under it.
+  lensingFalseAlarmBelowPercent: 1,
+  lensingSigmaAtLeast: 2.6,
+  lensedTotalRangeSolar: [100, 180] as const,
+  // arXiv:2512.17550: two overlapping signals favoured over one, with Bayes factors of about 100 to 10,000.
+  overlappingBayesFactorRange: [100, 10_000] as const,
+}
+
+// ---- Part 4: the tutor ----
+
+export interface PossibleGuessResult {
+  guess: PossibleChoice
+  real: PossibleChoice
+  matched: boolean
+  // True when the learner said "not sure" (neither matched nor not matched).
+  unsure: boolean
+}
+
+export function possibleGuessResult(choice: PossibleChoice): PossibleGuessResult {
+  const real = possibleAnswer()
+  return { guess: choice, real, matched: choice === real, unsure: choice === 'unsure' }
+}
+
+export interface SpinGuessResult {
+  guess: number
+  simple: number
+  nearest: SpinGuessChoice
+  matched: boolean
+  // The guess minus the simple-merger value.
+  fromSimple: number
+}
+
+export function spinGuessResult(choice: SpinGuessChoice): SpinGuessResult {
+  const nearest = spinAnswer()
+  return { guess: choice, simple: SIMPLE_MERGER_SPIN, nearest, matched: choice === nearest, fromSimple: round9(choice - SIMPLE_MERGER_SPIN) }
+}
+
+export interface ClimbFacts {
+  // What one merger of two equal black holes multiplies the mass by: 2 x (1 - share).
+  stepFactor: number
+  // The top of the theory band divided by its bottom.
+  bandRatio: number
+  // The heaviest mass below the band after which one equal merger could still reach the band: the band's top divided by the step factor.
+  jumpOverMassSolar: number
+  // True when one step is always shorter than the band is wide, so a climb that starts below the band must land inside it.
+  landsInGapAlways: boolean
+  // Twenty Suns after three rounds, the example in the tutor, and how many starting black holes it takes.
+  twentyAfterThree: number
+  twentyStartingCount: number
+}
+
+export function climbFacts(share: number = RADIATED_SHARE): ClimbFacts {
+  const step = 2 * (1 - share)
+  const jump = round9(GAP_THEORY_SOLAR.high / step)
+  const lad = ladder(20, 3, share)
+  return {
+    stepFactor: round9(step),
+    bandRatio: GAP_THEORY_SOLAR.high / GAP_THEORY_SOLAR.low,
+    jumpOverMassSolar: jump,
+    landsInGapAlways: jump > GAP_THEORY_SOLAR.low,
+    twentyAfterThree: lad[3].massSolar,
+    twentyStartingCount: lad[3].originalCount,
+  }
+}

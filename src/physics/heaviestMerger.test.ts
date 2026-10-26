@@ -23,6 +23,14 @@ import {
   spinGuessGap,
   spinRange,
   spinPicture,
+  climbFacts,
+  possibleGuessResult,
+  spinGuessResult,
+  gapPosition,
+  massGapRows,
+  ORIGIN_FIGURES,
+  rangeOverlapsGap,
+  shareComparison,
   logPosition,
   trialPicture,
   LOG_AXIS_MAX_SOLAR,
@@ -379,6 +387,99 @@ describe('Drawing A: the learner’s climb', () => {
     expect(p.rows.map((r) => r.zone)).toEqual(['below', 'below', 'in', 'above'])
     expect(p.inGapCount).toBe(1)
     expect(trialPicture(20, 1).inGapCount).toBe(0)
+  })
+})
+
+describe('Part 3: the results', () => {
+  it('places each mass against the theory band and the measured lower edge', () => {
+    const lighter = gapPosition(103)
+    expect(lighter.zone).toBe('in')
+    expect(lighter.aboveBandSolar).toBeNull()
+    expect(lighter.belowBandSolar).toBeNull()
+    expect(lighter.overMeasuredEdgeSolar).toBe(59)
+    const heavier = gapPosition(137)
+    expect(heavier.zone).toBe('above')
+    expect(heavier.aboveBandSolar).toBe(7)
+    expect(gapPosition(40).belowBandSolar).toBe(20)
+    expect(gapPosition(40).overMeasuredEdgeSolar).toBe(-4)
+  })
+
+  it('says whether a range overlaps the band: the heavier 120 to 159 and the lighter 51 to 123 do, the final 182 to 251 does not', () => {
+    expect(rangeOverlapsGap(120, 159)).toBe(true)
+    expect(rangeOverlapsGap(51, 123)).toBe(true)
+    expect(rangeOverlapsGap(182, 251)).toBe(false)
+    expect(rangeOverlapsGap(10, 59.9)).toBe(false)
+    expect(rangeOverlapsGap(10, 60)).toBe(true)
+  })
+
+  it('the three real black holes, in rows', () => {
+    const rows = massGapRows()
+    expect(rows.map((r) => r.massSolar)).toEqual([137, 103, 225])
+    expect(rows.map((r) => r.position.zone)).toEqual(['above', 'in', 'above'])
+    expect(rows.map((r) => r.rangeOverlapsBand)).toEqual([true, true, false])
+  })
+
+  it('compares the assumed 5 percent with the 6.25 percent from the best estimates: 1.25 points apart', () => {
+    const c = shareComparison()
+    expect(c.assumedPercent).toBeCloseTo(5, 9)
+    expect(c.impliedPercent).toBeCloseTo(6.25, 9)
+    expect(c.differencePoints).toBeCloseTo(1.25, 9)
+  })
+
+  it('for the four starting masses of Part 2, the first merged black hole is in the same zone at the implied share as at the assumed one', () => {
+    const implied = shareComparison().impliedPercent / 100
+    for (const m of MASS_CHOICES_SOLAR) {
+      expect(zoneOf(merge(m, m, implied))).toBe(zoneOf(merge(m, m)))
+    }
+  })
+
+  it('holds the published figures for the explanations', () => {
+    expect(ORIGIN_FIGURES.hierarchicalClusterChancePercent).toBe(5)
+    expect(ORIGIN_FIGURES.firstGenerationCounts).toEqual([6, 4])
+    expect(ORIGIN_FIGURES.lensedTotalRangeSolar).toEqual([100, 180])
+    expect(ORIGIN_FIGURES.lensingFalseAlarmBelowPercent).toBe(1)
+    expect(ORIGIN_FIGURES.overlappingBayesFactorRange).toEqual([100, 10000])
+  })
+})
+
+describe('Part 4: the tutor', () => {
+  it('marks Prediction 1: yes matches, no does not, not sure is neither', () => {
+    expect(possibleGuessResult('yes')).toEqual({ guess: 'yes', real: 'yes', matched: true, unsure: false })
+    expect(possibleGuessResult('no').matched).toBe(false)
+    expect(possibleGuessResult('no').unsure).toBe(false)
+    expect(possibleGuessResult('unsure').matched).toBe(false)
+    expect(possibleGuessResult('unsure').unsure).toBe(true)
+  })
+
+  it('marks Prediction 2: only the button nearest 0.686 matches, and the difference from it is exact', () => {
+    for (const c of SPIN_GUESS_CHOICES) {
+      expect(spinGuessResult(c).matched).toBe(c === 0.7)
+    }
+    expect(spinGuessResult(0.7).nearest).toBe(0.7)
+    expect(spinGuessResult(0.7).fromSimple).toBeCloseTo(0.014, 9)
+    expect(spinGuessResult(0.1).fromSimple).toBeCloseTo(-0.586, 9)
+  })
+
+  it('one equal merger multiplies the mass by 1.9, the band is 2.17 times as wide as it is low, and so a climb cannot jump over it', () => {
+    const f = climbFacts()
+    expect(f.stepFactor).toBeCloseTo(1.9, 9)
+    expect(f.bandRatio).toBeCloseTo(130 / 60, 9)
+    expect(f.jumpOverMassSolar).toBeCloseTo(130 / 1.9, 6)
+    expect(f.landsInGapAlways).toBe(true)
+    expect(f.twentyAfterThree).toBeCloseTo(137.18, 6)
+    expect(f.twentyStartingCount).toBe(8)
+  })
+
+  it('with no share lost the step is exactly 2, which is still shorter than the band is wide, so the climb still cannot jump over it', () => {
+    expect(climbFacts(0).stepFactor).toBe(2)
+    expect(climbFacts(0).landsInGapAlways).toBe(true)
+  })
+
+  it('a climb that starts below the band lands in it at least once, for every starting mass below it and for the learner’s share', () => {
+    for (let m = 1; m < 60; m += 1.5) {
+      const steps = ladder(m, 12)
+      expect(steps.some((s) => s.zone === 'in')).toBe(true)
+    }
   })
 })
 
