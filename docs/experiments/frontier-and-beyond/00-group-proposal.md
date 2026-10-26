@@ -1,6 +1,6 @@
 # Frontier and Beyond (as of October 2026) — Group Proposal
 
-**NOTE 2026-10-26: Experiment 19 (do black holes ring like bells?) was specified (`19-do-black-holes-ring-like-bells.md`) and built; Experiments 1 to 15, 17, 18 and 19 are built.**
+**NOTE 2026-10-26: Experiments 19 (do black holes ring like bells?) and 20 (the heaviest merger) were specified (`19-do-black-holes-ring-like-bells.md`, `20-the-heaviest-merger.md`) and built; Experiments 1 to 15 and 17 to 20 are built.**
 
 **NOTE 2026-10-25: Experiment 16 (gold, the magnetar flare) was DROPPED at the owner's decision, leaving twenty-three experiments, numbered 1 to 15 and 17 to 24; Experiment 17 was built. Counts of "twenty-four" below are the count when this proposal was approved.**
 

@@ -465,7 +465,7 @@ Set by the owner on 2026-10-24, from the pilot on Experiment 15 of Frontier and 
 7. Tells the learner in the introduction that the predictions never change the real pictures or tables, that the guesses are drawn on them in white and shown again beside the results, and which controls (if any) change which drawings; beside any controls it says that the guesses do not change the drawings or tables but these settings do.
 8. Takes every number for the marks from the tested physics module.
 
-The wording is the human project owner's to approve. It is built so far for Experiments 15, 17, 18 and 19 of Frontier and Beyond and applies to every new experiment. Experiments 1 to 14 and the other groups still follow the earlier rule (their guesses are shown only as text beside the results, and each says that predictions do not change the pictures or tables); the owner decided to audit and update them one at a time after the project is complete.
+The wording is the human project owner's to approve. It is built so far for Experiments 15, 17, 18, 19 and 20 of Frontier and Beyond and applies to every new experiment. Experiments 1 to 14 and the other groups still follow the earlier rule (their guesses are shown only as text beside the results, and each says that predictions do not change the pictures or tables); the owner decided to audit and update them one at a time after the project is complete.
 
 ### Frontier and Beyond: fuller introductions and captions
 

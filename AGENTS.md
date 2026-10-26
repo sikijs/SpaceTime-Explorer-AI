@@ -212,7 +212,7 @@ Every experiment with a prediction:
    beside any controls it says that the guesses do not change the drawings or tables but these settings do.
 8. Takes every number for the marks from the tested physics module.
 
-The wording stays the human's to approve. Built so far: Experiments 15, 17, 18 and 19 of Frontier and Beyond (Experiment 15's commits
+The wording stays the human's to approve. Built so far: Experiments 15, 17, 18, 19 and 20 of Frontier and Beyond (Experiment 15's commits
 are `9ac8311` to `72c84d7`). It applies to every new experiment. Experiments 1 to 14 and the other groups still follow the earlier rule
 (guesses shown only as text); the owner will audit and update them one at a time after the project is complete, and
 until then they are left as they are.
