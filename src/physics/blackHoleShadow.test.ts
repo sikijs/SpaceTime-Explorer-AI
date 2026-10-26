@@ -23,6 +23,10 @@ import {
   horizonAnswer,
   horizonGuessResult,
   guessShadowDiameterKm,
+  pictureOne,
+  horizonAngleMicroarcsec,
+  ratioRulerPosition,
+  sizeGuessMarker,
 } from './blackHoleShadow'
 import { horizonRadiusKm } from './blackHoleSizeExperiment'
 
@@ -165,5 +169,54 @@ describe('the predictions', () => {
     horizonGuessResult(10)
     guessShadowDiameterKm(1, 10)
     expect([realShadowMicroarcsec(M87_STAR), realShadowMicroarcsec(SGR_A_STAR), calculatedSizeRatio()]).toEqual(before)
+  })
+})
+
+describe('Picture 1', () => {
+  it('has the horizon 1 / 2.598 of the shadow in the sky for any black hole, about 15.3 and 19.4 microarcseconds', () => {
+    const pic = pictureOne()
+    for (const r of pic.rows) expect(r.shadowMicroarcsec / r.horizonMicroarcsec).toBeCloseTo(3 * Math.sqrt(3) / 2, 9)
+    expect(pic.rows[0].horizonMicroarcsec).toBeCloseTo(19.38, 1)
+    expect(pic.rows[1].horizonMicroarcsec).toBeCloseTo(15.28, 1)
+    expect(horizonAngleMicroarcsec(1e6, 1e4)).toBeCloseTo(angularSizeMicroarcsec(2 * horizonRadiusKm(1e6), 1e4 * KM_PER_PARSEC), 9)
+  })
+  it('lists Sagittarius A* first and M87* second, with the real data and ratios', () => {
+    const pic = pictureOne()
+    expect(pic.rows.map((r) => r.id)).toEqual(['sgrA', 'm87'])
+    expect(pic.rows[0].ringMicroarcsec).toBe(51.8)
+    expect(pic.rows[1].ringMicroarcsec).toBe(42)
+    expect(pic.rows[0].shadowMicroarcsec).toBeCloseTo(realShadowMicroarcsec(SGR_A_STAR), 12)
+    expect(pic.calculatedRatio).toBeCloseTo(0.788, 2)
+    expect(pic.measuredRatio).toBeCloseTo(0.811, 2)
+  })
+  it('fits both rings and their bands inside the 0 to 60 microarcsecond axis', () => {
+    const pic = pictureOne()
+    for (const r of pic.rows) {
+      expect(r.ringMicroarcsec + r.ringUncertainty).toBeLessThan(pic.axisMaxMicroarcsec)
+      expect(r.shadowMicroarcsec).toBeLessThan(pic.axisMaxMicroarcsec)
+    }
+    expect(pic.barMicroarcsec).toBe(10)
+  })
+  it('puts ratios on a log ruler from 0.1 to 10: 1 in the middle, the ends at 0 and 1', () => {
+    expect(ratioRulerPosition(0.1)).toBeCloseTo(0, 12)
+    expect(ratioRulerPosition(1)).toBeCloseTo(0.5, 12)
+    expect(ratioRulerPosition(10)).toBeCloseTo(1, 12)
+    expect(ratioRulerPosition(2) - 0.5).toBeCloseTo(0.5 - ratioRulerPosition(0.5), 12)
+    expect(ratioRulerPosition(1000)).toBe(1)
+    expect(() => ratioRulerPosition(0)).toThrow(RangeError)
+  })
+  it('puts each guess where its ratio is, and a different guess in a different place', () => {
+    const positions = SIZE_CHOICES.map((c) => sizeGuessMarker(c.id).position)
+    expect(positions).toEqual([...positions].sort((a, b) => b - a))
+    expect(new Set(positions).size).toBe(5)
+    expect(sizeGuessMarker('about-the-same').position).toBeCloseTo(0.5, 12)
+    expect(sizeGuessMarker('a-little-smaller').ratio).toBeCloseTo(1 / 1.5, 12)
+  })
+  it('puts the calculated and measured ratios close together on the ruler, between "a little smaller" and "about the same"', () => {
+    const pic = pictureOne()
+    const calc = ratioRulerPosition(pic.calculatedRatio)
+    expect(calc).toBeLessThan(sizeGuessMarker('about-the-same').position)
+    expect(calc).toBeGreaterThan(sizeGuessMarker('a-little-smaller').position)
+    expect(Math.abs(calc - ratioRulerPosition(pic.measuredRatio))).toBeLessThan(0.02)
   })
 })

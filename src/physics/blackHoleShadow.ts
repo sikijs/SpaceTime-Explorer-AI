@@ -206,3 +206,72 @@ export function guessShadowDiameterKm(massSolar: number, times: number): number 
   checkPositive(times, 'The guess')
   return times * 2 * horizonRadiusKm(massSolar)
 }
+
+// ---- Picture 1 (Step 5): both black holes on one angular scale, and the ratio ruler for Prediction 1's guess ----
+
+// Picture 1's panel A runs from 0 to this many millionths of an arcsecond across; a bar of PICTURE_ONE_BAR_MICROARCSEC is drawn as a scale.
+export const PICTURE_ONE_AXIS_MAX_MICROARCSEC = 60
+export const PICTURE_ONE_BAR_MICROARCSEC = 10
+
+// The horizon's angular width in the sky (its diameter, 2 r_s, over the distance).
+export function horizonAngleMicroarcsec(massSolar: number, distancePc: number): number {
+  checkPositive(distancePc, 'The distance')
+  return angularSizeMicroarcsec(2 * horizonRadiusKm(massSolar), distancePc * KM_PER_PARSEC)
+}
+
+export interface PictureOneRow {
+  id: RealBlackHole['id']
+  name: string
+  massSolar: number
+  distancePc: number
+  horizonMicroarcsec: number // calculated here
+  shadowMicroarcsec: number // calculated here
+  ringMicroarcsec: number // measured
+  ringUncertainty: number // measured
+}
+
+export interface PictureOne {
+  axisMaxMicroarcsec: number
+  barMicroarcsec: number
+  // Sagittarius A* first, then M87* (the ratio is M87* over Sagittarius A*).
+  rows: [PictureOneRow, PictureOneRow]
+  calculatedRatio: number
+  measuredRatio: number
+}
+
+export function pictureOne(): PictureOne {
+  const row = (bh: RealBlackHole): PictureOneRow => ({
+    id: bh.id,
+    name: bh.name,
+    massSolar: bh.massSolar,
+    distancePc: bh.distancePc,
+    horizonMicroarcsec: horizonAngleMicroarcsec(bh.massSolar, bh.distancePc),
+    shadowMicroarcsec: realShadowMicroarcsec(bh),
+    ringMicroarcsec: bh.ringMicroarcsec,
+    ringUncertainty: bh.ringUncertainty,
+  })
+  return {
+    axisMaxMicroarcsec: PICTURE_ONE_AXIS_MAX_MICROARCSEC,
+    barMicroarcsec: PICTURE_ONE_BAR_MICROARCSEC,
+    rows: [row(SGR_A_STAR), row(M87_STAR)],
+    calculatedRatio: calculatedSizeRatio(),
+    measuredRatio: measuredSizeRatio(),
+  }
+}
+
+// Panel B's ruler is a log scale from 0.1 to 10: a ratio of 1 is in the middle, each step to the right multiplies.
+export const RATIO_RULER_MIN = 0.1
+export const RATIO_RULER_MAX = 10
+
+// Where a ratio sits on the ruler, from 0 (left end) to 1 (right end).
+export function ratioRulerPosition(ratio: number): number {
+  checkPositive(ratio, 'The ratio')
+  const pos = (Math.log10(ratio) - Math.log10(RATIO_RULER_MIN)) / (Math.log10(RATIO_RULER_MAX) - Math.log10(RATIO_RULER_MIN))
+  return Math.min(1, Math.max(0, pos))
+}
+
+// Prediction 1's guess as a ratio and as a place on the ruler (a marker only: the guess has its own size in the sky, but the picture compares ratios).
+export function sizeGuessMarker(id: SizeChoiceId): { ratio: number; position: number } {
+  const ratio = sizeChoiceRatio(id)
+  return { ratio, position: ratioRulerPosition(ratio) }
+}

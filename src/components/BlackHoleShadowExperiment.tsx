@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { HORIZON_CHOICES, SIZE_CHOICES } from '../physics/blackHoleShadow'
+import { HORIZON_CHOICES, SIZE_CHOICES, massRatio, pictureOne, ratioRulerPosition, sizeGuessMarker, RATIO_RULER_MIN, RATIO_RULER_MAX } from '../physics/blackHoleShadow'
 import type { HorizonChoice, SizeChoiceId } from '../physics/blackHoleShadow'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { LookForList } from './WideBinariesExperiment'
+import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 21 (docs/experiments/frontier-and-beyond/21-black-hole-shadow.md).
-// STEPS 2 and 4 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
-// and the "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
+// STEPS 2, 4 and 5a (the interface skeleton and the introduction, the two predictions, then the run and Picture 1): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
+// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 with Prediction 1's guess. It has no Picture 2, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
 // the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how big either shadow looks in the sky, how the two compare, or how much
 // wider than the horizon the shadow is (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (the ESO page, which shows both images,
 // and the papers) are listed only after the run, in a later step. The introduction has no illustration; the pictures come with the run.
@@ -39,6 +41,219 @@ function referenceEntries(): { term: string; meaning: string }[] {
   ]
 }
 
+
+// ---- Colours ----
+const TEXT_COLOR = '#e2e8f0'
+const MUTED_COLOR = '#94a3b8'
+const BLACK_HOLE_COLOR = '#f87171' // red: a black hole's edge (its event horizon)
+const CALC_COLOR = '#38bdf8' // sky blue: calculated here
+const MEASURED_COLOR = '#34d399' // green: measured by the Event Horizon Telescope
+const YOURS_COLOR = '#ffffff' // white: the learner's guess
+
+const svgStyle = {
+  display: 'block',
+  maxWidth: '100%',
+  height: 'auto',
+  border: '1px solid var(--border-color, #ccc)',
+  borderRadius: '8px',
+  overflow: 'hidden',
+  backgroundColor: '#0b1020',
+} as const
+
+const VIEW_WIDTH = 560
+
+function SvgLines({ x, y, lines, fill, size = 10, bold = false, anchor = 'start' }: { x: number; y: number; lines: string[]; fill: string; size?: number; bold?: boolean; anchor?: 'start' | 'middle' | 'end' }) {
+  return (
+    <text x={x} y={y} fill={fill} fontSize={size} fontWeight={bold ? 'bold' : 'normal'} textAnchor={anchor}>
+      {lines.map((line, i) => (
+        <tspan key={i} x={x} dy={i === 0 ? 0 : size + 3}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  )
+}
+
+// ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'The two black holes', 'Their horizons', 'Their shadows, calculated', 'The rings, measured', 'The comparison']
+const STAGE_LINES = [
+  '',
+  'The two black holes the Event Horizon Telescope has imaged. Their masses and distances are published numbers.',
+  'Each black hole’s edge, the event horizon, drawn at the size it would look from Earth, on one scale for both.',
+  'The dashed circles are the shadows, calculated here from each black hole’s mass and distance.',
+  'The bright rings are what the telescope measured. The pale band round each is its give-or-take.',
+  'Panel B compares how wide the two shadows look. Your guess is the white box.',
+]
+
+const SIZE_PHRASE: Record<SizeChoiceId, string> = {
+  'much-bigger': 'much wider (about 10 times)',
+  'a-little-bigger': 'a little wider (about 1.5 times)',
+  'about-the-same': 'about the same',
+  'a-little-smaller': 'a little narrower (about 1.5 times)',
+  'much-smaller': 'much narrower (about 10 times)',
+}
+
+function massPhrase(m: number): string {
+  return m >= 1e9 ? `${m / 1e9} billion` : `${m / 1e6} million`
+}
+function distancePhrase(pc: number): string {
+  return pc >= 1e6 ? `${pc / 1e6} Mpc` : `${pc / 1e3} kpc`
+}
+function n1(x: number): string {
+  return x.toFixed(1)
+}
+function n2(x: number): string {
+  return x.toFixed(2)
+}
+
+// Picture 1. Panel A: both black holes on one angular scale. Panel B: the ratio of the two shadows on a log ruler, with Prediction 1's guess (a marker only).
+function PictureOne({ stage, sizeGuess }: { stage: number; sizeGuess: SizeChoiceId | null }) {
+  const pic = pictureOne()
+  const k = 3.2 // pixels per microarcsecond
+  const cy = 178
+  const cxs = [150, 410]
+  const barY = 316
+  const rulerY = 480
+  const rx0 = 60
+  const rx1 = 500
+  const rx = (r: number) => rx0 + ratioRulerPosition(r) * (rx1 - rx0)
+  const height = stage >= 5 ? 580 : 350
+  const guess = sizeGuess ? sizeGuessMarker(sizeGuess) : null
+  const boxW = 330
+  const boxX = guess ? Math.min(540 - boxW, Math.max(20, rx(guess.ratio) - boxW / 2)) : 0
+  const [sgr, m87] = pic.rows
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 1. Panel A: Sagittarius A star and M87 star on one scale of angle in the sky, in millionths of an arcsecond. ${
+        stage >= 2 ? `Each black hole's edge, its event horizon, is a dark circle: about ${n1(sgr.horizonMicroarcsec)} for Sagittarius A star and ${n1(m87.horizonMicroarcsec)} for M87 star. ` : ''
+      }${stage >= 3 ? `A dashed blue circle is each shadow, calculated: about ${n1(sgr.shadowMicroarcsec)} and ${n1(m87.shadowMicroarcsec)}. ` : ''}${
+        stage >= 4 ? `A green ring is each ring as measured: ${sgr.ringMicroarcsec} plus or minus ${sgr.ringUncertainty} and ${m87.ringMicroarcsec} plus or minus ${m87.ringUncertainty}. ` : ''
+      }${
+        stage >= 5
+          ? `Panel B: a ruler from ${RATIO_RULER_MIN} to ${RATIO_RULER_MAX} for how wide M87 star's shadow looks compared with Sagittarius A star's, calculated ${n2(pic.calculatedRatio)} and measured rings ${n2(pic.measuredRatio)}.${
+              sizeGuess ? ` Your guess for Prediction 1, ${SIZE_PHRASE[sizeGuess]}, is a white marker.` : ''
+            }`
+          : ''
+      }`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 1: two black holes on one scale
+      </text>
+      <SvgLines x={20} y={38} lines={['A. Seen from Earth. Angles are in µas, millionths of an arcsecond.']} fill={MUTED_COLOR} />
+
+      {pic.rows.map((r, i) => {
+        const cx = cxs[i]
+        return (
+          <g key={r.id}>
+            <SvgLines x={cx} y={56} lines={[r.name]} fill={TEXT_COLOR} bold size={12} anchor="middle" />
+            <SvgLines
+              x={cx}
+              y={70}
+              lines={[`${massPhrase(r.massSolar)} Suns, ${distancePhrase(r.distancePc)} away`]}
+              fill={MUTED_COLOR}
+              size={9}
+              anchor="middle"
+            />
+            <line x1={cx - 4} y1={cy} x2={cx + 4} y2={cy} stroke={MUTED_COLOR} strokeWidth={1} />
+            <line x1={cx} y1={cy - 4} x2={cx} y2={cy + 4} stroke={MUTED_COLOR} strokeWidth={1} />
+            {stage >= 4 && (
+              <g>
+                <circle cx={cx} cy={cy} r={(r.ringMicroarcsec / 2) * k} fill="none" stroke={MEASURED_COLOR} strokeOpacity={0.3} strokeWidth={r.ringUncertainty * k} />
+                <circle cx={cx} cy={cy} r={(r.ringMicroarcsec / 2) * k} fill="none" stroke={MEASURED_COLOR} strokeWidth={2.5} />
+              </g>
+            )}
+            {stage >= 3 && <circle cx={cx} cy={cy} r={(r.shadowMicroarcsec / 2) * k} fill="none" stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="6 4" />}
+            {stage >= 2 && <circle cx={cx} cy={cy} r={(r.horizonMicroarcsec / 2) * k} fill="#05070f" stroke={BLACK_HOLE_COLOR} strokeWidth={2.5} />}
+            <SvgLines
+              x={cx}
+              y={cy + 106}
+              lines={[
+                ...(stage >= 2 ? [`edge: ${n1(r.horizonMicroarcsec)} µas`] : []),
+                ...(stage >= 3 ? [`shadow (calculated): ${n1(r.shadowMicroarcsec)} µas`] : []),
+                ...(stage >= 4 ? [`ring (measured): ${r.ringMicroarcsec} ± ${r.ringUncertainty} µas`] : []),
+              ]}
+              fill={TEXT_COLOR}
+              size={9}
+              anchor="middle"
+            />
+          </g>
+        )
+      })}
+      <line x1={20} y1={barY + 14} x2={20 + pic.barMicroarcsec * k} y2={barY + 14} stroke={TEXT_COLOR} strokeWidth={2} />
+      <SvgLines x={20 + pic.barMicroarcsec * k + 8} y={barY + 18} lines={[`scale bar: ${pic.barMicroarcsec} µas`]} fill={MUTED_COLOR} size={9} />
+      <SvgLines x={540} y={barY + 18} lines={['Both drawn on the same scale']} fill={MUTED_COLOR} size={9} anchor="end" />
+
+      {stage >= 5 && (
+        <g>
+          <line x1={20} y1={354} x2={540} y2={354} stroke={MUTED_COLOR} strokeWidth={1} strokeDasharray="3 4" />
+          <SvgLines x={20} y={376} lines={['B. How wide M87*’s shadow looks, compared with Sagittarius A*’s']} fill={TEXT_COLOR} bold size={11} />
+          <SvgLines x={20} y={392} lines={['A ruler of ratios, not of angles: 1 is the same width; each step to the right multiplies (10 is ten times as wide).']} fill={MUTED_COLOR} size={9} />
+          <line x1={rx0} y1={rulerY} x2={rx1} y2={rulerY} stroke={MUTED_COLOR} strokeWidth={1} />
+          {[0.1, 0.5, 1, 2, 10].map((t) => (
+            <g key={t}>
+              <line x1={rx(t)} y1={rulerY} x2={rx(t)} y2={rulerY + 5} stroke={MUTED_COLOR} />
+              <SvgLines x={rx(t)} y={rulerY + 17} lines={[String(t)]} fill={MUTED_COLOR} size={9} anchor="middle" />
+            </g>
+          ))}
+          <SvgLines x={rx1} y={rulerY + 31} lines={['M87*’s shadow ÷ Sagittarius A*’s shadow']} fill={MUTED_COLOR} size={9} anchor="end" />
+          <line x1={rx(pic.calculatedRatio)} y1={rulerY - 40} x2={rx(pic.calculatedRatio)} y2={rulerY} stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="5 3" />
+          <line x1={rx(pic.measuredRatio)} y1={rulerY - 28} x2={rx(pic.measuredRatio)} y2={rulerY} stroke={MEASURED_COLOR} strokeWidth={2} />
+          <SvgLines x={rx(pic.calculatedRatio) - 4} y={rulerY - 46} lines={[`shadows, calculated: ${n2(pic.calculatedRatio)}`]} fill={CALC_COLOR} bold size={10} anchor="end" />
+          <SvgLines x={rx(pic.measuredRatio) + 6} y={rulerY - 32} lines={[`rings, measured: ${n2(pic.measuredRatio)}`]} fill={MEASURED_COLOR} bold size={10} />
+          {guess && sizeGuess && (
+            <g>
+              <line x1={rx(guess.ratio)} y1={rulerY} x2={rx(guess.ratio)} y2={rulerY + 52} stroke={YOURS_COLOR} strokeWidth={4} />
+              <polygon points={`${rx(guess.ratio)},${rulerY} ${rx(guess.ratio) - 7},${rulerY + 12} ${rx(guess.ratio) + 7},${rulerY + 12}`} fill={YOURS_COLOR} />
+              <rect x={boxX} y={rulerY + 52} width={boxW} height={28} rx={4} fill="#0b1020" stroke={YOURS_COLOR} strokeWidth={2.5} />
+              <SvgLines x={boxX + boxW / 2} y={rulerY + 70} lines={[`YOUR GUESS: ${SIZE_PHRASE[sizeGuess]}`]} fill={YOURS_COLOR} bold size={10} anchor="middle" />
+            </g>
+          )}
+        </g>
+      )}
+    </svg>
+  )
+}
+
+const captionParagraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+
+function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { title: string; intro: ReactNode; bullets: ReactNode[]; worked: ReactNode | null; lookFor: LookFor[]; whereFrom: ReactNode }) {
+  return (
+    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' }}>
+      <p style={captionParagraph}>
+        <strong>How to read {title}.</strong> {intro}
+      </p>
+      <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+        {bullets.map((b, i) => (
+          <li key={i}>{b}</li>
+        ))}
+      </ul>
+      {worked !== null && (
+        <p style={captionParagraph}>
+          <strong>A worked moment.</strong> {worked}
+        </p>
+      )}
+      {lookFor.length > 0 && (
+        <>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <strong>What to look for.</strong>
+          </p>
+          <LookForList items={lookFor} />
+        </>
+      )}
+      <p style={{ ...captionParagraph, marginTop: '0.75rem' }}>
+        <strong>Where the real picture comes from.</strong> {whereFrom}
+      </p>
+    </div>
+  )
+}
+
 const SIZE_LABELS: Record<SizeChoiceId, string> = {
   'much-bigger': 'Much bigger (about 10 times as wide)',
   'a-little-bigger': 'A little bigger (about 1.5 times as wide)',
@@ -55,16 +270,45 @@ const HORIZON_LABELS: Record<HorizonChoice, string> = {
   10: 'About 10 times as wide',
 }
 
-export function BlackHoleShadowExperiment() {
+interface BlackHoleShadowExperimentProps {
+  onComplete?: () => void
+  onTutorComplete?: () => void
+}
+
+export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperimentProps) {
   const [sizeGuess, setSizeGuess] = useState<SizeChoiceId | null>(null)
   const [horizonGuess, setHorizonGuess] = useState<HorizonChoice | null>(null)
-  const [recorded, setRecorded] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = sizeGuess !== null && horizonGuess !== null
+
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+
   const startOver = () => {
     setSizeGuess(null)
     setHorizonGuess(null)
-    setRecorded(false)
+    setStatus('idle')
+    setStage(0)
   }
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
+  const pic = pictureOne()
+  const [sgrRow, m87Row] = pic.rows
   return (
     <div>
       <h2>Experiment 21 — Can We Photograph a Black Hole’s Shadow? (Event Horizon Telescope)</h2>
@@ -344,7 +588,7 @@ export function BlackHoleShadowExperiment() {
             </div>
           ))}
 
-          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
             Run
           </button>
           {recorded && (
@@ -355,11 +599,83 @@ export function BlackHoleShadowExperiment() {
           {!bothPredicted && !recorded && (
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
           )}
-          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
-            {recorded
-              ? 'Your predictions are recorded and not marked here. The run and its pictures are built in a later step.'
-              : 'The pictures fill in, one stage at a time, after you press Run (built in a later step).'}
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The picture fills in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
+                {done
+                  ? 'Picture 1 is drawn. Your predictions are recorded and not marked here. The picture of the shadow and the horizon (Picture 2) is not built yet (a later step).'
+                  : STAGE_LINES[stage]}
+              </span>
+            )}
           </p>
+
+          {stage >= 1 && (
+            <div>
+              <PictureOne stage={stage} sizeGuess={sizeGuess} />
+              <CaptionBlock
+                title="Picture 1"
+                intro={`Panel A draws both black holes on the same scale of angle in the sky. “µas” stands for a millionth of an arcsecond, and the bar at the bottom of panel A shows ${pic.barMicroarcsec} µas. Panel B, which appears last, is on a different scale.`}
+                bullets={[
+                  ...(stage >= 2 ? [<><strong>The dark solid circle</strong> is a black hole’s edge, its event horizon.</>] : []),
+                  ...(stage >= 3 ? [<><strong>The dashed circle</strong> is its calculated shadow.</>] : []),
+                  ...(stage >= 4 ? [<><strong>The bright ring with a pale band</strong> is the measured ring and its give-or-take.</>] : []),
+                  ...(stage >= 5
+                    ? [
+                        <><strong>Panel B</strong> is a ruler on a different scale, which shows the <em>ratio</em> of the two shadows. 1 means the same width. Each step to the right is a multiplication, so 10 is ten times as wide and 0.1 is ten times narrower.</>,
+                        <><strong>The white box</strong> is your guess. It is only a marker, because a guess has no size of its own here.</>,
+                      ]
+                    : []),
+                ]}
+                worked={
+                  stage >= 4 ? (
+                    <>
+                      Sagittarius A* ring: about {sgrRow.ringMicroarcsec} µas. M87* ring: about {m87Row.ringMicroarcsec} µas. Divide {m87Row.ringMicroarcsec} ÷ {sgrRow.ringMicroarcsec} and you get about{' '}
+                      {n2(pic.measuredRatio)}. So the M87* ring is a little narrower than Sagittarius A*’s.
+                    </>
+                  ) : null
+                }
+                lookFor={[
+                  ...(stage >= 3
+                    ? [
+                        {
+                          look: 'the dashed circles in panel A.',
+                          means: `the calculated shadow of M87* is about ${n1(m87Row.shadowMicroarcsec)} µas and of Sagittarius A* about ${n1(sgrRow.shadowMicroarcsec)} µas. They are close in width even though the masses differ by about ${Math.round(massRatio() / 100) * 100} times.`,
+                          matters: 'mass is only half of what sets how wide a shadow looks.',
+                        },
+                      ]
+                    : []),
+                  ...(stage >= 4
+                    ? [
+                        {
+                          look: 'the bright rings.',
+                          means: `the measured rings are about ${m87Row.ringMicroarcsec} and ${sgrRow.ringMicroarcsec} µas. They sit close to the dashed circles but are not the same circles.`,
+                          matters: 'the rings are gas and the shadows are calculated, so how close they come is a real test.',
+                        },
+                      ]
+                    : []),
+                  ...(stage >= 5
+                    ? [
+                        {
+                          look: 'panel B.',
+                          means: `the calculated and measured ratios sit at about ${n2(pic.calculatedRatio)} and ${n2(pic.measuredRatio)}, with your white box beside them.`,
+                          matters: 'it shows in one glance whether your guess was above, below or close to the real result. The tutor says what that means.',
+                        },
+                      ]
+                    : []),
+                ]}
+                whereFrom={
+                  <>
+                    <strong>Measured (by the Event Horizon Telescope):</strong> the ring sizes, {m87Row.ringMicroarcsec} ± {m87Row.ringUncertainty} µas for M87* and {sgrRow.ringMicroarcsec} ± {sgrRow.ringUncertainty} µas for
+                    Sagittarius A*, and the masses and distances behind them. <strong>Calculated here:</strong> the horizons, the shadows and the ratios, from one formula. <strong>Imagined:</strong>{' '}
+                    nothing. Your guess is drawn in white and never changes the real picture.
+                  </>
+                }
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
