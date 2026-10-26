@@ -45,9 +45,9 @@ function referenceEntries(): { term: string; meaning: string }[] {
 // ---- Colours ----
 const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
-const BLACK_HOLE_COLOR = '#f87171' // red: a black hole's edge (its event horizon)
-const CALC_COLOR = '#38bdf8' // sky blue: calculated here
-const MEASURED_COLOR = '#34d399' // green: measured by the Event Horizon Telescope
+const BLACK_HOLE_COLOR = '#a78bfa' // violet: a black hole's edge (its event horizon)
+const CALC_COLOR = '#22d3ee' // cyan: calculated here (the shadow)
+const MEASURED_COLOR = '#fb923c' // orange: measured by the Event Horizon Telescope (the ring)
 const YOURS_COLOR = '#ffffff' // white: the learner's guess
 
 const svgStyle = {
@@ -82,8 +82,8 @@ const STAGE_LINES = [
   '',
   'The two black holes the Event Horizon Telescope has imaged. Their masses and distances are published numbers.',
   'Each black hole’s edge, the event horizon, drawn at the size it would look from Earth, on one scale for both.',
-  'The dashed circles are the shadows, calculated here from each black hole’s mass and distance.',
-  'The bright rings are what the telescope measured. The pale band round each is its give-or-take.',
+  'The dashed cyan circles are the shadows, calculated here from each black hole’s mass and distance.',
+  'The orange rings are what the telescope measured. The pale band round each is its give-or-take.',
   'Panel B compares how wide the two shadows look. Your guess is the white box.',
 ]
 
@@ -114,12 +114,12 @@ function PictureOne({ stage, sizeGuess }: { stage: number; sizeGuess: SizeChoice
   const k = 3.2 // pixels per microarcsecond
   const cy = 178
   const cxs = [150, 410]
-  const barY = 316
-  const rulerY = 480
+  const barY = 330
+  const rulerY = 494
   const rx0 = 60
   const rx1 = 500
   const rx = (r: number) => rx0 + ratioRulerPosition(r) * (rx1 - rx0)
-  const height = stage >= 5 ? 580 : 350
+  const height = stage >= 5 ? 595 : 365
   const guess = sizeGuess ? sizeGuessMarker(sizeGuess) : null
   const boxW = 330
   const boxX = guess ? Math.min(540 - boxW, Math.max(20, rx(guess.ratio) - boxW / 2)) : 0
@@ -133,8 +133,8 @@ function PictureOne({ stage, sizeGuess }: { stage: number; sizeGuess: SizeChoice
       role="img"
       aria-label={`Picture 1. Panel A: Sagittarius A star and M87 star on one scale of angle in the sky, in millionths of an arcsecond. ${
         stage >= 2 ? `Each black hole's edge, its event horizon, is a dark circle: about ${n1(sgr.horizonMicroarcsec)} for Sagittarius A star and ${n1(m87.horizonMicroarcsec)} for M87 star. ` : ''
-      }${stage >= 3 ? `A dashed blue circle is each shadow, calculated: about ${n1(sgr.shadowMicroarcsec)} and ${n1(m87.shadowMicroarcsec)}. ` : ''}${
-        stage >= 4 ? `A green ring is each ring as measured: ${sgr.ringMicroarcsec} plus or minus ${sgr.ringUncertainty} and ${m87.ringMicroarcsec} plus or minus ${m87.ringUncertainty}. ` : ''
+      }${stage >= 3 ? `A dashed cyan circle is each shadow, calculated: about ${n1(sgr.shadowMicroarcsec)} and ${n1(m87.shadowMicroarcsec)}. ` : ''}${
+        stage >= 4 ? `An orange ring is each ring as measured: ${sgr.ringMicroarcsec} plus or minus ${sgr.ringUncertainty} and ${m87.ringMicroarcsec} plus or minus ${m87.ringUncertainty}. ` : ''
       }${
         stage >= 5
           ? `Panel B: a ruler from ${RATIO_RULER_MIN} to ${RATIO_RULER_MAX} for how wide M87 star's shadow looks compared with Sagittarius A star's, calculated ${n2(pic.calculatedRatio)} and measured rings ${n2(pic.measuredRatio)}.${
@@ -165,24 +165,20 @@ function PictureOne({ stage, sizeGuess }: { stage: number; sizeGuess: SizeChoice
             <line x1={cx} y1={cy - 4} x2={cx} y2={cy + 4} stroke={MUTED_COLOR} strokeWidth={1} />
             {stage >= 4 && (
               <g>
-                <circle cx={cx} cy={cy} r={(r.ringMicroarcsec / 2) * k} fill="none" stroke={MEASURED_COLOR} strokeOpacity={0.3} strokeWidth={r.ringUncertainty * k} />
-                <circle cx={cx} cy={cy} r={(r.ringMicroarcsec / 2) * k} fill="none" stroke={MEASURED_COLOR} strokeWidth={2.5} />
+                <circle cx={cx} cy={cy} r={(r.ringMicroarcsec / 2) * k} fill="none" stroke={MEASURED_COLOR} strokeOpacity={0.35} strokeWidth={r.ringUncertainty * k} />
+                <circle cx={cx} cy={cy} r={(r.ringMicroarcsec / 2) * k} fill="none" stroke={MEASURED_COLOR} strokeWidth={3} />
               </g>
             )}
-            {stage >= 3 && <circle cx={cx} cy={cy} r={(r.shadowMicroarcsec / 2) * k} fill="none" stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="6 4" />}
+            {stage >= 3 && (
+              <g>
+                <circle cx={cx} cy={cy} r={(r.shadowMicroarcsec / 2) * k} fill="none" stroke="#0b1020" strokeWidth={5} />
+                <circle cx={cx} cy={cy} r={(r.shadowMicroarcsec / 2) * k} fill="none" stroke={CALC_COLOR} strokeWidth={2.5} strokeDasharray="7 5" />
+              </g>
+            )}
             {stage >= 2 && <circle cx={cx} cy={cy} r={(r.horizonMicroarcsec / 2) * k} fill="#05070f" stroke={BLACK_HOLE_COLOR} strokeWidth={2.5} />}
-            <SvgLines
-              x={cx}
-              y={cy + 106}
-              lines={[
-                ...(stage >= 2 ? [`edge: ${n1(r.horizonMicroarcsec)} µas`] : []),
-                ...(stage >= 3 ? [`shadow (calculated): ${n1(r.shadowMicroarcsec)} µas`] : []),
-                ...(stage >= 4 ? [`ring (measured): ${r.ringMicroarcsec} ± ${r.ringUncertainty} µas`] : []),
-              ]}
-              fill={TEXT_COLOR}
-              size={9}
-              anchor="middle"
-            />
+            {stage >= 2 && <SvgLines x={cx} y={cy + 106} lines={[`violet solid circle: edge ${n1(r.horizonMicroarcsec)} µas`]} fill={BLACK_HOLE_COLOR} size={9} bold anchor="middle" />}
+            {stage >= 3 && <SvgLines x={cx} y={cy + 119} lines={[`cyan dashed circle: shadow, calculated ${n1(r.shadowMicroarcsec)} µas`]} fill={CALC_COLOR} size={9} bold anchor="middle" />}
+            {stage >= 4 && <SvgLines x={cx} y={cy + 132} lines={[`orange ring: measured ${r.ringMicroarcsec} ± ${r.ringUncertainty} µas`]} fill={MEASURED_COLOR} size={9} bold anchor="middle" />}
           </g>
         )
       })}
@@ -192,9 +188,9 @@ function PictureOne({ stage, sizeGuess }: { stage: number; sizeGuess: SizeChoice
 
       {stage >= 5 && (
         <g>
-          <line x1={20} y1={354} x2={540} y2={354} stroke={MUTED_COLOR} strokeWidth={1} strokeDasharray="3 4" />
-          <SvgLines x={20} y={376} lines={['B. How wide M87*’s shadow looks, compared with Sagittarius A*’s']} fill={TEXT_COLOR} bold size={11} />
-          <SvgLines x={20} y={392} lines={['A ruler of ratios, not of angles: 1 is the same width; each step to the right multiplies (10 is ten times as wide).']} fill={MUTED_COLOR} size={9} />
+          <line x1={20} y1={368} x2={540} y2={368} stroke={MUTED_COLOR} strokeWidth={1} strokeDasharray="3 4" />
+          <SvgLines x={20} y={390} lines={['B. How wide M87*’s shadow looks, compared with Sagittarius A*’s']} fill={TEXT_COLOR} bold size={11} />
+          <SvgLines x={20} y={406} lines={['A ruler of ratios, not of angles: 1 is the same width; each step to the right multiplies (10 is ten times as wide).']} fill={MUTED_COLOR} size={9} />
           <line x1={rx0} y1={rulerY} x2={rx1} y2={rulerY} stroke={MUTED_COLOR} strokeWidth={1} />
           {[0.1, 0.5, 1, 2, 10].map((t) => (
             <g key={t}>
@@ -619,9 +615,18 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
                 title="Picture 1"
                 intro={`Panel A draws both black holes on the same scale of angle in the sky. “µas” stands for a millionth of an arcsecond, and the bar at the bottom of panel A shows ${pic.barMicroarcsec} µas. Panel B, which appears last, is on a different scale.`}
                 bullets={[
-                  ...(stage >= 2 ? [<><strong>The dark solid circle</strong> is a black hole’s edge, its event horizon.</>] : []),
-                  ...(stage >= 3 ? [<><strong>The dashed circle</strong> is its calculated shadow.</>] : []),
-                  ...(stage >= 4 ? [<><strong>The bright ring with a pale band</strong> is the measured ring and its give-or-take.</>] : []),
+                  ...(stage >= 2
+                    ? [<><strong>Each black hole is drawn as circles round the same centre, added one at a time. Each circle means something different.</strong> They are all on the same scale, so you can compare them.</>]
+                    : []),
+                  ...(stage >= 2
+                    ? [<><strong>The small dark circle with a violet outline</strong> is the black hole itself: its edge, called the event horizon. Anything that crosses this edge never comes back out. We work out its size from the black hole’s mass.</>]
+                    : []),
+                  ...(stage >= 3
+                    ? [<><strong>The dashed cyan circle</strong> is the black hole’s <strong>shadow</strong>: the dark patch we expect to see. We do not photograph it. We <em>calculate</em> its size with a formula, from the black hole’s mass and its distance from us.</>]
+                    : []),
+                  ...(stage >= 4
+                    ? [<><strong>The solid orange ring, with a pale orange band round it,</strong> is what the telescope <em>actually photographed</em>: the bright ring of glowing gas. We <em>measure</em> how wide it looks. The pale band is the <strong>give-or-take</strong>: the true width could be anywhere inside the band. The two circles this experiment compares are <strong>the dashed cyan circle (calculated)</strong> and <strong>the solid orange ring (measured)</strong>.</>]
+                    : []),
                   ...(stage >= 5
                     ? [
                         <><strong>Panel B</strong> is a ruler on a different scale, which shows the <em>ratio</em> of the two shadows. 1 means the same width. Each step to the right is a multiplication, so 10 is ten times as wide and 0.1 is ten times narrower.</>,
@@ -641,7 +646,7 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
                   ...(stage >= 3
                     ? [
                         {
-                          look: 'the dashed circles in panel A.',
+                          look: 'the dashed cyan circles in panel A.',
                           means: `the calculated shadow of M87* is about ${n1(m87Row.shadowMicroarcsec)} µas and of Sagittarius A* about ${n1(sgrRow.shadowMicroarcsec)} µas. They are close in width even though the masses differ by about ${Math.round(massRatio() / 100) * 100} times.`,
                           matters: 'mass is only half of what sets how wide a shadow looks.',
                         },
@@ -650,8 +655,8 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
                   ...(stage >= 4
                     ? [
                         {
-                          look: 'the bright rings.',
-                          means: `the measured rings are about ${m87Row.ringMicroarcsec} and ${sgrRow.ringMicroarcsec} µas. They sit close to the dashed circles but are not the same circles.`,
+                          look: 'the solid orange rings.',
+                          means: `the measured rings are about ${m87Row.ringMicroarcsec} and ${sgrRow.ringMicroarcsec} µas. They sit close to the dashed cyan circles but are not the same circles.`,
                           matters: 'the rings are gas and the shadows are calculated, so how close they come is a real test.',
                         },
                       ]
