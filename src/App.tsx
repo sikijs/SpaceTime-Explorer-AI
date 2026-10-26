@@ -20,6 +20,7 @@ import { FailedSupernovaExperiment } from './components/FailedSupernovaExperimen
 import { HorizonAreaLawExperiment } from './components/HorizonAreaLawExperiment'
 import { BlackHoleRingdownExperiment } from './components/BlackHoleRingdownExperiment'
 import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
+import { climbFacts, exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, ORIGIN_FIGURES, spinPicture } from './physics/heaviestMerger'
 import { checkUp as ringdownCheckUp, FASTER_SPIN, GW250114_RINGDOWN, pitchGuessResult, ringingWorked, SECOND_TONE_SIGNIFICANCE } from './physics/blackHoleRingdown'
 import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
 import { FAILED_SUPERNOVA_DATA, runCheckUp, SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES } from './physics/failedSupernova'
@@ -188,6 +189,28 @@ function blackHoleRingdownSummary(): string {
     `General relativity says that a settled black hole has no features beyond its mass and spin (“no hair”), so its pitch and fade time are fixed by those two numbers, and the ringing is a test of them. ` +
     `For the main tone the test was passed, to a few percent. This is strong evidence, from one very clear event, that a prediction of general relativity holds; it is not a new law. The second, faster-fading tone is weaker ` +
     `evidence (${SECOND_TONE_SIGNIFICANCE.earlierPercent} to ${SECOND_TONE_SIGNIFICANCE.laterPercent} percent, depending on the analysis), the formula is itself good only to a few percent, and the give-or-takes of the mass and spin are not combined on this page.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 20 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// drift from the page.
+function heaviestMergerSummary(): string {
+  const r = massRuler()
+  const ex = exampleMerger()
+  const f = climbFacts()
+  const sp = spinPicture()
+  const [heavier, lighter] = GW231123.masses
+  const n = (x: number) => String(Number(x.toFixed(1)))
+  return (
+    `Black holes that should not exist: how can a merger contain them? Stars in a certain range of very heavy weights are expected to blow themselves apart, leaving no black hole, so black holes should be rare or absent between about ` +
+    `${GAP_THEORY_SOLAR.low} and ${GAP_THEORY_SOLAR.high} Suns (a 2025 study put the lower edge nearer ${GAP_MEASURED_LOW_SOLAR.value}). In ${GW231123.detected.slice(3)} the detectors recorded GW231123, a merger of two black holes of about ${heavier.value} and ${lighter.value} Suns ` +
+    `(the lighter one’s mass is only known to lie between about ${n(lighter.value - lighter.minus)} and ${n(lighter.value + lighter.plus)}, with a 90 percent chance) into one of more than ${GW231123.finalBestFitSolar}, the heaviest seen so far in gravitational waves, and both were probably spinning fast ` +
+    `(${sp.rows[0].value.toFixed(2)} and ${sp.rows[1].value.toFixed(2)}). The teams put the chance that the lighter one is in the gap at ${r.lighterInGapPercent} percent. Merging can fill the gap: two black holes of ${ex.startSolar} Suns, each below it, make ` +
+    `${ex.startSolar} + ${ex.startSolar} − ${n(ex.radiatedSolar)} = ${n(ex.resultSolar)}, inside it, because each equal merger multiplies the mass by ${f.stepFactor.toFixed(2)}, which is less than the gap’s upper edge divided by its lower edge, ${f.bandRatio.toFixed(2)}, so a climb that starts below the gap has to land in it. ` +
+    `But the spins are a clue: two equal black holes that do not spin make one that spins at about ${sp.simple.toFixed(2)}, and the measured best estimates are ${sp.rows[0].gapFromSimple.toFixed(2)} and ${sp.rows[1].gapFromSimple.toFixed(2)} higher. Four explanations have been proposed: earlier mergers, ` +
+    `primordial black holes, gravitational lensing (which would make the total ${ORIGIN_FIGURES.lensedTotalRangeSolar[0]} to ${ORIGIN_FIGURES.lensedTotalRangeSolar[1]} Suns) and two overlapping signals. None is confirmed, and the papers disagree on how likely each is. ` +
+    `So there is strong evidence for what was seen, and what made it is open. The numbers come from LIGO’s summary page and from summaries of the discovery paper’s abstract, which was not read, the ${Math.round(ex.share * 100)} percent sent out as waves is assumed from GW250114, ` +
+    `and the ${sp.simple.toFixed(2)} was read only in a summary of simulations.`
   )
 }
 
@@ -861,17 +884,17 @@ const chapters: Chapter[] = [
     title: 'Do black holes ring like bells? (GW250114’s ringdown and the “no-hair” test)',
     group: 'Frontier and Beyond',
     Component: BlackHoleRingdownExperiment,
-    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" names no experiment, because
-    // Experiment 20 has no approved specification.
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleRingdownSummary(),
-    next: 'None yet, because Experiment 20 has no approved specification.',
+    next: 'Experiment 20 asks about black holes that seem too heavy to exist. Single stars should leave no black holes in a range of masses, yet the heaviest merger seen so far contains black holes in or above that range. How could that be?',
   },
   {
     title: 'Black holes that should not exist: the heaviest merger (GW231123)',
     group: 'Frontier and Beyond',
     Component: HeaviestMergerExperiment,
-    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
-    learned: 'The chapter summary of this experiment is not written yet.',
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" names no experiment, because
+    // Experiment 21 has no approved specification.
+    learned: heaviestMergerSummary(),
     next: 'None yet, because Experiment 21 has no approved specification.',
   },
 ]
