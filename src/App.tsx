@@ -19,6 +19,7 @@ import { NeutronStarSizeExperiment } from './components/NeutronStarSizeExperimen
 import { FailedSupernovaExperiment } from './components/FailedSupernovaExperiment'
 import { HorizonAreaLawExperiment } from './components/HorizonAreaLawExperiment'
 import { BlackHoleRingdownExperiment } from './components/BlackHoleRingdownExperiment'
+import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
 import { checkUp as ringdownCheckUp, FASTER_SPIN, GW250114_RINGDOWN, pitchGuessResult, ringingWorked, SECOND_TONE_SIGNIFICANCE } from './physics/blackHoleRingdown'
 import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
 import { FAILED_SUPERNOVA_DATA, runCheckUp, SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES } from './physics/failedSupernova'
@@ -864,6 +865,14 @@ const chapters: Chapter[] = [
     // Experiment 20 has no approved specification.
     learned: blackHoleRingdownSummary(),
     next: 'None yet, because Experiment 20 has no approved specification.',
+  },
+  {
+    title: 'Black holes that should not exist: the heaviest merger (GW231123)',
+    group: 'Frontier and Beyond',
+    Component: HeaviestMergerExperiment,
+    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
+    learned: 'The chapter summary of this experiment is not written yet.',
+    next: 'None yet, because Experiment 21 has no approved specification.',
   },
 ]
 
