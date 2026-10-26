@@ -349,3 +349,40 @@ export function spinScale(): SpinScale {
     ],
   }
 }
+
+// Picture 2's scale: spin from 0 (not turning) to 1 (as fast as is possible).
+export const SPIN_AXIS_MAX = 1
+
+export interface SpinRow {
+  label: string
+  value: number
+  low: number
+  high: number
+  // The measured best estimate minus the simple-merger value.
+  gapFromSimple: number
+  // Whether the 90 percent range reaches down to the simple-merger value.
+  rangeIncludesSimple: boolean
+}
+
+export interface SpinPicture {
+  axisMax: number
+  simple: number
+  rows: SpinRow[]
+}
+
+export function spinPicture(): SpinPicture {
+  const labels = ['Heavier black hole', 'Lighter black hole']
+  const rows = ([0, 1] as const).map((i): SpinRow => {
+    const [low, high] = spinRange(i)
+    const value = GW231123.spins[i].value
+    return {
+      label: labels[i],
+      value,
+      low,
+      high,
+      gapFromSimple: round9(value - SIMPLE_MERGER_SPIN),
+      rangeIncludesSimple: low <= SIMPLE_MERGER_SPIN && SIMPLE_MERGER_SPIN <= high,
+    }
+  })
+  return { axisMax: SPIN_AXIS_MAX, simple: SIMPLE_MERGER_SPIN, rows }
+}

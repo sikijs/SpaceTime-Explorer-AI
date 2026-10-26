@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, SPIN_GUESS_CHOICES } from '../physics/heaviestMerger'
+import { exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, mergerCheckUp, POSSIBLE_CHOICES, guessSpin, SPIN_GUESS_CHOICES, spinPicture } from '../physics/heaviestMerger'
 import type { PossibleChoice, SpinGuessChoice } from '../physics/heaviestMerger'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 20 (docs/experiments/frontier-and-beyond/20-the-heaviest-merger.md).
-// STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Picture 1): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
+// STEPS 2 to 5 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
 // "the gap") with its guide, the new-word list, the collapsed "Words and formulas" panel and the "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, results, tutor or
 // chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here
 // says that merging can fill the gap, what a merger's remnant spin is, or what the spins of GW231123 were (CLAUDE.md §12): those are the predictions' answers and the run's results.
@@ -119,19 +119,24 @@ function TwoEndingsDrawing() {
 
 // ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
 const STAGE_MS = 2600
-const LAST_STAGE = 4
-const STAGE_NAMES = ['', 'The two black holes that merged', 'The black hole they made', 'The gap', 'A check by hand']
+const LAST_STAGE = 6
+const STAGE_NAMES = ['', 'The two black holes that merged', 'The black hole they made', 'The gap', 'A check by hand', 'The spins', 'What a simple merger gives']
 const STAGE_LINES = [
   '',
   'Picture 1, panel A, draws the two black holes that merged, as the teams measured them, each with its give-or-take.',
   'Panel A now shows the black hole that they made.',
   'Panel A now shows the gap, in pink: the range from theory, and the lower edge measured in a 2025 study.',
   'Panel B does a check by hand with two imagined black holes. Your guess for Prediction 1 is drawn on it in white.',
+  'Picture 2 draws the spins of the two black holes that merged, as the teams measured them, each with its give-or-take.',
+  'Picture 2 now shows the spin that a merger of two equal black holes that are not spinning gives, from a published calculation. Your guess for Prediction 2 is drawn on it in white.',
 ]
 
 const P_X0 = 60
 const P_X1 = 520
 const P_W = P_X1 - P_X0
+
+const GAP_ARROW_COLOR = '#fbbf24' // amber: how much higher a measured spin is than the simple-merger value
+const CALC_COLOR = '#38bdf8' // sky blue: a published result that this page uses but did not calculate
 
 const POSSIBLE_PHRASE: Record<PossibleChoice, string> = { no: 'no, it could not', yes: 'yes, it could', unsure: 'not sure' }
 const POSSIBLE_GLYPH: Record<PossibleChoice, string> = { no: '✗', yes: '✓', unsure: '?' }
@@ -243,6 +248,85 @@ function PictureOne({ stage, possibleGuess }: { stage: number; possibleGuess: Po
   )
 }
 
+
+function PictureTwo({ stage, spinGuess }: { stage: number; spinGuess: SpinGuessChoice | null }) {
+  const pic = spinPicture()
+  const x = (v: number) => P_X0 + (v / pic.axisMax) * P_W
+  const rowY = [140, 206]
+  const axisY = 268
+  const height = stage >= 6 ? 360 : 306
+  const ticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
+  const guess = spinGuess === null ? null : guessSpin(spinGuess)
+  const boxW = 210
+  const boxX = guess === null ? 0 : Math.min(Math.max(x(guess) - boxW / 2, 20), VIEW_WIDTH - boxW - 20)
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={height}
+      viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 2, the spins, on a scale from 0, not turning, to 1, as fast as is possible. In green, as measured: the heavier black hole, spin about ${pic.rows[0].value}, range ${pic.rows[0].low} to ${pic.rows[0].high}; the lighter, about ${pic.rows[1].value}, range ${pic.rows[1].low} to ${pic.rows[1].high}.${
+        stage >= 6 ? ` A dashed blue line at ${pic.simple}, the published spin of the black hole made by two equal black holes that do not spin.${spinGuess ? ` Your guess for Prediction 2, about ${spinGuess}, is drawn in white.` : ''}` : ''
+      }`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 2: the spins
+      </text>
+      <SvgLines x={20} y={40} lines={['spin: 0 is not turning, 1 is the fastest possible']} fill={MUTED_COLOR} />
+      <SvgLines x={P_X0} y={62} lines={['A. GW231123, as measured']} fill={TEXT_COLOR} bold size={11} />
+
+      {pic.rows.map((r, i) => (
+        <g key={r.label}>
+          <SvgLines
+            x={x(pic.simple) - 8}
+            y={rowY[i] - 14}
+            lines={[`${r.label === 'Heavier black hole' ? 'Heavier' : 'Lighter'}: about ${r.value.toFixed(2)} (${r.low.toFixed(2)} to ${r.high.toFixed(2)})`]}
+            fill={MEASURED_COLOR}
+            size={10}
+            bold
+            anchor="end"
+          />
+          <line x1={x(r.low)} y1={rowY[i]} x2={x(r.high)} y2={rowY[i]} stroke={MEASURED_COLOR} strokeWidth={3} />
+          <line x1={x(r.low)} y1={rowY[i] - 6} x2={x(r.low)} y2={rowY[i] + 6} stroke={MEASURED_COLOR} strokeWidth={2} />
+          <line x1={x(r.high)} y1={rowY[i] - 6} x2={x(r.high)} y2={rowY[i] + 6} stroke={MEASURED_COLOR} strokeWidth={2} />
+          <circle cx={x(r.value)} cy={rowY[i]} r={6} fill={MEASURED_COLOR} />
+          {stage >= 6 && (
+            <g>
+              <line x1={x(pic.simple)} y1={rowY[i] + 14} x2={x(r.value) - 4} y2={rowY[i] + 14} stroke={GAP_ARROW_COLOR} strokeWidth={1.5} />
+              <polygon points={`${x(r.value)},${rowY[i] + 14} ${x(r.value) - 8},${rowY[i] + 10} ${x(r.value) - 8},${rowY[i] + 18}`} fill={GAP_ARROW_COLOR} />
+              <SvgLines x={x(pic.simple) + 6} y={rowY[i] + 28} lines={[`${r.gapFromSimple.toFixed(2)} more than the simple merger gives`]} fill={GAP_ARROW_COLOR} size={9} />
+            </g>
+          )}
+        </g>
+      ))}
+
+      {stage >= 6 && (
+        <g>
+          <line x1={x(pic.simple)} y1={76} x2={x(pic.simple)} y2={axisY} stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="5 4" />
+          <SvgLines x={x(pic.simple) - 8} y={86} lines={['two equal black holes that', `do not spin: ${pic.simple.toFixed(2)} (published)`]} fill={CALC_COLOR} size={9} bold anchor="end" />
+          {guess !== null && (
+            <g>
+              <line x1={x(guess)} y1={axisY} x2={x(guess)} y2={axisY + 40} stroke={YOURS_COLOR} strokeWidth={4} />
+              <polygon points={`${x(guess)},${axisY} ${x(guess) - 7},${axisY + 12} ${x(guess) + 7},${axisY + 12}`} fill={YOURS_COLOR} />
+              <rect x={boxX} y={axisY + 40} width={boxW} height={28} rx={4} fill="#0b1020" stroke={YOURS_COLOR} strokeWidth={2.5} />
+              <SvgLines x={boxX + boxW / 2} y={axisY + 58} lines={[`YOUR GUESS: about ${spinGuess}`]} fill={YOURS_COLOR} bold size={10} anchor="middle" />
+            </g>
+          )}
+        </g>
+      )}
+
+      <line x1={P_X0} y1={axisY} x2={P_X1} y2={axisY} stroke={MUTED_COLOR} strokeWidth={1} />
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={x(t)} y1={axisY} x2={x(t)} y2={axisY - 5} stroke={MUTED_COLOR} />
+          <SvgLines x={x(t)} y={axisY + (stage >= 6 ? -9 : 17)} lines={[String(t)]} fill={MUTED_COLOR} size={9} anchor="middle" />
+        </g>
+      ))}
+      <SvgLines x={P_X1} y={stage >= 6 ? axisY + 14 : axisY + 31} lines={['spin']} fill={MUTED_COLOR} size={9} anchor="end" />
+    </svg>
+  )
+}
 
 function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { title: string; intro: ReactNode; bullets: ReactNode[]; worked: ReactNode; lookFor: LookFor[]; whereFrom: ReactNode }) {
   return (
@@ -364,6 +448,7 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
   const ex = exampleMerger()
   const check = mergerCheckUp()
   const [mHeavy, mLight, mFinal] = ruler.marks
+  const spic = spinPicture()
   return (
     <div>
       <h2>Experiment 20 — Black Holes That Should Not Exist: The Heaviest Merger (GW231123)</h2>
@@ -628,7 +713,7 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Picture 1 is drawn. Your predictions are recorded and not marked here. The picture of the spins is not built yet (a later step).' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. The controls, the results and the tutor are built in later steps.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -677,6 +762,43 @@ export function HeaviestMergerExperiment({ onComplete }: HeaviestMergerExperimen
                     <strong>Measured:</strong> the masses and their give-or-takes, and the chance that the lighter black hole is in the gap ({ruler.lighterInGapPercent} percent), by the LIGO, Virgo and KAGRA teams. This page’s numbers come from LIGO’s summary page and from a search summary of the paper’s abstract, not from the paper itself, so each should be checked against it.
                     {stage >= 3 ? <> The band ({ruler.gapTheory.low} to {ruler.gapTheory.high}) is the range LIGO’s summary quotes from theory; the lower edge ({ruler.gapMeasuredLow.value}, +{ruler.gapMeasuredLow.plus}, −{ruler.gapMeasuredLow.minus}) is from a 2025 catalogue analysis by the same teams, read only through search summaries.</> : null}
                     {stage >= 4 ? <> <strong>Calculated here:</strong> the sum in panel B ({ex.startSolar} + {ex.startSolar} − {ex.radiatedSolar} = {ex.resultSolar}). <strong>Imagined for the question:</strong> the two black holes of {ex.startSolar} Suns, and the {Math.round(ex.share * 100)} percent radiated, which is assumed from GW250114. The white mark is your guess.</> : <> <strong>Calculated here:</strong> nothing yet. <strong>Imagined for the question:</strong> nothing yet.</>}
+                  </>
+                }
+              />
+            </div>
+          )}
+
+          {stage >= 5 && (
+            <div>
+              <PictureTwo stage={stage} spinGuess={spinGuess} />
+              <CaptionBlock
+                title="Picture 2"
+                intro={`It shows how fast the two black holes that merged were spinning. Spin is a number from 0, a black hole that is not turning, up to 1, one turning as fast as is possible (Black Holes Experiment 8). A mark further to the right is a faster spin.`}
+                bullets={[
+                  <><strong>Each green line with a dot</strong> is one of the two black holes that merged. The dot is the teams’ best estimate of its spin, and the line is its give-or-take: the range in which the teams say the true spin lies, with a 90 percent chance (9 chances in 10).</>,
+                  ...(stage >= 6 ? [
+                    <><strong>The dashed blue line</strong> is the spin of the black hole that a merger of two equal black holes that are not spinning makes, {spic.simple.toFixed(2)}. It is a published result of computer simulations of such mergers, which this page uses but did not calculate. <strong>The amber arrows</strong> show how much higher each measured spin is than that line.</>,
+                    <><strong>The white mark and the box “YOUR GUESS”</strong> are your answer to Prediction 2. The mark sits at the spin you chose, about {spinGuess}, so a different guess puts it somewhere else. It is drawn so that you can compare it with the dashed blue line, and it shows no verdict.</>,
+                  ] : []),
+                ]}
+                worked={
+                  stage < 6 ? (
+                    <>The heavier black hole’s dot is at {spic.rows[0].value.toFixed(2)} and its line runs from {spic.rows[0].low.toFixed(2)} to {spic.rows[0].high.toFixed(2)}. So the teams’ best estimate is a spin close to the top of the scale, and they say there is a 90 percent chance that the true spin is somewhere in that range. The lighter black hole’s line, from {spic.rows[1].low.toFixed(2)} to {spic.rows[1].high.toFixed(2)}, is much longer, because its spin is much less certain.</>
+                  ) : (
+                    <>The heavier black hole’s dot is at {spic.rows[0].value.toFixed(2)} and the dashed line is at {spic.simple.toFixed(2)}, so {spic.rows[0].value.toFixed(2)} − {spic.simple.toFixed(2)} = {spic.rows[0].gapFromSimple.toFixed(2)}. For the lighter black hole it is {spic.rows[1].value.toFixed(2)} − {spic.simple.toFixed(2)} = {spic.rows[1].gapFromSimple.toFixed(2)}.</>
+                  )
+                }
+                lookFor={[
+                  { look: 'the two green lines with dots.', means: `the heavier black hole spins at about ${spic.rows[0].value.toFixed(2)} (${spic.rows[0].low.toFixed(2)} to ${spic.rows[0].high.toFixed(2)}) and the lighter at about ${spic.rows[1].value.toFixed(2)} (${spic.rows[1].low.toFixed(2)} to ${spic.rows[1].high.toFixed(2)}). Both best estimates are near the fast end of the scale, and the lighter one’s range is much wider.`, matters: 'a very fast spin is one of the two unusual things about this merger, along with its mass. The wide range of the lighter black hole means its spin is less certain than the heavier one’s.' },
+                  ...(stage >= 6 ? [
+                    { look: 'the dashed blue line, and the amber arrows from it to the green dots.', means: `a merger of two equal black holes that do not spin gives a black hole spinning at about ${spic.simple.toFixed(2)}. The measured best estimates are ${spic.rows[0].gapFromSimple.toFixed(2)} and ${spic.rows[1].gapFromSimple.toFixed(2)} higher. The heavier black hole’s range (from ${spic.rows[0].low.toFixed(2)}) does not reach down to the line, and the lighter one’s range (from ${spic.rows[1].low.toFixed(2)}) does.`, matters: 'the spins of the two black holes that merged are higher than the simple case gives, so how they came to spin so fast is part of the puzzle. The explanations for it come later.' },
+                    ...(spinGuess !== null ? [{ look: 'the white mark and the box “YOUR GUESS”.', means: `your answer to Prediction 2 (about ${spinGuess}), drawn on the same scale as the dashed blue line. It shows no verdict.`, matters: 'you can see your guess beside the published value. The tutor goes through Prediction 2 with you later.' }] : []),
+                  ] : []),
+                ]}
+                whereFrom={
+                  <>
+                    <strong>Measured:</strong> the two spins and their give-or-takes, by the LIGO, Virgo and KAGRA teams. This page’s numbers come from a search summary of the paper’s abstract, not from the paper itself, so each should be checked against it.
+                    {stage >= 6 ? <> <strong>Published, not calculated here:</strong> the {spic.simple.toFixed(2)} for two equal black holes that do not spin, from computer simulations of mergers, read only through a search summary and not at a paper. <strong>Calculated here:</strong> the differences from it ({spic.rows[0].gapFromSimple.toFixed(2)} and {spic.rows[1].gapFromSimple.toFixed(2)}). <strong>Imagined for the question:</strong> two equal black holes that do not spin, which is a simple case, not a real merger. The white mark is your guess.</> : <> <strong>Calculated here:</strong> nothing yet. <strong>Imagined for the question:</strong> nothing yet.</>}
                   </>
                 }
               />

@@ -22,6 +22,8 @@ import {
   SPIN_GUESS_CHOICES,
   spinGuessGap,
   spinRange,
+  spinPicture,
+  SPIN_AXIS_MAX,
   spinScale,
   trial,
   zoneOf,
@@ -265,6 +267,34 @@ describe('the pictures', () => {
     expect(s.simple).toBe(0.686)
     expect(s.measured.map((m) => m.value)).toEqual([0.9, 0.8])
     expect(s.measured[1].low).toBeCloseTo(0.29, 9)
+  })
+})
+
+describe('Picture 2: the spins', () => {
+  it('has the measured spins and ranges, the simple-merger value and the gaps', () => {
+    const p = spinPicture()
+    expect(p.axisMax).toBe(SPIN_AXIS_MAX)
+    expect(p.simple).toBe(0.686)
+    expect(p.rows.map((r) => r.value)).toEqual([0.9, 0.8])
+    expect(p.rows[0].low).toBeCloseTo(0.71, 9)
+    expect(p.rows[0].high).toBe(1)
+    expect(p.rows[1].low).toBeCloseTo(0.29, 9)
+    expect(p.rows[0].gapFromSimple).toBeCloseTo(0.214, 9)
+    expect(p.rows[1].gapFromSimple).toBeCloseTo(0.114, 9)
+  })
+
+  it('the heavier black hole’s range stays above 0.686 and the lighter one’s reaches down past it', () => {
+    const p = spinPicture()
+    expect(p.rows[0].rangeIncludesSimple).toBe(false)
+    expect(p.rows[1].rangeIncludesSimple).toBe(true)
+  })
+
+  it('every guess button lies inside the scale, and the answer button is the one nearest the simple-merger value', () => {
+    for (const c of SPIN_GUESS_CHOICES) {
+      expect(c).toBeGreaterThan(0)
+      expect(c).toBeLessThanOrEqual(SPIN_AXIS_MAX)
+    }
+    expect(spinAnswer()).toBe(0.7)
   })
 })
 
