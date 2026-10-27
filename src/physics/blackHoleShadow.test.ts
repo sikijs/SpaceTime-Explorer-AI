@@ -37,6 +37,14 @@ import {
   TRIAL_RULER_MAX_MICROARCSEC,
   trialRulerPosition,
   trialPicture,
+  checkUpRows,
+  readingOf,
+  ratioRow,
+  fromMassRows,
+  shadowRange,
+  rangeContains,
+  rangeRows,
+  predictionsBeside,
 } from './blackHoleShadow'
 import { horizonRadiusKm } from './blackHoleSizeExperiment'
 
@@ -338,5 +346,82 @@ describe('Part 2: a trial black hole (Step 6)', () => {
     expect(() => trialPicture(0, 1e5)).toThrow(RangeError)
     expect(() => trialPicture(1e8, -1)).toThrow(RangeError)
     expect(() => trialRulerPosition(0)).toThrow(RangeError)
+  })
+})
+
+describe('Part 3: the results (Step 7)', () => {
+  it('compares the calculated shadow with each published ring: Sgr A* -1.5, M87* 2019 -2.3 and the later ring -4.2 microarcseconds', () => {
+    const rows = checkUpRows()
+    expect(rows.map((r) => r.id)).toEqual(['sgrA', 'm87-2019', 'm87-later'])
+    expect(rows[0].comparison.measured).toBe(51.8)
+    expect(rows[1].comparison.measured).toBe(42)
+    expect(rows[2].comparison.measured).toBe(43.9)
+    expect(rows[0].comparison.differenceMicroarcsec).toBeCloseTo(-1.453, 2)
+    expect(rows[1].comparison.differenceMicroarcsec).toBeCloseTo(-2.311, 2)
+    expect(rows[2].comparison.differenceMicroarcsec).toBeCloseTo(-4.211, 2)
+    expect(rows[2].comparison.differenceInUncertainties).toBeCloseTo(-7.02, 1)
+    expect(rows[1].comparison.differencePercent).toBeCloseTo(-5.50, 1)
+  })
+  it('reads a row as inside the give-or-take only when it is, and names the side', () => {
+    const [sgr, m87, later] = checkUpRows().map((r) => readingOf(r.comparison))
+    expect(sgr).toEqual({ side: 'smaller', withinOneGiveOrTake: true })
+    expect(m87).toEqual({ side: 'smaller', withinOneGiveOrTake: true })
+    expect(later).toEqual({ side: 'smaller', withinOneGiveOrTake: false })
+    expect(readingOf(compareWithMeasured(50, 40, 3))).toEqual({ side: 'larger', withinOneGiveOrTake: false })
+    expect(readingOf(compareWithMeasured(40, 40, 3))).toEqual({ side: 'equal', withinOneGiveOrTake: true })
+  })
+  it('gives the size ratios 0.79 calculated, 0.81 with the 2019 ring and 0.85 with the later ring', () => {
+    const r = ratioRow()
+    expect(r.calculated).toBeCloseTo(0.788, 2)
+    expect(r.measured2019).toBeCloseTo(42 / 51.8, 9)
+    expect(r.measuredLater).toBeCloseTo(43.9 / 51.8, 9)
+  })
+  it('shows the steps from mass to angle, with the shadow 2.598 times the horizon and the heavier black hole 1,625 times heavier', () => {
+    const [sgr, m87] = fromMassRows()
+    expect(sgr.name).toBe('Sagittarius A*')
+    expect(m87.massSolar / sgr.massSolar).toBeCloseTo(1625, 6)
+    expect(m87.distancePc / sgr.distancePc).toBeCloseTo(2061.35, 1)
+    for (const r of [sgr, m87]) {
+      expect(r.shadowOverHorizon).toBeCloseTo(2.598076, 5)
+      expect(r.shadowDiameterKm / r.horizonRadiusKm).toBeCloseTo(2 * 2.598076, 4)
+      expect(r.shadowMicroarcsec).toBeCloseTo((r.shadowDiameterKm / (r.distancePc * KM_PER_PARSEC)) * (180 / Math.PI) * 3600 * 1e6, 6)
+    }
+    expect(sgr.horizonRadiusKm).toBeCloseTo(horizonRadiusKm(4e6), 6)
+  })
+  it('carries the mass and distance give-or-takes through to the shadow: M87* 34 to 46 (33.8 to 45.9) and Sgr A* 42 to 65 microarcseconds', () => {
+    const m = shadowRange(M87_STAR)
+    expect(m.both.low).toBeCloseTo((39.689 * 5.8 * 16.8) / (6.5 * 17.6), 2)
+    expect(m.both.high).toBeCloseTo(45.875, 2)
+    expect(m.centre).toBeCloseTo(39.689, 2)
+    expect(m.massOnly.low).toBeCloseTo(39.689 * (5.8 / 6.5), 2)
+    expect(m.massOnly.high).toBeCloseTo(39.689 * (7.2 / 6.5), 2)
+    expect(m.distanceOnly.low).toBeCloseTo(39.689 * (16.8 / 17.6), 2)
+    expect(m.distanceOnly.high).toBeCloseTo(39.689 * (16.8 / 16.1), 2)
+    const s = shadowRange(SGR_A_STAR)
+    expect(s.both.low).toBeCloseTo(42.02, 1)
+    expect(s.both.high).toBeCloseTo(65.40, 1)
+    for (const r of [m, s]) {
+      expect(r.both.low).toBeLessThan(r.centre)
+      expect(r.both.high).toBeGreaterThan(r.centre)
+      expect(r.both.low).toBeLessThanOrEqual(Math.min(r.massOnly.low, r.distanceOnly.low))
+      expect(r.both.high).toBeGreaterThanOrEqual(Math.max(r.massOnly.high, r.distanceOnly.high))
+    }
+  })
+  it('says whether a value is inside a range and by how much it is outside', () => {
+    expect(rangeContains({ low: 34, high: 46 }, 40)).toEqual({ inside: true, outsideBy: 0 })
+    expect(rangeContains({ low: 34, high: 46 }, 30)).toEqual({ inside: false, outsideBy: 4 })
+    expect(rangeContains({ low: 34, high: 46 }, 47.5)).toEqual({ inside: false, outsideBy: 1.5 })
+  })
+  it('finds each measured ring inside the calculated shadow\'s own range', () => {
+    expect(rangeRows().map((r) => r.ringInsideBoth)).toEqual([true, true, true])
+  })
+  it('returns the learner\'s guesses beside the real values and does not mark them', () => {
+    const p = predictionsBeside('much-bigger', 10)
+    expect(p.sizeGuessRatio).toBe(10)
+    expect(p.sizeRealRatio).toBeCloseTo(0.788, 2)
+    expect(p.horizonGuessTimes).toBe(10)
+    expect(p.horizonRealTimes).toBeCloseTo(2.598, 3)
+    expect(Object.keys(p).sort()).toEqual(['horizonGuessTimes', 'horizonRealTimes', 'sizeGuessRatio', 'sizeRealRatio'])
+    expect(predictionsBeside('a-little-smaller', 3).sizeGuessRatio).toBeCloseTo(1 / 1.5, 9)
   })
 })

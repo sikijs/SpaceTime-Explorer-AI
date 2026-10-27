@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { HORIZON_CHOICES, SIZE_CHOICES, massRatio, pictureOne, pictureTwo, horizonGuessMarker, ratioRulerPosition, sizeGuessMarker, RATIO_RULER_MIN, RATIO_RULER_MAX, TRIAL_MASS_CHOICES_SOLAR, TRIAL_DISTANCE_CHOICES_PC, TRIAL_RULER_MIN_MICROARCSEC, TRIAL_RULER_MAX_MICROARCSEC, trialPicture, trialRulerPosition } from '../physics/blackHoleShadow'
+import { HORIZON_CHOICES, SIZE_CHOICES, massRatio, distanceRatio, pictureOne, pictureTwo, horizonGuessMarker, ratioRulerPosition, sizeGuessMarker, RATIO_RULER_MIN, RATIO_RULER_MAX, TRIAL_MASS_CHOICES_SOLAR, TRIAL_DISTANCE_CHOICES_PC, TRIAL_RULER_MIN_MICROARCSEC, TRIAL_RULER_MAX_MICROARCSEC, trialPicture, trialRulerPosition, checkUpRows, readingOf, ratioRow, fromMassRows, rangeRows, predictionsBeside } from '../physics/blackHoleShadow'
 import type { HorizonChoice, SizeChoiceId } from '../physics/blackHoleShadow'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { LookForList } from './WideBinariesExperiment'
+import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 21 (docs/experiments/frontier-and-beyond/21-black-hole-shadow.md).
 // STEPS 2, 4, 5a and 5b (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
-// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (eight stages), Picture 1 with Prediction 1's guess and Picture 2 with Prediction 2's guess. It has Part 2 (two trial controls and Drawing A, step 6) but no results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
+// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (eight stages), Picture 1 with Prediction 1's guess and Picture 2 with Prediction 2's guess. It has Part 2 (two trial controls and Drawing A, step 6) and Part 3 (the results, step 7) but no tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
 // the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how big either shadow looks in the sky, how the two compare, or how much
 // wider than the horizon the shadow is (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (the ESO page, which shows both images,
 // and the papers) are listed only after the run, in a later step. The introduction has no illustration; the pictures come with the run.
@@ -389,6 +389,15 @@ function TrialDrawing({ trial }: { trial: ReturnType<typeof trialPicture> }) {
   )
 }
 
+
+function kmText(x: number): string {
+  return x >= 1e9 ? `${(x / 1e9).toFixed(1)} billion km` : `${(x / 1e6).toFixed(1)} million km`
+}
+function rangeText(r: { low: number; high: number }): string {
+  return `${n1(r.low)} to ${n1(r.high)} µas`
+}
+const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
+
 const captionParagraph = { marginTop: 0, marginBottom: '0.75rem' } as const
 
 function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { title: string; intro: ReactNode; bullets: ReactNode[]; worked: ReactNode | null; lookFor: LookFor[]; whereFrom: ReactNode }) {
@@ -483,6 +492,11 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
   const [sgrRow, m87Row] = pic.rows
   const pic2 = pictureTwo()
   const trial = trialPicture(trialMass, trialDistance)
+  const checkUp = checkUpRows()
+  const ratios = ratioRow()
+  const fromMass = fromMassRows()
+  const ranges = rangeRows()
+  const beside = sizeGuess && horizonGuess !== null ? predictionsBeside(sizeGuess, horizonGuess) : null
   return (
     <div>
       <h2>Experiment 21 — Can We Photograph a Black Hole’s Shadow? (Event Horizon Telescope)</h2>
@@ -1009,6 +1023,170 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
                 </>
               }
             />
+          </div>
+        )}
+
+        {done && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0f766e' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#0f766e' }}>Part 3: The results</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> Here are the numbers behind the pictures, set out in three tables, each with a short guide to reading it. These tables are the real numbers, so they
+              never change with your guesses or with your settings in Part 2.
+            </p>
+
+            <div className="exp-card" style={{ padding: '1rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <strong>Where this stands (as of October 2026).</strong>
+              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Strong evidence</strong> that the Event Horizon Telescope has imaged the rings of glowing gas round two black holes, and that their sizes are close to what the black holes’ masses and distances give.
+                </li>
+                <li>
+                  <strong>Open:</strong> how tightly this tests gravity, because the masses and the link between a ring and a shadow carry their own give-or-take.
+                </li>
+                <li>
+                  The numbers come from the abstracts and summaries of the Event Horizon Telescope’s papers. No paper was read in full for this page, so each number should be checked against its paper.
+                </li>
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <strong>Your predictions, beside the results.</strong> These are your guesses, shown again so that you can find the real number for each. They are not marked here.
+              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Prediction 1</strong> (how wide M87*’s shadow looks, compared with Sagittarius A*’s): you guessed <strong>{sizeGuess ? `${SIZE_PHRASE[sizeGuess]}, a ratio of ${n2(beside?.sizeGuessRatio ?? 1)}` : '…'}</strong>. The real
+                  calculated ratio is in Table 1, in the row “Size ratio”.
+                </li>
+                <li>
+                  <strong>Prediction 2</strong> (how many times wider the shadow is than the black hole’s edge): you guessed <strong>{horizonGuess !== null ? `${horizonGuess} times` : '…'}</strong>. The real number is in Table 2, in the
+                  row “Shadow width ÷ edge width”.
+                </li>
+              </ul>
+            </div>
+
+            <p style={paragraph}>
+              <strong>How to read these results.</strong> A table of numbers is like a blood test: it means little until someone says what each number is and what it is compared with. So each table has a note under
+              it, called “What this table tells us”. Table 1 is a check-up: it sets each calculated shadow beside the ring that was measured, and says in plain words how they compare. It does not say “good” or “bad”,
+              because there is no accepted range for how closely a calculated shadow should match a ring. The <strong>give-or-take</strong> of a measurement is the “±” after it. “µas” is a millionth of an arcsecond.
+            </p>
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 1. Check-up: the calculated shadow against the measured ring</p>
+            <ResultsTable
+              minWidth={640}
+              head={['What we compare', 'Calculated here', 'Measured', 'How to read it']}
+              rows={[
+                ...checkUp.map((row) => {
+                  const c = row.comparison
+                  const reading = readingOf(c)
+                  return [
+                    `${row.blackHole.name}, ${row.ringLabel}`,
+                    `${n1(c.calculated)} µas`,
+                    `${c.measured} ± ${c.uncertainty} µas`,
+                    `${n1(Math.abs(c.differenceMicroarcsec))} µas ${reading.side === 'smaller' ? 'smaller' : reading.side === 'larger' ? 'larger' : 'the same'} than the ring (${n1(Math.abs(c.differencePercent))} percent, ${n1(Math.abs(c.differenceInUncertainties))} give-or-takes). ${
+                      reading.withinOneGiveOrTake ? 'Inside' : 'Outside'
+                    } the ring’s give-or-take.${row.id === 'm87-later' ? ' See Table 3.' : ''}`,
+                  ]
+                }),
+                [
+                  `Size ratio, M87* ÷ Sagittarius A*${sizeGuess && beside ? ` [your guess for Prediction 1: ${n2(beside.sizeGuessRatio)}]` : ''}`,
+                  n2(ratios.calculated),
+                  `${n2(ratios.measured2019)} (2019 ring), ${n2(ratios.measuredLater)} (later ring)`,
+                  'A little lower than the measured ratios. All three are below 1. No give-or-take is given for a ratio here, so no further comparison is made.',
+                ],
+              ]}
+            />
+            <div style={noteStyle}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is:</strong> each calculated shadow beside the ring the telescope measured. The calculation uses only the mass and the distance.
+                </li>
+                <li>
+                  <strong>What it means:</strong> all three calculated shadows are a little narrower than the measured rings. For Sagittarius A* and for M87*’s 2019 ring, the gap ({n1(Math.abs(checkUp[0].comparison.differenceMicroarcsec))} and{' '}
+                  {n1(Math.abs(checkUp[1].comparison.differenceMicroarcsec))} µas) is smaller than the ring’s own give-or-take. For M87*’s later ring, which is measured much more precisely (± {checkUp[2].comparison.uncertainty}), the same {n1(Math.abs(checkUp[2].comparison.differenceMicroarcsec))} µas
+                  gap is about {n1(Math.abs(checkUp[2].comparison.differenceInUncertainties))} give-or-takes.
+                </li>
+                <li>
+                  <strong>Why it matters:</strong> the ring is glowing gas, not the shadow itself, and the formula is the simple one that leaves out spin. So a gap of this size does not by itself show the formula is wrong. Table 3 shows
+                  how sure the calculated shadow is.
+                </li>
+                <li>
+                  <strong>How sure the numbers are:</strong> the rings are measured, and the calculated shadows depend on masses and distances that carry their own give-or-take. M87*’s ring size was the same in the 2017, 2018 and 2021 observations
+                  (43.9 ± 0.6 µas) while the brightness pattern round it changed. This page does not model that change.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 2. From mass and distance to an angle in the sky</p>
+            <ResultsTable
+              minWidth={600}
+              head={['Step', 'Sagittarius A*', 'M87*', 'How to read it']}
+              rows={[
+                ['Mass (Suns)', massPhrase(fromMass[0].massSolar), massPhrase(fromMass[1].massSolar), `M87* is ${Math.round(massRatio()).toLocaleString('en-US')} times heavier.`],
+                ['Distance', distancePhrase(fromMass[0].distancePc), distancePhrase(fromMass[1].distancePc), `M87* is ${Math.round(distanceRatio()).toLocaleString('en-US')} times farther away.`],
+                ['Edge (horizon) radius', kmText(fromMass[0].horizonRadiusKm), kmText(fromMass[1].horizonRadiusKm), 'From the mass, as in Black Holes Experiment 1.'],
+                ['Shadow width', kmText(fromMass[0].shadowDiameterKm), kmText(fromMass[1].shadowDiameterKm), 'The width of the dark patch, across, in kilometres.'],
+                [
+                  `Shadow width ÷ edge width${horizonGuess !== null ? ` [your guess for Prediction 2: ${horizonGuess} times]` : ''}`,
+                  n2(fromMass[0].shadowOverHorizon),
+                  n2(fromMass[1].shadowOverHorizon),
+                  'The same for both, because it comes from the same bending of light (Black Holes Experiment 4).',
+                ],
+                ['Angle in the sky (shadow)', `${n1(fromMass[0].shadowMicroarcsec)} µas`, `${n1(fromMass[1].shadowMicroarcsec)} µas`, `M87*’s is ${n2(ratios.calculated)} times Sagittarius A*’s.`],
+              ]}
+            />
+            <div style={noteStyle}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is:</strong> the steps from a black hole’s mass and distance to how wide its shadow looks, worked out the same way for both.
+                </li>
+                <li>
+                  <strong>What it means:</strong> the shadow is always {n2(fromMass[0].shadowOverHorizon)} times as wide as the edge. Its angle in the sky is its width divided by the distance. Here the mass is{' '}
+                  {Math.round(massRatio()).toLocaleString('en-US')} times larger and the distance {Math.round(distanceRatio()).toLocaleString('en-US')} times larger, so the angle is {Math.round(massRatio()).toLocaleString('en-US')} ÷{' '}
+                  {Math.round(distanceRatio()).toLocaleString('en-US')} = {n2(ratios.calculated)} times as large.
+                </li>
+                <li>
+                  <strong>Why it matters:</strong> these are the numbers behind both of your predictions. The reasons for them are for the tutor to explain.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 3. How sure is the calculated shadow?</p>
+            <ResultsTable
+              minWidth={760}
+              head={['Black hole and ring', 'Calculated shadow', 'Mass give-or-take only', 'Distance give-or-take only', 'Both together', 'Measured ring inside “both together”?']}
+              rows={ranges.map((r) => [
+                `${r.checkUp.blackHole.name}, ${r.checkUp.ringLabel}`,
+                `${n1(r.range.centre)} µas`,
+                rangeText(r.range.massOnly),
+                rangeText(r.range.distanceOnly),
+                rangeText(r.range.both),
+                `${r.checkUp.comparison.measured} µas: ${r.ringInsideBoth ? 'yes' : 'no'}`,
+              ])}
+            />
+            <div style={noteStyle}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is:</strong> the calculated shadow worked out again with the published give-or-takes on the mass and on the distance. The lowest value uses the lightest mass and the farthest distance; the highest uses the
+                  heaviest mass and the nearest distance.
+                </li>
+                <li>
+                  <strong>What it means:</strong> the calculated shadow has a give-or-take of its own, and most of it comes from the mass. M87*’s runs from about {n1(ranges[1].range.both.low)} to {n1(ranges[1].range.both.high)} µas and Sagittarius A*’s from about{' '}
+                  {n1(ranges[0].range.both.low)} to {n1(ranges[0].range.both.high)} µas. Every measured ring in Table 1 lies inside its range, including M87*’s later ring, which was {n1(Math.abs(checkUp[2].comparison.differenceInUncertainties))} of its own give-or-takes from the central value.
+                </li>
+                <li>
+                  <strong>Why it matters:</strong> it sets the size of the gap in Table 1 beside the real uncertainty of the calculation. The ranges are simple low-to-high ends of the published give-or-takes, not a statistical combination of them.
+                  The more tightly the masses are known, the more tightly this test can be made.
+                </li>
+              </ul>
+            </div>
           </div>
         )}
       </div>

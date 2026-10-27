@@ -400,3 +400,125 @@ export function trialPicture(massSolar: number, distancePc: number): TrialPictur
     sameAs: same ? same.id : null,
   }
 }
+
+// ---- Part 3 (Step 7): the results ----
+// Every number the results tables show comes from here (CLAUDE.md §9, §14 "Reading the Results"). Nothing is marked right or wrong.
+
+export type CheckUpId = 'sgrA' | 'm87-2019' | 'm87-later'
+
+export interface CheckUpRow {
+  id: CheckUpId
+  blackHole: RealBlackHole
+  ringLabel: string
+  comparison: Comparison
+}
+
+// Calculated shadow against measured ring, for Sagittarius A*, M87* (the 2019 ring) and M87* (the later ring of 2017, 2018 and 2021 together).
+export function checkUpRows(): CheckUpRow[] {
+  return [
+    { id: 'sgrA', blackHole: SGR_A_STAR, ringLabel: '2022 ring', comparison: checkRealBlackHole(SGR_A_STAR) },
+    { id: 'm87-2019', blackHole: M87_STAR, ringLabel: '2019 ring', comparison: checkRealBlackHole(M87_STAR) },
+    { id: 'm87-later', blackHole: M87_STAR, ringLabel: '2017 to 2021 ring', comparison: checkRealBlackHole(M87_STAR, true) },
+  ]
+}
+
+// Which side of the measured ring the calculated shadow falls, and whether it is inside the measurement's give-or-take. No cut-off is invented.
+export function readingOf(c: Comparison): { side: 'smaller' | 'larger' | 'equal'; withinOneGiveOrTake: boolean } {
+  return {
+    side: c.differenceMicroarcsec < 0 ? 'smaller' : c.differenceMicroarcsec > 0 ? 'larger' : 'equal',
+    withinOneGiveOrTake: c.withinOneUncertainty,
+  }
+}
+
+export interface RatioRow {
+  calculated: number // M87*'s calculated shadow over Sagittarius A*'s
+  measured2019: number // the rings, with the 2019 M87* ring
+  measuredLater: number // the rings, with the later M87* ring
+}
+
+export function ratioRow(): RatioRow {
+  return { calculated: calculatedSizeRatio(), measured2019: measuredSizeRatio(false), measuredLater: measuredSizeRatio(true) }
+}
+
+export interface FromMassRow {
+  id: RealBlackHole['id']
+  name: string
+  massSolar: number
+  distancePc: number
+  horizonRadiusKm: number
+  shadowDiameterKm: number
+  shadowOverHorizon: number
+  shadowMicroarcsec: number
+}
+
+// Table 2: from mass and distance to an angle in the sky, step by step. Sagittarius A* first, then M87*.
+export function fromMassRows(): FromMassRow[] {
+  return [SGR_A_STAR, M87_STAR].map((bh) => ({
+    id: bh.id,
+    name: bh.name,
+    massSolar: bh.massSolar,
+    distancePc: bh.distancePc,
+    horizonRadiusKm: horizonRadiusKm(bh.massSolar),
+    shadowDiameterKm: shadowDiameterKm(bh.massSolar),
+    shadowOverHorizon: shadowDiameterKm(bh.massSolar) / (2 * horizonRadiusKm(bh.massSolar)),
+    shadowMicroarcsec: realShadowMicroarcsec(bh),
+  }))
+}
+
+export interface ShadowRange {
+  id: RealBlackHole['id']
+  name: string
+  centre: number
+  // Only the mass at its low and high ends (distance at its published value), then only the distance, then both together (a simple low-to-high range, not a statistical combination).
+  massOnly: { low: number; high: number }
+  distanceOnly: { low: number; high: number }
+  both: { low: number; high: number }
+}
+
+// Table 3: how sure the calculated shadow is. The published give-or-takes on the mass and the distance carried through the same formula.
+// The heaviest and nearest values give the widest shadow; the lightest and farthest give the narrowest.
+export function shadowRange(bh: RealBlackHole): ShadowRange {
+  const mLow = bh.massSolar - bh.massMinus
+  const mHigh = bh.massSolar + bh.massPlus
+  const dLow = bh.distancePc - bh.distanceMinus
+  const dHigh = bh.distancePc + bh.distancePlus
+  return {
+    id: bh.id,
+    name: bh.name,
+    centre: realShadowMicroarcsec(bh),
+    massOnly: { low: shadowAngleMicroarcsec(mLow, bh.distancePc), high: shadowAngleMicroarcsec(mHigh, bh.distancePc) },
+    distanceOnly: { low: shadowAngleMicroarcsec(bh.massSolar, dHigh), high: shadowAngleMicroarcsec(bh.massSolar, dLow) },
+    both: { low: shadowAngleMicroarcsec(mLow, dHigh), high: shadowAngleMicroarcsec(mHigh, dLow) },
+  }
+}
+
+// Whether a measured ring (its value) lies inside a range, and how far from the nearest end if not.
+export function rangeContains(range: { low: number; high: number }, value: number): { inside: boolean; outsideBy: number } {
+  if (value < range.low) return { inside: false, outsideBy: range.low - value }
+  if (value > range.high) return { inside: false, outsideBy: value - range.high }
+  return { inside: true, outsideBy: 0 }
+}
+
+export interface RangeRow {
+  checkUp: CheckUpRow
+  range: ShadowRange
+  ringInsideBoth: boolean
+}
+
+// Each check-up row against the calculated shadow's own range.
+export function rangeRows(): RangeRow[] {
+  return checkUpRows().map((row) => {
+    const range = shadowRange(row.blackHole)
+    return { checkUp: row, range, ringInsideBoth: rangeContains(range.both, row.comparison.measured).inside }
+  })
+}
+
+// The learner's two guesses, as numbers to show beside the results (a guess only; nothing is marked), with the real value in the same units.
+export function predictionsBeside(size: SizeChoiceId, horizon: HorizonChoice) {
+  return {
+    sizeGuessRatio: sizeChoiceRatio(size),
+    sizeRealRatio: calculatedSizeRatio(),
+    horizonGuessTimes: horizon as number,
+    horizonRealTimes: shadowOverHorizon(),
+  }
+}
