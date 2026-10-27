@@ -3,12 +3,13 @@ import type { ReactNode } from 'react'
 import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne, pictureTwo, shiftGuessMarker, shiftRulerPosition, PICTURE_TWO_TICKS_SECONDS, TRIAL_MASS_CHOICES_SOLAR, TRIAL_SEPARATION_CHOICES_PC, trialPicture, frequencyRulerPosition, examplePair, separationAu, OBSERVING_SPAN_YEARS, resultsCheckUp, exampleSteps, hellingsDownsRows } from '../physics/pulsarTimingBackground'
 import type { CycleChoiceId, ShiftChoice, TrialPicture } from '../physics/pulsarTimingBackground'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PulsarTimingBackgroundTutor } from './PulsarTimingBackgroundTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 22 (docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md).
-// STEPS 2 to 7 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2, then the "Now try it yourself" controls and Drawing A, then the results): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
-// "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It also has Part 2, "Now try it yourself" (two controls and Drawing A, which follows them). It also has Part 3, the results (a check-up and two more tables, each with a note, the predictions beside them, and the papers). It has no tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
+// STEPS 2 to 8 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2, then the "Now try it yourself" controls and Drawing A, then the results, then the tutor): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
+// "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It also has Part 2, "Now try it yourself" (two controls and Drawing A, which follows them). It also has Part 3, the results (a check-up and two more tables, each with a note, the predictions beside them, and the papers). It also has Part 4, the tutor. It has no chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
 // owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long one wave cycle of a pair of supermassive black holes lasts, how big the shift in a
 // pulse's arrival time is, or what "nanohertz" means (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (NANOGrav's own pages, which say
 // "years to decades", the IPTA's page and the papers) are listed only after the run, in a later step.
@@ -466,7 +467,12 @@ function TrialDrawing({ trial }: { trial: TrialPicture }) {
   )
 }
 
-export function PulsarTimingBackgroundExperiment() {
+interface PulsarTimingBackgroundExperimentProps {
+  onComplete?: () => void
+  onTutorComplete?: () => void
+}
+
+export function PulsarTimingBackgroundExperiment({ onComplete, onTutorComplete }: PulsarTimingBackgroundExperimentProps) {
   const [cycleGuess, setCycleGuess] = useState<CycleChoiceId | null>(null)
   const [shiftGuess, setShiftGuess] = useState<ShiftChoice | null>(null)
   const [trialMass, setTrialMass] = useState<number>(1e9)
@@ -482,10 +488,13 @@ export function PulsarTimingBackgroundExperiment() {
     if (status !== 'running') return
     const timer = window.setTimeout(() => {
       if (stage < LAST_STAGE) setStage(stage + 1)
-      else setStatus('complete')
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
     }, STAGE_MS)
     return () => window.clearTimeout(timer)
-  }, [status, stage])
+  }, [status, stage, onComplete])
 
   const startOver = () => {
     setCycleGuess(null)
@@ -1177,6 +1186,30 @@ export function PulsarTimingBackgroundExperiment() {
                 </li>
               </ul>
             </div>
+          </div>
+        )}
+
+        {/* Part 4, the tutor (after the results): observe, compare with the predictions, a conceptual question, then the explanation. DRAFT wording for the owner's approval. */}
+        {done && cycleGuess !== null && shiftGuess !== null && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+            </p>
+            <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <li>
+                <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the real
+                results. Third, it asks one bigger question, about how you could tell a gravitational wave from a pulsar’s own drift. Type a few words for each. Nothing is graded, and a short answer is fine.
+              </li>
+              <li>
+                <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses matched until you have answered all three, so you can think it through first.
+              </li>
+              <li>
+                <strong>Then the explanation.</strong> It covers why the wave is so slow, why one wave cycle is half an orbit, how a shift so small can be seen, why many pulsars are needed, and why this is evidence
+                and not yet a discovery. Some parts use a worked sum or an everyday comparison.
+              </li>
+            </ul>
+            <PulsarTimingBackgroundTutor cyclePrediction={cycleGuess} shiftPrediction={shiftGuess} onExplained={onTutorComplete} />
           </div>
         )}
       </div>
