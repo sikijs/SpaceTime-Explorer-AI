@@ -40,6 +40,7 @@ import {
   pictureTwo,
   PICTURE_TWO_TICKS_SECONDS,
   PULSE_PERIOD_EXAMPLE_SECONDS,
+  separationAu,
 } from './pulsarTimingBackground'
 
 const G = 6.6743e-11
@@ -331,5 +332,18 @@ describe('Picture 2 (Step 5)', () => {
     expect(t.sort((a, b) => a - b)).toEqual([...PICTURE_TWO_TICKS_SECONDS])
     expect(shiftRulerPosition(PICTURE_TWO_TICKS_SECONDS[0])).toBe(0)
     expect(shiftRulerPosition(PICTURE_TWO_TICKS_SECONDS[PICTURE_TWO_TICKS_SECONDS.length - 1])).toBe(1)
+  })
+})
+
+describe('Part 2: the separation buttons in Earth-Sun distances (Step 6)', () => {
+  it('gives about 620, 2,060, 6,190 and 20,600 Earth-Sun distances for 0.003, 0.01, 0.03 and 0.1 parsecs', () => {
+    expect(separationAu(0.003)).toBeCloseTo(618.8, 1)
+    expect(separationAu(0.01)).toBeCloseTo(2062.6, 1)
+    expect(separationAu(0.03)).toBeCloseTo(6187.9, 1)
+    expect(separationAu(0.1)).toBeCloseTo(20626.5, 1)
+  })
+  it('is proportional to the separation and rejects a non-positive one', () => {
+    expect(separationAu(0.1) / separationAu(0.01)).toBeCloseTo(10, 9)
+    expect(() => separationAu(0)).toThrow(RangeError)
   })
 })

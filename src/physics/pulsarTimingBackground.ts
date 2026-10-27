@@ -276,6 +276,12 @@ export function trialPicture(massSolar: number, separationPc: number): TrialPict
   }
 }
 
+// A separation in parsecs, in Earth-Sun distances (astronomical units), for the control's button labels.
+export function separationAu(separationPc: number): number {
+  checkPositive(separationPc, 'The separation')
+  return separationPc * AU_PER_PARSEC
+}
+
 // ---- Picture 1 (Step 4): the pair, its orbit and wave, and a ruler of cycle lengths with LIGO's waves and what 15 years of timing can pick out ----
 
 export const AU_PER_PARSEC = 206264.80624709636

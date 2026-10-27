@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne, pictureTwo, shiftGuessMarker, shiftRulerPosition, PICTURE_TWO_TICKS_SECONDS } from '../physics/pulsarTimingBackground'
-import type { CycleChoiceId, ShiftChoice } from '../physics/pulsarTimingBackground'
+import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne, pictureTwo, shiftGuessMarker, shiftRulerPosition, PICTURE_TWO_TICKS_SECONDS, TRIAL_MASS_CHOICES_SOLAR, TRIAL_SEPARATION_CHOICES_PC, trialPicture, frequencyRulerPosition, examplePair, separationAu, OBSERVING_SPAN_YEARS } from '../physics/pulsarTimingBackground'
+import type { CycleChoiceId, ShiftChoice, TrialPicture } from '../physics/pulsarTimingBackground'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 22 (docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md).
-// STEPS 2 to 5 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
-// "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It has no controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
+// STEPS 2 to 6 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2, then the "Now try it yourself" controls and Drawing A): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
+// "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It also has Part 2, "Now try it yourself" (two controls and Drawing A, which follows them). It has no results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
 // owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long one wave cycle of a pair of supermassive black holes lasts, how big the shift in a
 // pulse's arrival time is, or what "nanohertz" means (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (NANOGrav's own pages, which say
 // "years to decades", the IPTA's page and the papers) are listed only after the run, in a later step.
@@ -375,9 +375,101 @@ const SHIFT_LABELS: Record<ShiftChoice, string> = {
   1000: 'About 1,000 nanoseconds (a millionth of a second)',
 }
 
+// ---- Part 2: "Now try it yourself" (trial values, not real pairs) ----
+const MASS_TRIAL_LABELS: Record<number, string> = {
+  1e8: '100 million Suns each',
+  1e9: '1 billion Suns each',
+  1e10: '10 billion Suns each',
+}
+function separationLabel(pc: number): string {
+  const au = separationAu(pc)
+  return `${pc} parsecs apart (about ${commas(Math.round(au / 100) * 100)} times the Earth–Sun distance)`
+}
+function nanohertzText(nh: number): string {
+  return nh >= 100 ? commas(nh) : nh >= 10 ? n1(nh) : n2(nh)
+}
+function cycleText(years: number): string {
+  if (years >= 10) return `${commas(years)} years`
+  if (years >= 1) return `${n1(years)} years`
+  return `${commas(years * 365.25)} days`
+}
+function cyclesText(c: number): string {
+  return c >= 100 ? commas(c) : c >= 10 ? n1(c) : n2(c)
+}
+const FREQUENCY_TICKS: { nanohertz: number; label: string }[] = [
+  { nanohertz: 0.1, label: '0.1' },
+  { nanohertz: 1, label: '1' },
+  { nanohertz: 10, label: '10' },
+  { nanohertz: 100, label: '100' },
+  { nanohertz: 1000, label: '1,000' },
+  { nanohertz: 10000, label: '10,000' },
+]
+
+// Drawing A. A log ruler of wave frequency (nanohertz): the lowest frequency that 15 years can pick out (cyan band), Picture 1's pair (cyan dashed line, calculated) and the trial pair (pink dot, imagined).
+function TrialDrawing({ trial }: { trial: TrialPicture }) {
+  const ex = examplePair()
+  const exPos = frequencyRulerPosition(ex.frequencyNanohertz)
+  const rulerY = 170
+  const x0 = 40
+  const x1 = 520
+  const rx = (pos: number) => x0 + pos * (x1 - x0)
+  const dotX = rx(trial.frequencyPosition)
+  const boxW = 250
+  const boxX = Math.min(540 - boxW, Math.max(20, dotX - boxW / 2))
+  const verdict = trial.fits ? `can be picked out as a wave (at least 1 cycle in ${OBSERVING_SPAN_YEARS} years)` : `has less than 1 cycle in ${OBSERVING_SPAN_YEARS} years`
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={310}
+      viewBox="0 0 560 310"
+      style={svgStyle}
+      role="img"
+      aria-label={`Drawing A. A ruler of the frequency of a gravitational wave, in nanohertz, from 0.1 to 10,000, going up in steps of ten. A cyan band starts at ${n1(trial.lowestNanohertz)} nanohertz and runs to the right: the waves that ${OBSERVING_SPAN_YEARS} years of timing can pick out. A cyan dashed line marks Picture 1's pair at ${n1(ex.frequencyNanohertz)} nanohertz. A pink dot marks your trial pair, two black holes of ${MASS_TRIAL_LABELS[trial.binary.mass1Solar] ?? ''}, ${trial.binary.separationPc} parsecs apart, at ${nanohertzText(trial.binary.frequencyNanohertz)} nanohertz. One wave cycle lasts about ${cycleText(trial.binary.waveCycleYears)}, with ${cyclesText(trial.cyclesIn15Years)} cycles in ${OBSERVING_SPAN_YEARS} years.`}
+    >
+      <SvgLines x={20} y={22} lines={['Drawing A. The frequency of your trial pair’s wave']} fill={TEXT_COLOR} bold size={11} />
+      <SvgLines x={20} y={38} lines={['Trial values: imagined for the question, not a real pair.']} fill={IMAGINED_COLOR} size={9} />
+      {/* The band that 15 years of timing can pick out: from the lowest frequency to the right end. */}
+      <rect x={rx(trial.lowestPosition)} y={rulerY - 38} width={x1 - rx(trial.lowestPosition)} height={76} fill={CALC_COLOR} opacity={0.16} />
+      <line x1={rx(trial.lowestPosition)} y1={rulerY - 38} x2={rx(trial.lowestPosition)} y2={rulerY + 38} stroke={CALC_COLOR} strokeWidth={1.5} />
+      <SvgLines x={rx(trial.lowestPosition) + 6} y={rulerY + 52} lines={[`cyan band: waves that ${OBSERVING_SPAN_YEARS} years of timing can pick out (from about ${n1(trial.lowestNanohertz)} nHz up)`]} fill={CALC_COLOR} size={9} />
+      {/* The ruler. */}
+      <line x1={x0} y1={rulerY} x2={x1} y2={rulerY} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {FREQUENCY_TICKS.map((t) => (
+        <g key={t.nanohertz}>
+          <line x1={rx(frequencyRulerPosition(t.nanohertz))} y1={rulerY - 4} x2={rx(frequencyRulerPosition(t.nanohertz))} y2={rulerY + 4} stroke={MUTED_COLOR} />
+          <SvgLines x={rx(frequencyRulerPosition(t.nanohertz))} y={rulerY + 17} lines={[t.label]} fill={MUTED_COLOR} size={9} anchor="middle" />
+        </g>
+      ))}
+      <SvgLines x={x1} y={rulerY + 30} lines={['nanohertz (nHz), going up in steps of ten']} fill={MUTED_COLOR} size={9} anchor="end" />
+      {/* Picture 1's pair: calculated, so cyan and dashed. */}
+      <line x1={rx(exPos)} y1={rulerY - 34} x2={rx(exPos)} y2={rulerY + 34} stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="5 4" />
+      <SvgLines x={rx(exPos)} y={rulerY + 68} lines={[`dashed line: Picture 1’s pair (1 billion Suns each, 0.01 parsecs apart), ${n1(ex.frequencyNanohertz)} nHz`]} fill={CALC_COLOR} size={9} anchor="middle" />
+      {/* The trial pair: imagined, so pink. */}
+      <line x1={dotX} y1={rulerY - 56} x2={dotX} y2={rulerY} stroke={IMAGINED_COLOR} strokeWidth={1.5} />
+      <circle cx={dotX} cy={rulerY} r={7} fill={IMAGINED_COLOR} stroke="#ffffff" strokeWidth={1} />
+      <rect x={boxX} y={rulerY - 92} width={boxW} height={36} rx={4} fill="#0b1020" stroke={IMAGINED_COLOR} strokeWidth={2} />
+      <SvgLines x={boxX + boxW / 2} y={rulerY - 76} lines={['YOUR TRIAL PAIR', `${nanohertzText(trial.binary.frequencyNanohertz)} nHz`]} fill={IMAGINED_COLOR} bold size={10} anchor="middle" />
+      {/* The readout. */}
+      <SvgLines
+        x={20}
+        y={262}
+        lines={[
+          `Trial pair: two black holes of ${MASS_TRIAL_LABELS[trial.binary.mass1Solar] ?? ''}, ${trial.binary.separationPc} parsecs apart.`,
+          `One wave cycle lasts about ${cycleText(trial.binary.waveCycleYears)}, so ${cyclesText(trial.cyclesIn15Years)} cycles fit in ${OBSERVING_SPAN_YEARS} years.`,
+          `Its wave ${verdict}.`,
+        ]}
+        fill={TEXT_COLOR}
+        size={10}
+      />
+    </svg>
+  )
+}
+
 export function PulsarTimingBackgroundExperiment() {
   const [cycleGuess, setCycleGuess] = useState<CycleChoiceId | null>(null)
   const [shiftGuess, setShiftGuess] = useState<ShiftChoice | null>(null)
+  const [trialMass, setTrialMass] = useState<number>(1e9)
+  const [trialSeparation, setTrialSeparation] = useState<number>(0.01)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -397,6 +489,8 @@ export function PulsarTimingBackgroundExperiment() {
   const startOver = () => {
     setCycleGuess(null)
     setShiftGuess(null)
+    setTrialMass(1e9)
+    setTrialSeparation(0.01)
     setStatus('idle')
     setStage(0)
   }
@@ -407,6 +501,9 @@ export function PulsarTimingBackgroundExperiment() {
   const pic = pictureOne()
   const b = pic.pair
   const pic2 = pictureTwo()
+  const trial = trialPicture(trialMass, trialSeparation)
+  const exampleFrequency = examplePair().frequencyNanohertz
+  const exampleCycleYears = examplePair().waveCycleYears
   return (
     <div>
       <h2>Experiment 22 — Does the Universe Hum? (Pulsar Timing Arrays)</h2>
@@ -776,6 +873,102 @@ export function PulsarTimingBackgroundExperiment() {
             </div>
           )}
         </div>
+
+        {done && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> Above, you saw one pair of black holes: two of a billion Suns each, 0.01 parsecs apart (the dashed cyan line below). Here you can try other
+              pairs. Pick how heavy each black hole is and how far apart the two are, and one drawing will show how fast the wave from your pair goes through its cycles, and whether 15 years of timing could
+              pick it out. The real pictures above do not change, and your two guesses do not change this drawing: only the two settings below do.
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>These are your own trial values, not real pairs.</strong> Each button is a number to try. For example, if you choose {MASS_TRIAL_LABELS[trialMass]} and{' '}
+              {trialSeparation} parsecs, the drawing works out the wave of a pair like that, with the same law as in Picture 1 (Kepler’s law). Such a pair is imagined for the question, and it is drawn in pink.
+              The two black holes are taken to have the same mass.
+            </p>
+
+            {(
+              [
+                {
+                  title: 'How heavy is each black hole?',
+                  choices: TRIAL_MASS_CHOICES_SOLAR.map((v) => ({ value: v, label: MASS_TRIAL_LABELS[v] })),
+                  value: trialMass,
+                  set: setTrialMass,
+                },
+                {
+                  title: 'How far apart are the two black holes?',
+                  choices: TRIAL_SEPARATION_CHOICES_PC.map((v) => ({ value: v, label: separationLabel(v) })),
+                  value: trialSeparation,
+                  set: setTrialSeparation,
+                },
+              ] as const
+            ).map((control) => (
+              <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                <div>
+                  {control.choices.map((choice) => (
+                    <button
+                      key={choice.value}
+                      type="button"
+                      onClick={() => (control.set as (v: number) => void)(choice.value)}
+                      className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                      style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                    >
+                      {choice.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <TrialDrawing trial={trial} />
+            <CaptionBlock
+              title="Drawing A"
+              intro={`It shows how fast the gravitational wave from your trial pair goes through its cycles. The ruler is a ruler of frequency in nanohertz (nHz). A hertz is one cycle a second, so a nanohertz is a billionth of that: one cycle every 31.7 years. The ruler goes up in steps of ten (0.1, 1, 10, 100 and so on), so that very slow and very fast waves fit on one line. A higher number means a faster wave and a shorter cycle.`}
+              bullets={[
+                <><strong>The pink dot, in the box “YOUR TRIAL PAIR”,</strong> is the frequency of the wave from your trial pair. It is calculated here, from the masses and the separation you chose, for a pair that is imagined for the question.</>,
+                <><strong>The cyan band</strong> shows which waves {OBSERVING_SPAN_YEARS} years of timing can pick out. Think of watching a swing for {OBSERVING_SPAN_YEARS} years: you can only tell that it is swinging if you see it go back and forth at least once
+                  in that time. A wave is the same. It has to go through at least one whole cycle while the pulsars are being timed. A wave that takes exactly {OBSERVING_SPAN_YEARS} years for one cycle has a frequency of
+                  1 cycle in {OBSERVING_SPAN_YEARS} years, which is about {n1(trial.lowestNanohertz)} nHz, and that is where the band starts (its left edge). A wave with a shorter cycle has a higher frequency, so it is
+                  further to the right, inside the band. A wave with a longer cycle is to the left of the band, so it is too slow to be picked out as a wave. Picture 1 showed the same band by the length of the cycle, where the band
+                  ran from short cycles up to about {OBSERVING_SPAN_YEARS} years. Here it is drawn by frequency, so the order is turned round: shorter cycles are to the right.</>,
+                <><strong>The cyan dashed line</strong> is a fixed mark for the pair you met in Picture 1: two black holes of a billion Suns each, 0.01 parsecs apart. Its wave goes through one cycle in about{' '}
+                  {n1(exampleCycleYears)} years, which is {n1(exampleFrequency)} nHz. The line stays where it is when you change a setting, so you can see how far your trial pair’s pink dot moves away from it.</>,
+                <><strong>The ruler goes up in steps of ten</strong>, so equal distances along it mean equal multiples of the frequency, not equal amounts.</>,
+                <><strong>The three lines of text underneath</strong> give your pair’s numbers: its masses and separation, the length of one wave cycle and how many cycles fit in {OBSERVING_SPAN_YEARS} years, and whether the wave has at least one cycle in that time.</>,
+              ]}
+              worked={
+                <>
+                  You chose {MASS_TRIAL_LABELS[trialMass]} and {trialSeparation} parsecs apart. That is {n2(trial.frequencyOverExample)} times the frequency of Picture 1’s pair. Its wave goes through
+                  one cycle in about {cycleText(trial.binary.waveCycleYears)}, which is {nanohertzText(trial.binary.frequencyNanohertz)} nHz, so {OBSERVING_SPAN_YEARS} years ÷ {cycleText(trial.binary.waveCycleYears)} ={' '}
+                  {cyclesText(trial.cyclesIn15Years)} cycles in {OBSERVING_SPAN_YEARS} years.
+                  {trial.frequencyOverExample === 1 ? ' These are the same values as Picture 1’s pair, so the pink dot sits on the cyan dashed line.' : ''}
+                </>
+              }
+              lookFor={[
+                {
+                  look: 'the pink dot, against the cyan band.',
+                  means: `your trial pair’s wave is at ${nanohertzText(trial.binary.frequencyNanohertz)} nHz, ${trial.fits ? 'inside' : 'to the left of'} the band, with ${cyclesText(trial.cyclesIn15Years)} cycles in ${OBSERVING_SPAN_YEARS} years.`,
+                  matters: 'a wave with at least one cycle in the data can be picked out as a wave. A wave with less than one cycle in the data would show only as a slow drift, and could not be seen as a wave.',
+                },
+                {
+                  look: 'the pink dot, beside the cyan dashed line.',
+                  means: `your pair’s wave has ${n2(trial.frequencyOverExample)} times the frequency of Picture 1’s pair.`,
+                  matters: 'the frequency is set by the two settings together, so changing either one moves the dot. Changing only one at a time shows what each does.',
+                },
+              ]}
+              whereFrom={
+                <>
+                  <strong>Measured:</strong> nothing in Drawing A is a measurement. <strong>Calculated here:</strong> the dashed line (Picture 1’s pair) and the pink dot, from Kepler’s law, with the wave’s frequency
+                  twice the pair’s orbital frequency; and the edge of the cyan band, from the rough rule that the lowest frequency {OBSERVING_SPAN_YEARS} years can pick out is about 1 ÷ {OBSERVING_SPAN_YEARS} years.{' '}
+                  <strong>Imagined for the question:</strong> the trial pair itself, in pink: its masses and its separation are chosen by you, and no such pair is known to exist. These are trial values and do not say
+                  that a real pair is like that.
+                </>
+              }
+            />
+          </div>
+        )}
       </div>
     </div>
   )
