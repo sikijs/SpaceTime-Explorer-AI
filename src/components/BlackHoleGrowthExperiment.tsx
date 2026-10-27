@@ -18,11 +18,12 @@ import {
 import type { SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { BlackHoleGrowthResults } from './BlackHoleGrowthResults'
+import { BlackHoleGrowthTutor } from './BlackHoleGrowthTutor'
 import { PictureOne, PictureTwo, TRIAL_SEED_LABELS, TrialDrawing, efficiencyPercent, pictureOneCaption, pictureTwoCaption, trialCaption } from './BlackHoleGrowthPictures'
 
 // Frontier and Beyond, Experiment 23 (docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md).
 // STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
-// links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 and Picture 2 with the guesses (in `BlackHoleGrowthPictures.tsx`). It also has Part 2 (two controls and Drawing A) and Part 3, the results (`BlackHoleGrowthResults.tsx`). It has no tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line
+// links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 and Picture 2 with the guesses (in `BlackHoleGrowthPictures.tsx`). It also has Part 2 (two controls and Drawing A), Part 3, the results (`BlackHoleGrowthResults.tsx`) and Part 4, the tutor (`BlackHoleGrowthTutor.tsx`). It has no chapter summary or post-run links yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long a black hole of 10 Suns takes to reach the object's mass, how many growth times that is, how small a seed
 // could do it, or what a growth time is in years (CLAUDE.md §12): those are the predictions' answers and the run's results. The pages that give them away or hint at them (NASA's Chandra page on
 // a black hole growing faster than the limit, which names a seed "less than a hundred Suns", and the papers) are listed only after the run, in a later step.
@@ -74,9 +75,10 @@ const STAGE_LINES = [
 
 interface BlackHoleGrowthExperimentProps {
   onComplete?: () => void
+  onTutorComplete?: () => void
 }
 
-export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperimentProps) {
+export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: BlackHoleGrowthExperimentProps) {
   const [timeGuess, setTimeGuess] = useState<TimeChoiceId | null>(null)
   const [seedGuess, setSeedGuess] = useState<SeedChoiceId | null>(null)
   const [trialSeed, setTrialSeed] = useState<number>(TRIAL_DEFAULT_SEED_SOLAR)
@@ -322,7 +324,7 @@ export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperim
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other seeds and efficiencies, and Part 3, the results. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other seeds and efficiencies, Part 3, the results, and Part 4, the tutor. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -394,6 +396,29 @@ export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperim
           )}
 
           {done && <BlackHoleGrowthResults timeGuess={timeGuess} seedGuess={seedGuess} />}
+
+          {done && timeGuess !== null && seedGuess !== null && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the real results. Third, it asks one bigger question, about
+                  what happens to the speed limit when a black hole gets heavier. Type a few words for each. Nothing is graded, and a short answer is fine.
+                </li>
+                <li>
+                  <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses matched until you have answered all three, so you can think it through first.
+                </li>
+                <li>
+                  <strong>Then the explanation.</strong> It covers why the limit rises with the mass and growth multiplies, why a higher efficiency means slower growth, why the seed’s mass matters so much, what the comparison shows and what it does not, and why sources disagree.
+                  Some parts use a worked sum or an everyday comparison.
+                </li>
+              </ul>
+              <BlackHoleGrowthTutor timePrediction={timeGuess} seedPrediction={seedGuess} onExplained={onTutorComplete} />
+            </div>
+          )}
         </div>
       </div>
     </div>
