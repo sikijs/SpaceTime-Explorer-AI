@@ -1,9 +1,21 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
+import {
+  CAPERS_LRD_Z9,
+  objectAgeYears,
+  PREDICTION_SEED_SOLAR,
+  SEED_CHOICES,
+  SEED_START_AGE_YEARS,
+  STANDARD_EFFICIENCY,
+  TIME_CHOICES,
+  timeAvailableYears,
+} from '../physics/blackHoleGrowth'
+import type { SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
 // Frontier and Beyond, Experiment 23 (docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md).
-// STEP 2 (the interface skeleton and the introduction): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
-// links. It has no predictions, run, pictures, controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line
+// STEPS 2 and 3 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
+// links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long a black hole of 10 Suns takes to reach the object's mass, how many growth times that is, how small a seed
 // could do it, or what a growth time is in years (CLAUDE.md §12): those are the predictions' answers and the run's results. The pages that give them away or hint at them (NASA's Chandra page on
 // a black hole growing faster than the limit, which names a seed "less than a hundred Suns", and the papers) are listed only after the run, in a later step.
@@ -22,7 +34,7 @@ function referenceEntries(): { term: string; meaning: string }[] {
   return [
     { term: 'Black hole and its mass', meaning: 'a black hole is a region from which nothing can escape, and its mass is how much matter it holds. We count mass in “Suns”, one Sun being the mass of our Sun. A black hole of 10 Suns is about the mass of one fairly heavy star (Black Holes Experiment 1).' },
     { term: 'Accretion (“feeding”)', meaning: 'a black hole grows by pulling in gas that is near it. The gas does not fall straight in. It swirls round the black hole in a flat disc, getting hotter and hotter, and shines brightly before it is swallowed. Nothing is burning: the gas glows because falling in makes it hot, not because anything is fusing.' },
-    { term: 'Efficiency', meaning: 'the share of the matter that falls towards a black hole that is turned into light on the way in (Black Holes Experiment 8). If the efficiency is 10 percent, then for every 100 kilograms that fall in, the equivalent of 10 kilograms is sent out as light, and the rest is swallowed.' },
+    { term: 'Efficiency', meaning: 'how much of the energy stored in the falling matter is given out as light on the way in (Black Holes Experiment 8). Matter is itself a store of energy (E = mc², Spacetime Geometry Experiment 5), and the falling gas gives some of it out: falling makes it speed up, rubbing against itself heats it, and hot gas glows. If the efficiency is 10 percent, then for every 100 kilograms that fall in, the light carries away the energy of 10 kilograms (“10 kilograms’ worth”), and all 100 kilograms are still swallowed.' },
     { term: 'Eddington limit', meaning: 'the fastest a black hole can feed, because the light from the glowing gas pushes outward on the gas that is still falling in. The faster the black hole feeds, the brighter the gas shines and the harder it pushes back, until pull and push are equal and the feeding cannot speed up. It is named after the astronomer Arthur Eddington.' },
     { term: 'Exponential growth', meaning: 'growth in which the amount is multiplied by the same factor in every equal span of time, for example doubling every hour. A single bacterium that divides every hour is 2 after 1 hour, 4 after 2, 8 after 3, and about a million after 20 hours. The bigger it gets, the more it adds each hour.' },
     { term: 'Seed (of a black hole)', meaning: 'the black hole that a supermassive black hole starts from, before it has done much feeding. How seeds form is not settled: one idea is that they are the remains of a massive star, which would make a seed of tens of Suns; others make heavier ones.' },
@@ -35,7 +47,22 @@ function referenceEntries(): { term: string; meaning: string }[] {
   ]
 }
 
+// Display rounding of the module's numbers for the wording of the predictions (no physics here, CLAUDE.md §9).
+function millionYears(years: number): string {
+  return `${(Math.round(years / 1e7) * 10).toLocaleString('en-US')} million years`
+}
+
 export function BlackHoleGrowthExperiment() {
+  const [timeGuess, setTimeGuess] = useState<TimeChoiceId | null>(null)
+  const [seedGuess, setSeedGuess] = useState<SeedChoiceId | null>(null)
+  const [recorded, setRecorded] = useState(false)
+  const bothPredicted = timeGuess !== null && seedGuess !== null
+  const startOver = () => {
+    setTimeGuess(null)
+    setSeedGuess(null)
+    setRecorded(false)
+  }
+  const targetMillion = Math.round(10 ** CAPERS_LRD_Z9.logMass / 1e6)
   return (
     <div>
       <h2>Experiment 23 — How Fast Can a Black Hole Grow? (The “Little Red Dots”)</h2>
@@ -91,10 +118,11 @@ export function BlackHoleGrowthExperiment() {
             brightly the gas can shine before its light pushes the rest of the gas away.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>Efficiency.</strong> Not every kind of falling gas gives out the same amount of light. As gas falls in, a share of its matter is turned into light on the way (Black Holes Experiment 8). That
-            share is called the <strong>efficiency</strong>. Because the limit is on brightness, the efficiency decides how much gas the black hole can take in, and so how fast it grows. Here is a made-up
+            <strong>Efficiency.</strong> Not every kind of falling gas gives out the same amount of light. The gas does not turn into light. It is swallowed, but on the way in it gives out some of its energy.
+            Matter is itself a store of energy (that is what Einstein’s E = mc² says, as in Spacetime Geometry Experiment 5), and as the gas falls it speeds up, rubs against itself and gets hot, and hot gas
+            glows. How much of the falling matter’s stored energy is given out as light in this way (Black Holes Experiment 8) is called the <strong>efficiency</strong>. Because the limit is on brightness, the efficiency decides how much gas the black hole can take in, and so how fast it grows. Here is a made-up
             example with easy numbers. Suppose the most light the gas can give out before it blows itself away is the equivalent of 10 kilograms of matter a year. If the efficiency is 10 percent, every
-            100 kilograms that fall in give out 10 kilograms’ worth of light, so the black hole can take in 100 kilograms a year, and keep 90 of them. If the efficiency is 50 percent, every 100 kilograms
+            100 kilograms that fall in give out light that carries the energy of 10 kilograms (“10 kilograms’ worth”), so the black hole can take in 100 kilograms a year, and keep 90 of them. If the efficiency is 50 percent, every 100 kilograms
             give out 50 kilograms’ worth of light, so the black hole can take in only 20 kilograms a year, and keep 10. The more efficient the feeding, the more light there is for each kilogram, the sooner the
             brightness limit is reached, and the slower the black hole grows. It is like a fire that must not get brighter than a certain level: if each log gives out a lot of light, you can burn only a few logs
             an hour.
@@ -161,6 +189,89 @@ export function BlackHoleGrowthExperiment() {
         </div>
 
         <ReferencePanel entries={referenceEntries()} />
+
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is right. */}
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed things: a calculation
+            of how a black hole grows when it feeds as fast as it can, and the published estimate for CAPERS-LRD-z9. They are the same for everyone. When they are drawn, your guesses appear on them in white, so
+            you can see how each guess compares with the real result. The real pictures stay the same whatever you guess.
+          </p>
+
+          {(
+            [
+              {
+                title: 'Prediction 1: how long does it take to grow?',
+                text: (
+                  <>
+                    A black hole of {PREDICTION_SEED_SOLAR} Suns begins to feed. It feeds at the Eddington limit, the fastest it can, all the time, and its efficiency is{' '}
+                    {Math.round(STANDARD_EFFICIENCY * 100)} percent (that is, the light that the falling gas gives out on the way in carries away energy equal to {Math.round(STANDARD_EFFICIENCY * 100)} percent of the energy stored in the matter that falls in). How long does it
+                    take to grow to about {targetMillion} million Suns, the estimated mass of the black hole in CAPERS-LRD-z9?
+                  </>
+                ),
+                choices: TIME_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+                value: timeGuess as string | null,
+                set: (v: string) => setTimeGuess(v as TimeChoiceId),
+              },
+              {
+                title: 'Prediction 2: how small a seed could do it?',
+                text: (
+                  <>
+                    Now suppose a seed begins to feed when the universe is {millionYears(SEED_START_AGE_YEARS)} old, at the Eddington limit, all the time, with the same {Math.round(STANDARD_EFFICIENCY * 100)}{' '}
+                    percent efficiency. CAPERS-LRD-z9 is seen when the universe was about {millionYears(objectAgeYears())} old, so the seed has about {millionYears(timeAvailableYears())} to grow to about{' '}
+                    {targetMillion} million Suns. About how small can the seed be, and still get there in that time? This is a separate guess from Prediction 1, so your two answers do not have to agree with each
+                    other.
+                  </>
+                ),
+                choices: SEED_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+                value: seedGuess as string | null,
+                set: (v: string) => setSeedGuess(v as SeedChoiceId),
+              },
+            ] as const
+          ).map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</p>
+              <div>
+                {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => (question.set as (v: string) => void)(choice.value)}
+                    disabled={recorded}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label.charAt(0).toUpperCase() + choice.label.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null
+                  ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label}.`
+                  : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+          )}
+          {recorded && (
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
+              Your predictions are recorded. The pictures and the results are built in later steps, so nothing more happens yet.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )
