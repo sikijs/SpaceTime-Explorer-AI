@@ -392,3 +392,151 @@ export function pictureTwo(): PictureTwo {
     objectOverSmallest: target / smallest,
   }
 }
+
+// ---- Results (Step 6): the check-up, the steps from the limit to the time, and the other settings ----
+
+// References for the check-up. Both come from search summaries, not from a page that was read (see the specification's "Sources").
+export const EDDINGTON_TIME_REFERENCE_YEARS = 450e6 // "approximately 450 million years" (the Salpeter time), as a search summary gave it
+export const OBJECT_AGE_REFERENCE_YEARS = 500e6 // "about half a billion years old", as summaries of the discovery paper gave it
+
+export type Comparison = 'the same' | 'more' | 'less'
+
+// A value against a reference stated to a given precision (a step, in the value's unit): "the same" if the value rounds to the reference at that precision.
+// No cut-off is invented (CLAUDE.md §14): the step is the precision of the reference itself.
+export function compareToReference(value: number, reference: number, step: number): Comparison {
+  checkPositive(step, 'The step')
+  const rounded = Math.round(value / step) * step
+  const ref = Math.round(reference / step) * step
+  if (rounded === ref) return 'the same'
+  return rounded > ref ? 'more' : 'less'
+}
+
+export type RangePlace = 'inside' | 'below' | 'above'
+export function placeInRange(value: number, low: number, high: number): RangePlace {
+  return value < low ? 'below' : value > high ? 'above' : 'inside'
+}
+
+export interface ResultsCheckUp {
+  // Row: time needed against the time available.
+  neededYears: number
+  availableYears: number
+  neededOverAvailable: number
+  neededComparison: Comparison
+  // Row: the age of the universe at the object, against "about half a billion years".
+  ageYears: number
+  ageReferenceYears: number
+  ageComparison: Comparison
+  // Row: the smallest seed, against the 10-Sun seed of Prediction 1.
+  smallestSeedSolar: number
+  stellarSeedSolar: number
+  smallestOverStellar: number
+  // Row: the Eddington time, against "about 450 million years".
+  eddingtonYears: number
+  eddingtonReferenceYears: number
+  eddingtonComparison: Comparison
+  growthTimeYears: number
+  // Row: the mass of the object. The estimate, its give-or-take in the logarithm, and the authors' wider range.
+  objectSolar: number
+  objectGiveOrTakeLowSolar: number
+  objectGiveOrTakeHighSolar: number
+  publishedLowSolar: number
+  publishedHighSolar: number
+  publishedRangeFactor: number
+  objectPlace: RangePlace
+  // Row: the time for a 10-Sun seed to reach the two ends of the published range of the object's mass.
+  neededForLowYears: number
+  neededForHighYears: number
+  neededForLowOverAvailable: number
+  neededForHighOverAvailable: number
+}
+
+export function resultsCheckUp(): ResultsCheckUp {
+  const target = objectMassSolar()
+  const available = timeAvailableYears()
+  const needed = yearsToGrow(PREDICTION_SEED_SOLAR, target, STANDARD_EFFICIENCY)
+  const smallest = smallestSeedSolar(target, available, STANDARD_EFFICIENCY)
+  const low = yearsToGrow(PREDICTION_SEED_SOLAR, CAPERS_LRD_Z9.minMassSolar, STANDARD_EFFICIENCY)
+  const high = yearsToGrow(PREDICTION_SEED_SOLAR, CAPERS_LRD_Z9.maxMassSolar, STANDARD_EFFICIENCY)
+  return {
+    neededYears: needed,
+    availableYears: available,
+    neededOverAvailable: needed / available,
+    neededComparison: needed > available ? 'more' : needed < available ? 'less' : 'the same',
+    ageYears: objectAgeYears(),
+    ageReferenceYears: OBJECT_AGE_REFERENCE_YEARS,
+    ageComparison: compareToReference(objectAgeYears(), OBJECT_AGE_REFERENCE_YEARS, 100e6),
+    smallestSeedSolar: smallest,
+    stellarSeedSolar: PREDICTION_SEED_SOLAR,
+    smallestOverStellar: smallest / PREDICTION_SEED_SOLAR,
+    eddingtonYears: eddingtonTimeYears(),
+    eddingtonReferenceYears: EDDINGTON_TIME_REFERENCE_YEARS,
+    eddingtonComparison: compareToReference(eddingtonTimeYears(), EDDINGTON_TIME_REFERENCE_YEARS, 10e6),
+    growthTimeYears: growthTimeYears(STANDARD_EFFICIENCY),
+    objectSolar: target,
+    objectGiveOrTakeLowSolar: 10 ** (CAPERS_LRD_Z9.logMass - CAPERS_LRD_Z9.logMassPlusMinus),
+    objectGiveOrTakeHighSolar: 10 ** (CAPERS_LRD_Z9.logMass + CAPERS_LRD_Z9.logMassPlusMinus),
+    publishedLowSolar: CAPERS_LRD_Z9.minMassSolar,
+    publishedHighSolar: CAPERS_LRD_Z9.maxMassSolar,
+    publishedRangeFactor: CAPERS_LRD_Z9.maxMassSolar / CAPERS_LRD_Z9.minMassSolar,
+    objectPlace: placeInRange(target, CAPERS_LRD_Z9.minMassSolar, CAPERS_LRD_Z9.maxMassSolar),
+    neededForLowYears: low,
+    neededForHighYears: high,
+    neededForLowOverAvailable: low / available,
+    neededForHighOverAvailable: high / available,
+  }
+}
+
+export interface ExampleSteps {
+  eddingtonYears: number
+  efficiency: number
+  growthTimeYears: number
+  seedSolar: number
+  targetSolar: number
+  massFactor: number
+  growthTimes: number
+  doublings: number
+  neededYears: number
+  startAgeYears: number
+  reachesAtAgeYears: number
+  objectAgeYears: number
+  availableYears: number
+}
+
+// The steps from the Eddington time to the time needed, for Picture 1's black hole (10 Suns, 10 percent), from the same functions as the pictures.
+export function exampleSteps(): ExampleSteps {
+  const pic = pictureOne()
+  return {
+    eddingtonYears: eddingtonTimeYears(),
+    efficiency: pic.efficiency,
+    growthTimeYears: pic.growthTimeYears,
+    seedSolar: pic.seedSolar,
+    targetSolar: pic.targetSolar,
+    massFactor: pic.targetSolar / pic.seedSolar,
+    growthTimes: pic.growthTimesNeeded,
+    doublings: pic.doublingsNeeded,
+    neededYears: pic.neededYears,
+    startAgeYears: pic.startAgeYears,
+    reachesAtAgeYears: pic.startAgeYears + pic.neededYears,
+    objectAgeYears: pic.ageYears,
+    availableYears: pic.availableYears,
+  }
+}
+
+export interface SettingsCell {
+  seedSolar: number
+  efficiency: number
+  growthTimeYears: number
+  yearsNeeded: number
+  reachesAtAgeYears: number
+  fits: boolean
+}
+
+// Every seed of the control against every efficiency of the control, as fixed numbers (the learner's settings do not move this table).
+export function settingsGrid(): SettingsCell[][] {
+  return TRIAL_SEED_CHOICES_SOLAR.map((seed) =>
+    efficiencyChoices().map((e) => {
+      const t = trialPicture(seed, e)
+      return { seedSolar: seed, efficiency: e, growthTimeYears: t.growthTimeYears, yearsNeeded: t.yearsNeeded, reachesAtAgeYears: t.reachesAtAgeYears, fits: t.fits }
+    }),
+  )
+}

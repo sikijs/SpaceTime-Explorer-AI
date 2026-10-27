@@ -327,3 +327,87 @@ describe('Drawing A: the age at which the trial seed reaches the object\'s mass 
     expect(trialPicture(1e3, nonSpinningEfficiency()).reachesAtAgeYears).toBeLessThan(trialPicture(1e3, 0.4).reachesAtAgeYears)
   })
 })
+
+import { resultsCheckUp, exampleSteps, settingsGrid, compareToReference, placeInRange, EDDINGTON_TIME_REFERENCE_YEARS, OBJECT_AGE_REFERENCE_YEARS } from './blackHoleGrowth'
+
+describe('the results (Step 6)', () => {
+  it('compareToReference says "the same" only when the value rounds to the reference at its precision', () => {
+    expect(compareToReference(450.5e6, 450e6, 10e6)).toBe('the same')
+    expect(compareToReference(470e6, 450e6, 10e6)).toBe('more')
+    expect(compareToReference(430e6, 450e6, 10e6)).toBe('less')
+    expect(compareToReference(522e6, 500e6, 100e6)).toBe('the same')
+    expect(compareToReference(560e6, 500e6, 100e6)).toBe('more')
+    expect(() => compareToReference(1, 1, 0)).toThrow(RangeError)
+  })
+
+  it('placeInRange puts a value inside, below or above a range', () => {
+    expect(placeInRange(5, 1, 10)).toBe('inside')
+    expect(placeInRange(0.5, 1, 10)).toBe('below')
+    expect(placeInRange(11, 1, 10)).toBe('above')
+    expect(placeInRange(1, 1, 10)).toBe('inside')
+  })
+
+  it('the check-up reproduces the pictures and the predictions', () => {
+    const c = resultsCheckUp()
+    expect(c.neededYears).toBeCloseTo(predictionTimeYears(), 0)
+    expect(c.availableYears).toBe(timeAvailableYears())
+    expect(c.neededOverAvailable).toBeCloseTo(c.neededYears / c.availableYears, 12)
+    expect(c.neededComparison).toBe('more')
+    expect(c.smallestSeedSolar).toBe(predictionSeedSolar())
+    expect(c.smallestOverStellar).toBeCloseTo(c.smallestSeedSolar / 10, 9)
+    expect(c.ageYears).toBe(objectAgeYears())
+    expect(c.ageReferenceYears).toBe(OBJECT_AGE_REFERENCE_YEARS)
+    expect(c.ageComparison).toBe('the same')
+    expect(c.eddingtonYears).toBe(eddingtonTimeYears())
+    expect(c.eddingtonReferenceYears).toBe(EDDINGTON_TIME_REFERENCE_YEARS)
+    expect(c.eddingtonComparison).toBe('the same')
+    expect(c.growthTimeYears).toBe(growthTimeYears(0.1))
+  })
+
+  it('the object\'s mass is inside the published range, and the log give-or-take is narrower than the range', () => {
+    const c = resultsCheckUp()
+    expect(c.objectPlace).toBe('inside')
+    expect(c.objectGiveOrTakeLowSolar / 1e6).toBeCloseTo(26.9, 1)
+    expect(c.objectGiveOrTakeHighSolar / 1e6).toBeCloseTo(53.7, 1)
+    expect(c.publishedRangeFactor).toBeCloseTo(3.16e8 / 4.5e6, 9)
+    expect(c.objectGiveOrTakeLowSolar).toBeGreaterThan(c.publishedLowSolar)
+    expect(c.objectGiveOrTakeHighSolar).toBeLessThan(c.publishedHighSolar)
+  })
+
+  it('the time for 10 Suns to reach the two ends of the published range is worked out from the same formula', () => {
+    const c = resultsCheckUp()
+    expect(c.neededForLowYears).toBeCloseTo(yearsToGrow(10, 4.5e6), 0)
+    expect(c.neededForHighYears).toBeCloseTo(yearsToGrow(10, 3.16e8), 0)
+    expect(c.neededForLowYears).toBeLessThan(c.neededYears)
+    expect(c.neededForHighYears).toBeGreaterThan(c.neededYears)
+    expect(c.neededForLowOverAvailable).toBeCloseTo(c.neededForLowYears / c.availableYears, 12)
+  })
+
+  it('the example steps agree with Picture 1 and chain from the Eddington time to the time needed', () => {
+    const s = exampleSteps()
+    const p = pictureOne()
+    expect(s.growthTimeYears).toBeCloseTo((s.efficiency / (1 - s.efficiency)) * s.eddingtonYears, 0)
+    expect(s.massFactor).toBeCloseTo(s.targetSolar / s.seedSolar, 6)
+    expect(s.growthTimes).toBeCloseTo(Math.log(s.massFactor), 12)
+    expect(s.neededYears).toBeCloseTo(s.growthTimes * s.growthTimeYears, 0)
+    expect(s.reachesAtAgeYears).toBeCloseTo(s.startAgeYears + s.neededYears, 0)
+    expect(s.availableYears).toBeCloseTo(s.objectAgeYears - s.startAgeYears, 0)
+    expect(s.neededYears).toBe(p.neededYears)
+  })
+
+  it('the settings grid holds every seed against every efficiency, agrees with the trial and does not depend on guesses', () => {
+    const g = settingsGrid()
+    expect(g).toHaveLength(TRIAL_SEED_CHOICES_SOLAR.length)
+    g.forEach((row) => expect(row).toHaveLength(efficiencyChoices().length))
+    g.forEach((row, i) =>
+      row.forEach((cell, j) => {
+        const t = trialPicture(TRIAL_SEED_CHOICES_SOLAR[i], efficiencyChoices()[j])
+        expect(cell.yearsNeeded).toBe(t.yearsNeeded)
+        expect(cell.fits).toBe(t.fits)
+      }),
+    )
+    const before = JSON.stringify([resultsCheckUp(), exampleSteps(), settingsGrid()])
+    TIME_CHOICES.forEach((c) => timeGuessMarker(c.id))
+    expect(JSON.stringify([resultsCheckUp(), exampleSteps(), settingsGrid()])).toBe(before)
+  })
+})

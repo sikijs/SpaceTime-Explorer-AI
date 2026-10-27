@@ -17,11 +17,12 @@ import {
 } from '../physics/blackHoleGrowth'
 import type { SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { BlackHoleGrowthResults } from './BlackHoleGrowthResults'
 import { PictureOne, PictureTwo, TRIAL_SEED_LABELS, TrialDrawing, efficiencyPercent, pictureOneCaption, pictureTwoCaption, trialCaption } from './BlackHoleGrowthPictures'
 
 // Frontier and Beyond, Experiment 23 (docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md).
 // STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
-// links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 and Picture 2 with the guesses (in `BlackHoleGrowthPictures.tsx`). It has no controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line
+// links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 and Picture 2 with the guesses (in `BlackHoleGrowthPictures.tsx`). It also has Part 2 (two controls and Drawing A) and Part 3, the results (`BlackHoleGrowthResults.tsx`). It has no tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long a black hole of 10 Suns takes to reach the object's mass, how many growth times that is, how small a seed
 // could do it, or what a growth time is in years (CLAUDE.md §12): those are the predictions' answers and the run's results. The pages that give them away or hint at them (NASA's Chandra page on
 // a black hole growing faster than the limit, which names a seed "less than a hundred Suns", and the papers) are listed only after the run, in a later step.
@@ -321,7 +322,7 @@ export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperim
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below is Part 2, where you can try other seeds and efficiencies. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other seeds and efficiencies, and Part 3, the results. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -391,6 +392,8 @@ export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperim
               {trialCaption(trial)}
             </div>
           )}
+
+          {done && <BlackHoleGrowthResults timeGuess={timeGuess} seedGuess={seedGuess} />}
         </div>
       </div>
     </div>
