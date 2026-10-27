@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS } from '../physics/pulsarTimingBackground'
+import type { CycleChoiceId, ShiftChoice } from '../physics/pulsarTimingBackground'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
 // Frontier and Beyond, Experiment 22 (docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md).
-// STEP 2 (the interface skeleton and the introduction): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
-// "Want to know more?" links. It has no predictions, run, pictures, controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
+// STEPS 2 and 3 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
+// "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
 // owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long one wave cycle of a pair of supermassive black holes lasts, how big the shift in a
 // pulse's arrival time is, or what "nanohertz" means (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (NANOGrav's own pages, which say
 // "years to decades", the IPTA's page and the papers) are listed only after the run, in a later step.
@@ -23,6 +26,8 @@ function referenceEntries(): { term: string; meaning: string }[] {
     { term: 'Gravitational wave', meaning: 'a ripple in spacetime that is sent out when heavy things speed up or change direction, for example two black holes circling each other. As it passes, it very slightly stretches and squeezes space (Gravitational Waves Experiment 1).' },
     { term: 'Hertz', meaning: 'a unit for how often something repeats. One hertz is one repeat (one cycle) every second, so a sound of 100 hertz repeats 100 times a second.' },
     { term: 'Orbit and orbital period', meaning: 'an orbit is the path of one object going round another, and the orbital period is the time it takes to go round once (Gravity Experiment 6). A year is the Earth’s orbital period round the Sun.' },
+    { term: 'Parsec', meaning: 'a unit for distances between stars and black holes. One parsec is about 3.26 light-years, which is about 31 million million kilometres. So 0.01 parsecs is about 0.03 light-years.' },
+    { term: 'Nanosecond', meaning: 'a billionth of a second. In one nanosecond, light travels about 30 centimetres.' },
     { term: 'Supermassive black hole', meaning: 'a black hole millions to billions of times as heavy as the Sun, found at the centre of most large galaxies. The one at the centre of our own galaxy, Sagittarius A*, is about 4 million Suns (Frontier and Beyond Experiment 21).' },
     { term: 'Neutron star', meaning: 'the extremely dense core left behind when a heavy star explodes, with the mass of more than the Sun squeezed into a sphere about 12 kilometres across (Frontier and Beyond Experiment 15).' },
     { term: 'Pulsar', meaning: 'a neutron star that spins and gives out beams of radio waves from its poles. As it spins, a beam sweeps round the sky like the light of a lighthouse, and each time it points at the Earth, telescopes pick up a short pulse.' },
@@ -34,7 +39,32 @@ function referenceEntries(): { term: string; meaning: string }[] {
   ]
 }
 
+const CYCLE_LABELS: Record<CycleChoiceId, string> = {
+  minute: 'About a minute',
+  day: 'About a day',
+  month: 'About a month',
+  year: 'About a year',
+  decade: 'About a decade (10 years)',
+  century: 'About a century (100 years)',
+}
+const SHIFT_LABELS: Record<ShiftChoice, string> = {
+  0.1: 'About 0.1 nanoseconds',
+  1: 'About 1 nanosecond',
+  10: 'About 10 nanoseconds',
+  100: 'About 100 nanoseconds',
+  1000: 'About 1,000 nanoseconds (a millionth of a second)',
+}
+
 export function PulsarTimingBackgroundExperiment() {
+  const [cycleGuess, setCycleGuess] = useState<CycleChoiceId | null>(null)
+  const [shiftGuess, setShiftGuess] = useState<ShiftChoice | null>(null)
+  const [recorded, setRecorded] = useState(false)
+  const bothPredicted = cycleGuess !== null && shiftGuess !== null
+  const startOver = () => {
+    setCycleGuess(null)
+    setShiftGuess(null)
+    setRecorded(false)
+  }
   return (
     <div>
       <h2>Experiment 22 — Does the Universe Hum? (Pulsar Timing Arrays)</h2>
@@ -106,6 +136,16 @@ export function PulsarTimingBackgroundExperiment() {
             or the other explanations that have been proposed for the signal. The numbers for the real results are published ones.
           </p>
 
+
+          <p style={paragraph}>
+            <strong>What you will do.</strong> You will make two predictions and press Run. Later steps will draw the pictures one stage at a time, and then let you try other values in a part of its own.
+            Nothing here is graded. Your predictions are your own guesses, made before you see anything. They never change the real pictures or the tables, which come from the physics and the published
+            numbers. Your guesses will be drawn on top of the real pictures, in white, so you can compare each guess with the real result, and they will be shown again beside the results. The page will have
+            four parts: first you predict and watch the pictures; then, in “Now try it yourself”, you can choose the mass of each black hole in a pair and how far apart they are, and watch a drawing follow your
+            choices; then come the results; and last a tutor asks you some questions. The real pictures and the results tables never change. Your white guess marks appear on the real pictures, and only the
+            drawing in “Now try it yourself” follows your choices.
+          </p>
+
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Want to know more?</strong> Plainer-language pages are listed here. Links open in a new tab. This page was written as of October 2026. The pages of the teams themselves, and the papers, are listed
             after the run, so that they do not give away the predictions.
@@ -123,6 +163,87 @@ export function PulsarTimingBackgroundExperiment() {
         </div>
 
         <ReferencePanel entries={referenceEntries()} />
+
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is right. */}
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed things: a calculation
+            for a pair of black holes, and published numbers for the real results. They are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess
+            compares with the real result. The real pictures stay the same whatever you guess.
+          </p>
+
+          {(
+            [
+              {
+                title: 'Prediction 1: how long does one cycle of the wave last?',
+                text: (
+                  <>
+                    Two supermassive black holes, each a billion times as heavy as the Sun, circle each other. They are 0.01 parsecs apart, which is about 0.03 light-years, or roughly 2,000 times the distance
+                    from the Earth to the Sun. Such a pair sends out gravitational waves. A wave goes through one cycle (one full up-and-down) and then repeats. How long does one cycle of this pair’s wave last?
+                  </>
+                ),
+                choices: CYCLE_CHOICES.map((c) => ({ value: c.id as string, label: CYCLE_LABELS[c.id] })),
+                value: cycleGuess as string | null,
+                set: (v: string) => setCycleGuess(v as CycleChoiceId),
+              },
+              {
+                title: 'Prediction 2: how much earlier or later does a pulse arrive?',
+                text: (
+                  <>
+                    A gravitational wave of the kind that the NANOGrav team reports squeezes and stretches space by a very small fraction: about 2.4 parts in a million billion (a million billion is 1 followed by 15
+                    zeros). The pulses of a millisecond pulsar arrive every few thousandths of a second. Because of such a wave, a pulse arrives a little earlier or later than it would otherwise. About how
+                    big is that shift, in billionths of a second (nanoseconds)? This is a separate guess from Prediction 1, so your two answers do not have to agree with each other.
+                  </>
+                ),
+                choices: SHIFT_CHOICES_NANOSECONDS.map((c) => ({ value: String(c), label: SHIFT_LABELS[c] })),
+                value: shiftGuess === null ? null : String(shiftGuess),
+                set: (v: string) => setShiftGuess(Number(v) as ShiftChoice),
+              },
+            ] as const
+          ).map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</p>
+              <div>
+                {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => (question.set as (v: string) => void)(choice.value)}
+                    disabled={recorded}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null
+                  ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label.toLowerCase()}.`
+                  : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
+          )}
+          {recorded && (
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
+              Your predictions are recorded. The pictures and the results are built in later steps, so nothing more happens yet.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )
