@@ -21,6 +21,7 @@ import { HorizonAreaLawExperiment } from './components/HorizonAreaLawExperiment'
 import { BlackHoleRingdownExperiment } from './components/BlackHoleRingdownExperiment'
 import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
 import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperiment'
+import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackgroundExperiment'
 import { checkUpRows, distanceRatio, fromMassRows, massRatio as shadowMassRatio, rangeRows, ratioRow } from './physics/blackHoleShadow'
 import { climbFacts, exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, ORIGIN_FIGURES, spinPicture } from './physics/heaviestMerger'
 import { checkUp as ringdownCheckUp, FASTER_SPIN, GW250114_RINGDOWN, pitchGuessResult, ringingWorked, SECOND_TONE_SIGNIFICANCE } from './physics/blackHoleRingdown'
@@ -927,6 +928,14 @@ const chapters: Chapter[] = [
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleShadowSummary(),
     next: 'None yet, because Experiment 22 has no approved specification.',
+  },
+  {
+    title: 'Does the universe hum? (pulsar timing arrays)',
+    group: 'Frontier and Beyond',
+    Component: PulsarTimingBackgroundExperiment,
+    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
+    learned: 'The chapter summary of this experiment is not written yet.',
+    next: 'None yet, because Experiment 23 has no approved specification.',
   },
 ]
 
