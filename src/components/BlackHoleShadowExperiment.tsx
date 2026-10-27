@@ -3,12 +3,13 @@ import type { ReactNode } from 'react'
 import { HORIZON_CHOICES, SIZE_CHOICES, massRatio, distanceRatio, pictureOne, pictureTwo, horizonGuessMarker, ratioRulerPosition, sizeGuessMarker, RATIO_RULER_MIN, RATIO_RULER_MAX, TRIAL_MASS_CHOICES_SOLAR, TRIAL_DISTANCE_CHOICES_PC, TRIAL_RULER_MIN_MICROARCSEC, TRIAL_RULER_MAX_MICROARCSEC, trialPicture, trialRulerPosition, checkUpRows, readingOf, ratioRow, fromMassRows, rangeRows, predictionsBeside } from '../physics/blackHoleShadow'
 import type { HorizonChoice, SizeChoiceId } from '../physics/blackHoleShadow'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { BlackHoleShadowTutor } from './BlackHoleShadowTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 21 (docs/experiments/frontier-and-beyond/21-black-hole-shadow.md).
 // STEPS 2, 4, 5a and 5b (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
-// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (eight stages), Picture 1 with Prediction 1's guess and Picture 2 with Prediction 2's guess. It has Part 2 (two trial controls and Drawing A, step 6) and Part 3 (the results, step 7) but no tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
+// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (eight stages), Picture 1 with Prediction 1's guess and Picture 2 with Prediction 2's guess. It has Part 2 (two trial controls and Drawing A, step 6), Part 3 (the results, step 7) and Part 4 (the tutor, step 8) but no chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
 // the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how big either shadow looks in the sky, how the two compare, or how much
 // wider than the horizon the shadow is (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (the ESO page, which shows both images,
 // and the papers) are listed only after the run, in a later step. The introduction has no illustration; the pictures come with the run.
@@ -452,7 +453,7 @@ interface BlackHoleShadowExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperimentProps) {
+export function BlackHoleShadowExperiment({ onComplete, onTutorComplete }: BlackHoleShadowExperimentProps) {
   const [sizeGuess, setSizeGuess] = useState<SizeChoiceId | null>(null)
   const [horizonGuess, setHorizonGuess] = useState<HorizonChoice | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -1187,6 +1188,30 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
                 </li>
               </ul>
             </div>
+          </div>
+        )}
+
+        {/* Part 4, the tutor (after the results): observe, compare with the predictions, a conceptual question, then the explanation. DRAFT wording for the owner's approval. */}
+        {done && sizeGuess !== null && horizonGuess !== null && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+            </p>
+            <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <li>
+                <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the real
+                results. Third, it asks one bigger question, about how big a shadow looks. Type a few words for each. Nothing is graded, and a short answer is fine.
+              </li>
+              <li>
+                <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses were right until you have answered all three, so you can think it through first.
+              </li>
+              <li>
+                <strong>Then the explanation.</strong> It covers why the shadow is a fixed multiple of the edge, why two very different black holes look about equally big, and what the check in Table 1 does and does
+                not show. Some parts use a worked sum or an everyday comparison.
+              </li>
+            </ul>
+            <BlackHoleShadowTutor sizePrediction={sizeGuess} horizonPrediction={horizonGuess} onExplained={onTutorComplete} />
           </div>
         )}
       </div>
