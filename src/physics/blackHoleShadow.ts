@@ -331,3 +331,72 @@ export function pictureTwo(): PictureTwo {
 export function horizonGuessMarker(choice: HorizonChoice): { times: number; radiusInHorizonRadii: number } {
   return { times: choice, radiusInHorizonRadii: choice }
 }
+
+// ---- Part 2 (Step 6): "Now try it yourself" — a trial black hole's shadow, on a ruler of angles (trial values, not real black holes) ----
+
+// The buttons: masses in Suns and distances in parsecs. Two of each are the real black holes' own values (Sagittarius A* and M87*); the others are between.
+export const TRIAL_MASS_CHOICES_SOLAR = [4e6, 1e8, 1e9, 6.5e9] as const
+export const TRIAL_DISTANCE_CHOICES_PC = [8150, 100000, 1e6, 16.8e6] as const
+
+// Drawing A's ruler of angles runs from 0.01 to 100,000 millionths of an arcsecond, going up in steps of ten. It holds every trial the buttons can give
+// (the smallest is about 0.02 and the largest about 82,000).
+export const TRIAL_RULER_MIN_MICROARCSEC = 0.01
+export const TRIAL_RULER_MAX_MICROARCSEC = 1e5
+
+// Where an angle sits on Drawing A's ruler, from 0 (left end) to 1 (right end).
+export function trialRulerPosition(microarcsec: number): number {
+  checkPositive(microarcsec, 'The angle')
+  const lo = Math.log10(TRIAL_RULER_MIN_MICROARCSEC)
+  const hi = Math.log10(TRIAL_RULER_MAX_MICROARCSEC)
+  return Math.min(1, Math.max(0, (Math.log10(microarcsec) - lo) / (hi - lo)))
+}
+
+export interface TrialRealMark {
+  id: RealBlackHole['id']
+  name: string
+  shadowMicroarcsec: number // calculated here
+  position: number
+}
+
+export interface TrialPicture {
+  massSolar: number
+  distancePc: number
+  horizonMicroarcsec: number // calculated here
+  shadowMicroarcsec: number // calculated here
+  horizonPosition: number
+  shadowPosition: number
+  // The trial shadow's angle divided by each real black hole's calculated shadow angle.
+  shadowOverSgrA: number
+  shadowOverM87: number
+  // The trial's mass and distance divided by Sagittarius A*'s.
+  massOverSgrA: number
+  distanceOverSgrA: number
+  // The real black holes' calculated shadows, for comparison; they do not move with the controls.
+  realMarks: [TrialRealMark, TrialRealMark]
+  // The real black hole whose mass and distance both equal the trial's, or null.
+  sameAs: RealBlackHole['id'] | null
+}
+
+export function trialPicture(massSolar: number, distancePc: number): TrialPicture {
+  const shadow = shadowAngleMicroarcsec(massSolar, distancePc)
+  const horizon = horizonAngleMicroarcsec(massSolar, distancePc)
+  const mark = (bh: RealBlackHole): TrialRealMark => {
+    const s = realShadowMicroarcsec(bh)
+    return { id: bh.id, name: bh.name, shadowMicroarcsec: s, position: trialRulerPosition(s) }
+  }
+  const same = REAL_BLACK_HOLES.find((bh) => bh.massSolar === massSolar && bh.distancePc === distancePc)
+  return {
+    massSolar,
+    distancePc,
+    horizonMicroarcsec: horizon,
+    shadowMicroarcsec: shadow,
+    horizonPosition: trialRulerPosition(horizon),
+    shadowPosition: trialRulerPosition(shadow),
+    shadowOverSgrA: shadow / realShadowMicroarcsec(SGR_A_STAR),
+    shadowOverM87: shadow / realShadowMicroarcsec(M87_STAR),
+    massOverSgrA: massSolar / SGR_A_STAR.massSolar,
+    distanceOverSgrA: distancePc / SGR_A_STAR.distancePc,
+    realMarks: [mark(SGR_A_STAR), mark(M87_STAR)],
+    sameAs: same ? same.id : null,
+  }
+}

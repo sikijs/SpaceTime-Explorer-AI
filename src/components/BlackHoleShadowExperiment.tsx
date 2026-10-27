@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { HORIZON_CHOICES, SIZE_CHOICES, massRatio, pictureOne, pictureTwo, horizonGuessMarker, ratioRulerPosition, sizeGuessMarker, RATIO_RULER_MIN, RATIO_RULER_MAX } from '../physics/blackHoleShadow'
+import { HORIZON_CHOICES, SIZE_CHOICES, massRatio, pictureOne, pictureTwo, horizonGuessMarker, ratioRulerPosition, sizeGuessMarker, RATIO_RULER_MIN, RATIO_RULER_MAX, TRIAL_MASS_CHOICES_SOLAR, TRIAL_DISTANCE_CHOICES_PC, TRIAL_RULER_MIN_MICROARCSEC, TRIAL_RULER_MAX_MICROARCSEC, trialPicture, trialRulerPosition } from '../physics/blackHoleShadow'
 import type { HorizonChoice, SizeChoiceId } from '../physics/blackHoleShadow'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
@@ -8,7 +8,7 @@ import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 21 (docs/experiments/frontier-and-beyond/21-black-hole-shadow.md).
 // STEPS 2, 4, 5a and 5b (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
-// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (eight stages), Picture 1 with Prediction 1's guess and Picture 2 with Prediction 2's guess. It has no Part 2, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
+// and the "Want to know more?" links. It also has the two predictions (Part 1), the run (eight stages), Picture 1 with Prediction 1's guess and Picture 2 with Prediction 2's guess. It has Part 2 (two trial controls and Drawing A, step 6) but no results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
 // the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how big either shadow looks in the sky, how the two compare, or how much
 // wider than the horizon the shadow is (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (the ESO page, which shows both images,
 // and the papers) are listed only after the run, in a later step. The introduction has no illustration; the pictures come with the run.
@@ -49,6 +49,7 @@ const BLACK_HOLE_COLOR = '#a78bfa' // violet: a black hole's edge (its event hor
 const CALC_COLOR = '#22d3ee' // cyan: calculated here (the shadow)
 const MEASURED_COLOR = '#fb923c' // orange: measured by the Event Horizon Telescope (the ring)
 const YOURS_COLOR = '#ffffff' // white: the learner's guess
+const TRIAL_COLOR = '#f472b6' // pink: imagined for the question (a trial black hole in Part 2)
 
 const svgStyle = {
   display: 'block',
@@ -318,6 +319,76 @@ function PictureTwoSvg({ stage, horizonGuess }: { stage: number; horizonGuess: H
 }
 const PICTURE_TWO_FIRST_AIM = 6.5
 
+// A number for a label: three significant figures, with commas.
+function fmt(x: number): string {
+  return Number(x.toPrecision(3)).toLocaleString('en-US')
+}
+
+const MASS_TRIAL_LABELS: Record<number, string> = {
+  4e6: '4 million Suns (Sagittarius A*’s mass)',
+  1e8: '100 million Suns',
+  1e9: '1 billion Suns',
+  6.5e9: '6.5 billion Suns (M87*’s mass)',
+}
+const DISTANCE_TRIAL_LABELS: Record<number, string> = {
+  8150: '8.15 kiloparsecs (Sagittarius A*’s distance)',
+  100000: '100 kiloparsecs',
+  1e6: '1 megaparsec',
+  16.8e6: '16.8 megaparsecs (M87*’s distance)',
+}
+
+// Drawing A (Part 2): a trial black hole's shadow on a ruler of angles that goes up in steps of ten. Imagined for the question, drawn in pink.
+function TrialDrawing({ trial }: { trial: ReturnType<typeof trialPicture> }) {
+  const x0 = 40
+  const x1 = 520
+  const rulerY = 150
+  const x = (pos: number) => x0 + pos * (x1 - x0)
+  const ticks = [0.01, 0.1, 1, 10, 100, 1000, 10000, 100000]
+  const [sgr, m87] = trial.realMarks
+  const shadowX = x(trial.shadowPosition)
+  const horizonX = x(trial.horizonPosition)
+  const labelW = 340
+  const boxX = Math.min(540 - labelW, Math.max(20, shadowX - labelW / 2))
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={290}
+      viewBox={`0 0 ${VIEW_WIDTH} 290`}
+      style={svgStyle}
+      role="img"
+      aria-label={`Drawing A, your own trial. A ruler of angles in the sky, in millionths of an arcsecond, from ${TRIAL_RULER_MIN_MICROARCSEC} to ${TRIAL_RULER_MAX_MICROARCSEC.toLocaleString('en-US')}, going up in steps of ten. Cyan dashed ticks mark the calculated shadows of the real black holes: Sagittarius A star about ${fmt(sgr.shadowMicroarcsec)} and M87 star about ${fmt(m87.shadowMicroarcsec)}. Your trial black hole, of ${fmt(trial.massSolar)} Suns at ${fmt(trial.distancePc)} parsecs, has a calculated shadow of about ${fmt(trial.shadowMicroarcsec)} and a calculated edge of about ${fmt(trial.horizonMicroarcsec)}, drawn in pink and violet. These are trial values, not real black holes.`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Drawing A: how wide your trial black hole’s shadow looks
+      </text>
+      <SvgLines x={20} y={38} lines={['A ruler of angles in the sky, in µas (millionths of an arcsecond). Each step to the right is ten times as wide.']} fill={MUTED_COLOR} />
+      <line x1={x0} y1={rulerY} x2={x1} y2={rulerY} stroke={MUTED_COLOR} strokeWidth={1} />
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={x(trialRulerPosition(t))} y1={rulerY} x2={x(trialRulerPosition(t))} y2={rulerY + 5} stroke={MUTED_COLOR} />
+          <SvgLines x={x(trialRulerPosition(t))} y={rulerY + 17} lines={[t.toLocaleString('en-US')]} fill={MUTED_COLOR} size={9} anchor="middle" />
+        </g>
+      ))}
+
+      {/* The real black holes' calculated shadows: they never move. */}
+      <line x1={x(m87.position)} y1={rulerY - 44} x2={x(m87.position)} y2={rulerY} stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="5 3" />
+      <line x1={x(sgr.position)} y1={rulerY - 62} x2={x(sgr.position)} y2={rulerY} stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="5 3" />
+      <SvgLines x={x(m87.position) - 4} y={rulerY - 48} lines={[`M87*’s shadow, calculated: ${fmt(m87.shadowMicroarcsec)} µas`]} fill={CALC_COLOR} bold size={10} anchor="end" />
+      <SvgLines x={x(sgr.position) + 4} y={rulerY - 66} lines={[`Sagittarius A*’s shadow, calculated: ${fmt(sgr.shadowMicroarcsec)} µas`]} fill={CALC_COLOR} bold size={10} />
+
+      {/* The trial black hole: its edge (violet) and its shadow (pink). */}
+      <circle cx={horizonX} cy={rulerY} r={6} fill="#05070f" stroke={BLACK_HOLE_COLOR} strokeWidth={2.5} />
+      <circle cx={shadowX} cy={rulerY} r={7} fill={TRIAL_COLOR} stroke="#0b1020" strokeWidth={1.5} />
+      <line x1={shadowX} y1={rulerY + 24} x2={shadowX} y2={rulerY + 36} stroke={TRIAL_COLOR} strokeWidth={2} />
+      <rect x={boxX} y={rulerY + 36} width={labelW} height={48} rx={4} fill="#0b1020" stroke={TRIAL_COLOR} strokeWidth={2} />
+      <SvgLines x={boxX + 10} y={rulerY + 52} lines={[`YOUR TRIAL: ${fmt(trial.massSolar)} Suns, ${fmt(trial.distancePc)} parsecs away`]} fill={TRIAL_COLOR} bold size={10} />
+      <SvgLines x={boxX + 10} y={rulerY + 68} lines={[`pink dot: its shadow, calculated, ${fmt(trial.shadowMicroarcsec)} µas`]} fill={TRIAL_COLOR} bold size={10} />
+      <SvgLines x={20} y={rulerY + 104} lines={[`violet circle: its edge (event horizon), calculated, ${fmt(trial.horizonMicroarcsec)} µas`]} fill={BLACK_HOLE_COLOR} bold size={10} />
+      <SvgLines x={20} y={rulerY + 124} lines={['Pink and violet are imagined for the question: trial values, not real black holes.']} fill={MUTED_COLOR} size={9} />
+    </svg>
+  )
+}
+
 const captionParagraph = { marginTop: 0, marginBottom: '0.75rem' } as const
 
 function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { title: string; intro: ReactNode; bullets: ReactNode[]; worked: ReactNode | null; lookFor: LookFor[]; whereFrom: ReactNode }) {
@@ -377,6 +448,8 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
   const [horizonGuess, setHorizonGuess] = useState<HorizonChoice | null>(null)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  const [trialMass, setTrialMass] = useState<number>(TRIAL_MASS_CHOICES_SOLAR[0])
+  const [trialDistance, setTrialDistance] = useState<number>(TRIAL_DISTANCE_CHOICES_PC[0])
   const recorded = status !== 'idle'
   const done = status === 'complete'
   const bothPredicted = sizeGuess !== null && horizonGuess !== null
@@ -397,6 +470,8 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
   const startOver = () => {
     setSizeGuess(null)
     setHorizonGuess(null)
+    setTrialMass(TRIAL_MASS_CHOICES_SOLAR[0])
+    setTrialDistance(TRIAL_DISTANCE_CHOICES_PC[0])
     setStatus('idle')
     setStage(0)
   }
@@ -407,6 +482,7 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
   const pic = pictureOne()
   const [sgrRow, m87Row] = pic.rows
   const pic2 = pictureTwo()
+  const trial = trialPicture(trialMass, trialDistance)
   return (
     <div>
       <h2>Experiment 21 — Can We Photograph a Black Hole’s Shadow? (Event Horizon Telescope)</h2>
@@ -847,6 +923,94 @@ export function BlackHoleShadowExperiment({ onComplete }: BlackHoleShadowExperim
             </div>
           )}
         </div>
+
+        {done && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> Above, in Picture 1 of Part 1, you saw two real black holes, Sagittarius A* and M87*, and how wide each one’s shadow looks from Earth (the dashed cyan
+              circles). Those two black holes have one mass and one distance each. Here you can try other values: pick a mass and a distance for a black hole of your own, and one drawing will show how
+              wide its shadow would look. The real pictures above do not change, and your two guesses do not change this drawing: only the two settings below do.
+            </p>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>These are your own trial values, not real black holes.</strong> Each button is a number to try. For example, if you choose {fmt(trial.massSolar)} Suns and{' '}
+              {fmt(trial.distancePc)} parsecs, the drawing shows a black hole of that mass at that distance, and works out the width its shadow would have in our sky. It is imagined for the
+              question, and it is drawn in pink. The same simple formula as in Picture 1 is used, so it leaves out the glowing gas and the effect of spin.
+            </p>
+
+            {(
+              [
+                {
+                  title: 'How heavy is the trial black hole?',
+                  choices: TRIAL_MASS_CHOICES_SOLAR.map((v) => ({ value: v, label: MASS_TRIAL_LABELS[v] })),
+                  value: trialMass,
+                  set: setTrialMass,
+                },
+                {
+                  title: 'How far away is it?',
+                  choices: TRIAL_DISTANCE_CHOICES_PC.map((v) => ({ value: v, label: DISTANCE_TRIAL_LABELS[v] })),
+                  value: trialDistance,
+                  set: setTrialDistance,
+                },
+              ] as const
+            ).map((control) => (
+              <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                <div>
+                  {control.choices.map((choice) => (
+                    <button
+                      key={choice.value}
+                      type="button"
+                      onClick={() => (control.set as (v: number) => void)(choice.value)}
+                      className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                      style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                    >
+                      {choice.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <TrialDrawing trial={trial} />
+            <CaptionBlock
+              title="Drawing A"
+              intro={`It shows how wide the shadow of your trial black hole would look from Earth. The ruler is a ruler of angles, in µas (millionths of an arcsecond), and it goes up in steps of ten (0.01, 0.1, 1, 10, 100 and so on), so that a very small angle and a very large one fit on the same ruler. It is imagined for the question, not observed.`}
+              bullets={[
+                <><strong>The pink dot</strong> is the shadow of your trial black hole, and <strong>the violet circle</strong> is its edge (event horizon). Both are calculated here, from the mass and the distance you chose. The shadow is always to the right of the edge, because it is wider.</>,
+                <><strong>The cyan dashed lines</strong> are the calculated shadows of the two real black holes from Picture 1, Sagittarius A* and M87*. They do not move when you change a setting.</>,
+                <><strong>The ruler goes up in steps of ten</strong>, so equal distances along it mean equal multiples of the angle, not equal amounts. Two shadows that are ten times apart in width are always the same distance apart on the ruler.</>,
+                <><strong>“µas”</strong> is a millionth of an arcsecond, as in Picture 1.</>,
+              ]}
+              worked={
+                <>
+                  You chose {fmt(trial.massSolar)} Suns at {fmt(trial.distancePc)} parsecs. Compared with Sagittarius A*, that is {fmt(trial.massOverSgrA)} times the mass and {fmt(trial.distanceOverSgrA)} times the distance. Its
+                  shadow is calculated to look {fmt(trial.shadowMicroarcsec)} µas wide, which is {fmt(trial.shadowOverSgrA)} times Sagittarius A*’s ({fmt(trial.realMarks[0].shadowMicroarcsec)} µas) and {fmt(trial.shadowOverM87)} times M87*’s ({fmt(trial.realMarks[1].shadowMicroarcsec)} µas).
+                  {trial.sameAs ? ` These are ${trial.sameAs === 'sgrA' ? 'Sagittarius A*' : 'M87*'}’s own mass and distance, so the pink dot sits on its cyan line.` : ''}
+                </>
+              }
+              lookFor={[
+                {
+                  look: 'the pink dot, against the two cyan dashed lines.',
+                  means: `your trial shadow looks ${fmt(trial.shadowMicroarcsec)} µas wide, ${fmt(trial.shadowOverSgrA)} times the width of Sagittarius A*’s shadow.`,
+                  matters: 'the width a shadow has in our sky is set by the mass and the distance together, so changing either setting moves the dot. Changing only one at a time shows what each does.',
+                },
+                {
+                  look: 'the violet circle, beside the pink dot.',
+                  means: `the edge looks ${fmt(trial.horizonMicroarcsec)} µas wide, and the shadow is ${fmt(trial.shadowMicroarcsec / trial.horizonMicroarcsec)} times as wide as the edge, for every trial you choose.`,
+                  matters: 'it is the same 2.6 as in Picture 2: the shadow is a fixed multiple of the edge, so any change in the shadow is a change in the edge too.',
+                },
+              ]}
+              whereFrom={
+                <>
+                  <strong>Measured:</strong> nothing in Drawing A is a measurement. <strong>Calculated here:</strong> the real black holes’ cyan lines (from the masses and distances published by the Event Horizon Telescope teams), and the pink dot and violet
+                  circle, all from the same formula as Picture 1. <strong>Imagined for the question:</strong> the trial black hole itself, in pink and violet: its mass and its distance are chosen by you, and no such black hole was observed.
+                  These are trial values and do not say that a real black hole is like that.
+                </>
+              }
+            />
+          </div>
+        )}
       </div>
     </div>
   )

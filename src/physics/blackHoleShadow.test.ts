@@ -31,6 +31,12 @@ import {
   horizonGuessMarker,
   PICTURE_TWO_BEAM_AIMS,
   PICTURE_TWO_VIEW_RADIUS,
+  TRIAL_MASS_CHOICES_SOLAR,
+  TRIAL_DISTANCE_CHOICES_PC,
+  TRIAL_RULER_MIN_MICROARCSEC,
+  TRIAL_RULER_MAX_MICROARCSEC,
+  trialRulerPosition,
+  trialPicture,
 } from './blackHoleShadow'
 import { horizonRadiusKm } from './blackHoleSizeExperiment'
 
@@ -266,5 +272,71 @@ describe('Picture 2', () => {
       expect(horizonGuessMarker(c).radiusInHorizonRadii).toBeLessThanOrEqual(PICTURE_TWO_VIEW_RADIUS)
     }
     expect(horizonGuessMarker(3).radiusInHorizonRadii).not.toBeCloseTo(pictureTwo().shadowRadius, 1)
+  })
+})
+
+describe('Part 2: a trial black hole (Step 6)', () => {
+  it('gives the real shadow when the trial values are a real black hole\'s own', () => {
+    for (const bh of [SGR_A_STAR, M87_STAR]) {
+      const t = trialPicture(bh.massSolar, bh.distancePc)
+      expect(t.shadowMicroarcsec).toBeCloseTo(realShadowMicroarcsec(bh), 9)
+      expect(t.sameAs).toBe(bh.id)
+    }
+    expect(trialPicture(1e8, 8150).sameAs).toBeNull()
+    expect(trialPicture(4e6, 1e6).sameAs).toBeNull()
+  })
+  it('doubles the angle when the mass doubles and halves it when the distance doubles', () => {
+    const base = trialPicture(1e8, 1e5).shadowMicroarcsec
+    expect(trialPicture(2e8, 1e5).shadowMicroarcsec / base).toBeCloseTo(2, 9)
+    expect(trialPicture(1e8, 2e5).shadowMicroarcsec / base).toBeCloseTo(0.5, 9)
+  })
+  it('keeps the shadow 2.598 times as wide in the sky as the horizon, for any trial', () => {
+    for (const m of TRIAL_MASS_CHOICES_SOLAR) {
+      for (const d of TRIAL_DISTANCE_CHOICES_PC) {
+        const t = trialPicture(m, d)
+        expect(t.shadowMicroarcsec / t.horizonMicroarcsec).toBeCloseTo(3 * Math.sqrt(3) / 2, 9)
+      }
+    }
+  })
+  it('matches a separate calculation in SI units for one trial (100 million Suns at 1 Mpc)', () => {
+    const km = (6 * Math.sqrt(3) * G * 1e8 * SUN) / (C * C) / 1000
+    const rad = km / (1e6 * KM_PER_PARSEC)
+    expect(trialPicture(1e8, 1e6).shadowMicroarcsec / (rad * (180 / Math.PI) * 3600 * 1e6)).toBeCloseTo(1, 3)
+  })
+  it('reports the trial against Sagittarius A* and M87*, and the real marks never move with the trial', () => {
+    const a = trialPicture(4e6, 8150)
+    expect(a.shadowOverSgrA).toBeCloseTo(1, 9)
+    expect(a.massOverSgrA).toBeCloseTo(1, 9)
+    expect(a.distanceOverSgrA).toBeCloseTo(1, 9)
+    const b = trialPicture(6.5e9, 16.8e6)
+    expect(b.shadowOverM87).toBeCloseTo(1, 9)
+    expect(b.shadowOverSgrA).toBeCloseTo(calculatedSizeRatio(), 9)
+    const far = trialPicture(1e8, 1e6)
+    expect(far.massOverSgrA).toBeCloseTo(25, 9)
+    expect(far.distanceOverSgrA).toBeCloseTo(1e6 / 8150, 9)
+    const c = trialPicture(1e9, 1e5)
+    expect(c.realMarks).toEqual(a.realMarks)
+    expect(c.realMarks[0].shadowMicroarcsec).toBeCloseTo(realShadowMicroarcsec(SGR_A_STAR), 9)
+  })
+  it('puts every possible trial on the ruler, with a heavier or nearer black hole further right', () => {
+    for (const m of TRIAL_MASS_CHOICES_SOLAR) {
+      for (const d of TRIAL_DISTANCE_CHOICES_PC) {
+        const t = trialPicture(m, d)
+        expect(t.shadowMicroarcsec).toBeGreaterThan(TRIAL_RULER_MIN_MICROARCSEC)
+        expect(t.shadowMicroarcsec).toBeLessThan(TRIAL_RULER_MAX_MICROARCSEC)
+        expect(t.horizonPosition).toBeLessThan(t.shadowPosition)
+      }
+    }
+    expect(trialRulerPosition(10)).toBeGreaterThan(trialRulerPosition(1))
+    expect(trialRulerPosition(TRIAL_RULER_MIN_MICROARCSEC)).toBe(0)
+    expect(trialRulerPosition(TRIAL_RULER_MAX_MICROARCSEC)).toBe(1)
+    expect(trialRulerPosition(1)).toBeCloseTo(2 / 7, 9)
+    expect(trialPicture(1e9, 1e5).shadowPosition).toBeGreaterThan(trialPicture(1e8, 1e5).shadowPosition)
+    expect(trialPicture(1e8, 1e5).shadowPosition).toBeGreaterThan(trialPicture(1e8, 1e6).shadowPosition)
+  })
+  it('rejects a trial that is not positive and finite', () => {
+    expect(() => trialPicture(0, 1e5)).toThrow(RangeError)
+    expect(() => trialPicture(1e8, -1)).toThrow(RangeError)
+    expect(() => trialRulerPosition(0)).toThrow(RangeError)
   })
 })
