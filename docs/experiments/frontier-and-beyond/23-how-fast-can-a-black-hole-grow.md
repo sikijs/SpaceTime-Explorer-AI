@@ -1,0 +1,173 @@
+# Experiment 23 (Frontier and Beyond): How Fast Can a Black Hole Grow? (The "Little Red Dots")
+
+**Status: PROPOSED by Claude on 2026-10-27 per `CLAUDE.md` §23 Stages 1 to 3, as the twenty-third experiment of the group (`00-group-proposal.md`, Part D, entry 23, marked ◇). Specification APPROVED by the owner on 2026-10-27 ("approve as is", read as all thirteen decisions on their defaults). Step 1 BUILT on 2026-10-27: the physics model and its tests (`src/physics/blackHoleGrowth.ts` and `.test.ts`, 24 tests, checked by ten deliberate breaks; one survived, a linear instead of a log nearest-button comparison, so a test and an export were added). Step 2 BUILT on 2026-10-27: the interface skeleton and introduction (`src/components/BlackHoleGrowthExperiment.tsx`, wired into `src/App.tsx` with a placeholder summary); its wording was APPROVED by the owner on 2026-10-27 ("approved"), after five rounds of changes (see the Implementation Notes, Step 2). Nothing else is built. Every fact below came from web search results and summaries on 2026-10-27 and was NOT read in its original paper; each must be checked at its source before the wording is approved (§29).**
+
+> **Two changes to the group proposal's entry 23, for the owner's decision (Decisions 1 and 2).** (a) The proposal's example prediction ("10 Suns to 100 million Suns in 700 million years?") is a coin toss with the proposal's own numbers (16.1 growth times of 45 million years is 0.72 billion years, against 0.70), so it would teach nothing. The prediction below uses a real object instead. (b) The proposal says the black holes of little red dots "look surprisingly large". A 2025 *Nature* paper (Rusakov and others) argues the masses may be **about 100 times smaller** than first estimated, which would shrink the problem. The experiment therefore teaches the growth limit itself, which is settled physics, and says plainly that whether little red dots are a problem is **Open**.
+
+## Overview
+
+In Black Holes Experiment 1 the learner saw that a black hole's size follows its mass, and in Experiment 8 that matter falling in releases energy as light. Those two ideas combine into a speed limit. A black hole that feeds gets hot gas swirling around it that shines brightly, and that light pushes outward on the gas still trying to fall in. When the push equals the pull, the black hole cannot feed any faster. This is the **Eddington limit**. It has a surprising consequence: a black hole growing at its limit **doubles in a fixed time**, however heavy it is, so growth is exponential, and a light seed needs a minimum number of doublings to become heavy.
+
+The James Webb Space Telescope (JWST) found, in the first billion years of the universe, many compact, very red sources, the "little red dots", and some show the signs of a growing black hole. One, CAPERS-LRD-z9, is seen as it was at redshift 9.288, when the universe was about half a billion years old, with a black hole estimated at about 38 million Suns (a range of 4.5 to 316 million). The experiment asks three questions:
+
+1. **How fast can a black hole grow at most?** The learner finds the growth time at the limit (tens of millions of years) and sees that mass multiplies by the same factor in each equal span of time.
+2. **Is there enough time?** The learner counts the doublings from a seed to 38 million Suns and compares the time they take with the time the universe had.
+3. **What does that tell us, and what not?** A seed of ordinary stellar size has too little time at the limit; a heavier seed, a higher efficiency or growth faster than the limit each fixes it, and the sources do not agree which happened. The experiment does not choose.
+
+The model is **the Eddington growth formula and the age of the universe, calculated here, set beside the published object**. It does not model the gas, the cocoon, how seeds form, or mergers.
+
+## Learning Objective
+
+By the end the learner can say, in their own words:
+
+1. Light from the gas falling into a black hole pushes outward on that gas, which caps how fast a black hole can feed (the Eddington limit). The cap grows in step with the mass, so the mass grows by the same factor in each equal span of time (exponential growth).
+2. The growth time is set by the share of the fallen mass that is turned into light (the efficiency, from Black Holes 8): a more efficient black hole shines more, pushes harder and grows more slowly.
+3. A seed of 10 Suns growing at the limit needs about 15 growth times to reach 38 million Suns, about 0.76 billion years, longer than the half a billion years the universe had at redshift 9.3; a seed of 100,000 Suns needs about 6, about 0.30 billion years.
+4. Little red dots are a population found by JWST whose nature is still debated: a growing black hole inside a dense cocoon of gas is one leading reading, and their black hole masses may be much lower than first estimated. A mass from a spectrum has a wide give-or-take.
+5. What this shows and what not: the limit is physics; whether any real black hole beat it, or began heavy, is not settled.
+
+## Physical Situation
+
+JWST's spectra of a few little red dots show broad lines of hydrogen, the sign of gas moving fast near a black hole, but the lines' width may come from gas moving fast or from light scattering off electrons in a thick cocoon; the two readings give masses a factor of about 100 apart. CAPERS-LRD-z9 is the most distant of these at z = 9.288.
+
+## Physics Model (`src/physics/blackHoleGrowth.ts`, to be written)
+
+| Part | What it computes | Source |
+|---|---|---|
+| **Eddington growth time** | t_Edd = σ_T c ÷ (4π G m_p) ≈ 0.45 billion years; mass grows as M(t) = M₀ exp[(1 − ε) ÷ ε × t ÷ t_Edd], so one e-folding takes t_growth = ε ÷ (1 − ε) × t_Edd: **50 million years at ε = 0.10** (45 million if the (1 − ε) is dropped; see Decision 3) | textbook; worked by hand 2026-10-27, **to be checked** |
+| **Efficiency** | ε = share of the fallen mass-energy radiated; Black Holes 8 gives about 5.7 percent for a non-spinning and up to about 42 percent for a maximally spinning black hole (reused) | Black Holes 8 |
+| **Time to grow** | t = t_growth × ln(M_final ÷ M_seed): from 10 Suns to 38 million, ln(3.8 × 10⁶) = 15.1, so 0.76 billion years at ε = 0.1; from 10⁵ Suns, ln(380) = 5.9, so 0.30 billion years | arithmetic; by hand |
+| **Age of the universe at redshift z** | reused from Frontier and Beyond 5's `ageAfterBigBangYears` (Planck values): about 0.52 billion years at z = 9.288 | Experiment 5's module |
+| **Mass reached** | M = M₀ exp(t ÷ t_growth) for a seed that starts feeding at a chosen age | arithmetic |
+| **Real object** | CAPERS-LRD-z9: z = 9.288; log(M ÷ M☉) = 7.58 ± 0.15 (about 38 million), range 4.5 to 316 million. Held as data | arXiv:2505.04609 abstract and summaries |
+| **Answers** | the predictions' answers, nearest-button helpers and the tutor's marks | arithmetic |
+
+The module invents no new physics. **Not modelled** (the page must say so): the gas and the cocoon, how the light is trapped, super-Eddington feeding (stated as a possibility), how seeds form (direct collapse, dense clusters, early stars), mergers of black holes (Experiments 18 to 20), the black hole's spin changing ε as it grows, and the mass uncertainty's origin. **Assumed and unsourced:** that a seed begins feeding at a given age (the controls expose it); this is a choice, not a measurement.
+
+## Learner Controls ("Now try it yourself", trial values)
+
+1. **Seed mass** (four buttons: 10, 1,000, 100,000 and 1 million Suns). The seeds are trial values, not claims about real seeds.
+2. **Efficiency** (three buttons: 5.7 percent, 10 percent and 40 percent, from Black Holes 8's range).
+
+Drawing A shows the trial seed's mass on a log ruler as it grows to the mass of CAPERS-LRD-z9, with the time it takes beside the time the universe had. It says its numbers are trial values.
+
+## Prediction Activity (§12, §14 "Predictions and the Real Results")
+
+1. **A black hole of 10 Suns feeds at the Eddington limit, all the time, with 10 percent efficiency. How long does it take to reach 38 million Suns?** Five buttons on a log scale: about 3 million years, about 30 million, about 300 million, about 800 million, about 8 billion. Answer: about 760 million years (the calculation gives 0.76 billion; the buttons are balanced so the nearest is "about 800 million"). Drawn as a white mark on a log ruler of times, beside the age of the universe at z = 9.288 (Picture 1).
+2. **What is the smallest seed, in Suns, that could reach 38 million Suns in the time the universe had if it started feeding when the universe was 100 million years old?** Five buttons on a log scale: about 10, 1,000, 30,000, 1 million, 10 million. Answer: about 8,300 Suns (the module's figure; the first draft's "about 40,000" was wrong). The buttons were rebalanced in Step 1 to about 10, 300, 10,000, 300,000 and 10 million Suns, so that the answer, "about 10,000", sits in the middle. Drawn as a white mark on a log ruler of seed masses (Picture 2).
+
+The guesses are drawn in white on the real pictures and never change them; the tutor marks each in its explanation only (§12, §13). 
+
+## Experiment Behavior
+
+### Introduction (to be drafted for the owner's approval after the specification is approved)
+Outline: Black Holes 1 and 8 recalled; light pushing on gas, with a daily-life comparison (a crowd pushing through a door while someone pushes back: the harder it shines, the harder it is to feed); what exponential growth is (a bacterium dividing at fixed intervals; money with compound interest); what JWST found, and what a little red dot is; what redshift means for time (Frontier and Beyond 5); the learner's job; that the predictions never change the real pictures; the assumptions. Terms defined before use: *Eddington limit*, *efficiency*, *seed*, *e-folding / growth time*, *little red dot*, *cocoon*, *broad line*, *redshift*. Held back until after the run: both predictions' answers (§12). A "Want to know more?" list (§29): plain official pages (NASA or ESA or STScI on JWST and black holes), the discovery papers after the run.
+
+### Display
+1. **Picture 1, the clock for growth:** a log ruler of times from a million years to ten billion years, with the growth time, the time to reach 38 million Suns from 10 Suns, and the age of the universe at z = 9.288, and Prediction 1's white mark.
+2. **Picture 2, the seed ruler:** a log ruler of masses from 1 Sun to 316 million Suns with the seed sizes, CAPERS-LRD-z9's mass and its published range, and Prediction 2's white mark.
+3. **Drawing A (follows the controls):** the trial seed's growth, time taken and the verdict "fits / does not fit the time the universe had".
+Each picture has a "How to read this diagram" caption with look-at / what-it-means / why-it-matters items (§14, §29) and a "Where the real picture comes from" line.
+
+### Run
+Five stages: the black hole and the push of light; the doubling time; the count of doublings; the clock of the universe; the real object. Guesses appear once the feature beside them is drawn.
+
+### Results (neutral, then explained by the tutor)
+A check-up table (growth time and time to 38 million Suns against the universe's age; the object's mass against its published range), then two more tables (steps from the limit to the time; what other efficiencies and seeds would give), each with a "What this table tells us" note (§14). The predictions beside the results, tagged on the row. No "right" or "wrong".
+
+### Tutor (Part 4)
+Predict, observe, compare, explain (§13): why light caps feeding; why the cap grows with mass; why doublings are the unit; what a heavier seed, a higher efficiency or faster-than-limit feeding would each change; why a mass from a spectrum can be off by a factor of 100; what is not settled.
+
+## Expected Observations
+t_growth about 50 million years at 10 percent; 10 Suns to 38 million Suns takes about 0.76 billion years against the universe's 0.52 billion at z = 9.288; a seed of 100,000 Suns takes about 0.30 billion.
+
+## Expected Learner Understanding
+That a speed limit on feeding turns "how heavy" into "how many doublings, and how long"; that tension appears only if the seed is light and the black hole is heavy; and that a fast-growth claim rests on a mass estimate with a large give-or-take.
+
+## New Concepts Introduced
+Eddington limit, accretion efficiency, growth (e-folding) time, black hole seed, little red dot.
+
+## Relationship to Previous Experiments
+Black Holes 1 (size and mass), 8 (energy released, efficiency), 9 (a star's end, one route to a seed); Cosmology 6 and this group's Experiment 5 (the age of the universe, redshift, the earliest galaxies); Experiments 18 to 20 (mergers, a rival way to grow); Experiment 1 (give-or-take).
+
+## Relationship to Later Experiments
+Experiment 24 is unrelated (an orbit); this is the last of the group's black hole experiments.
+
+## Required Physics Tests (each must fail when the module is deliberately broken)
+1. t_Edd = 0.45 billion years (± 0.01), worked separately in SI units from σ_T, c, G and m_p.
+2. t_growth at ε = 0.10 is 50 million years (± 1); at 5.7 percent it is shorter, and at 40 percent longer (ε ÷ (1 − ε) is rising in ε).
+3. Time to grow from 10 to 38 million Suns is 0.76 billion years (± 0.02); from 10⁵ Suns it is 0.30 billion years (± 0.01).
+4. Doubling the seed removes exactly one ln 2 growth time; the mass multiplies by the same factor in equal spans of time.
+5. The age of the universe at z = 9.288 matches Experiment 5's module (about 0.52 billion years).
+6. The smallest seed that fits is the inverse of the growth formula (a round trip: grow it for the time and get 38 million).
+7. The nearest-answer helpers pick the closest button on a log scale.
+8. The published object is held as listed (z = 9.288; log M = 7.58 ± 0.15; range 4.5 to 316 million).
+9. The verdict "fits / does not fit" changes at the boundary seed and not before.
+10. The module does not change when predictions change (separation, §9, §14).
+
+## Sources (checked 2026-10-27, search results and summaries only; none read in full)
+| Source | What it was used for | Status |
+|---|---|---|
+| CAPERS-LRD-z9, arXiv:2505.04609 | z = 9.288; broad Hβ; log M = 7.58 ± 0.15; range 4.5 to 316 million | abstract through summaries |
+| "Little red dots as young supermassive black holes in dense ionized cocoons", *Nature* (s41586-025-09900-4) | electron-scattered broad lines; masses of 10⁵ to 10⁷ Suns, about 100 times lower than earlier estimates | summary |
+| "Overmassive black holes and little red dots naturally form in simulations", *Nature* 2026 (s41586-026-10985-8); ScienceDaily, September 2026 ("growing at incredible speeds") | a rival reading: fast growth from heavy seeds | titles and summaries only |
+| "Little Red Dots: The Assembly of Early Supermassive Black Holes in the JWST Era" (arXiv:2601.00089); "The Little Red Dots Are Direct Collapse Black Holes" (arXiv:2601.14368) | the debate | titles and summaries only |
+| Scientific American "black hole stars" | the "black hole star" reading | title and summary |
+| NASA, ESA and STScI plain pages on the Eddington limit, JWST and black holes | the "Want to know more?" list | **not yet found or fetched** |
+
+## Facts that may change (§29)
+| Fact | Why it may change |
+|---|---|
+| CAPERS-LRD-z9's mass and range | later spectra may revise it, and the cocoon reading may lower it |
+| "little red dots' nature is debated" | a consensus may form |
+| "the most distant broad-line object" | a more distant one may be found |
+| the efficiency and Eddington time | textbook values, to be checked |
+
+## Open items
+a. No paper was read in full; all numbers come from summaries.
+b. The 0.45 billion years, the (1 − ε) factor, the efficiency range, and the seed-start age are textbook or chosen values with no source read.
+c. The 2026 *Nature* simulation and the September 2026 report were seen only by title and summary and may bear on the status label.
+d. Plain official pages for the Eddington limit and for little red dots are to be found and fetched (§29 rule 3).
+e. The mass of CAPERS-LRD-z9 depends on the reading of its lines; the page must say that "the mass is the reading under one assumption".
+
+## Decisions for the owner (each with a default)
+1. **Anchor and status label.** Keep the physics of the growth limit as the core, use CAPERS-LRD-z9 as the real object, and label the experiment: Settled (the Eddington limit and exponential growth); Strong evidence (JWST sees growing black holes very early); Open (whether any broke the limit or started heavy, and what little red dots are). Default: as stated.
+2. **Change the proposal's prediction** (10 to 100 million Suns in 700 million years, a toss-up) to the two predictions above. Default: yes.
+3. **Growth time:** use ε ÷ (1 − ε) × 0.45 billion years (50 million years at 10 percent) and say that some texts quote 45 million. Default: yes.
+4. **Controls:** seed mass and efficiency, as trial values; no control for super-Eddington feeding. Default: yes.
+5. **Two predictions** with five buttons each, balanced on a log scale. Default: yes.
+6. **Pictures:** two pictures and one drawing. Default: yes.
+7. **Results:** a check-up and two more tables; no table of trial values. Default: yes.
+8. **Seed-start age** of 100 million years, stated as a choice and not a measurement. Default: yes.
+9. **A 2026 search** for newer results is repeated before the wording is approved. Default: yes.
+10. **Tutor:** the standard four-step sequence. Default: yes.
+11. **Introduction length and links:** long and detailed, to §29. Default: yes.
+12. **Title** "How fast can a black hole grow?" (does not give away either prediction). Default: keep.
+13. **Whether to build it at all.** The group proposal marked this ◇ (drop first), and the "little red dots" nature is still debated. Default: build it, with the status label above.
+
+## Implementation Notes (Step 1, 2026-10-27)
+
+The physics model is built (`src/physics/blackHoleGrowth.ts`, 24 tests). Differences from the specification, for the owner's approval:
+
+1. **Prediction 2's buttons** are 10, 300, 10,000, 300,000 and 10 million Suns (the draft had 10, 1,000, 30,000, 1 million and 10 million, which put the answer off-centre). Its answer is 8,284 Suns, button "about 10,000".
+2. **The 40 percent efficiency** is held as a trial value; Black Holes 8's own function is reused only for the non-spinning 5.7 percent. The limit for a black hole spinning as fast as possible, 1 − 1/√3 = 42.3 percent, is a hand value (to be checked), and Black Holes 8's slider stops at spin 0.99, which gives less.
+3. **A finding the specification did not have.** The universe's age at z = 9.288 is 0.522 billion years, so a seed that starts feeding at 100 million years has 0.422 billion years. At **5.7 percent efficiency a 10-Sun seed does fit (414 million years needed)**, by a margin of 2 percent; at 10 percent it needs 758 million years (does not fit), and at 40 percent even a million-Sun seed does not fit (1.09 billion years). Drawing A will show this, and the tutor must not say that a stellar seed "cannot" reach the mass. This is a model result (the efficiency of a non-spinning black hole, no mergers, constant feeding at the limit), not a measurement.
+4. **Prediction 1's answer** is 0.758 billion years, button "about 800 million".
+5. The module's age of the universe is Experiment 5's function, so it is the Planck-value age (0.522 billion years), not the 0.5 the introduction may round to.
+
+## Implementation Notes (Step 2, 2026-10-27)
+
+Built: the title, the status line, the introduction (question, how a black hole feeds, the speed limit with a crowd-at-a-doorway comparison, exponential growth with a bacterium comparison, seeds, what JWST found, what is debated, the learner's job, "What your guesses do" per §14, and what is and is not modelled), a collapsed "Words and formulas" panel of twelve entries, and a "Want to know more?" list with two links. No predictions, run, pictures, controls, results, tutor or summary yet.
+
+1. **Held back until after the run (§12):** NASA's Chandra page on a black hole growing faster than the limit (it gives a plain definition of the Eddington limit, but also says a conventional seed is "less than a hundred Suns", which hints at Prediction 2), and all papers. A `?` for the owner: the Chandra page could instead be listed before the run for its plain definition of the limit.
+2. **Pre-run links (fetched 2026-10-27):** NASA's "Black Holes" page (loads; says nothing about how black holes grow, so it serves only as general background) and NASA's January 2025 "Newfound galaxy class may indicate early black hole growth, Webb finds" (loads; what little red dots look like, and that some show signs of growing black holes).
+3. **Source status of the introduction's claims:** the Eddington limit's plain description agrees with the NASA Chandra page; the light-pushes, crowd and bacterium comparisons, the disc of swirling gas, the infrared and look-back-time sentences, and "seeds from a massive star's collapse would be tens of Suns" have no source read; JWST's launch month (December 2021) and "first observing in 2022" are from memory and a search summary; "masses could be much smaller" is from the Nature 2025 title and summary only.
+4. **Checked:** the type check and all 1,679 tests pass; the page renders in Chrome at the local address; the pre-run text does not contain either answer (0.76, 760, 8,300, 50 million were searched for). Not checked: narrow widths, other browsers, keyboard, a real learner.
+
+**Changes made to the Step 2 wording at the owner's request (2026-10-27), all approved:**
+5. "Feed" is defined in the first paragraph (taking in gas, called accretion), and the status line says "take in gas, and so grow".
+6. "Light pushes" no longer says the Sun's push can be felt on the skin (it cannot; one feels warmth): light carries a small push, too small to feel from the Sun, but enough to drive a spacecraft with a mirror sail.
+7. The speed-limit passage was rewritten twice: five numbered steps (the pull stays the same; more gas, a brighter glow; a brighter glow, a bigger push; the push grows with the gas supply and the pull does not; beyond that the push wins), then the doorway comparison and the Eddington limit's name, stressing that what is limited is how brightly the gas can shine before it pushes the rest away.
+8. A new "Efficiency" paragraph with a made-up worked example (a cap of 10 kg's worth of light a year: 10 percent efficiency lets 100 kg in and keeps 90; 50 percent lets 20 kg in and keeps 10) and a fire comparison.
+9. "Nothing is burning" (no surface, no fusion; the gas glows because falling in heats it, like a meteor) was added to the first paragraph and to the Words panel's "Accretion" entry, and the lead-in notes that the hot gas has its own pressure but the limit is about the light's push.
+Still without a source: the light-pushes, solar-sail, doorway, fire and meteor comparisons, the made-up example, and the claim that the limit counts only the light's push (NASA's Chandra page says "radiation pressure balances the black hole's gravity").
