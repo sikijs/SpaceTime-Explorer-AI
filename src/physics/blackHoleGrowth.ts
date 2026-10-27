@@ -246,3 +246,122 @@ export function trialPicture(seedSolar: number, efficiency: number): TrialPictur
     objectPosition: massRulerPosition(target),
   }
 }
+
+// ---- Picture 1 (Step 4): the clock for growth ----
+
+// The decades that the rulers label: 1 million years to 10 billion years, and 1 Sun to a billion Suns.
+export const TIME_TICKS_YEARS = [1e6, 1e7, 1e8, 1e9, 1e10] as const
+export const MASS_TICKS_SOLAR = [1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9] as const
+
+// How many growth times of the mass staircase are drawn (0 to 5: the mass at the start and after one to five growth times).
+export const STAIRCASE_STEPS = 5
+
+export interface GrowthStep {
+  growthTimes: number
+  years: number
+  massSolar: number
+  // log10 of the mass, for the length of a bar: a constant factor each step is a constant step on a log scale.
+  log10Mass: number
+}
+
+export interface PictureOne {
+  seedSolar: number
+  efficiency: number
+  targetSolar: number
+  growthTimeYears: number
+  growthTimePosition: number
+  // Each step multiplies the mass by e (about 2.718).
+  steps: GrowthStep[]
+  growthTimesNeeded: number
+  doublingsNeeded: number
+  neededYears: number
+  neededPosition: number
+  ageYears: number
+  agePosition: number
+  startAgeYears: number
+  startPosition: number
+  availableYears: number
+  // Time needed divided by time available, and the shortfall in years (negative if there is spare time).
+  neededOverAvailable: number
+  shortfallYears: number
+}
+
+export function pictureOne(): PictureOne {
+  const seed = PREDICTION_SEED_SOLAR
+  const e = STANDARD_EFFICIENCY
+  const target = objectMassSolar()
+  const tg = growthTimeYears(e)
+  const needed = yearsToGrow(seed, target, e)
+  const available = timeAvailableYears()
+  const steps: GrowthStep[] = []
+  for (let i = 0; i <= STAIRCASE_STEPS; i++) {
+    const mass = massAfterYears(seed, i * tg, e)
+    steps.push({ growthTimes: i, years: i * tg, massSolar: mass, log10Mass: Math.log10(mass) })
+  }
+  return {
+    seedSolar: seed,
+    efficiency: e,
+    targetSolar: target,
+    growthTimeYears: tg,
+    growthTimePosition: timeRulerPosition(tg),
+    steps,
+    growthTimesNeeded: growthTimesNeeded(seed, target),
+    doublingsNeeded: growthTimesNeeded(seed, target) / Math.LN2,
+    neededYears: needed,
+    neededPosition: timeRulerPosition(needed),
+    ageYears: objectAgeYears(),
+    agePosition: timeRulerPosition(objectAgeYears()),
+    startAgeYears: SEED_START_AGE_YEARS,
+    startPosition: timeRulerPosition(SEED_START_AGE_YEARS),
+    availableYears: available,
+    neededOverAvailable: needed / available,
+    shortfallYears: needed - available,
+  }
+}
+
+// ---- Picture 2 (Step 4): the object's mass and the smallest seed ----
+
+export interface PictureTwo {
+  targetSolar: number
+  targetPosition: number
+  lowSolar: number
+  highSolar: number
+  lowPosition: number
+  highPosition: number
+  // The 10-Sun seed of Prediction 1, for comparison.
+  stellarSeedSolar: number
+  stellarSeedPosition: number
+  // The smallest seed that reaches the object's mass in the time available (Prediction 2's answer).
+  smallestSeedSolar: number
+  smallestSeedPosition: number
+  growthTimesFromSmallest: number
+  yearsFromSmallest: number
+  availableYears: number
+  // How many times heavier the smallest seed is than a 10-Sun seed.
+  smallestOverStellar: number
+  // How many times lighter the smallest seed is than the object.
+  objectOverSmallest: number
+}
+
+export function pictureTwo(): PictureTwo {
+  const target = objectMassSolar()
+  const available = timeAvailableYears()
+  const smallest = smallestSeedSolar(target, available, STANDARD_EFFICIENCY)
+  return {
+    targetSolar: target,
+    targetPosition: massRulerPosition(target),
+    lowSolar: CAPERS_LRD_Z9.minMassSolar,
+    highSolar: CAPERS_LRD_Z9.maxMassSolar,
+    lowPosition: massRulerPosition(CAPERS_LRD_Z9.minMassSolar),
+    highPosition: massRulerPosition(CAPERS_LRD_Z9.maxMassSolar),
+    stellarSeedSolar: PREDICTION_SEED_SOLAR,
+    stellarSeedPosition: massRulerPosition(PREDICTION_SEED_SOLAR),
+    smallestSeedSolar: smallest,
+    smallestSeedPosition: massRulerPosition(smallest),
+    growthTimesFromSmallest: growthTimesNeeded(smallest, target),
+    yearsFromSmallest: yearsToGrow(smallest, target, STANDARD_EFFICIENCY),
+    availableYears: available,
+    smallestOverStellar: smallest / PREDICTION_SEED_SOLAR,
+    objectOverSmallest: target / smallest,
+  }
+}

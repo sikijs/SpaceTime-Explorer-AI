@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CAPERS_LRD_Z9,
@@ -12,10 +12,11 @@ import {
 } from '../physics/blackHoleGrowth'
 import type { SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PictureOne, PictureTwo, pictureOneCaption, pictureTwoCaption } from './BlackHoleGrowthPictures'
 
 // Frontier and Beyond, Experiment 23 (docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md).
-// STEPS 2 and 3 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
-// links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line
+// STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
+// links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 and Picture 2 with the guesses (in `BlackHoleGrowthPictures.tsx`). It has no controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long a black hole of 10 Suns takes to reach the object's mass, how many growth times that is, how small a seed
 // could do it, or what a growth time is in years (CLAUDE.md §12): those are the predictions' answers and the run's results. The pages that give them away or hint at them (NASA's Chandra page on
 // a black hole growing faster than the limit, which names a seed "less than a hundred Suns", and the papers) are listed only after the run, in a later step.
@@ -52,15 +53,52 @@ function millionYears(years: number): string {
   return `${(Math.round(years / 1e7) * 10).toLocaleString('en-US')} million years`
 }
 
-export function BlackHoleGrowthExperiment() {
+// ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'A black hole feeds', 'Growth that multiplies', 'How long to reach the mass', 'The clock of the universe', 'The black hole of CAPERS-LRD-z9 and the smallest seed']
+const STAGE_LINES = [
+  '',
+  'The violet arrow is gravity pulling the gas in, and the yellow arrow is the light of the glowing gas pushing it out. The drawing is a sketch, not to scale.',
+  'The cyan bars are the mass of a black hole of 10 Suns feeding at the limit, after each growth time. Each step multiplies the mass by the same factor.',
+  'Panel B is a ruler of times. The cyan dots are one growth time, and the time needed to reach the mass of CAPERS-LRD-z9. Your guess for Prediction 1 is the white marker.',
+  'The cyan dot is the age of the universe when the light of CAPERS-LRD-z9 left it. The pink line is the moment the seed starts to feed (imagined for the question), and the pale cyan band is the time available.',
+  'Picture 2 is a ruler of masses. The orange dot is the estimated mass of the black hole, and the cyan dot is the smallest seed that could grow to it in the time available. Your guess for Prediction 2 is the white marker.',
+]
+
+interface BlackHoleGrowthExperimentProps {
+  onComplete?: () => void
+}
+
+export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperimentProps) {
   const [timeGuess, setTimeGuess] = useState<TimeChoiceId | null>(null)
   const [seedGuess, setSeedGuess] = useState<SeedChoiceId | null>(null)
-  const [recorded, setRecorded] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = timeGuess !== null && seedGuess !== null
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
   const startOver = () => {
     setTimeGuess(null)
     setSeedGuess(null)
-    setRecorded(false)
+    setStatus('idle')
+    setStage(0)
+  }
+  const run = () => {
+    setStage(1)
+    setStatus('running')
   }
   const targetMillion = Math.round(10 ** CAPERS_LRD_Z9.logMass / 1e6)
   return (
@@ -255,7 +293,7 @@ export function BlackHoleGrowthExperiment() {
             </div>
           ))}
 
-          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
             Run
           </button>
           {recorded && (
@@ -266,10 +304,28 @@ export function BlackHoleGrowthExperiment() {
           {!bothPredicted && !recorded && (
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>
           )}
-          {recorded && (
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 0 }}>
-              Your predictions are recorded. The pictures and the results are built in later steps, so nothing more happens yet.
-            </p>
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+              </span>
+            )}
+          </p>
+
+          {stage >= 1 && (
+            <div>
+              <PictureOne stage={stage} timeGuess={timeGuess} />
+              {pictureOneCaption(stage)}
+            </div>
+          )}
+          {stage >= 5 && (
+            <div>
+              <PictureTwo seedGuess={seedGuess} />
+              {pictureTwoCaption()}
+            </div>
           )}
         </div>
       </div>

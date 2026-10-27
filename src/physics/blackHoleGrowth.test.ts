@@ -218,3 +218,72 @@ describe('Drawing A: trial values (test 9)', () => {
     expect(t.objectPosition).toBeCloseTo(Math.log10(objectMassSolar()) / 9, 12)
   })
 })
+
+import { pictureOne, pictureTwo, STAIRCASE_STEPS, TIME_TICKS_YEARS, MASS_TICKS_SOLAR } from './blackHoleGrowth'
+
+describe('Picture 1 and Picture 2 (Step 4)', () => {
+  it('Picture 1 reproduces Prediction 1 and the clock of the universe', () => {
+    const p = pictureOne()
+    expect(p.neededYears).toBeCloseTo(predictionTimeYears(), 0)
+    expect(p.ageYears).toBe(objectAgeYears())
+    expect(p.availableYears).toBeCloseTo(p.ageYears - p.startAgeYears, 0)
+    expect(p.neededOverAvailable).toBeCloseTo(p.neededYears / p.availableYears, 12)
+    expect(p.neededOverAvailable).toBeGreaterThan(1.7)
+    expect(p.neededOverAvailable).toBeLessThan(1.9)
+    expect(p.shortfallYears).toBeCloseTo(p.neededYears - p.availableYears, 0)
+    expect(p.growthTimeYears).toBe(growthTimeYears(0.1))
+    expect(p.doublingsNeeded).toBeCloseTo(p.growthTimesNeeded / Math.LN2, 12)
+  })
+
+  it('the staircase multiplies the mass by e at every step, which is an equal step on a log scale', () => {
+    const p = pictureOne()
+    expect(p.steps).toHaveLength(STAIRCASE_STEPS + 1)
+    expect(p.steps[0].massSolar).toBeCloseTo(10, 9)
+    for (let i = 1; i < p.steps.length; i++) {
+      expect(p.steps[i].massSolar / p.steps[i - 1].massSolar).toBeCloseTo(Math.E, 9)
+      expect(p.steps[i].log10Mass - p.steps[i - 1].log10Mass).toBeCloseTo(Math.LOG10E, 9)
+      expect(p.steps[i].years).toBeCloseTo(i * p.growthTimeYears, 0)
+    }
+  })
+
+  it('every position on the pictures is on its ruler, from 0 to 1, in the right order', () => {
+    const p = pictureOne()
+    for (const x of [p.growthTimePosition, p.neededPosition, p.agePosition, p.startPosition]) {
+      expect(x).toBeGreaterThanOrEqual(0)
+      expect(x).toBeLessThanOrEqual(1)
+    }
+    expect(p.growthTimePosition).toBeLessThan(p.startPosition)
+    expect(p.startPosition).toBeLessThan(p.agePosition)
+    expect(p.agePosition).toBeLessThan(p.neededPosition)
+    const q = pictureTwo()
+    expect(q.stellarSeedPosition).toBeLessThan(q.smallestSeedPosition)
+    expect(q.smallestSeedPosition).toBeLessThan(q.lowPosition)
+    expect(q.lowPosition).toBeLessThan(q.targetPosition)
+    expect(q.targetPosition).toBeLessThan(q.highPosition)
+  })
+
+  it('Picture 2 reproduces Prediction 2 and grows the smallest seed to the object in exactly the time available', () => {
+    const q = pictureTwo()
+    expect(q.smallestSeedSolar).toBe(predictionSeedSolar())
+    expect(q.yearsFromSmallest).toBeCloseTo(q.availableYears, 0)
+    expect(massAfterYears(q.smallestSeedSolar, q.availableYears)).toBeCloseTo(q.targetSolar, 0)
+    expect(q.smallestOverStellar).toBeCloseTo(q.smallestSeedSolar / 10, 9)
+    expect(q.objectOverSmallest).toBeCloseTo(q.targetSolar / q.smallestSeedSolar, 6)
+    expect(q.lowSolar).toBe(4.5e6)
+    expect(q.highSolar).toBe(3.16e8)
+  })
+
+  it('the ruler ticks cover the pictures', () => {
+    expect(TIME_TICKS_YEARS[0]).toBe(1e6)
+    expect(TIME_TICKS_YEARS[TIME_TICKS_YEARS.length - 1]).toBe(1e10)
+    expect(MASS_TICKS_SOLAR[0]).toBe(1)
+    expect(MASS_TICKS_SOLAR[MASS_TICKS_SOLAR.length - 1]).toBe(1e9)
+  })
+
+  it('does not change when a guess is made (test 10)', () => {
+    const before = JSON.stringify([pictureOne(), pictureTwo()])
+    TIME_CHOICES.forEach((c) => timeGuessMarker(c.id))
+    SEED_CHOICES.forEach((c) => seedGuessMarker(c.id))
+    expect(JSON.stringify([pictureOne(), pictureTwo()])).toBe(before)
+  })
+})
