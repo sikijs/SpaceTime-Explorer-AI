@@ -22,6 +22,7 @@ import { BlackHoleRingdownExperiment } from './components/BlackHoleRingdownExper
 import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
 import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperiment'
 import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackgroundExperiment'
+import { BlackHoleGrowthExperiment } from './components/BlackHoleGrowthExperiment'
 import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
 import { checkUpRows, distanceRatio, fromMassRows, massRatio as shadowMassRatio, rangeRows, ratioRow } from './physics/blackHoleShadow'
 import { climbFacts, exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, ORIGIN_FIGURES, spinPicture } from './physics/heaviestMerger'
@@ -964,6 +965,14 @@ const chapters: Chapter[] = [
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: pulsarTimingBackgroundSummary(),
     next: 'None yet, because Experiment 23 has no approved specification.',
+  },
+  {
+    title: 'How fast can a black hole grow? (the little red dots)',
+    group: 'Frontier and Beyond',
+    Component: BlackHoleGrowthExperiment,
+    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
+    learned: 'The chapter summary of this experiment is not written yet.',
+    next: 'None yet, because Experiment 24 has no approved specification.',
   },
 ]
 
