@@ -21,6 +21,7 @@ import { HorizonAreaLawExperiment } from './components/HorizonAreaLawExperiment'
 import { BlackHoleRingdownExperiment } from './components/BlackHoleRingdownExperiment'
 import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
 import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperiment'
+import { checkUpRows, distanceRatio, fromMassRows, massRatio as shadowMassRatio, rangeRows, ratioRow } from './physics/blackHoleShadow'
 import { climbFacts, exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, ORIGIN_FIGURES, spinPicture } from './physics/heaviestMerger'
 import { checkUp as ringdownCheckUp, FASTER_SPIN, GW250114_RINGDOWN, pitchGuessResult, ringingWorked, SECOND_TONE_SIGNIFICANCE } from './physics/blackHoleRingdown'
 import { NEUTRON_STAR_DATA, predictionOneReal, runNeutronStarSize, surfaceMinutesPerDistantHour } from './physics/neutronStarSize'
@@ -212,6 +213,27 @@ function heaviestMergerSummary(): string {
     `primordial black holes, gravitational lensing (which would make the total ${ORIGIN_FIGURES.lensedTotalRangeSolar[0]} to ${ORIGIN_FIGURES.lensedTotalRangeSolar[1]} Suns) and two overlapping signals. None is confirmed, and the papers disagree on how likely each is. ` +
     `So there is strong evidence for what was seen, and what made it is open. The numbers come from LIGO’s summary page and from summaries of the discovery paper’s abstract, which was not read, the ${Math.round(ex.share * 100)} percent sent out as waves is assumed from GW250114, ` +
     `and the ${sp.simple.toFixed(2)} was read only in a summary of simulations.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 21 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// drift from the page.
+function blackHoleShadowSummary(): string {
+  const [sgr, m87] = fromMassRows()
+  const ratios = ratioRow()
+  const check = checkUpRows()
+  const ranges = rangeRows()
+  const n1 = (x: number) => x.toFixed(1)
+  const commas = (x: number) => Math.round(x).toLocaleString('en-US')
+  return (
+    `Can we photograph a black hole’s shadow? A black hole gives out no light, but the glowing gas round it does, and light that passes too close to the black hole is captured. That leaves a dark patch, the shadow, ` +
+    `inside a bright ring. The Event Horizon Telescope, a set of radio telescopes across the Earth that act as one, has imaged two of them: Sagittarius A* at the centre of our galaxy (${sgr.shadowMicroarcsec.toFixed(1)} µas calculated) ` +
+    `and M87* (${m87.shadowMicroarcsec.toFixed(1)} µas calculated). The shadow is always ${sgr.shadowOverHorizon.toFixed(2)} times as wide as the black hole’s edge, and how wide it looks in the sky depends on the mass and the distance together: ` +
+    `M87* is ${commas(shadowMassRatio())} times heavier but ${commas(distanceRatio())} times farther, so its shadow looks ${ratios.calculated.toFixed(2)} times as wide as Sagittarius A*’s, a little narrower. ` +
+    `The measured rings are ${check[0].comparison.measured} ± ${check[0].comparison.uncertainty} µas and ${check[1].comparison.measured} ± ${check[1].comparison.uncertainty} µas (${check[2].comparison.measured} ± ${check[2].comparison.uncertainty} in a later analysis). ` +
+    `The calculated shadows are ${n1(Math.abs(check[0].comparison.differencePercent))} to ${n1(Math.abs(check[2].comparison.differencePercent))} percent narrower than the rings, and each ring lies inside the calculated shadow’s own range, which comes from the give-or-take on the mass ` +
+    `and the distance (${n1(ranges[1].range.both.low)} to ${n1(ranges[1].range.both.high)} µas for M87*). This is strong evidence that the ring sizes are close to what the masses and distances give; how tightly it tests gravity is open. ` +
+    `The formula is for a black hole that does not spin, the ring is glowing gas and not the shadow, the link between them is not modelled, and the numbers come from abstracts and summaries, with no paper read in full.`
   )
 }
 
@@ -902,8 +924,8 @@ const chapters: Chapter[] = [
     title: 'Can we photograph a black hole’s shadow? (Event Horizon Telescope)',
     group: 'Frontier and Beyond',
     Component: BlackHoleShadowExperiment,
-    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
-    learned: 'The chapter summary of this experiment is not written yet.',
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
+    learned: blackHoleShadowSummary(),
     next: 'None yet, because Experiment 22 has no approved specification.',
   },
 ]
