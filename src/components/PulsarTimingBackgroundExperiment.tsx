@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne, pictureTwo, shiftGuessMarker, shiftRulerPosition, PICTURE_TWO_TICKS_SECONDS, TRIAL_MASS_CHOICES_SOLAR, TRIAL_SEPARATION_CHOICES_PC, trialPicture, frequencyRulerPosition, examplePair, separationAu, OBSERVING_SPAN_YEARS } from '../physics/pulsarTimingBackground'
+import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne, pictureTwo, shiftGuessMarker, shiftRulerPosition, PICTURE_TWO_TICKS_SECONDS, TRIAL_MASS_CHOICES_SOLAR, TRIAL_SEPARATION_CHOICES_PC, trialPicture, frequencyRulerPosition, examplePair, separationAu, OBSERVING_SPAN_YEARS, resultsCheckUp, exampleSteps, hellingsDownsRows } from '../physics/pulsarTimingBackground'
 import type { CycleChoiceId, ShiftChoice, TrialPicture } from '../physics/pulsarTimingBackground'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { LookForList } from './WideBinariesExperiment'
+import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 22 (docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md).
-// STEPS 2 to 6 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2, then the "Now try it yourself" controls and Drawing A): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
-// "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It also has Part 2, "Now try it yourself" (two controls and Drawing A, which follows them). It has no results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
+// STEPS 2 to 7 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2, then the "Now try it yourself" controls and Drawing A, then the results): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
+// "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It also has Part 2, "Now try it yourself" (two controls and Drawing A, which follows them). It also has Part 3, the results (a check-up and two more tables, each with a note, the predictions beside them, and the papers). It has no tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
 // owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long one wave cycle of a pair of supermassive black holes lasts, how big the shift in a
 // pulse's arrival time is, or what "nanohertz" means (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (NANOGrav's own pages, which say
 // "years to decades", the IPTA's page and the papers) are listed only after the run, in a later step.
@@ -22,6 +22,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 }
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 
 function referenceEntries(): { term: string; meaning: string }[] {
   return [
@@ -504,6 +505,14 @@ export function PulsarTimingBackgroundExperiment() {
   const trial = trialPicture(trialMass, trialSeparation)
   const exampleFrequency = examplePair().frequencyNanohertz
   const exampleCycleYears = examplePair().waveCycleYears
+  const check = resultsCheckUp()
+  const steps = exampleSteps()
+  const hd = hellingsDownsRows()
+  const cycleGuessLabel = cycleGuess !== null ? CYCLE_CHOICES.find((c) => c.id === cycleGuess)?.label ?? '' : ''
+  const shiftGuessLabel = shiftGuess !== null ? SHIFT_LABELS[shiftGuess].toLowerCase() : ''
+  const tag1 = cycleGuess !== null ? ` [your guess for Prediction 1: ${cycleGuessLabel}]` : ''
+  const tag2 = shiftGuess !== null ? ` [your guess for Prediction 2: ${shiftGuessLabel}]` : ''
+  const sigmaText = (low: number, high: number) => (low === high ? `about ${low}` : `about ${low} to ${high}`)
   return (
     <div>
       <h2>Experiment 22 — Does the Universe Hum? (Pulsar Timing Arrays)</h2>
@@ -729,7 +738,7 @@ export function PulsarTimingBackgroundExperiment() {
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other pairs, and Part 3, the results.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -967,6 +976,207 @@ export function PulsarTimingBackgroundExperiment() {
                 </>
               }
             />
+          </div>
+        )}
+
+        {done && (
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0f766e' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#0f766e' }}>Part 3: The results</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <strong>What we are about to do.</strong> Here are the numbers behind the pictures, set out in three tables, each with a short guide to reading it. These tables are the real numbers, so they never change
+              with your guesses or with your settings in Part 2.
+            </p>
+
+            <div className="exp-card" style={{ padding: '1rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <strong>Where this stands (as of October 2026).</strong>
+              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Strong evidence</strong> that pulsar timing contains a faint background of very slow gravitational waves: about 3 to 4 sigma in the best-known data set (NANOGrav’s 15 years). No team has announced the
+                  5 sigma that is the usual bar for a discovery.
+                </li>
+                <li>
+                  <strong>Open:</strong> what makes the background. Many pairs of supermassive black holes is the most likely source, but this is not proven, and the NANOGrav abstract also names new physics in the early universe.
+                </li>
+                <li>
+                  The numbers come from abstracts and summaries. No paper was read in full for this page, so each number should be checked against its paper.
+                </li>
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <strong>Your predictions, beside the results.</strong> These are your guesses, shown again so that you can find the real number for each. They are not marked here.
+              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Prediction 1</strong> (how long one wave cycle of the pair lasts): you guessed <strong>{cycleGuess !== null ? cycleGuessLabel : '…'}</strong>. The real calculated number is in Table 1, in the row “Wave cycle of the
+                  example pair”, and in Table 2.
+                </li>
+                <li>
+                  <strong>Prediction 2</strong> (how much earlier or later a pulse arrives): you guessed <strong>{shiftGuess !== null ? shiftGuessLabel : '…'}</strong>. The real calculated number is in Table 1, in the row “Timing shift”.
+                </li>
+              </ul>
+            </div>
+
+            <p style={paragraph}>
+              <strong>How to read these results.</strong> A table of numbers is like a blood test: it means little until someone says what each number is and what it is compared with. So each table has a note under it, called
+              “What this table tells us”. Table 1 is a check-up: it sets each calculated number beside a published number, or beside the rule used here, and says in plain words how they compare. It does not say “good” or “bad”,
+              because there is no accepted range for how closely a calculated wave should match a published one. The <strong>give-or-take</strong> of a measurement is the “±” after it, or the range in brackets. <strong>Sigma</strong> says
+              how hard it is to blame a result on chance: the bigger the number, the harder. “nHz” is a nanohertz, as in Drawing A.
+            </p>
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 1. Check-up: the calculated numbers beside the published ones</p>
+            <ResultsTable
+              minWidth={700}
+              head={['What we compare', 'Calculated here', 'Published value, or the rule used here', 'How to read it']}
+              rows={[
+                [
+                  `Wave cycle of the example pair${tag1}`,
+                  `${n2(check.cycleYears)} years`,
+                  `the longest cycle that ${OBSERVING_SPAN_YEARS} years of timing can pick out is about ${check.longestCycleYears} years (a rough rule: one whole cycle in the data)`,
+                  `Much shorter than the longest cycle: ${n1(check.cyclesInSpan)} whole cycles fit in ${OBSERVING_SPAN_YEARS} years. It is inside the band of Picture 1.`,
+                ],
+                [
+                  'Wave frequency of the example pair',
+                  `${n1(check.frequencyNanohertz)} nHz`,
+                  `the lowest frequency that ${OBSERVING_SPAN_YEARS} years can pick out is about ${n1(check.lowestNanohertz)} nHz (the same rough rule)`,
+                  `${n1(check.frequencyOverLowest)} times the lowest frequency. It is inside the band of Drawing A.`,
+                ],
+                [
+                  `Timing shift${tag2}`,
+                  `${n1(check.shiftNanoseconds)} nanoseconds (${n1(check.shiftLowNanoseconds)} to ${n1(check.shiftHighNanoseconds)})`,
+                  `the published strength of the wave, ${(check.strain * 1e15).toFixed(1)} (+${(check.strainPlus * 1e15).toFixed(1)}, −${(check.strainMinus * 1e15).toFixed(1)}) × 10⁻¹⁵ at 1 per year (the paper gives the strength, not a shift)`,
+                  'Worked out from the published strength by a rough estimate, so this row is not a separate check. The range comes from the strength’s give-or-take.',
+                ],
+                ...check.arrays.map((a) => [
+                  `Reported significance, ${a.array}`,
+                  'not calculated here',
+                  `${sigmaText(a.sigmaLow, a.sigmaHigh)} sigma`,
+                  a.belowFiveSigma ? 'Below the 5 sigma that is the usual bar for a discovery.' : 'At or above the 5 sigma that is the usual bar for a discovery.',
+                ]),
+              ]}
+            />
+            <div style={noteStyle}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is:</strong> the numbers worked out here for the example pair, set beside the published numbers, with the reported significance of each array in the last rows.
+                </li>
+                <li>
+                  <strong>What it means:</strong> the example pair’s wave goes through one cycle in {n2(check.cycleYears)} years, which is {n1(check.frequencyNanohertz)} nHz, {n1(check.frequencyOverLowest)} times the lowest frequency that{' '}
+                  {OBSERVING_SPAN_YEARS} years can pick out. The shift is about {n1(check.shiftNanoseconds)} billionths of a second, between {n1(check.shiftLowNanoseconds)} and {n1(check.shiftHighNanoseconds)} for the published strength’s
+                  give-or-take. The four arrays report different numbers ({check.arrays.map((a) => sigmaText(a.sigmaLow, a.sigmaHigh)).join(', ')} sigma), and none reaches 5.
+                </li>
+                <li>
+                  <strong>Why it matters:</strong> a pair like this one would give a wave that the timing can pick out, and the shift is the size of change that has to be noticed: about {commas(Math.round(pic2.pulsePeriodOverShift / 1000) * 1000)} times smaller than the
+                  gap between pulses a millisecond apart. The last rows show that this is evidence, not yet a confirmed discovery, and that the arrays do not all report the same strength of evidence.
+                </li>
+                <li>
+                  <strong>How sure the numbers are:</strong> the shift is a rough standard estimate that has no source read, and the lowest frequency is a rough rule, not the papers’ own value. The significance of each array is from an abstract or a
+                  summary (the 2, 3 and 4.6 sigma values only from a search summary). Different arrays use different data and methods, so their numbers are not for comparing like for like.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 2. From masses and separation to a wave</p>
+            <ResultsTable
+              minWidth={600}
+              head={['Step', 'Example pair', 'How to read it']}
+              rows={[
+                ['Mass of each black hole', `${(steps.massEachSolar / 1e9).toFixed(0)} billion Suns`, 'Two black holes of the same mass.'],
+                ['Total mass', `${(steps.totalMassSolar / 1e9).toFixed(0)} billion Suns`, 'The two masses added.'],
+                ['Separation', `${steps.separationPc} parsecs (about ${commas(Math.round(steps.separationAu / 100) * 100)} times the Earth–Sun distance)`, 'How far apart the two black holes circle.'],
+                ['Orbital period', `${n2(steps.orbitalPeriodYears)} years`, 'The time to go once round, from Kepler’s law (Gravity Experiment 6).'],
+                [`Wave cycle${tag1}`, `${n2(steps.waveCycleYears)} years`, 'Half the orbital period.'],
+                ['Wave frequency', `${n1(steps.waveFrequencyNanohertz)} nHz`, 'One cycle in the time above.'],
+                ['Cycles in 15 years', n1(steps.cyclesInSpan), `${OBSERVING_SPAN_YEARS} years ÷ ${n2(steps.waveCycleYears)} years.`],
+              ]}
+            />
+            <div style={noteStyle}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is:</strong> the steps from the pair’s masses and separation to the number of cycles its wave has in the data, each worked out from the one before.
+                </li>
+                <li>
+                  <strong>What it means:</strong> Kepler’s law turns {(steps.totalMassSolar / 1e9).toFixed(0)} billion Suns at {steps.separationPc} parsecs into an orbit of {n2(steps.orbitalPeriodYears)} years. The wave cycle is half of that,{' '}
+                  {n2(steps.orbitalPeriodYears)} ÷ 2 = {n2(steps.waveCycleYears)} years, and the frequency is one cycle in that time, {n1(steps.waveFrequencyNanohertz)} nHz. In {OBSERVING_SPAN_YEARS} years, {OBSERVING_SPAN_YEARS} ÷{' '}
+                  {n2(steps.waveCycleYears)} = {n1(steps.cyclesInSpan)} cycles.
+                </li>
+                <li>
+                  <strong>Why it matters:</strong> these are the numbers behind your first prediction, and they are the same ones that Picture 1 and Drawing A use. The reason the wave cycle is half an orbit is for the tutor to explain.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Table 3. The Hellings–Downs pattern: how two pulsars’ timing shifts go together</p>
+            <ResultsTable
+              minWidth={560}
+              head={['Angle between two pulsars in the sky', 'Value', 'How to read it']}
+              rows={hd.map((r) => [
+                `${r.isLowest ? n1(r.angleDegrees) : r.angleDegrees} degrees${r.isLowest ? ' (the lowest point)' : ''}`,
+                (r.value < 0 ? '−' : '') + Math.abs(r.value).toFixed(3),
+                r.angleDegrees === 0
+                  ? 'Pulsars in the same direction: the highest value.'
+                  : r.isLowest
+                    ? 'The lowest value, and it is below zero.'
+                    : r.angleDegrees === 180
+                      ? 'Pulsars on opposite sides of the sky: above zero again.'
+                      : r.value < 0
+                        ? 'Below zero.'
+                        : 'Above zero.',
+              ])}
+            />
+            <div style={noteStyle}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is:</strong> the standard formula for how much the timing shifts of two pulsars tend to go together, for waves that come from all over the sky, at several angles between the two pulsars. A positive
+                  value means the two tend to be early or late together, and a negative value means they tend to go the opposite ways. It is a pattern, not a measurement of any real pair of pulsars.
+                </li>
+                <li>
+                  <strong>What it means:</strong> the value is {hd[0].value.toFixed(1)} for two pulsars in the same direction, falls to its lowest, {hd.find((r) => r.isLowest)!.value.toFixed(3).replace('-', '−')}, at about{' '}
+                  {n1(hd.find((r) => r.isLowest)!.angleDegrees)} degrees, and rises to {hd[hd.length - 1].value.toFixed(2)} on opposite sides of the sky. So it is a particular curve, not a straight line.
+                </li>
+                <li>
+                  <strong>Why it matters:</strong> one pulsar on its own cannot show this pattern. It appears only when pairs of pulsars are compared, which is one reason that many pulsars are watched together. The NANOGrav abstract reports
+                  that the correlations it found follow this pattern. This page does not show their data.
+                </li>
+                <li>
+                  <strong>How sure the numbers are:</strong> the formula is the standard one, but no source was read for it on this page, and the abstract was the only part of the NANOGrav paper that was read.
+                </li>
+              </ul>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>The papers and pages behind these numbers.</strong> They are listed here, after the run, because they show what the results are. Links open in a new tab.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2306.16213">The NANOGrav 15-year Data Set: Evidence for a Gravitational-Wave Background</ExternalLink> (2023, The Astrophysical Journal Letters): the paper behind the 3.5
+                  to 4 sigma, the strength of 2.4 (+0.7, −0.6) × 10⁻¹⁵ and the 67 pulsars. Only its abstract was read for this page.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2512.08666">Stochastic gravitational-wave background search using data from five pulsar timing arrays</ExternalLink> (Yu and Allen, submitted December 2025,
+                  revised April 2026): a search that combines 121 pulsars from five arrays and finds a significance that stays below 5 sigma. Only its abstract was read for this page.
+                </li>
+                <li>
+                  <ExternalLink href="https://nanograv.org/science/topics/low-frequency-gravitational-waves">NANOGrav: Low-Frequency Gravitational Waves</ExternalLink> and{' '}
+                  <ExternalLink href="https://nanograv.org/science/topics/pulsars-cosmic-clocks">Pulsars as Cosmic Clocks</ExternalLink>: the NANOGrav team’s own plain accounts of what slow waves are and why pulsars can detect them.
+                </li>
+                <li>
+                  <ExternalLink href="https://nanograv.org/15yr/Summary">NANOGrav: 15-Year Publications’ Summaries</ExternalLink>: short summaries of the 15-year papers.
+                </li>
+                <li>
+                  <ExternalLink href="https://ipta4gw.org/">International Pulsar Timing Array</ExternalLink>: the group that combines the arrays’ data. Its pages mention Data Release 2 as the latest, with no news of a third release.
+                </li>
+              </ul>
+            </div>
           </div>
         )}
       </div>

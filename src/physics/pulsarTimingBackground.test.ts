@@ -41,6 +41,10 @@ import {
   PICTURE_TWO_TICKS_SECONDS,
   PULSE_PERIOD_EXAMPLE_SECONDS,
   separationAu,
+  resultsCheckUp,
+  exampleSteps,
+  hellingsDownsRows,
+  HELLINGS_DOWNS_ANGLES_DEGREES,
 } from './pulsarTimingBackground'
 
 const G = 6.6743e-11
@@ -345,5 +349,59 @@ describe('Part 2: the separation buttons in Earth-Sun distances (Step 6)', () =>
   it('is proportional to the separation and rejects a non-positive one', () => {
     expect(separationAu(0.1) / separationAu(0.01)).toBeCloseTo(10, 9)
     expect(() => separationAu(0)).toThrow(RangeError)
+  })
+})
+
+describe('Results (Step 7)', () => {
+  it('check-up: the example pair has a 1.05-year cycle, 30.3 nHz, 14.3 times the lowest frequency 15 years can pick out (2.1 nHz)', () => {
+    const c = resultsCheckUp()
+    expect(c.cycleYears).toBeCloseTo(1.046, 2)
+    expect(c.cycleSeconds).toBeCloseTo(examplePair().waveCycleSeconds, 3)
+    expect(c.longestCycleYears).toBe(15)
+    expect(c.cyclesInSpan).toBeCloseTo(14.3, 1)
+    expect(c.frequencyNanohertz).toBeCloseTo(30.3, 1)
+    expect(c.lowestNanohertz).toBeCloseTo(2.11, 2)
+    expect(c.frequencyOverLowest).toBeCloseTo(14.3, 1)
+    expect(c.frequencyOverLowest).toBeCloseTo(c.cyclesInSpan, 9)
+  })
+  it('check-up: the shift is 12.05 ns, with 9.0 and 15.6 ns from the strain\'s give-or-take, and the published strain is held as 2.4 (+0.7, -0.6) x 10^-15', () => {
+    const c = resultsCheckUp()
+    expect(c.shiftNanoseconds).toBeCloseTo(12.05, 1)
+    expect(c.shiftLowNanoseconds).toBeCloseTo(9.04, 1)
+    expect(c.shiftHighNanoseconds).toBeCloseTo(15.57, 1)
+    expect(c.shiftLowNanoseconds).toBeLessThan(c.shiftNanoseconds)
+    expect(c.shiftNanoseconds).toBeLessThan(c.shiftHighNanoseconds)
+    expect([c.strain, c.strainPlus, c.strainMinus]).toEqual([2.4e-15, 0.7e-15, 0.6e-15])
+  })
+  it('check-up: every array\'s reported significance is held as listed and is below 5 sigma', () => {
+    const c = resultsCheckUp()
+    expect(c.arrays.map((a) => [a.sigmaLow, a.sigmaHigh])).toEqual([[3.5, 4], [3, 3], [2, 2], [4.6, 4.6]])
+    expect(c.arrays.every((a) => a.belowFiveSigma)).toBe(true)
+    expect(c.arrays[0].array).toBe('NANOGrav (15 years)')
+  })
+  it('steps: two billion-Sun black holes 0.01 pc (2,063 Earth-Sun distances) apart give a 2.09-year orbit and a 1.05-year wave cycle (half an orbit)', () => {
+    const s = exampleSteps()
+    expect(s.massEachSolar).toBe(1e9)
+    expect(s.totalMassSolar).toBe(2e9)
+    expect(s.separationPc).toBe(0.01)
+    expect(s.separationAu).toBeCloseTo(2062.6, 1)
+    expect(s.orbitalPeriodYears).toBeCloseTo(2.09, 2)
+    expect(s.waveCycleYears).toBeCloseTo(s.orbitalPeriodYears / 2, 9)
+    expect(s.waveFrequencyNanohertz).toBeCloseTo(30.3, 1)
+    expect(s.cyclesInSpan).toBeCloseTo(14.3, 1)
+  })
+  it('Hellings-Downs rows: 0.5 at 0 degrees, -0.145 at 90, 0.25 at 180, and the lowest value (-0.152) at 82.5 degrees, in order of angle', () => {
+    const rows = hellingsDownsRows()
+    const at = (a: number) => rows.find((r) => r.angleDegrees === a)!.value
+    expect(at(0)).toBe(0.5)
+    expect(at(90)).toBeCloseTo(-0.1449, 3)
+    expect(at(180)).toBeCloseTo(0.25, 9)
+    const low = rows.filter((r) => r.isLowest)
+    expect(low).toHaveLength(1)
+    expect(low[0].angleDegrees).toBeCloseTo(82.5, 1)
+    expect(low[0].value).toBeCloseTo(-0.152, 3)
+    expect(Math.min(...rows.map((r) => r.value))).toBe(low[0].value)
+    expect(rows.map((r) => r.angleDegrees)).toEqual([...rows.map((r) => r.angleDegrees)].sort((a, b) => a - b))
+    expect(rows).toHaveLength(HELLINGS_DOWNS_ANGLES_DEGREES.length + 1)
   })
 })

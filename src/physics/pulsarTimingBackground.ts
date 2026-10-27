@@ -383,3 +383,87 @@ export function pictureTwo(): PictureTwo {
     pulsePeriodOverShift: PULSE_PERIOD_EXAMPLE_SECONDS / shift,
   }
 }
+
+// ---- Results (Step 7): the check-up, the steps from masses to frequency, and the Hellings-Downs values ----
+
+export interface ResultsCheckUp {
+  cycleYears: number
+  cycleSeconds: number
+  // The longest cycle that the span can pick out (the span itself, in years) and how many cycles of the pair fit in it.
+  longestCycleYears: number
+  cyclesInSpan: number
+  frequencyNanohertz: number
+  lowestNanohertz: number
+  frequencyOverLowest: number
+  strain: number
+  strainPlus: number
+  strainMinus: number
+  shiftNanoseconds: number
+  shiftLowNanoseconds: number
+  shiftHighNanoseconds: number
+  arrays: { array: string; sigmaLow: number; sigmaHigh: number; belowFiveSigma: boolean }[]
+}
+
+export function resultsCheckUp(): ResultsCheckUp {
+  const pair = examplePair()
+  const n = NANOGRAV_15_YEAR
+  const p = pictureTwo()
+  return {
+    cycleYears: pair.waveCycleYears,
+    cycleSeconds: pair.waveCycleSeconds,
+    longestCycleYears: OBSERVING_SPAN_YEARS,
+    cyclesInSpan: cyclesInSpan(pair),
+    frequencyNanohertz: pair.frequencyNanohertz,
+    lowestNanohertz: lowestFrequencyHz() * 1e9,
+    frequencyOverLowest: pair.frequencyHz / lowestFrequencyHz(),
+    strain: n.strain,
+    strainPlus: n.strainPlus,
+    strainMinus: n.strainMinus,
+    shiftNanoseconds: p.shiftNanoseconds,
+    shiftLowNanoseconds: p.shiftLowSeconds * 1e9,
+    shiftHighNanoseconds: p.shiftHighSeconds * 1e9,
+    arrays: PUBLISHED_RESULTS.map((r) => ({ array: r.array, sigmaLow: r.sigmaLow, sigmaHigh: r.sigmaHigh, belowFiveSigma: r.sigmaHigh < 5 })),
+  }
+}
+
+export interface ExampleSteps {
+  massEachSolar: number
+  totalMassSolar: number
+  separationPc: number
+  separationAu: number
+  orbitalPeriodYears: number
+  waveCycleYears: number
+  waveFrequencyNanohertz: number
+  cyclesInSpan: number
+}
+
+// The steps from the example pair's masses and separation to its wave, all from the same functions as Pictures 1 and 2.
+export function exampleSteps(): ExampleSteps {
+  const pair = examplePair()
+  return {
+    massEachSolar: pair.mass1Solar,
+    totalMassSolar: pair.mass1Solar + pair.mass2Solar,
+    separationPc: pair.separationPc,
+    separationAu: separationAu(pair.separationPc),
+    orbitalPeriodYears: pair.orbitalPeriodYears,
+    waveCycleYears: pair.waveCycleYears,
+    waveFrequencyNanohertz: pair.frequencyNanohertz,
+    cyclesInSpan: cyclesInSpan(pair),
+  }
+}
+
+export const HELLINGS_DOWNS_ANGLES_DEGREES = [0, 30, 60, 90, 120, 150, 180] as const
+
+export interface HellingsDownsRow {
+  angleDegrees: number
+  value: number
+  isLowest: boolean
+}
+
+// The pattern at a set of angles, with the lowest point added in its place (about 82.5 degrees).
+export function hellingsDownsRows(): HellingsDownsRow[] {
+  const low = hellingsDownsMinimum()
+  const rows: HellingsDownsRow[] = HELLINGS_DOWNS_ANGLES_DEGREES.map((a) => ({ angleDegrees: a, value: hellingsDowns(a), isLowest: false }))
+  rows.push({ angleDegrees: low.angleDegrees, value: low.value, isLowest: true })
+  return rows.sort((a, b) => a.angleDegrees - b.angleDegrees)
+}
