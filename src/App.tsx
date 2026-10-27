@@ -23,6 +23,7 @@ import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
 import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperiment'
 import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackgroundExperiment'
 import { BlackHoleGrowthExperiment } from './components/BlackHoleGrowthExperiment'
+import { nonSpinningEfficiency as growthLowEfficiency, objectMassSolar as growthObjectMass, pictureOne as growthPictureOne, pictureTwo as growthPictureTwo, settingsGrid as growthGrid } from './physics/blackHoleGrowth'
 import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
 import { checkUpRows, distanceRatio, fromMassRows, massRatio as shadowMassRatio, rangeRows, ratioRow } from './physics/blackHoleShadow'
 import { climbFacts, exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, ORIGIN_FIGURES, spinPicture } from './physics/heaviestMerger'
@@ -263,6 +264,27 @@ function pulsarTimingBackgroundSummary(): string {
     `${sigma(nanograv.sigmaLow, nanograv.sigmaHigh)} sigma, and the other arrays report ${sigma(epta.sigmaLow, epta.sigmaHigh)}, ${sigma(ppta.sigmaLow, ppta.sigmaHigh)} and ${sigma(cpta.sigmaLow, cpta.sigmaHigh)} sigma; none reaches the 5 sigma that is the usual bar for a discovery. ` +
     `So there is strong evidence for a background of very slow gravitational waves, and what makes it is open: many pairs of supermassive black holes is the most likely source, but this is not proven, and the NANOGrav abstract also names new physics in the early universe. ` +
     `The numbers come from abstracts and summaries, with no paper read in full, and the ${n1(check.shiftNanoseconds)} nanoseconds is a rough estimate.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 23 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function blackHoleGrowthSummary(): string {
+  const p1 = growthPictureOne()
+  const p2 = growthPictureTwo()
+  const grid = growthGrid()
+  const n1 = (x: number) => x.toFixed(1)
+  const my = (years: number) => `${Math.round(years / 1e6).toLocaleString('en-US')} million years`
+  const suns = (x: number) => (x >= 1e6 ? `${Math.round(x / 1e6).toLocaleString('en-US')} million Suns` : `${Math.round(x).toLocaleString('en-US')} Suns`)
+  const low = growthLowEfficiency()
+  return (
+    `How fast can a black hole grow? A black hole feeds on gas, and the light of the glowing gas pushes outward on the gas still falling in, so there is a fastest rate at which it can take in gas, the Eddington limit. ` +
+    `At that limit the mass is multiplied by the same factor in every equal span of time: with an efficiency of ${Math.round(p1.efficiency * 100)} percent, by ${Math.E.toFixed(2)} every ${my(p1.growthTimeYears)}. ` +
+    `The black hole of CAPERS-LRD-z9, seen when the universe was about ${my(p1.ageYears)} old, is estimated at ${suns(growthObjectMass())}, with a wide give-or-take (${n1(p2.lowSolar / 1e6)} to ${Math.round(p2.highSolar / 1e6)} million Suns). ` +
+    `A seed of ${p1.seedSolar} Suns would need ${n1(p1.growthTimesNeeded)} growth times, so ${my(p1.neededYears)}, against ${my(p1.availableYears)} if it began to feed when the universe was ${my(p1.startAgeYears)} old (a choice made for the question). ` +
+    `The smallest seed that fits is ${suns(p2.smallestSeedSolar)}. Both the seed and the efficiency matter: at ${(low * 100).toFixed(1)} percent a seed of ${p1.seedSolar} Suns needs ${my(grid[0][0].yearsNeeded)}, so the model leaves it only barely in time, and at 40 percent no seed in the table is in time. ` +
+    `So the calculation neither shows that a seed from a single star could not grow this big, nor that it could. Heavier seeds, feeding faster than the limit, mergers, or masses that are much lower than first estimated have each been proposed, and the sources do not agree. ` +
+    `The speed limit is settled physics, and there is strong evidence that the James Webb Space Telescope sees growing black holes very early; how they grew, and what the little red dots are, is open. ` +
+    `The numbers come from abstracts, summaries and a textbook formula, with no paper read in full, and the model assumes the black hole feeds at the limit all the time, with no mergers.`
   )
 }
 
@@ -964,14 +986,16 @@ const chapters: Chapter[] = [
     Component: PulsarTimingBackgroundExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: pulsarTimingBackgroundSummary(),
-    next: 'None yet, because Experiment 23 has no approved specification.',
+    // "What's next" now points to Experiment 23: this is draft wording for the owner's approval. It does not give away either of Experiment 23's predictions.
+    next: 'Experiment 23 asks about the other end of the story of black holes: how fast one can grow. The very heavy black holes that the James Webb Space Telescope finds in the young universe had to start small and feed, and there is a limit on how fast a black hole can feed. Was there enough time?',
   },
   {
     title: 'How fast can a black hole grow? (the little red dots)',
     group: 'Frontier and Beyond',
     Component: BlackHoleGrowthExperiment,
     // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
-    learned: 'The chapter summary of this experiment is not written yet.',
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
+    learned: blackHoleGrowthSummary(),
     next: 'None yet, because Experiment 24 has no approved specification.',
   },
 ]

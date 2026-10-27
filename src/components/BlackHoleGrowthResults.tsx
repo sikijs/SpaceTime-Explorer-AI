@@ -9,6 +9,14 @@ import { commas, efficiencyPercent, n1 } from './BlackHoleGrowthPictures'
 // guesses or settings. The wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1). The explanation of what the numbers mean for how real black
 // holes grew, and any verdict between the explanations, are left to the tutor (CLAUDE.md §12, §13).
 
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
+
 const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
 
@@ -242,6 +250,35 @@ export function BlackHoleGrowthResults({ timeGuess, seedGuess }: { timeGuess: Ti
           { label: 'How sure the numbers are', text: 'every cell assumes that the black hole feeds at the limit, all the time, from the moment the universe is 100 million years old, with no mergers and no change of efficiency as it grows. These are not facts about a real black hole. The 40 percent column is a trial value near the top of the range for a spinning black hole.' },
         ]}
       />
+
+      <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>The papers and pages behind these numbers.</strong> They are listed here, after the run, because they show what the results are and some of them go into the answers to your predictions. Links open in a new tab.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2505.04609">CAPERS-LRD-z9: A Gas Enshrouded Little Red Dot Hosting a Broad-line AGN at z=9.288</ExternalLink> (Taylor and others, 2025): the paper behind the redshift of 9.288 and the black hole mass, log(M ÷ Suns) = 7.58 ± 0.15, with the
+            wider range of 6.65 to 8.50 in the logarithm, which is the 4.5 to 316 million Suns of Table 1. Only its abstract was read for this page.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2503.16595">Little red dots as young supermassive black holes in dense ionized cocoons</ExternalLink> (Rusakov and others, 2025, published in <em>Nature</em>; the arXiv copy was last revised in February 2026): the paper that proposes that the
+            broad lines of little red dots are widened by light bouncing off electrons in a cocoon, which would make the black hole masses about a hundred times lower than first estimated. Only its abstract was read for this page.
+          </li>
+          <li>
+            <ExternalLink href="https://science.nasa.gov/missions/webb/nasa-webb-finds-strongest-evidence-yet-for-black-hole-stars/">NASA: Webb finds strongest evidence yet for “black hole stars”</ExternalLink> (June 2026), and{' '}
+            <ExternalLink href="https://esawebb.org/news/weic2610/">ESA Webb’s account of the same result</ExternalLink>: a growing black hole in a dense gas cocoon, seen in the most detailed spectrum of a little red dot so far (an object called GLIMPSE-17775). NASA’s page says that the black
+            hole masses need not be as high to explain the broad lines. Read in summary only.
+          </li>
+          <li>
+            <ExternalLink href="https://www.nasa.gov/missions/chandra/nasas-chandra-finds-black-hole-with-tremendous-growth/">NASA: Chandra finds a black hole with tremendous growth</ExternalLink>: NASA’s plain account of the Eddington limit, and of a black hole that appears to feed faster
+            than it, at about 2.4 times the limit. Read in summary only.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2601.14368">The Little Red Dots Are Direct Collapse Black Holes</ExternalLink> (Pacucci, Ferrara and Kocevski, January 2026): one proposal that little red dots are black holes that began very heavy, which would save growth time, as in Table 3. Only its
+            abstract was read for this page. Whether this is right is open.
+          </li>
+        </ul>
+      </div>
     </div>
   )
 }
