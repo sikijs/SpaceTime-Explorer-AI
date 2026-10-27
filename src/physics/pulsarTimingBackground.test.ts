@@ -45,6 +45,7 @@ import {
   exampleSteps,
   hellingsDownsRows,
   HELLINGS_DOWNS_ANGLES_DEGREES,
+  nanohertzCycleYears,
 } from './pulsarTimingBackground'
 
 const G = 6.6743e-11
@@ -403,5 +404,12 @@ describe('Results (Step 7)', () => {
     expect(Math.min(...rows.map((r) => r.value))).toBe(low[0].value)
     expect(rows.map((r) => r.angleDegrees)).toEqual([...rows.map((r) => r.angleDegrees)].sort((a, b) => a - b))
     expect(rows).toHaveLength(HELLINGS_DOWNS_ANGLES_DEGREES.length + 1)
+  })
+})
+
+describe('Drawing A\'s nanohertz (review fix)', () => {
+  it('gives one cycle every 31.7 years for one nanohertz, the lowest frequency 15 years can pick out being 15 years per cycle', () => {
+    expect(nanohertzCycleYears()).toBeCloseTo(31.69, 2)
+    expect(nanohertzCycleYears() / (lowestFrequencyHz() * 1e9)).toBeCloseTo(OBSERVING_SPAN_YEARS, 9)
   })
 })

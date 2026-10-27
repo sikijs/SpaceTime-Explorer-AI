@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne, pictureTwo, shiftGuessMarker, shiftRulerPosition, PICTURE_TWO_TICKS_SECONDS, TRIAL_MASS_CHOICES_SOLAR, TRIAL_SEPARATION_CHOICES_PC, trialPicture, frequencyRulerPosition, examplePair, separationAu, OBSERVING_SPAN_YEARS, resultsCheckUp, exampleSteps, hellingsDownsRows } from '../physics/pulsarTimingBackground'
+import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne, pictureTwo, shiftGuessMarker, shiftRulerPosition, PICTURE_TWO_TICKS_SECONDS, TRIAL_MASS_CHOICES_SOLAR, TRIAL_SEPARATION_CHOICES_PC, trialPicture, frequencyRulerPosition, examplePair, separationAu, OBSERVING_SPAN_YEARS, resultsCheckUp, exampleSteps, hellingsDownsRows, nanohertzCycleYears } from '../physics/pulsarTimingBackground'
 import type { CycleChoiceId, ShiftChoice, TrialPicture } from '../physics/pulsarTimingBackground'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { PulsarTimingBackgroundTutor } from './PulsarTimingBackgroundTutor'
@@ -34,7 +34,7 @@ function referenceEntries(): { term: string; meaning: string }[] {
     { term: 'Nanosecond', meaning: 'a billionth of a second. In one nanosecond, light travels about 30 centimetres.' },
     { term: 'Supermassive black hole', meaning: 'a black hole millions to billions of times as heavy as the Sun, found at the centre of most large galaxies. The one at the centre of our own galaxy, Sagittarius A*, is about 4 million Suns (Frontier and Beyond Experiment 21).' },
     { term: 'Neutron star', meaning: 'the extremely dense core left behind when a heavy star explodes, with the mass of more than the Sun squeezed into a sphere about 12 kilometres across (Frontier and Beyond Experiment 15).' },
-    { term: 'Pulsar', meaning: 'a neutron star that spins and gives out beams of radio waves from its poles. As it spins, a beam sweeps round the sky like the light of a lighthouse, and each time it points at the Earth, telescopes pick up a short pulse.' },
+    { term: 'Pulsar', meaning: 'a neutron star that spins and gives out beams of radio waves from near its magnetic poles. As it spins, a beam sweeps round the sky like the light of a lighthouse, and each time it points at the Earth, telescopes pick up a short pulse.' },
     { term: 'Millisecond pulsar', meaning: 'a pulsar that spins hundreds of times every second, so a pulse arrives every few thousandths of a second. They are among the steadiest natural clocks known, which is why they are used here.' },
     { term: 'Arrival time', meaning: 'the moment a pulse reaches a radio telescope on Earth. Astronomers compare each pulse’s real arrival time with the time a model says it should arrive, and look at the difference.' },
     { term: 'Background (of gravitational waves)', meaning: 'many waves from many different sources, added together, so that no one wave stands out, like the murmur of a crowd, in which you cannot pick out one voice. A background is a steady, faint signal from all directions.' },
@@ -392,7 +392,7 @@ function nanohertzText(nh: number): string {
 }
 function cycleText(years: number): string {
   if (years >= 10) return `${commas(years)} years`
-  if (years >= 1) return `${n1(years)} years`
+  if (years >= 1) return `${n2(years)} years`
   return `${commas(years * 365.25)} days`
 }
 function cyclesText(c: number): string {
@@ -943,7 +943,7 @@ export function PulsarTimingBackgroundExperiment({ onComplete, onTutorComplete }
             <TrialDrawing trial={trial} />
             <CaptionBlock
               title="Drawing A"
-              intro={`It shows how fast the gravitational wave from your trial pair goes through its cycles. The ruler is a ruler of frequency in nanohertz (nHz). A hertz is one cycle a second, so a nanohertz is a billionth of that: one cycle every 31.7 years. The ruler goes up in steps of ten (0.1, 1, 10, 100 and so on), so that very slow and very fast waves fit on one line. A higher number means a faster wave and a shorter cycle.`}
+              intro={`It shows how fast the gravitational wave from your trial pair goes through its cycles. The ruler is a ruler of frequency in nanohertz (nHz). A hertz is one cycle a second, so a nanohertz is a billionth of that: one cycle every ${n1(nanohertzCycleYears())} years. The ruler goes up in steps of ten (0.1, 1, 10, 100 and so on), so that very slow and very fast waves fit on one line. A higher number means a faster wave and a shorter cycle.`}
               bullets={[
                 <><strong>The pink dot, in the box “YOUR TRIAL PAIR”,</strong> is the frequency of the wave from your trial pair. It is calculated here, from the masses and the separation you chose, for a pair that is imagined for the question.</>,
                 <><strong>The cyan band</strong> shows which waves {OBSERVING_SPAN_YEARS} years of timing can pick out. Think of watching a swing for {OBSERVING_SPAN_YEARS} years: you can only tell that it is swinging if you see it go back and forth at least once

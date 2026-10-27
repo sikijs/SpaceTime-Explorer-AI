@@ -467,3 +467,8 @@ export function hellingsDownsRows(): HellingsDownsRow[] {
   rows.push({ angleDegrees: low.angleDegrees, value: low.value, isLowest: true })
   return rows.sort((a, b) => a.angleDegrees - b.angleDegrees)
 }
+
+// One nanohertz is one cycle every 1e9 seconds, in years (about 31.7), for Drawing A's caption.
+export function nanohertzCycleYears(): number {
+  return 1e9 / SECONDS_PER_YEAR
+}
