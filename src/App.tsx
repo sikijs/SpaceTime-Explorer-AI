@@ -22,6 +22,7 @@ import { BlackHoleRingdownExperiment } from './components/BlackHoleRingdownExper
 import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
 import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperiment'
 import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackgroundExperiment'
+import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
 import { checkUpRows, distanceRatio, fromMassRows, massRatio as shadowMassRatio, rangeRows, ratioRow } from './physics/blackHoleShadow'
 import { climbFacts, exampleMerger, GAP_MEASURED_LOW_SOLAR, GAP_THEORY_SOLAR, GW231123, massRuler, ORIGIN_FIGURES, spinPicture } from './physics/heaviestMerger'
 import { checkUp as ringdownCheckUp, FASTER_SPIN, GW250114_RINGDOWN, pitchGuessResult, ringingWorked, SECOND_TONE_SIGNIFICANCE } from './physics/blackHoleRingdown'
@@ -235,6 +236,32 @@ function blackHoleShadowSummary(): string {
     `The calculated shadows are ${n1(Math.abs(check[0].comparison.differencePercent))} to ${n1(Math.abs(check[2].comparison.differencePercent))} percent narrower than the rings, and each ring lies inside the calculated shadow’s own range, which comes from the give-or-take on the mass ` +
     `and the distance (${n1(ranges[1].range.both.low)} to ${n1(ranges[1].range.both.high)} µas for M87*). This is strong evidence that the ring sizes are close to what the masses and distances give; how tightly it tests gravity is open. ` +
     `The formula is for a black hole that does not spin, the ring is glowing gas and not the shadow, the link between them is not modelled, and the numbers come from abstracts and summaries, with no paper read in full.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 22 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// drift from the page.
+function pulsarTimingBackgroundSummary(): string {
+  const steps = pulsarSteps()
+  const check = pulsarCheckUp()
+  const p1 = pulsarPictureOne()
+  const p2 = pulsarPictureTwo()
+  const hd = hellingsDownsRows()
+  const lowest = hd.find((r) => r.isLowest)!
+  const n1 = (x: number) => x.toFixed(1)
+  const n2 = (x: number) => x.toFixed(2)
+  const sigma = (low: number, high: number) => (low === high ? `about ${low}` : `about ${low} to ${high}`)
+  const [nanograv, epta, ppta, cpta] = check.arrays
+  return (
+    `Does the universe hum? A passing gravitational wave very slightly stretches and squeezes space, so the pulses of a pulsar, a spinning neutron star that sends out a beam of radio waves, arrive a little early or late. ` +
+    `Two supermassive black holes of ${steps.massEachSolar / 1e9} billion Suns each, ${steps.separationPc} parsecs apart, go round each other in ${n2(steps.orbitalPeriodYears)} years and send out a wave with one cycle every ${n2(steps.waveCycleYears)} years ` +
+    `(${n1(steps.waveFrequencyNanohertz)} nHz), about ${n1(p1.pairOverLigoLongest / 1e9)} to ${n1(p1.pairOverLigoShortest / 1e9)} billion times longer than LIGO’s, so ${n1(steps.cyclesInSpan)} cycles fit in 15 years of timing. ` +
+    `A wave of the published strength, ${(check.strain * 1e15).toFixed(1)} × 10⁻¹⁵, shifts a pulse by about ${n1(check.shiftNanoseconds)} billionths of a second, roughly ${(Math.round(p2.pulsePeriodOverShift / 1000) * 1000).toLocaleString('en-US')} times less than the gap ` +
+    `between pulses a millisecond apart. A single pulsar can drift for its own reasons, so the teams look for a pattern shared by pairs of pulsars, the Hellings–Downs pattern: ${hd[0].value.toFixed(1)} for two pulsars in the same direction, ` +
+    `${lowest.value.toFixed(3).replace('-', '−')} at about ${n1(lowest.angleDegrees)} degrees and ${hd[hd.length - 1].value.toFixed(2)} on opposite sides of the sky. In 2023 NANOGrav reported evidence for a background of such waves at ` +
+    `${sigma(nanograv.sigmaLow, nanograv.sigmaHigh)} sigma, and the other arrays report ${sigma(epta.sigmaLow, epta.sigmaHigh)}, ${sigma(ppta.sigmaLow, ppta.sigmaHigh)} and ${sigma(cpta.sigmaLow, cpta.sigmaHigh)} sigma; none reaches the 5 sigma that is the usual bar for a discovery. ` +
+    `So there is strong evidence for a background of very slow gravitational waves, and what makes it is open: many pairs of supermassive black holes is the most likely source, but this is not proven, and the NANOGrav abstract also names new physics in the early universe. ` +
+    `The numbers come from abstracts and summaries, with no paper read in full, and the ${n1(check.shiftNanoseconds)} nanoseconds is a rough estimate.`
   )
 }
 
@@ -927,14 +954,15 @@ const chapters: Chapter[] = [
     Component: BlackHoleShadowExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleShadowSummary(),
-    next: 'None yet, because Experiment 22 has no approved specification.',
+    // "What's next" named no experiment, because Experiment 22 (the hum) now has one: this "What's next" is draft wording for the owner's approval.
+    next: 'Experiment 22 asks about much heavier black holes, and about a very different kind of detector. Pairs of supermassive black holes should send out gravitational waves too, but waves very different from the ones LIGO detects. How could they be detected, using stars as clocks?',
   },
   {
     title: 'Does the universe hum? (pulsar timing arrays)',
     group: 'Frontier and Beyond',
     Component: PulsarTimingBackgroundExperiment,
-    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
-    learned: 'The chapter summary of this experiment is not written yet.',
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
+    learned: pulsarTimingBackgroundSummary(),
     next: 'None yet, because Experiment 23 has no approved specification.',
   },
 ]
