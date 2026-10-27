@@ -339,9 +339,32 @@ export function PulsarTimingBackgroundExperiment() {
 
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
             <strong>What is a pulsar?</strong> To look for waves from such a pair we use stars as clocks. A <strong>neutron star</strong> (Frontier and Beyond Experiment 15) is the core left over when a heavy
-            star explodes: a sphere about 12 kilometres across, with more mass than the Sun. Some neutron stars spin and give out a narrow beam of radio waves from their poles. As the star spins, the beam sweeps
+            star explodes: a sphere about 12 kilometres across, with more mass than the Sun. Some neutron stars spin and give out a narrow beam of radio waves from near their magnetic poles. As the star spins, the beam sweeps
             round the sky, like the light of a lighthouse. From far away, you do not see a steady light, you see a flash each time the beam points at you. A neutron star seen this way is called a
             <strong> pulsar</strong>, because it pulses.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <strong>Why does a neutron star send out a beam?</strong> Two things make it happen.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <em>It has a huge magnetic field.</em> The Earth has a magnetic field too, which is why a compass works. A neutron star’s field is enormously stronger. The reason is its size. When the core of a
+            heavy star collapses into a sphere 12 kilometres across, its magnetic field lines are squeezed into a much smaller space, like a handful of threads pulled tight into a bundle. Squeezed lines mean a
+            much stronger field.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <em>It spins, and its magnetic poles are not at its spin poles.</em> The Earth’s magnetic north is not exactly where its spin axis points. A neutron star is the same, only more so: its magnetic
+            axis is tilted away from its spin axis.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            Now put the two together. A strong magnetic field that spins quickly creates a powerful electric force near the star’s surface. The force launches charged particles from the star, and they
+            speed up until they are moving at close to the speed of light. Charged particles move easily along magnetic field lines, not across them. Near the two magnetic poles the field lines reach far out
+            into space, so the particles stream away along them in two narrow streams, like water from a fountain. The streams give out radio waves, in a narrow cone above each magnetic pole. Scientists are
+            still working out exactly how the particles make radio waves, so that part is not fully understood.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <strong>Why a lighthouse?</strong> The beam leaves from the magnetic poles, and those are tilted away from the spin axis. As the star spins, the beam sweeps round the sky like a torch held at an
+            angle by someone turning on the spot. If the beam happens to sweep across the Earth, we see a flash once per turn. If it points elsewhere, we never see the star at all. The energy for the beam
+            comes from the star’s spin, so a pulsar slowly loses spin over a very long time, and when its electric force is no longer strong enough to make beams, it stops pulsing.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
             <strong>Why pulsars make good clocks.</strong> The fastest ones, <strong>millisecond pulsars</strong>, spin hundreds of times every second, and they spin so steadily that they approach the
@@ -353,6 +376,23 @@ export function PulsarTimingBackgroundExperiment() {
             <strong>How a gravitational wave could change the pulses.</strong> You saw in Gravitational Waves Experiment 1 that a passing wave stretches and squeezes space. If a wave passes through the space
             between the Earth and a pulsar, then for a moment that space is a little longer or a little shorter, so a pulse takes a little longer or a little less time to arrive. The pulse arrives a little late, or a
             little early, compared with its expected time. The shift is tiny, so the detector has to watch the pulses for years. The size of the shift is the second thing you will be asked to guess.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <strong>Why watch for years?</strong> There are three reasons.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <em>One pulse is not enough.</em> Each single pulse arrives with a little random wobble in its timing, from the star itself and from the thin gas between the star and us. This wobble is much
+            bigger than the shift a gravitational wave causes. Think of trying to see the tide by looking at the sea for one second: the splashing of the small waves hides it. If you take thousands of pulses
+            and average them, the random wobbles cancel out and the steady shift is left. Averaging takes thousands of pulses, and that takes time.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <em>A wave has to be seen going up and down.</em> A gravitational wave does not shift the pulses in one direction for ever. The shift grows, shrinks, and grows again as the wave passes. To tell
+            this from a plain drift, you need to watch the arrival times long enough to see them rise and fall at least once, the way you only know the tide is a tide after watching the water rise and fall. A
+            wave that takes a long time to go through one cycle needs a long record.
+          </p>
+          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <em>Many pulsars have to agree.</em> The wave is shared by all the pulsars, in a particular pattern across the sky. A wobble in one pulsar could be that one star’s own trouble. When dozens of
+            pulsars show the same pattern, over years, it is much harder to blame chance. This is why the teams keep adding years of data, and why they now combine their arrays.
           </p>
           <p style={paragraph}>
             This is a very different kind of detector from LIGO. The “arms” are the paths from the pulsars to the Earth, and there are dozens of them, pointing in different directions across our galaxy. The
@@ -393,7 +433,11 @@ export function PulsarTimingBackgroundExperiment() {
           <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
             <li>
               <ExternalLink href="https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-pulsars/">NASA: Pulsars</ExternalLink>: NASA’s account of pulsars, spinning neutron stars whose
-              beams sweep across space like a lighthouse, and of the fastest ones, the millisecond pulsars.
+              beams sweep across space like a lighthouse, how the beams are made, and the fastest ones, the millisecond pulsars.
+            </li>
+            <li>
+              <ExternalLink href="https://public.nrao.edu/radio-astronomy/pulsars/">NRAO: Pulsars</ExternalLink>: the National Radio Astronomy Observatory’s plain account of how a collapsing star’s
+              magnetic field is squeezed stronger, and how the magnetic poles act like fountains whose beam sweeps past us like a lighthouse.
             </li>
             <li>
               <ExternalLink href="https://science.nasa.gov/universe/black-holes/">NASA: Black Holes</ExternalLink>: NASA’s overview of black holes, including the supermassive ones at the centres of
@@ -433,7 +477,8 @@ export function PulsarTimingBackgroundExperiment() {
                   <>
                     A gravitational wave of the kind that the NANOGrav team reports squeezes and stretches space by a very small fraction: about 2.4 parts in a million billion (a million billion is 1 followed by 15
                     zeros). The pulses of a millisecond pulsar arrive every few thousandths of a second. Because of such a wave, a pulse arrives a little earlier or later than it would otherwise. About how
-                    big is that shift, in billionths of a second (nanoseconds)? This is a separate guess from Prediction 1, so your two answers do not have to agree with each other.
+                    big is that shift, in billionths of a second (nanoseconds)? This is a separate guess from Prediction 1, so your two answers do not have to agree with each other. The choices below are sizes of the shift. A pulse can arrive earlier or later by that amount, as the wave passes, so you are guessing
+                    how big the shift gets, not which way it goes.
                   </>
                 ),
                 choices: SHIFT_CHOICES_NANOSECONDS.map((c) => ({ value: String(c), label: SHIFT_LABELS[c] })),
