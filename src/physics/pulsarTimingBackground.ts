@@ -141,8 +141,8 @@ export const PUBLISHED_RESULTS: PublishedResult[] = [
   { id: 'cpta', array: 'CPTA', sigmaLow: 4.6, sigmaHigh: 4.6 },
 ]
 
-// LIGO's reference for comparison: GW150914 (about 36 and 29 Suns) rose from about 35 Hz to a peak of about 250 Hz. Taken from memory of the discovery
-// paper, with no source read for this page (to be checked); used only to place LIGO's waves on Picture 1's ruler.
+// LIGO's reference for comparison: GW150914 (about 36 and 29 Suns) "sweeps upwards in frequency from 35 to 250 Hz" (the abstract of the discovery paper, Phys. Rev. Lett.
+// 116, 061102, 2016, read on 2026-10-27); used only to place LIGO's waves on Picture 1's ruler.
 export const LIGO_REFERENCE = { lowHz: 35, peakHz: 250 } as const
 
 export function ligoCycleSeconds(): { longest: number; shortest: number } {
@@ -273,5 +273,59 @@ export function trialPicture(massSolar: number, separationPc: number): TrialPict
     frequencyPosition: frequencyRulerPosition(b.frequencyNanohertz),
     lowestPosition: frequencyRulerPosition(lowest),
     frequencyOverExample: b.frequencyHz / examplePair().frequencyHz,
+  }
+}
+
+// ---- Picture 1 (Step 4): the pair, its orbit and wave, and a ruler of cycle lengths with LIGO's waves and what 15 years of timing can pick out ----
+
+export const AU_PER_PARSEC = 206264.80624709636
+
+// The cycle lengths that Picture 1's ruler labels, in seconds: a millisecond, a second, an hour, a day, a year, ten years, a hundred years.
+export const PICTURE_ONE_TICKS_SECONDS = [1e-3, 1, 3600, 86400, SECONDS_PER_YEAR, 10 * SECONDS_PER_YEAR, 100 * SECONDS_PER_YEAR] as const
+
+// Where the band that a span can pick out stops fading, on the left: a fixed ruler position for the picture's fade (the real limit depends on how often pulsars are timed and is not modelled).
+export const PICTURE_ONE_BAND_FADE_SECONDS = 1e6
+
+export interface PictureOne {
+  pair: Binary
+  separationAu: number
+  orbitsPerWaveCycle: number // the wave cycle is half an orbit, so 0.5; and 2 wave cycles per orbit
+  waveCyclesPerOrbit: number
+  ligo: { lowHz: number; peakHz: number; longestSeconds: number; shortestSeconds: number; longestPosition: number; shortestPosition: number }
+  span: { years: number; longestCycleSeconds: number; longestCyclePosition: number; fadeEndPosition: number; cyclesForPair: number; pairFits: boolean }
+  pairPosition: number
+  // How many times longer the pair's wave cycle is than LIGO's longest, and than its shortest.
+  pairOverLigoLongest: number
+  pairOverLigoShortest: number
+}
+
+export function pictureOne(): PictureOne {
+  const pair = examplePair()
+  const lig = ligoCycleSeconds()
+  const spanSeconds = OBSERVING_SPAN_YEARS * SECONDS_PER_YEAR
+  return {
+    pair,
+    separationAu: EXAMPLE_PAIR.separationPc * AU_PER_PARSEC,
+    orbitsPerWaveCycle: pair.waveCycleSeconds / pair.orbitalPeriodSeconds,
+    waveCyclesPerOrbit: pair.orbitalPeriodSeconds / pair.waveCycleSeconds,
+    ligo: {
+      lowHz: LIGO_REFERENCE.lowHz,
+      peakHz: LIGO_REFERENCE.peakHz,
+      longestSeconds: lig.longest,
+      shortestSeconds: lig.shortest,
+      longestPosition: cycleRulerPosition(lig.longest),
+      shortestPosition: cycleRulerPosition(lig.shortest),
+    },
+    span: {
+      years: OBSERVING_SPAN_YEARS,
+      longestCycleSeconds: spanSeconds,
+      longestCyclePosition: cycleRulerPosition(spanSeconds),
+      fadeEndPosition: cycleRulerPosition(PICTURE_ONE_BAND_FADE_SECONDS),
+      cyclesForPair: cyclesInSpan(pair),
+      pairFits: fitsInSpan(pair),
+    },
+    pairPosition: cycleRulerPosition(pair.waveCycleSeconds),
+    pairOverLigoLongest: pair.waveCycleSeconds / lig.longest,
+    pairOverLigoShortest: pair.waveCycleSeconds / lig.shortest,
   }
 }

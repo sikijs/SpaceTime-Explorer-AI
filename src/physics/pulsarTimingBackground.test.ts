@@ -33,6 +33,10 @@ import {
   TRIAL_SEPARATION_CHOICES_PC,
   frequencyRulerPosition,
   trialPicture,
+  pictureOne,
+  AU_PER_PARSEC,
+  PICTURE_ONE_TICKS_SECONDS,
+  PICTURE_ONE_BAND_FADE_SECONDS,
 } from './pulsarTimingBackground'
 
 const G = 6.6743e-11
@@ -239,5 +243,52 @@ describe('separation of the model from the guesses (CLAUDE.md §9, §14)', () =>
     for (const c of CYCLE_CHOICES) cycleGuessResult(c.id)
     for (const c of SHIFT_CHOICES_NANOSECONDS) shiftGuessResult(c)
     expect(JSON.stringify([examplePair(), exampleTimingShiftSeconds(), cycleAnswer(), shiftAnswer()])).toBe(before)
+  })
+})
+
+describe('Picture 1 (Step 4)', () => {
+  it('puts the pair 0.01 parsecs apart, which is 2,063 times the Earth-Sun distance', () => {
+    expect(AU_PER_PARSEC).toBeCloseTo(206264.8, 1)
+    expect(pictureOne().separationAu).toBeCloseTo(2062.65, 1)
+  })
+  it('has two wave cycles in every orbit, so one cycle is half an orbit', () => {
+    const p = pictureOne()
+    expect(p.waveCyclesPerOrbit).toBeCloseTo(2, 12)
+    expect(p.orbitsPerWaveCycle).toBeCloseTo(0.5, 12)
+    expect(p.pair.orbitalPeriodYears / p.pair.waveCycleYears).toBeCloseTo(2, 12)
+  })
+  it('places LIGO\'s waves at 4 to 28.6 milliseconds a cycle, far to the left of the pair', () => {
+    const p = pictureOne()
+    expect(p.ligo.shortestSeconds).toBeCloseTo(0.004, 9)
+    expect(p.ligo.longestSeconds).toBeCloseTo(1 / 35, 9)
+    expect(p.ligo.shortestPosition).toBeLessThan(p.ligo.longestPosition)
+    expect(p.ligo.longestPosition).toBeLessThan(p.pairPosition - 0.5)
+    expect(p.ligo.shortestPosition).toBeCloseTo((Math.log10(0.004) + 3) / 13, 9)
+  })
+  it('says the pair\'s cycle is about 1.2 billion times LIGO\'s longest and 8.3 billion times its shortest', () => {
+    const p = pictureOne()
+    expect(p.pairOverLigoLongest / 1.156e9).toBeCloseTo(1, 2)
+    expect(p.pairOverLigoShortest / 8.26e9).toBeCloseTo(1, 2)
+    expect(p.pairOverLigoShortest).toBeGreaterThan(p.pairOverLigoLongest)
+  })
+  it('puts the longest cycle that 15 years can pick out at 15 years, with the pair inside the band', () => {
+    const p = pictureOne()
+    expect(p.span.longestCycleSeconds).toBeCloseTo(15 * SECONDS_PER_YEAR, 3)
+    expect(p.span.longestCyclePosition).toBeCloseTo(cycleRulerPosition(15 * SECONDS_PER_YEAR), 12)
+    expect(p.span.fadeEndPosition).toBeCloseTo(cycleRulerPosition(PICTURE_ONE_BAND_FADE_SECONDS), 12)
+    expect(p.span.fadeEndPosition).toBeLessThan(p.pairPosition)
+    expect(p.pairPosition).toBeLessThan(p.span.longestCyclePosition)
+    expect(p.span.pairFits).toBe(true)
+    expect(p.span.cyclesForPair).toBeCloseTo(14.32, 1)
+  })
+  it('has the pair on the ruler at the same place as its cycle length and ticks in rising order on the ruler', () => {
+    expect(pictureOne().pairPosition).toBeCloseTo(cycleRulerPosition(examplePair().waveCycleSeconds), 12)
+    const t = [...PICTURE_ONE_TICKS_SECONDS]
+    expect(t.sort((a, b) => a - b)).toEqual([...PICTURE_ONE_TICKS_SECONDS])
+    for (const x of PICTURE_ONE_TICKS_SECONDS) {
+      expect(cycleRulerPosition(x)).toBeGreaterThanOrEqual(0)
+      expect(cycleRulerPosition(x)).toBeLessThan(1)
+    }
+    expect(cycleRulerPosition(PICTURE_ONE_TICKS_SECONDS[0])).toBe(0)
   })
 })
