@@ -329,3 +329,51 @@ export function pictureOne(): PictureOne {
     pairOverLigoShortest: pair.waveCycleSeconds / lig.shortest,
   }
 }
+
+// ---- Picture 2 (Step 5): the pulse's path, and a ruler of the shift in arrival time ----
+
+// The decades that Picture 2's ruler labels, in seconds: 0.01 nanoseconds to 10 milliseconds.
+export const PICTURE_TWO_TICKS_SECONDS = [1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2] as const
+
+export interface PictureTwo {
+  strain: number
+  strainLow: number
+  strainHigh: number
+  referenceFrequencyHz: number
+  shiftSeconds: number
+  shiftNanoseconds: number
+  // The shift from the lowest and the highest published strain (a simple low-to-high range, not a statistical one).
+  shiftLowSeconds: number
+  shiftHighSeconds: number
+  shiftPosition: number
+  shiftLowPosition: number
+  shiftHighPosition: number
+  pulsePeriodSeconds: number
+  pulsePeriodPosition: number
+  // How many times longer the example pulse period is than the shift.
+  pulsePeriodOverShift: number
+}
+
+export function pictureTwo(): PictureTwo {
+  const n = NANOGRAV_15_YEAR
+  const f = n.referenceFrequencyHz
+  const shift = timingShiftSeconds(n.strain, f)
+  const low = timingShiftSeconds(n.strain - n.strainMinus, f)
+  const high = timingShiftSeconds(n.strain + n.strainPlus, f)
+  return {
+    strain: n.strain,
+    strainLow: n.strain - n.strainMinus,
+    strainHigh: n.strain + n.strainPlus,
+    referenceFrequencyHz: f,
+    shiftSeconds: shift,
+    shiftNanoseconds: shift * 1e9,
+    shiftLowSeconds: low,
+    shiftHighSeconds: high,
+    shiftPosition: shiftRulerPosition(shift),
+    shiftLowPosition: shiftRulerPosition(low),
+    shiftHighPosition: shiftRulerPosition(high),
+    pulsePeriodSeconds: PULSE_PERIOD_EXAMPLE_SECONDS,
+    pulsePeriodPosition: shiftRulerPosition(PULSE_PERIOD_EXAMPLE_SECONDS),
+    pulsePeriodOverShift: PULSE_PERIOD_EXAMPLE_SECONDS / shift,
+  }
+}

@@ -37,6 +37,9 @@ import {
   AU_PER_PARSEC,
   PICTURE_ONE_TICKS_SECONDS,
   PICTURE_ONE_BAND_FADE_SECONDS,
+  pictureTwo,
+  PICTURE_TWO_TICKS_SECONDS,
+  PULSE_PERIOD_EXAMPLE_SECONDS,
 } from './pulsarTimingBackground'
 
 const G = 6.6743e-11
@@ -290,5 +293,43 @@ describe('Picture 1 (Step 4)', () => {
       expect(cycleRulerPosition(x)).toBeLessThan(1)
     }
     expect(cycleRulerPosition(PICTURE_ONE_TICKS_SECONDS[0])).toBe(0)
+  })
+})
+
+describe('Picture 2 (Step 5)', () => {
+  it('gives the shift 12.05 nanoseconds for 2.4 x 10^-15 at 1 per year, and holds the published strain and frequency', () => {
+    const p = pictureTwo()
+    expect(p.strain).toBe(2.4e-15)
+    expect(p.referenceFrequencyHz).toBeCloseTo(1 / SECONDS_PER_YEAR, 18)
+    expect(p.shiftNanoseconds).toBeCloseTo(12.05, 1)
+    expect(p.shiftSeconds).toBeCloseTo(exampleTimingShiftSeconds(), 18)
+  })
+  it('carries the strain\'s give-or-take (+0.7, -0.6) through to 9.0 and 15.6 nanoseconds, in proportion to the strain', () => {
+    const p = pictureTwo()
+    expect(p.strainLow).toBeCloseTo(1.8e-15, 20)
+    expect(p.strainHigh).toBeCloseTo(3.1e-15, 20)
+    expect(p.shiftLowSeconds * 1e9).toBeCloseTo(9.04, 1)
+    expect(p.shiftHighSeconds * 1e9).toBeCloseTo(15.57, 1)
+    expect(p.shiftLowSeconds / p.shiftSeconds).toBeCloseTo(1.8 / 2.4, 9)
+    expect(p.shiftHighSeconds / p.shiftSeconds).toBeCloseTo(3.1 / 2.4, 9)
+    expect(p.shiftLowPosition).toBeLessThan(p.shiftPosition)
+    expect(p.shiftPosition).toBeLessThan(p.shiftHighPosition)
+  })
+  it('compares the shift with an example pulse every millisecond: about 83,000 times smaller', () => {
+    const p = pictureTwo()
+    expect(PULSE_PERIOD_EXAMPLE_SECONDS).toBe(1e-3)
+    expect(p.pulsePeriodSeconds).toBe(1e-3)
+    expect(p.pulsePeriodOverShift).toBeCloseTo(1e-3 / exampleTimingShiftSeconds(), 3)
+    expect(p.pulsePeriodOverShift / 82963).toBeCloseTo(1, 2)
+    expect(p.pulsePeriodPosition).toBeGreaterThan(p.shiftPosition)
+  })
+  it('places the shift near 0.67 on a ruler that runs from 0.01 nanoseconds to 10 milliseconds, with every tick on it', () => {
+    const p = pictureTwo()
+    expect(p.shiftPosition).toBeCloseTo((Math.log10(exampleTimingShiftSeconds()) + 11) / 9, 9)
+    expect(p.pulsePeriodPosition).toBeCloseTo((-3 + 11) / 9, 9)
+    const t = [...PICTURE_TWO_TICKS_SECONDS]
+    expect(t.sort((a, b) => a - b)).toEqual([...PICTURE_TWO_TICKS_SECONDS])
+    expect(shiftRulerPosition(PICTURE_TWO_TICKS_SECONDS[0])).toBe(0)
+    expect(shiftRulerPosition(PICTURE_TWO_TICKS_SECONDS[PICTURE_TWO_TICKS_SECONDS.length - 1])).toBe(1)
   })
 })

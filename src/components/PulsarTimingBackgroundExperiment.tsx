@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne } from '../physics/pulsarTimingBackground'
+import { CYCLE_CHOICES, SHIFT_CHOICES_NANOSECONDS, PICTURE_ONE_TICKS_SECONDS, cycleGuessMarker, cycleRulerPosition, pictureOne, pictureTwo, shiftGuessMarker, shiftRulerPosition, PICTURE_TWO_TICKS_SECONDS } from '../physics/pulsarTimingBackground'
 import type { CycleChoiceId, ShiftChoice } from '../physics/pulsarTimingBackground'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Frontier and Beyond, Experiment 22 (docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md).
-// STEPS 2, 3 and 4 (the interface skeleton and the introduction, the two predictions, then the run and Picture 1): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
-// "Want to know more?" links. It also has the two predictions (Part 1), the run (five stages so far) and Picture 1 with Prediction 1's guess. It has no Picture 2, controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
+// STEPS 2 to 5 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
+// "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It has no controls, results, tutor or chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
 // owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long one wave cycle of a pair of supermassive black holes lasts, how big the shift in a
 // pulse's arrival time is, or what "nanohertz" means (CLAUDE.md §12): those are the predictions' answers and the run's results. The links that give them away (NANOGrav's own pages, which say
 // "years to decades", the IPTA's page and the papers) are listed only after the run, in a later step.
@@ -48,6 +48,9 @@ const BLACK_HOLE_COLOR = '#a78bfa' // violet: a black hole
 const CALC_COLOR = '#22d3ee' // cyan: calculated here
 const MEASURED_COLOR = '#fb923c' // orange: measured (LIGO's waves)
 const YOURS_COLOR = '#ffffff' // white: the learner's guess
+const PULSAR_COLOR = '#fbbf24' // amber: the pulsar
+const EARTH_COLOR = '#60a5fa' // blue: the Earth
+const IMAGINED_COLOR = '#f472b6' // pink: imagined for the question (the example pulse spacing)
 
 const svgStyle = {
   display: 'block',
@@ -75,8 +78,8 @@ function SvgLines({ x, y, lines, fill, size = 10, bold = false, anchor = 'start'
 
 // ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
 const STAGE_MS = 2600
-const LAST_STAGE = 5
-const STAGE_NAMES = ['', 'The pair of black holes', 'Its orbit and its wave', 'One wave cycle, on a ruler', 'LIGO’s waves', 'What 15 years of timing can pick out']
+const LAST_STAGE = 6
+const STAGE_NAMES = ['', 'The pair of black holes', 'Its orbit and its wave', 'One wave cycle, on a ruler', 'LIGO’s waves', 'What 15 years of timing can pick out', 'The pulse and its shift']
 const STAGE_LINES = [
   '',
   'Two supermassive black holes of a billion Suns each, circling each other. The drawing is a sketch, not to scale.',
@@ -84,6 +87,7 @@ const STAGE_LINES = [
   'Panel B is a ruler for the length of one wave cycle. The cyan dot is this pair’s cycle, calculated here. Your guess for Prediction 1 is the white marker.',
   'The orange bar is the cycle length of the waves that LIGO detected in its first event.',
   'The cyan band is the range of cycle lengths that 15 years of pulsar timing can pick out.',
+  'Picture 2 shows how a passing wave changes when a pulse arrives. The cyan dot is the shift, calculated here. Your guess for Prediction 2 is the white marker.',
 ]
 
 function n1(x: number): string {
@@ -225,6 +229,103 @@ function PictureOne({ stage, cycleGuess }: { stage: number; cycleGuess: CycleCho
   )
 }
 
+const SHIFT_TICK_LABELS: Record<number, string> = { 1e-11: '0.01 ns', 1e-10: '0.1 ns', 1e-9: '1 ns', 1e-8: '10 ns', 1e-7: '100 ns', 1e-6: '1 µs', 1e-5: '10 µs', 1e-4: '100 µs', 1e-3: '1 ms', 1e-2: '10 ms' }
+
+// Picture 2. Panel A: a pulsar, the Earth and the path between them, with a wave stretching the path (hugely exaggerated). Panel B: a log ruler of the shift in arrival time, with Prediction 2's guess.
+function PictureTwo({ shiftGuess }: { shiftGuess: ShiftChoice | null }) {
+  const pic = pictureTwo()
+  const px = 70
+  const ex = 490
+  const rulerY = 396
+  const x0 = 40
+  const x1 = 520
+  const rx = (pos: number) => x0 + pos * (x1 - x0)
+  const guess = shiftGuess !== null ? shiftGuessMarker(shiftGuess) : null
+  const boxW = 330
+  const boxX = guess ? Math.min(540 - boxW, Math.max(20, rx(guess.position) - boxW / 2)) : 0
+  // Tick marks along the path: even without a wave, uneven (stretched and squeezed, hugely exaggerated) with one.
+  const N = 16
+  const evenX = (i: number) => px + 22 + ((ex - 22 - (px + 22)) * i) / N
+  const waveX = (i: number) => {
+    const t = i / N
+    return px + 22 + (ex - 22 - (px + 22)) * (t + (0.3 * Math.sin(2 * Math.PI * t)) / (2 * Math.PI) * 1.6)
+  }
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={492}
+      viewBox="0 0 560 492"
+      style={svgStyle}
+      role="img"
+      aria-label={`Picture 2. Panel A: a sketch, not to scale, of a pulsar on the left and the Earth on the right, with the path of a pulse between them, once with no wave and once with a gravitational wave passing, which stretches and squeezes the path (hugely exaggerated). Panel B: a ruler of the shift in a pulse's arrival time, from 0.01 nanoseconds to 10 milliseconds, going up in steps of ten. A cyan dot marks the calculated shift, ${n1(pic.shiftNanoseconds)} nanoseconds, with a pale band from ${n1(pic.shiftLowSeconds * 1e9)} to ${n1(pic.shiftHighSeconds * 1e9)} nanoseconds. A pink line marks an example pulse every millisecond.${
+        guess && shiftGuess !== null ? ` Your guess for Prediction 2, about ${shiftGuess} nanoseconds, is a white marker.` : ''
+      }`}
+    >
+      <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        Picture 2: how a passing wave shifts a pulse
+      </text>
+      <SvgLines x={20} y={38} lines={['A. A sketch, not to scale. The stretch is hugely exaggerated.']} fill={MUTED_COLOR} />
+
+      <circle cx={px} cy={110} r={13} fill={PULSAR_COLOR} />
+      <line x1={px - 22} y1={110} x2={px - 14} y2={110} stroke={PULSAR_COLOR} strokeWidth={2} />
+      <line x1={px + 14} y1={110} x2={px + 22} y2={110} stroke={PULSAR_COLOR} strokeWidth={2} />
+      <SvgLines x={px} y={84} lines={['pulsar']} fill={PULSAR_COLOR} bold size={10} anchor="middle" />
+      <circle cx={ex} cy={110} r={14} fill={EARTH_COLOR} />
+      <SvgLines x={ex} y={84} lines={['Earth']} fill={EARTH_COLOR} bold size={10} anchor="middle" />
+
+      <line x1={px + 22} y1={110} x2={ex - 22} y2={110} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {Array.from({ length: N + 1 }, (_, i) => (
+        <line key={`a${i}`} x1={evenX(i)} y1={104} x2={evenX(i)} y2={116} stroke={MUTED_COLOR} strokeWidth={1} />
+      ))}
+      <SvgLines x={(px + ex) / 2} y={96} lines={['grey: the pulse’s path with no wave passing']} fill={MUTED_COLOR} size={9} bold anchor="middle" />
+
+      <line x1={px + 22} y1={170} x2={ex - 22} y2={170} stroke={CALC_COLOR} strokeWidth={1.5} />
+      {Array.from({ length: N + 1 }, (_, i) => (
+        <line key={`b${i}`} x1={waveX(i)} y1={164} x2={waveX(i)} y2={176} stroke={CALC_COLOR} strokeWidth={1} />
+      ))}
+      <SvgLines x={(px + ex) / 2} y={196} lines={['cyan: the same path with a wave passing, stretched in some places and squeezed in others (hugely exaggerated)']} fill={CALC_COLOR} size={9} bold anchor="middle" />
+      <SvgLines x={(px + ex) / 2} y={211} lines={['so the pulse takes a little longer or a little less time to arrive']} fill={CALC_COLOR} size={9} anchor="middle" />
+
+      <line x1={20} y1={232} x2={540} y2={232} stroke={MUTED_COLOR} strokeWidth={1} strokeDasharray="3 4" />
+      <SvgLines x={20} y={254} lines={['B. How much earlier or later a pulse arrives']} fill={TEXT_COLOR} bold size={11} />
+      <SvgLines x={20} y={270} lines={['A ruler of times, not of equal steps: each step to the right multiplies the shift by ten.']} fill={MUTED_COLOR} size={9} />
+      <SvgLines
+        x={20}
+        y={290}
+        lines={[`cyan dot and pale band: the calculated shift, ${n1(pic.shiftNanoseconds)} ns (range ${n1(pic.shiftLowSeconds * 1e9)} to ${n1(pic.shiftHighSeconds * 1e9)} ns),`, `for a wave of strength ${(pic.strain * 1e15).toFixed(1)} parts in a million billion`]}
+        fill={CALC_COLOR}
+        bold
+        size={10}
+      />
+      <SvgLines x={20} y={322} lines={['pink line: one pulse every millisecond (an example, imagined for the question)']} fill={IMAGINED_COLOR} bold size={10} />
+
+      <line x1={x0} y1={rulerY} x2={x1} y2={rulerY} stroke={MUTED_COLOR} strokeWidth={1} />
+      {guess && shiftGuess !== null && (
+        <g>
+          <line x1={rx(guess.position)} y1={rulerY} x2={rx(guess.position)} y2={rulerY + 56} stroke={YOURS_COLOR} strokeWidth={4} />
+          <polygon points={`${rx(guess.position)},${rulerY} ${rx(guess.position) - 7},${rulerY + 12} ${rx(guess.position) + 7},${rulerY + 12}`} fill={YOURS_COLOR} />
+          <rect x={boxX} y={rulerY + 56} width={boxW} height={28} rx={4} fill="#0b1020" stroke={YOURS_COLOR} strokeWidth={2.5} />
+          <SvgLines x={boxX + boxW / 2} y={rulerY + 74} lines={[`YOUR GUESS: about ${shiftGuess.toLocaleString('en-US')} ${shiftGuess === 1 ? 'nanosecond' : 'nanoseconds'}`]} fill={YOURS_COLOR} bold size={10} anchor="middle" />
+        </g>
+      )}
+      {PICTURE_TWO_TICKS_SECONDS.map((t) => (
+        <g key={t}>
+          <line x1={rx(shiftRulerPosition(t))} y1={rulerY} x2={rx(shiftRulerPosition(t))} y2={rulerY + 5} stroke={MUTED_COLOR} />
+          <text x={rx(shiftRulerPosition(t))} y={rulerY + 17} fill={MUTED_COLOR} fontSize={9} textAnchor="middle" stroke="#0b1020" strokeWidth={3} paintOrder="stroke">
+            {SHIFT_TICK_LABELS[t]}
+          </text>
+        </g>
+      ))}
+      <rect x={rx(pic.shiftLowPosition)} y={rulerY - 16} width={rx(pic.shiftHighPosition) - rx(pic.shiftLowPosition)} height={16} fill={CALC_COLOR} fillOpacity={0.35} />
+      <line x1={rx(pic.pulsePeriodPosition)} y1={rulerY - 40} x2={rx(pic.pulsePeriodPosition)} y2={rulerY} stroke={IMAGINED_COLOR} strokeWidth={2.5} />
+      <SvgLines x={rx(pic.pulsePeriodPosition)} y={rulerY - 46} lines={['one pulse']} fill={IMAGINED_COLOR} bold size={10} anchor="middle" />
+      <line x1={rx(pic.shiftPosition)} y1={rulerY - 40} x2={rx(pic.shiftPosition)} y2={rulerY} stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="5 3" />
+      <circle cx={rx(pic.shiftPosition)} cy={rulerY} r={6} fill={CALC_COLOR} stroke="#0b1020" strokeWidth={1.5} />
+      <SvgLines x={rx(pic.shiftPosition)} y={rulerY - 46} lines={['the shift']} fill={CALC_COLOR} bold size={10} anchor="middle" />
+    </svg>
+  )
+}
+
 const captionParagraph = { marginTop: 0, marginBottom: '0.75rem' } as const
 
 function CaptionBlock({ title, intro, bullets, worked, lookFor, whereFrom }: { title: string; intro: ReactNode; bullets: ReactNode[]; worked: ReactNode | null; lookFor: LookFor[]; whereFrom: ReactNode }) {
@@ -305,6 +406,7 @@ export function PulsarTimingBackgroundExperiment() {
   }
   const pic = pictureOne()
   const b = pic.pair
+  const pic2 = pictureTwo()
   return (
     <div>
       <h2>Experiment 22 — Does the Universe Hum? (Pulsar Timing Arrays)</h2>
@@ -530,7 +632,7 @@ export function PulsarTimingBackgroundExperiment() {
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Picture 1 is drawn. Your predictions are recorded and not marked here. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -614,6 +716,60 @@ export function PulsarTimingBackgroundExperiment() {
                     <strong>Measured:</strong> LIGO’s range, 35 to 250 hertz, is from the abstract of the discovery paper of its first event (Physical Review Letters, 2016), which was read as an abstract only. <strong>Calculated here:</strong> the orbit and the
                     wave’s cycle, from Kepler’s law, and the band that {pic.span.years} years can pick out, from a rough rule (the longest cycle is about the length of the data; the {pic.span.years}-year length is the NANOGrav data set’s). <strong>Imagined for the question:</strong>{' '}
                     the pair itself: two black holes of a billion Suns each, {b.separationPc} parsecs apart, chosen for the question, not a pair known to exist. Your guess is drawn in white and never changes the real picture.
+                  </>
+                }
+              />
+            </div>
+          )}
+
+          {stage >= 6 && (
+            <div>
+              <PictureTwo shiftGuess={shiftGuess} />
+              <CaptionBlock
+                title="Picture 2"
+                intro="Panel A is a sketch of a pulsar, the Earth and the path of a pulse between them, with and without a gravitational wave. Panel B is a ruler for how much earlier or later a pulse arrives, on a different scale from panel A."
+                bullets={[
+                  <><strong>The amber circle</strong> on the left is a pulsar, and <strong>the blue circle</strong> on the right is the Earth. Each time the pulsar’s beam sweeps past the Earth, a pulse of radio waves travels along the path between them.</>,
+                  <><strong>The grey line</strong> is that path with no wave passing, with evenly spaced marks along it. <strong>The cyan line</strong> is the same path while a gravitational wave passes: the marks bunch together in some places and spread apart in others, because the wave stretches space in some places and squeezes it in others. This is hugely exaggerated. The real change is about {(pic2.strain * 1e15).toFixed(1)} parts in a million billion.</>,
+                  <><strong>Panel B</strong> is a ruler of times from 0.01 nanoseconds (ns) to 10 milliseconds (ms). A nanosecond is a billionth of a second, and a millisecond is a thousandth. It goes up in steps of ten, so each step to the right multiplies the time by ten.</>,
+                  <><strong>The cyan dot, and the pale cyan band round it,</strong> are the calculated shift in a pulse’s arrival time. The band runs from the shift for the lowest published wave strength ({(pic2.strainLow * 1e15).toFixed(1)}) to the one for the highest ({(pic2.strainHigh * 1e15).toFixed(1)}), because the strength has a give-or-take (2.4 + 0.7 − 0.6).</>,
+                  <><strong>The pink line</strong> marks an example pulse every millisecond. It is imagined for the question: a fast pulsar’s pulses are a few milliseconds apart, and the line is only there to show how big the shift is next to the gap between pulses.</>,
+                  <><strong>The white marker, with the box “YOUR GUESS”,</strong> is your guess for Prediction 2. It sits at the shift you guessed.</>,
+                ]}
+                worked={
+                  <>
+                    The strength reported for the wave is {(pic2.strain * 1e15).toFixed(1)} × 10⁻¹⁵ at a frequency of 1 per year, which is {(pic2.referenceFrequencyHz * 1e8).toFixed(1)} × 10⁻⁸ hertz. A rough estimate of the shift is the strength divided by (2π times the frequency):{' '}
+                    {(pic2.strain * 1e15).toFixed(1)} × 10⁻¹⁵ ÷ (6.28 × {(pic2.referenceFrequencyHz * 1e8).toFixed(1)} × 10⁻⁸) = {n1(pic2.shiftNanoseconds)} × 10⁻⁹ seconds, which is {n1(pic2.shiftNanoseconds)} nanoseconds. This is a rough standard estimate, not a result
+                    from a paper.
+                  </>
+                }
+                lookFor={[
+                  {
+                    look: 'the grey path and the cyan path.',
+                    means: `the wave stretches and squeezes the path a little, so a pulse takes slightly longer or shorter to arrive. The real change in the path is about ${(pic2.strain * 1e15).toFixed(1)} parts in a million billion, far smaller than drawn.`,
+                    matters: 'that tiny change in travel time is the only sign of the wave that the Earth can measure.',
+                  },
+                  {
+                    look: 'the cyan dot and its pale band on the ruler.',
+                    means: `the calculated shift is about ${n1(pic2.shiftNanoseconds)} billionths of a second, with a range of ${n1(pic2.shiftLowSeconds * 1e9)} to ${n1(pic2.shiftHighSeconds * 1e9)}.`,
+                    matters: 'this is the size of change that the timing has to notice, and the give-or-take on the wave’s strength gives it a range, not one exact value.',
+                  },
+                  {
+                    look: 'the cyan dot, beside the pink line.',
+                    means: `a pulse every millisecond is about ${commas(pic2.pulsePeriodOverShift)} times longer than the shift.`,
+                    matters: 'the shift is a tiny fraction of the gap between pulses, which is why very steady clocks and years of timing are needed.',
+                  },
+                  {
+                    look: 'the white marker.',
+                    means: 'your guessed shift, beside the real one.',
+                    matters: 'it shows at a glance how your guess compares with the real result. The tutor says what that means.',
+                  },
+                ]}
+                whereFrom={
+                  <>
+                    <strong>Measured:</strong> the wave’s strength, 2.4 (+0.7, −0.6) × 10⁻¹⁵ at 1 per year, by the NANOGrav team, from the abstract of its 15-year paper, which was read as an abstract only. <strong>Calculated here:</strong> the shift and its range, from a
+                    rough standard estimate that has no source read, and the strength’s give-or-take taken as simple low and high ends. <strong>Imagined for the question:</strong> the sketch of the pulsar and the Earth, the exaggerated stretch and the pulse every millisecond. Your guess
+                    is drawn in white and never changes the real picture.
                   </>
                 }
               />
