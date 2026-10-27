@@ -322,7 +322,7 @@ const PICTURE_TWO_FIRST_AIM = 6.5
 
 // A number for a label: three significant figures, with commas.
 function fmt(x: number): string {
-  return Number(x.toPrecision(3)).toLocaleString('en-US')
+  return Number(x.toPrecision(3)).toLocaleString('en-US', { maximumFractionDigits: 6 })
 }
 
 const MASS_TRIAL_LABELS: Record<number, string> = {
