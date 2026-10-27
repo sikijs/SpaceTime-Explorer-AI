@@ -1188,6 +1188,30 @@ export function BlackHoleShadowExperiment({ onComplete, onTutorComplete }: Black
                 </li>
               </ul>
             </div>
+
+            <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>The papers and releases behind these numbers.</strong> They are listed here, after the run, because they show both results. Links open in a new tab.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/1906.11238">First M87 Event Horizon Telescope Results. I. The Shadow of the Supermassive Black Hole</ExternalLink> (2019, The Astrophysical Journal Letters): the first
+                  paper on M87*, with its ring of 42 ± 3 µas and its mass of 6.5 ± 0.7 billion Suns. Only its abstract was read for this page.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2311.08680">First Sagittarius A* Event Horizon Telescope Results. I. The Shadow of the Supermassive Black Hole in the Center of the Milky Way</ExternalLink>{' '}
+                  (2022, The Astrophysical Journal Letters): the first paper on Sagittarius A*, with its ring of 51.8 ± 2.3 µas and its mass of about 4 million Suns. Only its abstract was read for this page.
+                </li>
+                <li>
+                  <ExternalLink href="https://arxiv.org/abs/2509.24593">Horizon-scale variability of M87* from 2017–2021 EHT observations</ExternalLink> (accepted by Astronomy &amp; Astrophysics): the 43.9 ± 0.6 µas
+                  ring of the later analysis, and how the brightness pattern round it changes from year to year. Only its abstract was read for this page.
+                </li>
+                <li>
+                  <ExternalLink href="https://www.eso.org/public/news/eso2208/">ESO: Astronomers reveal first image of the black hole at the heart of our galaxy</ExternalLink>: a plain account of the
+                  Sagittarius A* image, which is where the doughnut-on-the-Moon comparison in the introduction comes from.
+                </li>
+              </ul>
+            </div>
           </div>
         )}
 

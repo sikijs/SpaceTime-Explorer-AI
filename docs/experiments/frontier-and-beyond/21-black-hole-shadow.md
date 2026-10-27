@@ -119,6 +119,33 @@ Experiment 22 (pulsar timing arrays) and Experiment 23 (how black holes grow) us
 | search summary of EHT papers | 16.8 (+0.8, −0.7) Mpc, 8.15 ± 0.15 kpc, 51.8 ± 2.3 µas, 4.0 (+1.1, −0.6) × 10⁶ | summary only |
 | A&A 2025 variability paper (arXiv:2509.24593) | abstract: 43.9 ± 0.6 µas persistent; brightness and polarization change | abstract only |
 | A&A 2025 "persistent shadow II" | HTTP 403, not read | not read |
+| Checks of 2026-10-27 (final review): EHT M87\* paper I (arxiv.org/abs/1906.11238) | page loads; ApJ 875, L1, 2019; ring 42 ± 3 µas, mass (6.5 ± 0.7) × 10⁹ | abstract only |
+| EHT Sgr A\* paper I (arxiv.org/abs/2311.08680; the earlier row's 2311.09479 was a wrong identifier) | page loads; ApJL 930, L12, 2022; ring 51.8 ± 2.3 µas, mass about 4 × 10⁶ | abstract only |
+| A&A variability paper (arxiv.org/abs/2509.24593) | page loads; "Horizon-scale variability of M87\* from 2017–2021 EHT observations"; accepted in A&A; persistent diameter 43.9 ± 0.6 µas; brightness pattern changes year to year | abstract only |
+| ESO release eso2208 | page loads; says Sgr A\* looks about the size of a doughnut on the Moon, which is the source of the introduction's comparison | read |
+| NASA "Black Hole Image Makes History" and "Black Holes: Seeing the Invisible" | both load | read in summary |
+| eventhorizontelescope.org | HTTP 403, not read; not linked | not read |
+| 2026 search for newer EHT results (decision 9) | two searches found 2026 EHT work on the OJ 287 and 3C 279 jets and observing plans for March and April 2026, and no new shadow-size or ring-size result for M87\* or Sgr A\* | search summaries only; not exhaustive |
+
+## Implementation Notes (final review, 2026-10-27)
+
+The experiment is built as four parts: the introduction and Part 1 (two predictions, an eight-stage run, Pictures 1 and 2), Part 2 (Now try it yourself, Drawing A), Part 3 (the results) and Part 4 (the tutor), with a chapter summary. Differences from the specification above, for the owner's approval:
+
+1. **Run length.** Eight stages, not five: five for Picture 1 (black holes, horizons, shadows, rings, comparison) and three more for Picture 2 (one black hole, beams of light, the shadow's edge).
+2. **Picture 1 has two panels.** Panel A draws both black holes on one angular scale; panel B is a log ruler of the ratio (0.1 to 10) that carries Prediction 1's white marker. The specification said only "the size scale of Picture 1".
+3. **Colours.** Violet is the edge, cyan dashed the calculated shadow, orange the measured ring, white the learner's guess, pink the imagined trial black hole of Part 2.
+4. **Controls.** Four buttons each (4 million, 100 million, 1 billion, 6.5 billion Suns; 8.15 kpc, 100 kpc, 1 Mpc, 16.8 Mpc), two of each being the real black holes' own values. The specification said "for example" only.
+5. **Drawing A is a log ruler of angles (0.01 to 100,000 µas), not a picture of a shadow in the sky,** because the trial shadows span about 0.02 to 82,000 µas. It shows the trial shadow (pink), the trial edge (violet) and the two real shadows (cyan).
+6. **Results.** Table 1 (check-up) has three ring comparisons (Sgr A*, M87* 2019, M87* 2017 to 2021) and a size-ratio row; Table 2 is mass and distance to angle; Table 3 carries the mass and distance give-or-takes through to the shadow (simple low-to-high ends, not a statistical combination). The specification said only "a check-up and two more tables". The predictions are shown beside the results with tags on the rows.
+7. **Finding.** The calculated 39.7 µas is 7.0 give-or-takes below M87*'s later ring (43.9 ± 0.6) but inside the calculated shadow's own range (33.8 to 45.9). The page reports this and gives no reason for the gap; the tutor does not either.
+8. **Prediction marks.** The tutor marks each prediction "matched" or "did not match" in its explanation only.
+9. **Tutor conceptual question.** Two trees (10 m at 100 m and 20 m at 400 m), then the two black holes. The specification gave no question.
+10. **Sgr A\*'s calculated shadow is 50.3 µas** (the module gives 50.35), not the hand estimate 50.4.
+11. **Sources.** The "doughnut on the Moon" comparison is now sourced (ESO release eso2208). The Sgr A* paper's arXiv identifier is 2311.08680 (the earlier row's 2311.09479 was wrong). The paper links (wording approved by the owner on 2026-10-27, "wording approved") are listed after the run (§12), and the "Want to know more?" list before the run holds only the two NASA pages. No paper was read in full.
+12. **2026 search (decision 9)** found no new shadow-size result; see "Sources read".
+13. **Complete-flow test** covered 30 prediction pairs (5 by 6) and 16 control settings.
+
+Open (carried): no paper read in full; the ring-to-shadow calibration is unread; the 1.3 mm wavelength, the 12,700 km baseline and the "20 µas" rough calculation have no source read; the formula's effect of spin is named and not modelled; not checked at narrow widths, in other browsers, by keyboard or with a real learner; Experiment 22 has no specification.
 
 ## Open items
 a. No paper was read in full; the ring-to-shadow calibration is unread.
