@@ -194,6 +194,7 @@ describe('Drawing A: trial values (test 9)', () => {
 
   it('a seed of 100,000 Suns at 10 percent fits', () => {
     const t = trialPicture(1e5, 0.1)
+    expect(t.targetSolar).toBe(objectMassSolar())
     expect(t.fits).toBe(true)
     expect(t.yearsNeeded / GYR).toBeCloseTo(0.3, 1)
   })
@@ -219,7 +220,7 @@ describe('Drawing A: trial values (test 9)', () => {
   })
 })
 
-import { pictureOne, pictureTwo, STAIRCASE_STEPS, TIME_TICKS_YEARS, MASS_TICKS_SOLAR } from './blackHoleGrowth'
+import { pictureOne, pictureTwo, STAIRCASE_STEPS, TIME_TICKS_YEARS, MASS_TICKS_SOLAR, TRIAL_DEFAULT_SEED_SOLAR, TRIAL_DEFAULT_EFFICIENCY } from './blackHoleGrowth'
 
 describe('Picture 1 and Picture 2 (Step 4)', () => {
   it('Picture 1 reproduces Prediction 1 and the clock of the universe', () => {
@@ -285,5 +286,44 @@ describe('Picture 1 and Picture 2 (Step 4)', () => {
     TIME_CHOICES.forEach((c) => timeGuessMarker(c.id))
     SEED_CHOICES.forEach((c) => seedGuessMarker(c.id))
     expect(JSON.stringify([pictureOne(), pictureTwo()])).toBe(before)
+  })
+})
+
+describe('Drawing A: the age at which the trial seed reaches the object\'s mass (Step 5)', () => {
+  it('the default trial is Picture 1\'s black hole, so its dot sits on the fixed mark', () => {
+    const t = trialPicture(TRIAL_DEFAULT_SEED_SOLAR, TRIAL_DEFAULT_EFFICIENCY)
+    expect(t.reachesAtAgeYears).toBeCloseTo(t.pictureOneReachesAtAgeYears, 0)
+    expect(t.reachesAtAgePosition).toBeCloseTo(t.pictureOneReachesAtAgePosition, 12)
+  })
+
+  it('reaches the mass at the start age plus the time needed, and is late or early against the age of the object', () => {
+    const t = trialPicture(10, 0.1)
+    expect(t.reachesAtAgeYears).toBeCloseTo(SEED_START_AGE_YEARS + t.yearsNeeded, 0)
+    expect(t.lateByYears).toBeCloseTo(t.reachesAtAgeYears - objectAgeYears(), 0)
+    expect(t.lateByYears).toBeGreaterThan(0)
+    const early = trialPicture(1e6, 0.1)
+    expect(early.lateByYears).toBeLessThan(0)
+  })
+
+  it('fits exactly when it reaches the mass no later than the age of the object', () => {
+    for (const seed of TRIAL_SEED_CHOICES_SOLAR) {
+      for (const e of efficiencyChoices()) {
+        const t = trialPicture(seed, e)
+        expect(t.fits).toBe(t.lateByYears <= 0)
+        expect(t.fits).toBe(t.reachesAtAgeYears <= t.objectAgeYears)
+      }
+    }
+  })
+
+  it('every trial setting is on the ruler, and a heavier seed or lower efficiency reaches the mass earlier', () => {
+    for (const seed of TRIAL_SEED_CHOICES_SOLAR) {
+      for (const e of efficiencyChoices()) {
+        const t = trialPicture(seed, e)
+        expect(t.reachesAtAgePosition).toBeGreaterThan(0)
+        expect(t.reachesAtAgePosition).toBeLessThanOrEqual(1)
+      }
+    }
+    expect(trialPicture(1e5, 0.1).reachesAtAgeYears).toBeLessThan(trialPicture(1e3, 0.1).reachesAtAgeYears)
+    expect(trialPicture(1e3, nonSpinningEfficiency()).reachesAtAgeYears).toBeLessThan(trialPicture(1e3, 0.4).reachesAtAgeYears)
   })
 })

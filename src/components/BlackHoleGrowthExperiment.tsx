@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CAPERS_LRD_Z9,
+  efficiencyChoices,
   objectAgeYears,
   PREDICTION_SEED_SOLAR,
   SEED_CHOICES,
@@ -9,10 +10,14 @@ import {
   STANDARD_EFFICIENCY,
   TIME_CHOICES,
   timeAvailableYears,
+  TRIAL_DEFAULT_EFFICIENCY,
+  TRIAL_DEFAULT_SEED_SOLAR,
+  TRIAL_SEED_CHOICES_SOLAR,
+  trialPicture,
 } from '../physics/blackHoleGrowth'
 import type { SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { PictureOne, PictureTwo, pictureOneCaption, pictureTwoCaption } from './BlackHoleGrowthPictures'
+import { PictureOne, PictureTwo, TRIAL_SEED_LABELS, TrialDrawing, efficiencyPercent, pictureOneCaption, pictureTwoCaption, trialCaption } from './BlackHoleGrowthPictures'
 
 // Frontier and Beyond, Experiment 23 (docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md).
 // STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
@@ -73,6 +78,8 @@ interface BlackHoleGrowthExperimentProps {
 export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperimentProps) {
   const [timeGuess, setTimeGuess] = useState<TimeChoiceId | null>(null)
   const [seedGuess, setSeedGuess] = useState<SeedChoiceId | null>(null)
+  const [trialSeed, setTrialSeed] = useState<number>(TRIAL_DEFAULT_SEED_SOLAR)
+  const [trialEfficiency, setTrialEfficiency] = useState<number>(TRIAL_DEFAULT_EFFICIENCY)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -93,6 +100,8 @@ export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperim
   const startOver = () => {
     setTimeGuess(null)
     setSeedGuess(null)
+    setTrialSeed(TRIAL_DEFAULT_SEED_SOLAR)
+    setTrialEfficiency(TRIAL_DEFAULT_EFFICIENCY)
     setStatus('idle')
     setStage(0)
   }
@@ -100,6 +109,8 @@ export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperim
     setStage(1)
     setStatus('running')
   }
+  const trial = trialPicture(trialSeed, trialEfficiency)
+  const efficiencyLabels = ['(a black hole that is not spinning)', '(the value used above)', '(near the most that a spinning black hole can give)']
   const targetMillion = Math.round(10 ** CAPERS_LRD_Z9.logMass / 1e6)
   return (
     <div>
@@ -310,7 +321,7 @@ export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperim
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below is Part 2, where you can try other seeds and efficiencies. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -325,6 +336,59 @@ export function BlackHoleGrowthExperiment({ onComplete }: BlackHoleGrowthExperim
             <div>
               <PictureTwo seedGuess={seedGuess} />
               {pictureTwoCaption()}
+            </div>
+          )}
+
+          {done && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> Above, you saw one black hole: a seed of 10 Suns feeding at the limit with an efficiency of 10 percent. Here you can try other seeds and other efficiencies. Pick how heavy the seed is
+                and how efficiently its gas gives out light, and one drawing will show when your black hole would reach the mass of the black hole of CAPERS-LRD-z9, and whether that is before the age at which we see it. The real
+                pictures above do not change, and your two guesses do not change this drawing: only the two settings below do.
+              </p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>These are your own trial values, not real seeds.</strong> Each button is a number to try. For example, if you choose a seed of {TRIAL_SEED_LABELS[trialSeed]?.replace(' (the seed of Prediction 1)', '')} and an efficiency of{' '}
+                {efficiencyPercent(trialEfficiency)} percent, the drawing works out how long such a black hole needs to grow, with the same formula as in Picture 1. Such a seed is imagined for the question, and it is drawn in pink. The
+                black hole is taken to feed at the limit, all the time, from the moment the universe is {millionYears(SEED_START_AGE_YEARS)} old.
+              </p>
+
+              {(
+                [
+                  {
+                    title: 'How heavy is the seed?',
+                    choices: TRIAL_SEED_CHOICES_SOLAR.map((v) => ({ value: v, label: TRIAL_SEED_LABELS[v] })),
+                    value: trialSeed,
+                    set: setTrialSeed,
+                  },
+                  {
+                    title: 'What is the efficiency?',
+                    choices: efficiencyChoices().map((v, i) => ({ value: v, label: `${efficiencyPercent(v)} percent ${efficiencyLabels[i]}` })),
+                    value: trialEfficiency,
+                    set: setTrialEfficiency,
+                  },
+                ] as const
+              ).map((control) => (
+                <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                  <div>
+                    {control.choices.map((choice) => (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        onClick={() => (control.set as (v: number) => void)(choice.value)}
+                        className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <TrialDrawing trial={trial} />
+              {trialCaption(trial)}
             </div>
           )}
         </div>

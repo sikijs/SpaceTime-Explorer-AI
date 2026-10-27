@@ -12,7 +12,7 @@ import {
   timeGuessMarker,
   timeRulerPosition,
 } from '../physics/blackHoleGrowth'
-import type { SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
+import type { SeedChoiceId, TimeChoiceId, TrialPicture } from '../physics/blackHoleGrowth'
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
@@ -474,6 +474,146 @@ export function pictureTwoCaption(): ReactNode {
         <>
           <strong>Estimated from a measurement:</strong> the mass of the black hole of CAPERS-LRD-z9 and its range (arXiv:2505.04609, read in its abstract through summaries), worked out from a line in JWST’s spectrum under one reading of that line. <strong>Calculated here:</strong> the smallest
           seed, from the growth time and the time available. <strong>Imagined for the question:</strong> that the seed starts to feed at {myr(p1.startAgeYears)}, that it feeds at the limit all the time, and the {e} percent efficiency. Your guess is drawn in white and never changes the real picture.
+        </>
+      }
+    />
+  )
+}
+
+// ---- Drawing A (Part 2): the trial seed ----
+
+export const TRIAL_SEED_LABELS: Record<number, string> = {
+  10: '10 Suns (the seed of Prediction 1)',
+  1e3: '1,000 Suns',
+  1e5: '100,000 Suns',
+  1e6: '1 million Suns',
+}
+
+// An efficiency (a fraction) as a number of percent, with one decimal only where it has one (5.7, 10, 40).
+export function efficiencyPercent(fraction: number): string {
+  const v = Math.round(fraction * 1000) / 10
+  return Number.isInteger(v) ? String(v) : v.toFixed(1)
+}
+
+export function TrialDrawing({ trial }: { trial: TrialPicture }) {
+  const rulerY = 170
+  const x0 = 40
+  const x1 = 520
+  const rx = (pos: number) => x0 + pos * (x1 - x0)
+  const dotX = rx(trial.reachesAtAgePosition)
+  const boxW = 330
+  const boxX = Math.min(540 - boxW, Math.max(20, dotX - boxW / 2))
+  const pct = efficiencyPercent(trial.efficiency)
+  const verdict = trial.fits
+    ? [`It reaches the mass in time: ${myr(-trial.lateByYears)} before the universe is as old`, 'as when the light of CAPERS-LRD-z9 left it.']
+    : [`It reaches the mass too late: ${myr(trial.lateByYears)} after the universe is as old`, 'as when the light of CAPERS-LRD-z9 left it.']
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={460}
+      viewBox="0 0 560 460"
+      style={svgStyle}
+      role="img"
+      aria-label={`Drawing A. A ruler of the age of the universe, from 1 million years to 10 billion years, going up in steps of ten. A pink dot, in a box labelled YOUR TRIAL SEED, marks the age at which a seed of ${TRIAL_SEED_LABELS[trial.seedSolar] ?? solar(trial.seedSolar)} with an efficiency of ${pct} percent would reach ${commas(trial.targetSolar / 1e6)} million Suns: ${myr(trial.reachesAtAgeYears)}. A cyan line marks ${myr(trial.objectAgeYears)}, the age of the universe when the light of CAPERS-LRD-z9 left it. A pink line marks ${myr(trial.startAgeYears)}, when the seed starts to feed, and a pale cyan band between them is the time available. A cyan dashed line marks ${myr(trial.pictureOneReachesAtAgeYears)}, where the black hole of Picture 1 reaches that mass. ${trial.fits ? 'The trial seed reaches the mass before the age of CAPERS-LRD-z9.' : 'The trial seed reaches the mass after the age of CAPERS-LRD-z9.'}`}
+    >
+      <SvgLines x={20} y={22} lines={['Drawing A. When your trial seed would reach the mass of CAPERS-LRD-z9’s black hole']} fill={TEXT_COLOR} bold size={11} />
+      <SvgLines x={20} y={38} lines={['Trial values: imagined for the question, not a real seed. The ruler is the age of the universe.']} fill={IMAGINED_COLOR} size={9} />
+
+      <rect x={rx(trial.startAgePosition)} y={rulerY - 38} width={rx(trial.objectAgePosition) - rx(trial.startAgePosition)} height={76} fill={CALC_COLOR} opacity={0.16} />
+      <line x1={x0} y1={rulerY} x2={x1} y2={rulerY} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {TIME_TICKS_YEARS.map((t) => (
+        <g key={t}>
+          <line x1={rx(timeRulerPosition(t))} y1={rulerY - 4} x2={rx(timeRulerPosition(t))} y2={rulerY + 4} stroke={MUTED_COLOR} />
+          <SvgLines x={rx(timeRulerPosition(t))} y={rulerY + 17} lines={[TIME_TICK_LABELS[t]]} fill={MUTED_COLOR} size={9} anchor="middle" />
+        </g>
+      ))}
+      <SvgLines x={x1} y={rulerY + 52} lines={['age of the universe; Myr = million years, Gyr = billion years']} fill={MUTED_COLOR} size={9} anchor="end" />
+
+      <line x1={rx(trial.startAgePosition)} y1={rulerY - 38} x2={rx(trial.startAgePosition)} y2={rulerY + 38} stroke={IMAGINED_COLOR} strokeWidth={2} />
+      <line x1={rx(trial.objectAgePosition)} y1={rulerY - 38} x2={rx(trial.objectAgePosition)} y2={rulerY + 38} stroke={CALC_COLOR} strokeWidth={2.5} />
+      <line x1={rx(trial.pictureOneReachesAtAgePosition)} y1={rulerY - 34} x2={rx(trial.pictureOneReachesAtAgePosition)} y2={rulerY + 34} stroke={CALC_COLOR} strokeWidth={2} strokeDasharray="5 4" />
+
+      <line x1={dotX} y1={rulerY - 56} x2={dotX} y2={rulerY} stroke={IMAGINED_COLOR} strokeWidth={1.5} />
+      <circle cx={dotX} cy={rulerY} r={7} fill={IMAGINED_COLOR} stroke="#ffffff" strokeWidth={1} />
+      <rect x={boxX} y={rulerY - 92} width={boxW} height={36} rx={4} fill="#0b1020" stroke={IMAGINED_COLOR} strokeWidth={2} />
+      <SvgLines x={boxX + boxW / 2} y={rulerY - 76} lines={['YOUR TRIAL SEED', `reaches ${commas(trial.targetSolar / 1e6)} million Suns when the universe is ${myrShort(trial.reachesAtAgeYears)} old`]} fill={IMAGINED_COLOR} bold size={10} anchor="middle" />
+
+      <Legend
+        x={20}
+        y={rulerY + 78}
+        items={[
+          { lines: [`pale cyan band: the time available, ${myrShort(trial.yearsAvailable)}, calculated`], color: CALC_COLOR },
+          { lines: [`solid cyan line: the universe’s age when the light of CAPERS-LRD-z9 left it, ${myrShort(trial.objectAgeYears)}, calculated`], color: CALC_COLOR },
+          { lines: [`pink line: when the seed starts to feed, ${myrShort(trial.startAgeYears)}, imagined for the question`], color: IMAGINED_COLOR },
+          { lines: [`dashed cyan line: where Picture 1’s black hole (10 Suns, 10 percent) reaches that mass, ${myrShort(trial.pictureOneReachesAtAgeYears)}, calculated`], color: CALC_COLOR },
+        ]}
+        size={9}
+      />
+      <SvgLines
+        x={20}
+        y={rulerY + 172}
+        lines={[
+          `Trial seed: ${TRIAL_SEED_LABELS[trial.seedSolar] ?? solar(trial.seedSolar)}, efficiency ${pct} percent.`,
+          `One growth time is ${myr(trial.growthTimeYears)}. It needs ${n1(trial.growthTimes)} growth times (${n1(trial.doublings)} doublings),`,
+          `so ${myr(trial.yearsNeeded)}, against ${myr(trial.yearsAvailable)} available.`,
+          ...verdict,
+        ]}
+        fill={TEXT_COLOR}
+        size={10}
+      />
+    </svg>
+  )
+}
+
+export function trialCaption(trial: TrialPicture): ReactNode {
+  const pct = efficiencyPercent(trial.efficiency)
+  const seed = TRIAL_SEED_LABELS[trial.seedSolar] ?? solar(trial.seedSolar)
+  const isPictureOne = Math.abs(trial.reachesAtAgeYears - trial.pictureOneReachesAtAgeYears) < 1
+  return (
+    <CaptionBlock
+      title="Drawing A"
+      intro="It shows when the black hole of your trial seed would reach the mass of the black hole of CAPERS-LRD-z9, as an age of the universe. The ruler is the age of the universe, from 1 million years to 10 billion years. It goes up in steps of ten, so that short and long times fit on one line."
+      bullets={[
+        <>
+          <strong>The pink dot, in the box “YOUR TRIAL SEED”,</strong> is the age of the universe at which your trial seed, feeding at the limit all the time, would have grown to {commas(trial.targetSolar / 1e6)} million Suns. It is the start age plus the time it needs, and it is calculated here for a seed that is
+          imagined for the question.
+        </>,
+        <>
+          <strong>The solid cyan line</strong> is the age of the universe when the light of CAPERS-LRD-z9 left it, {myr(trial.objectAgeYears)}. A black hole that has reached that mass before this age is a black hole that could be the one we see. One that reaches it after this age could not have been.
+        </>,
+        <>
+          <strong>The pink line</strong> is the moment the seed starts to feed, {myr(trial.startAgeYears)}. It is imagined for the question, the same for every trial. <strong>The pale cyan band</strong> between the two lines is the time available, {myr(trial.yearsAvailable)}.
+        </>,
+        <>
+          <strong>The dashed cyan line</strong> is a fixed mark: the age at which the black hole of Picture 1 (10 Suns, at 10 percent) reaches that mass, {myr(trial.pictureOneReachesAtAgeYears)}. It stays where it is when you change a setting, so you can see how far the pink dot moves from it.
+        </>,
+        <>
+          <strong>The four lines of text underneath</strong> give your trial’s numbers: the growth time, the number of growth times and doublings, the time needed and the time available, and whether the mass is reached before or after the age of CAPERS-LRD-z9.
+        </>,
+      ]}
+      worked={
+        <>
+          You chose {seed} and an efficiency of {pct} percent. One growth time is {myr(trial.growthTimeYears)}. Growing from {solar(trial.seedSolar)} to {commas(trial.targetSolar / 1e6)} million Suns needs {n1(trial.growthTimes)} growth times, which is {n1(trial.doublings)} doublings. {n1(trial.growthTimes)} × {n1(trial.growthTimeYears / 1e6)} million
+          years = {myr(trial.yearsNeeded)}. Starting at {myr(trial.startAgeYears)}, it reaches the mass when the universe is {myr(trial.reachesAtAgeYears)} old, which is {trial.fits ? `${myr(-trial.lateByYears)} before` : `${myr(trial.lateByYears)} after`} the age of CAPERS-LRD-z9.
+          {isPictureOne ? ' These are the settings of Picture 1, so the pink dot sits on the dashed cyan line.' : ''}
+        </>
+      }
+      lookFor={[
+        {
+          look: 'the pink dot, against the solid cyan line.',
+          means: `your trial seed reaches ${commas(trial.targetSolar / 1e6)} million Suns when the universe is ${myr(trial.reachesAtAgeYears)} old, ${trial.fits ? 'to the left of' : 'to the right of'} the line at ${myr(trial.objectAgeYears)}.`,
+          matters: 'the line is the latest age by which a black hole must have reached that mass to be the one we see. Left of it there is enough time in this model; right of it there is not.',
+        },
+        {
+          look: 'the pink dot, beside the dashed cyan line.',
+          means: `your trial reaches the mass ${trial.reachesAtAgeYears === trial.pictureOneReachesAtAgeYears ? 'at the same age as' : trial.reachesAtAgeYears < trial.pictureOneReachesAtAgeYears ? 'earlier than' : 'later than'} Picture 1’s black hole (${myr(trial.pictureOneReachesAtAgeYears)}).`,
+          matters: 'a heavier seed saves growth times, and a lower efficiency makes each growth time shorter. Changing only one setting at a time shows what each does.',
+        },
+      ]}
+      whereFrom={
+        <>
+          <strong>Estimated from a measurement:</strong> the age of the universe when CAPERS-LRD-z9’s light left it comes from its measured redshift, 9.288. <strong>Calculated here:</strong> the growth time, the time needed and the age at which the mass is reached, from the Eddington growth formula, and the age of the
+          universe at the redshift (Experiment 5’s model). <strong>Imagined for the question:</strong> the trial seed and efficiency, in pink, which you chose, and the start at {myr(trial.startAgeYears)}. These are trial values and do not say that a real black hole is like that.
         </>
       }
     />

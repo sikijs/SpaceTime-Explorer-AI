@@ -215,6 +215,7 @@ export const TRIAL_SEED_CHOICES_SOLAR = [10, 1e3, 1e5, 1e6] as const
 export interface TrialPicture {
   seedSolar: number
   efficiency: number
+  targetSolar: number
   growthTimeYears: number
   growthTimes: number // e-foldings from the seed to the object's mass
   doublings: number // the same count, in doublings
@@ -225,6 +226,18 @@ export interface TrialPicture {
   needOverAvailable: number
   seedPosition: number
   objectPosition: number
+  // Drawing A's ruler is the age of the universe: the trial seed starts to feed at the start age and reaches the object's mass at the age below.
+  startAgeYears: number
+  reachesAtAgeYears: number
+  reachesAtAgePosition: number
+  startAgePosition: number
+  // The age of the universe at the object, the fixed mark of the drawing, and Picture 1's black hole (10 Suns at 10 percent) for comparison.
+  objectAgeYears: number
+  objectAgePosition: number
+  pictureOneReachesAtAgeYears: number
+  pictureOneReachesAtAgePosition: number
+  // How much later (positive) or earlier (negative) than the object's age the trial seed reaches the mass.
+  lateByYears: number
 }
 
 export function trialPicture(seedSolar: number, efficiency: number): TrialPicture {
@@ -235,6 +248,7 @@ export function trialPicture(seedSolar: number, efficiency: number): TrialPictur
   return {
     seedSolar,
     efficiency,
+    targetSolar: target,
     growthTimeYears: growthTimeYears(efficiency),
     growthTimes: times,
     doublings: times / Math.LN2,
@@ -244,8 +258,21 @@ export function trialPicture(seedSolar: number, efficiency: number): TrialPictur
     needOverAvailable: needed / available,
     seedPosition: massRulerPosition(seedSolar),
     objectPosition: massRulerPosition(target),
+    startAgeYears: SEED_START_AGE_YEARS,
+    reachesAtAgeYears: SEED_START_AGE_YEARS + needed,
+    reachesAtAgePosition: timeRulerPosition(SEED_START_AGE_YEARS + needed),
+    startAgePosition: timeRulerPosition(SEED_START_AGE_YEARS),
+    objectAgeYears: objectAgeYears(),
+    objectAgePosition: timeRulerPosition(objectAgeYears()),
+    pictureOneReachesAtAgeYears: SEED_START_AGE_YEARS + predictionTimeYears(),
+    pictureOneReachesAtAgePosition: timeRulerPosition(SEED_START_AGE_YEARS + predictionTimeYears()),
+    lateByYears: SEED_START_AGE_YEARS + needed - objectAgeYears(),
   }
 }
+
+// The efficiency of each button of the control, labelled for the page (the module holds the numbers, CLAUDE.md §9).
+export const TRIAL_DEFAULT_SEED_SOLAR = PREDICTION_SEED_SOLAR
+export const TRIAL_DEFAULT_EFFICIENCY = STANDARD_EFFICIENCY
 
 // ---- Picture 1 (Step 4): the clock for growth ----
 
