@@ -159,11 +159,10 @@ describe('Prediction 1: the time from 10 Suns', () => {
 })
 
 describe('Prediction 2: the smallest seed', () => {
-  it('is about 8,600 Suns, and the answer button is "about 10,000 Suns" (test 7)', () => {
-    // by hand: 3.8e7 x exp(-(0.52 - 0.10) / 0.05006)
+  it('is about 8,284 Suns, and the answer button is "about 10,000 Suns" (test 7)', () => {
+    // Worked separately (own constants and numerical integration for the age): 8,284 Suns.
     const seed = predictionSeedSolar()
-    expect(seed).toBeGreaterThan(5e3)
-    expect(seed).toBeLessThan(1.5e4)
+    expect(Math.abs(seed - 8284) / 8284).toBeLessThan(0.01)
     expect(seedAnswer()).toBe('s10k')
     expect(seedGuessResult('s10k')).toBe('matched')
     expect(seedGuessResult('s300')).toBe('not matched')

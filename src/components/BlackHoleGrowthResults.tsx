@@ -63,7 +63,7 @@ export function BlackHoleGrowthResults({ timeGuess, seedGuess }: { timeGuess: Ti
   // Which seeds are in time at the efficiency of column j, read from the module's grid.
   const inTime = (j: number) => {
     const ok = grid.filter((row) => row[j].fits).map((row) => suns(row[j].seedSolar))
-    return ok.length === 0 ? 'none of the seeds in the table is in time' : ok.length === grid.length ? 'every seed in the table is in time' : `the seeds in time are ${ok.join(', ')}`
+    return ok.length === 0 ? 'none of the seeds in the table is in time' : ok.length === grid.length ? 'every seed in the table is in time' : `the seeds in time are ${ok.length > 1 ? `${ok.slice(0, -1).join(', ')} and ${ok[ok.length - 1]}` : ok[0]}`
   }
   const comparisonWord = (w: string) => w.charAt(0).toUpperCase() + w.slice(1)
 

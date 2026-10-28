@@ -995,7 +995,7 @@ const chapters: Chapter[] = [
     Component: BlackHoleGrowthExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleGrowthSummary(),
-    next: 'None yet, because Experiment 24 has no approved specification.',
+    next: 'Experiment 24 is about something different, an orbit, and it has no approved specification yet.',
   },
 ]
 
