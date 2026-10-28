@@ -23,6 +23,7 @@ import { HeaviestMergerExperiment } from './components/HeaviestMergerExperiment'
 import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperiment'
 import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackgroundExperiment'
 import { BlackHoleGrowthExperiment } from './components/BlackHoleGrowthExperiment'
+import { InterstellarVisitorExperiment } from './components/InterstellarVisitorExperiment'
 import { nonSpinningEfficiency as growthLowEfficiency, objectMassSolar as growthObjectMass, pictureOne as growthPictureOne, pictureTwo as growthPictureTwo, settingsGrid as growthGrid } from './physics/blackHoleGrowth'
 import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
 import { checkUpRows, distanceRatio, fromMassRows, massRatio as shadowMassRatio, rangeRows, ratioRow } from './physics/blackHoleShadow'
@@ -996,6 +997,14 @@ const chapters: Chapter[] = [
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleGrowthSummary(),
     next: 'Experiment 24 is about something different, an orbit, and it has no approved specification yet.',
+  },
+  {
+    title: 'A visitor from another star (how far does the Sun bend its path?)',
+    group: 'Frontier and Beyond',
+    Component: InterstellarVisitorExperiment,
+    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
+    learned: 'The chapter summary of Experiment 24 is built in a later step.',
+    next: 'None yet.',
   },
 ]
 
