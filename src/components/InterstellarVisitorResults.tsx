@@ -8,6 +8,14 @@ import { ResultsTable } from './WideBinariesExperiment'
 // settings. The wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1). The explanation of why a path is open or closed, why the speed rises and why a faster
 // visitor is bent less, and any verdict, are left to the tutor (CLAUDE.md §12, §13).
 
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
+
 const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
 
@@ -256,6 +264,32 @@ export function InterstellarVisitorResults({ bendGuess, speedGuess }: { bendGues
           },
         ]}
       />
+
+      <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>The papers and pages behind these numbers.</strong> They are listed here, after the run, because some of them give the numbers that your predictions ask for. Links open in a new tab.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2507.02757">Discovery and Preliminary Characterization of a Third Interstellar Object: 3I/ATLAS (Seligman and others, 2025)</ExternalLink>: the paper that announced it, with the discovery on July 1, 2025 and its first orbit (an eccentricity of
+            about {c.eccentricityPublished.toFixed(1)}, a closest approach of about {s.closestApproachAu.toFixed(2)} AU and a speed far from the Sun of about {c.speedFarAwayPublishedKmS} km/s). Only its abstract was read for this page.
+          </li>
+          <li>
+            <ExternalLink href="https://science.nasa.gov/solar-system/comets/3i-atlas/3i-atlas-facts-and-faqs/">NASA: 3I/ATLAS facts and FAQs</ExternalLink>: NASA’s plain account of the discovery, of a path that was too fast to be held by the Sun’s gravity, of its speed at closest approach
+            (about {commas(c.nasaMph)} miles an hour) and of its leaving the solar system. NASA’s page gives October 30, 2025 for the closest approach; ESA and Wikipedia give October 29.
+          </li>
+          <li>
+            <ExternalLink href="https://www.esa.int/Science_Exploration/Space_Science/Comet_3I_ATLAS_frequently_asked_questions">ESA: Comet 3I/ATLAS frequently asked questions</ExternalLink>: ESA’s questions and answers, with what an interstellar object is, its speed at closest approach (roughly {commas(c.esaKmH)} km/h) and
+            its closest approaches to Mars, the Earth and the Sun.
+          </li>
+          <li>
+            <ExternalLink href="https://en.wikipedia.org/wiki/3I/ATLAS">Wikipedia: 3I/ATLAS</ExternalLink>: a secondary source. This page took the eccentricity ({c.eccentricityPublished}) and the closest approach ({s.closestApproachAu} AU) from the orbit table on this page, and the rounded speeds and eccentricities of ʻOumuamua and Borisov.
+          </li>
+          <li>
+            <ExternalLink href="https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html">NASA JPL Small-Body Database</ExternalLink>: where NASA’s Jet Propulsion Laboratory keeps the orbits of comets and asteroids, for a learner who wants the astronomers’ own orbit tables. It was not read for this page.
+          </li>
+        </ul>
+      </div>
     </div>
   )
 }

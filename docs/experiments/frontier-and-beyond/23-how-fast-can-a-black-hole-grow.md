@@ -290,3 +290,7 @@ Compared against the specification, `CLAUDE.md` §12, §14 and §29, and the pag
 6. **Experiment 22's specification** still needs the owner's yes or no on updating its "What's next" note (difference 3 of Step 8).
 
 **Open (not checked):** no paper was read in full; the 0.45 billion years, the (1 − ε) factor, the efficiency range and the 100 Myr start have no source read; the 2026 *Nature* simulation paper was not read; not checked at narrow widths, in other browsers, by keyboard or with a real learner; one standard search only for newer results.
+
+## Update (2026-10-28): "What's next" now points to Experiment 24
+
+Experiment 24 ("A visitor from another star") was built after this experiment. Its Step 8 changed this experiment's "What's next" in `src/App.tsx` from "Experiment 24 is about something different, an orbit, and it has no approved specification yet." to: "Experiment 24 turns from black holes to our own neighbourhood. In 2025 a comet from another star, 3I/ATLAS, passed the Sun and left again. How did the Sun's gravity shape its path?" It does not give away either of Experiment 24's predictions. The owner approved the new wording and the update of this specification on 2026-10-28 ("approved, commit, update exp 23 spec"). Item 5 of the Step 10 notes above, which records the earlier sentence, is kept as a record of what was fixed then.

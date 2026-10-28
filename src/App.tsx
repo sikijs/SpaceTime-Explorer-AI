@@ -24,6 +24,7 @@ import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperimen
 import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackgroundExperiment'
 import { BlackHoleGrowthExperiment } from './components/BlackHoleGrowthExperiment'
 import { InterstellarVisitorExperiment } from './components/InterstellarVisitorExperiment'
+import { exampleSteps as visitorSteps, knownObjects as visitorKnown, pictureTwo as visitorPictureTwo, resultsCheckUp as visitorCheckUp } from './physics/interstellarVisitor'
 import { nonSpinningEfficiency as growthLowEfficiency, objectMassSolar as growthObjectMass, pictureOne as growthPictureOne, pictureTwo as growthPictureTwo, settingsGrid as growthGrid } from './physics/blackHoleGrowth'
 import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
 import { checkUpRows, distanceRatio, fromMassRows, massRatio as shadowMassRatio, rangeRows, ratioRow } from './physics/blackHoleShadow'
@@ -265,6 +266,24 @@ function pulsarTimingBackgroundSummary(): string {
     `${sigma(nanograv.sigmaLow, nanograv.sigmaHigh)} sigma, and the other arrays report ${sigma(epta.sigmaLow, epta.sigmaHigh)}, ${sigma(ppta.sigmaLow, ppta.sigmaHigh)} and ${sigma(cpta.sigmaLow, cpta.sigmaHigh)} sigma; none reaches the 5 sigma that is the usual bar for a discovery. ` +
     `So there is strong evidence for a background of very slow gravitational waves, and what makes it is open: many pairs of supermassive black holes is the most likely source, but this is not proven, and the NANOGrav abstract also names new physics in the early universe. ` +
     `The numbers come from abstracts and summaries, with no paper read in full, and the ${n1(check.shiftNanoseconds)} nanoseconds is a rough estimate.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 24 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function interstellarVisitorSummary(): string {
+  const c = visitorCheckUp()
+  const s = visitorSteps()
+  const known = visitorKnown()
+  const gain = visitorPictureTwo().gainShare
+  const n1 = (x: number) => x.toFixed(1)
+  const n2 = (x: number) => x.toFixed(2)
+  return (
+    `A visitor from another star. 3I/ATLAS, found on July 1, 2025, is only the third object known to have come from outside our solar system. At its closest approach, ${n2(s.closestApproachAu)} times the Earth's distance from the Sun, it was going ${n1(c.speedAtClosestKmS)} km/s, ` +
+    `${n2(c.speedOverEscape)} times the escape speed there, ${n1(c.escapeSpeedAtClosestKmS)} km/s, so the Sun could not hold it: it came in on an open path and is leaving for good. Far from the Sun it was going ${n1(s.speedFarAwayKmS)} km/s. ` +
+    `The Sun's pull sped it up on the way in, by ${Math.round(gain * 100)} percent, and slowed it again on the way out. The Sun bent its path by ${n1(c.bendDegrees)} degrees in all. A slower visitor, or a closer pass, is bent more: ` +
+    `ʻOumuamua, with an eccentricity of ${known[0].eccentricity}, by ${n1(known[0].bendDegrees)} degrees, and Borisov, with ${known[1].eccentricity}, by ${n1(known[1].bendDegrees)} degrees. ` +
+    `The path of 3I/ATLAS is settled, to the precision published. What it is made of and how old it is are separate questions that are still being studied, and are not part of this experiment. The calculation uses the Sun's gravity alone and leaves out the planets' pulls and the push of the comet's own gas. ` +
+    `The numbers come from the discovery paper's abstract, a Wikipedia table of the orbit and the pages of NASA and ESA, with no paper read in full.`
   )
 }
 
@@ -996,15 +1015,16 @@ const chapters: Chapter[] = [
     Component: BlackHoleGrowthExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleGrowthSummary(),
-    next: 'Experiment 24 is about something different, an orbit, and it has no approved specification yet.',
+    // "What's next" now points to Experiment 24: this is draft wording for the owner's approval. It does not give away either of Experiment 24's predictions.
+    next: 'Experiment 24 turns from black holes to our own neighbourhood. In 2025 a comet from another star, 3I/ATLAS, passed the Sun and left again. How did the Sun’s gravity shape its path?',
   },
   {
     title: 'A visitor from another star (how far does the Sun bend its path?)',
     group: 'Frontier and Beyond',
     Component: InterstellarVisitorExperiment,
-    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
-    learned: 'The chapter summary of Experiment 24 is built in a later step.',
-    next: 'None yet.',
+    // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
+    learned: interstellarVisitorSummary(),
+    next: 'None yet, because Experiment 25 has no approved specification.',
   },
 ]
 
