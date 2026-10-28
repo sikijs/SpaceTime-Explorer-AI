@@ -1,20 +1,25 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   APPROACH_SPEED_ALTERNATIVE_KM_S,
   APPROACH_SPEED_KM_S,
+  FALL_CHOICES,
   MERGER_DISTANCE_KPC,
   MONTE_CARLO_TRIALS_2025,
+  PASS_CHOICES,
   PUBLISHED_2025,
   PUBLISHED_2026,
   SIDEWAYS_SPEED_2025_KM_S,
   SIDEWAYS_SPEED_2026_KM_S,
   SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S,
+  TOTAL_MASS,
   distanceKpc,
   sidewaysRange2026,
 } from '../physics/localGroupCollision'
+import type { FallChoiceId, PassChoiceId } from '../physics/localGroupCollision'
 
 // Frontier and Beyond, Experiment 25 (docs/experiments/frontier-and-beyond/25-will-the-milky-way-and-andromeda-collide.md).
-// Step 2: the title, the status line, the introduction and the "Want to know more?" links. The predictions, the run, the controls, the results and the tutor come in later steps.
+// Steps 2 and 3: the title, the status line, the introduction, the "Want to know more?" links and the two predictions. The run, the controls, the results and the tutor come in later steps.
 // The wording is the owner's draft of 2026-10-28, approved line by line (CLAUDE.md §28.1), with the one correction listed in the Implementation Notes. Every number comes from the physics module (CLAUDE.md §9).
 // Nothing here says how long a straight fall takes, how close the first pass is, or the date the old textbook gave for the collision, because the two predictions ask for them (CLAUDE.md §12).
 // The pages that give those dates away are listed only after the run (a later step).
@@ -36,6 +41,8 @@ interface LocalGroupCollisionExperimentProps {
 }
 
 export function LocalGroupCollisionExperiment(_props: LocalGroupCollisionExperimentProps) {
+  const [fallGuess, setFallGuess] = useState<FallChoiceId | null>(null)
+  const [passGuess, setPassGuess] = useState<PassChoiceId | null>(null)
   // Display rounding of the module's numbers (no physics here, CLAUDE.md §9).
   const distance = Math.round(distanceKpc())
   const approach = APPROACH_SPEED_KM_S
@@ -43,6 +50,7 @@ export function LocalGroupCollisionExperiment(_props: LocalGroupCollisionExperim
   const lowRange = Math.round(range.low)
   const highRange = Math.round(range.high)
   const sideways2026 = SIDEWAYS_SPEED_2026_KM_S.toFixed(1)
+  const totalMass = (TOTAL_MASS / 1e12).toFixed(1)
   const plusMinus = SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S.toFixed(1)
   return (
     <div>
@@ -155,8 +163,71 @@ export function LocalGroupCollisionExperiment(_props: LocalGroupCollisionExperim
           </ul>
         </div>
 
-        {/* Temporary note: removed in Step 3, when the predictions and the run are built. */}
-        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>The predictions and the run are not built yet.</p>
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is right. */}
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed things: a calculation of the orbit of Andromeda about the Milky
+            Way when only the two galaxies pull on each other, and the two studies’ published sideways speeds. They are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess compares with the
+            real result. The real pictures stay the same whatever you guess.
+          </p>
+
+          {(
+            [
+              {
+                title: 'Prediction 1: how long would a straight fall take?',
+                text: (
+                  <>
+                    Andromeda is about {distance} kpc away and is coming towards us at about {approach} km/s. Suppose it had no sideways motion at all, so that it simply fell straight towards the Milky Way from where it is now, with only the
+                    gravity of the two galaxies (together about {totalMass} trillion Suns, counting their halos) pulling on them all the way. About how long would it take to reach the Milky Way?
+                  </>
+                ),
+                choices: FALL_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+                value: fallGuess as string | null,
+                set: (v: string) => setFallGuess(v as FallChoiceId),
+              },
+              {
+                title: 'Prediction 2: how close would the first pass be?',
+                text: (
+                  <>
+                    Now give Andromeda the sideways speed that the 2026 study found, {sideways2026} km/s, together with the same approach speed as before. Treat the two galaxies as two points that pull on each other, with nothing else in the
+                    way. Their paths now curve instead of meeting head-on. About how close would they pass at their first closest approach? (For scale, the studies call two galaxies merged when they come within {MERGER_DISTANCE_KPC} kpc.) This is a
+                    separate guess from Prediction 1, so your two answers do not have to agree with each other.
+                  </>
+                ),
+                choices: PASS_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+                value: passGuess as string | null,
+                set: (v: string) => setPassGuess(v as PassChoiceId),
+              },
+            ] as const
+          ).map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</p>
+              <div>
+                {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => (question.set as (v: string) => void)(choice.value)}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label.charAt(0).toUpperCase() + choice.label.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null
+                  ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label}.`
+                  : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          {/* Temporary note: removed in Step 4, when the Run button and the run are built. */}
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The Run button and the pictures are not built yet.</p>
+        </div>
       </div>
     </div>
   )
