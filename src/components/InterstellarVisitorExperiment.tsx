@@ -18,6 +18,7 @@ import {
 import type { BendChoiceId, SpeedChoiceId } from '../physics/interstellarVisitor'
 import { EARTH } from '../physics/fastestSpacecraft'
 import { InterstellarVisitorResults } from './InterstellarVisitorResults'
+import { InterstellarVisitorTutor } from './InterstellarVisitorTutor'
 import { PictureOne, PictureTwo, TRIAL_CLOSEST_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './InterstellarVisitorPictures'
 
 // Frontier and Beyond, Experiment 24 (docs/experiments/frontier-and-beyond/24-a-visitor-from-another-star.md).
@@ -115,7 +116,7 @@ interface InterstellarVisitorExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisitorExperimentProps) {
+export function InterstellarVisitorExperiment({ onComplete, onTutorComplete }: InterstellarVisitorExperimentProps) {
   const [bendGuess, setBendGuess] = useState<BendChoiceId | null>(null)
   const [speedGuess, setSpeedGuess] = useState<SpeedChoiceId | null>(null)
   const [trialSpeed, setTrialSpeed] = useState<number>(TRIAL_DEFAULT_SPEED_KM_S)
@@ -311,7 +312,7 @@ export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisito
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other speeds and closest approaches, and Part 3, the results. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other speeds and closest approaches, Part 3, the results, and Part 4, the tutor. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -380,6 +381,29 @@ export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisito
           )}
 
           {done && <InterstellarVisitorResults bendGuess={bendGuess} speedGuess={speedGuess} />}
+
+          {done && bendGuess !== null && speedGuess !== null && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the real results. Third, it asks one bigger question, about a visitor that is
+                  faster than 3I/ATLAS. Type a few words for each. Nothing is graded, and a short answer is fine.
+                </li>
+                <li>
+                  <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses matched until you have answered all three, so you can think it through first.
+                </li>
+                <li>
+                  <strong>Then the explanation.</strong> It covers why a speed above the escape speed means an open path, why the speed rises on the way in and falls on the way out, why a faster visitor is bent less, what the calculation leaves out and what the path does not tell us.
+                  Some parts use a worked sum or an everyday comparison.
+                </li>
+              </ul>
+              <InterstellarVisitorTutor bendPrediction={bendGuess} speedPrediction={speedGuess} onExplained={onTutorComplete} />
+            </div>
+          )}
         </div>
       </div>
     </div>
