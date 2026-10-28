@@ -33,6 +33,16 @@ import {
   sidewaysRange2026,
   APPROACH_SPEED_ALTERNATIVE_KM_S,
   MONTE_CARLO_TRIALS_2025,
+  LIGHT_YEARS_PER_KPC,
+  PICTURE_ORBIT_EXTENT_KPC,
+  TIME_RULER,
+  PASS_RULER,
+  timeRulerPosition,
+  passRulerPosition,
+  pictureOne,
+  orbitTrack,
+  firstPassCurve,
+  pictureTwo,
 } from './localGroupCollision'
 
 // Constants written out again here, separately from the module (SI units): the Sun's GM, the kiloparsec and the Gyr.
@@ -56,6 +66,8 @@ function integrate(massSolar: number, sidewaysKmS: number, maxGyr = 12, dt = 0.0
   let [ax, ay] = acc(x, y)
   let best = Math.hypot(x, y)
   let bestT = 0
+  let bestX = x
+  let bestY = y
   for (let t = 0; t < maxGyr; t += dt) {
     vx += (ax * dt) / 2
     vy += (ay * dt) / 2
@@ -68,9 +80,11 @@ function integrate(massSolar: number, sidewaysKmS: number, maxGyr = 12, dt = 0.0
     if (r < best) {
       best = r
       bestT = t + dt
+      bestX = x
+      bestY = y
     } else if (r > best * 1.5 && t > bestT + 0.5) break
   }
-  return { passKpc: best, passGyr: bestT }
+  return { passKpc: best, passGyr: bestT, passX: bestX, passY: bestY }
 }
 
 describe('the published numbers and the constants', () => {
@@ -240,5 +254,87 @@ describe('the predictions (tests 7 and 10)', () => {
     fallGuessResult('f1')
     passGuessMarker('p900')
     expect(JSON.stringify([orbit(TOTAL_MASS, 46.7), straightFallGyr(), fallAnswer(), passAnswer()])).toBe(before)
+  })
+})
+
+describe('the pictures (Step 4)', () => {
+  it('the rulers are logarithmic, run from 0 to 1 and hold every button', () => {
+    expect(timeRulerPosition(TIME_RULER.minGyr)).toBeCloseTo(0, 10)
+    expect(timeRulerPosition(TIME_RULER.maxGyr)).toBeCloseTo(1, 10)
+    expect(timeRulerPosition(3)).toBeCloseTo(Math.log(10) / Math.log(100), 10) // 0.3 -> 30 is two decades; 3 is one decade in
+    expect(passRulerPosition(PASS_RULER.minKpc)).toBeCloseTo(0, 10)
+    expect(passRulerPosition(PASS_RULER.maxKpc)).toBeCloseTo(1, 10)
+    expect(passRulerPosition(10)).toBeCloseTo(1 / 3, 10)
+    for (const c of FALL_CHOICES) expect(timeRulerPosition(c.gyr)).toBeGreaterThan(0)
+    for (const c of FALL_CHOICES) expect(timeRulerPosition(c.gyr)).toBeLessThan(1)
+    for (const c of PASS_CHOICES) expect(passRulerPosition(c.kpc)).toBeGreaterThan(0)
+    for (const c of PASS_CHOICES) expect(passRulerPosition(c.kpc)).toBeLessThan(1)
+    expect(() => timeRulerPosition(0)).toThrow(RangeError)
+    expect(() => passRulerPosition(-1)).toThrow(RangeError)
+    expect(LIGHT_YEARS_PER_KPC).toBeCloseTo(3261.56, 2)
+  })
+  it('Picture 1 has the distance (761 kpc, 2.48 million light-years), the straight fall (3.81) and the constant-speed time (6.83)', () => {
+    const p = pictureOne()
+    expect(p.distanceKpc).toBeCloseTo(761.03, 1)
+    expect(p.distanceMillionLightYears).toBeCloseTo(2.482, 3)
+    expect(p.approachKmS).toBe(109)
+    expect(p.totalMass).toBeCloseTo(2.3e12, 0)
+    expect(p.straightFallGyr).toBeCloseTo(3.81, 2)
+    expect(p.constantSpeedGyr).toBeCloseTo(6.83, 2)
+  })
+  it('an orbit track starts at M31, ends at the same distance on the other side, passes the Milky Way at the first-pass distance and turns the way the sideways speed points', () => {
+    for (const v of [23, 46.7, 76, 100]) {
+      const tr = orbitTrack(v)
+      expect(tr.start).toEqual({ x: distanceKpc(), y: 0 })
+      expect(Math.hypot(tr.points[0].x - tr.start.x, tr.points[0].y)).toBeLessThan(1e-6)
+      const radii = tr.points.map((q) => Math.hypot(q.x, q.y))
+      expect(radii[radii.length - 1]).toBeCloseTo(distanceKpc(), 3)
+      expect(Math.hypot(tr.firstPass.x, tr.firstPass.y)).toBeCloseTo(tr.firstPassKpc, 6)
+      expect(Math.min(...radii)).toBeGreaterThanOrEqual(tr.firstPassKpc - 1e-6)
+      expect(Math.min(...radii)).toBeLessThan(tr.firstPassKpc + 0.5)
+      // The sideways speed points in +y, so the track moves to positive y before the first pass.
+      expect(tr.points[5].y).toBeGreaterThan(0)
+    }
+  })
+  it('the track agrees with the stepped motion: the closest point is at the same place (x and y, not only the distance), for 46.7 and 76 km/s', () => {
+    for (const v of [46.7, 76]) {
+      const tr = orbitTrack(v)
+      const s = integrate(TOTAL_MASS, v)
+      expect(Math.abs(tr.firstPass.x - s.passX)).toBeLessThan(1.5)
+      expect(Math.abs(tr.firstPass.y - s.passY)).toBeLessThan(1.5)
+    }
+  })
+  it('a straight fall is the line along the x axis to the origin, and an unbound orbit has no track', () => {
+    const tr = orbitTrack(0)
+    expect(tr.firstPassKpc).toBe(0)
+    expect(tr.points[0]).toEqual({ x: distanceKpc(), y: 0 })
+    expect(tr.points[tr.points.length - 1].x).toBeCloseTo(0, 6)
+    expect(tr.points.every((q) => q.y === 0)).toBe(true)
+    expect(tr.firstPassGyr as number).toBeCloseTo(3.81, 2)
+    expect(() => orbitTrack(125)).toThrow(RangeError)
+  })
+  it('Picture 2 has the three tracks, the 20 kpc ring, the unbound speed and the 2026 give-or-take band (15.2 to 157.8 kpc)', () => {
+    const p = pictureTwo()
+    expect(p.study2026.sidewaysKmS).toBe(46.7)
+    expect(p.study2025.sidewaysKmS).toBe(76)
+    expect(p.ringKpc).toBe(20)
+    expect(p.extentKpc).toBe(PICTURE_ORBIT_EXTENT_KPC)
+    expect(p.extentKpc).toBeGreaterThan(distanceKpc())
+    expect(p.unboundKmS).toBeCloseTo(118.81, 1)
+    expect(p.sidewaysFor20Kpc).toBeCloseTo(25.96, 1)
+    expect(p.band.lowKmS).toBeCloseTo(22.7, 10)
+    expect(p.band.highKmS).toBeCloseTo(70.7, 10)
+    expect(p.band.lowPassKpc).toBeCloseTo(15.2, 0)
+    expect(p.band.highPassKpc).toBeCloseTo(157.8, 0)
+    expect(p.study2026.firstPassKpc).toBeCloseTo(66.5, 0)
+    expect(p.study2025.firstPassKpc).toBeCloseTo(183.2, 0)
+  })
+  it('the first-pass curve rises from 1 kpc up to just below the unbound speed and stays on the ruler', () => {
+    const c = firstPassCurve()
+    expect(c[0].firstPassKpc).toBeCloseTo(1, 3)
+    for (let i = 1; i < c.length; i++) expect(c[i].firstPassKpc).toBeGreaterThan(c[i - 1].firstPassKpc)
+    expect(c[c.length - 1].sidewaysKmS).toBeLessThan(118.81)
+    expect(c[c.length - 1].firstPassKpc).toBeLessThan(PASS_RULER.maxKpc)
+    expect(c[c.length - 1].firstPassKpc).toBeGreaterThan(300)
   })
 })

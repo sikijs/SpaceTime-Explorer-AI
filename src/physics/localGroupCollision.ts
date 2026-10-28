@@ -202,3 +202,114 @@ export function passGuessMarker(id: PassChoiceId): { kpc: number } {
 // ---- Trial values (the controls, Step 5) ----
 export const TRIAL_SIDEWAYS_KM_S = [0, 23, 47, 76, 100] as const
 export const TRIAL_MASSES_SOLAR = [1.8e12, 2.3e12, 2.8e12] as const
+
+// ---- The pictures (Step 4): everything the run draws, read from the model above ----
+
+export const LIGHT_YEARS_PER_KPC = 3261.56
+export const PICTURE_ORBIT_EXTENT_KPC = 800 // the half-width of the orbit drawing (Picture 2, panel A)
+
+// Picture 1, panel B: a ruler of times on a log scale, from 0.3 to 30 billion years (every button fits).
+export const TIME_RULER = { minGyr: 0.3, maxGyr: 30, ticks: [0.3, 1, 3, 10, 30] } as const
+export function timeRulerPosition(gyr: number): number {
+  checkPositive(gyr, 'The time')
+  return (Math.log(gyr) - Math.log(TIME_RULER.minGyr)) / (Math.log(TIME_RULER.maxGyr) - Math.log(TIME_RULER.minGyr))
+}
+// Picture 2, panel B: a ruler of first-pass distances on a log scale, from 1 to 1,000 kpc (every button fits).
+export const PASS_RULER = { minKpc: 1, maxKpc: 1000, ticks: [1, 3, 10, 30, 100, 300, 1000] } as const
+export function passRulerPosition(kpc: number): number {
+  checkPositive(kpc, 'The distance')
+  return (Math.log(kpc) - Math.log(PASS_RULER.minKpc)) / (Math.log(PASS_RULER.maxKpc) - Math.log(PASS_RULER.minKpc))
+}
+
+export interface PictureOne {
+  distanceKpc: number
+  distanceMillionLightYears: number
+  approachKmS: number
+  totalMass: number
+  straightFallGyr: number
+  constantSpeedGyr: number
+}
+export function pictureOne(): PictureOne {
+  const d = distanceKpc()
+  return {
+    distanceKpc: d,
+    distanceMillionLightYears: (d * LIGHT_YEARS_PER_KPC) / 1e6,
+    approachKmS: APPROACH_SPEED_KM_S,
+    totalMass: TOTAL_MASS,
+    straightFallGyr: straightFallGyr(),
+    constantSpeedGyr: constantSpeedGyr(),
+  }
+}
+
+// The track of M31 about the Milky Way (at the origin, in kpc) for a sideways speed, drawn from the state now (M31 at x = r0, approaching, with the sideways speed in the +y direction)
+// to the first pass and out to the same distance on the other side. A straight fall is the line from the start to the origin.
+export interface OrbitTrack {
+  sidewaysKmS: number
+  points: { x: number; y: number }[]
+  start: { x: number; y: number }
+  firstPass: { x: number; y: number }
+  firstPassKpc: number
+  firstPassGyr: number | null
+}
+export function orbitTrack(sidewaysKmS: number, steps: number = 240, massSolar: number = TOTAL_MASS): OrbitTrack {
+  const o = orbit(massSolar, sidewaysKmS)
+  const r0 = o.startKpc
+  const start = { x: r0, y: 0 }
+  if (sidewaysKmS === 0) {
+    const points = Array.from({ length: steps + 1 }, (_, i) => ({ x: r0 * (1 - i / steps), y: 0 }))
+    return { sidewaysKmS, points, start, firstPass: { x: 0, y: 0 }, firstPassKpc: 0, firstPassGyr: o.firstPassGyr }
+  }
+  if (!o.bound) throw new RangeError('The orbit is not bound; there is no track to the first pass and out again.')
+  const mu = G_KPC * massSolar
+  const p = (o.angularMomentum * o.angularMomentum) / mu
+  const e = o.eccentricity
+  // The true anomaly on the way in is negative (before the closest point) and is measured so that the angle on the page grows with time.
+  const nu0 = -Math.acos(Math.max(-1, Math.min(1, (p / r0 - 1) / e)))
+  const at = (nu: number) => {
+    const r = p / (1 + e * Math.cos(nu))
+    return { x: r * Math.cos(nu - nu0), y: r * Math.sin(nu - nu0) }
+  }
+  const points = Array.from({ length: steps + 1 }, (_, i) => at(nu0 + (-2 * nu0 * i) / steps))
+  return { sidewaysKmS, points, start, firstPass: at(0), firstPassKpc: o.firstPassKpc, firstPassGyr: o.firstPassGyr }
+}
+
+// Picture 2, panel B: the first pass against the sideways speed, from the speed that gives a 1 kpc pass up to just below the unbound speed.
+export function firstPassCurve(points: number = 80): { sidewaysKmS: number; firstPassKpc: number }[] {
+  const from = sidewaysForFirstPass(PASS_RULER.minKpc)
+  const to = unboundSidewaysKmS() - 0.01
+  return Array.from({ length: points + 1 }, (_, i) => {
+    const v = from + ((to - from) * i) / points
+    return { sidewaysKmS: v, firstPassKpc: orbit(TOTAL_MASS, v).firstPassKpc }
+  })
+}
+
+export interface PictureTwo {
+  straight: OrbitTrack
+  study2026: OrbitTrack
+  study2025: OrbitTrack
+  ringKpc: number
+  extentKpc: number
+  curve: { sidewaysKmS: number; firstPassKpc: number }[]
+  unboundKmS: number
+  sidewaysFor20Kpc: number
+  band: { lowKmS: number; highKmS: number; lowPassKpc: number; highPassKpc: number }
+}
+export function pictureTwo(): PictureTwo {
+  const range = sidewaysRange2026()
+  return {
+    straight: orbitTrack(0),
+    study2026: orbitTrack(SIDEWAYS_SPEED_2026_KM_S),
+    study2025: orbitTrack(SIDEWAYS_SPEED_2025_KM_S),
+    ringKpc: MERGER_DISTANCE_KPC,
+    extentKpc: PICTURE_ORBIT_EXTENT_KPC,
+    curve: firstPassCurve(),
+    unboundKmS: unboundSidewaysKmS(),
+    sidewaysFor20Kpc: sidewaysForFirstPass(MERGER_DISTANCE_KPC),
+    band: {
+      lowKmS: range.low,
+      highKmS: range.high,
+      lowPassKpc: orbit(TOTAL_MASS, range.low).firstPassKpc,
+      highPassKpc: orbit(TOTAL_MASS, range.high).firstPassKpc,
+    },
+  }
+}
