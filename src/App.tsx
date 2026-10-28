@@ -24,6 +24,7 @@ import { BlackHoleShadowExperiment } from './components/BlackHoleShadowExperimen
 import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackgroundExperiment'
 import { BlackHoleGrowthExperiment } from './components/BlackHoleGrowthExperiment'
 import { InterstellarVisitorExperiment } from './components/InterstellarVisitorExperiment'
+import { LocalGroupCollisionExperiment } from './components/LocalGroupCollisionExperiment'
 import { exampleSteps as visitorSteps, knownObjects as visitorKnown, pictureTwo as visitorPictureTwo, resultsCheckUp as visitorCheckUp } from './physics/interstellarVisitor'
 import { nonSpinningEfficiency as growthLowEfficiency, objectMassSolar as growthObjectMass, pictureOne as growthPictureOne, pictureTwo as growthPictureTwo, settingsGrid as growthGrid } from './physics/blackHoleGrowth'
 import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
@@ -1025,6 +1026,14 @@ const chapters: Chapter[] = [
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: interstellarVisitorSummary(),
     next: 'None yet, because Experiment 25 has no approved specification.',
+  },
+  {
+    title: 'Will the Milky Way and Andromeda collide? (two studies, two answers)',
+    group: 'Frontier and Beyond',
+    Component: LocalGroupCollisionExperiment,
+    // Not written yet: the chapter summary comes with the results and tutor steps, and it is shown only after the tutor's explanation, which does not exist yet.
+    learned: '',
+    next: 'None yet: this is the last experiment of the group.',
   },
 ]
 
