@@ -68,7 +68,7 @@ export function InterstellarVisitorResults({ bendGuess, speedGuess }: { bendGues
         <strong>Where this stands (as of October 2026).</strong>
         <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
           <li>
-            <strong>Settled:</strong> that 3I/ATLAS came from outside our solar system, and its path round the Sun, to the precision that is published (an eccentricity of {c.eccentricityPublished}, and a closest approach of {s.closestApproachAu} AU). The Sun’s gravity alone gives the speeds and
+            <strong>Settled:</strong> that 3I/ATLAS came from outside our solar system, and its path round the Sun, to about three figures (an eccentricity of about {n2(c.eccentricityPublished)} and a closest approach of about {n2(s.closestApproachAu)} AU; published fits of the orbit differ by a few thousandths in the eccentricity). The Sun’s gravity alone gives the speeds and
             the bend in this page’s pictures.
           </li>
           <li>
@@ -161,7 +161,7 @@ export function InterstellarVisitorResults({ bendGuess, speedGuess }: { bendGues
           },
           {
             label: 'How sure the numbers are',
-            text: 'the eccentricity and the closest approach come from Wikipedia’s table of the orbit, which is a secondary source (the discovery paper’s abstract agrees to two figures; the astronomers’ own orbit tables were not read). NASA and ESA do not say how their speeds were worked out, so the agreement checks this arithmetic and may not be an independent test of it. The calculation leaves out the planets’ pulls and the push of the comet’s own gas; astronomers have measured a tiny push of that kind, and its effect on these numbers was not worked out here. The formulas are standard results for a path under the Sun’s gravity alone, worked out by hand and by a separate script, and not read at a source.',
+            text: 'the eccentricity and the closest approach come from Wikipedia’s table of the orbit, which is a secondary source (the discovery paper’s abstract agrees to two figures; the astronomers’ own orbit tables were not read). Different published fits of the orbit differ by a few thousandths in the eccentricity, because they treat the push of the comet’s own gas and the errors of the observations in different ways (a 2026 paper on that push says that these systematic uncertainties are larger than the formal errors), so the eccentricity is certain to about three figures and not to the six that are printed. A change of that size would alter the speeds by less than 0.02 km/s and the bend by about 0.01 degrees. NASA and ESA do not say how their speeds were worked out, so the agreement checks this arithmetic and may not be an independent test of it. The calculation leaves out the planets’ pulls and the push of the comet’s own gas; astronomers have measured a tiny push of that kind, and its effect on these numbers was not worked out here. The formulas are standard results for a path under the Sun’s gravity alone, worked out by hand and by a separate script, and not read at a source.',
           },
         ]}
       />
@@ -173,7 +173,7 @@ export function InterstellarVisitorResults({ bendGuess, speedGuess }: { bendGues
         rows={[
           ['The strength of the Sun’s pull (GM)', gmText, 'A number for how strong the Sun’s gravity is: the Sun’s mass times the constant of gravity. A standard value.'],
           ['Closest approach (q)', `${s.closestApproachAu} AU, which is ${commas(s.closestApproachMillionKm)} million km`, 'How near the object came to the Sun. Published.'],
-          ['Eccentricity (e)', `${s.eccentricity}`, 'How open the path is. Published.'],
+          ['Eccentricity (e)', `${s.eccentricity}`, 'How open the path is. Published, in Wikipedia’s table of the orbit; other fits differ in the third figure (see the note below).'],
           ['Speed far from the Sun', `${n1(s.speedFarAwayKmS)} km/s`, `The square root of (e − 1) × GM ÷ q, which is the square root of ${n2(s.eccentricity - 1)} × GM ÷ q.`],
           ['Escape speed at closest approach', `${n1(s.escapeSpeedKmS)} km/s`, 'The square root of 2 × GM ÷ q: the speed above which the Sun cannot hold an object at that distance.'],
           [
@@ -212,7 +212,7 @@ export function InterstellarVisitorResults({ bendGuess, speedGuess }: { bendGues
           },
           {
             label: 'How sure the numbers are',
-            text: 'the first three rows are standard or published values; the other rows follow from them by arithmetic and standard formulas, which were not read at a source.',
+            text: 'the first three rows are standard or published values (the eccentricity is certain to about three figures, as Table 1’s note says); the other rows follow from them by arithmetic and standard formulas, which were not read at a source.',
           },
         ]}
       />

@@ -282,7 +282,7 @@ function interstellarVisitorSummary(): string {
     `${n2(c.speedOverEscape)} times the escape speed there, ${n1(c.escapeSpeedAtClosestKmS)} km/s, so the Sun could not hold it: it came in on an open path and is leaving for good. Far from the Sun it was going ${n1(s.speedFarAwayKmS)} km/s. ` +
     `The Sun's pull sped it up on the way in, by ${Math.round(gain * 100)} percent, and slowed it again on the way out. The Sun bent its path by ${n1(c.bendDegrees)} degrees in all. A slower visitor, or a closer pass, is bent more: ` +
     `ʻOumuamua, with an eccentricity of ${known[0].eccentricity}, by ${n1(known[0].bendDegrees)} degrees, and Borisov, with ${known[1].eccentricity}, by ${n1(known[1].bendDegrees)} degrees. ` +
-    `The path of 3I/ATLAS is settled, to the precision published. What it is made of and how old it is are separate questions that are still being studied, and are not part of this experiment. The calculation uses the Sun's gravity alone and leaves out the planets' pulls and the push of the comet's own gas. ` +
+    `The path of 3I/ATLAS is settled, to about three figures. What it is made of and how old it is are separate questions that are still being studied, and are not part of this experiment. The calculation uses the Sun's gravity alone and leaves out the planets' pulls and the push of the comet's own gas. ` +
     `The numbers come from the discovery paper's abstract, a Wikipedia table of the orbit and the pages of NASA and ESA, with no paper read in full.`
   )
 }

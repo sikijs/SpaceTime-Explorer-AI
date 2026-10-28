@@ -4,6 +4,7 @@ import {
   DISTANCE_TICKS_AU,
   SPEED_RULER_MAX_KM_S,
   SPEED_TICKS_KM_S,
+  atlasClosestApproachM,
   bendGuessHeadingDegrees,
   distanceRulerPosition,
   esaSpeedAtClosestKmS,
@@ -299,7 +300,7 @@ export function pictureOneCaption(stage: number): ReactNode {
       ? [
           {
             look: 'the cyan dot, and the line from the Sun to it.',
-            means: `the closest approach is ${n2(pic.closestApproachAu)} AU from the Sun, about ${n2(pic.closestApproachAu)} times the Earth’s distance.`,
+            means: `the closest approach is ${n2(pic.closestApproachAu)} AU from the Sun, which is ${n2(pic.closestApproachAu)} times the Earth’s distance, or about ${Math.round(atlasClosestApproachM() / 1e9)} million kilometres.`,
             matters: 'this distance, together with the speed far away, is all that is needed to work out the whole path. It is also where the Sun’s pull on the object is strongest.',
           },
         ]
@@ -355,7 +356,7 @@ export function pictureOneCaption(stage: number): ReactNode {
           <>
             Measure each direction of travel as an angle from the direction that points to the right across the page, turning anticlockwise. On the way in, far from the Sun, the object is heading at {pic.headingInDegrees.toFixed(2)} degrees. On the way out it is
             heading at {pic.headingOutDegrees.toFixed(2)} degrees. The difference is {pic.headingOutDegrees.toFixed(2)} − {pic.headingInDegrees.toFixed(2)} = {pic.bendDegrees.toFixed(2)} degrees, which is the bend, {n1(pic.bendDegrees)} degrees. (Part 3 shows how
-            the bend follows from the eccentricity of the path, {pic.eccentricity}.)
+            the bend follows from the eccentricity of the path, about {n2(pic.eccentricity)}.)
           </>
         ) : null
       }
@@ -363,7 +364,7 @@ export function pictureOneCaption(stage: number): ReactNode {
       whereFrom={
         <>
           <strong>Estimated from measurements:</strong> the path’s eccentricity, {pic.eccentricity}, and closest approach, {pic.closestApproachAu} AU, come from the published orbit of 3I/ATLAS, which astronomers worked out from many observations (read from Wikipedia’s orbit table, in part; the discovery
-          paper’s abstract, arXiv:2507.02757, gives 6.1 and 1.36). <strong>Calculated here:</strong> the curve of the path (the standard formula for a path under the Sun’s gravity alone), the directions and the bend. The planets’ circles are drawn at their average distances, for scale (standard
+          paper’s abstract, arXiv:2507.02757, gives 6.1 and 1.36). Different published fits of the orbit differ by a few thousandths in the eccentricity, so its third figure is less certain than the first two. <strong>Calculated here:</strong> the curve of the path (the standard formula for a path under the Sun’s gravity alone), the directions and the bend. The planets’ circles are drawn at their average distances, for scale (standard
           values; no source was read for them). <strong>Imagined for the question:</strong> nothing. Your guess is drawn in white and never changes the real picture.
         </>
       }
@@ -388,7 +389,7 @@ export function pictureTwoCaption(): ReactNode {
     },
     {
       look: 'the left end of the cyan line, against the right end.',
-      means: `near the Sun (${first.au} AU) the speed is ${n1(first.speedKmS)} km/s; far away it levels off at about ${n1(pic.speedFarAwayKmS)} km/s.`,
+      means: `near the Sun (${first.au.toFixed(1)} AU) the speed is ${n1(first.speedKmS)} km/s; far away it levels off at about ${n1(pic.speedFarAwayKmS)} km/s.`,
       matters: 'far from the Sun the pull has almost gone, so the speed no longer changes. That level is the “speed far away”.',
     },
     {
@@ -519,7 +520,7 @@ export function trialCaption(trial: TrialPicture): ReactNode {
     {
       look: 'the pink line, against the faint cyan line.',
       means: same
-        ? 'the two lie on top of each other, because these settings are those of 3I/ATLAS (the speed is the rounded 58 km/s, so they differ in the third decimal place).'
+        ? 'the two lie on top of each other, because these settings are those of 3I/ATLAS. The speed setting is the rounded 58 km/s (the real one is 57.99), so a number here can differ from the same number in Pictures 1 and 2 in the last digit shown.'
         : `the pink path is ${trial.bendVersusAtlas === 'more' ? 'more' : 'less'} bent than the real path of 3I/ATLAS: ${n1(trial.bendDegrees)} degrees against ${n1(trial.atlasBendDegrees)}.`,
       matters: 'changing one setting at a time shows what each does to the path. The tutor explains why.',
     },

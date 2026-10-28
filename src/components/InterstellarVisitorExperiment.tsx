@@ -166,7 +166,7 @@ export function InterstellarVisitorExperiment({ onComplete, onTutorComplete }: I
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>
-            Where this stands (as of October 2026): settled. In July 2025 astronomers found a comet, named 3I/ATLAS, that had come from outside our solar system, from the space between the stars. Its path round the Sun is known very precisely, and this experiment uses only that path. What the object is made of, and
+            Where this stands (as of October 2026): settled. In July 2025 astronomers found a comet, named 3I/ATLAS, that had come from outside our solar system, from the space between the stars. Its path round the Sun is known well, and this experiment uses only that path. What the object is made of, and
             how old it is, are separate questions that are still being studied, and they are not part of this experiment. The numbers, and where each comes from, are shown after you press Run, so that you can guess first.
           </strong>
         </p>
