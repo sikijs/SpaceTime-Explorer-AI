@@ -381,3 +381,143 @@ export function trialPicture(speedFarAwayKmS: number, closestApproachAu: number)
 
 export const TRIAL_DEFAULT_SPEED_KM_S = 58
 export const TRIAL_DEFAULT_CLOSEST_AU = 1.356
+
+// ---- Results (Step 6): the check-up, the steps from two numbers to the bend, and the three known interstellar objects ----
+
+export type Comparison = 'the same' | 'more' | 'less'
+
+// A value against a reference stated to a given precision (a step, in the unit of both): "the same" if both round to the same multiple of the step.
+// No cut-off is invented (CLAUDE.md §14): the step is the precision of the reference itself.
+export function compareToReference(value: number, reference: number, step: number): Comparison {
+  checkPositive(step, 'The step')
+  const rounded = Math.round(value / step) * step
+  const ref = Math.round(reference / step) * step
+  if (rounded === ref) return 'the same'
+  return rounded > ref ? 'more' : 'less'
+}
+
+const SECONDS_PER_HOUR = 3600
+
+export interface ResultsCheckUp {
+  // Speed far from the Sun, derived from e and q, against the published 58 km/s (to the nearest km/s).
+  speedFarAwayKmS: number
+  speedFarAwayPublishedKmS: number
+  speedFarAwayComparison: Comparison
+  // The eccentricity worked out from the rounded 58 km/s and the closest approach, against the published 6.14135 (to two decimal places).
+  eccentricityFromRounded: number
+  eccentricityPublished: number
+  eccentricityComparison: Comparison
+  // Speed at closest approach against NASA's (miles an hour, to the nearest thousand) and ESA's (km/h, to the nearest ten thousand).
+  speedAtClosestKmS: number
+  speedAtClosestMph: number
+  nasaMph: number
+  nasaKmS: number
+  nasaComparison: Comparison
+  speedAtClosestKmH: number
+  esaKmH: number
+  esaKmS: number
+  esaComparison: Comparison
+  // The escape speed at closest approach, and how many times the object's speed is that.
+  escapeSpeedAtClosestKmS: number
+  speedOverEscape: number
+  // The total bend against the bends of the two earlier interstellar objects, calculated the same way.
+  bendDegrees: number
+  oumuamuaBendDegrees: number
+  borisovBendDegrees: number
+  bendVersusOumuamua: Comparison
+  bendVersusBorisov: Comparison
+}
+
+export function resultsCheckUp(): ResultsCheckUp {
+  const q = atlasClosestApproachM()
+  const vq = atlasSpeedAtClosestApproach()
+  const bend = atlasBendDegrees()
+  const mph = (vq * SECONDS_PER_HOUR) / 1609.344
+  const kmh = (vq * SECONDS_PER_HOUR) / 1e3
+  return {
+    speedFarAwayKmS: atlasSpeedFarAway() / 1e3,
+    speedFarAwayPublishedKmS: ATLAS_3I.publishedSpeedFarAwayKmS,
+    speedFarAwayComparison: compareToReference(atlasSpeedFarAway() / 1e3, ATLAS_3I.publishedSpeedFarAwayKmS, 1),
+    eccentricityFromRounded: eccentricityFrom(ATLAS_3I.publishedSpeedFarAwayKmS * 1e3, q),
+    eccentricityPublished: ATLAS_3I.eccentricity,
+    eccentricityComparison: compareToReference(eccentricityFrom(ATLAS_3I.publishedSpeedFarAwayKmS * 1e3, q), ATLAS_3I.eccentricity, 0.01),
+    speedAtClosestKmS: vq / 1e3,
+    speedAtClosestMph: mph,
+    nasaMph: NASA_SPEED_AT_CLOSEST_MPH,
+    nasaKmS: nasaSpeedAtClosestKmS(),
+    nasaComparison: compareToReference(mph, NASA_SPEED_AT_CLOSEST_MPH, 1000),
+    speedAtClosestKmH: kmh,
+    esaKmH: ESA_SPEED_AT_CLOSEST_KM_H,
+    esaKmS: esaSpeedAtClosestKmS(),
+    esaComparison: compareToReference(kmh, ESA_SPEED_AT_CLOSEST_KM_H, 10000),
+    escapeSpeedAtClosestKmS: atlasEscapeSpeedAtClosestApproach() / 1e3,
+    speedOverEscape: atlasSpeedOverEscape(),
+    bendDegrees: bend,
+    oumuamuaBendDegrees: bendDegrees(OUMUAMUA_1I.eccentricity),
+    borisovBendDegrees: bendDegrees(BORISOV_2I.eccentricity),
+    bendVersusOumuamua: bend > bendDegrees(OUMUAMUA_1I.eccentricity) ? 'more' : 'less',
+    bendVersusBorisov: bend > bendDegrees(BORISOV_2I.eccentricity) ? 'more' : 'less',
+  }
+}
+
+export interface ExampleSteps {
+  gm: number
+  closestApproachAu: number
+  closestApproachMillionKm: number
+  eccentricity: number
+  speedFarAwayKmS: number
+  escapeSpeedKmS: number
+  speedAtClosestKmS: number
+  // The squares used in "the speed at closest approach is the square root of (speed far away squared plus escape speed squared)", in (km/s) squared.
+  speedFarAwaySquared: number
+  escapeSpeedSquared: number
+  sumOfSquares: number
+  oneOverEccentricity: number
+  halfBendDegrees: number
+  bendDegrees: number
+  headingInDegrees: number
+  headingOutDegrees: number
+  asymptoteAngleDegrees: number
+}
+
+export function exampleSteps(): ExampleSteps {
+  const e = ATLAS_3I.eccentricity
+  const vFar = atlasSpeedFarAway() / 1e3
+  const vEsc = atlasEscapeSpeedAtClosestApproach() / 1e3
+  const pic = pictureOne()
+  return {
+    gm: GM_SUN,
+    closestApproachAu: ATLAS_3I.closestApproachAu,
+    closestApproachMillionKm: atlasClosestApproachM() / 1e9,
+    eccentricity: e,
+    speedFarAwayKmS: vFar,
+    escapeSpeedKmS: vEsc,
+    speedAtClosestKmS: atlasSpeedAtClosestApproach() / 1e3,
+    speedFarAwaySquared: vFar ** 2,
+    escapeSpeedSquared: vEsc ** 2,
+    sumOfSquares: vFar ** 2 + vEsc ** 2,
+    oneOverEccentricity: 1 / e,
+    halfBendDegrees: Math.asin(1 / e) * RAD_TO_DEG,
+    bendDegrees: bendDegrees(e),
+    headingInDegrees: pic.headingInDegrees,
+    headingOutDegrees: pic.headingOutDegrees,
+    asymptoteAngleDegrees: asymptoteAngleDegrees(e),
+  }
+}
+
+export interface KnownObject {
+  name: string
+  year: number
+  eccentricity: number
+  speedFarAwayKmS: number
+  bendDegrees: number
+}
+
+// The three known interstellar objects in order of discovery. The eccentricity and speed of the first two are rounded values from the Wikipedia page; 3I/ATLAS's are the published ones.
+export function knownObjects(): KnownObject[] {
+  return [
+    { name: OUMUAMUA_1I.name, year: 2017, eccentricity: OUMUAMUA_1I.eccentricity, speedFarAwayKmS: OUMUAMUA_1I.publishedSpeedFarAwayKmS, bendDegrees: bendDegrees(OUMUAMUA_1I.eccentricity) },
+    { name: BORISOV_2I.name, year: 2019, eccentricity: BORISOV_2I.eccentricity, speedFarAwayKmS: BORISOV_2I.publishedSpeedFarAwayKmS, bendDegrees: bendDegrees(BORISOV_2I.eccentricity) },
+    { name: ATLAS_3I.name, year: 2025, eccentricity: ATLAS_3I.eccentricity, speedFarAwayKmS: ATLAS_3I.publishedSpeedFarAwayKmS, bendDegrees: atlasBendDegrees() },
+  ]
+}

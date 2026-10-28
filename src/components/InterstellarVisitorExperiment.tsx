@@ -17,6 +17,7 @@ import {
 } from '../physics/interstellarVisitor'
 import type { BendChoiceId, SpeedChoiceId } from '../physics/interstellarVisitor'
 import { EARTH } from '../physics/fastestSpacecraft'
+import { InterstellarVisitorResults } from './InterstellarVisitorResults'
 import { PictureOne, PictureTwo, TRIAL_CLOSEST_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './InterstellarVisitorPictures'
 
 // Frontier and Beyond, Experiment 24 (docs/experiments/frontier-and-beyond/24-a-visitor-from-another-star.md).
@@ -310,7 +311,7 @@ export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisito
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below is Part 2, where you can try other speeds and closest approaches. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other speeds and closest approaches, and Part 3, the results. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -377,6 +378,8 @@ export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisito
               {trialCaption(trial)}
             </div>
           )}
+
+          {done && <InterstellarVisitorResults bendGuess={bendGuess} speedGuess={speedGuess} />}
         </div>
       </div>
     </div>

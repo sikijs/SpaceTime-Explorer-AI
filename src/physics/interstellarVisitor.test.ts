@@ -45,6 +45,10 @@ import {
   trialPicture,
   TRIAL_DEFAULT_SPEED_KM_S,
   TRIAL_DEFAULT_CLOSEST_AU,
+  compareToReference,
+  resultsCheckUp,
+  exampleSteps,
+  knownObjects,
 } from './interstellarVisitor'
 
 // Constants written out again here, separately from the module (Test 1): the IAU's GM of the Sun and the astronomical unit.
@@ -394,5 +398,71 @@ describe('Drawing A: a trial path (Step 5)', () => {
     expect(a.bendDegrees).toBe(o.bendDegrees)
     bendGuessResult('b2')
     expect(JSON.stringify(trialPicture(26, 3))).toBe(JSON.stringify(a))
+  })
+})
+
+describe('the results (Step 6)', () => {
+  it('compareToReference says "the same" only when both round to the same multiple of the reference\'s own precision', () => {
+    expect(compareToReference(68.34, 68, 1)).toBe('the same')
+    expect(compareToReference(68.6, 68, 1)).toBe('more')
+    expect(compareToReference(67.4, 68, 1)).toBe('less')
+    expect(compareToReference(152874, 153000, 1000)).toBe('the same')
+    expect(compareToReference(246028, 250000, 10000)).toBe('the same')
+    expect(compareToReference(6.1437, 6.14135, 0.01)).toBe('the same')
+    expect(compareToReference(6.1437, 6.14135, 0.0001)).toBe('more')
+    expect(() => compareToReference(1, 1, 0)).toThrow(RangeError)
+  })
+  it('the check-up reproduces the pictures and agrees with the published numbers at their own precision', () => {
+    const c = resultsCheckUp()
+    expect(c.speedFarAwayKmS).toBeCloseTo(57.99, 2)
+    expect(c.speedFarAwayComparison).toBe('the same')
+    expect(c.eccentricityFromRounded).toBeCloseTo(6.1437, 3)
+    expect(c.eccentricityComparison).toBe('the same')
+    expect(c.speedAtClosestKmS).toBeCloseTo(pictureTwo().speedAtClosestKmS, 10)
+    expect(c.speedAtClosestMph).toBeCloseTo(152874, -1)
+    expect(c.nasaComparison).toBe('the same')
+    expect(c.speedAtClosestKmH).toBeCloseTo(246028, -1)
+    expect(c.esaComparison).toBe('the same')
+    expect(c.nasaKmS).toBeCloseTo(68.4, 1)
+    expect(c.esaKmS).toBeCloseTo(69.44, 1)
+    expect(c.escapeSpeedAtClosestKmS).toBeCloseTo(36.17, 2)
+    expect(c.speedOverEscape).toBeCloseTo(1.89, 2)
+    expect(c.bendDegrees).toBeCloseTo(18.74, 2)
+    expect(c.bendDegrees).toBeCloseTo(pictureOne().bendDegrees, 10)
+  })
+  it('the bend is less than ʻOumuamua\'s and Borisov\'s, worked out the same way', () => {
+    const c = resultsCheckUp()
+    expect(c.oumuamuaBendDegrees).toBeCloseTo(112.9, 1)
+    expect(c.borisovBendDegrees).toBeCloseTo(34.2, 1)
+    expect(c.bendVersusOumuamua).toBe('less')
+    expect(c.bendVersusBorisov).toBe('less')
+  })
+  it('the example steps chain from the two numbers to the bend and agree with the pictures', () => {
+    const s = exampleSteps()
+    expect(s.closestApproachMillionKm).toBeCloseTo(202.9, 1)
+    expect(s.speedFarAwayKmS).toBeCloseTo(atlasSpeedFarAway() / 1e3, 10)
+    // The speed at closest approach is the square root of the sum of the squares of the speed far away and the escape speed there.
+    expect(Math.sqrt(s.sumOfSquares)).toBeCloseTo(s.speedAtClosestKmS, 8)
+    expect(s.sumOfSquares).toBeCloseTo(s.speedFarAwaySquared + s.escapeSpeedSquared, 8)
+    expect(s.oneOverEccentricity).toBeCloseTo(0.1628, 4)
+    expect(s.halfBendDegrees).toBeCloseTo(9.371, 3)
+    expect(2 * s.halfBendDegrees).toBeCloseTo(s.bendDegrees, 10)
+    expect(s.headingOutDegrees - s.headingInDegrees).toBeCloseTo(s.bendDegrees, 8)
+    expect(2 * s.asymptoteAngleDegrees).toBeCloseTo(180 + s.bendDegrees, 8)
+    expect(s.gm).toBe(GM)
+  })
+  it('the three known objects are in order of discovery, and a higher eccentricity means a smaller bend', () => {
+    const k = knownObjects()
+    expect(k.map((o) => o.year)).toEqual([2017, 2019, 2025])
+    expect(k.map((o) => o.eccentricity)).toEqual([1.2, 3.4, 6.14135])
+    expect(k[2].bendDegrees).toBeCloseTo(atlasBendDegrees(), 10)
+    expect(k[0].bendDegrees).toBeGreaterThan(k[1].bendDegrees)
+    expect(k[1].bendDegrees).toBeGreaterThan(k[2].bendDegrees)
+  })
+  it('does not depend on a guess', () => {
+    const before = JSON.stringify([resultsCheckUp(), exampleSteps(), knownObjects()])
+    bendGuessResult('b2')
+    speedGuessMarker('v230')
+    expect(JSON.stringify([resultsCheckUp(), exampleSteps(), knownObjects()])).toBe(before)
   })
 })
