@@ -46,6 +46,15 @@ import {
   trialPicture,
   TRIAL_DEFAULT_SIDEWAYS_KM_S,
   TRIAL_DEFAULT_MASS_SOLAR,
+  MONTE_CARLO_SAMPLES_2026_PER_RUN,
+  MEDIAN_MERGER_TIME_2025_GYR,
+  PROPER_MOTION_2025,
+  PROPER_MOTION_2026,
+  M31_CONCENTRATION_2025,
+  M31_CONCENTRATION_2026,
+  compare,
+  exampleSteps,
+  resultsCheckUp,
 } from './localGroupCollision'
 
 // Constants written out again here, separately from the module (SI units): the Sun's GM, the kiloparsec and the Gyr.
@@ -404,5 +413,68 @@ describe('the controls: a trial pair (Step 5)', () => {
     expect(trialPicture(47, 2.3e12).reference.sidewaysKmS).toBe(46.7)
     expect(trialPicture(47, 2.3e12).straightFallGyr).toBeCloseTo(3.81, 2)
     expect(trialPicture(47, 1.8e12).straightFallGyr).toBeCloseTo(4.05, 2)
+  })
+})
+
+describe('the results (Step 6)', () => {
+  it('holds the two studies\' further numbers as listed (proper motions, concentrations, median merger time, trial counts, the 64.7 to 100 range)', () => {
+    expect(PROPER_MOTION_2025).toEqual({ ra: 48.9, raPlusMinus: 10.5, dec: -36.9, decPlusMinus: 8.1 })
+    expect(PROPER_MOTION_2026).toEqual({ ra: 45.9, raPlusMinus: 8.1, dec: -20.5, decPlusMinus: 6.6 })
+    expect(M31_CONCENTRATION_2025).toEqual({ value: 10, plusMinus: 2 })
+    expect(M31_CONCENTRATION_2026).toEqual({ value: 15, plusMinus: 2.5 })
+    expect(MEDIAN_MERGER_TIME_2025_GYR).toBe(7.6)
+    expect(MONTE_CARLO_SAMPLES_2026_PER_RUN).toBe(10000)
+    expect(PUBLISHED_2026.percentRangeLow).toBe(64.7)
+    expect(PUBLISHED_2026.percentRangeHigh).toBe(100)
+  })
+  it('compare says more, less or the same to the given step', () => {
+    expect(compare(5, 3, 0.1)).toBe('more')
+    expect(compare(3, 5, 0.1)).toBe('less')
+    expect(compare(3.04, 3.0, 0.1)).toBe('the same')
+    expect(compare(3.4, 3.0, 0.1)).toBe('more')
+    expect(() => compare(1, 1, 0)).toThrow(RangeError)
+  })
+  it('the steps give the same first pass, time and shape as the orbit, with the sums worked separately', () => {
+    const s = exampleSteps()
+    const o = orbit(TOTAL_MASS, 46.7)
+    expect(s.firstPassKpc).toBeCloseTo(o.firstPassKpc, 8)
+    expect(s.eccentricity).toBeCloseTo(o.eccentricity, 10)
+    expect(s.firstPassGyr).toBeCloseTo(o.firstPassGyr as number, 10)
+    // Separately: mu = 4.30092e-6 x 2.3e12 = 9.89211e6; potential = mu / 761.03 = 12,998; half the speeds squared = (109^2 + 46.7^2) / 2 = 7,030.4.
+    expect(s.mu).toBeCloseTo(9.89211e6, -2)
+    expect(s.potential).toBeCloseTo(12998, -1)
+    expect(s.halfSpeedSquared).toBeCloseTo((109 ** 2 + 46.7 ** 2) / 2, 8)
+    expect(s.energy).toBeCloseTo(s.halfSpeedSquared - s.potential, 8)
+    expect(s.energy).toBeLessThan(0)
+    expect(s.angularMomentum).toBeCloseTo(761.03 * 46.7, 0)
+    expect(s.p).toBeCloseTo(127.7, 0)
+    expect(s.eccentricity).toBeGreaterThan(0)
+    expect(s.eccentricity).toBeLessThan(1)
+    expect(s.p / (1 + s.eccentricity)).toBeCloseTo(66.5, 0)
+  })
+  it('the check-up: a straight fall is less than distance over speed (0.56), the first passes are 3.3 and 9.2 times the ring, the time is before the 2026 median, 26.0 km/s is inside the give-or-take, and the unbound speed is above both studies\' speeds', () => {
+    const c = resultsCheckUp()
+    expect(c.straightFallGyr).toBeCloseTo(3.81, 2)
+    expect(c.constantSpeedGyr).toBeCloseTo(6.83, 2)
+    expect(c.fallVersusConstant).toBe('less')
+    expect(c.fallRatio).toBeCloseTo(0.558, 3)
+    expect(c.firstPass2026Kpc).toBeCloseTo(66.5, 0)
+    expect(c.firstPass2026Gyr).toBeCloseTo(4.2, 1)
+    expect(c.firstPass2025Kpc).toBeCloseTo(183.2, 0)
+    expect(c.pass2026Versus).toBe('more')
+    expect(c.pass2026Ratio).toBeCloseTo(3.33, 1)
+    expect(c.pass2025Versus).toBe('more')
+    expect(c.pass2025Ratio).toBeCloseTo(9.16, 1)
+    expect(c.medianMergerGyr).toBe(6.5)
+    expect(c.medianLowGyr).toBeCloseTo(5.0, 10)
+    expect(c.medianHighGyr).toBeCloseTo(7.8, 10)
+    expect(c.timeVersusMedian).toBe('less')
+    expect(c.timeGapGyr).toBeCloseTo(2.3, 1)
+    expect(c.timeBelowLowEnd).toBe(true)
+    expect(c.sidewaysFor20Kpc).toBeCloseTo(25.96, 1)
+    expect(c.sidewaysFor20InRange).toBe(true)
+    expect(c.rangeLowKmS).toBeCloseTo(22.7, 10)
+    expect(c.unboundKmS).toBeCloseTo(118.81, 1)
+    expect(c.unboundVersusStudies).toBe('more')
   })
 })

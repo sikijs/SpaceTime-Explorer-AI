@@ -43,14 +43,22 @@ export function sidewaysRange2026(): { low: number; high: number } {
 }
 // The approach speed from converting the 2026 paper's own inputs (its line-of-sight speed and the solar motion it adopts), 114.4 km/s, mentioned on the page as a caveat; the model uses 109 (the owner's decision, 2026-10-28).
 export const APPROACH_SPEED_ALTERNATIVE_KM_S = 114
-// The 2025 study's number of Monte Carlo trial runs.
+// The number of Monte Carlo simulations ESA's release gives for the 2025 study (the paper itself says every quoted probability uses at least 2500 samples), and the samples per run of the 2026 study.
 export const MONTE_CARLO_TRIALS_2025 = 100000
+export const MONTE_CARLO_SAMPLES_2026_PER_RUN = 10000
 // Both studies call two galaxies merged when they come within this distance, in kpc.
 export const MERGER_DISTANCE_KPC = 20
 // Published merger probabilities and times (percent; billions of years). 2025: about 50 percent within 10 Gyr that there is NO merger (44, 63, 37 and 54 percent merged for the two-body,
 // M33, LMC and four-body models); 2026: 90 percent merged, a median merger time of 6.5 (+1.3, -1.5) Gyr.
 export const PUBLISHED_2025 = { mergerPercentWithin10Gyr: 50, twoBodyPercent: 44, withM33Percent: 63, withLmcPercent: 37, fourBodyPercent: 54, headOnPercentIn4To5Gyr: 2 } as const
-export const PUBLISHED_2026 = { mergerPercent: 90, medianMergerTimeGyr: 6.5, medianPlusGyr: 1.3, medianMinusGyr: 1.5 } as const
+export const PUBLISHED_2026 = { mergerPercent: 90, medianMergerTimeGyr: 6.5, medianPlusGyr: 1.3, medianMinusGyr: 1.5, percentRangeLow: 64.7, percentRangeHigh: 100 } as const
+// The 2025 paper's median merger time of the runs that merge, in its fiducial (four-body) model, in Gyr.
+export const MEDIAN_MERGER_TIME_2025_GYR = 7.6
+// Andromeda's proper motion in each study, in millionths of an arcsecond a year (right ascension and declination, each with its give-or-take), and the halo concentration each adopts for Andromeda.
+export const PROPER_MOTION_2025 = { ra: 48.9, raPlusMinus: 10.5, dec: -36.9, decPlusMinus: 8.1 } as const
+export const PROPER_MOTION_2026 = { ra: 45.9, raPlusMinus: 8.1, dec: -20.5, decPlusMinus: 6.6 } as const
+export const M31_CONCENTRATION_2025 = { value: 10, plusMinus: 2 } as const
+export const M31_CONCENTRATION_2026 = { value: 15, plusMinus: 2.5 } as const
 
 // ---- The two-body orbit ----
 
@@ -347,5 +355,110 @@ export function trialPicture(sidewaysKmS: number, massSolar: number): TrialPictu
     unboundKmS: unboundSidewaysKmS(massSolar),
     insideRing: o.firstPassKpc < MERGER_DISTANCE_KPC,
     reference: orbitTrack(SIDEWAYS_SPEED_2026_KM_S),
+  }
+}
+
+// ---- The results (Step 6) ----
+export type Comparison = 'the same' | 'more' | 'less'
+// More or less than a reference, or "the same" when they agree to the given step.
+export function compare(value: number, reference: number, step: number): Comparison {
+  checkPositive(step, 'The step')
+  if (Math.round(value / step) === Math.round(reference / step)) return 'the same'
+  return value > reference ? 'more' : 'less'
+}
+
+// The steps from the state now to the first pass (Table 2), for the 2026 study's sideways speed.
+export interface ExampleSteps {
+  distanceKpc: number
+  approachKmS: number
+  sidewaysKmS: number
+  totalMass: number
+  mu: number
+  halfSpeedSquared: number
+  potential: number
+  energy: number
+  angularMomentum: number
+  p: number
+  eccentricity: number
+  firstPassKpc: number
+  firstPassGyr: number
+}
+export function exampleSteps(): ExampleSteps {
+  const r0 = distanceKpc()
+  const vr = APPROACH_SPEED_KM_S
+  const vt = SIDEWAYS_SPEED_2026_KM_S
+  const mu = G_KPC * TOTAL_MASS
+  const halfSpeedSquared = (vr * vr + vt * vt) / 2
+  const potential = mu / r0
+  const energy = halfSpeedSquared - potential
+  const L = r0 * vt
+  const p = (L * L) / mu
+  const e = Math.sqrt(1 + (2 * energy * L * L) / (mu * mu))
+  const o = orbit(TOTAL_MASS, vt)
+  return { distanceKpc: r0, approachKmS: vr, sidewaysKmS: vt, totalMass: TOTAL_MASS, mu, halfSpeedSquared, potential, energy, angularMomentum: L, p, eccentricity: e, firstPassKpc: p / (1 + e), firstPassGyr: o.firstPassGyr as number }
+}
+
+// The check-up (Table 1): what this page calculates, beside a published number or a comparison the page sets.
+export interface CheckUp {
+  straightFallGyr: number
+  constantSpeedGyr: number
+  fallVersusConstant: Comparison
+  fallRatio: number
+  firstPass2026Kpc: number
+  firstPass2026Gyr: number
+  firstPass2025Kpc: number
+  ringKpc: number
+  pass2026Versus: Comparison
+  pass2026Ratio: number
+  pass2025Versus: Comparison
+  pass2025Ratio: number
+  medianMergerGyr: number
+  medianLowGyr: number
+  medianHighGyr: number
+  timeVersusMedian: Comparison
+  timeGapGyr: number
+  timeBelowLowEnd: boolean
+  sidewaysFor20Kpc: number
+  rangeLowKmS: number
+  rangeHighKmS: number
+  sidewaysFor20InRange: boolean
+  unboundKmS: number
+  unboundVersusStudies: Comparison
+}
+export function resultsCheckUp(): CheckUp {
+  const o26 = orbit(TOTAL_MASS, SIDEWAYS_SPEED_2026_KM_S)
+  const o25 = orbit(TOTAL_MASS, SIDEWAYS_SPEED_2025_KM_S)
+  const fall = straightFallGyr()
+  const constant = constantSpeedGyr()
+  const range = sidewaysRange2026()
+  const side20 = sidewaysForFirstPass(MERGER_DISTANCE_KPC)
+  const unbound = unboundSidewaysKmS()
+  const median = PUBLISHED_2026.medianMergerTimeGyr
+  const low = median - PUBLISHED_2026.medianMinusGyr
+  return {
+    straightFallGyr: fall,
+    constantSpeedGyr: constant,
+    fallVersusConstant: compare(fall, constant, 0.01),
+    fallRatio: fall / constant,
+    firstPass2026Kpc: o26.firstPassKpc,
+    firstPass2026Gyr: o26.firstPassGyr as number,
+    firstPass2025Kpc: o25.firstPassKpc,
+    ringKpc: MERGER_DISTANCE_KPC,
+    pass2026Versus: compare(o26.firstPassKpc, MERGER_DISTANCE_KPC, 0.1),
+    pass2026Ratio: o26.firstPassKpc / MERGER_DISTANCE_KPC,
+    pass2025Versus: compare(o25.firstPassKpc, MERGER_DISTANCE_KPC, 0.1),
+    pass2025Ratio: o25.firstPassKpc / MERGER_DISTANCE_KPC,
+    medianMergerGyr: median,
+    medianLowGyr: low,
+    medianHighGyr: median + PUBLISHED_2026.medianPlusGyr,
+    timeVersusMedian: compare(o26.firstPassGyr as number, median, 0.1),
+    timeGapGyr: median - (o26.firstPassGyr as number),
+    timeBelowLowEnd: (o26.firstPassGyr as number) < low,
+    sidewaysFor20Kpc: side20,
+    rangeLowKmS: range.low,
+    rangeHighKmS: range.high,
+    sidewaysFor20InRange: side20 >= range.low && side20 <= range.high,
+    unboundKmS: unbound,
+    unboundVersusStudies: compare(unbound, Math.max(SIDEWAYS_SPEED_2025_KM_S, SIDEWAYS_SPEED_2026_KM_S), 0.1),
   }
 }

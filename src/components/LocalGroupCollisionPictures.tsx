@@ -461,7 +461,7 @@ export function pictureTwoCaption(stage: number): ReactNode {
         <>
           <strong>Measured by others:</strong> the two sideways speeds, {pic.study2025.sidewaysKmS} km/s (the 2025 study’s “most likely value”) and {n1(pic.study2026.sidewaysKmS)} ± 24.0 km/s (the 2026 study’s), as the studies found them; neither sentence names the frame it is given in. The distance, the masses and the{' '}
           approach speed are those of Picture 1. The {pic.ringKpc} kpc is the studies’ own definition of a merger. <strong>Calculated here:</strong> every path, first pass and time, for two points that pull on each other and nothing else: no other galaxies, no halo size, no dynamical friction. The studies’
-          own results come from 100,000 trial runs that include the other galaxies, so the numbers here are not theirs. <strong>Imagined for the question:</strong> the straight fall. Your guess is drawn in white and never changes the real picture.
+          own results come from many trial runs that include the other galaxies (ESA gives 100,000 for the 2025 study, and the 2026 study used 10,000 in each set-up), so the numbers here are not theirs. <strong>Imagined for the question:</strong> the straight fall. Your guess is drawn in white and never changes the real picture.
         </>
       }
     />

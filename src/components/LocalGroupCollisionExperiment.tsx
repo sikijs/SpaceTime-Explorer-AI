@@ -5,6 +5,7 @@ import {
   APPROACH_SPEED_KM_S,
   FALL_CHOICES,
   MERGER_DISTANCE_KPC,
+  MONTE_CARLO_SAMPLES_2026_PER_RUN,
   MONTE_CARLO_TRIALS_2025,
   PASS_CHOICES,
   PUBLISHED_2025,
@@ -22,6 +23,7 @@ import {
   trialPicture,
 } from '../physics/localGroupCollision'
 import type { FallChoiceId, PassChoiceId } from '../physics/localGroupCollision'
+import { LocalGroupCollisionResults } from './LocalGroupCollisionResults'
 import { PictureOne, PictureTwo, TRIAL_MASS_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './LocalGroupCollisionPictures'
 
 // Frontier and Beyond, Experiment 25 (docs/experiments/frontier-and-beyond/25-will-the-milky-way-and-andromeda-collide.md).
@@ -153,7 +155,7 @@ export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisio
               <strong>Dynamical friction:</strong> a slow drag a galaxy feels as it moves through another galaxy’s halo. It takes energy from the orbit and can pull the two together.
             </li>
             <li>
-              <strong>Monte Carlo:</strong> a method that repeats a calculation many times with the uncertain numbers drawn at random. The studies ran {MONTE_CARLO_TRIALS_2025.toLocaleString('en-US')} trials.
+              <strong>Monte Carlo:</strong> a method that repeats a calculation many times with the uncertain numbers drawn at random. ESA says the 2025 team ran {MONTE_CARLO_TRIALS_2025.toLocaleString('en-US')} such simulations, and the 2026 study used {MONTE_CARLO_SAMPLES_2026_PER_RUN.toLocaleString('en-US')} in each set-up.
             </li>
             <li>
               <strong>Give-or-take:</strong> how far a measured number might be off. {sideways2026} ± {plusMinus} km/s means the true value is probably between about {lowRange} and about {highRange}.
@@ -166,7 +168,7 @@ export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisio
           </p>
 
           <p style={paragraph}>
-            <strong>What the two studies did.</strong> Both studies used the same kind of method, and mostly the same masses. They differ mainly in Andromeda’s sideways speed. In June 2025 Sawala and others (<em>Nature Astronomy</em>) found about{' '}
+            <strong>What the two studies did.</strong> Both studies used the same kind of method, and mostly the same masses. The 2026 paper’s own tests point to Andromeda’s sideways speed as the biggest change between them. In June 2025 Sawala and others (<em>Nature Astronomy</em>) found about{' '}
             {SIDEWAYS_SPEED_2025_KM_S} km/s and about a {PUBLISHED_2025.mergerPercentWithin10Gyr} percent chance of a merger within 10 billion years. In March 2026 Wu and others (accepted by <em>The Astrophysical Journal Letters</em>) used newer Gaia
             measurements and found {sideways2026} ± {plusMinus} km/s and about {PUBLISHED_2026.mergerPercent} percent. Neither study’s sideways-speed paragraph names its frame, so this page says only “the sideways speed the study found”.
           </p>
@@ -359,8 +361,10 @@ export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisio
             </div>
           )}
 
-          {/* Temporary note: removed in Step 6, when the results and the tutor are built. */}
-          {done && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The results and the tutor are not built yet.</p>}
+          {done && <LocalGroupCollisionResults fallGuess={fallGuess} passGuess={passGuess} />}
+
+          {/* Temporary note: removed in Step 7, when the tutor is built. */}
+          {done && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The tutor is not built yet.</p>}
         </div>
       </div>
     </div>
