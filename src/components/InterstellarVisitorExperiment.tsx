@@ -22,12 +22,12 @@ import { InterstellarVisitorTutor } from './InterstellarVisitorTutor'
 import { PictureOne, PictureTwo, TRIAL_CLOSEST_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './InterstellarVisitorPictures'
 
 // Frontier and Beyond, Experiment 24 (docs/experiments/frontier-and-beyond/24-a-visitor-from-another-star.md).
-// STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed
-// "Words and formulas" panel, the "Want to know more?" links and Part 1 with the two predictions and the five-stage run (the pictures are in `InterstellarVisitorPictures.tsx`). It has no controls, results, tutor or
-// summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval
-// (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how much the Sun bends the path of 3I/ATLAS, how fast it was going at its closest approach, or any other number that
-// the two predictions ask for (CLAUDE.md §12). The pages that give those numbers away (NASA's and ESA's pages on 3I/ATLAS both give its speed at closest approach) are listed only after the
-// run, in a later step. The introduction has no computed number in it, so it needs nothing from the physics module (CLAUDE.md §9).
+// This file has the title, the status line, the introduction, the collapsed "Words and formulas" panel, the "Want to know more?" links, Part 1 (the two predictions and the five-stage run), Part 2 (the two controls
+// and Drawing A), Part 3 (the results, in `InterstellarVisitorResults.tsx`, which also lists the papers and pages after the run) and Part 4 (the tutor, in `InterstellarVisitorTutor.tsx`). The pictures are in
+// `InterstellarVisitorPictures.tsx` and the chapter summary and "What's next" are in `App.tsx`. All wording is written to the standard of §29 and was approved by the owner line by line (CLAUDE.md §28.1).
+// Nothing before the run says how much the Sun bends the path of 3I/ATLAS, how fast it was going at its closest approach, or any other number that the two predictions ask for (CLAUDE.md §12). The pages that
+// give those numbers away (NASA's and ESA's pages on 3I/ATLAS both give its speed at closest approach) are listed only after the run. The only numbers in the introduction are the escape speeds of the Earth's
+// and Jupiter's distances and the Earth's orbital speed, which come from the physics module (CLAUDE.md §9).
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -312,7 +312,7 @@ export function InterstellarVisitorExperiment({ onComplete, onTutorComplete }: I
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other speeds and closest approaches, Part 3, the results, and Part 4, the tutor. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below are Part 2, where you can try other speeds and closest approaches, Part 3, the results, and Part 4, the tutor.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
