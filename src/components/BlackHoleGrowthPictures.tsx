@@ -276,6 +276,8 @@ export function PictureTwo({ seedGuess }: { seedGuess: SeedChoiceId | null }) {
       />
 
       <line x1={x0} y1={rulerY} x2={x1} y2={rulerY} stroke={MUTED_COLOR} strokeWidth={1} />
+      {/* Drawn before the tick labels, so that a label (with its dark outline) stays readable when the guess falls on a tick. */}
+      {guess && seedGuess && <GuessMark x={rx(guess.position)} rulerY={rulerY} label={`YOUR GUESS: ${guessLabel}`} boxW={330} />}
       {MASS_TICKS_SOLAR.map((m) => (
         <g key={m}>
           <line x1={rx(massRulerPosition(m))} y1={rulerY} x2={rx(massRulerPosition(m))} y2={rulerY + 5} stroke={MUTED_COLOR} />
@@ -291,7 +293,6 @@ export function PictureTwo({ seedGuess }: { seedGuess: SeedChoiceId | null }) {
       <circle cx={rx(pic.stellarSeedPosition)} cy={rulerY} r={6} fill={BLACK_HOLE_COLOR} stroke="#0b1020" strokeWidth={1.5} />
       <circle cx={rx(pic.smallestSeedPosition)} cy={rulerY} r={6} fill={CALC_COLOR} stroke="#0b1020" strokeWidth={1.5} />
       <circle cx={rx(pic.targetPosition)} cy={rulerY} r={6} fill={MEASURED_COLOR} stroke="#0b1020" strokeWidth={1.5} />
-      {guess && seedGuess && <GuessMark x={rx(guess.position)} rulerY={rulerY} label={`YOUR GUESS: ${guessLabel}`} boxW={330} />}
     </svg>
   )
 }

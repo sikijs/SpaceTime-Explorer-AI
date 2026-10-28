@@ -993,7 +993,6 @@ const chapters: Chapter[] = [
     title: 'How fast can a black hole grow? (the little red dots)',
     group: 'Frontier and Beyond',
     Component: BlackHoleGrowthExperiment,
-    // Placeholder: the chapter summary is a later step (CLAUDE.md §6).
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleGrowthSummary(),
     next: 'None yet, because Experiment 24 has no approved specification.',
