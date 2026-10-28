@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   APPROACH_SPEED_ALTERNATIVE_KM_S,
@@ -17,9 +17,10 @@ import {
   sidewaysRange2026,
 } from '../physics/localGroupCollision'
 import type { FallChoiceId, PassChoiceId } from '../physics/localGroupCollision'
+import { PictureOne, PictureTwo, pictureOneCaption, pictureTwoCaption } from './LocalGroupCollisionPictures'
 
 // Frontier and Beyond, Experiment 25 (docs/experiments/frontier-and-beyond/25-will-the-milky-way-and-andromeda-collide.md).
-// Steps 2 and 3: the title, the status line, the introduction, the "Want to know more?" links and the two predictions. The run, the controls, the results and the tutor come in later steps.
+// Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 and 2 (in `LocalGroupCollisionPictures.tsx`). The controls, the results and the tutor come in later steps.
 // The wording is the owner's draft of 2026-10-28, approved line by line (CLAUDE.md §28.1), with the one correction listed in the Implementation Notes. Every number comes from the physics module (CLAUDE.md §9).
 // Nothing here says how long a straight fall takes, how close the first pass is, or the date the old textbook gave for the collision, because the two predictions ask for them (CLAUDE.md §12).
 // The pages that give those dates away are listed only after the run (a later step).
@@ -35,14 +36,54 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 const paragraph = { marginTop: 0, marginBottom: '0.5rem' } as const
 const list = { margin: '0.25rem 0 0.75rem', paddingLeft: '1.25rem' } as const
 
+// ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'The Milky Way and Andromeda', 'The approach', 'A straight fall', 'The sideways loop', 'The two studies’ values']
+const STAGE_LINES = [
+  '',
+  'The blue dot is the Milky Way and the violet dot is Andromeda. The dotted line is the distance between them.',
+  'The violet arrow is Andromeda’s approach speed, straight towards the Milky Way.',
+  'The ruler shows how long a straight fall would take (pink) and how long it would take if the speed stayed the same (violet). Your guess for Prediction 1 is the white marker.',
+  'Picture 2 shows the orbit of Andromeda about the Milky Way for the 2026 sideways speed (cyan), and the first pass against the sideways speed. Your guess for Prediction 2 is the white line.',
+  'The orange path is for the 2025 sideways speed, the dashed ring is the 20 kpc distance that the studies call merged, and the shaded band is the 2026 give-or-take.',
+]
+
 interface LocalGroupCollisionExperimentProps {
   onComplete?: () => void
   onTutorComplete?: () => void
 }
 
-export function LocalGroupCollisionExperiment(_props: LocalGroupCollisionExperimentProps) {
+export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisionExperimentProps) {
   const [fallGuess, setFallGuess] = useState<FallChoiceId | null>(null)
   const [passGuess, setPassGuess] = useState<PassChoiceId | null>(null)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
+  const bothPredicted = fallGuess !== null && passGuess !== null
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+  const startOver = () => {
+    setFallGuess(null)
+    setPassGuess(null)
+    setStatus('idle')
+    setStage(0)
+  }
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
   // Display rounding of the module's numbers (no physics here, CLAUDE.md §9).
   const distance = Math.round(distanceKpc())
   const approach = APPROACH_SPEED_KM_S
@@ -210,6 +251,7 @@ export function LocalGroupCollisionExperiment(_props: LocalGroupCollisionExperim
                     key={choice.value}
                     type="button"
                     onClick={() => (question.set as (v: string) => void)(choice.value)}
+                    disabled={recorded}
                     className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
                     style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                   >
@@ -225,8 +267,39 @@ export function LocalGroupCollisionExperiment(_props: LocalGroupCollisionExperim
             </div>
           ))}
 
-          {/* Temporary note: removed in Step 4, when the Run button and the run are built. */}
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The Run button and the pictures are not built yet.</p>
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here.' : STAGE_LINES[stage]}
+              </span>
+            )}
+          </p>
+          {status !== 'idle' && (
+            <div>
+              <PictureOne stage={stage} fallGuess={fallGuess} />
+              {pictureOneCaption(stage)}
+              {stage >= 4 && (
+                <>
+                  <PictureTwo stage={stage} passGuess={passGuess} />
+                  {pictureTwoCaption(stage)}
+                </>
+              )}
+            </div>
+          )}
+          {/* Temporary note: removed in Step 5, when the controls, the results and the tutor are built. */}
+          {done && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The controls, the results and the tutor are not built yet.</p>}
         </div>
       </div>
     </div>
