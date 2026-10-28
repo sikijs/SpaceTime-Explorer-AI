@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import {
   KPC_PER_GYR_PER_KM_S,
   PASS_RULER,
+  PICTURE_ORBIT_EXTENT_KPC,
   TIME_RULER,
   fallChoiceGyr,
   passChoiceKpc,
@@ -10,7 +11,8 @@ import {
   pictureTwo,
   timeRulerPosition,
 } from '../physics/localGroupCollision'
-import type { FallChoiceId, OrbitTrack, PassChoiceId } from '../physics/localGroupCollision'
+import { MERGER_DISTANCE_KPC } from '../physics/localGroupCollision'
+import type { FallChoiceId, OrbitTrack, PassChoiceId, TrialPicture } from '../physics/localGroupCollision'
 import { CaptionBlock } from './BlackHoleGrowthPictures'
 import type { LookFor } from './WideBinariesExperiment'
 
@@ -151,6 +153,7 @@ export function PictureOne({ stage, fallGuess }: { stage: number; fallGuess: Fal
 }
 
 // ---- Picture 2 ----
+const PICTURE_EXTENT = PICTURE_ORBIT_EXTENT_KPC
 const P2_W = 900
 const P2_H = 540
 // Panel A: the orbit, drawn to scale about the Milky Way at the centre.
@@ -459,6 +462,186 @@ export function pictureTwoCaption(stage: number): ReactNode {
           <strong>Measured by others:</strong> the two sideways speeds, {pic.study2025.sidewaysKmS} km/s (the 2025 study’s “most likely value”) and {n1(pic.study2026.sidewaysKmS)} ± 24.0 km/s (the 2026 study’s), as the studies found them; neither sentence names the frame it is given in. The distance, the masses and the{' '}
           approach speed are those of Picture 1. The {pic.ringKpc} kpc is the studies’ own definition of a merger. <strong>Calculated here:</strong> every path, first pass and time, for two points that pull on each other and nothing else: no other galaxies, no halo size, no dynamical friction. The studies’
           own results come from 100,000 trial runs that include the other galaxies, so the numbers here are not theirs. <strong>Imagined for the question:</strong> the straight fall. Your guess is drawn in white and never changes the real picture.
+        </>
+      }
+    />
+  )
+}
+
+// ---- Drawing A: the orbit of a trial pair ----
+export const TRIAL_SPEED_LABELS: Record<number, string> = {
+  0: '0 km/s (no sideways motion)',
+  23: '23 km/s',
+  47: '47 km/s (about the 2026 study’s value)',
+  76: '76 km/s (about the 2025 study’s value)',
+  100: '100 km/s',
+}
+export const TRIAL_MASS_LABELS: Record<number, string> = {
+  1.8e12: '1.8 trillion Suns',
+  2.3e12: '2.3 trillion Suns (the two studies’ halo masses added up)',
+  2.8e12: '2.8 trillion Suns',
+}
+const A_H = 560
+const A_W = 900
+const A_CX = 215
+const A_CY = 290
+
+// A first pass is shown to one decimal, but two where it lies within 0.05 kpc of the 20 kpc ring (so that "19.99, inside" does not read as "20.0, inside").
+function passText(kpc: number): string {
+  return Math.abs(kpc - MERGER_DISTANCE_KPC) < 0.05 ? kpc.toFixed(2) : n1(kpc)
+}
+
+export function TrialDrawing({ trial }: { trial: TrialPicture }) {
+  const scale = A_RADIUS / PICTURE_EXTENT
+  const px = (x: number) => A_CX + scale * x
+  const py = (y: number) => A_CY - scale * y
+  const path = (tr: OrbitTrack) => tr.points.map((q, i) => `${i === 0 ? 'M' : 'L'}${px(q.x).toFixed(1)},${py(q.y).toFixed(1)}`).join(' ')
+  const massText = `${(trial.massSolar / 1e12).toFixed(1)} trillion Suns`
+  const ringRatio = trial.firstPassKpc / MERGER_DISTANCE_KPC
+  const where = trial.insideRing ? 'inside' : 'outside'
+  const lines: string[] = [
+    `Trial pair: sideways speed ${trial.sidewaysKmS} km/s, total mass ${massText}.`,
+    '',
+    trial.sidewaysKmS === 0 ? 'First pass: straight through the Milky Way (no sideways motion),' : `First pass: ${passText(trial.firstPassKpc)} kpc from the Milky Way,`,
+    trial.firstPassGyr === null ? 'a time is not worked out, because the pair is not bound.' : `after ${n2(trial.firstPassGyr)} billion years.`,
+    '',
+    trial.bound
+      ? trial.periodGyr === null
+        ? 'A straight fall: it ends at the Milky Way.'
+        : `The pair is bound: one full loop takes ${n1(trial.periodGyr)} billion years.`
+      : `The pair is not bound: Andromeda passes once and does not return.`,
+    trial.bound ? '' : `(For this mass the limit is ${n1(trial.unboundKmS)} km/s.)`,
+    '',
+    trial.sidewaysKmS === 0 ? '' : `The first pass is ${where} the ${MERGER_DISTANCE_KPC} kpc ring (${n1(ringRatio)} times ${MERGER_DISTANCE_KPC}).`,
+    `A straight fall for this mass takes ${n2(trial.straightFallGyr)} billion years.`,
+    '',
+    'These are trial values. They do not say that',
+    'the real galaxies are like this.',
+  ].filter((l, i, a) => !(l === '' && (i === 0 || a[i - 1] === '')))
+  return (
+    <svg viewBox={`0 0 ${A_W} ${A_H}`} style={svgStyle} role="img" aria-label="Drawing A: the orbit of your trial pair of galaxies">
+      <SvgLines x={14} y={20} lines={['Drawing A. The orbit of your trial pair (seen from above, to scale)']} fill={TEXT_COLOR} bold size={13} />
+      <rect x={A_CX - A_RADIUS - 10} y={A_CY - A_RADIUS - 10} width={2 * A_RADIUS + 20} height={2 * A_RADIUS + 20} fill="none" stroke="#334155" />
+      <SvgLines x={A_CX} y={A_CY + A_RADIUS + 28} lines={[`The box is ${2 * PICTURE_EXTENT} kpc across.`]} fill={MUTED_COLOR} size={10} anchor="middle" />
+      {/* The reference: the 2026 study's speed with the studies' mass (does not change). */}
+      <path d={path(trial.reference)} fill="none" stroke={CYAN} strokeWidth={2} opacity={0.4} />
+      {/* The trial pair (imagined for the question). */}
+      <path d={path(trial.track)} fill="none" stroke={PINK} strokeWidth={2.5} />
+      <circle cx={A_CX} cy={A_CY} r={MERGER_DISTANCE_KPC * scale} fill="none" stroke={TEXT_COLOR} strokeWidth={1.5} strokeDasharray="2 2" />
+      <circle cx={A_CX} cy={A_CY} r={4} fill={MILKY_COLOR} />
+      <circle cx={px(trial.track.start.x)} cy={A_CY} r={5} fill={VIOLET} />
+      <circle cx={px(trial.track.firstPass.x)} cy={py(trial.track.firstPass.y)} r={4.5} fill={PINK} stroke="#0b1020" strokeWidth={1.5} />
+      <line x1={90} y1={158} x2={A_CX - 3} y2={A_CY - 4} stroke={MILKY_COLOR} strokeWidth={1} />
+      <SvgLines x={14} y={150} lines={['Milky Way (the centre)']} fill={MILKY_COLOR} bold size={10} />
+      <line x1={A_CX - MERGER_DISTANCE_KPC * scale} y1={A_CY} x2={110} y2={226} stroke={TEXT_COLOR} strokeWidth={1} />
+      <SvgLines x={14} y={216} lines={[`dashed ring: ${MERGER_DISTANCE_KPC} kpc`, '(the studies call this “merged”)']} fill={TEXT_COLOR} size={10} />
+      <SvgLines x={px(trial.track.start.x) + 14} y={A_CY + 20} lines={['Andromeda now']} fill={VIOLET} bold size={10} anchor="end" />
+      {/* The legend. */}
+      <SvgLines x={14} y={A_H - 62} lines={['pink: the orbit of your trial pair (imagined for the question)']} fill={PINK} bold size={10} />
+      <SvgLines x={14} y={A_H - 46} lines={['faint cyan: the 2026 study’s sideways speed, as in Picture 2 (does not change)']} fill={CYAN} bold size={10} />
+      {/* The numbers. */}
+      {(() => {
+        // The numbers, in short blocks with a gap between them (an empty line is a gap).
+        const blocks: string[][] = [[]]
+        for (const l of lines) l === '' ? blocks.push([]) : blocks[blocks.length - 1].push(l)
+        let at = 60
+        return blocks
+          .filter((b) => b.length > 0)
+          .map((b, i) => {
+            const y = at
+            at += b.length * 15 + 16
+            return <SvgLines key={i} x={470} y={y} lines={b} fill={PINK} bold size={12} />
+          })
+      })()}
+    </svg>
+  )
+}
+
+export function trialCaption(trial: TrialPicture): ReactNode {
+  const massText = `${(trial.massSolar / 1e12).toFixed(1)} trillion Suns`
+  const reference = trial.reference
+  const against = trial.sidewaysKmS === 0 ? 'straight through it' : `${passText(trial.firstPassKpc)} kpc`
+  const lookFor: LookFor[] = [
+    {
+      look: 'the pink path, against the faint cyan path in the box.',
+      means: (
+        <>
+          The faint cyan path is the 2026 study’s sideways speed, {n1(reference.sidewaysKmS)} km/s, with the studies’ total mass, as in Picture 2. It stays the same whatever you choose. The pink path is your trial pair. With your settings the first pass is {against}, against {n1(reference.firstPassKpc)} kpc for the cyan path. A faster
+          sideways speed puts the pink pass farther out than the cyan one, and a slower one puts it closer in.
+        </>
+      ),
+      matters: 'changing one setting at a time shows what each one does to the first pass. The sideways speed, the number that is hardest to measure, moves the first pass a lot, and the total mass moves it too. The tutor explains why.',
+    },
+    {
+      look: 'the numbers on the right: the first pass, the time to it and, below them, the time of a straight fall.',
+      means: (
+        <>
+          Your trial pair reaches its first pass {trial.firstPassGyr === null ? 'never at a time that is worked out here, because it is not bound' : `after ${n2(trial.firstPassGyr)} billion years`}. A straight fall for the same total mass, {massText}, would take {n2(trial.straightFallGyr)} billion years. Try the three masses at the same sideways speed: the heavier the pair, the shorter the times.
+        </>
+      ),
+      matters: 'the mass of the two halos, which is hard to measure too, changes how long everything takes. A sideways speed makes the trip a little longer than the straight fall, and a loop instead of a straight line.',
+    },
+    ...(trial.sidewaysKmS === 0
+      ? []
+      : [
+          {
+            look: 'the small dashed ring in the middle of the box, and the pink dot (the first pass).',
+            means: (
+              <>
+                {MERGER_DISTANCE_KPC} kpc is the distance that both studies use to say two galaxies have merged. Your first pass is {passText(trial.firstPassKpc)} kpc, so the pink dot is {trial.insideRing ? 'inside' : 'outside'} the ring ({n1(trial.firstPassKpc / MERGER_DISTANCE_KPC)} times {MERGER_DISTANCE_KPC}). The ring is tiny at this scale, so the numbers on the right are the way to read it.
+              </>
+            ),
+            matters: 'the ring is a rule the studies use for counting a merger. This drawing does not calculate whether the galaxies merge. The tutor says what a first pass inside or outside the ring does and does not mean.',
+          },
+        ]),
+    ...(trial.bound
+      ? []
+      : [
+          {
+            look: 'the pink curve, which does not close up.',
+            means: (
+              <>
+                With a sideways speed of {trial.sidewaysKmS} km/s and a total mass of {massText}, the pair is not bound: Andromeda swings past the Milky Way once and does not come back. For this mass the limit is {n1(trial.unboundKmS)} km/s, and your speed is above it. (With the studies’ mass, 2.3 trillion Suns, the limit is 118.8 km/s.)
+              </>
+            ),
+            matters: 'a speed that is too high, or a mass that is too small, means gravity cannot hold the pair together. This is the same kind of open path as in Experiment 24, and in this model the two galaxies would never meet again.',
+          },
+        ]),
+  ]
+  return (
+    <CaptionBlock
+      title="Drawing A"
+      intro="This is the same kind of map as panel A of Picture 2, for a pair of your own. The box is 1,600 kpc across and everything is to scale, so the middle is small. The real pictures above do not change when you change a setting; only this drawing does."
+      bullets={[
+        <>
+          <strong>The blue dot</strong> is the Milky Way, at the centre, and <strong>the violet dot</strong> is Andromeda now. <strong>The pink path</strong> is the orbit of your trial pair, calculated from the two settings you chose, and <strong>the pink dot</strong> on it is the first pass. It is imagined for the
+          question: it is not a measurement.
+        </>,
+        <>
+          <strong>The faint cyan path</strong> is the 2026 study’s sideways speed with the studies’ mass, as in Picture 2, kept here for comparison. <strong>The small dashed ring</strong> is {MERGER_DISTANCE_KPC} kpc, the distance the studies call merged.
+        </>,
+        <>
+          <strong>The lines of text on the right</strong> give your trial’s numbers: the settings, the first pass and its time, whether the pair is bound and, if it is, how long one full loop takes, where the first pass lies against the ring, and the time of a straight fall for the same mass.
+        </>,
+      ]}
+      worked={
+        trial.sidewaysKmS === 0 ? (
+          <>
+            With no sideways speed and a total mass of {massText}, Andromeda falls straight to the Milky Way in {n2(trial.straightFallGyr)} billion years, and there is no loop.
+          </>
+        ) : (
+          <>
+            You chose a sideways speed of {trial.sidewaysKmS} km/s and a total mass of {massText}. The first pass is {passText(trial.firstPassKpc)} kpc, and {passText(trial.firstPassKpc)} ÷ {MERGER_DISTANCE_KPC} = {n1(trial.firstPassKpc / MERGER_DISTANCE_KPC)}, so it is {trial.insideRing ? 'inside' : 'outside'} the {MERGER_DISTANCE_KPC} kpc ring.{' '}
+            {trial.firstPassGyr === null ? 'The pair is not bound, so it does not return.' : `It happens after ${n2(trial.firstPassGyr)} billion years, which is ${n2(trial.firstPassGyr - trial.straightFallGyr)} billion years more than the ${n2(trial.straightFallGyr)} of a straight fall for this mass.`}
+          </>
+        )
+      }
+      lookFor={lookFor}
+      whereFrom={
+        <>
+          <strong>Calculated here:</strong> the trial orbit, its first pass and times, with the same formulas as Picture 2, for the two galaxies alone (no other galaxies, no halo size, no dynamical friction). <strong>Imagined for the question:</strong> the trial pair and its two settings, in pink, which you chose. 47 and 76 km/s are the speeds of the 2026 and 2025 studies, rounded; 23 km/s
+          is about one give-or-take below the 2026 value; 0 is the straight fall; 100 is a larger value to try. 2.3 trillion Suns is the two studies’ halo masses added up (1.0 and 1.3 trillion), and 1.8 and 2.8 are about one give-or-take below and above it. <strong>Estimated from measurements:</strong> the faint cyan
+          path (as in Picture 2). These are trial values and do not say that the real galaxies are like that.
         </>
       }
     />

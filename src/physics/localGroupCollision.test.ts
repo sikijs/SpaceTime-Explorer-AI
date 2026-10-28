@@ -43,6 +43,9 @@ import {
   orbitTrack,
   firstPassCurve,
   pictureTwo,
+  trialPicture,
+  TRIAL_DEFAULT_SIDEWAYS_KM_S,
+  TRIAL_DEFAULT_MASS_SOLAR,
 } from './localGroupCollision'
 
 // Constants written out again here, separately from the module (SI units): the Sun's GM, the kiloparsec and the Gyr.
@@ -311,7 +314,7 @@ describe('the pictures (Step 4)', () => {
     expect(tr.points[tr.points.length - 1].x).toBeCloseTo(0, 6)
     expect(tr.points.every((q) => q.y === 0)).toBe(true)
     expect(tr.firstPassGyr as number).toBeCloseTo(3.81, 2)
-    expect(() => orbitTrack(125)).toThrow(RangeError)
+    expect(tr.bound).toBe(true)
   })
   it('Picture 2 has the three tracks, the 20 kpc ring, the unbound speed and the 2026 give-or-take band (15.2 to 157.8 kpc)', () => {
     const p = pictureTwo()
@@ -336,5 +339,70 @@ describe('the pictures (Step 4)', () => {
     expect(c[c.length - 1].sidewaysKmS).toBeLessThan(118.81)
     expect(c[c.length - 1].firstPassKpc).toBeLessThan(PASS_RULER.maxKpc)
     expect(c[c.length - 1].firstPassKpc).toBeGreaterThan(300)
+  })
+})
+
+describe('the controls: a trial pair (Step 5)', () => {
+  // Worked separately, in a script outside the module (the same two-body formulas): [mass, sideways, first pass (kpc), time to it (Gyr), period (Gyr) or null if not bound].
+  const table: [number, number, number, number | null, number | null][] = [
+    [1.8e12, 0, 0, 4.05, null],
+    [1.8e12, 23, 19.99, 4.17, 67.3],
+    [1.8e12, 47, 85.6, 4.54, 96.1],
+    [1.8e12, 76, 224.8, 4.95, 341.2],
+    [1.8e12, 100, 361.1, null, null],
+    [2.3e12, 0, 0, 3.81, null],
+    [2.3e12, 23, 15.7, 3.91, 38.4],
+    [2.3e12, 47, 67.4, 4.2, 46.8],
+    [2.3e12, 76, 183.2, 4.66, 79.8],
+    [2.3e12, 100, 313.1, 4.72, 230.2],
+    [2.8e12, 0, 0, 3.62, null],
+    [2.8e12, 23, 12.9, 3.7, 27.7],
+    [2.8e12, 47, 55.4, 3.94, 31.8],
+    [2.8e12, 76, 152.4, 4.37, 44.7],
+    [2.8e12, 100, 270.0, 4.61, 76.6],
+  ]
+  it('all fifteen settings agree with the separate calculation (first pass, time, period, and whether the pair is bound)', () => {
+    for (const [m, v, pass, time, period] of table) {
+      const tp = trialPicture(v, m)
+      expect(Math.abs(tp.firstPassKpc - pass)).toBeLessThan(Math.max(0.1, pass * 0.003))
+      if (time === null) {
+        expect(tp.bound).toBe(false)
+        expect(tp.firstPassGyr).toBeNull()
+        expect(tp.periodGyr).toBeNull()
+      } else {
+        expect(tp.bound).toBe(true)
+        expect(Math.abs((tp.firstPassGyr as number) - time)).toBeLessThan(0.02)
+        if (period !== null) expect(Math.abs((tp.periodGyr as number) - period) / period).toBeLessThan(0.005)
+        else expect(tp.periodGyr).toBeNull()
+      }
+    }
+  })
+  it('the stepped motion agrees with the controls: first pass and time, for a light, a middle and a heavy pair', () => {
+    for (const [m, v] of [[1.8e12, 47], [2.3e12, 100], [2.8e12, 76]] as const) {
+      const tp = trialPicture(v, m)
+      const s = integrate(m, v, 14)
+      expect(Math.abs(s.passKpc - tp.firstPassKpc) / tp.firstPassKpc).toBeLessThan(0.01)
+      expect(Math.abs(s.passGyr - (tp.firstPassGyr as number))).toBeLessThan(0.03)
+    }
+  })
+  it('the default is the 2026 study\'s speed (47) and the studies\' mass; 100 km/s with the light pair is not bound (the unbound speed is 92.0) and is drawn as an open curve', () => {
+    expect(TRIAL_DEFAULT_SIDEWAYS_KM_S).toBe(47)
+    expect(TRIAL_DEFAULT_MASS_SOLAR).toBe(2.3e12)
+    const open = trialPicture(100, 1.8e12)
+    expect(open.unboundKmS).toBeCloseTo(92.0, 1)
+    expect(open.bound).toBe(false)
+    expect(open.track.bound).toBe(false)
+    const radii = open.track.points.map((q) => Math.hypot(q.x, q.y))
+    expect(Math.min(...radii)).toBeLessThan(open.firstPassKpc + 1)
+    expect(radii[radii.length - 1]).toBeCloseTo(distanceKpc(), 3)
+  })
+  it('the ring flag follows the 20 kpc rule, including the case that lands just inside it (19.99 kpc), and the reference is the 2026 track', () => {
+    expect(trialPicture(23, 1.8e12).insideRing).toBe(true)
+    expect(trialPicture(23, 2.3e12).insideRing).toBe(true)
+    expect(trialPicture(47, 2.3e12).insideRing).toBe(false)
+    expect(trialPicture(0, 2.3e12).insideRing).toBe(true)
+    expect(trialPicture(47, 2.3e12).reference.sidewaysKmS).toBe(46.7)
+    expect(trialPicture(47, 2.3e12).straightFallGyr).toBeCloseTo(3.81, 2)
+    expect(trialPicture(47, 1.8e12).straightFallGyr).toBeCloseTo(4.05, 2)
   })
 })

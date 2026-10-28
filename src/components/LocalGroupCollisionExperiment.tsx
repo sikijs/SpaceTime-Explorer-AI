@@ -13,11 +13,16 @@ import {
   SIDEWAYS_SPEED_2026_KM_S,
   SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S,
   TOTAL_MASS,
+  TRIAL_DEFAULT_MASS_SOLAR,
+  TRIAL_DEFAULT_SIDEWAYS_KM_S,
+  TRIAL_MASSES_SOLAR,
+  TRIAL_SIDEWAYS_KM_S,
   distanceKpc,
   sidewaysRange2026,
+  trialPicture,
 } from '../physics/localGroupCollision'
 import type { FallChoiceId, PassChoiceId } from '../physics/localGroupCollision'
-import { PictureOne, PictureTwo, pictureOneCaption, pictureTwoCaption } from './LocalGroupCollisionPictures'
+import { PictureOne, PictureTwo, TRIAL_MASS_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './LocalGroupCollisionPictures'
 
 // Frontier and Beyond, Experiment 25 (docs/experiments/frontier-and-beyond/25-will-the-milky-way-and-andromeda-collide.md).
 // Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 and 2 (in `LocalGroupCollisionPictures.tsx`). The controls, the results and the tutor come in later steps.
@@ -57,6 +62,8 @@ interface LocalGroupCollisionExperimentProps {
 export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisionExperimentProps) {
   const [fallGuess, setFallGuess] = useState<FallChoiceId | null>(null)
   const [passGuess, setPassGuess] = useState<PassChoiceId | null>(null)
+  const [trialSideways, setTrialSideways] = useState<number>(TRIAL_DEFAULT_SIDEWAYS_KM_S)
+  const [trialMass, setTrialMass] = useState<number>(TRIAL_DEFAULT_MASS_SOLAR)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -77,6 +84,8 @@ export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisio
   const startOver = () => {
     setFallGuess(null)
     setPassGuess(null)
+    setTrialSideways(TRIAL_DEFAULT_SIDEWAYS_KM_S)
+    setTrialMass(TRIAL_DEFAULT_MASS_SOLAR)
     setStatus('idle')
     setStage(0)
   }
@@ -92,6 +101,7 @@ export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisio
   const highRange = Math.round(range.high)
   const sideways2026 = SIDEWAYS_SPEED_2026_KM_S.toFixed(1)
   const totalMass = (TOTAL_MASS / 1e12).toFixed(1)
+  const trial = trialPicture(trialSideways, trialMass)
   const plusMinus = SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S.toFixed(1)
   return (
     <div>
@@ -298,8 +308,59 @@ export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisio
               )}
             </div>
           )}
-          {/* Temporary note: removed in Step 5, when the controls, the results and the tutor are built. */}
-          {done && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The controls, the results and the tutor are not built yet.</p>}
+          {done && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> Above, you saw fixed cases: the straight fall and the two studies’ sideways speeds. Here you can try other values. Choose a sideways speed for Andromeda and a total mass for the pair, and one drawing will show
+                the orbit that results, how close the first pass is and how long it takes. The real pictures above do not change, and your two guesses do not change this drawing: only the two settings below do.
+              </p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>These are your own trial values, not new measurements.</strong> Each button is a number to try. The total mass is the masses of the two halos added together. For example, if you choose {TRIAL_SPEED_LABELS[trialSideways]?.replace(/ \(.*\)$/, '')} and{' '}
+                {TRIAL_MASS_LABELS[trialMass]?.replace(/ \(.*\)$/, '')}, the drawing works out the orbit of a pair like that, with the same formulas as Picture 2. Such a pair is imagined for the question, and it is drawn in pink. The orbit is calculated for the two galaxies alone, as in Picture 2.
+              </p>
+
+              {(
+                [
+                  {
+                    title: 'How fast is Andromeda moving sideways?',
+                    choices: TRIAL_SIDEWAYS_KM_S.map((v) => ({ value: v as number, label: TRIAL_SPEED_LABELS[v] })),
+                    value: trialSideways,
+                    set: setTrialSideways,
+                  },
+                  {
+                    title: 'What is the total mass of the two galaxies and their halos?',
+                    choices: TRIAL_MASSES_SOLAR.map((v) => ({ value: v as number, label: TRIAL_MASS_LABELS[v] })),
+                    value: trialMass,
+                    set: setTrialMass,
+                  },
+                ] as const
+              ).map((control) => (
+                <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                  <div>
+                    {control.choices.map((choice) => (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        onClick={() => (control.set as (v: number) => void)(choice.value)}
+                        className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <TrialDrawing trial={trial} />
+              {trialCaption(trial)}
+            </div>
+          )}
+
+          {/* Temporary note: removed in Step 6, when the results and the tutor are built. */}
+          {done && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The results and the tutor are not built yet.</p>}
         </div>
       </div>
     </div>

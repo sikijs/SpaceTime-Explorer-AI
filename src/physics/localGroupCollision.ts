@@ -242,7 +242,7 @@ export function pictureOne(): PictureOne {
 }
 
 // The track of M31 about the Milky Way (at the origin, in kpc) for a sideways speed, drawn from the state now (M31 at x = r0, approaching, with the sideways speed in the +y direction)
-// to the first pass and out to the same distance on the other side. A straight fall is the line from the start to the origin.
+// to the first pass and out to the same distance on the other side (for an orbit that is not bound, the open curve past the Milky Way, which never returns). A straight fall is the line from the start to the origin.
 export interface OrbitTrack {
   sidewaysKmS: number
   points: { x: number; y: number }[]
@@ -250,6 +250,7 @@ export interface OrbitTrack {
   firstPass: { x: number; y: number }
   firstPassKpc: number
   firstPassGyr: number | null
+  bound: boolean
 }
 export function orbitTrack(sidewaysKmS: number, steps: number = 240, massSolar: number = TOTAL_MASS): OrbitTrack {
   const o = orbit(massSolar, sidewaysKmS)
@@ -257,9 +258,8 @@ export function orbitTrack(sidewaysKmS: number, steps: number = 240, massSolar: 
   const start = { x: r0, y: 0 }
   if (sidewaysKmS === 0) {
     const points = Array.from({ length: steps + 1 }, (_, i) => ({ x: r0 * (1 - i / steps), y: 0 }))
-    return { sidewaysKmS, points, start, firstPass: { x: 0, y: 0 }, firstPassKpc: 0, firstPassGyr: o.firstPassGyr }
+    return { sidewaysKmS, points, start, firstPass: { x: 0, y: 0 }, firstPassKpc: 0, firstPassGyr: o.firstPassGyr, bound: true }
   }
-  if (!o.bound) throw new RangeError('The orbit is not bound; there is no track to the first pass and out again.')
   const mu = G_KPC * massSolar
   const p = (o.angularMomentum * o.angularMomentum) / mu
   const e = o.eccentricity
@@ -270,7 +270,7 @@ export function orbitTrack(sidewaysKmS: number, steps: number = 240, massSolar: 
     return { x: r * Math.cos(nu - nu0), y: r * Math.sin(nu - nu0) }
   }
   const points = Array.from({ length: steps + 1 }, (_, i) => at(nu0 + (-2 * nu0 * i) / steps))
-  return { sidewaysKmS, points, start, firstPass: at(0), firstPassKpc: o.firstPassKpc, firstPassGyr: o.firstPassGyr }
+  return { sidewaysKmS, points, start, firstPass: at(0), firstPassKpc: o.firstPassKpc, firstPassGyr: o.firstPassGyr, bound: o.bound }
 }
 
 // Picture 2, panel B: the first pass against the sideways speed, from the speed that gives a 1 kpc pass up to just below the unbound speed.
@@ -311,5 +311,41 @@ export function pictureTwo(): PictureTwo {
       lowPassKpc: orbit(TOTAL_MASS, range.low).firstPassKpc,
       highPassKpc: orbit(TOTAL_MASS, range.high).firstPassKpc,
     },
+  }
+}
+
+// ---- The controls (Step 5): a trial pair, from a sideways speed and a total mass ----
+export const TRIAL_DEFAULT_SIDEWAYS_KM_S = 47
+export const TRIAL_DEFAULT_MASS_SOLAR = 2.3e12
+export interface TrialPicture {
+  sidewaysKmS: number
+  massSolar: number
+  bound: boolean
+  track: OrbitTrack
+  firstPassKpc: number
+  firstPassGyr: number | null
+  farthestKpc: number | null
+  periodGyr: number | null
+  straightFallGyr: number
+  unboundKmS: number
+  insideRing: boolean
+  // For comparison with the 2026 study's speed and the studies' mass.
+  reference: OrbitTrack
+}
+export function trialPicture(sidewaysKmS: number, massSolar: number): TrialPicture {
+  const o = orbit(massSolar, sidewaysKmS)
+  return {
+    sidewaysKmS,
+    massSolar,
+    bound: o.bound,
+    track: orbitTrack(sidewaysKmS, 240, massSolar),
+    firstPassKpc: o.firstPassKpc,
+    firstPassGyr: o.firstPassGyr,
+    farthestKpc: o.farthestKpc,
+    periodGyr: o.periodGyr,
+    straightFallGyr: straightFallGyr(massSolar),
+    unboundKmS: unboundSidewaysKmS(massSolar),
+    insideRing: o.firstPassKpc < MERGER_DISTANCE_KPC,
+    reference: orbitTrack(SIDEWAYS_SPEED_2026_KM_S),
   }
 }
