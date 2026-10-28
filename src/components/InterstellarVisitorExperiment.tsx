@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import {
@@ -12,10 +12,12 @@ import {
 } from '../physics/interstellarVisitor'
 import type { BendChoiceId, SpeedChoiceId } from '../physics/interstellarVisitor'
 import { EARTH } from '../physics/fastestSpacecraft'
+import { PictureOne, PictureTwo, pictureOneCaption, pictureTwoCaption } from './InterstellarVisitorPictures'
 
 // Frontier and Beyond, Experiment 24 (docs/experiments/frontier-and-beyond/24-a-visitor-from-another-star.md).
-// STEPS 2 and 3 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel, the "Want to know more?" links
-// and Part 1 with the two predictions (Run only records them). It has no run, pictures, controls, results, tutor or summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval
+// STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed
+// "Words and formulas" panel, the "Want to know more?" links and Part 1 with the two predictions and the five-stage run (the pictures are in `InterstellarVisitorPictures.tsx`). It has no controls, results, tutor or
+// summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval
 // (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how much the Sun bends the path of 3I/ATLAS, how fast it was going at its closest approach, or any other number that
 // the two predictions ask for (CLAUDE.md §12). The pages that give those numbers away (NASA's and ESA's pages on 3I/ATLAS both give its speed at closest approach) are listed only after the
 // run, in a later step. The introduction has no computed number in it, so it needs nothing from the physics module (CLAUDE.md §9).
@@ -89,15 +91,53 @@ function referenceEntries(): { term: string; meaning: string }[] {
   ]
 }
 
-export function InterstellarVisitorExperiment() {
+// ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'The Sun and the planets', 'The path coming in', 'The closest approach and its speed', 'The path going out', 'The bend']
+const STAGE_LINES = [
+  '',
+  'The Sun is at the centre, with the orbits of the Earth, Mars and Jupiter for scale. One AU is the Earth’s distance from the Sun.',
+  'The cyan line is the path of 3I/ATLAS coming in from far away, calculated from its published orbit. The arrow shows which way it travels.',
+  'The cyan dot is the closest approach. Picture 2 shows its speed against its distance from the Sun. Your guess for Prediction 2 is the white marker.',
+  'The path goes on past the Sun and out again.',
+  'The dashed line is the way it was heading before it reached the Sun, and the cyan arrow is the way it leaves. The angle between them is the bend. Your guess for Prediction 1 is the white line.',
+]
+
+interface InterstellarVisitorExperimentProps {
+  onComplete?: () => void
+  onTutorComplete?: () => void
+}
+
+export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisitorExperimentProps) {
   const [bendGuess, setBendGuess] = useState<BendChoiceId | null>(null)
   const [speedGuess, setSpeedGuess] = useState<SpeedChoiceId | null>(null)
-  const [recorded, setRecorded] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = bendGuess !== null && speedGuess !== null
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
   const startOver = () => {
     setBendGuess(null)
     setSpeedGuess(null)
-    setRecorded(false)
+    setStatus('idle')
+    setStage(0)
+  }
+  const run = () => {
+    setStage(1)
+    setStatus('running')
   }
   // The inputs that the predictions give the learner, from the physics module (display rounding only, CLAUDE.md §9).
   const speedFarAwayKmS = Math.round(atlasSpeedFarAway() / 1e3)
@@ -245,7 +285,7 @@ export function InterstellarVisitorExperiment() {
             </div>
           ))}
 
-          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
             Run
           </button>
           {recorded && (
@@ -254,10 +294,27 @@ export function InterstellarVisitorExperiment() {
             </button>
           )}
           {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
-          {recorded && (
-            <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
-              Your predictions are recorded and are not marked here. The pictures that the run draws are built in a later step.
-            </p>
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+              </span>
+            )}
+          </p>
+          {status !== 'idle' && (
+            <div>
+              <PictureOne stage={stage} bendGuess={bendGuess} />
+              {pictureOneCaption(stage)}
+              {stage >= 3 && (
+                <>
+                  <PictureTwo stage={stage} speedGuess={speedGuess} />
+                  {pictureTwoCaption()}
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>

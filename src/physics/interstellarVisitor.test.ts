@@ -30,6 +30,18 @@ import {
   speedAnswer,
   speedGuessResult,
   speedGuessMarker,
+  pictureOne,
+  pictureTwo,
+  bendGuessHeadingDegrees,
+  PICTURE_VIEW_RADIUS_AU,
+  PLANET_ORBITS_AU,
+  DISTANCE_TICKS_AU,
+  SPEED_TICKS_KM_S,
+  SPEED_RULER_MAX_KM_S,
+  distanceRulerPosition,
+  speedRulerPosition,
+  nasaSpeedAtClosestKmS,
+  esaSpeedAtClosestKmS,
 } from './interstellarVisitor'
 
 // Constants written out again here, separately from the module (Test 1): the IAU's GM of the Sun and the astronomical unit.
@@ -206,5 +218,119 @@ describe('the nearest-answer helper and the predictions (tests 8 and 10)', () =>
     bendGuessMarker('b150')
     speedGuessMarker('v40')
     expect([bendAnswer(), speedAnswer(), atlasBendDegrees(), atlasSpeedAtClosestApproach()]).toEqual(before)
+  })
+})
+
+describe('Picture 1: the path from above the Sun (Step 4)', () => {
+  const pic = pictureOne()
+  it('puts the Sun at the origin and the closest approach on the +x axis, at 1.35645 AU', () => {
+    const c = pic.path[pic.closestIndex]
+    expect(c.x).toBeCloseTo(1.35645, 8)
+    expect(c.y).toBeCloseTo(0, 8)
+    expect(pic.closestApproachAu).toBe(1.35645)
+  })
+  it('every point lies on the hyperbola, and the two ends are at the view radius, symmetric about the closest approach', () => {
+    const e = 6.14135
+    const q = 1.35645
+    for (const p of pic.path) {
+      const r = Math.hypot(p.x, p.y)
+      const t = Math.atan2(p.y, p.x)
+      expect(r).toBeCloseTo((q * (1 + e)) / (1 + e * Math.cos(t)), 8)
+      expect(r).toBeLessThanOrEqual(PICTURE_VIEW_RADIUS_AU + 1e-9)
+    }
+    const first = pic.path[0]
+    const last = pic.path[pic.path.length - 1]
+    expect(Math.hypot(first.x, first.y)).toBeCloseTo(PICTURE_VIEW_RADIUS_AU, 6)
+    expect(Math.hypot(last.x, last.y)).toBeCloseTo(PICTURE_VIEW_RADIUS_AU, 6)
+    expect(first.x).toBeCloseTo(last.x, 8)
+    expect(first.y).toBeCloseTo(-last.y, 8)
+  })
+  it('the two headings differ by exactly the bend, and the object turns anticlockwise', () => {
+    expect(pic.headingOutDegrees - pic.headingInDegrees).toBeCloseTo(pic.bendDegrees, 8)
+    expect(pic.bendDegrees).toBeCloseTo(18.74, 1)
+    expect(pic.headingInDegrees).toBeCloseTo(80.63, 1)
+    expect(pic.headingOutDegrees).toBeCloseTo(99.37, 1)
+    // The real direction of travel far along the path agrees with the headings (it is within a few degrees at the view radius).
+    const n = pic.path.length
+    const dx = pic.path[n - 1].x - pic.path[n - 2].x
+    const dy = pic.path[n - 1].y - pic.path[n - 2].y
+    const leaving = (Math.atan2(dy, dx) * 180) / Math.PI
+    expect(Math.abs(leaving - pic.headingOutDegrees)).toBeLessThan(5)
+  })
+  it('the planets are drawn for scale at their mean distances, in order', () => {
+    expect(PLANET_ORBITS_AU.map((p) => p.name)).toEqual(['Earth', 'Mars', 'Jupiter'])
+    expect(pic.planets.map((p) => p.au)).toEqual([1, 1.524, 5.203])
+    for (const p of pic.planets) expect(p.au).toBeLessThan(PICTURE_VIEW_RADIUS_AU)
+  })
+  it('the guess line turns by the guessed bend from the way the object was heading, one heading per guess in order', () => {
+    expect(bendGuessHeadingDegrees('b20') - pic.headingInDegrees).toBeCloseTo(20, 8)
+    const heads = BEND_CHOICES.map((c) => bendGuessHeadingDegrees(c.id))
+    expect(heads).toEqual([...heads].sort((a, b) => a - b))
+    expect(new Set(heads).size).toBe(BEND_CHOICES.length)
+  })
+  it('does not change when a guess is made (separation)', () => {
+    const before = JSON.stringify(pictureOne())
+    bendGuessHeadingDegrees('b150')
+    expect(JSON.stringify(pictureOne())).toBe(before)
+  })
+})
+
+describe('Picture 2: speed against distance (Step 4)', () => {
+  const pic = pictureTwo()
+  it('reproduces the model: the speed at each distance is the energy-conservation speed, and the escape speed is lower everywhere', () => {
+    for (const c of pic.curve) {
+      expect(c.speedKmS * KM).toBeCloseTo(speedAt(atlasSpeedFarAway(), c.au * ASTRONOMICAL_UNIT), 3)
+      expect(c.escapeKmS * KM).toBeCloseTo(escapeSpeed(c.au * ASTRONOMICAL_UNIT), 3)
+      expect(c.speedKmS).toBeGreaterThan(c.escapeKmS)
+    }
+  })
+  it('the speed falls as the distance grows towards the speed far away, and the curve ends are the ruler ends', () => {
+    for (let i = 1; i < pic.curve.length; i++) {
+      expect(pic.curve[i].speedKmS).toBeLessThan(pic.curve[i - 1].speedKmS)
+      expect(pic.curve[i].escapeKmS).toBeLessThan(pic.curve[i - 1].escapeKmS)
+    }
+    expect(pic.curve[0].au).toBeCloseTo(0.3, 8)
+    expect(pic.curve[pic.curve.length - 1].au).toBeCloseTo(100, 6)
+    expect(pic.curve[pic.curve.length - 1].speedKmS).toBeGreaterThan(pic.speedFarAwayKmS)
+    expect(pic.curve[pic.curve.length - 1].speedKmS - pic.speedFarAwayKmS).toBeLessThan(0.2)
+  })
+  it('has 68.3 km/s and 36.2 km/s at the closest approach, 18 percent faster than far away', () => {
+    expect(Math.abs(pic.speedAtClosestKmS - 68.3)).toBeLessThan(0.1)
+    expect(Math.abs(pic.escapeSpeedAtClosestKmS - 36.2)).toBeLessThan(0.1)
+    expect(pic.gainShare).toBeCloseTo(68.34 / 57.99 - 1, 3)
+    expect(pic.speedOverEscape).toBeCloseTo(1.89, 2)
+  })
+  it('every position is on its ruler, and the largest button (230 km/s) fits on the speed ruler', () => {
+    for (const c of pic.curve) {
+      for (const v of [c.position, c.speedPosition, c.escapePosition]) {
+        expect(v).toBeGreaterThanOrEqual(0)
+        expect(v).toBeLessThanOrEqual(1)
+      }
+    }
+    for (const c of SPEED_CHOICES) expect(speedRulerPosition(c.kmS)).toBeLessThan(1)
+    expect(SPEED_RULER_MAX_KM_S).toBeGreaterThan(230)
+    expect(distanceRulerPosition(0.3)).toBeCloseTo(0, 8)
+    expect(distanceRulerPosition(100)).toBeCloseTo(1, 8)
+    expect(DISTANCE_TICKS_AU.map(distanceRulerPosition)).toEqual([...DISTANCE_TICKS_AU.map(distanceRulerPosition)].sort((a, b) => a - b))
+    expect(SPEED_TICKS_KM_S[SPEED_TICKS_KM_S.length - 1]).toBe(SPEED_RULER_MAX_KM_S)
+    // log(1.356 / 0.3) / log(100 / 0.3) = 0.2597, worked by hand.
+    expect(pic.closestPosition).toBeCloseTo(0.2597, 3)
+  })
+  it('keeps a value past the end of a ruler on the ruler, and rejects impossible values', () => {
+    expect(speedRulerPosition(300)).toBe(1)
+    expect(speedRulerPosition(0)).toBe(0)
+    expect(distanceRulerPosition(1000)).toBe(1)
+    expect(distanceRulerPosition(0.01)).toBe(0)
+    expect(() => speedRulerPosition(-1)).toThrow(RangeError)
+    expect(() => distanceRulerPosition(0)).toThrow(RangeError)
+  })
+  it('agrees with NASA\'s "about 153,000 miles per hour" and ESA\'s "roughly 250,000 km/h" at closest approach, to within 1 percent', () => {
+    expect(Math.abs(pic.speedAtClosestKmS / nasaSpeedAtClosestKmS() - 1)).toBeLessThan(0.01)
+    expect(Math.abs(pic.speedAtClosestKmS / esaSpeedAtClosestKmS() - 1)).toBeLessThan(0.02)
+  })
+  it('does not change when a guess is made (separation)', () => {
+    const before = JSON.stringify(pictureTwo())
+    speedGuessMarker('v230')
+    expect(JSON.stringify(pictureTwo())).toBe(before)
   })
 })

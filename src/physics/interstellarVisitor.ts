@@ -186,3 +186,137 @@ export function speedGuessResult(id: SpeedChoiceId): 'matched' | 'not matched' {
 export function speedGuessMarker(id: SpeedChoiceId): { kmS: number } {
   return { kmS: speedChoiceKmS(id) }
 }
+
+// ---- Pictures (Step 4): everything drawn is computed here, and the interface only draws it (CLAUDE.md §9) ----
+
+// The mean distances of the planets drawn for scale in Picture 1, in AU (standard values; no source was read for the page).
+export const PLANET_ORBITS_AU = [
+  { name: 'Earth', au: 1 },
+  { name: 'Mars', au: 1.524 },
+  { name: 'Jupiter', au: 5.203 },
+] as const
+
+// Picture 1 shows the path out to this distance from the Sun, in AU.
+export const PICTURE_VIEW_RADIUS_AU = 5.5
+
+export interface PictureOne {
+  eccentricity: number
+  closestApproachAu: number
+  bendDegrees: number
+  asymptoteAngleDegrees: number
+  viewRadiusAu: number
+  // The path, in AU, with the Sun at the origin and the closest approach on the +x axis; it runs from the incoming end to the outgoing end, through the closest approach.
+  path: { x: number; y: number }[]
+  closestIndex: number
+  // The direction of travel far away on the way in and on the way out, in degrees from the +x axis (anticlockwise). The bend is the angle from the first to the second.
+  headingInDegrees: number
+  headingOutDegrees: number
+  planets: { name: string; au: number }[]
+}
+
+const PATH_SAMPLES_EACH_SIDE = 60
+
+export function pictureOne(): PictureOne {
+  const e = ATLAS_3I.eccentricity
+  const q = ATLAS_3I.closestApproachAu
+  const R = PICTURE_VIEW_RADIUS_AU
+  // The angle at which the path reaches the view radius: q (1 + e) / (1 + e cos t) = R.
+  const tView = Math.acos((q * (1 + e) / R - 1) / e)
+  const path: { x: number; y: number }[] = []
+  for (let i = -PATH_SAMPLES_EACH_SIDE; i <= PATH_SAMPLES_EACH_SIDE; i++) {
+    const t = (i / PATH_SAMPLES_EACH_SIDE) * tView
+    const r = (q * (1 + e)) / (1 + e * Math.cos(t))
+    path.push({ x: r * Math.cos(t), y: r * Math.sin(t) })
+  }
+  const a = asymptoteAngleDegrees(e)
+  return {
+    eccentricity: e,
+    closestApproachAu: q,
+    bendDegrees: bendDegrees(e),
+    asymptoteAngleDegrees: a,
+    viewRadiusAu: R,
+    path,
+    closestIndex: PATH_SAMPLES_EACH_SIDE,
+    headingInDegrees: 180 - a,
+    headingOutDegrees: a,
+    planets: PLANET_ORBITS_AU.map((p) => ({ name: p.name, au: p.au })),
+  }
+}
+
+// Prediction 1's white line: it leaves the same point as the real path, turned from the way the object was heading by the guessed bend (anticlockwise, the same way as the real bend).
+export function bendGuessHeadingDegrees(id: BendChoiceId): number {
+  return pictureOne().headingInDegrees + bendChoiceDegrees(id)
+}
+
+// Picture 2: speed against distance from the Sun. Distances on a log ruler, speeds on a straight ruler.
+export const DISTANCE_RULER_MIN_AU = 0.3
+export const DISTANCE_RULER_MAX_AU = 100
+export const DISTANCE_TICKS_AU = [0.3, 1, 3, 10, 30, 100] as const
+export const SPEED_RULER_MAX_KM_S = 250
+export const SPEED_TICKS_KM_S = [0, 50, 100, 150, 200, 250] as const
+
+export function distanceRulerPosition(au: number): number {
+  checkPositive(au, 'The distance')
+  const pos = (Math.log10(au) - Math.log10(DISTANCE_RULER_MIN_AU)) / (Math.log10(DISTANCE_RULER_MAX_AU) - Math.log10(DISTANCE_RULER_MIN_AU))
+  return Math.min(1, Math.max(0, pos))
+}
+export function speedRulerPosition(kmS: number): number {
+  if (!Number.isFinite(kmS) || kmS < 0) throw new RangeError('The speed must be zero or more.')
+  return Math.min(1, kmS / SPEED_RULER_MAX_KM_S)
+}
+
+export interface PictureTwo {
+  speedFarAwayKmS: number
+  closestApproachAu: number
+  speedAtClosestKmS: number
+  escapeSpeedAtClosestKmS: number
+  speedOverEscape: number
+  // The speed of 3I/ATLAS and the escape speed at distances from the ruler's two ends, in km/s.
+  curve: { au: number; position: number; speedKmS: number; speedPosition: number; escapeKmS: number; escapePosition: number }[]
+  closestPosition: number
+  speedAtClosestPosition: number
+  escapeAtClosestPosition: number
+  speedFarAwayPosition: number
+  // How much faster than its speed far away it is at closest approach, as a share (0.18 is 18 percent).
+  gainShare: number
+}
+
+const CURVE_SAMPLES = 60
+
+export function pictureTwo(): PictureTwo {
+  const vFar = atlasSpeedFarAway()
+  const q = atlasClosestApproachM()
+  const curve: PictureTwo['curve'] = []
+  for (let i = 0; i <= CURVE_SAMPLES; i++) {
+    const au = 10 ** (Math.log10(DISTANCE_RULER_MIN_AU) + (i / CURVE_SAMPLES) * (Math.log10(DISTANCE_RULER_MAX_AU) - Math.log10(DISTANCE_RULER_MIN_AU)))
+    const v = speedAt(vFar, au * AU) / 1e3
+    const esc = escapeSpeed(au * AU) / 1e3
+    curve.push({ au, position: distanceRulerPosition(au), speedKmS: v, speedPosition: speedRulerPosition(v), escapeKmS: esc, escapePosition: speedRulerPosition(esc) })
+  }
+  const vq = atlasSpeedAtClosestApproach() / 1e3
+  const eq = atlasEscapeSpeedAtClosestApproach() / 1e3
+  return {
+    speedFarAwayKmS: vFar / 1e3,
+    closestApproachAu: ATLAS_3I.closestApproachAu,
+    speedAtClosestKmS: vq,
+    escapeSpeedAtClosestKmS: eq,
+    speedOverEscape: vq / eq,
+    curve,
+    closestPosition: distanceRulerPosition(q / AU),
+    speedAtClosestPosition: speedRulerPosition(vq),
+    escapeAtClosestPosition: speedRulerPosition(eq),
+    speedFarAwayPosition: speedRulerPosition(vFar / 1e3),
+    gainShare: vq / (vFar / 1e3) - 1,
+  }
+}
+
+// NASA's page on 3I/ATLAS (read 2026-10-28) gives its speed at closest approach as "about 153,000 miles per hour"; ESA's gives "roughly 250 000 km/h". Held to compare with the model after the run.
+export const NASA_SPEED_AT_CLOSEST_MPH = 153000
+export const ESA_SPEED_AT_CLOSEST_KM_H = 250000
+const METRES_PER_MILE = 1609.344
+export function nasaSpeedAtClosestKmS(): number {
+  return (NASA_SPEED_AT_CLOSEST_MPH * METRES_PER_MILE) / 1e3 / 3600
+}
+export function esaSpeedAtClosestKmS(): number {
+  return ESA_SPEED_AT_CLOSEST_KM_H / 3600
+}
