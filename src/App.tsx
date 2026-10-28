@@ -1025,7 +1025,7 @@ const chapters: Chapter[] = [
     Component: InterstellarVisitorExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: interstellarVisitorSummary(),
-    next: 'None yet, because Experiment 25 has no approved specification.',
+    next: 'Experiment 25 turns from a visitor passing the Sun to our own galaxy and its nearest large neighbour. Will the Milky Way and Andromeda collide? Two careful studies, a year apart, gave different answers.',
   },
   {
     title: 'Will the Milky Way and Andromeda collide? (two studies, two answers)',
