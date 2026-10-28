@@ -6,13 +6,18 @@ import {
   ATLAS_3I,
   BEND_CHOICES,
   SPEED_CHOICES,
+  TRIAL_CLOSEST_AU,
+  TRIAL_DEFAULT_CLOSEST_AU,
+  TRIAL_DEFAULT_SPEED_KM_S,
+  TRIAL_SPEEDS_KM_S,
   atlasClosestApproachM,
   atlasSpeedFarAway,
   escapeSpeed,
+  trialPicture,
 } from '../physics/interstellarVisitor'
 import type { BendChoiceId, SpeedChoiceId } from '../physics/interstellarVisitor'
 import { EARTH } from '../physics/fastestSpacecraft'
-import { PictureOne, PictureTwo, pictureOneCaption, pictureTwoCaption } from './InterstellarVisitorPictures'
+import { PictureOne, PictureTwo, TRIAL_CLOSEST_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './InterstellarVisitorPictures'
 
 // Frontier and Beyond, Experiment 24 (docs/experiments/frontier-and-beyond/24-a-visitor-from-another-star.md).
 // STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed
@@ -112,6 +117,8 @@ interface InterstellarVisitorExperimentProps {
 export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisitorExperimentProps) {
   const [bendGuess, setBendGuess] = useState<BendChoiceId | null>(null)
   const [speedGuess, setSpeedGuess] = useState<SpeedChoiceId | null>(null)
+  const [trialSpeed, setTrialSpeed] = useState<number>(TRIAL_DEFAULT_SPEED_KM_S)
+  const [trialClosest, setTrialClosest] = useState<number>(TRIAL_DEFAULT_CLOSEST_AU)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -132,6 +139,8 @@ export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisito
   const startOver = () => {
     setBendGuess(null)
     setSpeedGuess(null)
+    setTrialSpeed(TRIAL_DEFAULT_SPEED_KM_S)
+    setTrialClosest(TRIAL_DEFAULT_CLOSEST_AU)
     setStatus('idle')
     setStage(0)
   }
@@ -144,6 +153,7 @@ export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisito
   const closestAu = ATLAS_3I.closestApproachAu.toFixed(2)
   const closestMillionKm = Math.round(atlasClosestApproachM() / 1e9)
   const earthSpeedForScale = Math.round(EARTH.orbitalSpeed / 1e3)
+  const trial = trialPicture(trialSpeed, trialClosest)
   // Display rounding of the module's escape speeds (no physics here, CLAUDE.md §9).
   const earthEscape = Math.round(escapeSpeed(AU) / 1e3)
   const earthSpeed = Math.round(EARTH.orbitalSpeed / 1e3)
@@ -300,7 +310,7 @@ export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisito
             {status !== 'idle' && (
               <span>
                 <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
-                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
+                {done ? 'Pictures 1 and 2 are drawn. Your predictions are recorded and not marked here. Below is Part 2, where you can try other speeds and closest approaches. The rest of the page is built in later steps.' : STAGE_LINES[stage]}
               </span>
             )}
           </p>
@@ -314,6 +324,57 @@ export function InterstellarVisitorExperiment({ onComplete }: InterstellarVisito
                   {pictureTwoCaption()}
                 </>
               )}
+            </div>
+          )}
+
+          {done && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> Above, you saw one visitor: 3I/ATLAS. Here you can try other visitors. Choose how fast a visitor is going when it is far from the Sun, and how close it comes to the Sun, and one drawing
+                will show its path, how open the path is (its eccentricity) and how much the Sun bends it. The real pictures above do not change, and your two guesses do not change this drawing: only the two settings below do.
+              </p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>These are your own trial values, not real objects.</strong> Each button is a number to try. For example, if you choose {TRIAL_SPEED_LABELS[trialSpeed]?.replace(/ \(.*\)$/, '')} and {trialClosest.toFixed(2)} AU, the drawing works out the path of a visitor like that, with the same formulas as
+                Pictures 1 and 2. Such a visitor is imagined for the question, and it is drawn in pink. The path is calculated for the Sun’s gravity alone.
+              </p>
+
+              {(
+                [
+                  {
+                    title: 'How fast is the visitor going when it is far from the Sun?',
+                    choices: TRIAL_SPEEDS_KM_S.map((v) => ({ value: v as number, label: TRIAL_SPEED_LABELS[v] })),
+                    value: trialSpeed,
+                    set: setTrialSpeed,
+                  },
+                  {
+                    title: 'How close does it come to the Sun?',
+                    choices: TRIAL_CLOSEST_AU.map((v) => ({ value: v as number, label: TRIAL_CLOSEST_LABELS[v] })),
+                    value: trialClosest,
+                    set: setTrialClosest,
+                  },
+                ] as const
+              ).map((control) => (
+                <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                  <div>
+                    {control.choices.map((choice) => (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        onClick={() => (control.set as (v: number) => void)(choice.value)}
+                        className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <TrialDrawing trial={trial} />
+              {trialCaption(trial)}
             </div>
           )}
         </div>

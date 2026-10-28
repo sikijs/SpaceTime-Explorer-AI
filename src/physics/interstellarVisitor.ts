@@ -320,3 +320,64 @@ export function nasaSpeedAtClosestKmS(): number {
 export function esaSpeedAtClosestKmS(): number {
   return ESA_SPEED_AT_CLOSEST_KM_H / 3600
 }
+
+// ---- Drawing A (Step 5): the path of a trial visitor, from the learner's two settings ----
+
+export type BendVersusAtlas = 'more' | 'less' | 'the same'
+
+export interface TrialPicture extends TrialOrbit {
+  // The trial path in AU with the Sun at the origin and the closest approach on the +x axis, from the entry to the exit at the picture's view radius.
+  path: { x: number; y: number }[]
+  closestIndex: number
+  // The direction of travel at the two ends of the drawn path, in degrees anticlockwise from the +x axis. Their difference is at most the bend (the path is drawn only out to the view radius).
+  entryHeadingDegrees: number
+  exitHeadingDegrees: number
+  bendVersusAtlas: BendVersusAtlas
+  atlasBendDegrees: number
+  // The trial's escape speed at closest approach as a share of the speed there (always below 1 for an open path).
+  escapeOverSpeed: number
+}
+
+// The direction of travel at angle t on r(t) = p / (1 + e cos t): the derivative of (r cos t, r sin t).
+function headingAt(e: number, p: number, t: number): number {
+  const d = 1 + e * Math.cos(t)
+  const r = p / d
+  const dr = (p * e * Math.sin(t)) / (d * d)
+  const dx = dr * Math.cos(t) - r * Math.sin(t)
+  const dy = dr * Math.sin(t) + r * Math.cos(t)
+  return Math.atan2(dy, dx) * RAD_TO_DEG
+}
+
+// A bend is "the same" as 3I/ATLAS's when the two agree to within 0.05 degrees (the default trial reproduces it to that precision, given the rounding of 58 km/s).
+const SAME_BEND_DEGREES = 0.05
+
+export function trialPicture(speedFarAwayKmS: number, closestApproachAu: number): TrialPicture {
+  const orbit = trialOrbit(speedFarAwayKmS, closestApproachAu)
+  const e = orbit.eccentricity
+  const q = closestApproachAu
+  const p = q * (1 + e)
+  const R = PICTURE_VIEW_RADIUS_AU
+  const c = Math.min(1, Math.max(-1, (p / R - 1) / e))
+  const tView = Math.acos(c)
+  const path: { x: number; y: number }[] = []
+  for (let i = -PATH_SAMPLES_EACH_SIDE; i <= PATH_SAMPLES_EACH_SIDE; i++) {
+    const t = (i / PATH_SAMPLES_EACH_SIDE) * tView
+    const r = p / (1 + e * Math.cos(t))
+    path.push({ x: r * Math.cos(t), y: r * Math.sin(t) })
+  }
+  const atlas = atlasBendDegrees()
+  const diff = orbit.bendDegrees - atlas
+  return {
+    ...orbit,
+    path,
+    closestIndex: PATH_SAMPLES_EACH_SIDE,
+    entryHeadingDegrees: headingAt(e, p, -tView),
+    exitHeadingDegrees: headingAt(e, p, tView),
+    bendVersusAtlas: Math.abs(diff) < SAME_BEND_DEGREES ? 'the same' : diff > 0 ? 'more' : 'less',
+    atlasBendDegrees: atlas,
+    escapeOverSpeed: orbit.escapeSpeedAtClosestKmS / orbit.speedAtClosestKmS,
+  }
+}
+
+export const TRIAL_DEFAULT_SPEED_KM_S = 58
+export const TRIAL_DEFAULT_CLOSEST_AU = 1.356

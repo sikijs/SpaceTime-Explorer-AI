@@ -12,8 +12,9 @@ import {
   pictureTwo,
   speedChoiceKmS,
   speedRulerPosition,
+  TRIAL_CLOSEST_AU,
 } from '../physics/interstellarVisitor'
-import type { BendChoiceId, SpeedChoiceId } from '../physics/interstellarVisitor'
+import type { BendChoiceId, SpeedChoiceId, TrialPicture } from '../physics/interstellarVisitor'
 import { CaptionBlock } from './BlackHoleGrowthPictures'
 import type { LookFor } from './WideBinariesExperiment'
 
@@ -25,6 +26,7 @@ const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
 const CALC_COLOR = '#22d3ee'
 const SUN_COLOR = '#fde047'
+const IMAGINED_COLOR = '#f472b6'
 const YOURS_COLOR = '#ffffff'
 
 const svgStyle = {
@@ -320,7 +322,7 @@ export function pictureOneCaption(stage: number): ReactNode {
   return (
     <CaptionBlock
       title="Picture 1"
-      intro="This is a map of the solar system seen from above, with the Sun at the centre, drawn to scale. It shows the real path of 3I/ATLAS, calculated from its published orbit. It builds up in stages as the run goes on."
+      intro="This is a map of the solar system seen from above, with the Sun at the centre, drawn to scale (except that the dot for the Sun is much bigger than the real Sun, so that you can see it). It shows the real path of 3I/ATLAS, calculated from its published orbit. It builds up in stages as the run goes on."
       bullets={[
         <>
           <strong>The yellow dot</strong> is the Sun. <strong>The grey circles</strong> are the orbits of the Earth, Mars and Jupiter, drawn for scale. One AU (astronomical unit) is the Earth’s distance from the Sun, about 150 million kilometres.
@@ -423,6 +425,136 @@ export function pictureTwoCaption(): ReactNode {
           <strong>Calculated here:</strong> both curves, from the Sun’s gravity alone (the speed at each distance follows from keeping the total energy the same). The speed far away, {n1(pic.speedFarAwayKmS)} km/s, is worked out from the published eccentricity and closest approach; it agrees with the 58 km/s in the discovery paper’s abstract.
           <strong> Measured by others:</strong> NASA’s page on 3I/ATLAS gives its speed at closest approach as about 153,000 miles an hour, which is {n1(nasaSpeedAtClosestKmS())} km/s, and ESA’s page as roughly 250,000 km/h, which is {n1(esaSpeedAtClosestKmS())} km/s. Both agree with the calculated {n1(pic.speedAtClosestKmS)} km/s to
           within about 2 percent (read on the pages on 2026-10-28; they do not say how the figures were worked out). <strong>Imagined for the question:</strong> nothing. Your guess is drawn in white and never changes the real picture. The range of the speed ruler, up to {SPEED_RULER_MAX_KM_S} km/s, was chosen so that every button fits.
+        </>
+      }
+    />
+  )
+}
+
+// ---- Drawing A: the path of a trial visitor ----
+const A_H = 560
+
+export const TRIAL_SPEED_LABELS: Record<number, string> = {
+  5: '5 km/s',
+  26: '26 km/s (about ʻOumuamua’s)',
+  58: '58 km/s (3I/ATLAS’s)',
+  100: '100 km/s',
+}
+export const TRIAL_CLOSEST_LABELS: Record<number, string> = {
+  0.3: '0.3 AU (much closer than the Earth)',
+  1.356: '1.36 AU (3I/ATLAS’s)',
+  3: '3 AU (between Mars and Jupiter)',
+}
+export { TRIAL_CLOSEST_AU }
+
+export function TrialDrawing({ trial }: { trial: TrialPicture }) {
+  const real = pictureOne()
+  const px = (x: number) => CX + SCALE * x
+  const py = (y: number) => CY - SCALE * y
+  const line = (pts: { x: number; y: number }[]) => pts.map((p) => `${px(p.x)},${py(p.y)}`).join(' ')
+  const closest = trial.path[trial.closestIndex]
+  const exit = trial.path[trial.path.length - 1]
+  const midIndex = Math.floor(trial.closestIndex / 2)
+  const mid = trial.path[midIndex]
+  const next = trial.path[midIndex + 1]
+  const midHeading = (Math.atan2(next.y - mid.y, next.x - mid.x) * 180) / Math.PI
+  const versus = trial.bendVersusAtlas === 'the same' ? 'the same as' : `${trial.bendVersusAtlas} than`
+  return (
+    <svg viewBox={`0 0 ${P1_W} ${A_H}`} style={svgStyle} role="img" aria-label="Drawing A: the path of your trial visitor past the Sun, with the real path of 3I/ATLAS for comparison">
+      <text x={14} y={20} fill={TEXT_COLOR} fontSize={13} fontWeight="bold">
+        Drawing A. The path of your trial visitor
+      </text>
+      <Legend
+        x={14}
+        y={38}
+        size={9}
+        items={[
+          { lines: ['yellow dot: the Sun; grey circles: the orbits of Earth, Mars and Jupiter, for scale'], color: SUN_COLOR },
+          { lines: ['faint cyan line: the real path of 3I/ATLAS from Picture 1, for comparison (it does not change)'], color: CALC_COLOR },
+          { lines: ['pink line: the path of your trial visitor, calculated for the settings you chose (imagined for the question)'], color: IMAGINED_COLOR },
+        ]}
+      />
+      {real.planets.map((p, i) => {
+        const angle = [140, 180, 220][i % 3]
+        const a = (angle * Math.PI) / 180
+        return (
+          <g key={p.name}>
+            <circle cx={CX} cy={CY} r={SCALE * p.au} fill="none" stroke={MUTED_COLOR} strokeWidth={1} strokeDasharray="3 4" />
+            <text x={CX + SCALE * p.au * Math.cos(a) - 3} y={CY - SCALE * p.au * Math.sin(a) + 3} fill={MUTED_COLOR} fontSize={8} textAnchor="end">
+              {p.name}
+            </text>
+          </g>
+        )
+      })}
+      <circle cx={CX} cy={CY} r={5} fill={SUN_COLOR} />
+      <polyline points={line(real.path)} fill="none" stroke={CALC_COLOR} strokeWidth={2} opacity={0.35} />
+      <polyline points={line(trial.path)} fill="none" stroke={IMAGINED_COLOR} strokeWidth={2.5} />
+      <Arrowhead x={px(mid.x)} y={py(mid.y)} headingDegrees={midHeading} size={9} color={IMAGINED_COLOR} />
+      <Arrowhead x={px(exit.x)} y={py(exit.y)} headingDegrees={trial.exitHeadingDegrees} size={9} color={IMAGINED_COLOR} />
+      <line x1={CX} y1={CY} x2={px(closest.x)} y2={py(closest.y)} stroke={IMAGINED_COLOR} strokeWidth={1} strokeDasharray="2 3" />
+      <circle cx={px(closest.x)} cy={py(closest.y)} r={4.5} fill={IMAGINED_COLOR} stroke="#0b1020" strokeWidth={1.5} />
+      <SvgLines x={px(closest.x) + 10} y={py(closest.y) + 14} lines={[`closest approach of the trial:`, `${trial.closestApproachAu.toFixed(2)} AU`]} fill={IMAGINED_COLOR} bold size={9} />
+      <SvgLines
+        x={14}
+        y={452}
+        lines={[
+          `Trial visitor: speed far from the Sun ${trial.speedFarAwayKmS} km/s, closest approach ${trial.closestApproachAu.toFixed(2)} AU.`,
+          `Eccentricity ${n2(trial.eccentricity)}. Speed at closest approach ${n1(trial.speedAtClosestKmS)} km/s, against an escape speed there of ${n1(trial.escapeSpeedAtClosestKmS)} km/s (${n2(trial.speedOverEscape)} times).`,
+          `The path is open. Total bend ${n1(trial.bendDegrees)} degrees: ${versus} the ${n1(trial.atlasBendDegrees)} degrees of 3I/ATLAS.`,
+          'A visitor with no speed at all far from the Sun would be exactly on the border between an open and a closed path,',
+          'so every setting here, which has some speed far away, gives an open path.',
+        ]}
+        fill={IMAGINED_COLOR}
+        bold
+        size={10}
+      />
+    </svg>
+  )
+}
+
+export function trialCaption(trial: TrialPicture): ReactNode {
+  const speedText = TRIAL_SPEED_LABELS[trial.speedFarAwayKmS]?.replace(/ \(.*\)$/, '') ?? `${trial.speedFarAwayKmS} km/s`
+  const same = trial.bendVersusAtlas === 'the same'
+  const lookFor: LookFor[] = [
+    {
+      look: 'the pink line, against the faint cyan line.',
+      means: same
+        ? 'the two lie on top of each other, because these settings are those of 3I/ATLAS (the speed is the rounded 58 km/s, so they differ in the third decimal place).'
+        : `the pink path is ${trial.bendVersusAtlas === 'more' ? 'more' : 'less'} bent than the real path of 3I/ATLAS: ${n1(trial.bendDegrees)} degrees against ${n1(trial.atlasBendDegrees)}.`,
+      matters: 'changing one setting at a time shows what each does to the path. The tutor explains why.',
+    },
+    {
+      look: 'the numbers under the picture: the speed at closest approach, against the escape speed there.',
+      means: `your trial visitor goes ${n1(trial.speedAtClosestKmS)} km/s at its closest approach, ${n2(trial.speedOverEscape)} times the escape speed there, ${n1(trial.escapeSpeedAtClosestKmS)} km/s.`,
+      matters: 'a speed above the escape speed means an open path: the Sun cannot hold the visitor. Any speed far from the Sun above zero gives this.',
+    },
+  ]
+  return (
+    <CaptionBlock
+      title="Drawing A"
+      intro="This is the same kind of map as Picture 1, for a visitor of your own. The Sun’s dot is drawn much bigger than the real Sun, so that you can see it. Everything else is to scale. The real picture above does not change when you change a setting; only this drawing does."
+      bullets={[
+        <>
+          <strong>The pink line</strong> is the path of your trial visitor, and <strong>the pink dot</strong> is its closest approach. <strong>The arrows</strong> show which way it travels. It is calculated here from the two settings you chose, and it is imagined for the question: it is not a real object.
+        </>,
+        <>
+          <strong>The faint cyan line</strong> is the real path of 3I/ATLAS, as in Picture 1, kept here for comparison. <strong>The grey circles</strong> are the orbits of the Earth, Mars and Jupiter, for scale.
+        </>,
+        <>
+          <strong>The four lines of text underneath</strong> give your trial’s numbers: the settings, the eccentricity (how open the path is), the speed at closest approach and the escape speed there, and the total bend, with how it compares with 3I/ATLAS’s.
+        </>,
+      ]}
+      worked={
+        <>
+          You chose a speed far from the Sun of {speedText} and a closest approach of {trial.closestApproachAu.toFixed(2)} AU. The eccentricity works out as {n2(trial.eccentricity)}, so the path is open, and the total bend is {n1(trial.bendDegrees)} degrees, which is {same ? 'the same as' : `${trial.bendVersusAtlas} than`}{' '}
+          the {n1(trial.atlasBendDegrees)} degrees of 3I/ATLAS (Part 3 shows how the bend follows from the eccentricity). At the closest approach the speed is {n1(trial.speedAtClosestKmS)} km/s and the escape speed is {n1(trial.escapeSpeedAtClosestKmS)} km/s.
+        </>
+      }
+      lookFor={lookFor}
+      whereFrom={
+        <>
+          <strong>Calculated here:</strong> your trial path, its eccentricity, bend and speeds, with the same formulas as Pictures 1 and 2. <strong>Imagined for the question:</strong> the trial visitor and its two settings, in pink, which you chose. 0.3, 1.36 and 3 AU and 5, 26, 58 and 100 km/s are
+          numbers to try; 26 km/s is about the speed of ʻOumuamua far from the Sun (Wikipedia), and 58 km/s and 1.36 AU are those of 3I/ATLAS. <strong>Estimated from measurements:</strong> the faint cyan path (as in Picture 1). These are trial values and do not say that a real visitor is like that.
         </>
       }
     />

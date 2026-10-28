@@ -42,6 +42,9 @@ import {
   speedRulerPosition,
   nasaSpeedAtClosestKmS,
   esaSpeedAtClosestKmS,
+  trialPicture,
+  TRIAL_DEFAULT_SPEED_KM_S,
+  TRIAL_DEFAULT_CLOSEST_AU,
 } from './interstellarVisitor'
 
 // Constants written out again here, separately from the module (Test 1): the IAU's GM of the Sun and the astronomical unit.
@@ -332,5 +335,64 @@ describe('Picture 2: speed against distance (Step 4)', () => {
     const before = JSON.stringify(pictureTwo())
     speedGuessMarker('v230')
     expect(JSON.stringify(pictureTwo())).toBe(before)
+  })
+})
+
+describe('Drawing A: a trial path (Step 5)', () => {
+  it('the default trial (58 km/s, 1.356 AU) is 3I/ATLAS\'s path: the same bend, nearly the same path', () => {
+    const t = trialPicture(TRIAL_DEFAULT_SPEED_KM_S, TRIAL_DEFAULT_CLOSEST_AU)
+    expect(t.bendVersusAtlas).toBe('the same')
+    expect(Math.abs(t.bendDegrees - atlasBendDegrees())).toBeLessThan(0.05)
+    const real = pictureOne().path
+    expect(t.path.length).toBe(real.length)
+    for (let i = 0; i < real.length; i += 10) expect(Math.hypot(t.path[i].x - real[i].x, t.path[i].y - real[i].y)).toBeLessThan(0.1)
+  })
+  it('every trial path lies on its hyperbola, passes the Sun at the chosen closest approach and ends at the view radius', () => {
+    for (const v of TRIAL_SPEEDS_KM_S)
+      for (const au of TRIAL_CLOSEST_AU) {
+        const t = trialPicture(v, au)
+        const c = t.path[t.closestIndex]
+        expect(c.x).toBeCloseTo(au, 8)
+        expect(c.y).toBeCloseTo(0, 8)
+        for (const pt of t.path) {
+          const r = Math.hypot(pt.x, pt.y)
+          const th = Math.atan2(pt.y, pt.x)
+          expect(r).toBeCloseTo((au * (1 + t.eccentricity)) / (1 + t.eccentricity * Math.cos(th)), 6)
+        }
+        const first = t.path[0]
+        expect(Math.hypot(first.x, first.y)).toBeCloseTo(PICTURE_VIEW_RADIUS_AU, 6)
+        expect(t.escapeOverSpeed).toBeLessThan(1)
+        expect(t.escapeOverSpeed).toBeCloseTo(1 / t.speedOverEscape, 10)
+      }
+  })
+  it('the heading at each end is the real direction of travel, and the path turns by at most the bend', () => {
+    for (const v of TRIAL_SPEEDS_KM_S)
+      for (const au of TRIAL_CLOSEST_AU) {
+        const t = trialPicture(v, au)
+        const n = t.path.length
+        const dx = t.path[n - 1].x - t.path[n - 2].x
+        const dy = t.path[n - 1].y - t.path[n - 2].y
+        const finite = (Math.atan2(dy, dx) * 180) / Math.PI
+        expect(Math.abs(finite - t.exitHeadingDegrees)).toBeLessThan(3)
+        const turn = t.exitHeadingDegrees - t.entryHeadingDegrees
+        expect(turn).toBeGreaterThan(0)
+        expect(turn).toBeLessThanOrEqual(t.bendDegrees + 1e-6)
+      }
+  })
+  it('says whether the bend is more or less than 3I/ATLAS\'s, and a slower visitor is bent more', () => {
+    expect(trialPicture(26, 1.356).bendVersusAtlas).toBe('more')
+    expect(trialPicture(100, 1.356).bendVersusAtlas).toBe('less')
+    expect(trialPicture(58, 0.3).bendVersusAtlas).toBe('more')
+    expect(trialPicture(58, 3).bendVersusAtlas).toBe('less')
+    const bends = TRIAL_SPEEDS_KM_S.map((v) => trialPicture(v, 1.356).bendDegrees)
+    for (let i = 1; i < bends.length; i++) expect(bends[i]).toBeLessThan(bends[i - 1])
+  })
+  it('does not depend on a guess, and agrees with trialOrbit', () => {
+    const a = trialPicture(26, 3)
+    const o = trialOrbit(26, 3)
+    expect(a.eccentricity).toBe(o.eccentricity)
+    expect(a.bendDegrees).toBe(o.bendDegrees)
+    bendGuessResult('b2')
+    expect(JSON.stringify(trialPicture(26, 3))).toBe(JSON.stringify(a))
   })
 })
