@@ -1,0 +1,188 @@
+// Frontier and Beyond Experiment 24: A visitor from another star (3I/ATLAS). The Sun's pull alone, on a body that comes from far away: its speed at any distance, the escape speed, the
+// eccentricity of its path and the total bend. Physics only: no React or browser code (CLAUDE.md §9). The model is the two-body problem (a point body in the Sun's gravity); it leaves out
+// the planets, the comet's own gas and relativity. Every formula is a standard two-body result, worked by hand and by a separate script on 2026-10-28 (to be checked at a source).
+import { ASTRONOMICAL_UNIT, SUN } from './fastestSpacecraft'
+
+export const GM_SUN = SUN.gm // m^3/s^2
+export const AU = ASTRONOMICAL_UNIT // m
+const RAD_TO_DEG = 180 / Math.PI
+
+function checkPositive(x: number, what: string): void {
+  if (!Number.isFinite(x) || x <= 0) throw new RangeError(`${what} must be above zero.`)
+}
+
+// ---- The real object and its comparison objects ----
+
+// 3I/ATLAS: the published eccentricity and closest approach (Wikipedia's orbit table, 6.14135 +/- 0.00002 and 1.35645 AU; the discovery paper's abstract, arXiv:2507.02757, gives e ~ 6.1, q ~ 1.36 AU,
+// V-infinity ~ 58 km/s, inclination ~ 175 degrees). The speed far away is derived from these (below), not held.
+export const ATLAS_3I = {
+  name: '3I/ATLAS',
+  eccentricity: 6.14135,
+  closestApproachAu: 1.35645,
+  inclinationDegrees: 175.12,
+  publishedSpeedFarAwayKmS: 58,
+  discoveryDate: '2025-07-01',
+  closestApproachDate: '2025-10-29',
+} as const
+
+// The two earlier interstellar objects, from rounded values on the Wikipedia page (the primary values were not read): eccentricity and speed far away.
+export const OUMUAMUA_1I = { name: '1I/ʻOumuamua', eccentricity: 1.2, publishedSpeedFarAwayKmS: 26 } as const
+export const BORISOV_2I = { name: '2I/Borisov', eccentricity: 3.4, publishedSpeedFarAwayKmS: 32 } as const
+
+// ---- The two-body formulas (SI units; speeds in m/s, distances in m) ----
+
+// Speed far from the Sun, from the eccentricity and the closest approach: v_inf = sqrt((e - 1) GM / q).
+export function speedFarAway(eccentricity: number, closestApproachM: number): number {
+  if (!Number.isFinite(eccentricity) || eccentricity <= 1) throw new RangeError('An open path needs an eccentricity above 1.')
+  checkPositive(closestApproachM, 'The closest approach')
+  return Math.sqrt(((eccentricity - 1) * GM_SUN) / closestApproachM)
+}
+
+// Eccentricity from the speed far away and the closest approach: e = 1 + q v_inf^2 / GM.
+export function eccentricityFrom(speedFarAwayMs: number, closestApproachM: number): number {
+  checkPositive(speedFarAwayMs, 'The speed far away')
+  checkPositive(closestApproachM, 'The closest approach')
+  return 1 + (closestApproachM * speedFarAwayMs ** 2) / GM_SUN
+}
+
+// Speed at distance r (energy conservation): v = sqrt(v_inf^2 + 2 GM / r).
+export function speedAt(speedFarAwayMs: number, distanceM: number): number {
+  if (!Number.isFinite(speedFarAwayMs) || speedFarAwayMs < 0) throw new RangeError('The speed far away must be zero or more.')
+  checkPositive(distanceM, 'The distance')
+  return Math.sqrt(speedFarAwayMs ** 2 + (2 * GM_SUN) / distanceM)
+}
+
+// Escape speed at distance r: sqrt(2 GM / r).
+export function escapeSpeed(distanceM: number): number {
+  checkPositive(distanceM, 'The distance')
+  return Math.sqrt((2 * GM_SUN) / distanceM)
+}
+
+// Total bend of the path, in degrees, from the direction it comes in from to the direction it leaves in: 2 arcsin(1 / e).
+export function bendDegrees(eccentricity: number): number {
+  if (!Number.isFinite(eccentricity) || eccentricity <= 1) throw new RangeError('An open path needs an eccentricity above 1.')
+  return 2 * Math.asin(1 / eccentricity) * RAD_TO_DEG
+}
+
+// The hyperbola, from the Sun at one focus: r(theta) = q (1 + e) / (1 + e cos theta), theta measured from the closest approach.
+export function pathDistance(eccentricity: number, closestApproachM: number, thetaRadians: number): number {
+  if (!Number.isFinite(eccentricity) || eccentricity <= 1) throw new RangeError('An open path needs an eccentricity above 1.')
+  checkPositive(closestApproachM, 'The closest approach')
+  return (closestApproachM * (1 + eccentricity)) / (1 + eccentricity * Math.cos(thetaRadians))
+}
+
+// The angle (degrees, either side of the closest approach) at which the path goes to infinity: arccos(-1 / e). The path sweeps twice this, 180 degrees plus the bend.
+export function asymptoteAngleDegrees(eccentricity: number): number {
+  if (!Number.isFinite(eccentricity) || eccentricity <= 1) throw new RangeError('An open path needs an eccentricity above 1.')
+  return Math.acos(-1 / eccentricity) * RAD_TO_DEG
+}
+
+// ---- 3I/ATLAS, in SI units ----
+
+export function atlasClosestApproachM(): number {
+  return ATLAS_3I.closestApproachAu * AU
+}
+export function atlasSpeedFarAway(): number {
+  return speedFarAway(ATLAS_3I.eccentricity, atlasClosestApproachM())
+}
+export function atlasSpeedAtClosestApproach(): number {
+  return speedAt(atlasSpeedFarAway(), atlasClosestApproachM())
+}
+export function atlasEscapeSpeedAtClosestApproach(): number {
+  return escapeSpeed(atlasClosestApproachM())
+}
+// How many times the escape speed the object is going at its closest approach.
+export function atlasSpeedOverEscape(): number {
+  return atlasSpeedAtClosestApproach() / atlasEscapeSpeedAtClosestApproach()
+}
+export function atlasBendDegrees(): number {
+  return bendDegrees(ATLAS_3I.eccentricity)
+}
+
+// ---- Trial values (the controls, Step 5): a speed far away and a closest approach chosen by the learner ----
+
+export const TRIAL_SPEEDS_KM_S = [5, 26, 58, 100] as const
+export const TRIAL_CLOSEST_AU = [0.3, 1.356, 3] as const
+
+export interface TrialOrbit {
+  speedFarAwayKmS: number
+  closestApproachAu: number
+  eccentricity: number
+  bendDegrees: number
+  speedAtClosestKmS: number
+  escapeSpeedAtClosestKmS: number
+  speedOverEscape: number
+}
+
+export function trialOrbit(speedFarAwayKmS: number, closestApproachAu: number): TrialOrbit {
+  const v = speedFarAwayKmS * 1e3
+  const q = closestApproachAu * AU
+  const e = eccentricityFrom(v, q)
+  return {
+    speedFarAwayKmS,
+    closestApproachAu,
+    eccentricity: e,
+    bendDegrees: bendDegrees(e),
+    speedAtClosestKmS: speedAt(v, q) / 1e3,
+    escapeSpeedAtClosestKmS: escapeSpeed(q) / 1e3,
+    speedOverEscape: speedAt(v, q) / escapeSpeed(q),
+  }
+}
+
+// ---- The predictions ----
+
+export function nearestOnLogScale<T>(choices: readonly T[], value: number, valueOf: (c: T) => number): T {
+  let best = choices[0]
+  for (const c of choices) {
+    if (Math.abs(Math.log(valueOf(c)) - Math.log(value)) < Math.abs(Math.log(valueOf(best)) - Math.log(value))) best = c
+  }
+  return best
+}
+
+// Prediction 1: the total bend of 3I/ATLAS's path. Buttons on a log scale, in degrees.
+export const BEND_CHOICES = [
+  { id: 'b2', label: 'about 2 degrees', degrees: 2 },
+  { id: 'b6', label: 'about 6 degrees', degrees: 6 },
+  { id: 'b20', label: 'about 20 degrees', degrees: 20 },
+  { id: 'b60', label: 'about 60 degrees', degrees: 60 },
+  { id: 'b150', label: 'about 150 degrees', degrees: 150 },
+] as const
+export type BendChoiceId = (typeof BEND_CHOICES)[number]['id']
+
+export function bendAnswer(): BendChoiceId {
+  return nearestOnLogScale(BEND_CHOICES, atlasBendDegrees(), (c) => c.degrees).id
+}
+export function bendChoiceDegrees(id: BendChoiceId): number {
+  return BEND_CHOICES.find((c) => c.id === id)!.degrees
+}
+// The tutor's mark (§12, §13): used in the explanation only.
+export function bendGuessResult(id: BendChoiceId): 'matched' | 'not matched' {
+  return id === bendAnswer() ? 'matched' : 'not matched'
+}
+// The marker for Picture 1: the guessed bend, in degrees (the white line leaves at this angle from the straight-on direction).
+export function bendGuessMarker(id: BendChoiceId): { degrees: number } {
+  return { degrees: bendChoiceDegrees(id) }
+}
+
+// Prediction 2: the speed at closest approach. Buttons in km/s: slower, the same as far away, a little faster, about twice and about four times as fast.
+export const SPEED_CHOICES = [
+  { id: 'v40', label: 'slower, about 40 km/s', kmS: 40 },
+  { id: 'v58', label: 'the same, about 58 km/s', kmS: 58 },
+  { id: 'v70', label: 'a little faster, about 70 km/s', kmS: 70 },
+  { id: 'v115', label: 'about twice as fast, about 115 km/s', kmS: 115 },
+  { id: 'v230', label: 'about four times as fast, about 230 km/s', kmS: 230 },
+] as const
+export type SpeedChoiceId = (typeof SPEED_CHOICES)[number]['id']
+
+export function speedAnswer(): SpeedChoiceId {
+  return nearestOnLogScale(SPEED_CHOICES, atlasSpeedAtClosestApproach() / 1e3, (c) => c.kmS).id
+}
+export function speedChoiceKmS(id: SpeedChoiceId): number {
+  return SPEED_CHOICES.find((c) => c.id === id)!.kmS
+}
+export function speedGuessResult(id: SpeedChoiceId): 'matched' | 'not matched' {
+  return id === speedAnswer() ? 'matched' : 'not matched'
+}
+export function speedGuessMarker(id: SpeedChoiceId): { kmS: number } {
+  return { kmS: speedChoiceKmS(id) }
+}

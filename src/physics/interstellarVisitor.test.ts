@@ -1,0 +1,210 @@
+import { describe, it, expect } from 'vitest'
+import {
+  GM_SUN,
+  AU,
+  ATLAS_3I,
+  OUMUAMUA_1I,
+  BORISOV_2I,
+  speedFarAway,
+  eccentricityFrom,
+  speedAt,
+  escapeSpeed,
+  bendDegrees,
+  pathDistance,
+  asymptoteAngleDegrees,
+  atlasClosestApproachM,
+  atlasSpeedFarAway,
+  atlasSpeedAtClosestApproach,
+  atlasEscapeSpeedAtClosestApproach,
+  atlasSpeedOverEscape,
+  atlasBendDegrees,
+  trialOrbit,
+  TRIAL_SPEEDS_KM_S,
+  TRIAL_CLOSEST_AU,
+  nearestOnLogScale,
+  BEND_CHOICES,
+  bendAnswer,
+  bendGuessResult,
+  bendGuessMarker,
+  SPEED_CHOICES,
+  speedAnswer,
+  speedGuessResult,
+  speedGuessMarker,
+} from './interstellarVisitor'
+
+// Constants written out again here, separately from the module (Test 1): the IAU's GM of the Sun and the astronomical unit.
+const GM = 1.32712440018e20
+const ASTRONOMICAL_UNIT = 1.495978707e11
+const KM = 1e3
+
+describe('the real object and the constants', () => {
+  it('holds the published orbit as listed (test 9)', () => {
+    expect(ATLAS_3I.eccentricity).toBe(6.14135)
+    expect(ATLAS_3I.closestApproachAu).toBe(1.35645)
+    expect(ATLAS_3I.inclinationDegrees).toBe(175.12)
+    expect(GM_SUN).toBe(GM)
+    expect(AU).toBe(ASTRONOMICAL_UNIT)
+  })
+})
+
+describe('the speeds of 3I/ATLAS', () => {
+  it('has a speed far away of 58.0 km/s, derived from e and q, agreeing with the published 58 (test 1)', () => {
+    const q = 1.35645 * ASTRONOMICAL_UNIT
+    const separately = Math.sqrt((5.14135 * GM) / q)
+    expect(atlasSpeedFarAway()).toBeCloseTo(separately, 3)
+    expect(Math.abs(atlasSpeedFarAway() / KM - 58.0)).toBeLessThan(0.1)
+    expect(Math.abs(atlasSpeedFarAway() / KM - ATLAS_3I.publishedSpeedFarAwayKmS)).toBeLessThan(0.1)
+  })
+  it('has 68.3 km/s at closest approach and an escape speed of 36.2 km/s there, 1.89 times (test 2)', () => {
+    expect(Math.abs(atlasSpeedAtClosestApproach() / KM - 68.3)).toBeLessThan(0.1)
+    expect(Math.abs(atlasEscapeSpeedAtClosestApproach() / KM - 36.2)).toBeLessThan(0.1)
+    expect(atlasSpeedOverEscape()).toBeCloseTo(1.89, 2)
+    // Even far away it is faster than the escape speed at closest approach: 58.0 / 36.2 = 1.6.
+    expect(atlasSpeedFarAway() / atlasEscapeSpeedAtClosestApproach()).toBeCloseTo(1.6, 1)
+  })
+  it('speeds up as it falls in and returns to its speed far away (energy conservation, test 5)', () => {
+    const v = atlasSpeedFarAway()
+    const energy = (r: number) => speedAt(v, r) ** 2 / 2 - GM / r
+    const e0 = energy(atlasClosestApproachM())
+    for (const au of [0.3, 1, 5, 30, 100, 1000]) expect(energy(au * ASTRONOMICAL_UNIT)).toBeCloseTo(e0, -3) // to a part in 1e14 of the energy
+    expect(speedAt(v, 1e6 * ASTRONOMICAL_UNIT)).toBeCloseTo(v, 0)
+    expect(speedAt(v, 1 * ASTRONOMICAL_UNIT) / KM).toBeCloseTo(71.67, 1)
+    expect(speedAt(v, 100 * ASTRONOMICAL_UNIT) / KM).toBeCloseTo(58.14, 1)
+  })
+})
+
+describe('the eccentricity and the bend', () => {
+  it('the eccentricity from the speed far away and the closest approach reproduces 6.14 (test 3)', () => {
+    const e = eccentricityFrom(58 * KM, 1.356 * ASTRONOMICAL_UNIT)
+    expect(e).toBeCloseTo(6.14, 1)
+    expect(e).toBeCloseTo(1 + (1.356 * ASTRONOMICAL_UNIT * (58 * KM) ** 2) / GM, 10)
+    // A round trip with the speed formula.
+    expect(speedFarAway(e, 1.356 * ASTRONOMICAL_UNIT)).toBeCloseTo(58 * KM, 6)
+  })
+  it('the total bend is 2 arcsin(1 / e): 18.7 degrees for 3I/ATLAS, 112.9 for e = 1.2 and 34.2 for e = 3.4 (test 4)', () => {
+    expect(atlasBendDegrees()).toBeCloseTo(18.74, 1)
+    expect(bendDegrees(OUMUAMUA_1I.eccentricity)).toBeCloseTo(112.9, 1)
+    expect(bendDegrees(BORISOV_2I.eccentricity)).toBeCloseTo(34.2, 1)
+    expect(bendDegrees(ATLAS_3I.eccentricity)).toBe(atlasBendDegrees())
+  })
+  it('the bend falls as the eccentricity rises, towards zero, and towards 180 degrees as the path closes', () => {
+    let last = 180
+    for (const e of [1.001, 1.2, 2, 3.4, 6.14, 20, 140]) {
+      const b = bendDegrees(e)
+      expect(b).toBeLessThan(last)
+      last = b
+    }
+    expect(bendDegrees(1.0001)).toBeGreaterThan(178)
+    expect(bendDegrees(1000)).toBeLessThan(0.2)
+  })
+  it('a faster visitor at the same closest approach is bent less (test 4)', () => {
+    const q = atlasClosestApproachM()
+    const bends = [5, 26, 58, 100, 300].map((v) => bendDegrees(eccentricityFrom(v * KM, q)))
+    for (let i = 1; i < bends.length; i++) expect(bends[i]).toBeLessThan(bends[i - 1])
+  })
+  it('rejects a path that is not open, and impossible inputs', () => {
+    expect(() => bendDegrees(1)).toThrow(RangeError)
+    expect(() => bendDegrees(0.5)).toThrow(RangeError)
+    expect(() => speedFarAway(1, AU)).toThrow(RangeError)
+    expect(() => eccentricityFrom(0, AU)).toThrow(RangeError)
+    expect(() => speedAt(-1, AU)).toThrow(RangeError)
+    expect(() => escapeSpeed(0)).toThrow(RangeError)
+    expect(() => pathDistance(0.9, AU, 0)).toThrow(RangeError)
+  })
+})
+
+describe('the path (test 6)', () => {
+  const e = ATLAS_3I.eccentricity
+  const q = ATLAS_3I.closestApproachAu * ASTRONOMICAL_UNIT
+  it('has its closest approach at theta = 0 and is symmetric about it', () => {
+    expect(pathDistance(e, q, 0)).toBeCloseTo(q, 0)
+    expect(pathDistance(e, q, 0.7)).toBeCloseTo(pathDistance(e, q, -0.7), 0)
+    expect(pathDistance(e, q, 1.0)).toBeGreaterThan(q)
+  })
+  it('goes to infinity at arccos(-1 / e), and the path sweeps 180 degrees plus the bend', () => {
+    const a = asymptoteAngleDegrees(e)
+    expect(a).toBeCloseTo(99.37, 1)
+    const nearly = (a - 0.001) * (Math.PI / 180)
+    expect(pathDistance(e, q, nearly)).toBeGreaterThan(1e3 * AU)
+    expect(2 * a).toBeCloseTo(180 + atlasBendDegrees(), 8)
+  })
+  it('the speed at a point on the path agrees with the distance there (vis-viva round trip)', () => {
+    const v = atlasSpeedFarAway()
+    const r = pathDistance(e, q, 1.2)
+    const a = -q / (e - 1)
+    expect(speedAt(v, r) ** 2).toBeCloseTo(GM * (2 / r - 1 / a), -6)
+  })
+})
+
+describe('open paths (test 7)', () => {
+  it('any speed far away above zero gives an open path, and a speed above the escape speed at closest approach', () => {
+    for (const v of TRIAL_SPEEDS_KM_S)
+      for (const au of TRIAL_CLOSEST_AU) {
+        const t = trialOrbit(v, au)
+        expect(t.eccentricity).toBeGreaterThan(1)
+        expect(t.speedAtClosestKmS).toBeGreaterThan(t.escapeSpeedAtClosestKmS)
+        expect(t.speedOverEscape).toBeGreaterThan(1)
+      }
+  })
+  it('the default trial (58 km/s, 1.356 AU) is 3I/ATLAS within the rounding of 58', () => {
+    const t = trialOrbit(58, 1.356)
+    expect(Math.abs(t.eccentricity - ATLAS_3I.eccentricity)).toBeLessThan(0.01)
+    expect(Math.abs(t.bendDegrees - atlasBendDegrees())).toBeLessThan(0.05)
+    expect(Math.abs(t.speedAtClosestKmS - atlasSpeedAtClosestApproach() / KM)).toBeLessThan(0.1)
+  })
+  it('a 26 km/s visitor at 3I/ATLAS\'s closest approach is bent more, and a 100 km/s one less', () => {
+    expect(trialOrbit(26, 1.356).bendDegrees).toBeGreaterThan(atlasBendDegrees())
+    expect(trialOrbit(100, 1.356).bendDegrees).toBeLessThan(atlasBendDegrees())
+  })
+  it('a closer approach bends the same visitor more', () => {
+    expect(trialOrbit(58, 0.3).bendDegrees).toBeGreaterThan(trialOrbit(58, 1.356).bendDegrees)
+    expect(trialOrbit(58, 3).bendDegrees).toBeLessThan(trialOrbit(58, 1.356).bendDegrees)
+  })
+})
+
+describe('the nearest-answer helper and the predictions (tests 8 and 10)', () => {
+  it('compares on a log scale, not a linear one', () => {
+    const c = [{ v: 1 }, { v: 100 }]
+    expect(nearestOnLogScale(c, 20, (x) => x.v).v).toBe(100) // a linear comparison would pick 1 (19 away against 80), a log comparison picks 100
+    expect(nearestOnLogScale(c, 5, (x) => x.v).v).toBe(1)
+  })
+  it('Prediction 1 has the answer "about 20 degrees" for a bend of 18.7 degrees', () => {
+    expect(bendAnswer()).toBe('b20')
+    expect(bendGuessResult('b20')).toBe('matched')
+    for (const id of ['b2', 'b6', 'b60', 'b150'] as const) expect(bendGuessResult(id)).toBe('not matched')
+  })
+  it('Prediction 2 has the answer "about 70 km/s" for a speed of 68.3 km/s', () => {
+    expect(speedAnswer()).toBe('v70')
+    expect(speedGuessResult('v70')).toBe('matched')
+    for (const id of ['v40', 'v58', 'v115', 'v230'] as const) expect(speedGuessResult(id)).toBe('not matched')
+  })
+  it('the buttons are the ones in the specification', () => {
+    expect(BEND_CHOICES.map((c) => c.degrees)).toEqual([2, 6, 20, 60, 150])
+    expect(SPEED_CHOICES.map((c) => c.kmS)).toEqual([40, 58, 70, 115, 230])
+    expect(BEND_CHOICES.map((c) => c.label)).toEqual(['about 2 degrees', 'about 6 degrees', 'about 20 degrees', 'about 60 degrees', 'about 150 degrees'])
+  })
+  it('the buttons are balanced about each answer on a log scale (neither neighbour is much nearer)', () => {
+    const b = atlasBendDegrees()
+    const lo = Math.log(b / 6)
+    const hi = Math.log(60 / b)
+    expect(Math.abs(lo - hi)).toBeLessThan(0.5)
+    const s = atlasSpeedAtClosestApproach() / KM
+    expect(Math.abs(Math.log(s / 40) - Math.log(115 / s))).toBeLessThan(0.6)
+  })
+  it('each guess has its own marker, in increasing order', () => {
+    const bends = BEND_CHOICES.map((c) => bendGuessMarker(c.id).degrees)
+    expect(bends).toEqual([...bends].sort((a, b) => a - b))
+    expect(new Set(bends).size).toBe(BEND_CHOICES.length)
+    const speeds = SPEED_CHOICES.map((c) => speedGuessMarker(c.id).kmS)
+    expect(speeds).toEqual([...speeds].sort((a, b) => a - b))
+    expect(new Set(speeds).size).toBe(SPEED_CHOICES.length)
+  })
+  it('the answers do not depend on a guess having been made (separation, test 10)', () => {
+    const before = [bendAnswer(), speedAnswer(), atlasBendDegrees(), atlasSpeedAtClosestApproach()]
+    bendGuessResult('b2')
+    speedGuessResult('v230')
+    bendGuessMarker('b150')
+    speedGuessMarker('v40')
+    expect([bendAnswer(), speedAnswer(), atlasBendDegrees(), atlasSpeedAtClosestApproach()]).toEqual(before)
+  })
+})
