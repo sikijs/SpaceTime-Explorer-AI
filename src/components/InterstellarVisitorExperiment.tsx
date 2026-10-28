@@ -1,11 +1,21 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { AU, escapeSpeed } from '../physics/interstellarVisitor'
+import {
+  AU,
+  ATLAS_3I,
+  BEND_CHOICES,
+  SPEED_CHOICES,
+  atlasClosestApproachM,
+  atlasSpeedFarAway,
+  escapeSpeed,
+} from '../physics/interstellarVisitor'
+import type { BendChoiceId, SpeedChoiceId } from '../physics/interstellarVisitor'
 import { EARTH } from '../physics/fastestSpacecraft'
 
 // Frontier and Beyond, Experiment 24 (docs/experiments/frontier-and-beyond/24-a-visitor-from-another-star.md).
-// STEP 2 (the interface skeleton and the introduction): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?" links.
-// It has no predictions, run, pictures, controls, results, tutor or summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval
+// STEPS 2 and 3 (the interface skeleton and the introduction, then the two predictions): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel, the "Want to know more?" links
+// and Part 1 with the two predictions (Run only records them). It has no run, pictures, controls, results, tutor or summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval
 // (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how much the Sun bends the path of 3I/ATLAS, how fast it was going at its closest approach, or any other number that
 // the two predictions ask for (CLAUDE.md §12). The pages that give those numbers away (NASA's and ESA's pages on 3I/ATLAS both give its speed at closest approach) are listed only after the
 // run, in a later step. The introduction has no computed number in it, so it needs nothing from the physics module (CLAUDE.md §9).
@@ -80,6 +90,20 @@ function referenceEntries(): { term: string; meaning: string }[] {
 }
 
 export function InterstellarVisitorExperiment() {
+  const [bendGuess, setBendGuess] = useState<BendChoiceId | null>(null)
+  const [speedGuess, setSpeedGuess] = useState<SpeedChoiceId | null>(null)
+  const [recorded, setRecorded] = useState(false)
+  const bothPredicted = bendGuess !== null && speedGuess !== null
+  const startOver = () => {
+    setBendGuess(null)
+    setSpeedGuess(null)
+    setRecorded(false)
+  }
+  // The inputs that the predictions give the learner, from the physics module (display rounding only, CLAUDE.md §9).
+  const speedFarAwayKmS = Math.round(atlasSpeedFarAway() / 1e3)
+  const closestAu = ATLAS_3I.closestApproachAu.toFixed(2)
+  const closestMillionKm = Math.round(atlasClosestApproachM() / 1e9)
+  const earthSpeedForScale = Math.round(EARTH.orbitalSpeed / 1e3)
   // Display rounding of the module's escape speeds (no physics here, CLAUDE.md §9).
   const earthEscape = Math.round(escapeSpeed(AU) / 1e3)
   const earthSpeed = Math.round(EARTH.orbitalSpeed / 1e3)
@@ -157,6 +181,85 @@ export function InterstellarVisitorExperiment() {
         </div>
 
         <ReferencePanel entries={referenceEntries()} />
+
+        {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is right. */}
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed things: a calculation of the path of a
+            visitor under the Sun’s gravity alone, and the published path of 3I/ATLAS. They are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess
+            compares with the real result. The real pictures stay the same whatever you guess.
+          </p>
+
+          {(
+            [
+              {
+                title: 'Prediction 1: how much does the Sun bend its path?',
+                text: (
+                  <>
+                    When 3I/ATLAS was far from the Sun it was going about {speedFarAwayKmS} kilometres a second (for scale, the Earth goes round the Sun at about {earthSpeedForScale}). It passed the Sun at its closest approach, {closestAu} times the Earth’s distance from the Sun,
+                    which is about {closestMillionKm} million kilometres. The Sun’s pull turned its direction of travel. From the direction it was travelling in before it reached the Sun to the direction it travelled in after it had gone past, about how many
+                    degrees was its path turned through in all? (A path that is not bent at all is 0 degrees. A path that turned right round and went back the way it came would be 180 degrees.)
+                  </>
+                ),
+                choices: BEND_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+                value: bendGuess as string | null,
+                set: (v: string) => setBendGuess(v as BendChoiceId),
+              },
+              {
+                title: 'Prediction 2: how fast was it going at its closest approach?',
+                text: (
+                  <>
+                    Far from the Sun, 3I/ATLAS was going about {speedFarAwayKmS} kilometres a second. As it came in, the Sun’s gravity pulled on it all the way. About how fast was it going at its closest approach to the Sun, {closestAu} times the Earth’s distance
+                    from the Sun? This is a separate guess from Prediction 1, so your two answers do not have to agree with each other.
+                  </>
+                ),
+                choices: SPEED_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+                value: speedGuess as string | null,
+                set: (v: string) => setSpeedGuess(v as SpeedChoiceId),
+              },
+            ] as const
+          ).map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</p>
+              <div>
+                {(question.choices as ReadonlyArray<{ value: string; label: string }>).map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => (question.set as (v: string) => void)(choice.value)}
+                    disabled={recorded}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label.charAt(0).toUpperCase() + choice.label.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null
+                  ? `Your prediction: ${(question.choices as ReadonlyArray<{ value: string; label: string }>).find((c) => c.value === question.value)?.label}.`
+                  : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
+          {recorded && (
+            <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0', color: 'var(--text-muted)' }}>
+              Your predictions are recorded and are not marked here. The pictures that the run draws are built in a later step.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )
