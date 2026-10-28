@@ -37,6 +37,14 @@ export const TOTAL_MASS = HALO_MASS_MILKY_WAY + HALO_MASS_M31
 export const SIDEWAYS_SPEED_2025_KM_S = 76
 export const SIDEWAYS_SPEED_2026_KM_S = 46.7
 export const SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S = 24.0
+// The 2026 give-or-take as a range, in km/s: the sideways speed minus and plus its give-or-take (22.7 to 70.7).
+export function sidewaysRange2026(): { low: number; high: number } {
+  return { low: SIDEWAYS_SPEED_2026_KM_S - SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S, high: SIDEWAYS_SPEED_2026_KM_S + SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S }
+}
+// The approach speed from converting the 2026 paper's own inputs (its line-of-sight speed and the solar motion it adopts), 114.4 km/s, mentioned on the page as a caveat; the model uses 109 (the owner's decision, 2026-10-28).
+export const APPROACH_SPEED_ALTERNATIVE_KM_S = 114
+// The 2025 study's number of Monte Carlo trial runs.
+export const MONTE_CARLO_TRIALS_2025 = 100000
 // Both studies call two galaxies merged when they come within this distance, in kpc.
 export const MERGER_DISTANCE_KPC = 20
 // Published merger probabilities and times (percent; billions of years). 2025: about 50 percent within 10 Gyr that there is NO merger (44, 63, 37 and 54 percent merged for the two-body,

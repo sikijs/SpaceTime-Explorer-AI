@@ -30,6 +30,9 @@ import {
   passGuessMarker,
   TRIAL_SIDEWAYS_KM_S,
   TRIAL_MASSES_SOLAR,
+  sidewaysRange2026,
+  APPROACH_SPEED_ALTERNATIVE_KM_S,
+  MONTE_CARLO_TRIALS_2025,
 } from './localGroupCollision'
 
 // Constants written out again here, separately from the module (SI units): the Sun's GM, the kiloparsec and the Gyr.
@@ -95,6 +98,16 @@ describe('the published numbers and the constants', () => {
     expect(distanceKpc()).toBeCloseTo(761.03, 1)
     expect(Math.abs(distanceKpc() - 761)).toBeLessThan(1)
     expect(distanceKpc(25)).toBeCloseTo(1000, 3)
+  })
+})
+
+describe('the values the introduction quotes', () => {
+  it('the 2026 give-or-take range is 22.7 to 70.7 km/s, the alternative approach speed is 114 and the 2025 study used 100,000 trials', () => {
+    expect(sidewaysRange2026().low).toBeCloseTo(22.7, 10)
+    expect(sidewaysRange2026().high).toBeCloseTo(70.7, 10)
+    expect(APPROACH_SPEED_ALTERNATIVE_KM_S).toBe(114)
+    expect(APPROACH_SPEED_ALTERNATIVE_KM_S).toBeGreaterThan(APPROACH_SPEED_KM_S)
+    expect(MONTE_CARLO_TRIALS_2025).toBe(100000)
   })
 })
 
