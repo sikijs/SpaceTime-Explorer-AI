@@ -25,6 +25,7 @@ import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackg
 import { BlackHoleGrowthExperiment } from './components/BlackHoleGrowthExperiment'
 import { InterstellarVisitorExperiment } from './components/InterstellarVisitorExperiment'
 import { LocalGroupCollisionExperiment } from './components/LocalGroupCollisionExperiment'
+import { WormholeExperiment } from './components/WormholeExperiment'
 import {
   APPROACH_SPEED_KM_S as lgApproach,
   MERGER_DISTANCE_KPC as lgRing,
@@ -125,6 +126,7 @@ const groupOrder = [
   'Cosmology',
   'Black Holes and Strong Gravity',
   'Spacetime Geometry: What Is Real, What Is Seen',
+  'Evidence and Imagination: What Has Been Tested, What Has Not',
   'Frontier and Beyond',
 ]
 
@@ -132,6 +134,8 @@ const groupOrder = [
 // are listed. Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1), including the last clause, "and how one might
 // end", which was added for Experiment 10 (Hawking radiation). It names only what is built.
 const groupOverviews: Record<string, string> = {
+  'Evidence and Imagination: What Has Been Tested, What Has Not':
+    'This group asks what has been tested in relativity and cosmology and what has not: real measurements of effects the theories predict, and ideas that the mathematics allows but that nobody has seen. Each experiment says how settled its result is, as of October 2026.',
   'Black Holes and Strong Gravity':
     'This group follows black holes from several sides: how small something must be to become one, what happens to time, orbits, light and a falling traveler near one, what spin changes, where black holes come from, and how one might end.',
   'Frontier and Beyond':
@@ -1067,7 +1071,19 @@ const chapters: Chapter[] = [
     learned: localGroupCollisionSummary(),
     next: 'None yet: this is the last experiment of the group.',
   },
+  // Appended at the end of the list so that the saved progress (kept by position in this list) is not disturbed; the sidebar and Previous/Next follow `groupOrder`, which puts this group
+  // between "Spacetime Geometry" and "Frontier and Beyond". No chapter summary yet: it comes with the tutor.
+  {
+    title: 'Can a wormhole exist? (what would it take to hold one open?)',
+    group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
+    Component: WormholeExperiment,
+    learned: '',
+    next: '',
+  },
 ]
+
+// The chapters in the order the sidebar shows them (by group, then by position in `chapters`). Previous and Next follow this order; the saved progress still uses positions in `chapters`.
+const sidebarOrder = groupOrder.flatMap((groupName) => chapters.map((chapter, index) => ({ chapter, index })).filter(({ chapter }) => chapter.group === groupName).map(({ index }) => index))
 
 const STORAGE_KEY = 'spacetime-explorer-progress'
 
@@ -1141,7 +1157,8 @@ export function App() {
   const activeChapter = isWelcome ? null : chapters[currentChapter]
   const isCurrentExplained = !isWelcome && explained.includes(currentChapter)
   const isFirst = currentChapter === -1
-  const isLast = currentChapter === chapters.length - 1
+  const sidebarPosition = sidebarOrder.indexOf(currentChapter)
+  const isLast = sidebarPosition === sidebarOrder.length - 1
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#fafafa' }}>
@@ -1314,7 +1331,7 @@ export function App() {
               <button
                 type="button"
                 disabled={isFirst}
-                onClick={() => setCurrentChapter(currentChapter - 1)}
+                onClick={() => setCurrentChapter(sidebarPosition <= 0 ? -1 : sidebarOrder[sidebarPosition - 1])}
                 className="primary-button"
                 style={{ padding: '0.6rem 1.4rem', fontSize: '1rem' }}
               >
@@ -1323,7 +1340,7 @@ export function App() {
               <button
                 type="button"
                 disabled={isLast}
-                onClick={() => setCurrentChapter(currentChapter + 1)}
+                onClick={() => setCurrentChapter(sidebarOrder[sidebarPosition + 1])}
                 className="primary-button"
                 style={{ padding: '0.6rem 1.4rem', fontSize: '1rem' }}
               >
