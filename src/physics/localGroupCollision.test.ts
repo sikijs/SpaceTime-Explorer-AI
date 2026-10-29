@@ -484,6 +484,7 @@ describe('the results (Step 6)', () => {
     expect(t.angularMomentum).toBeCloseTo(distanceKpc() * SIDEWAYS_SPEED_2026_KM_S, 6)
     expect(t.speedAtFirstPassKmS).toBeCloseTo(534.3, 0)
     expect(t.firstPassAtFullKpc).toBeCloseTo(66.5, 0)
+    expect(t.halfSidewaysKmS).toBeCloseTo(SIDEWAYS_SPEED_2026_KM_S / 2, 10)
     expect(t.firstPassAtHalfKpc).toBeCloseTo(orbit(TOTAL_MASS, 23.35).firstPassKpc, 10)
     expect(t.doublingRatio).toBeGreaterThan(2)
     expect(t.doublingRatio).toBeCloseTo(4.12, 2)
