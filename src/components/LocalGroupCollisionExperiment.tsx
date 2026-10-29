@@ -150,6 +150,9 @@ export function LocalGroupCollisionExperiment({ onComplete, onTutorComplete }: L
               arcsecond a year, and an arcsecond is 1/3600 of a degree. The Moon is about 1,800 arcseconds wide, so this is tens of millions of times smaller than the Moon’s width. Gaia, ESA’s star-mapping telescope, measures such shifts.
             </li>
             <li>
+              <strong>Bound:</strong> held to each other by gravity. Two galaxies are bound if they move slowly enough that their pull brings them back together after they swing apart. If they move too fast, they pass once and do not return.
+            </li>
+            <li>
               <strong>Merger:</strong> the studies call two galaxies merged when they come within {MERGER_DISTANCE_KPC} kpc of each other.
             </li>
             <li>

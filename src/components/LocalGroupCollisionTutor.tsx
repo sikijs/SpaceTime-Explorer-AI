@@ -173,12 +173,12 @@ export function LocalGroupCollisionTutor({ fallPrediction, passPrediction, onExp
           </p>
           <p style={paragraphStyle}>
             <strong>3. Why a close first pass is not yet a merger.</strong> The {n1(c.firstPass2026Kpc)} kpc first pass is outside the {MERGER_DISTANCE_KPC} kpc ring that both studies use to call a merger. Without friction, the pair would swing out to {commas(t.farthest2026Kpc)} kpc and come back every{' '}
-            {n1(t.period2026Gyr)} billion years. The studies also include dynamical friction, a drag that a galaxy feels as it moves through another’s halo. It slows them and lets them settle together on later passes. That is why the 2026 study’s median merger time,{' '}
+            {n1(t.period2026Gyr)} billion years. The studies also include dynamical friction, a drag that a galaxy feels as it moves through another’s halo. It slows them and lets them settle together on later passes. That may be part of why the 2026 study’s median merger time,{' '}
             {PUBLISHED_2026.medianMergerTimeGyr} billion years (range {n1(c.medianLowGyr)} to {n1(c.medianHighGyr)}), is later than the {n2(c.firstPass2026Gyr)} billion years of this model’s first pass. This page does not model friction or compute a merger.
           </p>
           <p style={paragraphStyle}>
             <strong>4. Why the two studies differ, and how little it takes.</strong> The 2025 study used about {SIDEWAYS_SPEED_2025_KM_S} km/s and the 2026 study {sideways2026} ± {n1(SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S)} km/s. The 2026 give-or-take ({n1(c.rangeLowKmS)} to {n1(c.rangeHighKmS)} km/s) gives first
-            passes from {n1(t.firstPassForRange.low)} to {n1(t.firstPassForRange.high)} kpc. A sideways speed of {n1(c.sidewaysFor20Kpc)} km/s gives exactly {MERGER_DISTANCE_KPC} kpc, and that is inside the 2026 range but far below {SIDEWAYS_SPEED_2025_KM_S}. That is one reason a study with a sideways speed
+            passes from {n1(t.firstPassForRange.low)} to {n1(t.firstPassForRange.high)} kpc. A sideways speed of {n1(c.sidewaysFor20Kpc)} km/s gives exactly {MERGER_DISTANCE_KPC} kpc, and that is inside the 2026 range but far below {SIDEWAYS_SPEED_2025_KM_S}. That may be one reason a study with a sideways speed
             near {SIDEWAYS_SPEED_2025_KM_S} finds about {PUBLISHED_2025.mergerPercentWithin10Gyr} percent merging within 10 billion years, and one with a range that reaches down to {Math.round(c.sidewaysFor20Kpc)} finds about {PUBLISHED_2026.mergerPercent} percent. The studies also treat the Large Magellanic Cloud
             differently. I am not saying which study is right.
           </p>
