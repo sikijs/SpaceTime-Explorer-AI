@@ -53,6 +53,19 @@ import {
   TRIAL_DEFAULT_THROAT_RADIUS_M,
   TRIAL_DEFAULT_PLATE_GAP_M,
   trialPicture,
+  PICTURE_PROFILE_HALF_LENGTH_M,
+  SNAPSHOT_TIMES,
+  PICTURE_RAY_START,
+  pictureOne,
+  bridgeSnapshots,
+  pictureRayEndsAtT,
+  TENSION_AXES,
+  tensionCurve,
+  tensionMarks,
+  tensionAxisPosition,
+  radiusAxisPosition,
+  pictureThree,
+  PREDICTION_THROAT_RADIUS_M,
 } from './wormholes'
 
 // Independent helpers, written here and not taken from the module under test.
@@ -360,5 +373,74 @@ describe('the ruler of masses and the trial values', () => {
   it('uses the constants G and c as given', () => {
     expect(G).toBe(6.6743e-11)
     expect(C).toBe(299_792_458)
+  })
+})
+
+describe('the numbers for Pictures 1 to 3', () => {
+  it('draws Picture 1 for the 1 metre throat of Prediction 2, from -3 m to +3 m, with radius sqrt(10) = 3.162 m at the ends', () => {
+    const p = pictureOne()
+    expect(p.throatRadiusM).toBe(PREDICTION_THROAT_RADIUS_M)
+    expect(p.halfLengthM).toBe(PICTURE_PROFILE_HALF_LENGTH_M)
+    expect(p.profile[0].l).toBeCloseTo(-3, 12)
+    expect(p.profile[p.profile.length - 1].l).toBeCloseTo(3, 12)
+    expect(p.radiusAtEndM).toBeCloseTo(Math.sqrt(10), 12)
+    expect(Math.min(...p.profile.map((q) => q.r))).toBeCloseTo(1, 12)
+  })
+  it('has four moments, 0, 0.5, 0.9 and 0.99, with the throat radii 1.000, 0.898, 0.517 and 0.187 of the horizon radius', () => {
+    expect([...SNAPSHOT_TIMES]).toEqual([0, 0.5, 0.9, 0.99])
+    const snaps = bridgeSnapshots()
+    expect(snaps.map((s) => s.T)).toEqual([0, 0.5, 0.9, 0.99])
+    const expected = [1, 0.8982, 0.5170, 0.1873]
+    snaps.forEach((s, i) => {
+      expect(s.throatRadiusFraction).toBeCloseTo(expected[i], 3)
+      expect(s.throatRadiusFraction).toBeCloseTo(bisect((y) => (y - 1) * Math.exp(y) + SNAPSHOT_TIMES[i] ** 2, 0, 1), 8)
+      expect(s.slice.length).toBeGreaterThan(100)
+    })
+  })
+  it('puts the ray on the left of the throat at every moment, moving towards the middle, ending on the singularity at T = 13/12 = 1.0833', () => {
+    expect(PICTURE_RAY_START).toEqual({ T: 0, X: -1.5 })
+    const snaps = bridgeSnapshots()
+    snaps.forEach((s, i) => {
+      expect(s.ray.X).toBeCloseTo(SNAPSHOT_TIMES[i] - 1.5, 12)
+      expect(s.ray.X).toBeLessThan(0)
+      expect(s.ray.distance).toBeLessThan(0)
+      expect(s.earlierRays).toHaveLength(i)
+    })
+    expect(snaps[3].earlierRays.map((r) => r.X)).toEqual([-1.5, -1, -0.6])
+    expect(pictureRayEndsAtT()).toBeCloseTo((1 + 2.25) / 3, 12)
+    // The interpolated distance agrees with a finer slice.
+    const fine = bridgeSlice(0.5, 3, 2400).find((p) => Math.abs(p.X + 1) < 1e-9)!.distance
+    expect(snaps[1].ray.distance).toBeCloseTo(fine, 2)
+  })
+  it('has a tension curve falling as 1 / r^2 (a hundred times for every tenfold radius), with marks for 1 m and 3 km', () => {
+    const c = tensionCurve(70)
+    expect(c[0].radiusM).toBeCloseTo(TENSION_AXES.minRadiusM, 12)
+    expect(c[c.length - 1].radiusM).toBeCloseTo(TENSION_AXES.maxRadiusM, 6)
+    for (let i = 10; i < c.length; i++) expect(c[i].tensionPa).toBeLessThan(c[i - 1].tensionPa)
+    expect(c[10].tensionPa / c[20].tensionPa).toBeCloseTo(100, 6)
+    const marks = tensionMarks()
+    expect(marks.map((m) => m.id)).toEqual(['1m', '3km'])
+    expect(marks[0].tensionPa).toBeCloseTo(throatTension(1), -30)
+    expect(marks[1].publishedNeutronStarMatch).toBe(true)
+    expect(marks[0].publishedNeutronStarMatch).toBe(false)
+    expect(tensionAxisPosition(TENSION_AXES.minPa)).toBeCloseTo(0, 12)
+    expect(tensionAxisPosition(TENSION_AXES.maxPa)).toBeCloseTo(1, 12)
+    expect(radiusAxisPosition(1)).toBeCloseTo(3 / 7, 12)
+    for (const p of c) {
+      expect(p.tensionPa).toBeGreaterThanOrEqual(TENSION_AXES.minPa)
+      expect(p.tensionPa).toBeLessThanOrEqual(TENSION_AXES.maxPa)
+    }
+  })
+  it('gives Picture 3 the 1 metre throat: 2.115e27 kg, 354 Earths, 1.11 Jupiters, a position on the ruler beside Jupiter, and the secondary summary at 0.71 Jupiters', () => {
+    const p = pictureThree()
+    expect(p.throatRadiusM).toBe(1)
+    expect(p.negativeMassKg / 2.1152e27).toBeCloseTo(1, 3)
+    expect(p.inUnits.earths).toBeCloseTo(354.2, 0)
+    expect(p.inUnits.jupiters).toBeCloseTo(1.114, 2)
+    expect(p.inUnits.suns).toBeCloseTo(0.001064, 5)
+    expect(p.rulerPosition).toBeCloseTo(0.8442, 3)
+    expect(p.tensionPa / 4.8155e42).toBeCloseTo(1, 3)
+    expect(p.secondaryJupiters).toBeCloseTo(0.709, 2)
+    expect(p.worked.kg).toBeCloseTo(Math.PI * p.worked.radiusM * p.worked.c * p.worked.c / (2 * p.worked.g), -20)
   })
 })

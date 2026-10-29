@@ -390,3 +390,114 @@ export function trialPicture(throatRadiusM: number, plateGapM: number): TrialPic
     isPublishedNeutronStarMatch: throatRadiusM === PUBLISHED_NEUTRON_STAR_MATCH_RADIUS_M,
   }
 }
+
+// ---- The numbers for Pictures 1 to 3 (Step 4): the interface draws these and calculates nothing ----
+
+// Picture 1: the outline of the throat of the Prediction 2 wormhole (1 metre in radius), from -3 m to +3 m along the tunnel.
+export const PICTURE_PROFILE_HALF_LENGTH_M = 3
+export interface PictureOneData {
+  throatRadiusM: number
+  halfLengthM: number
+  profile: ProfilePoint[]
+  /** the circle's radius at the end of the drawn tunnel (3 m along) */
+  radiusAtEndM: number
+}
+export function pictureOne(): PictureOneData {
+  const b0 = PREDICTION_THROAT_RADIUS_M
+  return { throatRadiusM: b0, halfLengthM: PICTURE_PROFILE_HALF_LENGTH_M, profile: embeddingProfile(b0, PICTURE_PROFILE_HALF_LENGTH_M, 60), radiusAtEndM: circumferenceRadius(PICTURE_PROFILE_HALF_LENGTH_M, b0) }
+}
+
+// Picture 2: four moments of the Schwarzschild bridge, and a ray of light sent in from the left at T = 0 (a chosen start; any left start ends the same way). The slice at T = 1 cannot be drawn
+// (the throat has gone), so the last moment is T = 0.99.
+export const SNAPSHOT_TIMES = [0, 0.5, 0.9, 0.99] as const
+export const PICTURE_RAY_START = { T: 0, X: -1.5 } as const
+export interface RayOnSlice {
+  X: number
+  /** proper distance along the slice from the throat, in horizon radii (negative on the left) */
+  distance: number
+  radiusFraction: number
+}
+export interface Snapshot {
+  T: number
+  throatRadiusFraction: number
+  slice: SlicePoint[]
+  ray: RayOnSlice
+  /** where the ray was at the earlier moments, drawn on this slice */
+  earlierRays: RayOnSlice[]
+}
+function interpolateOnSlice(slice: SlicePoint[], X: number): RayOnSlice {
+  let i = 0
+  while (i < slice.length - 2 && slice[i + 1].X < X) i++
+  const a = slice[i]
+  const b = slice[i + 1]
+  const f = (X - a.X) / (b.X - a.X)
+  return { X, distance: a.distance + f * (b.distance - a.distance), radiusFraction: a.radiusFraction + f * (b.radiusFraction - a.radiusFraction) }
+}
+export function bridgeSnapshots(steps: number = 240): Snapshot[] {
+  const k = PICTURE_RAY_START.X - PICTURE_RAY_START.T
+  return SNAPSHOT_TIMES.map((T, n) => {
+    const slice = bridgeSlice(T, 3, steps)
+    return {
+      T,
+      throatRadiusFraction: throatRadiusFraction(T),
+      slice,
+      ray: interpolateOnSlice(slice, T + k),
+      earlierRays: SNAPSHOT_TIMES.slice(0, n).map((Te) => interpolateOnSlice(slice, Te + k)),
+    }
+  })
+}
+export function pictureRayEndsAtT(): number {
+  return traceRightMovingRay(PICTURE_RAY_START.T, PICTURE_RAY_START.X).endsAtT
+}
+
+// Picture 3, panel B: the tension against the throat radius (log-log), with the 1 m and 3 km throats marked.
+export const TENSION_AXES = { minRadiusM: 1e-3, maxRadiusM: 1e4, minPa: 1e34, maxPa: 1e49 } as const
+export function tensionCurve(points: number = 60): { radiusM: number; tensionPa: number }[] {
+  const a = Math.log10(TENSION_AXES.minRadiusM)
+  const b = Math.log10(TENSION_AXES.maxRadiusM)
+  const out: { radiusM: number; tensionPa: number }[] = []
+  for (let i = 0; i <= points; i++) {
+    const r = Math.pow(10, a + ((b - a) * i) / points)
+    out.push({ radiusM: r, tensionPa: throatTension(r) })
+  }
+  return out
+}
+export function tensionMarks(): { id: string; radiusM: number; tensionPa: number; publishedNeutronStarMatch: boolean }[] {
+  return [
+    { id: '1m', radiusM: PREDICTION_THROAT_RADIUS_M, tensionPa: throatTension(PREDICTION_THROAT_RADIUS_M), publishedNeutronStarMatch: false },
+    { id: '3km', radiusM: PUBLISHED_NEUTRON_STAR_MATCH_RADIUS_M, tensionPa: throatTension(PUBLISHED_NEUTRON_STAR_MATCH_RADIUS_M), publishedNeutronStarMatch: true },
+  ]
+}
+export function tensionAxisPosition(pa: number): number {
+  checkPositive(pa, 'The tension')
+  return (Math.log10(pa) - Math.log10(TENSION_AXES.minPa)) / (Math.log10(TENSION_AXES.maxPa) - Math.log10(TENSION_AXES.minPa))
+}
+export function radiusAxisPosition(radiusM: number): number {
+  checkPositive(radiusM, 'The radius')
+  return (Math.log10(radiusM) - Math.log10(TENSION_AXES.minRadiusM)) / (Math.log10(TENSION_AXES.maxRadiusM) - Math.log10(TENSION_AXES.minRadiusM))
+}
+
+// Picture 3, panel A: the negative mass the Prediction 2 throat needs, and the numbers of the worked sum.
+export interface PictureThreeData {
+  throatRadiusM: number
+  negativeMassKg: number
+  inUnits: { earths: number; jupiters: number; suns: number }
+  tensionPa: number
+  rulerPosition: number
+  /** the secondary summary's mass (-radius c^2 / G) in Jupiter masses, for the note beside the derived one */
+  secondaryJupiters: number
+  worked: { radiusM: number; c: number; g: number; kg: number }
+}
+export function pictureThree(): PictureThreeData {
+  const b0 = PREDICTION_THROAT_RADIUS_M
+  const kg = totalNegativeMassKg(b0)
+  return {
+    throatRadiusM: b0,
+    negativeMassKg: kg,
+    inUnits: negativeMassInUnits(kg),
+    tensionPa: throatTension(b0),
+    rulerPosition: massRulerPosition(kg),
+    secondaryJupiters: secondaryNegativeMassKg(b0) / JUPITER_MASS_KG,
+    worked: { radiusM: b0, c: C, g: G, kg },
+  }
+}

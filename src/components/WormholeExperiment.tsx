@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { CROSS_CHOICES, MASS_CHOICES, PREDICTION_THROAT_RADIUS_M } from '../physics/wormholes'
 import type { CrossChoiceId, MassChoiceId } from '../physics/wormholes'
+import { PictureOne, PictureThree, PictureTwo, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './WormholePictures'
 
 // Evidence and Imagination, Experiment 1 (docs/experiments/evidence-and-imagination/01-can-a-wormhole-exist.md).
-// Steps 2 and 3: the title, the status line, the introduction, the "Want to know more?" links and the two predictions (the Run button records them). The pictures, the results and the tutor come in later steps.
+// Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions (in `WormholePictures.tsx`).
+// The controls, the results and the tutor come in later steps.
 // The wording is the owner's draft of 2026-10-29, approved (CLAUDE.md §28.1), with the one-line honesty note kept on the page at the owner's request. Nothing here says that a throat pinches
 // off, how much negative mass a throat needs, or how small the Casimir energy is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
@@ -17,6 +19,19 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 }
 
 const paragraph = { marginTop: 0, marginBottom: '0.5rem' } as const
+
+// ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'A wormhole would be a tunnel', 'The shape of the throat', 'The simplest one, over time', 'What it would take to hold one open', 'What has been looked for']
+const STAGE_LINES = [
+  '',
+  'Picture 1, panel A, is a sketch of two far places joined by a tunnel.',
+  `Panel B shows the outline of a throat ${PREDICTION_THROAT_RADIUS_M} metre in radius.`,
+  'Picture 2 shows the simplest wormhole at four moments, with a ray of light sent in.',
+  `Picture 3 shows the negative mass that a ${PREDICTION_THROAT_RADIUS_M} metre throat needs, and the tension at the throat.`,
+  'Astronomers have searched gravitational-wave data for echoes that a wormhole might leave. As of October 2026 none has been found. The searches are listed with the results.',
+]
 const list = { margin: '0.25rem 0 0.75rem', paddingLeft: '1.25rem' } as const
 
 interface WormholeExperimentProps {
@@ -24,15 +39,35 @@ interface WormholeExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function WormholeExperiment(_props: WormholeExperimentProps) {
+export function WormholeExperiment({ onComplete }: WormholeExperimentProps) {
   const [crossGuess, setCrossGuess] = useState<CrossChoiceId | null>(null)
   const [massGuess, setMassGuess] = useState<MassChoiceId | null>(null)
-  const [recorded, setRecorded] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = crossGuess !== null && massGuess !== null
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
   const startOver = () => {
     setCrossGuess(null)
     setMassGuess(null)
-    setRecorded(false)
+    setStatus('idle')
+    setStage(0)
   }
   const questions = [
     {
@@ -189,7 +224,7 @@ export function WormholeExperiment(_props: WormholeExperimentProps) {
             </div>
           ))}
 
-          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
             Run
           </button>
           {recorded && (
@@ -198,8 +233,35 @@ export function WormholeExperiment(_props: WormholeExperimentProps) {
             </button>
           )}
           {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
-          {/* Temporary: removed when the run and its pictures are built (Step 4). */}
-          {recorded && <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0' }}>Your predictions are recorded and are not marked here. The pictures come in the next step.</p>}
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
+                {done ? 'Pictures 1 to 3 are drawn. Your predictions are recorded and not marked here.' : STAGE_LINES[stage]}
+              </span>
+            )}
+          </p>
+
+          {recorded && stage >= 1 && (
+            <div>
+              <PictureOne stage={stage} />
+              {pictureOneCaption(stage)}
+              {stage >= 3 && (
+                <>
+                  <PictureTwo crossGuess={crossGuess} />
+                  {pictureTwoCaption()}
+                </>
+              )}
+              {stage >= 4 && (
+                <>
+                  <PictureThree massGuess={massGuess} />
+                  {pictureThreeCaption()}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
