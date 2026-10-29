@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { CROSS_CHOICES, MASS_CHOICES, PREDICTION_THROAT_RADIUS_M } from '../physics/wormholes'
+import type { CrossChoiceId, MassChoiceId } from '../physics/wormholes'
 
 // Evidence and Imagination, Experiment 1 (docs/experiments/evidence-and-imagination/01-can-a-wormhole-exist.md).
-// Step 2: the title, the status line, the introduction and the "Want to know more?" links. The predictions, the run, the pictures, the results and the tutor come in later steps.
+// Steps 2 and 3: the title, the status line, the introduction, the "Want to know more?" links and the two predictions (the Run button records them). The pictures, the results and the tutor come in later steps.
 // The wording is the owner's draft of 2026-10-29, approved (CLAUDE.md §28.1), with the one-line honesty note kept on the page at the owner's request. Nothing here says that a throat pinches
 // off, how much negative mass a throat needs, or how small the Casimir energy is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
@@ -22,6 +25,41 @@ interface WormholeExperimentProps {
 }
 
 export function WormholeExperiment(_props: WormholeExperimentProps) {
+  const [crossGuess, setCrossGuess] = useState<CrossChoiceId | null>(null)
+  const [massGuess, setMassGuess] = useState<MassChoiceId | null>(null)
+  const [recorded, setRecorded] = useState(false)
+  const bothPredicted = crossGuess !== null && massGuess !== null
+  const startOver = () => {
+    setCrossGuess(null)
+    setMassGuess(null)
+    setRecorded(false)
+  }
+  const questions = [
+    {
+      title: 'Prediction 1: could light cross the simplest wormhole?',
+      text: (
+        <>
+          Take the simplest wormhole-like shape that Einstein’s equations give: the Einstein–Rosen bridge, which belongs to a black hole’s full mathematical solution. It joins two regions of space, one on each side. Suppose a ray of light is sent in from
+          one side. Could it come out on the other side?
+        </>
+      ),
+      choices: CROSS_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+      value: crossGuess as string | null,
+      set: (v: string) => setCrossGuess(v as CrossChoiceId),
+    },
+    {
+      title: 'Prediction 2: how much negative mass would a small wormhole need?',
+      text: (
+        <>
+          Now suppose a wormhole whose throat is {PREDICTION_THROAT_RADIUS_M} metre in radius, so about {2 * PREDICTION_THROAT_RADIUS_M} metres across at its narrowest. As the mathematics of Morris and Thorne requires, it is held open by matter with
+          negative energy. Count that negative energy as a negative mass. About how much would it be? This is a separate guess from Prediction 1, so your two answers do not have to agree with each other.
+        </>
+      ),
+      choices: MASS_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+      value: massGuess as string | null,
+      set: (v: string) => setMassGuess(v as MassChoiceId),
+    },
+  ]
   return (
     <div>
       <h2>Experiment 1 — Can a Wormhole Exist? (What Would It Take to Hold One Open?)</h2>
@@ -119,8 +157,50 @@ export function WormholeExperiment(_props: WormholeExperimentProps) {
           </p>
         </div>
 
-        {/* Temporary note: removed as the later steps (predictions, run, results, tutor) are built. */}
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The predictions, the run, the results and the tutor are not built yet.</p>
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed things: the shape of a wormhole’s throat, what happens to the simplest
+            one, and what it would take to hold one open. They are calculated from the mathematics and are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess compares with the real result. The
+            real pictures stay the same whatever you guess.
+          </p>
+
+          {questions.map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</p>
+              <div>
+                {question.choices.map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => question.set(choice.value)}
+                    disabled={recorded}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label.charAt(0).toUpperCase() + choice.label.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null ? `Your prediction: ${question.choices.find((c) => c.value === question.value)?.label}.` : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
+          {/* Temporary: removed when the run and its pictures are built (Step 4). */}
+          {recorded && <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0' }}>Your predictions are recorded and are not marked here. The pictures come in the next step.</p>}
+        </div>
       </div>
     </div>
   )

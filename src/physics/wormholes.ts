@@ -284,7 +284,7 @@ export function nearestOnLogScale<T>(choices: readonly T[], value: number, value
 
 // Prediction 1: could a ray of light sent in at one mouth of the simplest wormhole come out of the other? A yes or no has no size, so a marker is drawn.
 export const CROSS_CHOICES = [
-  { id: 'yes', label: 'Yes, it could come out of the other mouth', crosses: true },
+  { id: 'yes', label: 'Yes, it could come out of the other side', crosses: true },
   { id: 'no', label: 'No, it could not', crosses: false },
 ] as const
 export type CrossChoiceId = (typeof CROSS_CHOICES)[number]['id']
