@@ -39,6 +39,7 @@ import {
   tutorFigures as lgTutorFigures,
   TOTAL_MASS as lgMass,
 } from './physics/localGroupCollision'
+import { resultsCheckUp as whCheckUp, tutorFigures as whTutorFigures, ECHO_SEARCHES as whEchoSearches } from './physics/wormholes'
 import { exampleSteps as visitorSteps, knownObjects as visitorKnown, pictureTwo as visitorPictureTwo, resultsCheckUp as visitorCheckUp } from './physics/interstellarVisitor'
 import { nonSpinningEfficiency as growthLowEfficiency, objectMassSolar as growthObjectMass, pictureOne as growthPictureOne, pictureTwo as growthPictureTwo, settingsGrid as growthGrid } from './physics/blackHoleGrowth'
 import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
@@ -303,6 +304,29 @@ function localGroupCollisionSummary(): string {
     `and the 2026 study's median merger time is ${lg2026.medianMergerTimeGyr} billion years. That Andromeda is approaching is strong evidence. Whether the pair merge within 10 billion years is contested. Andromeda's true sideways motion is open, and Gaia's next release, planned for December 2, 2026, may narrow it. ` +
     `This page's model has two points and leaves out M33, the Large Magellanic Cloud, the halos' size, friction and the studies' random trial runs, and it does not compute a probability. ` +
     `The numbers come from the papers' full texts (arXiv versions) and summaries; the journal versions were not read, and the papers do not say which frame their sideways speeds are given in.`
+  )
+}
+
+// The chapter summary of Evidence and Imagination Experiment 1 (wording approved by the owner). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function wormholeSummary(): string {
+  const c = whCheckUp()
+  const t = whTutorFigures()
+  const n2 = (x: number) => x.toFixed(2)
+  const sup: Record<string, string> = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻' }
+  const sci = (x: number) => {
+    const e = Math.floor(Math.log10(x))
+    return `${(x / Math.pow(10, e)).toFixed(1)} × 10${String(e).split('').map((ch) => sup[ch]).join('')}`
+  }
+  const [t1, t2, t3] = c.closingTimes
+  const [f1, f2, f3] = c.closingFractions
+  return (
+    `Can a wormhole exist? A wormhole is a tunnel through spacetime that the equations of general relativity allow. It is mathematics: no one has seen one. The simplest one, the Einstein–Rosen bridge, is not a shortcut. ` +
+    `Its throat shrinks to ${n2(f1)}, ${n2(f2)} and ${n2(f3)} of its opening size at T = ${t1}, ${t2} and ${t3}, and it is shut at T = ${c.shutAtT}, before a ray of light from one side can cross. ` +
+    `A tunnel that stays open needs matter with negative energy, so that its walls flare outward. For a throat 1 metre in radius that is about ${sci(c.massKg)} kg of negative mass, ${n2(c.massJupiters)} Jupiters (a second formula gives ${n2(c.secondaryJupiters)}), and a throat twice as wide needs ${n2(t.massRatio)} times as much. ` +
+    `The only negative energy measured, the Casimir effect between plates ${c.casimirGapM * 1e6} µm apart, is ${sci(c.casimirJPerM2)} J per square metre, which is ${sci(c.shortfall)} times too small. ` +
+    `${whEchoSearches.length === 2 ? 'Two' : String(whEchoSearches.length)} searches of gravitational-wave data for echoes found nothing significant. ` +
+    `What the equations say is settled. Whether any wormhole exists is open: this page says neither that they exist nor that they cannot. ` +
+    `The numbers come from abstracts and summaries, with no paper read in full, and the mass formula and the throat's shape were not checked against Morris and Thorne's paper.`
   )
 }
 
@@ -1072,13 +1096,14 @@ const chapters: Chapter[] = [
     next: 'None yet: this is the last experiment of the group.',
   },
   // Appended at the end of the list so that the saved progress (kept by position in this list) is not disturbed; the sidebar and Previous/Next follow `groupOrder`, which puts this group
-  // between "Spacetime Geometry" and "Frontier and Beyond". No chapter summary yet: it comes with the tutor.
+  // between "Spacetime Geometry" and "Frontier and Beyond".
   {
     title: 'Can a wormhole exist? (what would it take to hold one open?)',
     group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
     Component: WormholeExperiment,
-    learned: '',
-    next: '',
+    // Chapter summary: wording approved by the owner. Every number is the one the experiment uses (the physics model's). "What's next" is a planned direction only: Experiment 2 has no specification yet.
+    learned: wormholeSummary(),
+    next: 'The next experiment in this group asks whether the past can be reached at all. A wormhole is one way the mathematics allows a closed path in time, and the question is what else would have to be true.',
   },
 ]
 

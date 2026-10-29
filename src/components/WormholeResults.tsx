@@ -6,7 +6,15 @@ import { ResultsTable } from './WideBinariesExperiment'
 // Evidence and Imagination, Experiment 1: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
 // Every number is read from the physics module (CLAUDE.md §9); this file only sets it out. The tables are the real numbers and never change with the learner's guesses or settings. The wording is the
 // owner's draft of 2026-10-29, approved line by line (CLAUDE.md §28.1). Why the simplest throat closes and why a flare needs negative energy are left to the tutor (CLAUDE.md §12, §13). The papers behind
-// the numbers are listed in a later step, after the run, because some of them give the answers to the predictions.
+// the numbers are listed at the end (Step 8), after the run, because some of them give the answers to the predictions. Each link was fetched on 2026-10-29; the three journal pages that blocked it are cited without links.
+
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
 
 const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
@@ -219,6 +227,38 @@ export function WormholeResults({ crossGuess, massGuess }: { crossGuess: CrossCh
           },
         ]}
       />
+
+      <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>The papers behind these numbers.</strong> They are listed here, after the run, because some of them give the answers to your predictions. Links open in a new tab.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/1604.02082">Lobo, “From the Flamm–Einstein–Rosen bridge to the modern renaissance of traversable wormholes” (2016)</ExternalLink>: a review of the field, including why a tunnel that stays open must break the usual energy
+            conditions.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/gr-qc/9710001">Visser and Hochberg, “Geometric wormhole throats” (1997)</ExternalLink>: why the weighted energy through a throat must go negative.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2202.00051">Kuhfittig, “Accounting for exotic matter and the extreme radial tension in Morris–Thorne wormholes” (2022)</ExternalLink>: the tension at the throat, the figure used in Table 1.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2107.07052">Maeda, “Simple traversable wormholes violating energy conditions only near the Planck scale” (2021)</ExternalLink>: an example of how the ideas have changed.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2512.24730">Wu and others, “Model-agnostic search of gravitational wave echoes in LVK data” (2025)</ExternalLink> and{' '}
+            <ExternalLink href="https://arxiv.org/abs/2602.01615">Lai and others, “Testing the wormhole echo hypothesis for GW231123” (2026)</ExternalLink>: the two echo searches in Table 3.
+          </li>
+          <li>
+            <ExternalLink href="https://doi.org/10.1038/s41586-022-05424-3">Jafferis and others, “Traversable wormhole dynamics on a quantum processor”, Nature (2022)</ExternalLink> and{' '}
+            <ExternalLink href="https://arxiv.org/abs/2308.00697">a 2023 paper debating it</ExternalLink>: the quantum-processor “wormhole” and the debate over what it shows.
+          </li>
+          <li>
+            <strong>Not linked</strong> (the publisher’s page could not be checked here): Einstein and Rosen, <em>Physical Review</em> 48, 73 (1935); Fuller and Wheeler, <em>Physical Review</em> 128, 919 (1962); Morris and Thorne, <em>American Journal of Physics</em> 56, 395 (1988).
+          </li>
+        </ul>
+      </div>
     </div>
   )
 }
