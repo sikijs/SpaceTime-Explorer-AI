@@ -35,7 +35,9 @@ const STAGE_LINES = [
   'Astronomers have searched gravitational-wave data for echoes that a wormhole might leave. As of October 2026 none has been found. The searches are listed with the results.',
 ]
 const radiusLabel = (m: number) => (m < 1 ? `${m * 1000} millimetre` : m >= 1000 ? `${m / 1000} kilometre${m === 1000 ? '' : 's'}` : `${m} metre`)
-const gapLabel = (m: number) => `${m * 1e6} micrometre${m * 1e6 === 1 ? '' : 's'}`
+// Rounded to 6 figures so that 1e-7 × 1e6 reads 0.1, not 0.09999999999999999.
+const gapMicrometres = (m: number) => Number((m * 1e6).toPrecision(6))
+const gapLabel = (m: number) => `${gapMicrometres(m)} micrometre${gapMicrometres(m) === 1 ? '' : 's'}`
 const list = { margin: '0.25rem 0 0.75rem', paddingLeft: '1.25rem' } as const
 
 interface WormholeExperimentProps {

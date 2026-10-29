@@ -463,7 +463,9 @@ const A_H = 490
 const unitText = (t: TrialPicture) =>
   t.inUnits.suns >= 1 ? `${sci(t.inUnits.suns)} Suns` : t.inUnits.jupiters >= 1 ? `${sci(t.inUnits.jupiters)} Jupiters` : t.inUnits.earths >= 0.01 ? `${sci(t.inUnits.earths)} Earths` : `${sci(t.negativeMassKg)} kg`
 const radiusText = (m: number) => (m < 1 ? `${m * 1000} millimetre${m * 1000 === 1 ? '' : 's'}` : m >= 1000 ? `${m / 1000} kilometre${m === 1000 ? '' : 's'}` : `${m} metre${m === 1 ? '' : 's'}`)
-const gapText = (m: number) => `${m * 1e6} micrometre${m * 1e6 === 1 ? '' : 's'}`
+// Rounded to 6 figures so that 1e-7 × 1e6 reads 0.1, not 0.09999999999999999.
+const gapMicrometres = (m: number) => Number((m * 1e6).toPrecision(6))
+const gapText = (m: number) => `${gapMicrometres(m)} micrometre${gapMicrometres(m) === 1 ? '' : 's'}`
 const ratioText = (x: number) => (x >= 1 ? `${sci(x)} times` : `${sci(x)} times (less than 1)`)
 
 export function TrialDrawing({ trial }: { trial: TrialPicture }) {
