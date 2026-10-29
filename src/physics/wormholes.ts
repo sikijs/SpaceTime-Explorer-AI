@@ -372,6 +372,12 @@ export interface TrialPicture {
   fractionOfUniverseSurface: number
   /** the published statement: a 3 km throat has a tension the size of a massive neutron star's centre */
   isPublishedNeutronStarMatch: boolean
+  /** this throat's tension divided by the 3 km throat's tension (the published neutron-star match) */
+  tensionOverNeutronStarCentre: number
+  /** where the mass and the two energies fall on the Drawing A rulers (0 to 1) */
+  massRulerPosition: number
+  neededEnergyRulerPosition: number
+  casimirEnergyRulerPosition: number
 }
 export function trialPicture(throatRadiusM: number, plateGapM: number): TrialPicture {
   const mass = totalNegativeMassKg(throatRadiusM)
@@ -388,7 +394,17 @@ export function trialPicture(throatRadiusM: number, plateGapM: number): TrialPic
     plateAreaM2: casimirAreaNeededM2(throatRadiusM, plateGapM),
     fractionOfUniverseSurface: fractionOfObservableUniverseSurface(casimirAreaNeededM2(throatRadiusM, plateGapM)),
     isPublishedNeutronStarMatch: throatRadiusM === PUBLISHED_NEUTRON_STAR_MATCH_RADIUS_M,
+    tensionOverNeutronStarCentre: throatTension(throatRadiusM) / throatTension(PUBLISHED_NEUTRON_STAR_MATCH_RADIUS_M),
+    massRulerPosition: massRulerPosition(mass),
+    neededEnergyRulerPosition: energyRulerPosition(negativeEnergyNeededJ(throatRadiusM)),
+    casimirEnergyRulerPosition: energyRulerPosition(casimirEnergyPerAreaJPerM2(plateGapM)),
   }
+}
+// Drawing A's ruler of energies, in joules on a log scale (the Casimir energy of 1 square metre of plates, and the energy a throat needs).
+export const ENERGY_RULER = { minJ: 1e-15, maxJ: 1e50, ticks: [1e-12, 1e-3, 1e6, 1e15, 1e24, 1e33, 1e42, 1e50] } as const
+export function energyRulerPosition(joules: number): number {
+  checkPositive(joules, 'The energy')
+  return (Math.log10(joules) - Math.log10(ENERGY_RULER.minJ)) / (Math.log10(ENERGY_RULER.maxJ) - Math.log10(ENERGY_RULER.minJ))
 }
 
 // ---- The numbers for Pictures 1 to 3 (Step 4): the interface draws these and calculates nothing ----

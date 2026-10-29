@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { CROSS_CHOICES, MASS_CHOICES, PREDICTION_THROAT_RADIUS_M } from '../physics/wormholes'
+import { CROSS_CHOICES, MASS_CHOICES, PREDICTION_THROAT_RADIUS_M, TRIAL_DEFAULT_PLATE_GAP_M, TRIAL_DEFAULT_THROAT_RADIUS_M, TRIAL_PLATE_GAPS_M, TRIAL_THROAT_RADII_M, trialPicture } from '../physics/wormholes'
 import type { CrossChoiceId, MassChoiceId } from '../physics/wormholes'
-import { PictureOne, PictureThree, PictureTwo, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './WormholePictures'
+import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './WormholePictures'
 
 // Evidence and Imagination, Experiment 1 (docs/experiments/evidence-and-imagination/01-can-a-wormhole-exist.md).
-// Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions (in `WormholePictures.tsx`).
-// The controls, the results and the tutor come in later steps.
+// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `WormholePictures.tsx`).
+// The results and the tutor come in later steps.
 // The wording is the owner's draft of 2026-10-29, approved (CLAUDE.md §28.1), with the one-line honesty note kept on the page at the owner's request. Nothing here says that a throat pinches
 // off, how much negative mass a throat needs, or how small the Casimir energy is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
@@ -32,6 +32,8 @@ const STAGE_LINES = [
   `Picture 3 shows the negative mass that a ${PREDICTION_THROAT_RADIUS_M} metre throat needs, and the tension at the throat.`,
   'Astronomers have searched gravitational-wave data for echoes that a wormhole might leave. As of October 2026 none has been found. The searches are listed with the results.',
 ]
+const radiusLabel = (m: number) => (m < 1 ? `${m * 1000} millimetre` : m >= 1000 ? `${m / 1000} kilometre${m === 1000 ? '' : 's'}` : `${m} metre`)
+const gapLabel = (m: number) => `${m * 1e6} micrometre${m * 1e6 === 1 ? '' : 's'}`
 const list = { margin: '0.25rem 0 0.75rem', paddingLeft: '1.25rem' } as const
 
 interface WormholeExperimentProps {
@@ -42,6 +44,8 @@ interface WormholeExperimentProps {
 export function WormholeExperiment({ onComplete }: WormholeExperimentProps) {
   const [crossGuess, setCrossGuess] = useState<CrossChoiceId | null>(null)
   const [massGuess, setMassGuess] = useState<MassChoiceId | null>(null)
+  const [trialRadius, setTrialRadius] = useState<number>(TRIAL_DEFAULT_THROAT_RADIUS_M)
+  const [trialGap, setTrialGap] = useState<number>(TRIAL_DEFAULT_PLATE_GAP_M)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -66,9 +70,12 @@ export function WormholeExperiment({ onComplete }: WormholeExperimentProps) {
   const startOver = () => {
     setCrossGuess(null)
     setMassGuess(null)
+    setTrialRadius(TRIAL_DEFAULT_THROAT_RADIUS_M)
+    setTrialGap(TRIAL_DEFAULT_PLATE_GAP_M)
     setStatus('idle')
     setStage(0)
   }
+  const trial = trialPicture(trialRadius, trialGap)
   const questions = [
     {
       title: 'Prediction 1: could light cross the simplest wormhole?',
@@ -260,6 +267,67 @@ export function WormholeExperiment({ onComplete }: WormholeExperimentProps) {
                   {pictureThreeCaption()}
                 </>
               )}
+            </div>
+          )}
+          {done && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> In the pictures above, the throat was {PREDICTION_THROAT_RADIUS_M} metre in radius. Here you can try other sizes, and also try a real laboratory effect. You choose two things:
+              </p>
+              <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>The throat radius.</strong> How wide the narrowest part of the tunnel is.
+                </li>
+                <li>
+                  <strong>The gap between two metal plates.</strong> Two metal plates held very close together in a vacuum have a tiny amount of negative energy between them (the Casimir effect, explained in the introduction). It is the only negative energy anyone has
+                  measured, so it shows how far we are from what a tunnel would need.
+                </li>
+              </ol>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>One drawing then shows, for your choices:</p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>How much negative mass the throat would need</strong>, set against a car, a mountain, the Earth and the Sun.
+                </li>
+                <li>
+                  <strong>How strongly the throat’s walls would have to be pulled</strong> to keep it open, set against the pressure at the centre of a massive neutron star.
+                </li>
+                <li>
+                  <strong>How the negative energy of your plates compares with what the throat needs</strong>, and how many times too small the plates’ energy is.
+                </li>
+              </ul>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                The real pictures above do not change, and your two guesses do not change this drawing. Only the two settings below do.
+              </p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>These are your own trial values, not new measurements.</strong> Each button is a number to try. For example, if you choose a throat {radiusLabel(trialRadius)} in radius and plates {gapLabel(trialGap)} apart, the drawing works out the negative mass and
+                energy for a wormhole like that, and the Casimir energy of plates like that, with the same formulas as Pictures 1 to 3. Such a wormhole is imagined for the question, and it is drawn in pink. This does not say that a wormhole like it exists.
+              </p>
+              {(
+                [
+                  { title: 'How big is the throat? (its radius)', choices: TRIAL_THROAT_RADII_M.map((v) => ({ value: v as number, label: radiusLabel(v) })), value: trialRadius, set: setTrialRadius },
+                  { title: 'How far apart are the two metal plates?', choices: TRIAL_PLATE_GAPS_M.map((v) => ({ value: v as number, label: gapLabel(v) })), value: trialGap, set: setTrialGap },
+                ] as const
+              ).map((control) => (
+                <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                  <div>
+                    {control.choices.map((choice) => (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        onClick={() => (control.set as (v: number) => void)(choice.value)}
+                        className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {choice.label.charAt(0).toUpperCase() + choice.label.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <TrialDrawing trial={trial} />
+              {trialCaption(trial)}
             </div>
           )}
         </div>

@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
 import {
+  ENERGY_RULER,
   MASS_LANDMARKS,
   MASS_RULER,
   TENSION_AXES,
   bridgeSnapshots,
+  energyRulerPosition,
   massChoiceKg,
   massRulerPosition,
   pictureOne,
@@ -14,7 +16,7 @@ import {
   tensionCurve,
   tensionMarks,
 } from '../physics/wormholes'
-import type { CrossChoiceId, MassChoiceId } from '../physics/wormholes'
+import type { CrossChoiceId, MassChoiceId, TrialPicture } from '../physics/wormholes'
 import { CaptionBlock } from './BlackHoleGrowthPictures'
 import type { LookFor } from './WideBinariesExperiment'
 
@@ -449,6 +451,144 @@ export function pictureThreeCaption(): ReactNode {
         <>
           <strong>Measured:</strong> nothing about a wormhole. <strong>Calculated here:</strong> the mass and the tension for the simplest throat. The mass formula is derived here, and a secondary source’s formula gives {n2(pic.secondaryJupiters)} Jupiters, which
           is the same order. The {marks[1].radiusM / 1000} km comparison is the published statement of Kuhfittig 2022, repeating Morris and Thorne. <strong>Imagined for the question:</strong> the {pic.throatRadiusM} m wormhole.
+        </>
+      }
+    />
+  )
+}
+
+// ---- Drawing A: your trial throat and your trial plates (follows the two controls; the guesses do not change it) ----
+const A_W = 760
+const A_H = 490
+const unitText = (t: TrialPicture) =>
+  t.inUnits.suns >= 1 ? `${sci(t.inUnits.suns)} Suns` : t.inUnits.jupiters >= 1 ? `${sci(t.inUnits.jupiters)} Jupiters` : t.inUnits.earths >= 0.01 ? `${sci(t.inUnits.earths)} Earths` : `${sci(t.negativeMassKg)} kg`
+const radiusText = (m: number) => (m < 1 ? `${m * 1000} millimetre${m * 1000 === 1 ? '' : 's'}` : m >= 1000 ? `${m / 1000} kilometre${m === 1000 ? '' : 's'}` : `${m} metre${m === 1 ? '' : 's'}`)
+const gapText = (m: number) => `${m * 1e6} micrometre${m * 1e6 === 1 ? '' : 's'}`
+const ratioText = (x: number) => (x >= 1 ? `${sci(x)} times` : `${sci(x)} times (less than 1)`)
+
+export function TrialDrawing({ trial }: { trial: TrialPicture }) {
+  const rx0 = 60
+  const rx1 = 700
+  const ry = 120
+  const xm = (kg: number) => rx0 + (rx1 - rx0) * (Math.log10(kg) - Math.log10(MASS_RULER.minKg)) / (Math.log10(MASS_RULER.maxKg) - Math.log10(MASS_RULER.minKg))
+  const needX = rx0 + (rx1 - rx0) * trial.massRulerPosition
+  const ex0 = 60
+  const ex1 = 700
+  const ey = 352
+  const casX = ex0 + (ex1 - ex0) * trial.casimirEnergyRulerPosition
+  const needEX = ex0 + (ex1 - ex0) * trial.neededEnergyRulerPosition
+  const labelRight = needX < 380
+  return (
+    <svg viewBox={`0 0 ${A_W} ${A_H}`} style={svgStyle} role="img" aria-label="Drawing A: the negative mass and tension for your trial throat, and the Casimir energy for your trial plates">
+      <SvgLines x={20} y={20} lines={[`Drawing A. Your trial throat, ${radiusText(trial.throatRadiusM)} in radius, and your trial plates, ${gapText(trial.plateGapM)} apart`]} fill={TEXT_COLOR} bold size={13} />
+      <SvgLines x={20} y={46} lines={['A1. The negative mass that this throat would need (ruler of masses, log scale)']} fill={TEXT_COLOR} bold size={11} />
+      <line x1={rx0} y1={ry} x2={rx1} y2={ry} stroke={TEXT_COLOR} strokeWidth={1.5} />
+      {MASS_RULER.ticks.map((t) => (
+        <g key={t}>
+          <line x1={xm(t)} y1={ry} x2={xm(t)} y2={ry + 6} stroke={MUTED_COLOR} />
+          <SvgLines x={xm(t)} y={ry + 18} lines={[`${tenPower(t)} kg`]} fill={MUTED_COLOR} size={10} anchor="middle" />
+        </g>
+      ))}
+      {MASS_LANDMARKS.map((l, i) => (
+        <g key={l.id}>
+          <line x1={xm(l.kg)} y1={ry - 8} x2={xm(l.kg)} y2={ry + 8} stroke={MUTED_COLOR} strokeWidth={2} />
+          <SvgLines x={xm(l.kg)} y={ry - 14 - (i % 2) * 13} lines={[l.label]} fill={MUTED_COLOR} size={10} anchor="middle" />
+        </g>
+      ))}
+      <line x1={needX} y1={ry} x2={needX} y2={ry + 40} stroke={PINK} strokeWidth={3} />
+      <circle cx={needX} cy={ry} r={6} fill={PINK} />
+      <SvgLines
+        x={labelRight ? needX + 8 : needX - 8}
+        y={ry + 54}
+        lines={[`needed: ${sci(trial.negativeMassKg)} kg`, `(${unitText(trial)})`]}
+        fill={PINK}
+        bold
+        size={11}
+        anchor={labelRight ? 'start' : 'end'}
+      />
+      <SvgLines
+        x={20}
+        y={ry + 100}
+        lines={[
+          `Tension at this throat: ${sci(trial.tensionPa)} Pa, which is ${ratioText(trial.tensionOverNeutronStarCentre)} the tension of a 3 km throat.`,
+          'The published statement: a 3 km throat has a tension the same size as the pressure at the centre of a massive neutron star.',
+        ]}
+        fill={PINK}
+        size={11}
+      />
+      <line x1={20} y1={250} x2={A_W - 20} y2={250} stroke="#334155" />
+      <SvgLines x={20} y={272} lines={['A2. The Casimir energy of 1 square metre of your plates, against the energy this throat needs (ruler of energies, log scale)']} fill={TEXT_COLOR} bold size={11} />
+      <line x1={ex0} y1={ey} x2={ex1} y2={ey} stroke={TEXT_COLOR} strokeWidth={1.5} />
+      {ENERGY_RULER.ticks.map((t) => (
+        <g key={t}>
+          <line x1={ex0 + (ex1 - ex0) * energyRulerPosition(t)} y1={ey} x2={ex0 + (ex1 - ex0) * energyRulerPosition(t)} y2={ey + 6} stroke={MUTED_COLOR} />
+          <SvgLines x={ex0 + (ex1 - ex0) * energyRulerPosition(t)} y={ey + 18} lines={[`${tenPower(t)} J`]} fill={MUTED_COLOR} size={10} anchor="middle" />
+        </g>
+      ))}
+      <line x1={casX} y1={ey} x2={casX} y2={ey - 34} stroke={CYAN} strokeWidth={3} />
+      <circle cx={casX} cy={ey} r={6} fill={CYAN} />
+      <SvgLines x={casX} y={ey - 52} lines={[`Casimir energy: ${sci(trial.casimirJPerM2)} J`]} fill={CYAN} bold size={11} anchor="start" />
+      <line x1={needEX} y1={ey} x2={needEX} y2={ey - 34} stroke={PINK} strokeWidth={3} />
+      <circle cx={needEX} cy={ey} r={6} fill={PINK} />
+      <SvgLines x={needEX} y={ey - 52} lines={[`needed: ${sci(trial.neededJ)} J`]} fill={PINK} bold size={11} anchor="end" />
+      <line x1={casX} y1={ey + 38} x2={needEX} y2={ey + 38} stroke={MUTED_COLOR} strokeWidth={1.5} strokeDasharray="5 4" />
+      <SvgLines x={(casX + needEX) / 2} y={ey + 56} lines={[`the gap: the energy needed is ${sci(trial.shortfall)} times the Casimir energy`]} fill={TEXT_COLOR} bold size={11} anchor="middle" />
+      <SvgLines x={20} y={ey + 84} lines={[`To make up the gap with plates like these you would need ${sci(trial.plateAreaM2)} square metres of them,`, `which is ${sci(trial.fractionOfUniverseSurface)} times the surface of the observable universe.`]} fill={MUTED_COLOR} size={11} />
+    </svg>
+  )
+}
+
+export function trialCaption(trial: TrialPicture): ReactNode {
+  return (
+    <CaptionBlock
+      title="Drawing A"
+      intro="This drawing follows the two settings above, and only them. The top half (A1) is for the throat radius. The bottom half (A2) uses both the throat radius and the gap between the plates. Your predictions do not change it, and the real pictures above do not change either."
+      bullets={[
+        <>
+          <strong>The pink mark on the top ruler</strong> is the negative mass a throat {radiusText(trial.throatRadiusM)} in radius would need: {sci(trial.negativeMassKg)} kg, or {unitText(trial)}. The grey ticks are the same landmarks as in Picture 3. It is
+          pink because the throat is imagined for the question.
+        </>,
+        <>
+          <strong>The pink line of text</strong> gives the tension at the throat, the pull along the tunnel, and how it compares with the tension of a 3 km throat.
+        </>,
+        <>
+          <strong>The cyan mark on the bottom ruler</strong> is the energy stored between 1 square metre of two plates {gapText(trial.plateGapM)} apart (the Casimir energy), and <strong>the pink mark</strong> is the energy this throat needs. <strong>The dashed line</strong> between
+          them is the gap, which you can read as a number of times on the line under it.
+        </>,
+        <>
+          <strong>The last line</strong> says how much plate area it would take to make up the gap, set beside the surface of the observable universe, as a rough illustration.
+        </>,
+      ]}
+      worked={
+        <>
+          For a throat {radiusText(trial.throatRadiusM)} in radius the energy needed is {sci(trial.neededJ)} J. For plates {gapText(trial.plateGapM)} apart, 1 square metre holds {sci(trial.casimirJPerM2)} J. {sci(trial.neededJ)} ÷ {sci(trial.casimirJPerM2)} = {sci(trial.shortfall)}.
+        </>
+      }
+      lookFor={[
+        {
+          look: 'the pink mark on the top ruler, when you change the throat radius.',
+          means: `it moves right as the throat gets bigger. At ${radiusText(trial.throatRadiusM)} it is ${unitText(trial)}.`,
+          matters: 'the bigger the tunnel, the more negative mass it would need, so a tunnel big enough for a person needs far more than a tiny one.',
+        },
+        {
+          look: 'the two marks on the bottom ruler, and the dashed line between them.',
+          means: `they are ${sci(trial.shortfall)} times apart. Changing the plate gap moves only the cyan mark, and changing the throat radius moves only the pink one.`,
+          matters: 'the only negative energy we know how to make is a tiny fraction of what a tunnel would need, however the plates are set.',
+        },
+        ...(trial.isPublishedNeutronStarMatch
+          ? [
+              {
+                look: 'the line of text about the tension.',
+                means: 'for a 3 km throat the tension is the same size as the pressure at the centre of a massive neutron star, the densest stars known.',
+                matters: 'even a throat 3 km in radius needs a pull as strong as anything known to occur in nature.',
+              },
+            ]
+          : []),
+      ]}
+      whereFrom={
+        <>
+          <strong>Measured:</strong> that the Casimir effect exists (Lamoreaux, 1997, to within 5 percent, as reported in summaries); nothing about a wormhole. <strong>Calculated here:</strong> the mass, the tension and the energies, with the same formulas as Pictures 1 to 3.{' '}
+          <strong>Imagined for the question:</strong> the throat you chose. Its numbers are trial values, not new measurements.
         </>
       }
     />

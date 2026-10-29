@@ -53,6 +53,8 @@ import {
   TRIAL_DEFAULT_THROAT_RADIUS_M,
   TRIAL_DEFAULT_PLATE_GAP_M,
   trialPicture,
+  ENERGY_RULER,
+  energyRulerPosition,
   PICTURE_PROFILE_HALF_LENGTH_M,
   SNAPSHOT_TIMES,
   PICTURE_RAY_START,
@@ -369,6 +371,24 @@ describe('the ruler of masses and the trial values', () => {
     const d = trialPicture(TRIAL_DEFAULT_THROAT_RADIUS_M, TRIAL_DEFAULT_PLATE_GAP_M)
     expect(d.negativeMassKg).toBeCloseTo(totalNegativeMassKg(1), -20)
     expect(d.shortfall / 4.3866e53).toBeCloseTo(1, 2)
+  })
+  it('gives the tension ratio against the 3 km throat and puts every trial value on its ruler', () => {
+    expect(trialPicture(3000, 1e-6).tensionOverNeutronStarCentre).toBeCloseTo(1, 12)
+    expect(trialPicture(1000, 1e-6).tensionOverNeutronStarCentre).toBeCloseTo(9, 9)
+    expect(trialPicture(1e4, 1e-6).tensionOverNeutronStarCentre).toBeCloseTo(0.09, 9)
+    expect(energyRulerPosition(ENERGY_RULER.minJ)).toBeCloseTo(0, 12)
+    expect(energyRulerPosition(ENERGY_RULER.maxJ)).toBeCloseTo(1, 12)
+    expect(() => energyRulerPosition(0)).toThrow(RangeError)
+    for (const b0 of TRIAL_THROAT_RADII_M)
+      for (const d of TRIAL_PLATE_GAPS_M) {
+        const t = trialPicture(b0, d)
+        for (const q of [t.massRulerPosition, t.neededEnergyRulerPosition, t.casimirEnergyRulerPosition]) {
+          expect(q).toBeGreaterThan(0)
+          expect(q).toBeLessThan(1)
+        }
+        expect(t.neededEnergyRulerPosition).toBeGreaterThan(t.casimirEnergyRulerPosition)
+      }
+    expect(trialPicture(1, 1e-5).casimirEnergyRulerPosition).toBeLessThan(trialPicture(1, 1e-7).casimirEnergyRulerPosition)
   })
   it('uses the constants G and c as given', () => {
     expect(G).toBe(6.6743e-11)
