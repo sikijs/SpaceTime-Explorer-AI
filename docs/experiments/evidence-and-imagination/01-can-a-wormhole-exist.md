@@ -1,6 +1,6 @@
 # Experiment 1 (Evidence and Imagination): Can a Wormhole Exist? (What Would It Take to Hold One Open?)
 
-**Status: DRAFT specification, PROPOSED by Claude on 2026-10-29 per `CLAUDE.md` §23 Stages 2 and 3, as Experiment 1 of the group (`00-group-proposal.md`, approved by the owner on 2026-10-29). **On 2026-10-29 the owner agreed Decisions 3, 6 and 7 on their defaults** (the four Kruskal snapshots; the derived exotic-mass formula shown with the other one stated and the difference explained; the Casimir comparison with the surface of the observable universe, marked illustrative); **On 2026-10-29 the owner then approved the specification ("approve the spec"), read as all twelve decisions on their defaults.** Step 1 (the physics model and its tests) is the next step; nothing else is built. Every fact below came from search results, abstracts and summarising fetches on 2026-10-29; the Morris and Thorne paper could not be read as text (the PDF was fetched but has no readable text layer here), and no paper was read in full. Each number must be checked at its source before the wording is approved (§29).**
+**Status: DRAFT specification, PROPOSED by Claude on 2026-10-29 per `CLAUDE.md` §23 Stages 2 and 3, as Experiment 1 of the group (`00-group-proposal.md`, approved by the owner on 2026-10-29). **On 2026-10-29 the owner agreed Decisions 3, 6 and 7 on their defaults** (the four Kruskal snapshots; the derived exotic-mass formula shown with the other one stated and the difference explained; the Casimir comparison with the surface of the observable universe, marked illustrative); **On 2026-10-29 the owner then approved the specification ("approve the spec"), read as all twelve decisions on their defaults.** **BUILT in nine steps and finally reviewed on 2026-10-29 (see "Implementation Notes" below); wording approved step by step on 2026-10-29; the owner approved all the differences from this specification on 2026-10-29.** Every fact below came from search results, abstracts and summarising fetches on 2026-10-29; the Morris and Thorne paper could not be read as text (the PDF was fetched but has no readable text layer here), and no paper was read in full. Each number must be checked at its source before the wording is approved (§29).**
 
 > **Three things for the owner's attention (decisions 2, 6 and 7).** (a) The "exotic mass" for a throat is not given by one agreed formula in the sources I could read: a secondary summary says "−radius × c² ÷ G" (for 1 metre, 0.71 Jupiter masses, about one Jupiter), and my own integration of the energy of the simplest open throat gives −π × radius × c² ÷ (2G) (for 1 metre, 1.11 Jupiter masses). They differ by a factor of π ÷ 2 = 1.57 (corrected on 2026-10-29 from "agree to 12 percent", which was wrong: 1.11 against 0.71 Jupiters) and both give "about one Jupiter mass per metre". (b) The model is a **toy shape from the mathematics** (no wormhole has ever been seen) and the page must say so on every picture. (c) A comparison with the surface of the observable universe, for how much Casimir plate would be needed, is striking but is only a rough illustration.
 
@@ -128,12 +128,32 @@ Experiment 2 of the group (time travel) uses the wormhole as one way to make a c
 | The quantum-computer "wormhole" debate | later comments or a repeat |
 | NASA's page is dated 2005 | NASA may update or move it |
 
+## Implementation Notes (2026-10-29)
+
+**Built in ten steps, each its own commit:** the specification (`59092f8`); Step 1, the physics model and tests (`38ada3e`); Step 2, the introduction, links and the new sidebar group (`9474ca5`); Step 3, the two predictions and the Run button (`e187139`); Step 4, the five-stage run with Pictures 1 to 3 (`1f47bdd`); Step 5, "Now try it yourself" with Drawing A (`429a033`); Step 6, the results (`4d26024`); Step 7, the tutor (`25613e4`); Step 8, the chapter summary, "What's next" and the papers list (`3afc423`); Step 9, the complete-flow test and the fix to the 0.1 µm label (`df9ad90`). Files: `src/physics/wormholes.ts` (imports nothing) and `wormholes.test.ts` (39 test cases, checked by ten deliberate breaks of the module, all caught); `src/components/WormholeExperiment.tsx`, `WormholePictures.tsx`, `WormholeResults.tsx`, `WormholeTutor.tsx` and `src/App.tsx`. Built to `CLAUDE.md` §14 ("Predictions and the Real Results").
+
+**Complete-flow test (Chrome, 2026-10-29):** all 10 prediction pairs (the stages in order; the pictures at the right stages; Parts 2, 3 and 4 and all three tables; the white guess marks; the guess tags; no verdict before the tutor; the tutor's marks; the chapter summary) and all 15 control settings against a separate calculation, with no failures after the fix below. The test found one fault, a floating-point label ("0.09999999999999999 micrometres" for 0.1), which was fixed.
+
+**Differences from this specification (all approved by the owner on 2026-10-29):**
+1. Picture 2's last snapshot is T = 0.99, not 1, because at T = 1 the outline is cut in two; the caption says so.
+2. Table 1's mass row is set beside the secondary summary's formula (not "against Jupiter's"), and Table 1 also has a closing row and a Kuhfittig 10 m tension row; the echo searches are Table 3, not a Table 1 row.
+3. Drawing A shows the tension as a ratio to a 3 km throat's tension, because no number for a neutron star's centre was read.
+4. The tutor uses a magnifying-glass comparison instead of a rope or tunnel wall, and states the cost in Jupiters and Earths.
+5. The papers list after the run cites Einstein and Rosen (1935), Fuller and Wheeler (1962) and Morris and Thorne (1988) without links, because the publishers' pages blocked checking on 2026-10-29.
+6. The "agree to 12 percent" statement in the header was wrong (the two mass formulas differ by π ÷ 2 = 1.57) and was corrected.
+7. After the review the Table 1 note defines dyn/cm² and the joule, and the tutor defines "qubits" (§15).
+
 ## Open items
 a. The Morris and Thorne paper must be read as text (a library or arXiv-like copy) to confirm the throat shape function chosen here, the tension and the "about one Jupiter" statement.
 b. The Fuller and Wheeler paper and the Kruskal relation are from search summaries and memory.
 c. The derived total negative mass, −π b₀ c² ÷ (2G), differs by a factor of π/2 from the secondary summary's −b₀ c² ÷ G. The spec's choice is a decision (Decision 6).
 d. The Casimir energy formula and Lamoreaux's measurement are from search summaries; the comparison with the surface of the observable universe uses 4.4 × 10²⁶ m for its radius and is to be sourced if kept.
 e. A plain official page for exotic matter and the Casimir effect has not been found.
+
+f. No source was read for the tutor's magnifying-glass comparison, its collapsing-bridge comparison or its description of the 2022 quantum-processor "wormhole" (search summaries only).
+g. The Einstein–Rosen, Fuller–Wheeler and Morris–Thorne pages could not be fetched (bot challenge, 403), so the papers are cited without links.
+h. No plain official page for exotic matter, negative energy or the Casimir effect was found; the introduction defines them in its own words (§29 rule 3(c)).
+i. Not checked: narrow widths, other browsers, keyboard use, a real learner, and the progress check mark in the sidebar.
 
 ## Decisions for the owner (each with a default)
 1. **Status label.** Open overall; Settled (what the equations say: the simplest throat pinches off; holding one open needs negative energy); no evidence that a wormhole exists. Default: as stated.

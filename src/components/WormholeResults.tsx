@@ -133,7 +133,7 @@ export function WormholeResults({ crossGuess, massGuess }: { crossGuess: CrossCh
         items={[
           {
             label: 'What it is',
-            text: 'the main numbers from this page’s calculation, each set beside a reference: the throat’s own starting size, a formula from a summary, a published figure, or the energy a throat needs.',
+            text: 'the main numbers from this page’s calculation, each set beside a reference: the throat’s own starting size, a formula from a summary, a published figure, or the energy a throat needs. Two units appear. Tension is given in dyn/cm², an older unit of force per area, where 1 pascal (the unit used in the pictures) is 10 dyn/cm². Energy is given in joules (J), where lifting a small apple one metre takes about 1 joule.',
           },
           {
             label: 'What it means',

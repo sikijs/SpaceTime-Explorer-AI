@@ -142,7 +142,7 @@ export function WormholeTutor({ crossPrediction, massPrediction, onExplained }: 
             the gap you would need plates covering {n2(c.fractionOfUniverseSurface)} times the surface of the observable universe. It is also not known that negative energy of that kind can be gathered in bulk.
           </p>
           <p style={paragraphStyle}>
-            <strong>5. What the 2022 “wormhole” on a quantum computer was and was not.</strong> In 2022 a team reported a “traversable wormhole” on a quantum processor. It simulated a mathematical equivalent of one on a few qubits. It was not a tunnel in space, and whether it shows what was claimed
+            <strong>5. What the 2022 “wormhole” on a quantum computer was and was not.</strong> In 2022 a team reported a “traversable wormhole” on a quantum processor. It simulated a mathematical equivalent of one on a few of the processor’s basic memory units (qubits). It was not a tunnel in space, and whether it shows what was claimed
             is debated.
           </p>
           <p style={paragraphStyle}>
