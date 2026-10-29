@@ -517,3 +517,112 @@ export function pictureThree(): PictureThreeData {
     worked: { radiusM: b0, c: C, g: G, kg },
   }
 }
+
+// ---- The results (Step 6): the check-up and the worked steps. The interface sets these out and calculates nothing (CLAUDE.md §9, §14 "Reading the Results") ----
+export type Comparison = 'the same' | 'more' | 'less'
+// "The same" means within 1 percent of the reference; otherwise more or less. This is a reading aid, not a scientific cut-off.
+export function compare(value: number, reference: number, tolerance: number = 0.01): Comparison {
+  checkPositive(value, 'The value')
+  checkPositive(reference, 'The reference')
+  const ratio = value / reference
+  if (Math.abs(ratio - 1) <= tolerance) return 'the same'
+  return ratio > 1 ? 'more' : 'less'
+}
+export const CHECK_UP_THROAT_RADIUS_M = PREDICTION_THROAT_RADIUS_M
+export const CHECK_UP_PLATE_GAP_M = 1e-6
+export const CHECK_UP_TENSION_RADIUS_M = 10
+export const CHECK_UP_CLOSING_TIMES = [0.5, 0.9, 0.99] as const
+export interface CheckUp {
+  closingTimes: number[]
+  /** the throat's radius at each time, as a fraction of its radius at T = 0 */
+  closingFractions: number[]
+  closingFallsEachTime: boolean
+  shutAtT: number
+  massKg: number
+  massJupiters: number
+  secondaryMassKg: number
+  secondaryJupiters: number
+  massRatio: number
+  massVersusSecondary: Comparison
+  tension10mDynPerCm2: number
+  publishedTension10mDynPerCm2: number
+  tension10mRatio: number
+  tension10mVersusPublished: Comparison
+  tension3kmDynPerCm2: number
+  tension3kmPa: number
+  casimirJPerM2: number
+  casimirGapM: number
+  neededJ: number
+  shortfall: number
+  plateAreaM2: number
+  fractionOfUniverseSurface: number
+}
+export function resultsCheckUp(): CheckUp {
+  const mass = totalNegativeMassKg(CHECK_UP_THROAT_RADIUS_M)
+  const secondary = secondaryNegativeMassKg(CHECK_UP_THROAT_RADIUS_M)
+  const t10 = tensionInDynPerCm2(CHECK_UP_TENSION_RADIUS_M)
+  const fractions = CHECK_UP_CLOSING_TIMES.map((T) => throatRadiusFraction(T))
+  let falls = fractions[0] < 1
+  for (let i = 1; i < fractions.length; i++) if (!(fractions[i] < fractions[i - 1])) falls = false
+  const area = casimirAreaNeededM2(CHECK_UP_THROAT_RADIUS_M, CHECK_UP_PLATE_GAP_M)
+  return {
+    closingTimes: [...CHECK_UP_CLOSING_TIMES],
+    closingFractions: fractions,
+    closingFallsEachTime: falls,
+    shutAtT: 1,
+    massKg: mass,
+    massJupiters: mass / JUPITER_MASS_KG,
+    secondaryMassKg: secondary,
+    secondaryJupiters: secondary / JUPITER_MASS_KG,
+    massRatio: mass / secondary,
+    massVersusSecondary: compare(mass, secondary),
+    tension10mDynPerCm2: t10,
+    publishedTension10mDynPerCm2: PUBLISHED_TENSION_AT_10_M_DYN_CM2,
+    tension10mRatio: t10 / PUBLISHED_TENSION_AT_10_M_DYN_CM2,
+    tension10mVersusPublished: compare(t10, PUBLISHED_TENSION_AT_10_M_DYN_CM2),
+    tension3kmDynPerCm2: tensionInDynPerCm2(PUBLISHED_NEUTRON_STAR_MATCH_RADIUS_M),
+    tension3kmPa: throatTension(PUBLISHED_NEUTRON_STAR_MATCH_RADIUS_M),
+    casimirJPerM2: casimirEnergyPerAreaJPerM2(CHECK_UP_PLATE_GAP_M),
+    casimirGapM: CHECK_UP_PLATE_GAP_M,
+    neededJ: negativeEnergyNeededJ(CHECK_UP_THROAT_RADIUS_M),
+    shortfall: casimirShortfall(CHECK_UP_THROAT_RADIUS_M, CHECK_UP_PLATE_GAP_M),
+    plateAreaM2: area,
+    fractionOfUniverseSurface: fractionOfObservableUniverseSurface(area),
+  }
+}
+export interface ExampleSteps {
+  radiusM: number
+  c: number
+  g: number
+  /** pi * b0 * c^2 / (2 G), the closed form */
+  closedFormKg: number
+  /** the same mass by a numerical sum of the density over the volume */
+  numericKg: number
+  /** how far apart the two are, as a fraction of the closed form */
+  relativeDifference: number
+  jupiters: number
+  earths: number
+  tensionPa: number
+  tensionDynPerCm2: number
+  /** the energy this mass is worth, mass x c^2 */
+  energyJ: number
+}
+export function exampleSteps(): ExampleSteps {
+  const b0 = PREDICTION_THROAT_RADIUS_M
+  const closed = totalNegativeMassKg(b0)
+  const numeric = totalNegativeMassNumericKg(b0)
+  const u = negativeMassInUnits(closed)
+  return {
+    radiusM: b0,
+    c: C,
+    g: G,
+    closedFormKg: closed,
+    numericKg: numeric,
+    relativeDifference: Math.abs(numeric - closed) / closed,
+    jupiters: u.jupiters,
+    earths: u.earths,
+    tensionPa: throatTension(b0),
+    tensionDynPerCm2: tensionInDynPerCm2(b0),
+    energyJ: negativeEnergyNeededJ(b0),
+  }
+}

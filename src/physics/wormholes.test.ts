@@ -53,6 +53,9 @@ import {
   TRIAL_DEFAULT_THROAT_RADIUS_M,
   TRIAL_DEFAULT_PLATE_GAP_M,
   trialPicture,
+  compare,
+  resultsCheckUp,
+  exampleSteps,
   ENERGY_RULER,
   energyRulerPosition,
   PICTURE_PROFILE_HALF_LENGTH_M,
@@ -389,6 +392,40 @@ describe('the ruler of masses and the trial values', () => {
         expect(t.neededEnergyRulerPosition).toBeGreaterThan(t.casimirEnergyRulerPosition)
       }
     expect(trialPicture(1, 1e-5).casimirEnergyRulerPosition).toBeLessThan(trialPicture(1, 1e-7).casimirEnergyRulerPosition)
+  })
+  it('compares as the same, more or less, with the same meaning as a reference', () => {
+    expect(compare(1, 1)).toBe('the same')
+    expect(compare(1.005, 1)).toBe('the same')
+    expect(compare(1.5, 1)).toBe('more')
+    expect(compare(0.5, 1)).toBe('less')
+    expect(() => compare(0, 1)).toThrow(RangeError)
+  })
+  it('gives a check-up whose throat closes each time, whose mass is pi/2 times the secondary one and whose numbers match the earlier tests', () => {
+    const c = resultsCheckUp()
+    expect(c.closingFallsEachTime).toBe(true)
+    expect(c.closingFractions[0]).toBeCloseTo(0.898, 3)
+    expect(c.closingFractions[1]).toBeCloseTo(0.517, 3)
+    expect(c.closingFractions[2]).toBeCloseTo(0.187, 3)
+    expect(c.shutAtT).toBe(1)
+    expect(c.massRatio).toBeCloseTo(Math.PI / 2, 12)
+    expect(c.massVersusSecondary).toBe('more')
+    expect(c.massJupiters).toBeCloseTo(1.11, 2)
+    expect(c.secondaryJupiters).toBeCloseTo(0.71, 2)
+    expect(c.tension10mDynPerCm2 / 4.8e41).toBeCloseTo(1, 1)
+    expect(c.tension10mRatio).toBeCloseTo(0.963, 3)
+    expect(c.tension10mVersusPublished).toBe('less')
+    expect(c.tension3kmDynPerCm2 / 5.4e36).toBeCloseTo(1, 1)
+    expect(c.casimirJPerM2 / 4.33e-10).toBeCloseTo(1, 2)
+    expect(c.shortfall / 4.39e53).toBeCloseTo(1, 2)
+    expect(c.fractionOfUniverseSurface).toBeCloseTo(0.18, 2)
+  })
+  it('gives worked steps in which the closed form and the numerical sum agree and the energy is mass times c squared', () => {
+    const s = exampleSteps()
+    expect(s.relativeDifference).toBeLessThan(1e-9)
+    expect(s.closedFormKg / (Math.PI * s.radiusM * s.c ** 2 / (2 * s.g))).toBeCloseTo(1, 12)
+    expect(s.jupiters).toBeCloseTo(1.11, 2)
+    expect(s.energyJ / (s.closedFormKg * s.c ** 2)).toBeCloseTo(1, 12)
+    expect(s.tensionPa).toBeCloseTo(4.815e42, -39)
   })
   it('uses the constants G and c as given', () => {
     expect(G).toBe(6.6743e-11)

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { CROSS_CHOICES, MASS_CHOICES, PREDICTION_THROAT_RADIUS_M, TRIAL_DEFAULT_PLATE_GAP_M, TRIAL_DEFAULT_THROAT_RADIUS_M, TRIAL_PLATE_GAPS_M, TRIAL_THROAT_RADII_M, trialPicture } from '../physics/wormholes'
 import type { CrossChoiceId, MassChoiceId } from '../physics/wormholes'
+import { WormholeResults } from './WormholeResults'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './WormholePictures'
 
 // Evidence and Imagination, Experiment 1 (docs/experiments/evidence-and-imagination/01-can-a-wormhole-exist.md).
-// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `WormholePictures.tsx`).
-// The results and the tutor come in later steps.
+// Steps 2 to 6: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `WormholePictures.tsx`).
+// (Step 6) The results (`WormholeResults.tsx`). The tutor comes in a later step.
 // The wording is the owner's draft of 2026-10-29, approved (CLAUDE.md §28.1), with the one-line honesty note kept on the page at the owner's request. Nothing here says that a throat pinches
 // off, how much negative mass a throat needs, or how small the Casimir energy is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
@@ -330,6 +331,7 @@ export function WormholeExperiment({ onComplete }: WormholeExperimentProps) {
               {trialCaption(trial)}
             </div>
           )}
+          {done && <WormholeResults crossGuess={crossGuess} massGuess={massGuess} />}
         </div>
       </div>
     </div>
