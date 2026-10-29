@@ -626,3 +626,39 @@ export function exampleSteps(): ExampleSteps {
     energyJ: negativeEnergyNeededJ(b0),
   }
 }
+
+// ---- The tutor's figures (Step 7): the numbers the tutor's explanation quotes, all from the formulas above ----
+export interface TutorFigures {
+  radiusM: number
+  doubledRadiusM: number
+  doubledMassKg: number
+  doubledJupiters: number
+  /** doubled mass divided by the first mass */
+  massRatio: number
+  doubledTensionPa: number
+  /** doubled tension divided by the first tension */
+  tensionRatio: number
+  /** the Einstein-Rosen throat's size as a fraction of its opening size at each closing time, and when it is shut */
+  closingTimes: number[]
+  closingFractions: number[]
+  shutAtT: number
+}
+export function tutorFigures(): TutorFigures {
+  const b0 = PREDICTION_THROAT_RADIUS_M
+  const b1 = 2 * b0
+  const m0 = totalNegativeMassKg(b0)
+  const m1 = totalNegativeMassKg(b1)
+  const c = resultsCheckUp()
+  return {
+    radiusM: b0,
+    doubledRadiusM: b1,
+    doubledMassKg: m1,
+    doubledJupiters: m1 / JUPITER_MASS_KG,
+    massRatio: m1 / m0,
+    doubledTensionPa: throatTension(b1),
+    tensionRatio: throatTension(b1) / throatTension(b0),
+    closingTimes: c.closingTimes,
+    closingFractions: c.closingFractions,
+    shutAtT: c.shutAtT,
+  }
+}

@@ -56,6 +56,7 @@ import {
   compare,
   resultsCheckUp,
   exampleSteps,
+  tutorFigures,
   ENERGY_RULER,
   energyRulerPosition,
   PICTURE_PROFILE_HALF_LENGTH_M,
@@ -426,6 +427,16 @@ describe('the ruler of masses and the trial values', () => {
     expect(s.jupiters).toBeCloseTo(1.11, 2)
     expect(s.energyJ / (s.closedFormKg * s.c ** 2)).toBeCloseTo(1, 12)
     expect(s.tensionPa).toBeCloseTo(4.815e42, -39)
+  })
+  it('gives the tutor figures for a throat twice as wide: twice the mass and a quarter of the tension', () => {
+    const t = tutorFigures()
+    expect(t.doubledRadiusM).toBe(2 * t.radiusM)
+    expect(t.massRatio).toBeCloseTo(2, 12)
+    expect(t.tensionRatio).toBeCloseTo(0.25, 12)
+    expect(t.doubledJupiters).toBeCloseTo(2.23, 2)
+    expect(t.doubledTensionPa / 1.204e42).toBeCloseTo(1, 2)
+    expect(t.closingFractions).toEqual(resultsCheckUp().closingFractions)
+    expect(t.shutAtT).toBe(1)
   })
   it('uses the constants G and c as given', () => {
     expect(G).toBe(6.6743e-11)

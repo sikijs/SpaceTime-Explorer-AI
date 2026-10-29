@@ -3,11 +3,12 @@ import type { ReactNode } from 'react'
 import { CROSS_CHOICES, MASS_CHOICES, PREDICTION_THROAT_RADIUS_M, TRIAL_DEFAULT_PLATE_GAP_M, TRIAL_DEFAULT_THROAT_RADIUS_M, TRIAL_PLATE_GAPS_M, TRIAL_THROAT_RADII_M, trialPicture } from '../physics/wormholes'
 import type { CrossChoiceId, MassChoiceId } from '../physics/wormholes'
 import { WormholeResults } from './WormholeResults'
+import { WormholeTutor } from './WormholeTutor'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './WormholePictures'
 
 // Evidence and Imagination, Experiment 1 (docs/experiments/evidence-and-imagination/01-can-a-wormhole-exist.md).
-// Steps 2 to 6: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `WormholePictures.tsx`).
-// (Step 6) The results (`WormholeResults.tsx`). The tutor comes in a later step.
+// Steps 2 to 7: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `WormholePictures.tsx`).
+// (Step 6) The results (`WormholeResults.tsx`). (Step 7) The tutor as Part 4 (`WormholeTutor.tsx`).
 // The wording is the owner's draft of 2026-10-29, approved (CLAUDE.md §28.1), with the one-line honesty note kept on the page at the owner's request. Nothing here says that a throat pinches
 // off, how much negative mass a throat needs, or how small the Casimir energy is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
@@ -42,7 +43,7 @@ interface WormholeExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function WormholeExperiment({ onComplete }: WormholeExperimentProps) {
+export function WormholeExperiment({ onComplete, onTutorComplete }: WormholeExperimentProps) {
   const [crossGuess, setCrossGuess] = useState<CrossChoiceId | null>(null)
   const [massGuess, setMassGuess] = useState<MassChoiceId | null>(null)
   const [trialRadius, setTrialRadius] = useState<number>(TRIAL_DEFAULT_THROAT_RADIUS_M)
@@ -332,6 +333,29 @@ export function WormholeExperiment({ onComplete }: WormholeExperimentProps) {
             </div>
           )}
           {done && <WormholeResults crossGuess={crossGuess} massGuess={massGuess} />}
+
+          {done && crossGuess !== null && massGuess !== null && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> You have seen the pictures and the tables. This last part is a short conversation with a tutor.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>Three questions, one at a time.</strong> What you see in Pictures 1 to 3; how your own guesses (the white marks) compare with the real results; and one bigger question about a wider tunnel. Type a few words for each. Nothing is graded, and a short
+                  answer is fine.
+                </li>
+                <li>
+                  <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses matched until you have answered all three, so you can think it through first.
+                </li>
+                <li>
+                  <strong>Then the explanation.</strong> It covers why the simplest throat closes, why a tunnel that stays open needs negative energy, how big the cost is, why the Casimir effect is not enough, what the 2022 quantum-computer “wormhole” was, and what is not
+                  settled.
+                </li>
+              </ul>
+              <WormholeTutor crossPrediction={crossGuess} massPrediction={massGuess} onExplained={onTutorComplete} />
+            </div>
+          )}
         </div>
       </div>
     </div>
