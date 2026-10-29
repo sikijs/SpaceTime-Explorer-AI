@@ -462,3 +462,35 @@ export function resultsCheckUp(): CheckUp {
     unboundVersusStudies: compare(unbound, Math.max(SIDEWAYS_SPEED_2025_KM_S, SIDEWAYS_SPEED_2026_KM_S), 0.1),
   }
 }
+
+// ---- The tutor's figures (Step 7) ----
+// The numbers the tutor's explanation quotes, all from the orbit above: the turning amount and the speed at the first pass (L / r), the first passes for each trial sideways speed,
+// and the effect of doubling the 2026 sideways speed.
+export interface TutorFigures {
+  angularMomentum: number
+  speedAtFirstPassKmS: number
+  halfSidewaysKmS: number
+  firstPassAtHalfKpc: number
+  firstPassAtFullKpc: number
+  doublingRatio: number
+  firstPassForTrialKpc: { sidewaysKmS: number; firstPassKpc: number }[]
+  firstPassForRange: { low: number; high: number }
+  farthest2026Kpc: number
+  period2026Gyr: number
+}
+export function tutorFigures(): TutorFigures {
+  const full = orbit(TOTAL_MASS, SIDEWAYS_SPEED_2026_KM_S)
+  const half = orbit(TOTAL_MASS, SIDEWAYS_SPEED_2026_KM_S / 2)
+  return {
+    angularMomentum: full.angularMomentum,
+    speedAtFirstPassKmS: full.angularMomentum / full.firstPassKpc,
+    halfSidewaysKmS: SIDEWAYS_SPEED_2026_KM_S / 2,
+    firstPassAtHalfKpc: half.firstPassKpc,
+    firstPassAtFullKpc: full.firstPassKpc,
+    doublingRatio: full.firstPassKpc / half.firstPassKpc,
+    firstPassForTrialKpc: TRIAL_SIDEWAYS_KM_S.map((v) => ({ sidewaysKmS: v, firstPassKpc: orbit(TOTAL_MASS, v).firstPassKpc })),
+    firstPassForRange: { low: orbit(TOTAL_MASS, sidewaysRange2026().low).firstPassKpc, high: orbit(TOTAL_MASS, sidewaysRange2026().high).firstPassKpc },
+    farthest2026Kpc: full.farthestKpc as number,
+    period2026Gyr: full.periodGyr as number,
+  }
+}

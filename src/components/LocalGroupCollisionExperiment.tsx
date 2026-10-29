@@ -24,6 +24,7 @@ import {
 } from '../physics/localGroupCollision'
 import type { FallChoiceId, PassChoiceId } from '../physics/localGroupCollision'
 import { LocalGroupCollisionResults } from './LocalGroupCollisionResults'
+import { LocalGroupCollisionTutor } from './LocalGroupCollisionTutor'
 import { PictureOne, PictureTwo, TRIAL_MASS_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './LocalGroupCollisionPictures'
 
 // Frontier and Beyond, Experiment 25 (docs/experiments/frontier-and-beyond/25-will-the-milky-way-and-andromeda-collide.md).
@@ -61,7 +62,7 @@ interface LocalGroupCollisionExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisionExperimentProps) {
+export function LocalGroupCollisionExperiment({ onComplete, onTutorComplete }: LocalGroupCollisionExperimentProps) {
   const [fallGuess, setFallGuess] = useState<FallChoiceId | null>(null)
   const [passGuess, setPassGuess] = useState<PassChoiceId | null>(null)
   const [trialSideways, setTrialSideways] = useState<number>(TRIAL_DEFAULT_SIDEWAYS_KM_S)
@@ -363,8 +364,28 @@ export function LocalGroupCollisionExperiment({ onComplete }: LocalGroupCollisio
 
           {done && <LocalGroupCollisionResults fallGuess={fallGuess} passGuess={passGuess} />}
 
-          {/* Temporary note: removed in Step 7, when the tutor is built. */}
-          {done && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The tutor is not built yet.</p>}
+          {done && fallGuess !== null && passGuess !== null && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the real results. Third, it asks one bigger question, about what doubling the sideways speed
+                  would do. Type a few words for each. Nothing is graded, and a short answer is fine.
+                </li>
+                <li>
+                  <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses matched until you have answered all three, so you can think it through first.
+                </li>
+                <li>
+                  <strong>Then the explanation.</strong> It covers why a straight fall is shorter than distance ÷ speed, why a sideways speed makes a loop and what sets the first pass, why a close first pass is not yet a merger, why the two studies differ, and what the model leaves out. Some
+                  parts use a worked sum or an everyday comparison.
+                </li>
+              </ul>
+              <LocalGroupCollisionTutor fallPrediction={fallGuess} passPrediction={passGuess} onExplained={onTutorComplete} />
+            </div>
+          )}
         </div>
       </div>
     </div>

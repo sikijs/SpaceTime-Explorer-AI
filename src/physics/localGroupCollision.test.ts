@@ -55,6 +55,7 @@ import {
   compare,
   exampleSteps,
   resultsCheckUp,
+  tutorFigures,
 } from './localGroupCollision'
 
 // Constants written out again here, separately from the module (SI units): the Sun's GM, the kiloparsec and the Gyr.
@@ -476,5 +477,24 @@ describe('the results (Step 6)', () => {
     expect(c.rangeLowKmS).toBeCloseTo(22.7, 10)
     expect(c.unboundKmS).toBeCloseTo(118.81, 1)
     expect(c.unboundVersusStudies).toBe('more')
+  })
+  it('the tutor figures: L = 35,540 kpc km/s, a speed of 534 km/s at the first pass, doubling the sideways speed (23.35 to 46.7) gives about 4.1 times the first pass, and the trial first passes rise with the speed', () => {
+    const t = tutorFigures()
+    expect(t.angularMomentum).toBeCloseTo(35540, -1)
+    expect(t.angularMomentum).toBeCloseTo(distanceKpc() * SIDEWAYS_SPEED_2026_KM_S, 6)
+    expect(t.speedAtFirstPassKmS).toBeCloseTo(534.3, 0)
+    expect(t.firstPassAtFullKpc).toBeCloseTo(66.5, 0)
+    expect(t.firstPassAtHalfKpc).toBeCloseTo(orbit(TOTAL_MASS, 23.35).firstPassKpc, 10)
+    expect(t.doublingRatio).toBeGreaterThan(2)
+    expect(t.doublingRatio).toBeCloseTo(4.12, 2)
+    const v = t.firstPassForTrialKpc.map((x) => x.firstPassKpc)
+    expect(v[0]).toBe(0)
+    expect(v[1]).toBeCloseTo(15.7, 1)
+    expect(v[4]).toBeCloseTo(313.1, 0)
+    for (let i = 1; i < v.length; i++) expect(v[i]).toBeGreaterThan(v[i - 1])
+    expect(t.firstPassForRange.low).toBeCloseTo(15.2, 1)
+    expect(t.firstPassForRange.high).toBeCloseTo(157.8, 1)
+    expect(t.farthest2026Kpc).toBeCloseTo(1591, 0)
+    expect(t.period2026Gyr).toBeCloseTo(46.6, 1)
   })
 })
