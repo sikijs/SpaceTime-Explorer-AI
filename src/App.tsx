@@ -25,6 +25,19 @@ import { PulsarTimingBackgroundExperiment } from './components/PulsarTimingBackg
 import { BlackHoleGrowthExperiment } from './components/BlackHoleGrowthExperiment'
 import { InterstellarVisitorExperiment } from './components/InterstellarVisitorExperiment'
 import { LocalGroupCollisionExperiment } from './components/LocalGroupCollisionExperiment'
+import {
+  APPROACH_SPEED_KM_S as lgApproach,
+  MERGER_DISTANCE_KPC as lgRing,
+  PUBLISHED_2025 as lg2025,
+  PUBLISHED_2026 as lg2026,
+  SIDEWAYS_SPEED_2025_KM_S as lgSideways2025,
+  SIDEWAYS_SPEED_2026_KM_S as lgSideways2026,
+  distanceKpc as lgDistance,
+  orbit as lgOrbit,
+  resultsCheckUp as lgCheckUp,
+  tutorFigures as lgTutorFigures,
+  TOTAL_MASS as lgMass,
+} from './physics/localGroupCollision'
 import { exampleSteps as visitorSteps, knownObjects as visitorKnown, pictureTwo as visitorPictureTwo, resultsCheckUp as visitorCheckUp } from './physics/interstellarVisitor'
 import { nonSpinningEfficiency as growthLowEfficiency, objectMassSolar as growthObjectMass, pictureOne as growthPictureOne, pictureTwo as growthPictureTwo, settingsGrid as growthGrid } from './physics/blackHoleGrowth'
 import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
@@ -267,6 +280,25 @@ function pulsarTimingBackgroundSummary(): string {
     `${sigma(nanograv.sigmaLow, nanograv.sigmaHigh)} sigma, and the other arrays report ${sigma(epta.sigmaLow, epta.sigmaHigh)}, ${sigma(ppta.sigmaLow, ppta.sigmaHigh)} and ${sigma(cpta.sigmaLow, cpta.sigmaHigh)} sigma; none reaches the 5 sigma that is the usual bar for a discovery. ` +
     `So there is strong evidence for a background of very slow gravitational waves, and what makes it is open: many pairs of supermassive black holes is the most likely source, but this is not proven, and the NANOGrav abstract also names new physics in the early universe. ` +
     `The numbers come from abstracts and summaries, with no paper read in full, and the ${n1(check.shiftNanoseconds)} nanoseconds is a rough estimate.`
+  )
+}
+
+// The chapter summary of Frontier and Beyond Experiment 25 (wording approved by the owner). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function localGroupCollisionSummary(): string {
+  const c = lgCheckUp()
+  const t = lgTutorFigures()
+  const n1 = (x: number) => x.toFixed(1)
+  const n2 = (x: number) => x.toFixed(2)
+  return (
+    `Will the Milky Way and Andromeda collide? Andromeda is about ${Math.round(lgDistance())} kiloparsecs away and is coming towards us at about ${lgApproach} km/s. If it fell straight in with no sideways motion, the fall would take ${n2(c.straightFallGyr)} billion years, ` +
+    `not the ${n2(c.constantSpeedGyr)} you get by dividing distance by speed, because the pull grows as the galaxies get closer and the speed keeps rising. But Andromeda has a sideways speed, and that speed is hard to measure. ` +
+    `With the 2026 study's ${n1(lgSideways2026)} km/s, a two-point model gives a first pass of ${n1(c.firstPass2026Kpc)} kpc after ${n2(c.firstPass2026Gyr)} billion years: a near miss, outside the ${lgRing} kpc distance the studies call a merger. ` +
+    `With the 2025 study's ${lgSideways2025} km/s the first pass is ${Math.round(lgOrbit(lgMass, lgSideways2025).firstPassKpc)} kpc. The first pass grows faster than the sideways speed (doubling the speed gives about ${n1(t.doublingRatio)} times the distance), ` +
+    `and the 2026 give-or-take, ${n1(c.rangeLowKmS)} to ${n1(c.rangeHighKmS)} km/s, covers first passes from ${n1(t.firstPassForRange.low)} to ${n1(t.firstPassForRange.high)} kpc. A speed of ${n1(c.sidewaysFor20Kpc)} km/s would give exactly ${lgRing} kpc. ` +
+    `That is why two careful studies, a year apart, found about ${lg2025.mergerPercentWithin10Gyr} percent (2025) and about ${lg2026.mergerPercent} percent (2026) for a merger. A near miss is not yet a merger: the studies also include a drag called dynamical friction, which this page does not model, ` +
+    `and the 2026 study's median merger time is ${lg2026.medianMergerTimeGyr} billion years. That Andromeda is approaching is strong evidence. Whether the pair merge within 10 billion years is contested. Andromeda's true sideways motion is open, and Gaia's next release, planned for December 2, 2026, may narrow it. ` +
+    `This page's model has two points and leaves out M33, the Large Magellanic Cloud, the halos' size, friction and the studies' random trial runs, and it does not compute a probability. ` +
+    `The numbers come from the papers' full texts (arXiv versions) and summaries; the journal versions were not read, and the papers do not say which frame their sideways speeds are given in.`
   )
 }
 
@@ -1031,8 +1063,8 @@ const chapters: Chapter[] = [
     title: 'Will the Milky Way and Andromeda collide? (two studies, two answers)',
     group: 'Frontier and Beyond',
     Component: LocalGroupCollisionExperiment,
-    // Not written yet: the chapter summary comes with the results and tutor steps, and it is shown only after the tutor's explanation, which does not exist yet.
-    learned: '',
+    // Chapter summary: wording approved by the owner. Every number is the one the experiment uses (the physics model's).
+    learned: localGroupCollisionSummary(),
     next: 'None yet: this is the last experiment of the group.',
   },
 ]
