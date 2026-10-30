@@ -41,6 +41,7 @@ import {
   TOTAL_MASS as lgMass,
 } from './physics/localGroupCollision'
 import { resultsCheckUp as whCheckUp, tutorFigures as whTutorFigures, ECHO_SEARCHES as whEchoSearches } from './physics/wormholes'
+import { resultsCheckUp as ttCheckUp, exampleSteps as ttSteps, tutorFigures as ttTutorFigures, friendlyDuration as ttDuration } from './physics/timeTravel'
 import { exampleSteps as visitorSteps, knownObjects as visitorKnown, pictureTwo as visitorPictureTwo, resultsCheckUp as visitorCheckUp } from './physics/interstellarVisitor'
 import { nonSpinningEfficiency as growthLowEfficiency, objectMassSolar as growthObjectMass, pictureOne as growthPictureOne, pictureTwo as growthPictureTwo, settingsGrid as growthGrid } from './physics/blackHoleGrowth'
 import { exampleSteps as pulsarSteps, hellingsDownsRows, pictureOne as pulsarPictureOne, pictureTwo as pulsarPictureTwo, resultsCheckUp as pulsarCheckUp } from './physics/pulsarTimingBackground'
@@ -328,6 +329,24 @@ function wormholeSummary(): string {
     `${whEchoSearches.length === 2 ? 'Two' : String(whEchoSearches.length)} searches of gravitational-wave data for echoes found nothing significant. ` +
     `What the equations say is settled. Whether any wormhole exists is open: this page says neither that they exist nor that they cannot. ` +
     `The numbers come from abstracts and summaries, with no paper read in full, and the mass formula and the throat's shape were not checked against Morris and Thorne's paper.`
+  )
+}
+
+// The chapter summary of Evidence and Imagination Experiment 2 (wording approved by the owner, 2026-10-30). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function timeTravelSummary(): string {
+  const s = ttSteps()
+  const c = ttCheckUp()
+  const t = ttTutorFigures()
+  const n = (x: number) => String(Number(x.toFixed(2)))
+  const yrs = (x: number) => ttDuration(Number(x.toFixed(6)))
+  return (
+    `Can you travel back in time? This experiment kept two questions apart. Travel to the future is measured: a clock that moves fast counts less time than one that stays put, and clocks flown on aircraft and carried on satellites have shown it. ` +
+    `At ${s.speed} c, over ${s.tripYears} years on A's clock, mouth B's clock counted ${n(s.movingYears)} years, so it ended ${n(s.offsetYears)} years behind. ` +
+    `Travel to the past is not measured. In a model with a wormhole, a tunnel that joins equal clock readings turns that ${n(s.offsetYears)}-year gap into a path that returns ${yrs(s.timeGainedYears)} before it left, because the gap is longer than the ${yrs(s.lightTravelYears)} that light needs to cross between the mouths (${n(c.offsetOverLight)} times as long). ` +
+    `A path back needs two things at once, a big enough gap and mouths close enough together: at ${t.slowSpeed} c the gap is only ${yrs(t.slowOffsetYears)}, too short for mouths 1 light-year apart but long enough for 1 light-day. ` +
+    `No wormhole and no path back in time has been seen. "Chronology protection", Hawking's 1992 idea that something would stop such a path from forming, is a conjecture, not proved; in the two black-hole models studied in 2024 and 2025 it held, and a 2021 survey says no general mechanism is known. ` +
+    `Travel to the future is settled. Travel to the past is open: this page says neither that it is possible nor that it is impossible. ` +
+    `The numbers come from this page's own calculation and from abstracts and summaries; no paper was read in full, and the 1988 abstract does not say how moving one mouth makes the time machine.`
   )
 }
 
@@ -1110,9 +1129,9 @@ const chapters: Chapter[] = [
     title: 'Can you travel back in time?',
     group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
     Component: TimeTravelExperiment,
-    // The chapter summary and "What's next" come in a later step (Step 8); empty text hides the summary hint until then.
-    learned: '',
-    next: '',
+    // Chapter summary: wording approved by the owner (2026-10-30). "What's next" is a planned direction only: Experiment 3 has no specification yet.
+    learned: timeTravelSummary(),
+    next: 'The next experiment in this group looks at the speed limit this page leaned on: why two speeds do not simply add, so that two spaceships each moving at half the speed of light do not see each other moving at the speed of light.',
   },
 ]
 
