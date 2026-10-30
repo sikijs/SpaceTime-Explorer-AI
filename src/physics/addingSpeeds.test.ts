@@ -38,6 +38,9 @@ import {
   resultsCheckUp,
   stepsTable,
   TESTED,
+  speedGuessResult,
+  flashGuessResult,
+  tutorFigures,
 } from './addingSpeeds'
 
 describe('the rule for adding speeds', () => {
@@ -312,5 +315,36 @@ describe('the results', () => {
   it('the table of what has been tested has four rows, two of them measurements', () => {
     expect(TESTED).toHaveLength(4)
     expect(TESTED.filter((r) => r.status.startsWith('Measured'))).toHaveLength(2)
+  })
+})
+
+describe('the tutor', () => {
+  it('marks a guess as matched only for the button the real result points to', () => {
+    expect(speedGuessResult('point8')).toBe('matched')
+    expect(speedGuessResult('one')).toBe('did not match')
+    expect(speedGuessResult('point5')).toBe('did not match')
+    expect(flashGuessResult('about-c')).toBe('matched')
+    expect(flashGuessResult('about-2c')).toBe('did not match')
+    expect(flashGuessResult('less-than-c')).toBe('did not match')
+    expect(() => speedGuessResult('nope')).toThrow(RangeError)
+    expect(() => flashGuessResult('nope')).toThrow(RangeError)
+  })
+  it('the train changes by about 5 x 10^-15 m/s, which is the correction times 21 m/s', () => {
+    const t = tutorFigures()
+    expect(t.trainEveryday).toBe(21)
+    expect(t.trainChangeMPerS).toBeCloseTo(4.673e-15, 18)
+  })
+  it('the bottom minus the top is (1 - a)(1 - b): 0.01 for 0.9 and 0.9', () => {
+    const t = tutorFigures()
+    expect(t.fast.rule).toBeCloseTo(1.8 / 1.81, 12)
+    expect(t.fastBottomMinusTop).toBeCloseTo(0.01, 12)
+    expect(t.fastOneMinusAOneMinusB).toBeCloseTo(0.01, 12)
+    expect(t.fastBottomMinusTop).toBeCloseTo(t.fastOneMinusAOneMinusB, 12)
+  })
+  it('0.99 and 0.99 stay below c by about 5 parts in 100 000, and the water fraction is 0.435', () => {
+    const t = tutorFigures()
+    expect(t.fastest.rule).toBeCloseTo(0.99995, 5)
+    expect(t.fastestBelowC).toBeCloseTo(5.05e-5, 7)
+    expect(t.water.ruleShare).toBeCloseTo(0.4347, 4)
   })
 })

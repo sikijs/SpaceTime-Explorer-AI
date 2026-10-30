@@ -345,3 +345,34 @@ export const TESTED: readonly TestedRow[] = [
     status: 'Not covered here',
   },
 ]
+
+// ---- The tutor (Part 4) ----
+// The tutor marks each prediction in its explanation only (CLAUDE.md §12, §13). A guess matches when it is the button the real result points to.
+export type GuessResult = 'matched' | 'did not match'
+export function speedGuessResult(id: string): GuessResult {
+  speedGuessValue(id)
+  return id === predictionOneAnswerId() ? 'matched' : 'did not match'
+}
+export function flashGuessResult(id: string): GuessResult {
+  flashGuess(id)
+  return id === predictionTwoAnswerId() ? 'matched' : 'did not match'
+}
+
+// The numbers the tutor's last question and its explanation use: the train's tiny correction, two fast speeds (0.9 and 0.9) worked through, and the biggest pair of the controls (0.99 and 0.99).
+export function tutorFigures() {
+  const train = trainExample()
+  const fast = trialPicture(0.9, 0.9)
+  const fastest = trialPicture(0.99, 0.99)
+  return {
+    trainEveryday: train.everyday,
+    trainExcess: train.excess,
+    trainChangeMPerS: train.everyday * train.excess,
+    fast,
+    fastest,
+    // 1 + a b - (a + b) = (1 - a)(1 - b): the bottom minus the top, positive whenever both speeds are below c.
+    fastBottomMinusTop: fast.bottom - fast.top,
+    fastOneMinusAOneMinusB: (1 - fast.ship) * (1 - fast.probe),
+    fastestBelowC: fastest.belowC,
+    water: pictureTwo(),
+  }
+}
