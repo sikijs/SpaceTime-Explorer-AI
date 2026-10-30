@@ -30,6 +30,10 @@ import {
   SHIP_SPEED_CHOICES,
   fizeauWorked,
   pionWorked,
+  trialPicture,
+  TRIAL_DEFAULT_SHIP_SPEED,
+  TRIAL_DEFAULT_PROBE_SPEED,
+  PROBE_SPEED_CHOICES,
 } from './addingSpeeds'
 
 describe('the rule for adding speeds', () => {
@@ -220,5 +224,46 @@ describe('the worked moment of Picture 3', () => {
     expect(w.differenceFromLightKmPerS).toBeCloseTo(20, 6)
     expect(w.everydayKmPerS).toBeCloseTo(599505.05, 1)
     expect(w.giveOrTakePercentOfLight).toBeCloseTo(0.01334, 4)
+  })
+})
+
+describe('the trial drawing (Drawing A)', () => {
+  it('starts at the preset and reproduces Picture 1 for it', () => {
+    expect(TRIAL_DEFAULT_SHIP_SPEED).toBe(0.5)
+    expect(TRIAL_DEFAULT_PROBE_SPEED).toBe(0.5)
+    const t = trialPicture(TRIAL_DEFAULT_SHIP_SPEED, TRIAL_DEFAULT_PROBE_SPEED)
+    expect(t.rule).toBeCloseTo(0.8, 12)
+    expect(t.top).toBeCloseTo(1, 12)
+    expect(t.bottom).toBeCloseTo(1.25, 12)
+    expect(t.gap).toBeCloseTo(0.2, 12)
+    expect(t.everydayPassesC).toBe(false)
+  })
+  it('matches the rule and the everyday sum for every control setting', () => {
+    for (const a of SHIP_SPEED_CHOICES)
+      for (const b of PROBE_SPEED_CHOICES) {
+        const t = trialPicture(a, b)
+        expect(t.rule).toBeCloseTo((a + b) / (1 + a * b), 12)
+        expect(t.everyday).toBeCloseTo(a + b, 12)
+        expect(t.gap).toBeCloseTo(a + b - t.rule, 12)
+        expect(t.rule).toBeLessThanOrEqual(1 + 1e-12)
+        expect(t.top / t.bottom).toBeCloseTo(t.rule, 12)
+        expect(t.everydayPassesC).toBe(a + b > 1)
+        expect(t.belowC).toBeCloseTo(1 - t.rule, 12)
+      }
+  })
+  it('gives c for light and flags it, and for the biggest ship and probe stays below c by about 5 parts in 100 000', () => {
+    const light = trialPicture(0.9, 1)
+    expect(light.probeIsLight).toBe(true)
+    expect(light.rule).toBeCloseTo(1, 12)
+    expect(light.belowC).toBeCloseTo(0, 12)
+    const big = trialPicture(0.99, 0.9)
+    expect(big.probeIsLight).toBe(false)
+    expect(big.rule).toBeLessThan(1)
+    expect(trialPicture(0.99, 0.99).belowC).toBeCloseTo(5.05e-5, 7)
+  })
+  it('is unchanged by the learner\'s predictions (nothing stored)', () => {
+    const first = trialPicture(0.1, 0.1)
+    predictionOneAnswerId()
+    expect(trialPicture(0.1, 0.1)).toEqual(first)
   })
 })

@@ -229,3 +229,38 @@ export function pionWorked() {
     giveOrTakePercentOfLight: (MEASURED_GAMMA_SPEED_GIVE_OR_TAKE_CM_PER_S / LIGHT_SPEED_CM_PER_S) * 100,
   }
 }
+
+// ---- "Now try it yourself": the trial drawing (Drawing A). Trial values only: the real pictures never change with them. ----
+export const TRIAL_DEFAULT_SHIP_SPEED = PRESET_SHIP_SPEED
+export const TRIAL_DEFAULT_PROBE_SPEED = PRESET_PROBE_SPEED
+export interface TrialPicture {
+  ship: number
+  probe: number
+  top: number // a + b, the everyday sum
+  bottom: number // 1 + a b, the correction
+  everyday: number
+  rule: number
+  gap: number // everyday - rule
+  rulePercentOfC: number
+  everydayPassesC: boolean // the everyday sum is above c
+  belowC: number // 1 - rule (0 when the probe is light)
+  probeIsLight: boolean
+}
+export function trialPicture(ship: number, probe: number): TrialPicture {
+  const top = everydaySum(ship, probe)
+  const bottom = 1 + ship * probe
+  const rule = combineSpeeds(ship, probe)
+  return {
+    ship,
+    probe,
+    top,
+    bottom,
+    everyday: top,
+    rule,
+    gap: top - rule,
+    rulePercentOfC: rule * 100,
+    everydayPassesC: top > 1,
+    belowC: 1 - rule,
+    probeIsLight: probe === 1,
+  }
+}

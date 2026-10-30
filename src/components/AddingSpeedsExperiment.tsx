@@ -1,10 +1,21 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { SPEED_ANSWER_CHOICES, FLASH_ANSWER_CHOICES, PRESET_SHIP_SPEED, PRESET_PROBE_SPEED, PION_SOURCE_SPEED } from '../physics/addingSpeeds'
-import { PictureOne, PictureThree, PictureTwo, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './AddingSpeedsPictures'
+import {
+  SPEED_ANSWER_CHOICES,
+  FLASH_ANSWER_CHOICES,
+  PRESET_SHIP_SPEED,
+  PRESET_PROBE_SPEED,
+  PION_SOURCE_SPEED,
+  SHIP_SPEED_CHOICES,
+  PROBE_SPEED_CHOICES,
+  TRIAL_DEFAULT_SHIP_SPEED,
+  TRIAL_DEFAULT_PROBE_SPEED,
+  trialPicture,
+} from '../physics/addingSpeeds'
+import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, probeLabel, trialCaption } from './AddingSpeedsPictures'
 
 // Evidence and Imagination, Experiment 3 (docs/experiments/evidence-and-imagination/03-adding-speeds.md).
-// Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions (in `AddingSpeedsPictures.tsx`). The "Now try it yourself" part, the results and the tutor come in later steps.
-// The introduction's wording and the wording of the two predictions are approved (2026-10-30). The stage lines and the picture captions are Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here gives the result of adding 0.5 c and 0.5 c, says what happens when one of the speeds is
+// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions, the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `AddingSpeedsPictures.tsx`). The results and the tutor come in later steps.
+// The introduction's wording and the wording of the two predictions are approved (2026-10-30). The stage lines and the Picture 1 to 3 captions are approved too (2026-10-30). The Part 2 wording and the Drawing A caption are Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here gives the result of adding 0.5 c and 0.5 c, says what happens when one of the speeds is
 // the speed of light, or gives either test's result, because the predictions and the results ask for them (CLAUDE.md §12). The papers, and NASA's page on the speed of light, are listed only after the run.
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -39,6 +50,8 @@ interface AddingSpeedsExperimentProps {
 export function AddingSpeedsExperiment({ onComplete }: AddingSpeedsExperimentProps) {
   const [shipGuess, setShipGuess] = useState<string | null>(null)
   const [flashGuess, setFlashGuess] = useState<string | null>(null)
+  const [trialShip, setTrialShip] = useState<number>(TRIAL_DEFAULT_SHIP_SPEED)
+  const [trialProbe, setTrialProbe] = useState<number>(TRIAL_DEFAULT_PROBE_SPEED)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -63,9 +76,13 @@ export function AddingSpeedsExperiment({ onComplete }: AddingSpeedsExperimentPro
   const startOver = () => {
     setShipGuess(null)
     setFlashGuess(null)
+    setTrialShip(TRIAL_DEFAULT_SHIP_SPEED)
+    setTrialProbe(TRIAL_DEFAULT_PROBE_SPEED)
     setStatus('idle')
     setStage(0)
   }
+
+  const trial = trialPicture(trialShip, trialProbe)
 
   const questions = [
     {
@@ -262,6 +279,64 @@ export function AddingSpeedsExperiment({ onComplete }: AddingSpeedsExperimentPro
                   {pictureThreeCaption(stage)}
                 </>
               )}
+            </div>
+          )}
+          {done && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> In the pictures above, the spaceship moved at {PRESET_SHIP_SPEED} c and fired its probe at {PRESET_PROBE_SPEED} c. Here you can try other numbers. You choose two things:
+              </p>
+              <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>The spaceship’s speed</strong>, relative to the lab, as a fraction of c.
+                </li>
+                <li>
+                  <strong>The probe’s speed</strong>, relative to the spaceship, as a fraction of c. The last button, “1.0 c (light)”, makes the probe a flash of light.
+                </li>
+              </ol>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>One drawing then shows, for your choices:</p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>The everyday sum</strong> of the two speeds, and <strong>what the lab measures</strong>, as two bars on one ruler, with the speed of light marked.
+                </li>
+                <li>
+                  <strong>The gap</strong> between them.
+                </li>
+                <li>
+                  <strong>The rule worked out</strong> for your numbers: its top, its bottom and its result.
+                </li>
+              </ul>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>The real pictures above do not change, and your two guesses do not change this drawing. Only the two settings below do.</p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>These are your own trial values, not new measurements.</strong> Each button is a number to try. For example, if you choose {trialShip} c for the spaceship and {probeLabel(trialProbe)} for the probe, the drawing works out the lab’s measurement with the
+                same rule as Pictures 1 to 3. The spaceship and probe are imagined for the question and are drawn in pink. This does not say that a real spaceship could move like this.
+              </p>
+              {(
+                [
+                  { title: 'How fast does the spaceship move, relative to the lab?', choices: SHIP_SPEED_CHOICES.map((v) => ({ value: v as number, label: `${v} c` })), value: trialShip, set: setTrialShip },
+                  { title: 'How fast does the probe move, relative to the spaceship?', choices: PROBE_SPEED_CHOICES.map((v) => ({ value: v as number, label: probeLabel(v) })), value: trialProbe, set: setTrialProbe },
+                ] as const
+              ).map((control) => (
+                <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                  <div>
+                    {control.choices.map((choice) => (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        onClick={() => (control.set as (v: number) => void)(choice.value)}
+                        className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <TrialDrawing trial={trial} />
+              {trialCaption(trial)}
             </div>
           )}
         </div>

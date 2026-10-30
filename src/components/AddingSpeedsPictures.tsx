@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { fizeauWorked, flashGuess, pionWorked, pictureOne, pictureThree, pictureTwo, speedGuessValue } from '../physics/addingSpeeds'
+import type { TrialPicture } from '../physics/addingSpeeds'
 import { CaptionBlock } from './BlackHoleGrowthPictures'
 import type { LookFor } from './WideBinariesExperiment'
 
@@ -456,6 +457,119 @@ export function pictureThreeCaption(stage: number): ReactNode {
       whereFrom={
         <>
           <strong>Measured:</strong> the green dot is from Alväger, Farley, Kjellman and Wallin, 1964 (a scan of the paper, machine-read: the figures are still to be checked against its pages). <strong>Calculated here:</strong> the two cyan bars in both panels. <strong>Imagined for the question:</strong> the ships of panel B.
+        </>
+      }
+    />
+  )
+}
+
+// ---- Drawing A: the learner's trial values (Part 2). No guess marks: the guesses never change it. ----
+// A speed or gap written to as many decimals as it needs (up to five), without trailing zeros, so that 0.8 stays 0.8 and 0.99995 stays 0.99995.
+const fmt = (x: number) => {
+  const t = x.toFixed(5).replace(/0+$/, '')
+  return t.endsWith('.') ? t + '0' : t
+}
+export const probeLabel = (b: number) => (b === 1 ? '1.0 c (light)' : `${b} c`)
+
+const A_W = 760
+const A_H = 440
+
+export function TrialDrawing({ trial }: { trial: TrialPicture }) {
+  const tx = (v: number) => 100 + 300 * v
+  const showGap = trial.gap > 1e-9
+  return (
+    <svg viewBox={`0 0 ${A_W} ${A_H}`} width="100%" style={svgStyle} role="img" aria-label="Drawing A: the everyday sum and the measured result for your trial spaceship speed and probe speed">
+      <SvgLines x={20} y={24} lines={['Drawing A. Your trial values (speeds as a fraction of c)']} fill={TEXT_COLOR} size={12} bold />
+      <line x1={tx(1)} y1={34} x2={tx(1)} y2={190} stroke={YELLOW} strokeWidth={2} strokeDasharray="6 4" />
+      <SvgLines x={tx(1) + 6} y={44} lines={['c', '(speed of light)']} fill={YELLOW} size={10} bold />
+      <rect x={tx(0)} y={52} width={tx(trial.ship) - tx(0)} height={22} fill={PINK} fillOpacity={0.35} stroke={PINK} strokeWidth={1.5} />
+      <SvgLines x={tx(0) + 8} y={68} lines={[`spaceship, relative to the lab: ${trial.ship} c`]} fill={TEXT_COLOR} size={11} bold />
+      <rect x={tx(trial.ship)} y={82} width={tx(trial.ship + trial.probe) - tx(trial.ship)} height={22} fill={PINK} fillOpacity={0.35} stroke={PINK} strokeWidth={1.5} />
+      <SvgLines x={tx(trial.ship) + 8} y={98} lines={[`${trial.probeIsLight ? 'flash of light' : 'probe'}, relative to the spaceship: ${probeLabel(trial.probe)}`]} fill={TEXT_COLOR} size={11} bold />
+      <rect x={tx(0)} y={116} width={tx(trial.everyday) - tx(0)} height={22} fill={CYAN} fillOpacity={0.35} stroke={CYAN} strokeWidth={1.5} />
+      <SvgLines x={tx(0) + 8} y={132} lines={[`the everyday sum: ${fmt(trial.everyday)} c`]} fill={TEXT_COLOR} size={11} bold />
+      <rect x={tx(0)} y={146} width={tx(trial.rule) - tx(0)} height={22} fill={CYAN} fillOpacity={0.55} stroke={CYAN} strokeWidth={1.5} />
+      <SvgLines x={tx(0) + 8} y={162} lines={[`what the lab measures: ${fmt(trial.rule)} c`]} fill={TEXT_COLOR} size={11} bold />
+      {showGap && <rect x={tx(trial.rule)} y={146} width={tx(trial.everyday) - tx(trial.rule)} height={22} fill="none" stroke={CYAN} strokeWidth={1.5} strokeDasharray="5 4" />}
+      <line x1={tx(0)} y1={186} x2={tx(2)} y2={186} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {[0, 0.5, 1, 1.5, 2].map((v) => (
+        <g key={v}>
+          <line x1={tx(v)} y1={181} x2={tx(v)} y2={191} stroke={MUTED_COLOR} />
+          <SvgLines x={tx(v)} y={206} lines={[String(v)]} fill={MUTED_COLOR} size={10} anchor="middle" />
+        </g>
+      ))}
+      <SvgLines x={tx(2) + 10} y={190} lines={['c']} fill={MUTED_COLOR} size={10} />
+
+      <line x1={20} y1={226} x2={A_W - 20} y2={226} stroke="#334155" />
+      <SvgLines x={20} y={250} lines={['The rule worked out for your values']} fill={TEXT_COLOR} size={12} bold />
+      <SvgLines x={20} y={276} lines={[`top: a + b = ${trial.ship} + ${trial.probe} = ${fmt(trial.top)}   (the everyday sum)`]} fill={CYAN} size={11} />
+      <SvgLines x={20} y={296} lines={[`bottom: 1 + a × b = 1 + ${trial.ship} × ${trial.probe} = ${fmt(trial.bottom)}   (the correction)`]} fill={CYAN} size={11} />
+      <SvgLines x={20} y={316} lines={[`result: top ÷ bottom = ${fmt(trial.top)} ÷ ${fmt(trial.bottom)} = ${fmt(trial.rule)} c, which is ${trial.rulePercentOfC.toFixed(3)} percent of c`]} fill={CYAN} size={11} bold />
+      <SvgLines x={20} y={346} lines={[`The everyday sum is ${fmt(trial.gap)} c above what the lab measures.`]} fill={TEXT_COLOR} size={11} />
+      <SvgLines
+        x={20}
+        y={366}
+        lines={[trial.everydayPassesC ? `The everyday sum, ${fmt(trial.everyday)} c, is beyond c. What the lab measures is ${trial.probeIsLight ? 'exactly c' : `${fmt(trial.belowC)} c below c`}.` : `The everyday sum, ${fmt(trial.everyday)} c, is still below c. What the lab measures is ${fmt(trial.belowC)} c below c.`]}
+        fill={TEXT_COLOR}
+        size={11}
+      />
+      <SvgLines x={20} y={400} lines={['Pink: imagined for the question. Cyan: calculated here. Yellow: the speed of light. These are your trial values, not measurements.']} fill={MUTED_COLOR} size={10} />
+    </svg>
+  )
+}
+
+export function trialCaption(trial: TrialPicture): ReactNode {
+  const lookFor: LookFor[] = [
+    {
+      look: 'the two cyan bars, and the dashed gap between their ends.',
+      means: `for your values, the everyday sum is ${fmt(trial.everyday)} c and what the lab measures is ${fmt(trial.rule)} c. The gap is ${fmt(trial.gap)} c.`,
+      matters: 'try 0.1 c with 0.1 c, and then 0.9 c with 0.9 c. The gap is tiny for slow speeds and large for fast ones. This is why the everyday rule works so well in daily life and fails near the speed of light.',
+    },
+    {
+      look: 'the yellow dashed line at c, and where each cyan bar ends beside it.',
+      means: trial.everydayPassesC
+        ? `the everyday bar, ${fmt(trial.everyday)} c, goes past the line. The measured bar, ${fmt(trial.rule)} c, does not.`
+        : `neither bar goes past the line for your values: the everyday bar ends at ${fmt(trial.everyday)} c and the measured bar at ${fmt(trial.rule)} c.`,
+      matters: 'for every setting you can choose here, the measured bar ends at or before the line, while the everyday bar goes past it as soon as the two speeds add up to more than c. Experiment 5 of the first chapter asked why light cannot go faster, and this is one place where the same limit shows up.',
+    },
+    {
+      look: 'the last button of the probe control, “1.0 c (light)”, with any spaceship speed.',
+      means: 'the bottom of the rule, 1 + a × 1, is always the same number as the top, a + 1. The result is exactly 1 c.',
+      matters: 'it is the check from Picture 1 and the test of Picture 3 in one place: whatever the spaceship’s speed, a flash of light is measured at c.',
+    },
+  ]
+  return (
+    <CaptionBlock
+      title="Drawing A"
+      intro="This drawing follows the two settings above it. Like Picture 1, it shows speeds as fractions of c, where c is the speed of light (0.5 means half of c, and 1 means c itself). A longer bar means a greater speed, and the probe’s pink bar starts where the spaceship’s ends so that you can see the speeds being added. Below the bars, the rule is worked out for your values."
+      bullets={[
+        <>
+          <strong>The pink bars</strong> are your imagined spaceship (a, its speed relative to the lab) and its probe or flash (b, its speed relative to the spaceship). <strong>The upper cyan bar</strong> is the everyday sum, a + b. <strong>The lower, darker cyan bar</strong> is what the lab
+          measures, from the rule (a + b) ÷ (1 + a × b). <strong>The dashed outline</strong> is the gap between them. <strong>The yellow dashed line</strong> marks c.
+        </>,
+        <>
+          <strong>The lines under the bars</strong> are the three parts of the rule: the top (a + b), the bottom (1 + a × b) and the result (top ÷ bottom), with your numbers in them, as in the worked moments of Pictures 1 and 3.
+        </>,
+      ]}
+      worked={
+        <>
+          <strong>The rule.</strong> This is the same rule as in Picture 1: (a + b) ÷ (1 + a × b), where a is the spaceship’s speed relative to the lab and b is the {trial.probeIsLight ? 'flash’s' : 'probe’s'} speed relative to the spaceship, both as fractions of c. Its top, a + b, is the everyday sum. Its
+          bottom, 1 + a × b, is the correction that special relativity adds. Its result is the speed that the lab measures. Here it is worked out for your two numbers.
+          <br />
+          <strong>Step 1.</strong> Your spaceship is a = {trial.ship} and your {trial.probeIsLight ? 'flash of light' : 'probe'} is b = {trial.probe}, as fractions of c.
+          <br />
+          <strong>Step 2.</strong> The top of the rule is a + b = {trial.ship} + {trial.probe} = {fmt(trial.top)}. This is the everyday sum.
+          <br />
+          <strong>Step 3.</strong> The bottom of the rule is 1 + a × b = 1 + {trial.ship} × {trial.probe} = {fmt(trial.bottom)}. This is the correction.
+          <br />
+          <strong>Step 4.</strong> Divide the top by the bottom: {fmt(trial.top)} ÷ {fmt(trial.bottom)} = {fmt(trial.rule)}. So the lab measures {trial.probeIsLight ? 'the flash' : 'the probe'} at {fmt(trial.rule)} c.
+        </>
+      }
+      lookFor={lookFor}
+      whereFrom={
+        <>
+          <strong>Calculated here:</strong> both cyan bars and every number in the drawing, from the rule that Picture 1 explains. <strong>Imagined for the question:</strong> your spaceship and probe. <strong>Measured:</strong> nothing in this drawing; the tests are in Pictures 2 and 3. These are your own trial values, not new
+          measurements, and they do not say that a real spaceship could move like this.
         </>
       }
     />
