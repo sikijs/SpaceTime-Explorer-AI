@@ -1,4 +1,5 @@
 import { useState, type ReactElement } from 'react'
+import { TwoTheoriesGuide } from './TwoTheoriesGuide'
 import relativityBanner from '../assets/relativity-banner.jpg'
 
 interface PreviewChapter {
@@ -137,6 +138,8 @@ export function Welcome({ chapters, onSelectChapter }: WelcomeProps) {
           </p>
         </div>
       </div>
+
+      <TwoTheoriesGuide />
 
       <div style={{ marginTop: '1.5rem' }}>
         <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
