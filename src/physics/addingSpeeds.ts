@@ -364,6 +364,8 @@ export function tutorFigures() {
   const fast = trialPicture(0.9, 0.9)
   const fastest = trialPicture(0.99, 0.99)
   return {
+    trainWalker: train.walker,
+    trainSpeed: train.train,
     trainEveryday: train.everyday,
     trainExcess: train.excess,
     trainChangeMPerS: train.everyday * train.excess,

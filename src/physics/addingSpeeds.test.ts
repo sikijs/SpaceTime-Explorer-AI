@@ -332,6 +332,8 @@ describe('the tutor', () => {
   it('the train changes by about 5 x 10^-15 m/s, which is the correction times 21 m/s', () => {
     const t = tutorFigures()
     expect(t.trainEveryday).toBe(21)
+    expect(t.trainWalker).toBe(1)
+    expect(t.trainSpeed).toBe(20)
     expect(t.trainChangeMPerS).toBeCloseTo(4.673e-15, 18)
   })
   it('the bottom minus the top is (1 - a)(1 - b): 0.01 for 0.9 and 0.9', () => {

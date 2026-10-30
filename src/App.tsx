@@ -42,6 +42,7 @@ import {
   TOTAL_MASS as lgMass,
 } from './physics/localGroupCollision'
 import { resultsCheckUp as whCheckUp, tutorFigures as whTutorFigures, ECHO_SEARCHES as whEchoSearches } from './physics/wormholes'
+import { resultsCheckUp as asCheckUp, tutorFigures as asTutorFigures, pionWorked as asPionWorked, pictureOne as asPictureOne } from './physics/addingSpeeds'
 import { resultsCheckUp as ttCheckUp, exampleSteps as ttSteps, tutorFigures as ttTutorFigures, friendlyDuration as ttDuration } from './physics/timeTravel'
 import { exampleSteps as visitorSteps, knownObjects as visitorKnown, pictureTwo as visitorPictureTwo, resultsCheckUp as visitorCheckUp } from './physics/interstellarVisitor'
 import { nonSpinningEfficiency as growthLowEfficiency, objectMassSolar as growthObjectMass, pictureOne as growthPictureOne, pictureTwo as growthPictureTwo, settingsGrid as growthGrid } from './physics/blackHoleGrowth'
@@ -334,6 +335,28 @@ function wormholeSummary(): string {
 }
 
 // The chapter summary of Evidence and Imagination Experiment 2 (wording approved by the owner, 2026-10-30). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function addingSpeedsSummary(): string {
+  const p1 = asPictureOne()
+  const c = asCheckUp()
+  const t = asTutorFigures()
+  const w = asPionWorked()
+  const fmt = (x: number) => {
+    const r = x.toFixed(5).replace(/0+$/, '')
+    return r.endsWith('.') ? r + '0' : r
+  }
+  const num = (x: number) => String(Number(x.toFixed(3)))
+  const spaced = (x: number) => String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  return (
+    `Can speeds simply be added? On a train they can: a walker at ${t.trainWalker} metre per second on a train at ${t.trainSpeed} metres per second is seen at ${t.trainEveryday} metres per second, and the rule that special relativity gives, (a + b) ÷ (1 + a × b), agrees to about ${(t.trainExcess * 1e16).toFixed(1)} parts in 10 000 000 000 000 000. ` +
+    `Near the speed of light it does not. A spaceship at ${p1.ship} c that fires a probe at ${p1.probe} c is seen to fire it at ${fmt(p1.rule)} c, not ${fmt(p1.everyday)} c, because the bottom of the rule, 1 + ${p1.ship} × ${p1.probe} = ${fmt(1 + p1.ship * p1.probe)}, holds the result back. ` +
+    `For any two speeds below c the result stays below c: ${t.fastest.ship} c and ${t.fastest.probe} c give ${fmt(t.fastest.rule)} c. If the probe is a flash of light the top and the bottom are the same number, so the result is c for every spaceship. ` +
+    `Two old tests agree with the rule. In 1851 Fizeau found that flowing water carries along only a fraction of its own speed to the light going through it; the rule gives ${num(c.waterRuleShare)} for water's refractive index of ${num(t.water.n)}, where the everyday sum gives all of it. ` +
+    `In 1964 gamma rays from pions moving at ${w.a} c were measured at ${spaced(w.measuredKmPerS)} kilometres per second, give-or-take ${spaced(w.giveOrTakeKmPerS)}, against ${spaced(w.lightKmPerS)} for c: the speed of light, not the everyday sum of about ${spaced(w.everydayKmPerS)}. ` +
+    `This is settled, and the tests are old. They do not cover speeds that are not along one line, and this page did not check other tests of the rule. ` +
+    `The numbers come from this page's own calculation, a Wikipedia account of Fizeau, a typed copy of Michelson and Morley's 1886 paper and a machine-read scan of the 1964 paper, whose figures still need checking against its pages. No paper was read in full.`
+  )
+}
+
 function timeTravelSummary(): string {
   const s = ttSteps()
   const c = ttCheckUp()
@@ -1132,14 +1155,14 @@ const chapters: Chapter[] = [
     Component: TimeTravelExperiment,
     // Chapter summary: wording approved by the owner (2026-10-30). "What's next" is a planned direction only: Experiment 3 has no specification yet.
     learned: timeTravelSummary(),
-    next: 'The next experiment in this group looks at the speed limit this page leaned on: why two speeds do not simply add, so that two spaceships each moving at half the speed of light do not see each other moving at the speed of light.',
+    next: 'The next experiment in this group looks at the speed limit this page leaned on: how two speeds combine when each is a large fraction of the speed of light, and what real measurements show.',
   },  {
     title: 'Can speeds simply be added?',
     group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
     Component: AddingSpeedsExperiment,
-    // The chapter summary and "What's next" come in a later step; empty text hides the summary hint until then.
-    learned: '',
-    next: '',
+    // Chapter summary and "What's next": Claude's DRAFT of 2026-10-30, for the owner's approval. "What's next" is a planned direction only: Experiment 4 has no specification yet.
+    learned: addingSpeedsSummary(),
+    next: 'The next experiment in this group turns to another prediction of special relativity that has been tested with real particles: how the ticking of a moving clock is slowed, shown by particles made high in the air that decay very quickly.',
   },
 ]
 
