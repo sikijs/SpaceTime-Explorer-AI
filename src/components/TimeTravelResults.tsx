@@ -6,7 +6,15 @@ import { ResultsTable } from './WideBinariesExperiment'
 // Evidence and Imagination, Experiment 2: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
 // Every number is read from the physics module (CLAUDE.md §9); this file only sets it out. The tables are the real numbers and never change with the learner's guesses or settings. The wording is
 // Claude's DRAFT of 2026-10-30, for the owner's approval line by line (CLAUDE.md §28.1). Why the tunnel turns an offset into a path back in time, and what chronology protection means, are left to the
-// tutor (CLAUDE.md §12, §13). The papers behind the numbers are listed at the end (Step 8), after the run, because some of them give the answers to the predictions.
+// tutor (CLAUDE.md §12, §13). The papers behind the numbers are listed at the end (Step 8), after the run, because some of them give the answers to the predictions. Each link was fetched on 2026-10-30; the two publisher pages (APS) returned 403 and are not linked. The papers' abstracts were read, not the full papers. The list's wording is approved (2026-10-30) (CLAUDE.md §28.1).
+
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
 
 const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
@@ -205,6 +213,31 @@ export function TimeTravelResults({ clockGuess, beforeGuess }: { clockGuess: str
           },
         ]}
       />
+      <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>The papers behind these numbers.</strong> They are listed here, after the run, because some of them give the answers to your predictions. Links open in a new tab. Only the abstracts (the short summaries at the top) were read for this page, not the full papers.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://authors.library.caltech.edu/9262/">Morris, Thorne and Yurtsever, “Wormholes, time machines, and the weak energy condition”, Physical Review Letters (1988)</ExternalLink>: the paper that showed a wormhole, if one could be made and kept open, could be turned into a time machine.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/hep-th/9202090">Visser, “From wormhole to time machine: comments on Hawking’s chronology protection conjecture” (1992)</ExternalLink>: a reply to Hawking’s idea that, in the model problems it studies, supports it.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2101.08592">Luminet, “Closed timelike curves, singularities and causality: a survey from Gödel to chronological protection”, Universe (2021)</ExternalLink>: a history of paths back in time in general relativity.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2408.06023">Bunyaratavej, Burikham and Senjaya (2024)</ExternalLink> and <ExternalLink href="https://arxiv.org/abs/2509.19744">Park and Maeda (2025)</ExternalLink>: the two recent papers in Table 3, each on a particular kind of black hole.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2607.27473">Morapakula and Ikeda, “Closed timelike curve decoding on quantum hardware” (2026)</ExternalLink>: the quantum-computer simulation in Table 3.
+          </li>
+          <li>
+            <strong>Not linked</strong> (the publisher’s page could not be checked here): Hawking, “Chronology protection conjecture”, <em>Physical Review D</em> 46, 603 (1992), and the publisher’s own page for the 1988 paper.
+          </li>
+        </ul>
+      </div>
     </div>
   )
 }
