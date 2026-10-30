@@ -21,6 +21,12 @@ import {
   predictionTwoAnswer,
   predictionTwoAnswerId,
   BEFORE_CHOICES,
+  PICTURE_ENTRY_TIME_YEARS,
+  pictureOne,
+  pictureTwo,
+  pictureThree,
+  clockGuessYears,
+  beforeGuessMarker,
 } from './timeTravel'
 
 describe('travel to the future: the offset between the mouths (the twin formula)', () => {
@@ -126,5 +132,51 @@ describe('answers, buttons and the preset', () => {
   it('test 10: the module has no state that a prediction could change (the same call gives the same answer)', () => {
     expect(clockOffsetYears(0.8, 10)).toBe(clockOffsetYears(0.8, 10))
     expect(predictionTwoAnswer()).toBe(predictionTwoAnswer())
+  })
+})
+
+describe('the pictures (every drawn number comes from the module)', () => {
+  it('Picture 1: A counts 10 years, B counts 6, the offset is 4, and B turns round 4.5 light-years out after 5.625 years', () => {
+    const p = pictureOne()
+    expect(p.stayAtHomeYears).toBe(10)
+    expect(p.movingYears).toBeCloseTo(6, 9)
+    expect(p.offsetYears).toBeCloseTo(4, 9)
+    expect(p.farthestLy).toBeCloseTo(4.5, 9)
+    expect(p.outYears).toBeCloseTo(5.625, 9)
+  })
+  it('Picture 1: the out-and-back trip at 0.8c really ends 1 light-year from A and takes 10 years', () => {
+    const p = pictureOne()
+    const backYears = p.tripYears - p.outYears
+    expect(p.speed * p.outYears - p.speed * backYears).toBeCloseTo(p.separationLy, 9)
+    expect(p.speed * p.outYears).toBeCloseTo(p.farthestLy, 9)
+  })
+  it('Picture 2: entry at B (5, 1), exit at A (1, 0), arrival at B (2, 1): 3 years before the entry; a closed loop; entry inside the exit cone', () => {
+    const p = pictureTwo()
+    expect(p.entry).toEqual({ time: PICTURE_ENTRY_TIME_YEARS, position: 1 })
+    expect(p.exit.time).toBeCloseTo(1, 9)
+    expect(p.exit.position).toBe(0)
+    expect(p.arrival.time).toBeCloseTo(2, 9)
+    expect(p.arrival.position).toBe(1)
+    expect(p.timeGainedYears).toBeCloseTo(3, 9)
+    expect(p.timeGainedYears).toBeCloseTo(timeGainedYears(p.offsetYears, p.separationLy), 9)
+    expect(p.closed).toBe(true)
+    expect(p.entryInsideExitCone).toBe(true)
+  })
+  it('Picture 2: the exit is after the start of the machine (time 0)', () => {
+    expect(pictureTwo().exit.time).toBeGreaterThan(0)
+  })
+  it('Picture 3: offset 4 years against light-travel time 1 year, 3 years gained', () => {
+    const p = pictureThree()
+    expect(p.offsetYears).toBeCloseTo(4, 9)
+    expect(p.lightTravelYears).toBe(1)
+    expect(p.timeGainedYears).toBeCloseTo(3, 9)
+    expect(p.closed).toBe(true)
+  })
+  it('the guess helpers follow the button: 6 years is 6, "yes" is a marker before', () => {
+    expect(clockGuessYears('6')).toBe(6)
+    expect(clockGuessYears('2')).toBe(2)
+    expect(beforeGuessMarker('yes').before).toBe(true)
+    expect(beforeGuessMarker('no').before).toBe(false)
+    expect(() => clockGuessYears('7')).toThrow(RangeError)
   })
 })

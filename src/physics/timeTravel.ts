@@ -137,3 +137,71 @@ export const SEPARATION_CHOICES_LY: readonly { id: string; ly: number; label: st
   { id: '3', ly: 3, label: '3 light-years' },
   { id: '5', ly: 5, label: '5 light-years' },
 ]
+
+// ---- The pictures (every number drawn or written is read from here; CLAUDE.md §9) ----
+// The entry moment on A's clock for the drawn closed path. Any moment gives the same time gained; 5 years is chosen so that the exit (5 - offset) is after the machine's start at 0.
+export const PICTURE_ENTRY_TIME_YEARS = 5
+
+// Picture 1: the trip of mouth B and where the two clocks end up. B travels at a steady speed, out and back, and stops `separationLy` from A. The farthest point from A is
+// (v T + d) / 2 (out for (T + d/v)/2 years, back for the rest), so the turn-around is drawn at that distance. The turning itself is not modelled.
+export function pictureOne() {
+  const speed = PRESET_SPEED
+  const tripYears = PRESET_TRIP_YEARS
+  const separationLy = PRESET_SEPARATION_LY
+  const movingYears = movingClockYears(speed, tripYears)
+  return {
+    speed,
+    tripYears,
+    separationLy,
+    stayAtHomeYears: tripYears,
+    movingYears,
+    offsetYears: tripYears - movingYears,
+    farthestLy: (speed * tripYears + separationLy) / 2,
+    outYears: (tripYears + separationLy / speed) / 2,
+  }
+}
+
+// What a guess for Prediction 1 means on B's clock ruler: the number of years on the button.
+export function clockGuessYears(id: string): number {
+  const choice = CLOCK_CHOICES.find((c) => c.id === id)
+  if (!choice) throw new RangeError('Unknown choice.')
+  return choice.years
+}
+
+// Picture 2: the spacetime diagram of the closed path, in the common frame (position in light-years, time in years of A's clock). Mouth A is at position 0 and mouth B at position d.
+// The traveller steps into B at the entry moment, comes out of A `offset` years earlier, runs outside to B at the speed of light (the best case) and arrives `separation` years later.
+export function pictureTwo() {
+  const one = pictureOne()
+  const offsetYears = one.offsetYears
+  const separationLy = one.separationLy
+  const { entry, exit } = entryAndExitEvents(PICTURE_ENTRY_TIME_YEARS, offsetYears, separationLy)
+  const arrival = { time: exit.time + separationLy, position: separationLy }
+  return {
+    separationLy,
+    offsetYears,
+    entry,
+    exit,
+    arrival,
+    timeGainedYears: entry.time - arrival.time,
+    closed: closedPathExists(offsetYears, separationLy),
+    entryInsideExitCone: entryInsideExitCone(offsetYears, separationLy),
+  }
+}
+
+// What a guess for Prediction 2 is drawn as: only a marker, since a yes or no has no size.
+export function beforeGuessMarker(id: string): { before: boolean } {
+  const choice = BEFORE_CHOICES.find((c) => c.id === id)
+  if (!choice) throw new RangeError('Unknown choice.')
+  return { before: choice.before }
+}
+
+// Picture 3: the two numbers whose comparison decides it, and the time gained.
+export function pictureThree() {
+  const one = pictureOne()
+  return {
+    offsetYears: one.offsetYears,
+    lightTravelYears: one.separationLy,
+    timeGainedYears: timeGainedYears(one.offsetYears, one.separationLy),
+    closed: closedPathExists(one.offsetYears, one.separationLy),
+  }
+}

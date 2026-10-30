@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { CLOCK_CHOICES, BEFORE_CHOICES, PRESET_SPEED, PRESET_TRIP_YEARS, PRESET_SEPARATION_LY } from '../physics/timeTravel'
+import { PictureOne, PictureThree, PictureTwo, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './TimeTravelPictures'
 
 // Evidence and Imagination, Experiment 2 (docs/experiments/evidence-and-imagination/02-can-you-travel-back-in-time.md).
-// Steps 2 and 3: the title, the status line, the introduction, the "Want to know more?" links and the two predictions (the Run button records them). The pictures, the results and the tutor come in later steps.
-// The introduction's wording is approved (2026-10-30). The wording of the two predictions is Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
+// Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions (in `TimeTravelPictures.tsx`). The "Now try it yourself" part, the results and the tutor come in later steps.
+// The introduction's wording is approved (2026-10-30). The wording of the two predictions is approved (2026-10-30). The stage lines and the picture captions are approved too (2026-10-30) (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
 // in time, or what chronology protection is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -15,6 +16,19 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 }
 
 const paragraph = { marginTop: 0, marginBottom: '0.5rem' } as const
+
+// ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'A clock only goes forward', 'The trip, and the gap it makes', 'The tunnel links the two mouths', 'Does a path return to its own past?', 'What has been tested']
+const STAGE_LINES = [
+  '',
+  'Picture 1, panel A, shows the two mouths side by side, with their clocks set equal. Each clock only ever ticks forward.',
+  `Mouth B is sent out and back at ${PRESET_SPEED} c. Panel B shows how many years each clock counted.`,
+  'Picture 2 is a spacetime diagram. The tunnel joins moments at which the two mouths’ own clocks show the same reading.',
+  'Picture 2 adds the traveller’s route outside the tunnel and a light cone. Picture 3 compares the two numbers that decide it.',
+  'Travel to the future has been measured with real clocks. As of October 2026 no path back in time has been seen, and no wormhole has been seen either. The sources are listed with the results.',
+]
 const list = { margin: '0.25rem 0 0.75rem', paddingLeft: '1.25rem' } as const
 
 interface TimeTravelExperimentProps {
@@ -22,15 +36,35 @@ interface TimeTravelExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function TimeTravelExperiment(_props: TimeTravelExperimentProps) {
+export function TimeTravelExperiment({ onComplete }: TimeTravelExperimentProps) {
   const [clockGuess, setClockGuess] = useState<string | null>(null)
   const [beforeGuess, setBeforeGuess] = useState<string | null>(null)
-  const [recorded, setRecorded] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = clockGuess !== null && beforeGuess !== null
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
   const startOver = () => {
     setClockGuess(null)
     setBeforeGuess(null)
-    setRecorded(false)
+    setStatus('idle')
+    setStage(0)
   }
 
   const questions = [
@@ -194,7 +228,7 @@ export function TimeTravelExperiment(_props: TimeTravelExperimentProps) {
             </div>
           ))}
 
-          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
             Run
           </button>
           {recorded && (
@@ -203,8 +237,35 @@ export function TimeTravelExperiment(_props: TimeTravelExperimentProps) {
             </button>
           )}
           {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
-          {/* Temporary: removed when the run and its pictures are built (Step 4). */}
-          {recorded && <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0' }}>Your predictions are recorded and are not marked here. The pictures come in the next step.</p>}
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
+                {done ? 'Pictures 1 to 3 are drawn. Your predictions are recorded and not marked here.' : STAGE_LINES[stage]}
+              </span>
+            )}
+          </p>
+
+          {recorded && stage >= 1 && (
+            <div>
+              <PictureOne stage={stage} clockGuess={clockGuess} />
+              {pictureOneCaption(stage)}
+              {stage >= 3 && (
+                <>
+                  <PictureTwo stage={stage} beforeGuess={beforeGuess} />
+                  {pictureTwoCaption(stage)}
+                </>
+              )}
+              {stage >= 4 && (
+                <>
+                  <PictureThree />
+                  {pictureThreeCaption()}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
