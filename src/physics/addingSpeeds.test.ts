@@ -279,6 +279,10 @@ describe('the results', () => {
   it('compare says the same within 1 percent, otherwise more or less', () => {
     expect(compare(1, 1)).toBe('the same')
     expect(compare(1.005, 1)).toBe('the same')
+    expect(compare(1.05, 1)).toBe('more')
+    expect(compare(0.95, 1)).toBe('less')
+    expect(compare(0.9901, 1)).toBe('the same')
+    expect(compare(0.9899, 1)).toBe('less')
     expect(compare(0.8, 1)).toBe('less')
     expect(compare(1.5, 1)).toBe('more')
     expect(compare(0.8, 1, 0.3)).toBe('the same')
