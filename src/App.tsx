@@ -26,6 +26,7 @@ import { BlackHoleGrowthExperiment } from './components/BlackHoleGrowthExperimen
 import { InterstellarVisitorExperiment } from './components/InterstellarVisitorExperiment'
 import { LocalGroupCollisionExperiment } from './components/LocalGroupCollisionExperiment'
 import { WormholeExperiment } from './components/WormholeExperiment'
+import { TimeTravelExperiment } from './components/TimeTravelExperiment'
 import {
   APPROACH_SPEED_KM_S as lgApproach,
   MERGER_DISTANCE_KPC as lgRing,
@@ -1104,6 +1105,14 @@ const chapters: Chapter[] = [
     // Chapter summary: wording approved by the owner. Every number is the one the experiment uses (the physics model's). "What's next" is a planned direction only: Experiment 2 has no specification yet.
     learned: wormholeSummary(),
     next: 'The next experiment in this group asks whether the past can be reached at all. A wormhole is one way the mathematics allows a closed path in time, and the question is what else would have to be true.',
+  },
+  {
+    title: 'Can you travel back in time?',
+    group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
+    Component: TimeTravelExperiment,
+    // The chapter summary and "What's next" come in a later step (Step 8); empty text hides the summary hint until then.
+    learned: '',
+    next: '',
   },
 ]
 
