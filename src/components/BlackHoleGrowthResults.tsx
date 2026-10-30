@@ -4,7 +4,7 @@ import type { SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
 import { ResultsTable } from './WideBinariesExperiment'
 import { commas, efficiencyPercent, n1 } from './BlackHoleGrowthPictures'
 
-// Frontier and Beyond, Experiment 23: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
+// Cosmic Horizons, Experiment 23: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
 // Every number is read from the physics module (CLAUDE.md §9); this file only sets it out. The tables are the real numbers and never change with the learner's
 // guesses or settings. The wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1). The explanation of what the numbers mean for how real black
 // holes grew, and any verdict between the explanations, are left to the tutor (CLAUDE.md §12, §13).

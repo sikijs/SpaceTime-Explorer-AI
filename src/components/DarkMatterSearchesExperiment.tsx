@@ -22,7 +22,7 @@ import type { Background, CountRange, GlobalEffect } from '../physics/darkMatter
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { DarkMatterSearchesTutor } from './DarkMatterSearchesTutor'
 
-// Frontier and Beyond, Experiment 6 (docs/experiments/frontier-and-beyond/06-where-is-the-dark-matter.md).
+// Cosmic Horizons, Experiment 6 (docs/experiments/frontier-and-beyond/06-where-is-the-dark-matter.md).
 // Step 2 builds the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of a detector (an
 // illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 with its guide. The predictions, Run, the
 // other two pictures, the results, the controls, the tutor and the chapter summary come in later steps. All wording is draft for the owner's

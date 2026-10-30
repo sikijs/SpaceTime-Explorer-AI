@@ -1,4 +1,4 @@
-// Frontier and Beyond Experiment 25: Will the Milky Way and Andromeda collide? The two-body orbit of the two galaxies as point masses: the fall time, the first pass and the sideways speed
+// Cosmic Horizons Experiment 25: Will the Milky Way and Andromeda collide? The two-body orbit of the two galaxies as point masses: the fall time, the first pass and the sideways speed
 // that decides it. Physics only: no React or browser code (CLAUDE.md §9). The model leaves out the Large Magellanic Cloud, M33, the size of the halos, dynamical friction and the expansion
 // of the universe, and it does NOT compute a probability of a merger (the page gives the two studies' probabilities as published). Every formula is a standard two-body result,
 // worked by hand and by a separate script on 2026-10-28 (to be checked at a source); the published numbers come from abstracts and summaries of two papers (to be checked at the papers).

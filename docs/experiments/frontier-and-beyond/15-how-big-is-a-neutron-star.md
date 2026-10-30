@@ -1,4 +1,4 @@
-# Experiment 15 (Frontier and Beyond): How Big Is a Neutron Star, and Where Do They End? (NICER and GW230529)
+# Experiment 15 (Cosmic Horizons): How Big Is a Neutron Star, and Where Do They End? (NICER and GW230529)
 
 **Status: Specification APPROVED by the owner on 2026-10-24 ("approve", read as all twelve decisions on their defaults). PROPOSED by Claude on 2026-10-24 per `CLAUDE.md` §23 Stages 1 to 3, as the fifteenth experiment of the group (`00-group-proposal.md`, Part C, "how stars live and die", entry 15). Built, tested, complete-flow tested in Chrome and finally reviewed on 2026-10-24; the learner-facing wording and the differences from this specification were approved by the owner on 2026-10-24 (see "Implementation Notes", which record every change, and the "Pilot" section, which supersedes the parts of this specification that say predictions do not change the pictures). Every number below was taken from pages and abstracts fetched on 2026-10-24; no paper was read in full (see "Sources read").**
 

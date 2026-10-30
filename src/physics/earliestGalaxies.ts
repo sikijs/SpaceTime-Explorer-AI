@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 5: how early can galaxies form? (JWST's earliest galaxies).
+// Cosmic Horizons, Experiment 5: how early can galaxies form? (JWST's earliest galaxies).
 // See docs/experiments/frontier-and-beyond/05-how-early-can-galaxies-form.md, "Physics Model".
 //
 // No new physics: the stretching of a wavelength by 1 + z is the only new relation. The age and the distances are the project's own

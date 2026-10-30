@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 12: the star that may be about to explode, what is Betelgeuse, and does it have a companion?
+// Cosmic Horizons, Experiment 12: the star that may be about to explode, what is Betelgeuse, and does it have a companion?
 // See docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md, "Physics Model".
 //
 // No new physics: (1) a size from an angle and a distance, radius = 1/2 x angular diameter x distance (the small-angle relation, with the angle in radians); (2) Kepler's

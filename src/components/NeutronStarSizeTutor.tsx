@@ -43,7 +43,7 @@ function sci(x: number): string {
   return `${mantissa.toFixed(1)} × 10${String(exponent).split('').map((c) => SUPERSCRIPT[c]).join('')}`
 }
 
-// The tutor of Frontier and Beyond Experiment 15. Wording approved by the owner on 2026-10-24 (CLAUDE.md §28.1), from the specification's "AI Tutor Behavior" and the group's
+// The tutor of Cosmic Horizons Experiment 15. Wording approved by the owner on 2026-10-24 (CLAUDE.md §28.1), from the specification's "AI Tutor Behavior" and the group's
 // tutor pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics
 // module (neutronStarSize.ts), never typed in by hand (CLAUDE.md §9). The predictions are marked only in the explanation (the owner's choice for the group, kept for this
 // experiment). The tutor does not say what the maximum mass is beyond the published estimate, does not decide what the heavier object in GW230529 is, and does not explain

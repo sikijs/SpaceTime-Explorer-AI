@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 17: a star that vanished, can a star become a black hole without exploding? (M31-2014-DS1)
+// Cosmic Horizons, Experiment 17: a star that vanished, can a star become a black hole without exploding? (M31-2014-DS1)
 // See docs/experiments/frontier-and-beyond/17-a-star-that-vanished.md, "Physics Model".
 //
 // No new physics: bookkeeping and comparison on published numbers. (1) What stays collapsed, remnant = star - thrown off, set against Black Holes 9's limits and Experiment 15's

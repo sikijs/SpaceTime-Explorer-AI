@@ -26,7 +26,7 @@ import {
 } from './earliestGalaxies'
 import { distanceTodayLightYears } from './observableUniverseExperiment'
 
-// Tests for Frontier and Beyond Experiment 5 (docs/experiments/frontier-and-beyond/05-how-early-can-galaxies-form.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 5 (docs/experiments/frontier-and-beyond/05-how-early-can-galaxies-form.md, "Required Physics Tests").
 // The age and the distance are also computed here by direct numerical integration of the expansion rate (Simpson's rule, Planck's
 // H0 = 67.4 and matter fraction 0.315, no radiation), which does not use the project's closed forms, so a wrong rescaling in the module
 // cannot make a test pass.

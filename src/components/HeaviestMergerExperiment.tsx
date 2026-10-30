@@ -7,7 +7,7 @@ import { HeaviestMergerTutor } from './HeaviestMergerTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 20 (docs/experiments/frontier-and-beyond/20-the-heaviest-merger.md).
+// Cosmic Horizons, Experiment 20 (docs/experiments/frontier-and-beyond/20-the-heaviest-merger.md).
 // STEPS 2 to 8 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, Picture 2, Part 2: the learner's own climb, Part 3: the results, then Part 4: the tutor): this file has the title, the status line, the introduction, one illustration (two ways a very heavy star can end, to explain
 // "the gap") with its guide, the new-word list, the collapsed "Words and formulas" panel and the "Want to know more?" links. It also has the two predictions (Part 1), and Run only records them. It has no run, pictures, results, tutor or
 // chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here

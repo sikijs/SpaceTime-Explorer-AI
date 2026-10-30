@@ -53,7 +53,7 @@ function sciText(value: number, digits = 1): string {
 const thousandsComma = (value: number): string => Math.round(value).toLocaleString('en-US')
 const millions = (value: number): string => (value / 1e6).toFixed(1)
 
-// The tutor of Frontier and Beyond Experiment 13. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor Behavior" and the group's
+// The tutor of Cosmic Horizons Experiment 13. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor Behavior" and the group's
 // tutor pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics
 // module (catchingASupernova.ts), never typed in by hand (CLAUDE.md §9); the published statements follow the specification's source table. The predictions are marked only
 // in the explanation (the owner's choice for the group). The tutor does not say how heavy the star was, does not choose among the mass estimates, does not say that the

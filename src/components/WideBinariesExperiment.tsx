@@ -21,7 +21,7 @@ import type { BoostRange, ContaminationRange } from '../physics/wideBinaries'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { WideBinariesTutor } from './WideBinariesTutor'
 
-// Frontier and Beyond, Experiment 7 (docs/experiments/frontier-and-beyond/07-wide-binary-stars.md).
+// Cosmic Horizons, Experiment 7 (docs/experiments/frontier-and-beyond/07-wide-binary-stars.md).
 // Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of two stars orbiting
 // (an illustration, not data), the collapsed "Words and formulas" panel and Picture 1's skeleton. Step 3 built the two predictions. Step 4
 // builds the five-stage run (Picture 1 filled in over stages 1 to 3, Picture 2 in stage 4, Picture 3 in stage 5), each with a guide. Step 5

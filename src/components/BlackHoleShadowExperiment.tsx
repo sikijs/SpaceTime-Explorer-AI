@@ -7,7 +7,7 @@ import { BlackHoleShadowTutor } from './BlackHoleShadowTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 21 (docs/experiments/frontier-and-beyond/21-black-hole-shadow.md).
+// Cosmic Horizons, Experiment 21 (docs/experiments/frontier-and-beyond/21-black-hole-shadow.md).
 // STEPS 2, 4, 5a and 5b (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel
 // and the "Want to know more?" links. It also has the two predictions (Part 1), the run (eight stages), Picture 1 with Prediction 1's guess and Picture 2 with Prediction 2's guess. It has Part 2 (two trial controls and Drawing A, step 6), Part 3 (the results, step 7) and Part 4 (the tutor, step 8) but no chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for
 // the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how big either shadow looks in the sky, how the two compare, or how much

@@ -16,7 +16,7 @@ import type { SeedChoiceId, TimeChoiceId, TrialPicture } from '../physics/blackH
 import { LookForList } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 23: Picture 1 (the clock for growth) and Picture 2 (the object's mass and the smallest seed), with their captions.
+// Cosmic Horizons, Experiment 23: Picture 1 (the clock for growth) and Picture 2 (the object's mass and the smallest seed), with their captions.
 // Every number drawn or written here is read from the physics module (CLAUDE.md §9); this file only draws it. Colours: violet is a black hole, cyan is calculated here,
 // orange is estimated from a measurement, pink is imagined for the question, yellow is light and glowing gas, and white is always the learner's guess (CLAUDE.md §14).
 

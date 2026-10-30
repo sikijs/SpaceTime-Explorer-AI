@@ -24,7 +24,7 @@ import {
   timeScale,
 } from './lunarClocks'
 
-// Tests for Frontier and Beyond Experiment 10 (docs/experiments/frontier-and-beyond/10-does-time-tick-faster-on-the-moon.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 10 (docs/experiments/frontier-and-beyond/10-does-time-tick-faster-on-the-moon.md, "Required Physics Tests").
 // The expected values are worked out by hand from the constants, so a wrong formula in the module cannot make a test pass. With c = 299,792,458 m/s,
 // c^2 = 8.98755e16 m^2/s^2. The Earth's equator: gravity GM / (R c^2) = 3.986004e14 / (6.378137e6 x 8.98755e16) = 3.986004e14 / 5.73229e23 = 6.9535e-10; the spin
 // speed is 7.2921159e-5 x 6.378137e6 = 465.10 m/s, so the spin term is 465.10^2 / (2 x 8.98755e16) = 216,318 / 1.79751e17 = 1.2034e-12; the total is 6.9655e-10. The

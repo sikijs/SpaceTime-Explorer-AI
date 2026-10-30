@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 15: how big is a neutron star, and where do they end? (NICER and GW230529)
+// Cosmic Horizons, Experiment 15: how big is a neutron star, and where do they end? (NICER and GW230529)
 // See docs/experiments/frontier-and-beyond/15-how-big-is-a-neutron-star.md, "Physics Model".
 //
 // No new physics. Small calculations on a ball of mass M and radius R: (1) its black-hole radius (Black Holes 1, imported) and the ratio of the two; (2) compactness

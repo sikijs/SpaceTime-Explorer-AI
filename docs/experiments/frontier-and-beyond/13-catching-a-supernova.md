@@ -1,4 +1,4 @@
-# Experiment 13 (Frontier and Beyond): Catching a Supernova in the Act: What Exploded, and Where Did the Energy Go? (SN 2023ixf)
+# Experiment 13 (Cosmic Horizons): Catching a Supernova in the Act: What Exploded, and Where Did the Energy Go? (SN 2023ixf)
 
 **Status: Specification APPROVED by the owner on 2026-10-23 ("approved with all decisions on their defaults", read as all twelve decisions on their defaults). Proposed by Claude on 2026-10-23 per `CLAUDE.md` §23 Stages 1 to 3, as the thirteenth experiment of the group (`00-group-proposal.md`, Part C, "how stars live and die", entry 13). Implementation starts with Step 1 (physics model and tests) and proceeds one step at a time (§6). Every number below was taken from search results or fetched abstracts on 2026-10-23; no paper was read in full (see "Sources read"). The decisions at the end are the owner's.**
 
@@ -133,7 +133,7 @@ Core-collapse supernova; neutron star (as the remnant, not its structure, which 
 
 ## Relationship to Previous Experiments
 
-Builds on Experiment 12 (red supergiant; this is what such a star does at the end), Black Holes 9 (what holds up a dead star's core, here the collapse), Spacetime Geometry 4 (what we see is the past, here 22 million years), Spacetime Geometry 5 (energy), Frontier and Beyond Experiment 1 (error bars and sigma: here the mass estimates' ranges), and Experiment 8 (the idea of a particle that barely interacts, antimatter and neutrinos).
+Builds on Experiment 12 (red supergiant; this is what such a star does at the end), Black Holes 9 (what holds up a dead star's core, here the collapse), Spacetime Geometry 4 (what we see is the past, here 22 million years), Spacetime Geometry 5 (energy), Cosmic Horizons Experiment 1 (error bars and sigma: here the mass estimates' ranges), and Experiment 8 (the idea of a particle that barely interacts, antimatter and neutrinos).
 
 ## Relationship to Later Experiments
 

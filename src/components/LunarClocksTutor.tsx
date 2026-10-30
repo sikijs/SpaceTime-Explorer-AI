@@ -50,7 +50,7 @@ const gapText = (seconds: number) => (seconds < 1e-3 ? `${(seconds * 1e6).toFixe
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-// The tutor of Frontier and Beyond Experiment 10. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
+// The tutor of Cosmic Horizons Experiment 10. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
 // Behavior": observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes
 // from the physics module (lunarClocks.ts), never typed in by hand (CLAUDE.md §9); the published statements follow the specification's source table. The
 // predictions are marked only in the explanation (the owner's choice for the group). The tutor does not say that time on the Moon "flows" differently in an

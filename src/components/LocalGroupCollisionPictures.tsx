@@ -16,7 +16,7 @@ import type { FallChoiceId, OrbitTrack, PassChoiceId, TrialPicture } from '../ph
 import { CaptionBlock } from './BlackHoleGrowthPictures'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 25: Picture 1 (the fall: a sketch of the two galaxies and a ruler of times) and Picture 2 (the orbit seen from above, and the first pass against the sideways speed), with their captions.
+// Cosmic Horizons, Experiment 25: Picture 1 (the fall: a sketch of the two galaxies and a ruler of times) and Picture 2 (the orbit seen from above, and the first pass against the sideways speed), with their captions.
 // Every number drawn or written here is read from the physics module (CLAUDE.md §9); this file only draws it. Colours: cyan is calculated here from the 2026 study's sideways speed, orange from the 2025 study's,
 // pink and violet are imagined for the question (no sideways motion; a speed that stays the same), and white is always the learner's guess (CLAUDE.md §14).
 

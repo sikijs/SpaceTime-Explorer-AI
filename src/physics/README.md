@@ -1,6 +1,6 @@
 # Physics
 
-This directory holds the physics/simulation engine for Cosmic Horizons.
+This directory holds the physics/simulation engine for Frontier and Beyond.
 
 Rules:
 

@@ -1,10 +1,10 @@
-# Cosmic Horizons — Project Instructions
+# Frontier and Beyond — Project Instructions
 
 > All these concepts are complex. Use simple terms so that a user with just a basic knowledge of science should be able to understand. Make it as detailed as necessary to make the concept clear. Do not assume the user can understand these concepts easily. Explain with examples wherever possible.
 
 ## Project Purpose
 
-Cosmic Horizons is an interactive educational laboratory for understanding
+Frontier and Beyond is an interactive educational laboratory for understanding
 relativity, spacetime, gravity, astronomy, aerospace, and cosmology.
 
 Relativity is the central subject. Other space and aerospace topics are used as
@@ -186,7 +186,7 @@ simple terms with the real numbers:
 
 The numbers come from the tested physics module. The guide gives meaning and significance but leaves the full
 mechanism and any verdict to the tutor, and never reveals a prediction's answer early. The wording stays the human's to
-approve. Built so far: Experiment 12 of Frontier and Beyond. The earlier experiments do not have it yet.
+approve. Built so far: Experiment 12 of Cosmic Horizons. The earlier experiments do not have it yet.
 
 ## Predictions and the Real Results
 
@@ -212,14 +212,14 @@ Every experiment with a prediction:
    beside any controls it says that the guesses do not change the drawings or tables but these settings do.
 8. Takes every number for the marks from the tested physics module.
 
-The wording stays the human's to approve. Built so far: Experiments 15, 17, 18, 19 and 20 of Frontier and Beyond, and Experiment 1 of Evidence and Imagination (Experiment 15's commits
+The wording stays the human's to approve. Built so far: Experiments 15, 17, 18, 19 and 20 of Cosmic Horizons, and Experiment 1 of Evidence and Imagination (Experiment 15's commits
 are `9ac8311` to `72c84d7`). It applies to every new experiment. Experiments 1 to 14 and the other groups still follow the earlier rule
 (guesses shown only as text); the owner will audit and update them one at a time after the project is complete, and
 until then they are left as they are.
 
-## Frontier and Beyond: Introductions and Captions
+## Cosmic Horizons: Introductions and Captions
 
-The "Frontier and Beyond" group (every experiment in it, all twenty-three that remain after Experiment 16 was dropped on 2026-10-25, and any added later) teaches recent discoveries
+The "Cosmic Horizons" group (every experiment in it, all twenty-three that remain after Experiment 16 was dropped on 2026-10-25, and any added later) teaches recent discoveries
 and findings of astronomers and scientists. The ideas are complex, so:
 
 1. Each introduction must be up to date, clear and detailed, in simple terms for a learner with basic science

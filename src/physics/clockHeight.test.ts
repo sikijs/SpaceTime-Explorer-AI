@@ -20,7 +20,7 @@ import {
   yearsToDrift,
 } from './clockHeight'
 
-// Tests for Frontier and Beyond Experiment 9 (docs/experiments/frontier-and-beyond/09-can-a-clock-tell-its-height.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 9 (docs/experiments/frontier-and-beyond/09-can-a-clock-tell-its-height.md, "Required Physics Tests").
 // The expected values are worked out by hand, so a wrong formula in the module cannot make a test pass. With g = 9.81 m/s^2 and c = 299,792,458 m/s,
 // c^2 = 8.98755 x 10^16, so g / c^2 = 9.81 / 8.98755e16 = 1.09151e-16 per metre. Over a year (31,557,600 s) that is 1.09151e-16 x 31,557,600 =
 // 3.4445e-9 s for 1 m. The smallest height for a precision p is p / 1.09151e-16: 1e-16 -> 0.9162 m, 1e-18 -> 0.009162 m, 7.6e-21 -> 6.963e-5 m. JILA's

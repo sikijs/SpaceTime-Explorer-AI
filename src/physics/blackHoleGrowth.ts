@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 23: how fast can a black hole grow? (the "little red dots")
+// Cosmic Horizons, Experiment 23: how fast can a black hole grow? (the "little red dots")
 // See docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md, "Physics Model".
 //
 // The Eddington growth time, exponential growth M(t) = M0 exp[(1 - e) / e x t / t_Edd] at efficiency e, the time to grow from a seed to a

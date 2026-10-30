@@ -20,7 +20,7 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 9 (docs/experiments/frontier-and-beyond/09-can-a-clock-tell-its-height.md).
+// Cosmic Horizons, Experiment 9 (docs/experiments/frontier-and-beyond/09-can-a-clock-tell-its-height.md).
 // Step 6 builds the three controls (the height, the duration and the clock's precision), shown after the run, which add a white mark to each picture and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stages 1 and 3, Picture 2 at stages 2 and 3, Picture 3 at stages 4 and 5, each with a guide. Step 3 built the two predictions. Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of an optical lattice clock
 // (an illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 (its axes and a guide). Step 7 built the tutor (ClockHeightTutor.tsx) and, in App, the
 // chapter summary. All wording is draft for the owner's line-by-line

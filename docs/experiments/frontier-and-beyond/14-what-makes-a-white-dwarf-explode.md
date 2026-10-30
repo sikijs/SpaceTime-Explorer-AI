@@ -1,4 +1,4 @@
-# Experiment 14 (Frontier and Beyond): What Makes a White Dwarf Explode? (the double-detonation remnant SNR 0509-67.5)
+# Experiment 14 (Cosmic Horizons): What Makes a White Dwarf Explode? (the double-detonation remnant SNR 0509-67.5)
 
 **Status: Specification APPROVED by the owner on 2026-10-23 ("approved", read as all twelve decisions on their defaults). Proposed by Claude on 2026-10-23 per `CLAUDE.md` §23 Stages 1 to 3, as the fourteenth experiment of the group (`00-group-proposal.md`, Part C, "how stars live and die", entry 14). Built, complete-flow tested in Chrome and finally reviewed on 2026-10-23 (see "Implementation Notes"); the owner approved all its learner-facing wording ("wording approved", 2026-10-23, read as covering the introduction, captions, predictions, results, panel, links, tutor, chapter summary, the formation paragraph, the NASA link, the centre-ignition text, the reworded brightness control heading and Experiment 13's changed "What's next"); the owner approved all the differences from this specification on 2026-10-23 ("differences approved", listed in the last note under "Implementation Notes"). Implementation proceeds one step at a time (§6). Every number below was taken from search results or fetched pages and abstracts on 2026-10-23; no paper was read in full except where "Sources read" says otherwise.**
 
@@ -133,7 +133,7 @@ Type Ia supernova (as a white dwarf explosion, not a massive star's collapse); d
 
 ## Relationship to Previous Experiments
 
-Builds on Black Holes 9 (the white dwarf, electron degeneracy pressure and the limit; its module), Frontier and Beyond Experiments 1 and 2 (Type Ia supernovae as the distance markers behind the Hubble tension and dark energy), Experiment 13 (the other kind of supernova, and distance ÷ speed), and Spacetime Geometry 4 (what we see is the past; light-years).
+Builds on Black Holes 9 (the white dwarf, electron degeneracy pressure and the limit; its module), Cosmic Horizons Experiments 1 and 2 (Type Ia supernovae as the distance markers behind the Hubble tension and dark energy), Experiment 13 (the other kind of supernova, and distance ÷ speed), and Spacetime Geometry 4 (what we see is the past; light-years).
 
 ## Relationship to Later Experiments
 

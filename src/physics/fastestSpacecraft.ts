@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 11: the fastest spacecraft, how much does its clock lag? (Parker Solar Probe)
+// Cosmic Horizons, Experiment 11: the fastest spacecraft, how much does its clock lag? (Parker Solar Probe)
 // See docs/experiments/frontier-and-beyond/11-the-fastest-spacecraft.md, "Physics Model".
 //
 // No new physics beyond the weak-field clock-rate formula of Experiment 10 (and Gravity Experiments 2, 3 and 9): compared with a clock far from everything, a

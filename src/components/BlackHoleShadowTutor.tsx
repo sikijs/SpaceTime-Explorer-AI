@@ -22,7 +22,7 @@ function commas(x: number): string {
   return Math.round(x).toLocaleString('en-US')
 }
 
-// The tutor of Frontier and Beyond Experiment 21. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "Tutor (Part 4)" and the group's
+// The tutor of Cosmic Horizons Experiment 21. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "Tutor (Part 4)" and the group's
 // tutor pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics module
 // (blackHoleShadow.ts), never typed in by hand (CLAUDE.md §9), except the two everyday trees, which are an illustration. The predictions are marked only in the explanation (the
 // owner's choice for the group). The tutor does not give the reason for the gap in Table 1 as settled, and does not claim more than the abstracts say.

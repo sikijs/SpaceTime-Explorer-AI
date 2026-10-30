@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 3: how lumpy is the universe? (S8, KiDS and DES).
+// Cosmic Horizons, Experiment 3: how lumpy is the universe? (S8, KiDS and DES).
 // See docs/experiments/frontier-and-beyond/03-how-lumpy-is-the-universe.md, "Physics Model".
 //
 // No new physics: S8 is a definition, S8 = sigma8 x sqrt(Omega_m / 0.3), and the tension is Experiment 1's sigma (the gap divided by the

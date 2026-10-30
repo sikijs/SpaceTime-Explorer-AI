@@ -1,6 +1,6 @@
 # Group Proposal: Evidence and Imagination: What Has Been Tested, What Has Not
 
-**Status: PROPOSED by Claude on 2026-10-29 per `CLAUDE.md` §23 Stages 1 to 3, at the owner's request (2026-10-29: after a review of the whole project for gaps, "Build 1 to 4. New group. Include lower priority bridges like 'microwave-background dipole', 'wormholes', 'time travel'… Focus more on what would interest the user the most like wormholes etc."). On 2026-10-29 the owner then decided: exclude the first draft's Experiments 5 (Mercury), 7 (frame dragging), 8 (the star S2), 11 (the thorium clock), 12 (exoplanets) and 13 (Vera Rubin and Euclid); place the group between "Spacetime Geometry" and "Frontier and Beyond"; keep the order as drafted. The group is therefore SEVEN experiments. **On 2026-10-29 the owner approved the name, "Evidence and Imagination: What Has Been Tested, What Has Not" ("Go with 'Evidence and Imagination'"), and approved the group as listed ("approve the group"). The group is APPROVED as a direction; no experiment has a specification yet, and each needs its own specification and approval (§23 Stages 3 and 4).** Nothing is built. No fact below has been looked up: every number marked "indicative" is from Claude's memory and must be sourced (§29) before any wording is approved.**
+**Status: PROPOSED by Claude on 2026-10-29 per `CLAUDE.md` §23 Stages 1 to 3, at the owner's request (2026-10-29: after a review of the whole project for gaps, "Build 1 to 4. New group. Include lower priority bridges like 'microwave-background dipole', 'wormholes', 'time travel'… Focus more on what would interest the user the most like wormholes etc."). On 2026-10-29 the owner then decided: exclude the first draft's Experiments 5 (Mercury), 7 (frame dragging), 8 (the star S2), 11 (the thorium clock), 12 (exoplanets) and 13 (Vera Rubin and Euclid); place the group between "Spacetime Geometry" and "Cosmic Horizons"; keep the order as drafted. The group is therefore SEVEN experiments. **On 2026-10-29 the owner approved the name, "Evidence and Imagination: What Has Been Tested, What Has Not" ("Go with 'Evidence and Imagination'"), and approved the group as listed ("approve the group"). The group is APPROVED as a direction; no experiment has a specification yet, and each needs its own specification and approval (§23 Stages 3 and 4).** Nothing is built. No fact below has been looked up: every number marked "indicative" is from Claude's memory and must be sourced (§29) before any wording is approved.**
 
 ## Why this group
 
@@ -33,7 +33,7 @@ Some things in relativity and cosmology have been **tested** (and the page says 
 
 ## Where the group goes in the sidebar (decided by the owner, 2026-10-29)
 
-**Between "Spacetime Geometry" and "Frontier and Beyond"** (the `groupOrder` list in `src/App.tsx`). "Frontier and Beyond" stays the project's last group of results, so the sentences calling it the last group stay true, and the Conclusion page follows it as the last page.
+**Between "Spacetime Geometry" and "Cosmic Horizons"** (the `groupOrder` list in `src/App.tsx`). "Cosmic Horizons" stays the project's last group of results, so the sentences calling it the last group stay true, and the Conclusion page follows it as the last page.
 
 ## Consequences of the owner's exclusions (to be noted, not decided here)
 

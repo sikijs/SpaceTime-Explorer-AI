@@ -24,7 +24,7 @@ import {
 } from './darkMatterSearches'
 import { oneSidedChance } from './evolvingDarkEnergy'
 
-// Tests for Frontier and Beyond Experiment 6 (docs/experiments/frontier-and-beyond/06-where-is-the-dark-matter.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 6 (docs/experiments/frontier-and-beyond/06-where-is-the-dark-matter.md, "Required Physics Tests").
 // The expected values are worked out by hand (logarithms, and the standard normal table: Q(3.4) = 3.369e-4, Q(2.6) = 4.661e-3), so a wrong
 // formula in the module cannot make a test pass.
 

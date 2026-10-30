@@ -21,7 +21,7 @@ import { BlackHoleGrowthResults } from './BlackHoleGrowthResults'
 import { BlackHoleGrowthTutor } from './BlackHoleGrowthTutor'
 import { PictureOne, PictureTwo, TRIAL_SEED_LABELS, TrialDrawing, efficiencyPercent, pictureOneCaption, pictureTwoCaption, trialCaption } from './BlackHoleGrowthPictures'
 
-// Frontier and Beyond, Experiment 23 (docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md).
+// Cosmic Horizons, Experiment 23 (docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md).
 // STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
 // links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 and Picture 2 with the guesses (in `BlackHoleGrowthPictures.tsx`). It also has Part 2 (two controls and Drawing A), Part 3, the results (`BlackHoleGrowthResults.tsx`) and Part 4, the tutor (`BlackHoleGrowthTutor.tsx`). The chapter summary and "What's next" are in `App.tsx`, and the papers are listed after the run. All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long a black hole of 10 Suns takes to reach the object's mass, how many growth times that is, how small a seed
@@ -46,7 +46,7 @@ function referenceEntries(): { term: string; meaning: string }[] {
     { term: 'Eddington limit', meaning: 'the fastest a black hole can feed, because the light from the glowing gas pushes outward on the gas that is still falling in. The faster the black hole feeds, the brighter the gas shines and the harder it pushes back, until pull and push are equal and the feeding cannot speed up. It is named after the astronomer Arthur Eddington.' },
     { term: 'Exponential growth', meaning: 'growth in which the amount is multiplied by the same factor in every equal span of time, for example doubling every hour. A single bacterium that divides every hour is 2 after 1 hour, 4 after 2, 8 after 3, and about a million after 20 hours. The bigger it gets, the more it adds each hour.' },
     { term: 'Seed (of a black hole)', meaning: 'the black hole that a supermassive black hole starts from, before it has done much feeding. How seeds form is not settled: one idea is that they are the remains of a massive star, which would make a seed of tens of Suns; others make heavier ones.' },
-    { term: 'Redshift', meaning: 'how much the light of a faraway object has been stretched by the expansion of the universe on its way to us. A bigger redshift means the light left earlier, so the object is seen as it was when the universe was younger (Frontier and Beyond Experiment 5).' },
+    { term: 'Redshift', meaning: 'how much the light of a faraway object has been stretched by the expansion of the universe on its way to us. A bigger redshift means the light left earlier, so the object is seen as it was when the universe was younger (Cosmic Horizons Experiment 5).' },
     { term: 'James Webb Space Telescope (JWST)', meaning: 'a space telescope, launched in December 2021, that sees infrared light. Infrared is what the light from very distant objects has been stretched into, so it can see galaxies and black holes as they were very early in the history of the universe.' },
     { term: 'Little red dot', meaning: 'a name for a kind of small, very red object that JWST has found in great numbers in the young universe. They are tiny on the sky and unlike anything seen before, and what they are is still being debated.' },
     { term: 'Cocoon', meaning: 'a thick cloud of gas wrapped all round something. In one leading idea about little red dots, the cocoon is gas around a feeding black hole that hides it and reddens its light.' },
@@ -195,7 +195,7 @@ export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: Black
             <strong>What the James Webb Space Telescope found.</strong> The James Webb Space Telescope (JWST) sees infrared light, which is what the light of very distant objects has been stretched into on its long
             way here. Because light takes time to travel, looking far away means looking back in time. Soon after it began observing, in 2022, JWST revealed many small, very red objects in the young universe that
             astronomers called <strong>little red dots</strong>. They are tiny on the sky and unlike anything seen before. Some of them show broad lines in their spectrum, the sign of gas moving fast near a
-            black hole, and one of them, called CAPERS-LRD-z9, is seen as it was when the universe was about half a billion years old (a redshift of 9.288, an idea from Frontier and Beyond Experiment 5). The
+            black hole, and one of them, called CAPERS-LRD-z9, is seen as it was when the universe was about half a billion years old (a redshift of 9.288, an idea from Cosmic Horizons Experiment 5). The
             estimate for its black hole is about 38 million times the mass of the Sun, but with a wide give-or-take: from about 4.5 million to 316 million Suns, because the mass is worked out from the width of
             a line in the spectrum.
           </p>

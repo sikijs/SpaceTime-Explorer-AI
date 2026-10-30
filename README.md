@@ -1,8 +1,8 @@
-# Cosmic Horizons
+# Frontier and Beyond
 
 ## An Interactive Laboratory for Understanding Spacetime and the Universe
 
-Cosmic Horizons is an educational interactive laboratory designed to help
+Frontier and Beyond is an educational interactive laboratory designed to help
 learners understand relativity and its connections to gravity, astronomy,
 aerospace, and cosmology.
 

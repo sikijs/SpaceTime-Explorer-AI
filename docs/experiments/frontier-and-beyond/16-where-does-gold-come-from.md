@@ -1,4 +1,4 @@
-# Experiment 16 (Frontier and Beyond): Where Does Gold Come From? (the magnetar flare of 2004)
+# Experiment 16 (Cosmic Horizons): Where Does Gold Come From? (the magnetar flare of 2004)
 
 **SET ASIDE (2026-10-25, the owner's decision, "Option 1"): this experiment is not to be built. After reading the sources, Claude advised that it fits the project poorly (nuclear astrophysics rather than relativity or gravity, the weakest evidence in the group, and "gold" as a hook that pulls focus from the black hole and spacetime themes), and the owner chose to skip it and go to Experiment 17. The draft is kept only so the source work is not lost; it was never approved. If the owner later wants a version on neutron star mergers and GW170817, this draft is the starting point.**
 

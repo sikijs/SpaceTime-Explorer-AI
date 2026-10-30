@@ -22,7 +22,7 @@ import type { AgeShareRange, CountRange } from '../physics/earliestGalaxies'
 import { EarliestGalaxiesTutor } from './EarliestGalaxiesTutor'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
-// Frontier and Beyond, Experiment 5 (docs/experiments/frontier-and-beyond/05-how-early-can-galaxies-form.md).
+// Cosmic Horizons, Experiment 5 (docs/experiments/frontier-and-beyond/05-how-early-can-galaxies-form.md).
 // Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of a stretched wave
 // (an illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 with its guide. Step 3 adds the two
 // predictions, Run, the five-stage run, the stretching and Webb's range on Picture 1, Picture 2 (the clock and the ruler) and Picture 3

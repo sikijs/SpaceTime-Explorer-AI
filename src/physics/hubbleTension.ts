@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 1: two measurements of the expansion rate (the Hubble tension).
+// Cosmic Horizons, Experiment 1: two measurements of the expansion rate (the Hubble tension).
 // See docs/experiments/frontier-and-beyond/01-hubble-tension.md, "Physics Model".
 //
 // No new physics: the expansion rate is Cosmology Experiment 1's, the Hubble time is Cosmology

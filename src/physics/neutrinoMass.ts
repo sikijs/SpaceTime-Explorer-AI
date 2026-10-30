@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 4: can the universe weigh a neutrino? (DESI's limit on the neutrino mass).
+// Cosmic Horizons, Experiment 4: can the universe weigh a neutrino? (DESI's limit on the neutrino mass).
 // See docs/experiments/frontier-and-beyond/04-can-the-universe-weigh-a-neutrino.md, "Physics Model".
 //
 // No new physics beyond standard textbook relations: the neutrino temperature (4/11)^(1/3) T, the typical energy 3.151 k T, the

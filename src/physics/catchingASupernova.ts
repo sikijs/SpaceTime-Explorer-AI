@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 13: catching a supernova in the act (SN 2023ixf), what exploded, and where did the energy go?
+// Cosmic Horizons, Experiment 13: catching a supernova in the act (SN 2023ixf), what exploded, and where did the energy go?
 // See docs/experiments/frontier-and-beyond/13-catching-a-supernova.md, "Physics Model".
 //
 // No new physics: (1) the energy of a core collapse as a neutron star's gravitational energy, E = G M^2 / R (an order-of-magnitude estimate, as in Black Holes 9 and

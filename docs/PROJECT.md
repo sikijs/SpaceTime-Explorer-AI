@@ -1,8 +1,8 @@
-# Cosmic Horizons — Project Definition
+# Frontier and Beyond — Project Definition
 
 ## 1. Project Purpose
 
-Cosmic Horizons is an interactive educational application designed to help learners understand relativity and spacetime by **experiencing physical ideas through experiments and simulations**, rather than learning them only through text, formulas, or lectures.
+Frontier and Beyond is an interactive educational application designed to help learners understand relativity and spacetime by **experiencing physical ideas through experiments and simulations**, rather than learning them only through text, formulas, or lectures.
 
 The project is intended to make difficult ideas in relativity easier to understand by allowing the learner to:
 
@@ -35,7 +35,7 @@ Examples include:
 * gravity and curved spacetime
 * the relationship between geometry and physical measurements
 
-Cosmic Horizons should introduce these ideas gradually.
+Frontier and Beyond should introduce these ideas gradually.
 
 The learner should encounter a concept first through a simple physical situation, then gradually move toward more sophisticated situations.
 
@@ -152,7 +152,7 @@ An incorrect prediction can be educational because it creates an opportunity to 
 
 ## 6. Experiments
 
-Cosmic Horizons will be organized around a sequence of interactive experiments.
+Frontier and Beyond will be organized around a sequence of interactive experiments.
 
 Each experiment should introduce or reinforce a specific physical idea.
 
@@ -450,11 +450,11 @@ Added by the owner on 2026-10-22. Results are shown as scientific numbers, and a
 3. **A comparison for any table the learner controls**: the published value beside the learner's value, a plain reading of how they compare, and a short paragraph that updates with the settings. The learner's settings are called trial values or the learner's own numbers.
 4. **The learner's predictions beside the results**: each guess, the question it was about, and where its number is. The page does not say whether the guess was right. The tutor does that, after the learner has looked.
 
-The guide explains what each number means and why it matters. The full mechanism and any verdict between competing explanations stay with the tutor, and the guide never gives away what the learner was asked to predict. Its wording is the human project owner's to approve. It is built so far for Experiment 12 of the Frontier and Beyond group, and adding it to earlier experiments is a decision for the owner.
+The guide explains what each number means and why it matters. The full mechanism and any verdict between competing explanations stay with the tutor, and the guide never gives away what the learner was asked to predict. Its wording is the human project owner's to approve. It is built so far for Experiment 12 of the Cosmic Horizons group, and adding it to earlier experiments is a decision for the owner.
 
 ### Predictions and the real results
 
-Set by the owner on 2026-10-24, from the pilot on Experiment 15 of Frontier and Beyond, and replacing the owner's rule of 2026-10-23 ("Predictions do not change the results"). A learner's predictions are their own guesses, made before they see anything. The real pictures, tables and numbers come from the physics and never change with a guess, and the learner is told so in plain words, so that "nothing changed" is not mistaken for a fault. The guess itself is no longer only a line of text beside the results: it is **drawn on the real picture, beside the real result**, so that it is easy to compare. Every experiment with a prediction:
+Set by the owner on 2026-10-24, from the pilot on Experiment 15 of Cosmic Horizons, and replacing the owner's rule of 2026-10-23 ("Predictions do not change the results"). A learner's predictions are their own guesses, made before they see anything. The real pictures, tables and numbers come from the physics and never change with a guess, and the learner is told so in plain words, so that "nothing changed" is not mistaken for a fault. The guess itself is no longer only a line of text beside the results: it is **drawn on the real picture, beside the real result**, so that it is easy to compare. Every experiment with a prediction:
 
 1. Keeps the real pictures, tables and numbers fixed.
 2. Draws the guess on the real picture where its answer lives, as a separate, clearly labelled mark in white, with a prominent "YOUR GUESS" box joined to it by a line. White always means the learner's guess; anything imagined for the question is drawn in another colour and called "imagined". The mark shows the guess only: no "right", "wrong" or "matched". The tutor marks the predictions in its explanation, and nowhere earlier.
@@ -465,11 +465,11 @@ Set by the owner on 2026-10-24, from the pilot on Experiment 15 of Frontier and 
 7. Tells the learner in the introduction that the predictions never change the real pictures or tables, that the guesses are drawn on them in white and shown again beside the results, and which controls (if any) change which drawings; beside any controls it says that the guesses do not change the drawings or tables but these settings do.
 8. Takes every number for the marks from the tested physics module.
 
-The wording is the human project owner's to approve. It is built so far for Experiments 15, 17, 18, 19 and 20 of Frontier and Beyond and for Experiment 1 of Evidence and Imagination, and applies to every new experiment. Experiments 1 to 14 and the other groups still follow the earlier rule (their guesses are shown only as text beside the results, and each says that predictions do not change the pictures or tables); the owner decided to audit and update them one at a time after the project is complete.
+The wording is the human project owner's to approve. It is built so far for Experiments 15, 17, 18, 19 and 20 of Cosmic Horizons and for Experiment 1 of Evidence and Imagination, and applies to every new experiment. Experiments 1 to 14 and the other groups still follow the earlier rule (their guesses are shown only as text beside the results, and each says that predictions do not change the pictures or tables); the owner decided to audit and update them one at a time after the project is complete.
 
-### Frontier and Beyond: fuller introductions and captions
+### Cosmic Horizons: fuller introductions and captions
 
-The "Frontier and Beyond" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so four rules apply to every experiment in the group, all twenty-three that remain after Experiment 16 was dropped on 2026-10-25, and any added later:
+The "Cosmic Horizons" group teaches recent discoveries and findings of astronomers and scientists (results of 2022 to 2026). These ideas are complex and hard to grasp at first reading, so four rules apply to every experiment in the group, all twenty-three that remain after Experiment 16 was dropped on 2026-10-25, and any added later:
 
 1. **The introduction is up to date, clear and detailed, in simple terms** that a learner with only a basic knowledge of science can follow. It may use real-life examples. Its length is not limited, as long as the extra length helps the learner understand. It may also give links for the learner who wants to know more.
 2. **The caption of every picture follows the same rule:** up to date, clear, detailed and in simple terms, with real-life examples where they help, and as long as it needs to be.
@@ -502,7 +502,7 @@ Whenever a visualization represents a physical quantity, its relationship to the
 
 ## 17. Scope Control
 
-Cosmic Horizons is intended to be developed carefully and incrementally.
+Frontier and Beyond is intended to be developed carefully and incrementally.
 
 The project should not grow simply because a feature sounds interesting.
 
@@ -554,7 +554,7 @@ A development step should normally accomplish one logical objective.
 
 After completing that step, the implementation should be tested and reviewed before proceeding to the next step.
 
-This is particularly important because Cosmic Horizons combines:
+This is particularly important because Frontier and Beyond combines:
 
 * physics
 * software
@@ -588,7 +588,7 @@ Only after those questions have been answered should implementation begin.
 
 ## 21. Definition of Success
 
-Cosmic Horizons will be successful if a learner can use the application to move from:
+Frontier and Beyond will be successful if a learner can use the application to move from:
 
 **"I have read about this concept."**
 

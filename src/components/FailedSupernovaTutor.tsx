@@ -43,7 +43,7 @@ function thousands(n: number): string {
   return Math.round(n).toLocaleString('en-US')
 }
 
-// The tutor of Frontier and Beyond Experiment 17. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "AI Tutor Behavior" and the
+// The tutor of Cosmic Horizons Experiment 17. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "AI Tutor Behavior" and the
 // group's tutor pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics
 // module (failedSupernova.ts), never typed in by hand (CLAUDE.md §9). The predictions are marked only in the explanation (the owner's choice for the group). The tutor does not
 // decide between the two readings, does not say how many black holes came this way, and does not say that the star became a black hole as a fact.

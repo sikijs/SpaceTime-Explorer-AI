@@ -128,7 +128,7 @@ const groupOrder = [
   'Black Holes and Strong Gravity',
   'Spacetime Geometry: What Is Real, What Is Seen',
   'Evidence and Imagination: What Has Been Tested, What Has Not',
-  'Frontier and Beyond',
+  'Cosmic Horizons',
 ]
 
 // A one-sentence overview of a group, shown under its title on every chapter page of that group. Only groups that have one
@@ -139,11 +139,11 @@ const groupOverviews: Record<string, string> = {
     'This group asks what has been tested in relativity and cosmology and what has not: real measurements of effects the theories predict, and ideas that the mathematics allows but that nobody has seen. Each experiment says how settled its result is, as of October 2026.',
   'Black Holes and Strong Gravity':
     'This group follows black holes from several sides: how small something must be to become one, what happens to time, orbits, light and a falling traveler near one, what spin changes, where black holes come from, and how one might end.',
-  'Frontier and Beyond':
+  'Cosmic Horizons':
     'This group follows recent results that are still being tested: where measurements disagree, where something unexpected has been seen, and what a result must show before it counts as a discovery. Each experiment says how settled its result is, as of October 2026.',
 }
 
-// The chapter summary of Frontier and Beyond Experiment 15 (wording approved by the owner on 2026-10-24). Every number is read from the experiment's physics module, so the
+// The chapter summary of Cosmic Horizons Experiment 15 (wording approved by the owner on 2026-10-24). Every number is read from the experiment's physics module, so the
 // text cannot drift from the page.
 function neutronStarSummary(): string {
   const r = runNeutronStarSize()
@@ -162,7 +162,7 @@ function neutronStarSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 17 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// The chapter summary of Cosmic Horizons Experiment 17 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
 // drift from the page.
 function failedSupernovaSummary(): string {
   const c = runCheckUp()
@@ -180,7 +180,7 @@ function failedSupernovaSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 18 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// The chapter summary of Cosmic Horizons Experiment 18 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
 // drift from the page.
 function horizonAreaLawSummary(): string {
   const c = areaLawCheckUp()
@@ -200,7 +200,7 @@ function horizonAreaLawSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 19 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// The chapter summary of Cosmic Horizons Experiment 19 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
 // drift from the page.
 function blackHoleRingdownSummary(): string {
   const w = ringingWorked()
@@ -219,7 +219,7 @@ function blackHoleRingdownSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 20 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// The chapter summary of Cosmic Horizons Experiment 20 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
 // drift from the page.
 function heaviestMergerSummary(): string {
   const r = massRuler()
@@ -241,7 +241,7 @@ function heaviestMergerSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 21 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// The chapter summary of Cosmic Horizons Experiment 21 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
 // drift from the page.
 function blackHoleShadowSummary(): string {
   const [sgr, m87] = fromMassRows()
@@ -262,7 +262,7 @@ function blackHoleShadowSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 22 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
+// The chapter summary of Cosmic Horizons Experiment 22 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot
 // drift from the page.
 function pulsarTimingBackgroundSummary(): string {
   const steps = pulsarSteps()
@@ -288,7 +288,7 @@ function pulsarTimingBackgroundSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 25 (wording approved by the owner). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+// The chapter summary of Cosmic Horizons Experiment 25 (wording approved by the owner). Every number is read from the experiment's physics module, so the text cannot drift from the page.
 function localGroupCollisionSummary(): string {
   const c = lgCheckUp()
   const t = lgTutorFigures()
@@ -330,7 +330,7 @@ function wormholeSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 24 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+// The chapter summary of Cosmic Horizons Experiment 24 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot drift from the page.
 function interstellarVisitorSummary(): string {
   const c = visitorCheckUp()
   const s = visitorSteps()
@@ -348,7 +348,7 @@ function interstellarVisitorSummary(): string {
   )
 }
 
-// The chapter summary of Frontier and Beyond Experiment 23 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+// The chapter summary of Cosmic Horizons Experiment 23 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot drift from the page.
 function blackHoleGrowthSummary(): string {
   const p1 = growthPictureOne()
   const p2 = growthPictureTwo()
@@ -863,7 +863,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Two measurements of the expansion rate',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: HubbleTensionExperiment,
     // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
     // explanation, which is not built yet.
@@ -873,7 +873,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Does dark energy change?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: EvolvingDarkEnergyExperiment,
     // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
     // explanation. Every number is the published one the experiment uses (DESI arXiv:2503.14738 and 2607.27410, DES arXiv:2511.07517).
@@ -883,7 +883,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'How lumpy is the universe?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: LumpinessExperiment,
     // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's explanation.
     // Every number is the published one the experiment uses (KiDS arXiv:2007.15633 and 2503.19441, DES arXiv:2602.10065, Planck as quoted by KiDS-Legacy).
@@ -894,7 +894,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Can the universe weigh a neutrino?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: NeutrinoMassExperiment,
     // Wording approved by the owner on 2026-10-19 (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's explanation.
     // Every number is the published one the experiment uses (DESI arXiv:2503.14744 and 2607.27410, Planck arXiv:1807.06209, NuFIT 6.0 arXiv:2410.05380).
@@ -905,7 +905,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'How early can galaxies form?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: EarliestGalaxiesExperiment,
     // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's explanation.
     // Every number is the one the experiment uses (the model's, at Planck's expansion rate) or the published one (Naidu et al., arXiv:2505.11263).
@@ -916,7 +916,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Where is the dark matter?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: DarkMatterSearchesExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses or the published one
     // (LZ, arXiv:2410.17036 and arXiv:2609.02823; the SLAC release of 8 December 2025). "What's next" says nothing about Experiment 7 until it has an
@@ -927,7 +927,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Do we need dark matter, or does gravity change?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: WideBinariesExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's,
     // for a pair of 1.5 Suns) or a published one (the abstracts of arXiv:2311.03436, 2305.04613, 2309.10404, 2601.21728, 2603.11015 and 2602.24035).
@@ -938,7 +938,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Does antimatter fall down?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: AntimatterGravityExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a
     // published one (Nature 621, 716-722, and arXiv:2503.22471, whose plans are as of March 2025). "What's next" points to Experiment 9 (the owner asked for it on 2026-10-21; wording for the owner's approval).
@@ -948,7 +948,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Can a clock tell how high it is?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: ClockHeightExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a
     // published one (Bothwell et al., Nature 602, 420-424; Zheng et al., Nature Communications 14; the BIPM's Resolution 4 of the 28th CGPM). "What's next"
@@ -959,7 +959,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Does time tick faster on the Moon?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: LunarClocksExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a
     // published one (Ashby and Patla, The Astronomical Journal, 2024; the BIPM's Resolution 6 of the 28th CGPM). "What's next" says nothing about Experiment 11
@@ -970,7 +970,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'The fastest spacecraft: how much does its clock lag?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: FastestSpacecraftExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a
     // published one (NASA's pages of 18 December 2025 and 10 September 2026, the Guinness World Records entry). "What's next" named no experiment, because
@@ -981,7 +981,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'A star near the end of its life: what is Betelgeuse, and does it have a companion?',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: BetelgeuseCompanionExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a published one
     // (Howell and others 2025; Goldberg and others 2024; Joyce and others 2020; the 2026 papers of Dupree and others and of Matthews and others). "What's next" names no
@@ -992,7 +992,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Catching a supernova in the act: what exploded, and where did the energy go? (SN 2023ixf)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: CatchingASupernovaExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a published one
     // (Jacobson-Galan and others 2023; the mass estimates of the papers listed on the page; the 2026 paper). "What's next" names no experiment, because Experiment 14 has no
@@ -1003,7 +1003,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'What makes a white dwarf explode? (the double-detonation remnant SNR 0509-67.5)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: WhiteDwarfExplosionExperiment,
     // Draft chapter summary, for the owner's line-by-line approval (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's) or a published one
     // (Das and others 2025; Mandal and others 2026). "What's next" names no experiment, because Experiment 15 has no approved specification.
@@ -1013,7 +1013,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'How big is a neutron star, and where do they end? (NICER and GW230529)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: NeutronStarSizeExperiment,
     // Chapter summary, wording approved by the owner on 2026-10-24 (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's). "What's next" names no
     // experiment, because Experiment 16 has no approved specification.
@@ -1022,14 +1022,14 @@ const chapters: Chapter[] = [
   },
   {
     title: 'A star that vanished: can a star become a black hole without exploding? (M31-2014-DS1)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: FailedSupernovaExperiment,
     learned: failedSupernovaSummary(),
     next: 'Experiment 18 asks a different question about black holes. When two black holes merge, a little of their mass leaves as gravitational waves, so the new black hole is lighter. Does the surface of the black hole shrink too?',
   },
   {
     title: 'Does a black hole’s surface area ever shrink? (GW250114 and Hawking’s area theorem)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: HorizonAreaLawExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: horizonAreaLawSummary(),
@@ -1037,7 +1037,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Do black holes ring like bells? (GW250114’s ringdown and the “no-hair” test)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: BlackHoleRingdownExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleRingdownSummary(),
@@ -1045,7 +1045,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Black holes that should not exist: the heaviest merger (GW231123)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: HeaviestMergerExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" named no experiment, because
     // Experiment 21 (the shadow) now has one: this "What's next" is draft wording for the owner's approval.
@@ -1054,7 +1054,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Can we photograph a black hole’s shadow? (Event Horizon Telescope)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: BlackHoleShadowExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleShadowSummary(),
@@ -1063,7 +1063,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Does the universe hum? (pulsar timing arrays)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: PulsarTimingBackgroundExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: pulsarTimingBackgroundSummary(),
@@ -1072,7 +1072,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'How fast can a black hole grow? (the little red dots)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: BlackHoleGrowthExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleGrowthSummary(),
@@ -1081,7 +1081,7 @@ const chapters: Chapter[] = [
   },
   {
     title: 'A visitor from another star (how far does the Sun bend its path?)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: InterstellarVisitorExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: interstellarVisitorSummary(),
@@ -1089,14 +1089,14 @@ const chapters: Chapter[] = [
   },
   {
     title: 'Will the Milky Way and Andromeda collide? (two studies, two answers)',
-    group: 'Frontier and Beyond',
+    group: 'Cosmic Horizons',
     Component: LocalGroupCollisionExperiment,
     // Chapter summary: wording approved by the owner. Every number is the one the experiment uses (the physics model's).
     learned: localGroupCollisionSummary(),
     next: 'None yet: this is the last experiment of the group.',
   },
   // Appended at the end of the list so that the saved progress (kept by position in this list) is not disturbed; the sidebar and Previous/Next follow `groupOrder`, which puts this group
-  // between "Spacetime Geometry" and "Frontier and Beyond".
+  // between "Spacetime Geometry" and "Cosmic Horizons".
   {
     title: 'Can a wormhole exist? (what would it take to hold one open?)',
     group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
@@ -1191,7 +1191,7 @@ export function App() {
         {isWelcome && (
           <>
             <h1 className="app-title" style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '3rem' }}>
-              Cosmic Horizons
+              Frontier and Beyond
             </h1>
             <p className="app-subtitle" style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 2rem' }}>
               A short sequence of experiments on relativity — space, time, and motion. Each one builds on the one before it.

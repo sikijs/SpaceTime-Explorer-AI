@@ -19,7 +19,7 @@ import { WhiteDwarfExplosionTutor } from './WhiteDwarfExplosionTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 14 (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md).
+// Cosmic Horizons, Experiment 14 (docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md).
 // Step 6 builds the tutor (WhiteDwarfExplosionTutor.tsx) and, in App, the chapter summary.
 // Step 5 builds the three controls (the white dwarf's weight, the remnant's age and a brightness difference), shown after the run, which add white marks to Pictures 1 and 3, and the
 // results with the reading guide (the check-up, three tables with notes, the predictions beside the results and the held-back paper links).

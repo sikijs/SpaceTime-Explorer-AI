@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 2: does dark energy change?
+// Cosmic Horizons, Experiment 2: does dark energy change?
 // See docs/experiments/frontier-and-beyond/02-does-dark-energy-change.md, "Physics Model".
 //
 // No new physical law: a flat universe of matter and dark energy (Cosmology Experiment 5), with the

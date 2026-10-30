@@ -38,7 +38,7 @@ import {
   widthAU,
 } from './betelgeuseCompanion'
 
-// Tests for Frontier and Beyond Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md, "Required Physics Tests").
 // The expected values are worked out by hand, so a wrong formula in the module cannot make a test pass. One milliarcsecond at one parsec is 0.001 astronomical units, so a
 // star of angular diameter 41 mas at 168 pc has a radius of 1/2 x 0.041 x 168 = 3.444 AU, and 42 mas gives 1/2 x 0.042 x 168 = 3.528 AU. One AU is 149,597,870.7 / 695,700 =
 // 215.032 solar radii, so 3.444 AU is 740.6 and 3.528 AU is 758.6 solar radii (Joyce and others: 764). The range of the papers: 40 mas at 153 pc, 1/2 x 0.040 x 153 = 3.060 AU,

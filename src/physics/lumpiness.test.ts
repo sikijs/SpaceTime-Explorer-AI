@@ -16,7 +16,7 @@ import {
 } from './lumpiness'
 import type { S8Measurement } from './lumpiness'
 
-// Tests for Frontier and Beyond Experiment 3 (docs/experiments/frontier-and-beyond/03-how-lumpy-is-the-universe.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 3 (docs/experiments/frontier-and-beyond/03-how-lumpy-is-the-universe.md, "Required Physics Tests").
 // The numbers below were worked out separately, by an independent script and by hand, so a wrong formula in the module cannot make a test pass.
 
 const planck = EARLY_MEASUREMENT

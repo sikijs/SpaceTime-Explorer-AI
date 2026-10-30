@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 18: does a black hole's surface area ever shrink? (GW250114 and Hawking's area theorem)
+// Cosmic Horizons, Experiment 18: does a black hole's surface area ever shrink? (GW250114 and Hawking's area theorem)
 // See docs/experiments/frontier-and-beyond/18-does-a-black-holes-area-ever-shrink.md, "Physics Model".
 //
 // One formula, given and not derived (the Kerr horizon, Black Holes 8): the area of a spinning black hole's horizon is

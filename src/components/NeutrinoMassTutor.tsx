@@ -40,7 +40,7 @@ export const formatTotal = (value: number) => (value === DESI_JULY_2026.value ? 
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-// The tutor of Frontier and Beyond Experiment 4. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
+// The tutor of Cosmic Horizons Experiment 4. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
 // Behavior": observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes
 // from the physics module (neutrinoMass.ts), never typed in by hand (CLAUDE.md §9), except the published limits' wording, which follows the abstracts
 // of arXiv:2503.14744 (March 2025), arXiv:2607.27410 (July 2026), arXiv:1807.06209 (Planck 2018) and arXiv:2406.14554 (Planck PR4), and DESI's March 2025

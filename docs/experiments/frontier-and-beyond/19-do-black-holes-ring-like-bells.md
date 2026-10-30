@@ -1,4 +1,4 @@
-# Experiment 19 (Frontier and Beyond): Do Black Holes Ring Like Bells? (GW250114's Ringdown and the "No-Hair" Test)
+# Experiment 19 (Cosmic Horizons): Do Black Holes Ring Like Bells? (GW250114's Ringdown and the "No-Hair" Test)
 
 **Status: Specification APPROVED by the owner on 2026-10-26 ("approved", read as all twelve decisions on their defaults). PROPOSED by Claude on 2026-10-26 per `CLAUDE.md` §23 Stages 1 to 3, as the nineteenth experiment of the group (`00-group-proposal.md`, Part D, entry 19). Nothing is implemented. On 2026-10-26 a further attempt to read the fit's coefficients at Berti, Cardoso and Will (2006) (ar5iv copy and PDF, through a summarising fetch) did not show the table; the paper says only that its fits are "accurate within a few percent"; open item (a) therefore still stands. Every number below comes from an abstract, a search summary or a partial fetch on 2026-10-26 (see "Sources read"); the two fit formulas were NOT read in the paper that gives them. Decisions for the owner are at the end; each has a default.**
 

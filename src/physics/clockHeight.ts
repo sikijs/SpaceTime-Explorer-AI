@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 9: can a clock tell how high it is? Optical lattice clocks.
+// Cosmic Horizons, Experiment 9: can a clock tell how high it is? Optical lattice clocks.
 // See docs/experiments/frontier-and-beyond/09-can-a-clock-tell-its-height.md, "Physics Model".
 //
 // No new physics beyond the weak-field clock-rate formula of Gravity Experiments 2 and 9: a clock higher by h ticks faster by the fraction g h / c^2, with one

@@ -51,7 +51,7 @@ const sci = (value: number, digits = 2) => {
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-// The tutor of Frontier and Beyond Experiment 11. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "Introduction,
+// The tutor of Cosmic Horizons Experiment 11. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "Introduction,
 // pictures and results" and the group's tutor pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has
 // responded. Every number comes from the physics module (fastestSpacecraft.ts), never typed in by hand (CLAUDE.md §9); the published statements follow the
 // specification's source table. The predictions are marked only in the explanation (the owner's choice for the group). The tutor does not say that time near the Sun

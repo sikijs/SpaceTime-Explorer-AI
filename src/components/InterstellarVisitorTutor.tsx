@@ -15,7 +15,7 @@ import {
 } from '../physics/interstellarVisitor'
 import type { BendChoiceId, SpeedChoiceId } from '../physics/interstellarVisitor'
 
-// Frontier and Beyond, Experiment 24: Part 4, the tutor. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "Tutor (Part 4)" and the group's tutor
+// Cosmic Horizons, Experiment 24: Part 4, the tutor. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "Tutor (Part 4)" and the group's tutor
 // pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics module
 // (interstellarVisitor.ts), never typed in by hand (CLAUDE.md §9), except the comparisons that are everyday illustrations (a ball thrown up, a skateboard in a dip, a ball rolling past a magnet).
 // The predictions are marked only in the explanation (the owner's choice for the group). The tutor says what the model shows and what it leaves out; it does not say what the object is.

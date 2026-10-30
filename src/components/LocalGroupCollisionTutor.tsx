@@ -21,7 +21,7 @@ import {
 } from '../physics/localGroupCollision'
 import type { FallChoiceId, PassChoiceId } from '../physics/localGroupCollision'
 
-// Frontier and Beyond, Experiment 25: Part 4, the tutor. Wording approved by the owner (CLAUDE.md §28.1) from the Step 7 draft. Observe, compare with the predictions, one conceptual
+// Cosmic Horizons, Experiment 25: Part 4, the tutor. Wording approved by the owner (CLAUDE.md §28.1) from the Step 7 draft. Observe, compare with the predictions, one conceptual
 // question, then the explanation. Every number comes from the physics module (localGroupCollision.ts), never typed in by hand (CLAUDE.md §9), except the everyday illustrations
 // (a ball dropped from a tower, a skater pulling in her arms, a ball on a string). The predictions are marked only in the explanation (CLAUDE.md §12, §13).
 

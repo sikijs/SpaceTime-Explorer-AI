@@ -20,7 +20,7 @@ import {
 import type { Comparison, FallChoiceId, PassChoiceId } from '../physics/localGroupCollision'
 import { ResultsTable } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 25: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
+// Cosmic Horizons, Experiment 25: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
 // Every number is read from the physics module (CLAUDE.md §9); this file only sets it out. The tables are the real numbers and never change with the learner's guesses or settings. The wording is a
 // DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1). Why a falling galaxy speeds up, why a sideways speed makes a loop, why a close first pass is not yet a merger and which of the studies' differences
 // matters most are left to the tutor (CLAUDE.md §12, §13). The papers and pages behind the numbers are listed at the end, after the run, because some of them give "four billion years" (CLAUDE.md §12).

@@ -20,7 +20,7 @@ const rangeWords: Record<TensionRange, string> = {
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-// The tutor of Frontier and Beyond Experiment 3. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
+// The tutor of Cosmic Horizons Experiment 3. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
 // Behavior": observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes
 // from the physics module (lumpiness.ts), never typed in by hand (CLAUDE.md §9). The predictions are marked only in the explanation (the owner's choice
 // for the group), never before it. What changed in KiDS is given in the authors' own words (arXiv:2503.19441) and is NOT presented as an established

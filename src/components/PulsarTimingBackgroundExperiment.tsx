@@ -7,7 +7,7 @@ import { PulsarTimingBackgroundTutor } from './PulsarTimingBackgroundTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 22 (docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md).
+// Cosmic Horizons, Experiment 22 (docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md).
 // STEPS 2 to 8 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2, then the "Now try it yourself" controls and Drawing A, then the results, then the tutor): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
 // "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It also has Part 2, "Now try it yourself" (two controls and Drawing A, which follows them). It also has Part 3, the results (a check-up and two more tables, each with a note, the predictions beside them, and the papers). It also has Part 4, the tutor. It has no chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
 // owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long one wave cycle of a pair of supermassive black holes lasts, how big the shift in a
@@ -32,8 +32,8 @@ function referenceEntries(): { term: string; meaning: string }[] {
     { term: 'Orbit and orbital period', meaning: 'an orbit is the path of one object going round another, and the orbital period is the time it takes to go round once (Gravity Experiment 6). A year is the Earth’s orbital period round the Sun.' },
     { term: 'Parsec', meaning: 'a unit for distances between stars and black holes. One parsec is about 3.26 light-years, which is about 31 million million kilometres. So 0.01 parsecs is about 0.03 light-years.' },
     { term: 'Nanosecond', meaning: 'a billionth of a second. In one nanosecond, light travels about 30 centimetres.' },
-    { term: 'Supermassive black hole', meaning: 'a black hole millions to billions of times as heavy as the Sun, found at the centre of most large galaxies. The one at the centre of our own galaxy, Sagittarius A*, is about 4 million Suns (Frontier and Beyond Experiment 21).' },
-    { term: 'Neutron star', meaning: 'the extremely dense core left behind when a heavy star explodes, with the mass of more than the Sun squeezed into a sphere about 12 kilometres across (Frontier and Beyond Experiment 15).' },
+    { term: 'Supermassive black hole', meaning: 'a black hole millions to billions of times as heavy as the Sun, found at the centre of most large galaxies. The one at the centre of our own galaxy, Sagittarius A*, is about 4 million Suns (Cosmic Horizons Experiment 21).' },
+    { term: 'Neutron star', meaning: 'the extremely dense core left behind when a heavy star explodes, with the mass of more than the Sun squeezed into a sphere about 12 kilometres across (Cosmic Horizons Experiment 15).' },
     { term: 'Pulsar', meaning: 'a neutron star that spins and gives out beams of radio waves from near its magnetic poles. As it spins, a beam sweeps round the sky like the light of a lighthouse, and each time it points at the Earth, telescopes pick up a short pulse.' },
     { term: 'Millisecond pulsar', meaning: 'a pulsar that spins hundreds of times every second, so a pulse arrives every few thousandths of a second. They are among the steadiest natural clocks known, which is why they are used here.' },
     { term: 'Arrival time', meaning: 'the moment a pulse reaches a radio telescope on Earth. Astronomers compare each pulse’s real arrival time with the time a model says it should arrive, and look at the difference.' },
@@ -555,7 +555,7 @@ export function PulsarTimingBackgroundExperiment({ onComplete, onTutorComplete }
           </p>
 
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>What is a pulsar?</strong> To look for waves from such a pair we use stars as clocks. A <strong>neutron star</strong> (Frontier and Beyond Experiment 15) is the core left over when a heavy
+            <strong>What is a pulsar?</strong> To look for waves from such a pair we use stars as clocks. A <strong>neutron star</strong> (Cosmic Horizons Experiment 15) is the core left over when a heavy
             star explodes: a sphere about 12 kilometres across, with more mass than the Sun. Some neutron stars spin and give out a narrow beam of radio waves from near their magnetic poles. As the star spins, the beam sweeps
             round the sky, like the light of a lighthouse. From far away, you do not see a steady light, you see a flash each time the beam points at you. A neutron star seen this way is called a
             <strong> pulsar</strong>, because it pulses.

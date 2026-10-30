@@ -37,7 +37,7 @@ function suns(x: number): string {
   return x >= 1e6 ? `${x < 1e7 ? n1(x / 1e6) : commas(x / 1e6)} million Suns` : `${commas(x)} Suns`
 }
 
-// The tutor of Frontier and Beyond Experiment 23. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "Tutor (Part 4)" and the group's
+// The tutor of Cosmic Horizons Experiment 23. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "Tutor (Part 4)" and the group's
 // tutor pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics module
 // (blackHoleGrowth.ts), never typed in by hand (CLAUDE.md §9), except the bacterium (a doubling every hour) and the doorway, which are everyday illustrations. The predictions are marked
 // only in the explanation (the owner's choice for the group). The tutor does not say how real black holes grew: it says what the model shows and what it leaves out.

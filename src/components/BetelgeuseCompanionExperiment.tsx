@@ -26,7 +26,7 @@ import { BetelgeuseCompanionTutor } from './BetelgeuseCompanionTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md).
+// Cosmic Horizons, Experiment 12 (docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md).
 // Step 8 builds the tutor (BetelgeuseCompanionTutor.tsx) and, in App, the chapter summary.
 // Step 7 builds the three controls (the distance, the two masses and the strength of the signal), shown after the run, which add a white mark to each picture, and Table 4.
 // Step 6 builds the five-stage run: Picture 1 fills in at stages 1 and 2, Picture 2 at stage 3 and Picture 3 at stages 4 and 5, each with a guide. The results, the

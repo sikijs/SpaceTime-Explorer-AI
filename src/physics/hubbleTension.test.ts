@@ -14,7 +14,7 @@ import {
 } from './hubbleTension'
 import { hubbleTimeYears } from './bigBangExperiment'
 
-// Tests for Frontier and Beyond Experiment 1 (docs/experiments/frontier-and-beyond/01-hubble-tension.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 1 (docs/experiments/frontier-and-beyond/01-hubble-tension.md, "Required Physics Tests").
 // The numbers in the specification's table are written out here by hand, so a wrong formula in the module cannot make a test pass.
 
 const planck = EARLY_MEASUREMENT

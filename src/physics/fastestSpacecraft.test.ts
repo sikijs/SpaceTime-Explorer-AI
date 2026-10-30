@@ -27,7 +27,7 @@ import {
   timeScale,
 } from './fastestSpacecraft'
 
-// Tests for Frontier and Beyond Experiment 11 (docs/experiments/frontier-and-beyond/11-the-fastest-spacecraft.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 11 (docs/experiments/frontier-and-beyond/11-the-fastest-spacecraft.md, "Required Physics Tests").
 // The expected values are worked out by hand from the constants, so a wrong formula in the module cannot make a test pass. With c = 299,792,458 m/s,
 // c^2 = 8.98755e16 m^2/s^2. At closest approach the distance from the Sun's centre is 6.16759e9 + 6.957e8 = 6.86329e9 m. Gravity: GM / (r c^2) = 1.32712e20 /
 // (6.86329e9 x 8.98755e16) = 1.32712e20 / 6.16850e26 = 2.1515e-7. Speed: 192,220^2 / (2 x 8.98755e16) = 3.69485e10 / 1.79751e17 = 2.0555e-7. The total is 4.2070e-7,

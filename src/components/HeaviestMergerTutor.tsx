@@ -21,7 +21,7 @@ function two(x: number): string {
   return x.toFixed(2)
 }
 
-// The tutor of Frontier and Beyond Experiment 20. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "AI Tutor Behavior" and the group's
+// The tutor of Cosmic Horizons Experiment 20. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "AI Tutor Behavior" and the group's
 // tutor pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics module
 // (heaviestMerger.ts), never typed in by hand (CLAUDE.md §9). The predictions are marked only in the explanation (the owner's choice for the group). The tutor does not say which
 // explanation of GW231123 is right, does not give any explanation's likelihood as settled, and does not claim that merging is how GW231123 was made.

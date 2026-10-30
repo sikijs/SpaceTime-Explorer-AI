@@ -19,7 +19,7 @@ import type { BendChoiceId, SpeedChoiceId, TrialPicture } from '../physics/inter
 import { CaptionBlock } from './BlackHoleGrowthPictures'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 24: Picture 1 (the path of 3I/ATLAS past the Sun, seen from above) and Picture 2 (its speed against its distance from the Sun), with their captions.
+// Cosmic Horizons, Experiment 24: Picture 1 (the path of 3I/ATLAS past the Sun, seen from above) and Picture 2 (its speed against its distance from the Sun), with their captions.
 // Every number drawn or written here is read from the physics module (CLAUDE.md §9); this file only draws it. Colours: cyan is calculated here, orange is estimated from a measurement,
 // pink is imagined for the question, yellow is the Sun, and white is always the learner's guess (CLAUDE.md §14).
 

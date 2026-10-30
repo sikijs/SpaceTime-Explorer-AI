@@ -24,7 +24,7 @@ import {
 } from './evolvingDarkEnergy'
 import { comovingDistanceMpc as constantComovingDistanceMpc } from './darkEnergyExperiment'
 
-// Tests for Frontier and Beyond Experiment 2 (docs/experiments/frontier-and-beyond/02-does-dark-energy-change.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 2 (docs/experiments/frontier-and-beyond/02-does-dark-energy-change.md, "Required Physics Tests").
 // The numbers below were worked out separately, by an independent script, so a wrong formula in the module cannot make a test pass.
 
 const byName = (name: string) => FITS.find((f) => f.name === name)!

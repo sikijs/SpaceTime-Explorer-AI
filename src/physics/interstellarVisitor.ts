@@ -1,4 +1,4 @@
-// Frontier and Beyond Experiment 24: A visitor from another star (3I/ATLAS). The Sun's pull alone, on a body that comes from far away: its speed at any distance, the escape speed, the
+// Cosmic Horizons Experiment 24: A visitor from another star (3I/ATLAS). The Sun's pull alone, on a body that comes from far away: its speed at any distance, the escape speed, the
 // eccentricity of its path and the total bend. Physics only: no React or browser code (CLAUDE.md §9). The model is the two-body problem (a point body in the Sun's gravity); it leaves out
 // the planets, the comet's own gas and relativity. Every formula is a standard two-body result, worked by hand and by a separate script on 2026-10-28 (to be checked at a source).
 import { ASTRONOMICAL_UNIT, SUN } from './fastestSpacecraft'

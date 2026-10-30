@@ -31,7 +31,7 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 15 (docs/experiments/frontier-and-beyond/15-how-big-is-a-neutron-star.md).
+// Cosmic Horizons, Experiment 15 (docs/experiments/frontier-and-beyond/15-how-big-is-a-neutron-star.md).
 // The page has an introduction and four parts. The introduction has the question, the new-word list, the assumptions, the "Want to know more?" links, an illustration of a pulsar and
 // the collapsed "Words and formulas" panel. Part 1 (predict, then watch) has the two predictions, a five-stage run and three pictures, each with a guide; the learner's guesses are
 // drawn on Pictures 1 and 2 beside the real results (the owner's pilot of 2026-10-24), and the real pictures never change. Part 2 (now try it yourself) has two controls, the star's

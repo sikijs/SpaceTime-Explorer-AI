@@ -1,6 +1,6 @@
 # Components
 
-This directory holds React UI components for Cosmic Horizons.
+This directory holds React UI components for Frontier and Beyond.
 
 Rules:
 

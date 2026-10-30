@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 14: what makes a white dwarf explode? (the double-detonation remnant SNR 0509-67.5)
+// Cosmic Horizons, Experiment 14: what makes a white dwarf explode? (the double-detonation remnant SNR 0509-67.5)
 // See docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md, "Physics Model".
 //
 // No new physics. Four small calculations: (1) a white dwarf's size and its distance from the Chandrasekhar limit (the formula and the limit are Black Holes 9's, imported);

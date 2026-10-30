@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 7: do we need dark matter, or does gravity change? Wide binary stars.
+// Cosmic Horizons, Experiment 7: do we need dark matter, or does gravity change? Wide binary stars.
 // See docs/experiments/frontier-and-beyond/07-wide-binary-stars.md, "Physics Model".
 //
 // No new physics beyond textbook relations: the circular-orbit speed v = sqrt(G M / s) and the pull g = G M / s^2 of two stars of total mass M

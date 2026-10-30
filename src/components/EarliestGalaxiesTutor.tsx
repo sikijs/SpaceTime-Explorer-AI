@@ -38,7 +38,7 @@ const countWords: Record<CountRange, string> = {
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-// The tutor of Frontier and Beyond Experiment 5. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
+// The tutor of Cosmic Horizons Experiment 5. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
 // Behavior": observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number
 // comes from the physics module (earliestGalaxies.ts), never typed in by hand (CLAUDE.md §9), except the published statements' wording, which follows
 // the Naidu et al. paper (arXiv:2505.11263), the ESA/Webb release of 28 January 2026, and the abstracts of Sun et al. (arXiv:2307.15305) and Dekel

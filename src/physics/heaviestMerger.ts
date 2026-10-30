@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 20: black holes that should not exist: the heaviest merger (GW231123)
+// Cosmic Horizons, Experiment 20: black holes that should not exist: the heaviest merger (GW231123)
 // See docs/experiments/frontier-and-beyond/20-the-heaviest-merger.md, "Physics Model".
 //
 // Only arithmetic, and published numbers held as data. Merging two black holes gives the sum of their masses minus the share sent out as

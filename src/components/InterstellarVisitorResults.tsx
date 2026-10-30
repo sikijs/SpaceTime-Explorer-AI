@@ -3,7 +3,7 @@ import { BEND_CHOICES, SPEED_CHOICES, exampleSteps, knownObjects, resultsCheckUp
 import type { BendChoiceId, Comparison, SpeedChoiceId } from '../physics/interstellarVisitor'
 import { ResultsTable } from './WideBinariesExperiment'
 
-// Frontier and Beyond, Experiment 24: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
+// Cosmic Horizons, Experiment 24: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
 // Every number is read from the physics module (CLAUDE.md §9); this file only sets it out. The tables are the real numbers and never change with the learner's guesses or
 // settings. The wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1). The explanation of why a path is open or closed, why the speed rises and why a faster
 // visitor is bent less, and any verdict, are left to the tutor (CLAUDE.md §12, §13).

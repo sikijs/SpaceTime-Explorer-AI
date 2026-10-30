@@ -41,7 +41,7 @@ const effectWords: Record<GlobalEffect, string> = {
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-// The tutor of Frontier and Beyond Experiment 6. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
+// The tutor of Cosmic Horizons Experiment 6. Draft wording for the owner's review (CLAUDE.md §28.1, §29), from the specification's "AI Tutor
 // Behavior": observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number
 // comes from the physics module (darkMatterSearches.ts), never typed in by hand (CLAUDE.md §9). The published statements follow the sources in the
 // specification's source table (the SLAC release of 8 December 2025 and the abstracts of arXiv:2609.02823, 2609.08893 and 2609.10504, through fetch

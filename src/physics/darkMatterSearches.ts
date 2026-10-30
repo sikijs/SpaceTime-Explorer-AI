@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 6: where is the dark matter? (the LZ experiment's null results and one unexplained event).
+// Cosmic Horizons, Experiment 6: where is the dark matter? (the LZ experiment's null results and one unexplained event).
 // See docs/experiments/frontier-and-beyond/06-where-is-the-dark-matter.md, "Physics Model".
 //
 // No new physics beyond standard textbook statistics: Poisson counting (the chance of seeing no events when N are expected is e^-N), the

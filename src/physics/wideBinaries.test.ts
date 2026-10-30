@@ -18,7 +18,7 @@ import {
   speedBoostPercent,
 } from './wideBinaries'
 
-// Tests for Frontier and Beyond Experiment 7 (docs/experiments/frontier-and-beyond/07-wide-binary-stars.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 7 (docs/experiments/frontier-and-beyond/07-wide-binary-stars.md, "Required Physics Tests").
 // The expected values are worked out by hand with G = 6.674e-11, one solar mass 1.989e30 kg and one AU 1.496e11 m, so a wrong formula in the
 // module cannot make a test pass. For example, 1.5 Suns at 10,000 AU: GM = 6.674e-11 x 1.5 x 1.989e30 = 1.9911e20; s = 1.496e15 m;
 // GM / s = 1.3310e5; the square root is 364.8 m/s; GM / s^2 = 1.3310e5 / 1.496e15 = 8.897e-11.

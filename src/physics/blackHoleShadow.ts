@@ -1,4 +1,4 @@
-// Frontier and Beyond, Experiment 21: can we photograph a black hole's shadow? (Event Horizon Telescope)
+// Cosmic Horizons, Experiment 21: can we photograph a black hole's shadow? (Event Horizon Telescope)
 // See docs/experiments/frontier-and-beyond/21-black-hole-shadow.md, "Physics Model".
 //
 // One formula, given and not derived (Black Holes 4): light aimed closer than 3 sqrt(3) / 2 horizon radii is captured, so the
