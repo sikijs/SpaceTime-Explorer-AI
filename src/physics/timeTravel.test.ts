@@ -27,6 +27,12 @@ import {
   pictureThree,
   clockGuessYears,
   beforeGuessMarker,
+  trialPicture,
+  friendlyDuration,
+  durationRulerPosition,
+  DURATION_RULER,
+  TRIAL_DEFAULT_SPEED,
+  TRIAL_DEFAULT_SEPARATION_LY,
 } from './timeTravel'
 
 describe('travel to the future: the offset between the mouths (the twin formula)', () => {
@@ -178,5 +184,63 @@ describe('the pictures (every drawn number comes from the module)', () => {
     expect(beforeGuessMarker('yes').before).toBe(true)
     expect(beforeGuessMarker('no').before).toBe(false)
     expect(() => clockGuessYears('7')).toThrow(RangeError)
+  })
+})
+
+describe('"Now try it yourself": the trial picture for the controls', () => {
+  it('the default settings give exactly the real Picture 3 numbers', () => {
+    const t = trialPicture(TRIAL_DEFAULT_SPEED, TRIAL_DEFAULT_SEPARATION_LY)
+    const p = pictureThree()
+    expect(t.offsetYears).toBeCloseTo(p.offsetYears, 12)
+    expect(t.lightTravelYears).toBe(p.lightTravelYears)
+    expect(t.timeGainedYears).toBeCloseTo(p.timeGainedYears, 12)
+    expect(t.closed).toBe(p.closed)
+    expect(t.factor).toBeCloseTo(0.6, 12)
+  })
+  it('settings give the specified outcomes: 0.1c at 1 light-year no; 0.1c at 1 light-day yes; 0.5c at 1 yes and at 3 no; 0.99c at 5 yes', () => {
+    expect(trialPicture(0.1, 1).closed).toBe(false)
+    expect(trialPicture(0.1, 1).timeGainedYears).toBe(0)
+    const day = trialPicture(0.1, 1 / 365.25)
+    expect(day.closed).toBe(true)
+    expect(day.timeGainedYears).toBeCloseTo(0.0501 - 0.0027, 3)
+    expect(trialPicture(0.5, 1).closed).toBe(true)
+    expect(trialPicture(0.5, 1).timeGainedYears).toBeCloseTo(0.3397, 3)
+    expect(trialPicture(0.5, 3).closed).toBe(false)
+    expect(trialPicture(0.99, 5).closed).toBe(true)
+    expect(trialPicture(0.99, 5).timeGainedYears).toBeCloseTo(3.589, 3)
+  })
+  it('every one of the 20 settings: closed exactly when the offset is longer, and the time gained is the difference', () => {
+    for (const beta of SPEED_CHOICES) {
+      for (const sep of SEPARATION_CHOICES_LY) {
+        const t = trialPicture(beta, sep.ly)
+        expect(t.closed).toBe(t.offsetYears > t.lightTravelYears)
+        expect(t.timeGainedYears).toBeCloseTo(t.closed ? t.offsetYears - t.lightTravelYears : 0, 12)
+        expect(t.offsetRulerPosition).toBeGreaterThan(0)
+        expect(t.offsetRulerPosition).toBeLessThan(1)
+        expect(t.lightRulerPosition).toBeGreaterThan(0)
+        expect(t.lightRulerPosition).toBeLessThan(1)
+      }
+    }
+  })
+  it('the smallest speed that works: 0.4359 for 1 light-year, 0.866 for 5, and the offset at that speed equals the separation', () => {
+    expect(trialPicture(0.8, 1).smallestSpeed).toBeCloseTo(0.4359, 4)
+    expect(trialPicture(0.8, 5).smallestSpeed).toBeCloseTo(0.866, 3)
+    expect(clockOffsetYears(trialPicture(0.8, 5).smallestSpeed!, 10)).toBeCloseTo(5, 9)
+  })
+  it('a faster mouth gives a larger offset and a smaller factor, and the log ruler grows with the duration', () => {
+    expect(trialPicture(0.9, 1).offsetYears).toBeGreaterThan(trialPicture(0.5, 1).offsetYears)
+    expect(trialPicture(0.9, 1).factor).toBeLessThan(trialPicture(0.5, 1).factor)
+    expect(durationRulerPosition(DURATION_RULER.minYears)).toBeCloseTo(0, 12)
+    expect(durationRulerPosition(DURATION_RULER.maxYears)).toBeCloseTo(1, 12)
+    expect(durationRulerPosition(1)).toBeCloseTo(0.75, 12)
+  })
+  it('friendlyDuration writes years and days in plain words', () => {
+    expect(friendlyDuration(1)).toBe('1 year')
+    expect(friendlyDuration(4)).toBe('4 years')
+    expect(friendlyDuration(8.589)).toBe('8.59 years')
+    expect(friendlyDuration(1 / 365.25)).toBe('1 day')
+    expect(friendlyDuration(0.0501)).toBe('18 days')
+    expect(friendlyDuration(0.0027)).toBe('1 day')
+    expect(() => friendlyDuration(0)).toThrow(RangeError)
   })
 })

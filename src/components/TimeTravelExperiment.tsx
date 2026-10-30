@@ -1,10 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { CLOCK_CHOICES, BEFORE_CHOICES, PRESET_SPEED, PRESET_TRIP_YEARS, PRESET_SEPARATION_LY } from '../physics/timeTravel'
-import { PictureOne, PictureThree, PictureTwo, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './TimeTravelPictures'
+import { CLOCK_CHOICES, BEFORE_CHOICES, PRESET_SPEED, PRESET_TRIP_YEARS, PRESET_SEPARATION_LY, SEPARATION_CHOICES_LY, SPEED_CHOICES, TRIAL_DEFAULT_SEPARATION_LY, TRIAL_DEFAULT_SPEED, friendlyDuration, trialPicture } from '../physics/timeTravel'
+import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './TimeTravelPictures'
 
 // Evidence and Imagination, Experiment 2 (docs/experiments/evidence-and-imagination/02-can-you-travel-back-in-time.md).
-// Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions (in `TimeTravelPictures.tsx`). The "Now try it yourself" part, the results and the tutor come in later steps.
-// The introduction's wording is approved (2026-10-30). The wording of the two predictions is approved (2026-10-30). The stage lines and the picture captions are approved too (2026-10-30) (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
+// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions, the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `TimeTravelPictures.tsx`). The results and the tutor come in later steps.
+// The introduction's wording is approved (2026-10-30). The wording of the two predictions is approved (2026-10-30). The stage lines and the Picture 1 to 3 captions are approved too (2026-10-30). The Part 2 wording and the Drawing A caption are approved too (2026-10-30) (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
 // in time, or what chronology protection is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -39,6 +39,8 @@ interface TimeTravelExperimentProps {
 export function TimeTravelExperiment({ onComplete }: TimeTravelExperimentProps) {
   const [clockGuess, setClockGuess] = useState<string | null>(null)
   const [beforeGuess, setBeforeGuess] = useState<string | null>(null)
+  const [trialSpeed, setTrialSpeed] = useState<number>(TRIAL_DEFAULT_SPEED)
+  const [trialSeparation, setTrialSeparation] = useState<number>(TRIAL_DEFAULT_SEPARATION_LY)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -63,9 +65,13 @@ export function TimeTravelExperiment({ onComplete }: TimeTravelExperimentProps) 
   const startOver = () => {
     setClockGuess(null)
     setBeforeGuess(null)
+    setTrialSpeed(TRIAL_DEFAULT_SPEED)
+    setTrialSeparation(TRIAL_DEFAULT_SEPARATION_LY)
     setStatus('idle')
     setStage(0)
   }
+
+  const trial = trialPicture(trialSpeed, trialSeparation)
 
   const questions = [
     {
@@ -264,6 +270,66 @@ export function TimeTravelExperiment({ onComplete }: TimeTravelExperimentProps) 
                   {pictureThreeCaption()}
                 </>
               )}
+            </div>
+          )}
+          {done && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> In the pictures above, mouth B moved at {PRESET_SPEED} c and the mouths ended {PRESET_SEPARATION_LY} light-year apart. Here you can try other numbers. You choose two things:
+              </p>
+              <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>The speed of the moving mouth.</strong> The trip always lasts {PRESET_TRIP_YEARS} years on A’s clock, as before. A faster mouth makes its clock fall further behind.
+                </li>
+                <li>
+                  <strong>The separation of the mouths.</strong> How far apart the mouths are outside the tunnel when the trip is over. Light needs a certain time to cross it, and nothing can cross faster.
+                </li>
+              </ol>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>One drawing then shows, for your choices:</p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>How long each clock counted</strong>, and the offset between them.
+                </li>
+                <li>
+                  <strong>The offset set against the light-travel time</strong> between the mouths outside the tunnel.
+                </li>
+                <li>
+                  <strong>Whether a closed path exists</strong> for your choices, how much earlier the traveller arrives at best, and the smallest speed that would make one for your separation.
+                </li>
+              </ul>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                The real pictures above do not change, and your two guesses do not change this drawing. Only the two settings below do.
+              </p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>These are your own trial values, not new measurements.</strong> Each button is a number to try. For example, if you choose {trialSpeed} c and mouths {friendlyDuration(trialSeparation)} of light-travel apart, the drawing works out the clocks’ offset and the comparison with the same formulas as
+                Pictures 1 to 3. A wormhole like that is imagined for the question, and it is drawn in pink where it appears. This does not say that a wormhole like it exists, or that any speed or separation is possible.
+              </p>
+              {(
+                [
+                  { title: 'How fast does the moving mouth travel?', choices: SPEED_CHOICES.map((v) => ({ value: v as number, label: `${v} c` })), value: trialSpeed, set: setTrialSpeed },
+                  { title: 'How far apart are the mouths outside the tunnel?', choices: SEPARATION_CHOICES_LY.map((c) => ({ value: c.ly as number, label: c.label })), value: trialSeparation, set: setTrialSeparation },
+                ] as const
+              ).map((control) => (
+                <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                  <div>
+                    {control.choices.map((choice) => (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        onClick={() => (control.set as (v: number) => void)(choice.value)}
+                        className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {choice.label.charAt(0).toUpperCase() + choice.label.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <TrialDrawing trial={trial} />
+              {trialCaption(trial)}
             </div>
           )}
         </div>

@@ -205,3 +205,53 @@ export function pictureThree() {
     closed: closedPathExists(one.offsetYears, one.separationLy),
   }
 }
+
+// ---- "Now try it yourself" (Step 5): trial values for the speed of the moving mouth and the separation of the mouths. The trip is always the preset 10 years of A's clock. ----
+export const TRIAL_DEFAULT_SPEED = PRESET_SPEED
+export const TRIAL_DEFAULT_SEPARATION_LY = PRESET_SEPARATION_LY
+
+// A duration in years, written in plain words for the learner: years from one year up, days below one (365.25 days to the year).
+export function friendlyDuration(years: number): string {
+  checkPositive(years, 'The duration')
+  const round = (x: number, digits: number) => String(Number(x.toFixed(digits)))
+  if (years >= 1) {
+    const v = round(years, 2)
+    return `${v} ${v === '1' ? 'year' : 'years'}`
+  }
+  const days = years * 365.25
+  const v = days >= 10 ? round(days, 0) : round(days, 1)
+  return `${v} ${v === '1' ? 'day' : 'days'}`
+}
+
+// Drawing A's ruler of durations, in years on a log scale (an offset of a few days and one of nearly nine years must both fit).
+export const DURATION_RULER = { minYears: 0.001, maxYears: 10, ticks: [0.001, 0.01, 0.1, 1, 10] } as const
+export function durationRulerPosition(years: number): number {
+  checkPositive(years, 'The duration')
+  return (Math.log10(years) - Math.log10(DURATION_RULER.minYears)) / (Math.log10(DURATION_RULER.maxYears) - Math.log10(DURATION_RULER.minYears))
+}
+
+export function trialPicture(beta: number, separationLy: number) {
+  checkSpeed(beta)
+  checkPositive(separationLy, 'The separation')
+  const tripYears = PRESET_TRIP_YEARS
+  const movingYears = movingClockYears(beta, tripYears)
+  const offsetYears = tripYears - movingYears
+  const closed = beta > 0 && closedPathExists(offsetYears, separationLy)
+  return {
+    speed: beta,
+    tripYears,
+    separationLy,
+    factor: movingYears / tripYears,
+    movingYears,
+    offsetYears,
+    lightTravelYears: separationLy,
+    closed,
+    timeGainedYears: beta > 0 ? timeGainedYears(offsetYears, separationLy) : 0,
+    // How many times longer the offset is than the light-travel time (below 1 when it is shorter).
+    offsetOverLight: offsetYears / separationLy,
+    smallestSpeed: smallestSpeedForClosedPath(tripYears, separationLy),
+    offsetRulerPosition: offsetYears > 0 ? durationRulerPosition(offsetYears) : 0,
+    lightRulerPosition: durationRulerPosition(separationLy),
+  }
+}
+export type TrialPicture = ReturnType<typeof trialPicture>

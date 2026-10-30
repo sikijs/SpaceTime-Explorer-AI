@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { beforeGuessMarker, clockGuessYears, pictureOne, pictureThree, pictureTwo } from '../physics/timeTravel'
+import { DURATION_RULER, beforeGuessMarker, clockGuessYears, durationRulerPosition, friendlyDuration, pictureOne, pictureThree, pictureTwo } from '../physics/timeTravel'
+import type { TrialPicture } from '../physics/timeTravel'
 import { CaptionBlock } from './BlackHoleGrowthPictures'
 import type { LookFor } from './WideBinariesExperiment'
 
@@ -453,6 +454,142 @@ export function pictureThreeCaption(): ReactNode {
       whereFrom={
         <>
           <strong>Measured:</strong> nothing here. <strong>Calculated here:</strong> both bars and the bracket, from Picture 1 and the separation. <strong>Imagined for the question:</strong> the wormhole; the comparison only means something if a tunnel like this could exist, and none has been seen.
+        </>
+      }
+    />
+  )
+}
+
+// ---- Drawing A: "Now try it yourself" (follows the two settings, and only them) ----
+const A_W = 760
+const A_H = 500
+
+export function TrialDrawing({ trial }: { trial: TrialPicture }) {
+  const by = (years: number) => 100 + 55 * years
+  const rx = (pos: number) => 100 + 550 * pos
+  const offX = rx(trial.offsetRulerPosition)
+  const lightX = rx(trial.lightRulerPosition)
+  const clampMid = (x: number) => Math.min(Math.max(x, 190), 640)
+  const offsetWidth = by(trial.tripYears) - by(trial.movingYears)
+  return (
+    <svg viewBox={`0 0 ${A_W} ${A_H}`} width="100%" style={svgStyle} role="img" aria-label="Drawing A: the clock offset and the light-travel time for your settings">
+      <SvgLines x={20} y={24} lines={[`A1. What each clock counted, at ${trial.speed} c (years)`]} fill={TEXT_COLOR} size={12} bold />
+      <rect x={by(0)} y={42} width={by(trial.tripYears) - by(0)} height={26} fill={CYAN} fillOpacity={0.35} stroke={CYAN} strokeWidth={1.5} />
+      <SvgLines x={by(0) + 8} y={60} lines={[`A’s clock: ${friendlyDuration(trial.tripYears)}`]} fill={TEXT_COLOR} size={11} bold />
+      <rect x={by(0)} y={80} width={by(trial.movingYears) - by(0)} height={26} fill={CYAN} fillOpacity={0.35} stroke={CYAN} strokeWidth={1.5} />
+      <SvgLines x={by(0) + 8} y={98} lines={[`B’s clock: ${friendlyDuration(trial.movingYears)}`]} fill={TEXT_COLOR} size={11} bold />
+      <rect x={by(trial.movingYears)} y={80} width={Math.max(offsetWidth, 1.5)} height={26} fill="none" stroke={CYAN} strokeWidth={1.5} strokeDasharray="5 4" />
+      <line x1={by(0)} y1={118} x2={by(10)} y2={118} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {[0, 2, 4, 6, 8, 10].map((y) => (
+        <g key={y}>
+          <line x1={by(y)} y1={113} x2={by(y)} y2={123} stroke={MUTED_COLOR} />
+          <SvgLines x={by(y)} y={137} lines={[String(y)]} fill={MUTED_COLOR} size={10} anchor="middle" />
+        </g>
+      ))}
+      <SvgLines x={by(10) + 14} y={122} lines={['years']} fill={MUTED_COLOR} size={10} />
+      <SvgLines x={100} y={162} lines={[`offset (the dashed part): ${friendlyDuration(trial.offsetYears)}`]} fill={CYAN} size={11} bold />
+
+      <line x1={20} y1={182} x2={A_W - 20} y2={182} stroke="#334155" />
+      <SvgLines x={20} y={204} lines={['A2. The two numbers that decide it (years, on a ruler where each step is ten times longer)']} fill={TEXT_COLOR} size={12} bold />
+      <line x1={rx(0)} y1={290} x2={rx(1)} y2={290} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {DURATION_RULER.ticks.map((t) => (
+        <g key={t}>
+          <line x1={rx(durationRulerPosition(t))} y1={285} x2={rx(durationRulerPosition(t))} y2={295} stroke={MUTED_COLOR} />
+          <SvgLines x={rx(durationRulerPosition(t))} y={309} lines={[String(t)]} fill={MUTED_COLOR} size={10} anchor="middle" />
+        </g>
+      ))}
+      <SvgLines x={rx(1) + 14} y={294} lines={['years']} fill={MUTED_COLOR} size={10} />
+      <line x1={Math.min(offX, lightX)} y1={290} x2={Math.max(offX, lightX)} y2={290} stroke={trial.closed ? CYAN : PINK} strokeWidth={4} strokeOpacity={0.7} />
+      {/* the offset: a cyan mark above the ruler */}
+      <polygon points={`${offX},${278} ${offX - 7},${266} ${offX + 7},${266}`} fill={CYAN} />
+      <line x1={offX} y1={266} x2={offX} y2={246} stroke={CYAN} strokeWidth={1.5} />
+      <SvgLines x={clampMid(offX)} y={236} lines={[`offset: ${friendlyDuration(trial.offsetYears)}`]} fill={CYAN} size={11} bold anchor="middle" />
+      {/* the light-travel time: a yellow mark below the ruler */}
+      <polygon points={`${lightX},${302} ${lightX - 7},${314} ${lightX + 7},${314}`} fill={YELLOW} />
+      <line x1={lightX} y1={314} x2={lightX} y2={336} stroke={YELLOW} strokeWidth={1.5} />
+      <SvgLines x={clampMid(lightX)} y={350} lines={[`light-travel time outside: ${friendlyDuration(trial.lightTravelYears)}`]} fill={YELLOW} size={11} bold anchor="middle" />
+
+      <SvgLines
+        x={20}
+        y={392}
+        lines={
+          trial.closed
+            ? [
+                `A closed path exists: the offset is ${Number(trial.offsetOverLight.toFixed(2))} times the light-travel time.`,
+                `At best the traveller arrives ${friendlyDuration(trial.timeGainedYears)} before stepping in.`,
+              ]
+            : [
+                `No closed path: the offset is only ${Number(trial.offsetOverLight.toFixed(2))} of the light-travel time.`,
+                'Light crosses outside first, so the traveller arrives after stepping in, not before.',
+              ]
+        }
+        fill={trial.closed ? CYAN : PINK}
+        size={12}
+        bold
+      />
+      <SvgLines
+        x={20}
+        y={448}
+        lines={
+          trial.smallestSpeed === null
+            ? [`For a ${trial.tripYears}-year trip and ${friendlyDuration(trial.separationLy)} of light-travel, no speed below c would be enough.`]
+            : [`For a ${trial.tripYears}-year trip and this separation, the mouth must move faster than ${Number(trial.smallestSpeed.toFixed(3))} c for a closed path.`]
+        }
+        fill={TEXT_COLOR}
+        size={11}
+      />
+      <SvgLines x={20} y={474} lines={['Pink and cyan: imagined and calculated for your trial values; the wormhole itself is imagined.']} fill={MUTED_COLOR} size={10} />
+    </svg>
+  )
+}
+
+export function trialCaption(trial: TrialPicture): ReactNode {
+  const lookFor: LookFor[] = [
+    {
+      look: 'the dashed part of B’s bar in A1, when you change the speed.',
+      means: `at ${trial.speed} c, B’s clock counts ${friendlyDuration(trial.movingYears)} while A’s counts ${friendlyDuration(trial.tripYears)}. The offset is ${friendlyDuration(trial.offsetYears)}.`,
+      matters: 'a faster mouth falls further behind. At low speeds the offset is tiny, so the tunnel’s jump back in time would be tiny too.',
+    },
+    {
+      look: 'the cyan mark and the yellow mark in A2, and which one is further right.',
+      means: trial.closed
+        ? `the offset (${friendlyDuration(trial.offsetYears)}) is longer than the light-travel time (${friendlyDuration(trial.lightTravelYears)}), so a closed path exists for these settings.`
+        : `the offset (${friendlyDuration(trial.offsetYears)}) is shorter than the light-travel time (${friendlyDuration(trial.lightTravelYears)}), so no closed path exists for these settings.`,
+      matters: 'the cyan mark depends only on the speed, and the yellow mark only on the separation. A closed path needs both to line up: a big enough offset and mouths close enough together.',
+    },
+  ]
+  return (
+    <CaptionBlock
+      title="Drawing A"
+      intro="This drawing follows the two settings above, and only them. The top half (A1) is for the speed of the moving mouth. The bottom half (A2) uses both the speed and the separation of the mouths. Your predictions do not change it, and the real pictures above do not change either. The trip always lasts 10 years on A’s clock."
+      bullets={[
+        <>
+          <strong>The cyan bars in A1</strong> are the years counted by A’s clock and by B’s clock at the speed you chose, and <strong>the dashed outline</strong> is the offset. They are drawn on a straight ruler, like Picture 1.
+        </>,
+        <>
+          <strong>The ruler in A2</strong> is different: each step along it is ten times longer than the step before (0.001 years, 0.01, 0.1, 1, 10). That is so that a few days and nearly nine years both fit on one line.
+        </>,
+        <>
+          <strong>The cyan mark</strong> above the ruler is the offset. <strong>The yellow mark</strong> below it is the light-travel time between the mouths outside the tunnel. <strong>The thick line</strong> between them is cyan when a closed path exists and pink when it does not.
+        </>,
+        <>
+          <strong>The lines of text</strong> say whether a closed path exists, how many years earlier than stepping in the traveller arrives at best, and the smallest speed that would make a closed path for this separation.
+        </>,
+      ]}
+      worked={
+        <>
+          At {trial.speed} c, k = √(1 − {trial.speed}²) = {Number(trial.factor.toFixed(4))}. B’s clock counts {trial.tripYears} × {Number(trial.factor.toFixed(4))} = {Number(trial.movingYears.toFixed(3))} years, so the offset is {Number(trial.offsetYears.toFixed(3))} years ({friendlyDuration(trial.offsetYears)}). Light needs{' '}
+          {friendlyDuration(trial.lightTravelYears)} to cross the separation.{' '}
+          {trial.closed
+            ? `${Number(trial.offsetYears.toFixed(3))} − ${Number(trial.lightTravelYears.toFixed(4))} = ${Number(trial.timeGainedYears.toFixed(3))} years: the time gained, at best.`
+            : 'The offset is shorter, so nothing is gained.'}
+        </>
+      }
+      lookFor={lookFor}
+      whereFrom={
+        <>
+          <strong>Measured:</strong> nothing about a wormhole; the general fact that a moving clock counts less time has been measured with real clocks. <strong>Calculated here:</strong> the clock counts, the offset and the comparison, with the same formulas as Pictures 1 to 3.{' '}
+          <strong>Imagined for the question:</strong> the wormhole and the speed and separation you chose. These are trial values, not new measurements, and they do not say that a wormhole like this exists.
         </>
       }
     />
