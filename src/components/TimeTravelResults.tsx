@@ -209,7 +209,7 @@ export function TimeTravelResults({ clockGuess, beforeGuess }: { clockGuess: str
           },
           {
             label: 'How sure the numbers are',
-            text: 'only the first row rests on a page that was read in full, NASA’s Space Place page. The others come from search results and summaries of abstracts, and the 2026 paper in the last row was seen only by its title and a one-line summary. The papers are listed after the run.',
+            text: 'only the first row rests on a page that was read in full, NASA’s Space Place page. The others come from search results and from the abstracts of the papers listed below, which were read. No paper was read in full, and the 1988 abstract does not say how the time machine is made by moving one mouth.',
           },
         ]}
       />
