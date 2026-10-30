@@ -146,9 +146,10 @@ export function AddingSpeedsTutor({ shipPrediction, flashPrediction, onExplained
             from (Experiment 5): light is measured at the same speed by everyone. This page does not prove that fact. It shows that the rule agrees with it, and the 1964 test is a measurement that checks the two together.
           </p>
           <p style={paragraphStyle}>
-            <strong>4. What Fizeau’s water tells us.</strong> The everyday sum says that flowing water should carry all of its own speed to the light going through it. In 1851 Fizeau measured that it carries only a fraction. For water, with a refractive index of {num(t.water.n)}, the rule gives the
-            fraction {n3(t.water.ruleShare)}: the light in still water goes at 1 ÷ {num(t.water.n)} = {n3(t.water.stillWaterSpeed)} c, and the rule adds {n3(t.water.ruleShare)} of the water’s speed to that. That is how the experiment and the rule agree. Von Laue showed this in 1907, after the rule had been
-            worked out. The number {num(t.water.n)} has no source read for this page, so treat {n3(t.water.ruleShare)} as an illustration, and the finding that the drag is only a fraction as the measured part.
+            <strong>4. What Fizeau’s water tells us.</strong> The everyday sum says that flowing water should carry all of its own speed to the light going through it. In 1851 Fizeau measured that it carries only a fraction. For water, with a refractive index of {num(t.water.n)} (Michelson and Morley used its square, 1.78), the rule gives the
+            fraction {n3(t.water.ruleShare)}: the light in still water goes at 1 ÷ {num(t.water.n)} = {n3(t.water.stillWaterSpeed)} c, and the rule adds {n3(t.water.ruleShare)} of the water’s speed to that. In 1886 Michelson and Morley repeated the experiment with longer tubes and measured the fraction as{' '}
+            {n3(t.water.measured)}, with a possible error of ±{num(t.water.measuredGiveOrTake)}. The rule’s {n3(t.water.ruleShare)} lies inside that range, and the everyday sum’s 1 does not, so the measurement sides with the rule. Von Laue showed in 1907 that the rule gives this fraction, after the rule had been
+            worked out. Their “possible error” is their own estimate, and I read their paper only as a typed copy.
           </p>
           <p style={paragraphStyle}>
             <strong>5. What the 1964 test adds.</strong> The pions were moving at {w.a} c. If the gamma ray had been given that speed on top of its own, as the everyday sum says, it would have gone at about {spaced(w.everydayKmPerS)} kilometres per second. It was measured at {spaced(w.measuredKmPerS)} kilometres per second, with a give-or-take of

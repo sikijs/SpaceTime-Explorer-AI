@@ -67,11 +67,11 @@ export function AddingSpeedsResults({ shipGuess, flashGuess }: { shipGuess: stri
             <strong>Settled:</strong> the rule for adding speeds has been tested, in water in 1851 and with a flash of light from fast particles in 1964. Both tests are old, and this page reports them. It does not report a new result.
           </li>
           <li>
-            <strong>What was read:</strong> a Wikipedia account of Fizeau’s experiment (the first part of it), and a scan of the 1964 paper that a computer turned into text, so its figures still need checking against the pages. No other paper was read, and no number from
-            Fizeau’s own experiment was read, so none is used.
+            <strong>What was read:</strong> a typed copy of Michelson and Morley’s 1886 paper, whose figures and typeset equations were not seen; a Wikipedia account of Fizeau’s experiment (the first part of it); and a scan of the 1964 paper that a computer turned into text, so its figures still need
+            checking against the pages. No other paper was read, and no number from Fizeau’s own paper was read, so none is used.
           </li>
           <li>
-            <strong>Not checked here:</strong> the value 1.33 for the refractive index of water has no source read for this page, and whether the rule has been tested in other ways was not looked up.
+            <strong>Not checked here:</strong> whether the rule has been tested in other ways was not looked up, and the rule itself was checked only against a short account in a Wikipedia article, not a textbook.
           </li>
         </ul>
       </div>
@@ -115,7 +115,15 @@ export function AddingSpeedsResults({ shipGuess, flashGuess }: { shipGuess: stri
             'Light in moving water: the fraction of the water’s speed added to the light’s (the rule)',
             `${num(c.waterRuleShare)} of v`,
             `the everyday sum: all of v, which is ${num(c.waterEverydayShare)} of v`,
-            `${comparisonWord(c.waterRuleVersusEveryday)}: ${num(c.waterRuleOverEveryday)} times as much. Fizeau measured a fraction less than all of it. No number from his experiment was read, so it is not compared with a number.`,
+            `${comparisonWord(c.waterRuleVersusEveryday)}: ${num(c.waterRuleOverEveryday)} times as much.`,
+          ],
+          [
+            'Light in moving water: the same fraction, measured by Michelson and Morley in 1886',
+            `${num(c.waterMeasured)} of v, possible error ±${num(c.waterMeasuredGiveOrTake)}`,
+            `the rule’s fraction: ${num(c.waterRuleShare)} of v`,
+            c.waterMeasuredAgreesWithRule
+              ? `${comparisonWord('the same')}, within their possible error (the two differ by ${num(Math.abs(c.waterRuleMinusMeasured))}). The everyday sum, 1 of v, is ${num(1 / c.waterMeasured)} times the measured value and far outside the range.`
+              : 'Not the same: the rule is outside their possible error.',
           ],
           [
             `The gamma ray’s speed measured in 1964${tag2}`,
@@ -148,18 +156,18 @@ export function AddingSpeedsResults({ shipGuess, flashGuess }: { shipGuess: stri
             text: (
               <>
                 For the spaceship and its probe, the lab measures {fmt(c.rule)} c, which is {num(c.ruleOverEveryday)} times the everyday sum of {fmt(c.everyday)} c. Run the rule backwards and it returns {fmt(c.probeWorkedBack)} c, the probe’s own speed, so the rule is consistent with itself. In water, the
-                rule adds {num(c.waterRuleShare)} of the water’s speed to the light’s, where the everyday sum would add all of it. In 1964 the gamma ray was measured at {fmt(c.pionMeasured)} c, give-or-take {fmt(c.pionGiveOrTake)} c, so it sits on c (within that give-or-take) and about
+                rule adds {num(c.waterRuleShare)} of the water’s speed to the light’s, where the everyday sum would add all of it, and Michelson and Morley measured {num(c.waterMeasured)} (possible error ±{num(c.waterMeasuredGiveOrTake)}), which agrees with the rule and not with the everyday sum. In 1964 the gamma ray was measured at {fmt(c.pionMeasured)} c, give-or-take {fmt(c.pionGiveOrTake)} c, so it sits on c (within that give-or-take) and about
                 half of the everyday sum, {fmt(c.pionEveryday)} c. The rule gives c for a flash from every ship in Picture 3, panel B.
               </>
             ),
           },
           {
             label: 'Why it matters',
-            text: 'two of these rows are measurements, and the everyday sum fails both. The water row shows it by a small amount, since the water is slow. The 1964 row shows it by a large one, since the source was almost as fast as light itself. A rule that matches one test and fails the other would not be much use. This one matches both.',
+            text: <>two of these rows are measurements, and the everyday sum fails both. The water rows show it by a small amount in speed, since the water is slow, but the measured fraction, {num(c.waterMeasured)}, is less than half of what the everyday sum says. The 1964 row shows it by a large one, since the source was almost as fast as light itself. A rule that matches one test and fails the other would not be much use. This one matches both.</>,
           },
           {
             label: 'How sure the numbers are',
-            text: 'the rule’s numbers are exact arithmetic. The 1964 figures are from a scan that a computer turned into text, and still need checking against its pages. Fizeau’s number was not read. The refractive index of water, 1.33, which sets the water fraction of 0.435, has no source read for this page. The rule itself has been checked here only against a short account in a Wikipedia article, not a textbook.',
+            text: 'the rule’s numbers are exact arithmetic. The 1964 figures are from a scan that a computer turned into text, and still need checking against its pages. The 1886 figures are from a typed copy, and their “possible error” is the authors’ own estimate, not a standard statistical error bar. Fizeau’s own number was not read. The rule itself has been checked here only against a short account in a Wikipedia article, not a textbook.',
           },
         ]}
       />

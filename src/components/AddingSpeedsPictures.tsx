@@ -242,23 +242,22 @@ export function PictureTwo() {
       <rect x={sx(0)} y={212} width={sx(pic.ruleShare) - sx(0)} height={26} fill={CYAN} fillOpacity={0.55} stroke={CYAN} strokeWidth={1.5} />
       <SvgLines x={sx(0) + 8} y={230} lines={[`by the rule: ${n3(pic.ruleShare)} of v, which is 1 − 1 ÷ ${num(pic.n)}²`]} fill={TEXT_COLOR} size={11} bold />
       <rect x={sx(pic.ruleShare)} y={212} width={sx(pic.everydayShare) - sx(pic.ruleShare)} height={26} fill="none" stroke={CYAN} strokeWidth={1.5} strokeDasharray="5 4" />
-      <line x1={sx(0)} y1={258} x2={sx(1)} y2={258} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {/* the measurement: Michelson and Morley's 0.434, with their possible error of +/- 0.02 */}
+      <line x1={sx(pic.measured - pic.measuredGiveOrTake)} y1={262} x2={sx(pic.measured + pic.measuredGiveOrTake)} y2={262} stroke={GREEN} strokeWidth={3} />
+      <line x1={sx(pic.measured - pic.measuredGiveOrTake)} y1={255} x2={sx(pic.measured - pic.measuredGiveOrTake)} y2={269} stroke={GREEN} strokeWidth={3} />
+      <line x1={sx(pic.measured + pic.measuredGiveOrTake)} y1={255} x2={sx(pic.measured + pic.measuredGiveOrTake)} y2={269} stroke={GREEN} strokeWidth={3} />
+      <circle cx={sx(pic.measured)} cy={262} r={7} fill={GREEN} stroke="#0b1020" strokeWidth={1.5} />
+      <SvgLines x={sx(pic.measured + pic.measuredGiveOrTake) + 14} y={266} lines={[`measured in 1886: ${n3(pic.measured)} of v, give-or-take ${num(pic.measuredGiveOrTake)}`]} fill={GREEN} size={11} bold />
+      <line x1={sx(0)} y1={292} x2={sx(1)} y2={292} stroke={MUTED_COLOR} strokeWidth={1.5} />
       {[0, 0.25, 0.5, 0.75, 1].map((s) => (
         <g key={s}>
-          <line x1={sx(s)} y1={253} x2={sx(s)} y2={263} stroke={MUTED_COLOR} />
-          <SvgLines x={sx(s)} y={277} lines={[String(s)]} fill={MUTED_COLOR} size={10} anchor="middle" />
+          <line x1={sx(s)} y1={287} x2={sx(s)} y2={297} stroke={MUTED_COLOR} />
+          <SvgLines x={sx(s)} y={311} lines={[String(s)]} fill={MUTED_COLOR} size={10} anchor="middle" />
         </g>
       ))}
-      <SvgLines x={sx(1) + 14} y={262} lines={['of v']} fill={MUTED_COLOR} size={10} />
-      <rect x={120} y={298} width={480} height={72} rx={6} fill="none" stroke={GREEN} strokeWidth={2} />
-      <SvgLines
-        x={132}
-        y={318}
-        lines={['Measured (Fizeau, 1851; repeated by Michelson and Morley, 1886):', 'the light is dragged along by only a fraction of the water’s speed, less than all of it.', 'No measured number is drawn here: it has not been read at its source.']}
-        fill={GREEN}
-        size={11}
-        bold
-      />
+      <SvgLines x={sx(1) + 14} y={296} lines={['of v']} fill={MUTED_COLOR} size={10} />
+      <rect x={120} y={328} width={480} height={52} rx={6} fill="none" stroke={GREEN} strokeWidth={2} />
+      <SvgLines x={132} y={348} lines={['Fizeau first measured this in 1851: the light is dragged along by only a fraction', 'of the water’s speed, less than all of it. No number from his paper is drawn here.']} fill={GREEN} size={11} bold />
     </svg>
   )
 }
@@ -273,15 +272,15 @@ export function pictureTwoCaption(): ReactNode {
       matters: 'the water is a small speed, so the difference is small, but it is a difference in kind that can be measured, and it separates the two ways of adding.',
     },
     {
-      look: 'the green box at the bottom.',
-      means: 'Fizeau measured that the light is dragged along by only a fraction of the water’s speed, and later experiments confirmed it.',
-      matters: 'this is a measurement that was made in 1851, long before the rule was written down, and the rule explains it with no extra assumption. The tutor goes through why.',
+      look: 'the green dot and the short green line through it, below the cyan bars.',
+      means: `Michelson and Morley measured the fraction as ${n3(pic.measured)} of the water’s speed, with a possible error of ±${num(pic.measuredGiveOrTake)} (the ends of the green line, ${n3(pic.measured - pic.measuredGiveOrTake)} to ${n3(pic.measured + pic.measuredGiveOrTake)}). The rule’s ${n3(pic.ruleShare)} lies inside that range, and the everyday sum’s 1 lies far outside it.`,
+      matters: 'this is a measurement made in 1886, long before the rule was in use, and it sides with the rule and not with the everyday sum. The tutor goes through why.',
     },
   ]
   return (
     <CaptionBlock
       title="Picture 2"
-      intro={`Panel A is a sketch of Fizeau’s idea: light sent through a tube of flowing water, in the same direction as the water. Panel B compares two ways of working out how much the water’s flow changes the light’s speed, as a fraction of the water’s own speed v (its speed relative to the lab). A fraction of v means a part of v: 0.5 would be half of v, and 1 would be all of it. Water has a number called its refractive index, which says how much slower light goes in it than in empty space. For water it is about ${num(pic.n)}, which means that light goes through still water at about 1 ÷ ${num(pic.n)} = ${n3(pic.stillWaterSpeed)} of its speed in empty space.`}
+      intro={`Panel A is a sketch of Fizeau’s idea: light sent through a tube of flowing water, in the same direction as the water. Panel B compares two ways of working out how much the water’s flow changes the light’s speed, as a fraction of the water’s own speed v (its speed relative to the lab). A fraction of v means a part of v: 0.5 would be half of v, and 1 would be all of it. Water has a number called its refractive index, which says how much slower light goes in it than in empty space. For water it is about ${num(pic.n)} (Michelson and Morley used its square, 1.78), which means that light goes through still water at about 1 ÷ ${num(pic.n)} = ${n3(pic.stillWaterSpeed)} of its speed in empty space.`}
       bullets={[
         <>
           <strong>The pink tube and arrow</strong> are the flowing water, imagined for the question as a sketch. <strong>The yellow arrow</strong> is the light. The tube is not drawn to scale: the water’s speed v is very much smaller than the speed of light.
@@ -290,12 +289,12 @@ export function pictureTwoCaption(): ReactNode {
           <strong>The two cyan bars</strong> are calculated here. The upper one is the everyday sum, which adds all of v to the light’s speed. The lower, darker one is the rule, which adds the fraction {n3(pic.ruleShare)} of v. For example, for water flowing at {w.exampleWaterMPerS} metres per second, the everyday sum adds all {w.exampleWaterMPerS} metres per second to the light’s speed, while the rule adds {n3(pic.ruleShare)} × {w.exampleWaterMPerS} = {(pic.ruleShare * w.exampleWaterMPerS).toFixed(2)} metres per second. <strong>The dashed outline</strong> is the part that the rule does not add.
         </>,
         <>
-          <strong>The green box</strong> is the measurement: a drag of less than all of v. It has no number because none was read at a source for this page.
+          <strong>The green dot and line</strong> are the measurement by Michelson and Morley in 1886: the dot is their value, {n3(pic.measured)} of v, and the short line is their “possible error”, ±{num(pic.measuredGiveOrTake)}, the range in which they thought the true value could lie. <strong>The green box</strong> is Fizeau’s first finding in 1851, in words only.
         </>,
       ]}
       worked={
         <>
-          <strong>What the letters mean.</strong> <strong>v</strong> is the speed of the water relative to the lab (the speed of the flow in the tube). <strong>n</strong> is the refractive index of the water, the number that says how much slower light goes in water than in empty space. For water, n = {num(w.n)}.
+          <strong>What the letters mean.</strong> <strong>v</strong> is the speed of the water relative to the lab (the speed of the flow in the tube). <strong>n</strong> is the refractive index of the water, the number that says how much slower light goes in water than in empty space. For water, n = {num(w.n)} (Michelson and Morley used n² = 1.78 for the water in their tubes, and {num(w.n)} is its square root).
           <br />
           <strong>Where the fraction comes from.</strong> It comes from the same rule as in Picture 1, (a + b) ÷ (1 + a × b), with speeds as fractions of c. Here the “spaceship” is the water, moving at a = v (as a fraction of c), and the “probe” is the light, which goes through still water at b = 1 ÷ n (as a
           fraction of c). The light goes in the same direction as the flow. The rule is the one that special relativity gives, and von Laue showed in 1907 that it explains Fizeau’s result.
@@ -315,7 +314,7 @@ export function pictureTwoCaption(): ReactNode {
       lookFor={lookFor}
       whereFrom={
         <>
-          <strong>Measured:</strong> Fizeau, 1851, and Michelson and Morley, 1886, found that moving water drags light along by only a fraction of its own speed (read in a Wikipedia account; the original papers were not read). <strong>Calculated here:</strong> the fraction {n3(pic.ruleShare)} of v, using {num(pic.n)} for the refractive index of water, a standard textbook value that has not been checked against a source for this page, and von Laue’s 1907 derivation of the same fraction from the rule. <strong>Imagined for the question:</strong> the tube and the arrows, as a sketch.
+          <strong>Measured:</strong> Michelson and Morley, 1886, measured the fraction as {n3(pic.measured)} of v with a possible error of ±{num(pic.measuredGiveOrTake)} (read in a typed copy of their paper, whose figures and typeset equations were not seen). Fizeau, 1851, first found that the drag is only a fraction (read in a Wikipedia account; his own paper was not opened). <strong>Calculated here:</strong> the fraction {n3(pic.ruleShare)} of v, from the rule, using n² = 1.78, the value Michelson and Morley used (they print Fresnel’s value as 0.437, a rounding that differs from this page’s {n3(pic.ruleShare)} by 0.001), and von Laue’s 1907 derivation of the same fraction from the rule. <strong>Imagined for the question:</strong> the tube and the arrows, as a sketch.
         </>
       }
     />

@@ -1,8 +1,8 @@
 // Evidence and Imagination, Experiment 3: Can speeds simply be added? The rule for combining two speeds along one line (special relativity), the everyday sum beside it, light in moving
 // water (Fizeau 1851, von Laue 1907) and the CERN test of 1964 (gamma rays from pions moving at 0.99975 c). Physics only: no React or browser code (CLAUDE.md §9). It imports nothing.
 // Units: speeds as a fraction of c (c = 1) unless a name says otherwise. One dimension, one direction (the specification's Decision 4); no derivation and no rapidity.
-// Sources and what is unchecked (specification, "Sources"): the 1964 figures are from machine-read text of a scanned paper and must be checked against its page images; the refractive index
-// of water and Fizeau's measured coefficient have no source read yet; the rule itself is checked only against a summary, to be checked at a textbook.
+// Sources and what is unchecked (specification, "Sources"): the 1964 figures are from machine-read text of a scanned paper and must be checked against its page images; the water figures are from
+// Michelson and Morley's 1886 paper, read as a typed copy (Wikisource) whose figures and typeset equations were not seen; the rule itself is checked only against a summary, to be checked at a textbook.
 
 function checkSpeed(x: number, what: string): void {
   if (!Number.isFinite(x) || x < 0 || x > 1) throw new RangeError(`${what} must satisfy 0 <= speed <= c.`)
@@ -56,7 +56,12 @@ export function exactDragCoefficient(n: number, v: number): number {
   if (!Number.isFinite(v) || v <= 0) throw new RangeError('The medium speed must be above zero.')
   return (lightSpeedInMovingMedium(n, v) - 1 / n) / v
 }
-export const WATER_REFRACTIVE_INDEX = 1.33 // NOT YET SOURCED (specification, Sources): to be found at an official page before the page states it.
+// Michelson and Morley (1886) use n^2 = 1.78 for water (so n is about 1.334) and measure the drag coefficient as 0.434 "with a possible error of +/- 0.02" (their words; not a statistical error bar).
+// They print Fresnel's value (n^2 - 1) / n^2 as 0.437; worked from 1.78 it is 0.438 (the paper's own rounding differs by 0.001).
+export const WATER_INDEX_SQUARED = 1.78
+export const WATER_REFRACTIVE_INDEX = Math.sqrt(WATER_INDEX_SQUARED)
+export const MEASURED_WATER_DRAG = 0.434
+export const MEASURED_WATER_DRAG_GIVE_OR_TAKE = 0.02
 
 // ---- The CERN test of 1964 (Alväger, Farley, Kjellman and Wallin) ----
 // Neutral pions of energy above 6 GeV, moving at 0.99975 c "according to special relativity", decayed into gamma rays; the gamma rays' speed was timed over 31.450 m.
@@ -167,7 +172,7 @@ export function pictureOne() {
   }
 }
 
-// Picture 2: light in moving water. Shares are of the water's speed v: the everyday sum adds all of it, the rule adds the Fresnel fraction. The refractive index is NOT YET SOURCED.
+// Picture 2: light in moving water. Fractions are of the water's speed v: the everyday sum adds all of it, the rule adds the Fresnel fraction; Michelson and Morley measured 0.434 +/- 0.02.
 export function pictureTwo() {
   const n = WATER_REFRACTIVE_INDEX
   return {
@@ -175,6 +180,8 @@ export function pictureTwo() {
     stillWaterSpeed: 1 / n,
     everydayShare: 1,
     ruleShare: fresnelDragCoefficient(n),
+    measured: MEASURED_WATER_DRAG,
+    measuredGiveOrTake: MEASURED_WATER_DRAG_GIVE_OR_TAKE,
   }
 }
 
@@ -191,7 +198,7 @@ export function pictureThree() {
 }
 
 // The worked moment of Picture 2: the rule applied to light in still water (1/n, relative to the water) and water moving at v (relative to the lab), step by step. The example water speed
-// (10 m/s) is the page's own choice for the example, not Fizeau's. The refractive index is NOT YET SOURCED.
+// (10 m/s) is the page's own choice for the example, not Fizeau's or Michelson and Morley's.
 export const EXAMPLE_WATER_M_PER_S = 10
 export function fizeauWorked() {
   const n = WATER_REFRACTIVE_INDEX
@@ -296,6 +303,12 @@ export function resultsCheckUp() {
     waterEverydayShare: two.everydayShare,
     waterRuleOverEveryday: two.ruleShare / two.everydayShare,
     waterRuleVersusEveryday: compare(two.ruleShare, two.everydayShare),
+    waterMeasured: two.measured,
+    waterMeasuredGiveOrTake: two.measuredGiveOrTake,
+    waterRuleMinusMeasured: two.ruleShare - two.measured,
+    waterMeasuredAgreesWithRule: Math.abs(two.ruleShare - two.measured) <= two.measuredGiveOrTake,
+    waterMeasuredOverEveryday: two.measured / two.everydayShare,
+    waterMeasuredVersusEveryday: compare(two.measured, two.everydayShare),
     pionMeasured: three.measured,
     pionGiveOrTake: three.giveOrTake,
     pionMeasuredVersusLight: compare(three.measured, 1),
@@ -326,7 +339,7 @@ export interface TestedRow {
 export const TESTED: readonly TestedRow[] = [
   {
     idea: 'Light in moving water',
-    what: 'In 1851 Hippolyte Fizeau found that light is dragged along by only a fraction of the water’s speed, not all of it. Michelson and Morley confirmed this in 1886. Max von Laue showed in 1907 that the rule gives that fraction.',
+    what: `In 1851 Hippolyte Fizeau found that light is dragged along by only a fraction of the water’s speed, not all of it. Michelson and Morley repeated it in 1886 and measured the fraction as ${MEASURED_WATER_DRAG} with a possible error of ±${MEASURED_WATER_DRAG_GIVE_OR_TAKE}; the rule gives ${fresnelDragCoefficient(WATER_REFRACTIVE_INDEX).toFixed(3)} for the water they used. Max von Laue showed in 1907 that the rule gives that fraction.`,
     status: 'Measured (an old test)',
   },
   {

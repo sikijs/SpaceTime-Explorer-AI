@@ -99,6 +99,7 @@ describe('the speed seen the other way', () => {
 describe('light in moving water (Fizeau, von Laue)', () => {
   it('gives the Fresnel coefficient 1 - 1/n^2 for small water speeds', () => {
     expect(fresnelDragCoefficient(1.33)).toBeCloseTo(0.4347, 4)
+    expect(fresnelDragCoefficient(Math.sqrt(1.78))).toBeCloseTo(1 - 1 / 1.78, 12)
     const vOverC = 10 / 299792458 // water at 10 m/s
     expect(Math.abs(exactDragCoefficient(1.33, vOverC) / fresnelDragCoefficient(1.33) - 1)).toBeLessThan(0.001)
   })
@@ -183,8 +184,10 @@ describe('the run pictures', () => {
   it('Picture 2: the everyday sum adds all of the water speed and the rule adds 1 - 1/n^2 of it', () => {
     const p = pictureTwo()
     expect(p.everydayShare).toBe(1)
-    expect(p.ruleShare).toBeCloseTo(0.4347, 4)
-    expect(p.stillWaterSpeed).toBeCloseTo(1 / 1.33, 12)
+    expect(p.ruleShare).toBeCloseTo(0.4382, 4)
+    expect(p.stillWaterSpeed).toBeCloseTo(1 / Math.sqrt(1.78), 12)
+    expect(p.measured).toBe(0.434)
+    expect(p.measuredGiveOrTake).toBe(0.02)
   })
   it('Picture 3: the flash is 1.99975 c everyday, c by the rule, and every ship gives c by the rule', () => {
     const p = pictureThree()
@@ -202,16 +205,16 @@ describe('the run pictures', () => {
 describe('the worked moment of Picture 2', () => {
   it('follows 1 - 1/n^2 step by step', () => {
     const w = fizeauWorked()
-    expect(w.nSquared).toBeCloseTo(1.7689, 10)
-    expect(w.oneOverNSquared).toBeCloseTo(0.5653, 4)
+    expect(w.nSquared).toBeCloseTo(1.78, 10)
+    expect(w.oneOverNSquared).toBeCloseTo(0.5618, 4)
     expect(w.share).toBeCloseTo(1 - w.oneOverNSquared, 12)
-    expect(w.share).toBeCloseTo(0.4347, 4)
-    expect(w.stillWaterSpeed).toBeCloseTo(0.7519, 4)
+    expect(w.share).toBeCloseTo(0.4382, 4)
+    expect(w.stillWaterSpeed).toBeCloseTo(0.7495, 4)
   })
   it('the example water speed gives a denominator of 1 to about 2.5 parts in 100 million, and the exact share agrees with 1 - 1/n^2 to 1 part in 10 million', () => {
     const w = fizeauWorked()
     expect(w.exampleWaterShareOfC).toBeCloseTo(3.3356e-8, 12)
-    expect(w.exampleDenominatorExcess).toBeCloseTo(2.508e-8, 11)
+    expect(w.exampleDenominatorExcess).toBeCloseTo(2.5e-8, 10)
     expect(Math.abs(w.exampleExactShare / w.share - 1)).toBeLessThan(1e-7)
   })
 })
@@ -296,8 +299,14 @@ describe('the results', () => {
     expect(c.ruleVersusEveryday).toBe('less')
     expect(c.probeWorkedBack).toBeCloseTo(0.5, 10)
     expect(c.probeWorkedBackVersusProbe).toBe('the same')
-    expect(c.waterRuleShare).toBeCloseTo(0.4347, 4)
+    expect(c.waterRuleShare).toBeCloseTo(0.4382, 4)
     expect(c.waterRuleVersusEveryday).toBe('less')
+    expect(c.waterMeasured).toBe(0.434)
+    expect(c.waterMeasuredGiveOrTake).toBe(0.02)
+    expect(c.waterRuleMinusMeasured).toBeCloseTo(0.0042, 4)
+    expect(c.waterMeasuredAgreesWithRule).toBe(true)
+    expect(c.waterMeasuredVersusEveryday).toBe('less')
+    expect(c.waterMeasuredOverEveryday).toBeCloseTo(0.434, 12)
     expect(c.pionMeasuredVersusLight).toBe('the same')
     expect(c.pionMeasuredAgreesWithLight).toBe(true)
     expect(c.pionMeasuredOverEveryday).toBeCloseTo(0.5, 3)
@@ -315,6 +324,11 @@ describe('the results', () => {
     expect(t.two.bottom).toBeCloseTo(1.99975, 10)
     expect(t.two.result).toBeCloseTo(1, 12)
     expect(t.two.percentOfC).toBeCloseTo(100, 8)
+  })
+  it('the water row of the table of what has been tested quotes the 1886 measurement and the rule\'s value', () => {
+    expect(TESTED[0].what).toContain('0.434')
+    expect(TESTED[0].what).toContain('±0.02')
+    expect(TESTED[0].what).toContain('0.438')
   })
   it('the table of what has been tested has four rows, two of them measurements', () => {
     expect(TESTED).toHaveLength(4)
@@ -351,6 +365,6 @@ describe('the tutor', () => {
     const t = tutorFigures()
     expect(t.fastest.rule).toBeCloseTo(0.99995, 5)
     expect(t.fastestBelowC).toBeCloseTo(5.05e-5, 7)
-    expect(t.water.ruleShare).toBeCloseTo(0.4347, 4)
+    expect(t.water.ruleShare).toBeCloseTo(0.4382, 4)
   })
 })
