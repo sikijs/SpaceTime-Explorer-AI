@@ -27,6 +27,7 @@ import { InterstellarVisitorExperiment } from './components/InterstellarVisitorE
 import { LocalGroupCollisionExperiment } from './components/LocalGroupCollisionExperiment'
 import { WormholeExperiment } from './components/WormholeExperiment'
 import { TimeTravelExperiment } from './components/TimeTravelExperiment'
+import { AddingSpeedsExperiment } from './components/AddingSpeedsExperiment'
 import {
   APPROACH_SPEED_KM_S as lgApproach,
   MERGER_DISTANCE_KPC as lgRing,
@@ -1132,6 +1133,13 @@ const chapters: Chapter[] = [
     // Chapter summary: wording approved by the owner (2026-10-30). "What's next" is a planned direction only: Experiment 3 has no specification yet.
     learned: timeTravelSummary(),
     next: 'The next experiment in this group looks at the speed limit this page leaned on: why two speeds do not simply add, so that two spaceships each moving at half the speed of light do not see each other moving at the speed of light.',
+  },  {
+    title: 'Can speeds simply be added?',
+    group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
+    Component: AddingSpeedsExperiment,
+    // The chapter summary and "What's next" come in a later step; empty text hides the summary hint until then.
+    learned: '',
+    next: '',
   },
 ]
 
