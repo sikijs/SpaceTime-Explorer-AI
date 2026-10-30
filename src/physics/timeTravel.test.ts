@@ -37,6 +37,9 @@ import {
   resultsCheckUp,
   exampleSteps,
   TESTED,
+  clockGuessResult,
+  beforeGuessResult,
+  tutorFigures,
 } from './timeTravel'
 
 describe('travel to the future: the offset between the mouths (the twin formula)', () => {
@@ -289,5 +292,34 @@ describe('the results: check-up, steps and what has been tested', () => {
     expect(TESTED[0].idea).toBe('Travel to the future')
     expect(TESTED.filter((r) => r.status === 'Not seen')).toHaveLength(2)
     expect(TESTED.every((r) => r.idea.length > 0 && r.what.length > 0)).toBe(true)
+  })
+})
+
+describe('the tutor: marking the guesses and the figures it uses', () => {
+  it('Prediction 1 matches only the 6 years button, and Prediction 2 only "yes"', () => {
+    expect(clockGuessResult('6')).toBe('matched')
+    for (const id of ['10', '8', '4', '2']) expect(clockGuessResult(id)).toBe('did not match')
+    expect(beforeGuessResult('yes')).toBe('matched')
+    expect(beforeGuessResult('no')).toBe('did not match')
+    expect(() => clockGuessResult('7')).toThrow(RangeError)
+    expect(() => beforeGuessResult('maybe')).toThrow()
+  })
+  it('the last question: at 0.1 c the offset is 0.0501 years (about 18 days), too short for 1 light-year but long enough for 1 light-day', () => {
+    const t = tutorFigures()
+    expect(t.slowSpeed).toBe(0.1)
+    expect(t.slowOffsetYears).toBeCloseTo(10 * (1 - Math.sqrt(1 - 0.01)), 12)
+    expect(t.slowOffsetYears).toBeCloseTo(0.0501, 4)
+    expect(t.slowOffsetDays).toBeCloseTo(18.3, 1)
+    expect(t.slowClosedAtOneLightYear).toBe(false)
+    expect(t.slowLateDaysAtOneLightYear).toBeCloseTo(365.25 - t.slowOffsetDays, 9)
+    expect(t.slowLateDaysAtOneLightYear).toBeCloseTo(346.9, 1)
+    expect(t.slowClosedAtOneLightDay).toBe(true)
+    expect(t.slowGainedAtOneLightDayDays).toBeCloseTo(t.slowOffsetDays - 1, 9)
+  })
+  it('the smallest speed for 1 light-year is 0.4359 c, and the preset offset is 4 years, 4 times the light-travel time', () => {
+    const t = tutorFigures()
+    expect(t.smallestSpeedAtOneLightYear).toBeCloseTo(0.4359, 4)
+    expect(t.presetOffsetYears).toBeCloseTo(4, 12)
+    expect(t.presetOffsetOverLight).toBeCloseTo(4, 12)
   })
 })

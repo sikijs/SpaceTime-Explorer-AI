@@ -345,3 +345,40 @@ export const TESTED: readonly TestedRow[] = [
     status: 'Simulated only',
   },
 ]
+
+// ---- The tutor (Part 4) ----
+// The tutor marks each prediction in its explanation only (CLAUDE.md §12, §13). A guess matches when it is the button the real result points to.
+export type GuessResult = 'matched' | 'did not match'
+export function clockGuessResult(id: string): GuessResult {
+  clockGuessYears(id)
+  return id === predictionOneAnswerId() ? 'matched' : 'did not match'
+}
+export function beforeGuessResult(id: string): GuessResult {
+  beforeGuessMarker(id)
+  return id === predictionTwoAnswerId() ? 'matched' : 'did not match'
+}
+
+// The numbers the tutor's last question and explanation use: a slow mouth (0.1 c, the slowest setting of "Now try it yourself") with the mouths 1 light-year apart, and with them 1 light-day apart.
+const DAYS_PER_YEAR = 365.25
+export function tutorFigures() {
+  const slowSpeed = SPEED_CHOICES[0]
+  const oneLightDayYears = 1 / DAYS_PER_YEAR
+  const far = trialPicture(slowSpeed, PRESET_SEPARATION_LY)
+  const near = trialPicture(slowSpeed, oneLightDayYears)
+  const preset = trialPicture(PRESET_SPEED, PRESET_SEPARATION_LY)
+  return {
+    tripYears: PRESET_TRIP_YEARS,
+    slowSpeed,
+    slowOffsetYears: far.offsetYears,
+    slowOffsetDays: far.offsetYears * DAYS_PER_YEAR,
+    slowClosedAtOneLightYear: far.closed,
+    // With the mouths 1 light-year apart at 0.1 c the traveller still arrives this many days AFTER leaving (the light-travel time minus the offset).
+    slowLateDaysAtOneLightYear: (PRESET_SEPARATION_LY - far.offsetYears) * DAYS_PER_YEAR,
+    oneLightDayYears,
+    slowClosedAtOneLightDay: near.closed,
+    slowGainedAtOneLightDayDays: near.timeGainedYears * DAYS_PER_YEAR,
+    smallestSpeedAtOneLightYear: far.smallestSpeed as number,
+    presetOffsetYears: preset.offsetYears,
+    presetOffsetOverLight: preset.offsetOverLight,
+  }
+}

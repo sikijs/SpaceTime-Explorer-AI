@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { CLOCK_CHOICES, BEFORE_CHOICES, PRESET_SPEED, PRESET_TRIP_YEARS, PRESET_SEPARATION_LY, SEPARATION_CHOICES_LY, SPEED_CHOICES, TRIAL_DEFAULT_SEPARATION_LY, TRIAL_DEFAULT_SPEED, friendlyDuration, trialPicture } from '../physics/timeTravel'
 import { TimeTravelResults } from './TimeTravelResults'
+import { TimeTravelTutor } from './TimeTravelTutor'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './TimeTravelPictures'
 
 // Evidence and Imagination, Experiment 2 (docs/experiments/evidence-and-imagination/02-can-you-travel-back-in-time.md).
-// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions, the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `TimeTravelPictures.tsx`), and (Step 6) the results (`TimeTravelResults.tsx`). The tutor comes in a later step.
+// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions, the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `TimeTravelPictures.tsx`), (Step 6) the results (`TimeTravelResults.tsx`) with the papers list (Step 8), and (Step 7) the tutor as Part 4 (`TimeTravelTutor.tsx`, wording approved 2026-10-30). The chapter summary comes in a later step.
 // The introduction's wording is approved (2026-10-30). The wording of the two predictions is approved (2026-10-30). The stage lines and the Picture 1 to 3 captions are approved too (2026-10-30). The Part 2 wording and the Drawing A caption are approved too (2026-10-30). The Part 3 results wording is approved too (2026-10-30) (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
 // in time, or what chronology protection is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
@@ -37,7 +38,7 @@ interface TimeTravelExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function TimeTravelExperiment({ onComplete }: TimeTravelExperimentProps) {
+export function TimeTravelExperiment({ onComplete, onTutorComplete }: TimeTravelExperimentProps) {
   const [clockGuess, setClockGuess] = useState<string | null>(null)
   const [beforeGuess, setBeforeGuess] = useState<string | null>(null)
   const [trialSpeed, setTrialSpeed] = useState<number>(TRIAL_DEFAULT_SPEED)
@@ -334,6 +335,28 @@ export function TimeTravelExperiment({ onComplete }: TimeTravelExperimentProps) 
             </div>
           )}
           {done && <TimeTravelResults clockGuess={clockGuess} beforeGuess={beforeGuess} />}
+
+          {done && clockGuess !== null && beforeGuess !== null && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> You have seen the pictures and the tables. This last part is a short conversation with a tutor.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>Three questions, one at a time.</strong> What you see in Pictures 1 to 3; how your own guesses (the white marks) compare with the real results; and one bigger question about a slower mouth and a shorter distance. Type a few words for each. Nothing is graded, and a short answer is fine.
+                </li>
+                <li>
+                  <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses matched until you have answered all three, so you can think it through first.
+                </li>
+                <li>
+                  <strong>Then the explanation.</strong> It covers why B’s clock falls behind, why the tunnel turns that gap into a path back in time, why the path closes only when the gap is longer than the light-travel time, why it could not reach back before the gap existed, the
+                  grandfather paradox, what chronology protection is, and what is not settled.
+                </li>
+              </ul>
+              <TimeTravelTutor clockPrediction={clockGuess} beforePrediction={beforeGuess} onExplained={onTutorComplete} />
+            </div>
+          )}
         </div>
       </div>
     </div>
