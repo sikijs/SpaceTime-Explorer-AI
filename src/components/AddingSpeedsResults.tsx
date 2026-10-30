@@ -6,7 +6,15 @@ import { ResultsTable } from './WideBinariesExperiment'
 // Evidence and Imagination, Experiment 3: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
 // Every number is read from the physics module (CLAUDE.md §9); this file only sets it out. The tables are the real numbers and never change with the learner's guesses or settings. The wording is
 // Claude's DRAFT of 2026-10-30, for the owner's approval line by line (CLAUDE.md §28.1). Why the rule has the form it has beyond the short account in Picture 1, and what the two tests show about the
-// speed of light, are left to the tutor (CLAUDE.md §12, §13). The papers behind the numbers are listed at the end (Step 8), after the run.
+// speed of light, are left to the tutor (CLAUDE.md §12, §13). The papers behind the numbers are listed at the end (Step 8), after the run: each link was opened on 2026-10-30; the 1964 paper and the 1886 paper were read, NASA's page in part, and Fizeau's and von Laue's papers could not be opened (not linked).
+
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
 
 const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
@@ -218,6 +226,30 @@ export function AddingSpeedsResults({ shipGuess, flashGuess }: { shipGuess: stri
           },
         ]}
       />
+      <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>The papers and pages behind these numbers.</strong> They are listed here, after the run, because they give away the answers to your predictions. Links open in a new tab. Each link was opened on 30 October 2026. Only the 1964 paper (a scan) and the 1886 paper (a
+          typed copy) were read for this page. NASA’s page was read in part.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://doi.org/10.1016/0031-9163(64)91095-9">Alväger, Farley, Kjellman and Wallin, “Test of the second postulate of special relativity in the GeV region”, Physics Letters 12, 260 (1964)</ExternalLink>: the CERN test in Picture 3. This link goes to
+            the publisher’s record of the paper.{' '}
+            <ExternalLink href="https://docente.unife.it/guido.zavattini/allegati/alvaeger-pl1964.pdf">A scan of the paper</ExternalLink> is kept by a university lecturer; it is the copy read for this page.
+          </li>
+          <li>
+            <ExternalLink href="https://en.wikisource.org/wiki/Influence_of_Motion_of_the_Medium_on_the_Velocity_of_Light">Michelson and Morley, “Influence of motion of the medium on the velocity of light”, American Journal of Science (1886)</ExternalLink>: the repeat of Fizeau’s
+            experiment in Picture 2, with larger tubes. This is a typed copy of the paper on Wikisource.
+          </li>
+          <li>
+            <ExternalLink href="https://science.nasa.gov/solar-system/10-things-einstein-got-right/">NASA Science, “10 Things Einstein Got Right”</ExternalLink>: a plain page that says all light obeys one speed, and that light of very different energies travels at the same speed. It does not
+            cover adding speeds.
+          </li>
+          <li>
+            <strong>Not linked</strong> (no readable copy could be opened here): Fizeau’s own paper of 1851 (<em>Comptes Rendus</em> 33, 349), and von Laue’s paper of 1907 (<em>Annalen der Physik</em> 328, 989), whose publisher’s page was refused.
+          </li>
+        </ul>
+      </div>
     </div>
   )
 }
