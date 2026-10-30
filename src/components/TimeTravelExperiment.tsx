@@ -5,7 +5,7 @@ import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, 
 
 // Evidence and Imagination, Experiment 2 (docs/experiments/evidence-and-imagination/02-can-you-travel-back-in-time.md).
 // Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions, the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `TimeTravelPictures.tsx`), and (Step 6) the results (`TimeTravelResults.tsx`). The tutor comes in a later step.
-// The introduction's wording is approved (2026-10-30). The wording of the two predictions is approved (2026-10-30). The stage lines and the Picture 1 to 3 captions are approved too (2026-10-30). The Part 2 wording and the Drawing A caption are approved too (2026-10-30). The Part 3 results wording is Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
+// The introduction's wording is approved (2026-10-30). The wording of the two predictions is approved (2026-10-30). The stage lines and the Picture 1 to 3 captions are approved too (2026-10-30). The Part 2 wording and the Drawing A caption are approved too (2026-10-30). The Part 3 results wording is approved too (2026-10-30) (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
 // in time, or what chronology protection is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
