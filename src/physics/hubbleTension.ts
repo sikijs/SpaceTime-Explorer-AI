@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 1: two measurements of the expansion rate (the Hubble tension).
-// See docs/experiments/frontier-and-beyond/01-hubble-tension.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/01-hubble-tension.md, "Physics Model".
 //
 // No new physics: the expansion rate is Cosmology Experiment 1's, the Hubble time is Cosmology
 // Experiment 2's. The one new idea is sigma, the gap between two measurements in units of their

@@ -32,7 +32,7 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Cosmic Horizons, Experiment 13 (docs/experiments/frontier-and-beyond/13-catching-a-supernova.md).
+// Cosmic Horizons, Experiment 13 (docs/experiments/cosmic-horizons/13-catching-a-supernova.md).
 // Step 6 builds the tutor (CatchingASupernovaTutor.tsx) and, in App, the chapter summary.
 // Step 5 builds the two controls (the core and the speed of the gas; a distance control was dropped at the owner's request on 2026-10-23), shown after the run, which add white marks to Pictures 2 and 3, and the results
 // with the reading guide (the check-up, four tables with notes, the predictions beside the results and the held-back paper links).

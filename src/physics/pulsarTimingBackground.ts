@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 22: does the universe hum? (pulsar timing arrays)
-// See docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/22-does-the-universe-hum.md, "Physics Model".
 //
 // Kepler's law for two black holes in orbit, the wave frequency (twice the orbital frequency), the lowest frequency that a data set of a
 // given length can pick out (1 / the span), a rough estimate of the shift in a pulse's arrival time (the strain divided by 2 pi times the

@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 8: does antimatter fall down? ALPHA-g.
-// See docs/experiments/frontier-and-beyond/08-does-antimatter-fall-down.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/08-does-antimatter-fall-down.md, "Physics Model".
 //
 // No new physics beyond textbook relations: free fall at a constant acceleration (distance = 1/2 x ratio x g x t^2), combining two independent
 // uncertainties in quadrature, and the number of sigma between a measurement and a possibility. The experiment's published numbers are ALPHA's 2023

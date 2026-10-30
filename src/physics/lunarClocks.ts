@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 10: does time tick faster on the Moon? Lunar clocks.
-// See docs/experiments/frontier-and-beyond/10-does-time-tick-faster-on-the-moon.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/10-does-time-tick-faster-on-the-moon.md, "Physics Model".
 //
 // No new physics beyond the weak-field clock-rate formula of Gravity Experiments 2, 3 and 9: compared with a clock far from everything, a clock
 // ticks slower by the fraction  potential / c^2 + speed^2 / (2 c^2). The potential is the sum of GM / distance for each body that matters, and the

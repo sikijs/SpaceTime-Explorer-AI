@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 2: does dark energy change?
-// See docs/experiments/frontier-and-beyond/02-does-dark-energy-change.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/02-does-dark-energy-change.md, "Physics Model".
 //
 // No new physical law: a flat universe of matter and dark energy (Cosmology Experiment 5), with the
 // dark energy's strength allowed to change through the two-number description

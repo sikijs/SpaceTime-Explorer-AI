@@ -8,7 +8,7 @@ import { HorizonAreaLawTutor } from './HorizonAreaLawTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Cosmic Horizons, Experiment 18 (docs/experiments/frontier-and-beyond/18-does-a-black-holes-area-ever-shrink.md).
+// Cosmic Horizons, Experiment 18 (docs/experiments/cosmic-horizons/18-does-a-black-holes-area-ever-shrink.md).
 // STEPS 2 and 3 (the interface skeleton, the introduction and the two predictions): this file has the status line, the introduction, one illustration (what the "area" of a black
 // hole is) with its guide, the new-word list, the collapsed "Words and formulas" panel, the "Want to know more?" links and the two predictions (Run only records them). It has no
 // run, pictures, controls, results or tutor yet; those are later steps (CLAUDE.md §6). The few published numbers the introduction states are read from src/physics/horizonAreaLaw.ts (CLAUDE.md §9). All wording is a DRAFT for the

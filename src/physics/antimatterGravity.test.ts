@@ -17,7 +17,7 @@ import {
   upOrDown,
 } from './antimatterGravity'
 
-// Tests for Cosmic Horizons Experiment 8 (docs/experiments/frontier-and-beyond/08-does-antimatter-fall-down.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 8 (docs/experiments/cosmic-horizons/08-does-antimatter-fall-down.md, "Required Physics Tests").
 // The expected values are worked out by hand with g = 9.81 m/s^2, so a wrong formula in the module cannot make a test pass. For example, in one
 // second a ratio of 1 falls 0.5 x 1 x 9.81 x 1^2 = 4.905 m, and a ratio of 0.75 falls 0.5 x 0.75 x 9.81 = 3.67875 m. The time to fall 0.256 m at
 // ratio 1 is sqrt(2 x 0.256 / 9.81) = sqrt(0.052192) = 0.22845 s, and at 0.75 it is sqrt(0.512 / 7.3575) = sqrt(0.069589) = 0.26380 s. The combined

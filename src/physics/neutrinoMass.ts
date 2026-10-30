@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 4: can the universe weigh a neutrino? (DESI's limit on the neutrino mass).
-// See docs/experiments/frontier-and-beyond/04-can-the-universe-weigh-a-neutrino.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/04-can-the-universe-weigh-a-neutrino.md, "Physics Model".
 //
 // No new physics beyond standard textbook relations: the neutrino temperature (4/11)^(1/3) T, the typical energy 3.151 k T, the
 // density Omega_nu h^2 = (sum of masses) / 93.14 eV, and the small-clump smoothing 8 f_nu. The microwave-background temperature, its

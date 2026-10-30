@@ -25,7 +25,7 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Cosmic Horizons, Experiment 10 (docs/experiments/frontier-and-beyond/10-does-time-tick-faster-on-the-moon.md).
+// Cosmic Horizons, Experiment 10 (docs/experiments/cosmic-horizons/10-does-time-tick-faster-on-the-moon.md).
 // Step 6 builds the controls (the place, the length of an orbit and the duration), shown after the run, which add a white mark to each picture and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stages 1 to 3, Picture 2 at stages 3 and 4 and Picture 3 at stage 5, each with a guide. Step 3 built the two predictions (their answer buttons, Run gated on both, and Start over); Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of the Earth and the Moon with the
 // influences on a clock (an illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 (its axes and a guide). Step 7 built the tutor (LunarClocksTutor.tsx) and, in App,
 // the chapter summary. All wording is draft for the owner's

@@ -20,7 +20,7 @@ import { AntimatterGravityTutor } from './AntimatterGravityTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Cosmic Horizons, Experiment 8 (docs/experiments/frontier-and-beyond/08-does-antimatter-fall-down.md).
+// Cosmic Horizons, Experiment 8 (docs/experiments/cosmic-horizons/08-does-antimatter-fall-down.md).
 // Step 6 builds the three controls (the ratio, the error bar with the possibility to test, and the difference to see), shown after the run, which change Picture 1's
 // white dashed curve, Picture 2's third line, Picture 3's white bar and a last row in Tables 1 and 2, and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stage 1, Picture 2 at stages 2 to 4 and Picture 3 at stage 5, each with a guide. Step 3 built the two predictions. Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of the ALPHA-g trap (an
 // illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 with its guide. Step 7 built the tutor (AntimatterGravityTutor.tsx) and, in App, the chapter summary. All wording is draft for the owner's line-by-line

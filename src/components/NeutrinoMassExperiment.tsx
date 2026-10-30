@@ -25,7 +25,7 @@ import type { HeavyTiming, Room, RoomRange } from '../physics/neutrinoMass'
 import { formatTotal, NeutrinoMassTutor } from './NeutrinoMassTutor'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 
-// Cosmic Horizons, Experiment 4 (docs/experiments/frontier-and-beyond/04-can-the-universe-weigh-a-neutrino.md).
+// Cosmic Horizons, Experiment 4 (docs/experiments/cosmic-horizons/04-can-the-universe-weigh-a-neutrino.md).
 // Step 2 built the status label, the introduction with its new-word list and its "Want to know more?" links, a drawing of the relic neutrino
 // sea, and the skeleton of Picture 1 with its guide. Step 3 added the two predictions, Run, the staged run, the neutrinos' turning point on
 // Picture 1, and Pictures 2 and 3 with their guides. Step 4 added the "Try a different total mass" control, the neutral results tables and their

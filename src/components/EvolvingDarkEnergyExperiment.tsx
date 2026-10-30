@@ -14,7 +14,7 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 import { EvolvingDarkEnergyTutor } from './EvolvingDarkEnergyTutor'
 import type { DistanceRange, RecalibrationEffect } from '../physics/evolvingDarkEnergy'
 
-// Cosmic Horizons, Experiment 2 (docs/experiments/frontier-and-beyond/02-does-dark-energy-change.md).
+// Cosmic Horizons, Experiment 2 (docs/experiments/cosmic-horizons/02-does-dark-energy-change.md).
 // Step 5 adds the tutor (EvolvingDarkEnergyTutor.tsx), shown below the results after the run; the chapter summary in App appears once the
 // learner reaches its explanation. Step 4 adds the "Words and formulas" panel (the formulas appear after the run), the "How far back?" control and the neutral results (both
 // shown after the run), and the links withheld until then. The wording of Step 4 is draft wording for the owner's review (§28.1).

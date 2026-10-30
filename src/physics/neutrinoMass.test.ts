@@ -18,7 +18,7 @@ import {
   typicalEnergyEv,
 } from './neutrinoMass'
 
-// Tests for Cosmic Horizons Experiment 4 (docs/experiments/frontier-and-beyond/04-can-the-universe-weigh-a-neutrino.md, "Required Physics Tests").
+// Tests for Cosmic Horizons Experiment 4 (docs/experiments/cosmic-horizons/04-can-the-universe-weigh-a-neutrino.md, "Required Physics Tests").
 // The numbers below were worked out separately, by an independent script and by hand, so a wrong formula in the module cannot make a test pass.
 
 const bound = (name: string) => BOUNDS.find((b) => b.name === name)!

@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 3: how lumpy is the universe? (S8, KiDS and DES).
-// See docs/experiments/frontier-and-beyond/03-how-lumpy-is-the-universe.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/03-how-lumpy-is-the-universe.md, "Physics Model".
 //
 // No new physics: S8 is a definition, S8 = sigma8 x sqrt(Omega_m / 0.3), and the tension is Experiment 1's sigma (the gap divided by the
 // combined uncertainty), with the one stated simplification that each published up/down uncertainty is replaced by the one on the side

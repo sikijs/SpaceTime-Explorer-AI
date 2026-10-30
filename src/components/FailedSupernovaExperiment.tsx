@@ -27,7 +27,7 @@ import { FailedSupernovaTutor } from './FailedSupernovaTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Cosmic Horizons, Experiment 17 (docs/experiments/frontier-and-beyond/17-a-star-that-vanished.md).
+// Cosmic Horizons, Experiment 17 (docs/experiments/cosmic-horizons/17-a-star-that-vanished.md).
 // STEPS 2 to 4 (the interface skeleton, the predictions, and the run with its three pictures): this file has the status line, the introduction, one illustration (an ordinary
 // supernova beside a failed one) with its guide, the new-word list, the collapsed "Words and formulas" panel, the "Want to know more?" links, the two predictions, and Part 1: a
 // five-stage run that builds three pictures (what telescopes saw; what is left of the star and how strong the push was; how many stars fail). The learner's guesses are drawn on

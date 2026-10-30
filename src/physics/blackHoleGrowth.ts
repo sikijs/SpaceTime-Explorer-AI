@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 23: how fast can a black hole grow? (the "little red dots")
-// See docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/23-how-fast-can-a-black-hole-grow.md, "Physics Model".
 //
 // The Eddington growth time, exponential growth M(t) = M0 exp[(1 - e) / e x t / t_Edd] at efficiency e, the time to grow from a seed to a
 // given mass, the smallest seed that fits in a given time, and the published object CAPERS-LRD-z9 as data. The age of the universe is

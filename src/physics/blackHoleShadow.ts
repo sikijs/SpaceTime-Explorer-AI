@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 21: can we photograph a black hole's shadow? (Event Horizon Telescope)
-// See docs/experiments/frontier-and-beyond/21-black-hole-shadow.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/21-black-hole-shadow.md, "Physics Model".
 //
 // One formula, given and not derived (Black Holes 4): light aimed closer than 3 sqrt(3) / 2 horizon radii is captured, so the
 // ideal shadow of a non-spinning black hole is a disc of diameter 2 x (3 sqrt(3) / 2) x r_s = 6 sqrt(3) G M / c^2. Its angle in the

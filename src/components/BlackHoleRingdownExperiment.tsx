@@ -10,7 +10,7 @@ import { BlackHoleRingdownTutor } from './BlackHoleRingdownTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Cosmic Horizons, Experiment 19 (docs/experiments/frontier-and-beyond/19-do-black-holes-ring-like-bells.md).
+// Cosmic Horizons, Experiment 19 (docs/experiments/cosmic-horizons/19-do-black-holes-ring-like-bells.md).
 // STEPS 2 to 8 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, Pictures 2 and 3, Part 2: the learner's own trial black hole, Part 3: the results, then Part 4: the tutor): this file has the title, the status line, the introduction, one illustration (a bell and a black hole, to explain "ringing") with its
 // guide, the new-word list, the collapsed "Words and formulas" panel and the "Want to know more?" links. The two predictions are there, and Run starts a five-stage run that draws Picture 1 (the ringing, its swings and the comparison with the measurement, with Prediction 2's guess on it in white), Picture 2 (pitch against spin, with Prediction 1's guess on it in white) and Picture 3 (pitch against mass). Part 2 ("Now try it yourself") has two controls, the mass and the spin, and one drawing that follows them. Part 3 has the results: a reading guide, a check-up table, two more tables, a note under each and the learner's predictions beside them. Part 4 is the tutor. It has no chapter summary yet; those are
 // later steps (CLAUDE.md §6). All wording is a DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says which way the pitch changes

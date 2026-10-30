@@ -5,7 +5,7 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LumpinessTutor } from './LumpinessTutor'
 import type { LumpinessResult, ShiftDirection, TensionRange } from '../physics/lumpiness'
 
-// Cosmic Horizons, Experiment 3 (docs/experiments/frontier-and-beyond/03-how-lumpy-is-the-universe.md).
+// Cosmic Horizons, Experiment 3 (docs/experiments/cosmic-horizons/03-how-lumpy-is-the-universe.md).
 // Step 2 built the status label, the introduction with its "Want to know more?" links, the weak-lensing drawing and Picture 1 (wording approved
 // by the owner on 2026-10-19). Step 3 adds the two predictions, Run, the staged run, the survey measurements and gaps on Picture 1, and Pictures 2
 // and 3 with their guides (wording approved by the owner on 2026-10-19). Step 4 adds the "Look closer at" control and the neutral results (shown

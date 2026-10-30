@@ -6,7 +6,7 @@ import { REAL_UNIVERSE_AGE_YEARS } from '../physics/bigBangExperiment'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { HubbleTensionTutor } from './HubbleTensionTutor'
 
-// Cosmic Horizons, Experiment 1 (docs/experiments/frontier-and-beyond/01-hubble-tension.md).
+// Cosmic Horizons, Experiment 1 (docs/experiments/cosmic-horizons/01-hubble-tension.md).
 // Step 2 built the status label, the introduction, the choice of a nearby-universe measurement and Picture 1. Step 3 added the two
 // predictions, Run, the staged run and Pictures 2 and 3 with their guides. Step 4 added the "Words and formulas" panel, the neutral results
 // (shown after the run) and the "What if the error bars were bigger?" control. Step 5 adds the tutor (HubbleTensionTutor.tsx), shown after the

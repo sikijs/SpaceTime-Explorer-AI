@@ -21,7 +21,7 @@ import { InterstellarVisitorResults } from './InterstellarVisitorResults'
 import { InterstellarVisitorTutor } from './InterstellarVisitorTutor'
 import { PictureOne, PictureTwo, TRIAL_CLOSEST_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './InterstellarVisitorPictures'
 
-// Cosmic Horizons, Experiment 24 (docs/experiments/frontier-and-beyond/24-a-visitor-from-another-star.md).
+// Cosmic Horizons, Experiment 24 (docs/experiments/cosmic-horizons/24-a-visitor-from-another-star.md).
 // This file has the title, the status line, the introduction, the collapsed "Words and formulas" panel, the "Want to know more?" links, Part 1 (the two predictions and the five-stage run), Part 2 (the two controls
 // and Drawing A), Part 3 (the results, in `InterstellarVisitorResults.tsx`, which also lists the papers and pages after the run) and Part 4 (the tutor, in `InterstellarVisitorTutor.tsx`). The pictures are in
 // `InterstellarVisitorPictures.tsx` and the chapter summary and "What's next" are in `App.tsx`. All wording is written to the standard of §29 and was approved by the owner line by line (CLAUDE.md §28.1).

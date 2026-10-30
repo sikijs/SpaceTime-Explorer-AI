@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 14: what makes a white dwarf explode? (the double-detonation remnant SNR 0509-67.5)
-// See docs/experiments/frontier-and-beyond/14-what-makes-a-white-dwarf-explode.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/14-what-makes-a-white-dwarf-explode.md, "Physics Model".
 //
 // No new physics. Four small calculations: (1) a white dwarf's size and its distance from the Chandrasekhar limit (the formula and the limit are Black Holes 9's, imported);
 // (2) the mass of the double-detonation white dwarf, a carbon-oxygen core plus a helium shell; (3) a shell's average speed, radius / age, and the gap between the two calcium shells;

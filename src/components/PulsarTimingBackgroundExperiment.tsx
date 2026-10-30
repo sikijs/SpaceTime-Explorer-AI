@@ -7,7 +7,7 @@ import { PulsarTimingBackgroundTutor } from './PulsarTimingBackgroundTutor'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Cosmic Horizons, Experiment 22 (docs/experiments/frontier-and-beyond/22-does-the-universe-hum.md).
+// Cosmic Horizons, Experiment 22 (docs/experiments/cosmic-horizons/22-does-the-universe-hum.md).
 // STEPS 2 to 8 (the interface skeleton and the introduction, the two predictions, the run and Picture 1, then Picture 2, then the "Now try it yourself" controls and Drawing A, then the results, then the tutor): this file has the title, the status line, the introduction, the new-word list, the collapsed "Words and formulas" panel and the
 // "Want to know more?" links. It also has the two predictions (Part 1), the run (six stages) and Picture 1 and Picture 2 with the guesses. It also has Part 2, "Now try it yourself" (two controls and Drawing A, which follows them). It also has Part 3, the results (a check-up and two more tables, each with a note, the predictions beside them, and the papers). It also has Part 4, the tutor. It has no chapter summary yet; those are later steps (CLAUDE.md §6). All wording is a DRAFT for the
 // owner's line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long one wave cycle of a pair of supermassive black holes lasts, how big the shift in a

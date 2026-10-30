@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 19: do black holes ring like bells? (GW250114's ringdown and the "no-hair" test)
-// See docs/experiments/frontier-and-beyond/19-do-black-holes-ring-like-bells.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/19-do-black-holes-ring-like-bells.md, "Physics Model".
 //
 // Two published fits, given and not derived, for the main ringing tone ((l, m, n) = (2, 2, 0)) of a spinning black hole of mass M and spin chi
 // (Berti, Cardoso and Will, 2006), with t_M = G M / c^3:

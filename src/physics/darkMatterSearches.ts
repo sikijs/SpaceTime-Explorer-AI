@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 6: where is the dark matter? (the LZ experiment's null results and one unexplained event).
-// See docs/experiments/frontier-and-beyond/06-where-is-the-dark-matter.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/06-where-is-the-dark-matter.md, "Physics Model".
 //
 // No new physics beyond standard textbook statistics: Poisson counting (the chance of seeing no events when N are expected is e^-N), the
 // zero-event 90 percent rule (N = -ln 0.10 = 2.30), and two idealised rules for how a limit improves with more data. The normal-curve

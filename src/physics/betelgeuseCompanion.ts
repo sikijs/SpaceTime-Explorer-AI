@@ -1,5 +1,5 @@
 // Cosmic Horizons, Experiment 12: the star that may be about to explode, what is Betelgeuse, and does it have a companion?
-// See docs/experiments/frontier-and-beyond/12-betelgeuse-and-its-companion.md, "Physics Model".
+// See docs/experiments/cosmic-horizons/12-betelgeuse-and-its-companion.md, "Physics Model".
 //
 // No new physics: (1) a size from an angle and a distance, radius = 1/2 x angular diameter x distance (the small-angle relation, with the angle in radians); (2) Kepler's
 // third law in astronomers' units, period^2 = separation^3 / (total mass), with the period in years, the separation in astronomical units and the masses in solar masses;

@@ -21,7 +21,7 @@ import { BlackHoleGrowthResults } from './BlackHoleGrowthResults'
 import { BlackHoleGrowthTutor } from './BlackHoleGrowthTutor'
 import { PictureOne, PictureTwo, TRIAL_SEED_LABELS, TrialDrawing, efficiencyPercent, pictureOneCaption, pictureTwoCaption, trialCaption } from './BlackHoleGrowthPictures'
 
-// Cosmic Horizons, Experiment 23 (docs/experiments/frontier-and-beyond/23-how-fast-can-a-black-hole-grow.md).
+// Cosmic Horizons, Experiment 23 (docs/experiments/cosmic-horizons/23-how-fast-can-a-black-hole-grow.md).
 // STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
 // links. It also has the two predictions (Part 1), the run (five stages) and Picture 1 and Picture 2 with the guesses (in `BlackHoleGrowthPictures.tsx`). It also has Part 2 (two controls and Drawing A), Part 3, the results (`BlackHoleGrowthResults.tsx`) and Part 4, the tutor (`BlackHoleGrowthTutor.tsx`). The chapter summary and "What's next" are in `App.tsx`, and the papers are listed after the run. All wording is a DRAFT for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. Nothing here says how long a black hole of 10 Suns takes to reach the object's mass, how many growth times that is, how small a seed

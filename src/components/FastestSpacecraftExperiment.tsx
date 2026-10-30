@@ -25,7 +25,7 @@ import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
-// Cosmic Horizons, Experiment 11 (docs/experiments/frontier-and-beyond/11-the-fastest-spacecraft.md).
+// Cosmic Horizons, Experiment 11 (docs/experiments/cosmic-horizons/11-the-fastest-spacecraft.md).
 // Step 7 builds the tutor (FastestSpacecraftTutor.tsx) and, in App, the chapter summary.
 // Step 6 builds the controls (the point on the orbit, and the time), shown after the run, which add a white mark to each picture and a Table 4.
 // Step 5 builds the results (the status label, three tables, the formulas in the "Words and formulas" panel and the link kept back until after the run).

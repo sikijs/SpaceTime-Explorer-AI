@@ -27,7 +27,7 @@ import { LocalGroupCollisionResults } from './LocalGroupCollisionResults'
 import { LocalGroupCollisionTutor } from './LocalGroupCollisionTutor'
 import { PictureOne, PictureTwo, TRIAL_MASS_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './LocalGroupCollisionPictures'
 
-// Cosmic Horizons, Experiment 25 (docs/experiments/frontier-and-beyond/25-will-the-milky-way-and-andromeda-collide.md).
+// Cosmic Horizons, Experiment 25 (docs/experiments/cosmic-horizons/25-will-the-milky-way-and-andromeda-collide.md).
 // Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 and 2 (in `LocalGroupCollisionPictures.tsx`). The controls, the results and the tutor come in later steps.
 // The wording is the owner's draft of 2026-10-28, approved line by line (CLAUDE.md §28.1), with the one correction listed in the Implementation Notes. Every number comes from the physics module (CLAUDE.md §9).
 // Nothing here says how long a straight fall takes, how close the first pass is, or the date the old textbook gave for the collision, because the two predictions ask for them (CLAUDE.md §12).
