@@ -40,6 +40,7 @@ import {
   clockGuessResult,
   beforeGuessResult,
   tutorFigures,
+  largestSeparationLy,
 } from './timeTravel'
 
 describe('travel to the future: the offset between the mouths (the twin formula)', () => {
@@ -248,6 +249,9 @@ describe('"Now try it yourself": the trial picture for the controls', () => {
     expect(friendlyDuration(1 / 365.25)).toBe('1 day')
     expect(friendlyDuration(0.0501)).toBe('18 days')
     expect(friendlyDuration(0.0027)).toBe('1 day')
+    // 365.25 days to the year: 10 days and half a year both depend on the constant.
+    expect(friendlyDuration(10 / 365.25)).toBe('10 days')
+    expect(friendlyDuration(0.5)).toBe('183 days')
     expect(() => friendlyDuration(0)).toThrow(RangeError)
   })
 })
@@ -321,5 +325,25 @@ describe('the tutor: marking the guesses and the figures it uses', () => {
     expect(t.smallestSpeedAtOneLightYear).toBeCloseTo(0.4359, 4)
     expect(t.presetOffsetYears).toBeCloseTo(4, 12)
     expect(t.presetOffsetOverLight).toBeCloseTo(4, 12)
+  })
+})
+
+describe('how far apart a 10-year trip can leave the mouths', () => {
+  it('at most speed x 10 light-years: 1 at 0.1 c, 5 at 0.5 c, 8 at 0.8 c', () => {
+    expect(largestSeparationLy(0.1)).toBeCloseTo(1, 12)
+    expect(largestSeparationLy(0.5)).toBeCloseTo(5, 12)
+    expect(largestSeparationLy(0.8)).toBeCloseTo(8, 12)
+    expect(() => largestSeparationLy(1)).toThrow(RangeError)
+  })
+  it('of the 20 settings, exactly 2 ask for more than the trip allows (0.1 c with 3 or 5 light-years) and 2 need a one-way trip (0.1 c with 1, 0.5 c with 5)', () => {
+    const over: string[] = []
+    const oneWay: string[] = []
+    for (const b of SPEED_CHOICES) for (const s of SEPARATION_CHOICES_LY) {
+      const most = largestSeparationLy(b)
+      if (s.ly > most + 1e-9) over.push(`${b}/${s.label}`)
+      else if (Math.abs(s.ly - most) < 1e-9) oneWay.push(`${b}/${s.label}`)
+    }
+    expect(over).toEqual(['0.1/3 light-years', '0.1/5 light-years'])
+    expect(oneWay).toEqual(['0.1/1 light-year', '0.5/5 light-years'])
   })
 })

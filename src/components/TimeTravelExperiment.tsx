@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { CLOCK_CHOICES, BEFORE_CHOICES, PRESET_SPEED, PRESET_TRIP_YEARS, PRESET_SEPARATION_LY, SEPARATION_CHOICES_LY, SPEED_CHOICES, TRIAL_DEFAULT_SEPARATION_LY, TRIAL_DEFAULT_SPEED, friendlyDuration, trialPicture } from '../physics/timeTravel'
+import { CLOCK_CHOICES, BEFORE_CHOICES, largestSeparationLy, PRESET_SPEED, PRESET_TRIP_YEARS, PRESET_SEPARATION_LY, SEPARATION_CHOICES_LY, SPEED_CHOICES, TRIAL_DEFAULT_SEPARATION_LY, TRIAL_DEFAULT_SPEED, friendlyDuration, trialPicture } from '../physics/timeTravel'
 import { TimeTravelResults } from './TimeTravelResults'
 import { TimeTravelTutor } from './TimeTravelTutor'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './TimeTravelPictures'
@@ -195,12 +195,12 @@ export function TimeTravelExperiment({ onComplete, onTutorComplete }: TimeTravel
               <ExternalLink href="https://spaceplace.nasa.gov/time-travel/en/">NASA Space Place: Is Time Travel Possible?</ExternalLink>: a short, plain account of travelling to the future with clocks on airplanes and GPS satellites, written for young readers.
             </li>
             <li>
-              <ExternalLink href="https://science.gsfc.nasa.gov/attic/cosmicopia.gsfc.nasa.gov/qa_sp_sl.html">NASA Cosmicopia: Are wormholes in space real, or are they only science fiction?</ExternalLink>: NASA’s short answer: the mathematics of general
-              relativity allows wormholes, and there is no evidence that any exists. It is a 2005 page, now kept in NASA’s archive.
+              <ExternalLink href="https://science.gsfc.nasa.gov/attic/cosmicopia.gsfc.nasa.gov/qa_sp_sl.html">NASA Cosmicopia: Wormholes, Time Travel, and Faster-Than-Speed-of-Light Theories</ExternalLink>: NASA’s short answers: the mathematics of general relativity allows wormholes, and some paths that may point to a possibility of time travel, but no one knows how
+              to make a wormhole, there is no evidence that one exists, and there is no known way to travel in time. It also says a wormhole by itself is a shortcut through space, not a way back in time. It is a 2005 page, now kept in NASA’s archive.
             </li>
           </ul>
           <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.875rem' }}>
-            No plain NASA or ESA page was found for closed timelike curves or for a wormhole used as a time machine, so this page explains them in its own words.
+            NASA’s Cosmicopia page touches on time travel and wormholes, but no plain NASA or ESA page was found that explains closed timelike curves or a wormhole used as a time machine, so this page explains those in its own words.
           </p>
         </div>
 
@@ -288,6 +288,10 @@ export function TimeTravelExperiment({ onComplete, onTutorComplete }: TimeTravel
                   <strong>The separation of the mouths.</strong> How far apart the mouths are outside the tunnel when the trip is over. Light needs a certain time to cross it, and nothing can cross faster.
                 </li>
               </ol>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>The two settings are independent.</strong> The page does not work out the separation from the speed. A mouth that moves at a given speed for {PRESET_TRIP_YEARS} years can end up no further from A than {PRESET_TRIP_YEARS} times that speed, in light-years: at most {largestSeparationLy(SPEED_CHOICES[0])} light-year
+                at {SPEED_CHOICES[0]} c, for example, and only if it never comes back. So some pairs of buttons, such as {SPEED_CHOICES[0]} c with {SEPARATION_CHOICES_LY[2].label}, could not come from a trip like this one. The drawing does not check this. It only compares the two numbers you chose.
+              </p>
               <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>One drawing then shows, for your choices:</p>
               <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                 <li>

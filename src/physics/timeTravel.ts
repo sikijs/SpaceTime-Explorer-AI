@@ -256,6 +256,13 @@ export function trialPicture(beta: number, separationLy: number) {
 }
 export type TrialPicture = ReturnType<typeof trialPicture>
 
+// How far from A mouth B can end up after a trip of PRESET_TRIP_YEARS by A's clock, moving at beta the whole way: going straight out for the whole trip, beta x trip light-years. A return trip ends nearer;
+// the separation buttons are independent trial values, so some combinations (0.1 c with 3 light-years) could not come from such a trip, and the page says so in Part 2.
+export function largestSeparationLy(beta: number): number {
+  checkSpeed(beta)
+  return beta * PRESET_TRIP_YEARS
+}
+
 // ---- The results (Step 6): the check-up, the steps and the table of what has been tested. The interface only sets these out (CLAUDE.md §9). ----
 export type Comparison = 'the same' | 'more' | 'less'
 // "The same" means within 1 percent of the reference; otherwise more or less. This is a reading aid, not a scientific cut-off.
@@ -336,7 +343,7 @@ export const TESTED: readonly TestedRow[] = [
   },
   {
     idea: 'The idea that nature forbids such paths (“chronology protection”)',
-    what: 'In 1992 Stephen Hawking argued that the energy building up as a closed path formed would stop it. Papers from 2024 to 2026 have examined particular models, and in the two found the idea holds. This is not a proof for every case.',
+    what: 'In 1992 Stephen Hawking argued that the energy building up as a closed path formed would stop it. Two papers, from 2024 and 2025, examined particular black-hole models, and in both the idea holds. This is not a proof for every case.',
     status: 'A conjecture, not proved',
   },
   {
