@@ -123,3 +123,109 @@ export type FlashAnswerId = (typeof FLASH_ANSWER_CHOICES)[number]['id']
 export function predictionTwoAnswerId(): FlashAnswerId {
   return nearestChoice(FLASH_ANSWER_CHOICES, pionFlashRule(), (c) => c.value).id
 }
+
+// ---- Marks for the learner's guesses (specification: "Predictions and the Real Results") ----
+// Prediction 1: the speed the guess names, in units of c, for the white mark on the lab's speed ruler.
+export function speedGuessValue(id: string): number {
+  const choice = SPEED_ANSWER_CHOICES.find((c) => c.id === id)
+  if (!choice) throw new RangeError(`Unknown speed guess: ${id}`)
+  return choice.value
+}
+// Prediction 2: the speed the guess names, in units of c. "Less than c" has no size of its own, so `markerOnly` is true and the page says its position is only a marker.
+export function flashGuess(id: string): { value: number; markerOnly: boolean } {
+  const choice = FLASH_ANSWER_CHOICES.find((c) => c.id === id)
+  if (!choice) throw new RangeError(`Unknown flash guess: ${id}`)
+  return { value: choice.value, markerOnly: id === 'less-than-c' }
+}
+
+// ---- The run's pictures ----
+export const SPEED_OF_LIGHT_M_PER_S = 299792458
+export const TRAIN_WALKER_M_PER_S = 1
+export const TRAIN_SPEED_M_PER_S = 20
+
+// Stage 1, the train: the everyday sum, and the amount by which the rule's denominator exceeds 1 (v w / c^2, worked directly so that it is not lost in rounding).
+export function trainExample(): { walker: number; train: number; everyday: number; excess: number } {
+  return {
+    walker: TRAIN_WALKER_M_PER_S,
+    train: TRAIN_SPEED_M_PER_S,
+    everyday: TRAIN_WALKER_M_PER_S + TRAIN_SPEED_M_PER_S,
+    excess: (TRAIN_WALKER_M_PER_S * TRAIN_SPEED_M_PER_S) / (SPEED_OF_LIGHT_M_PER_S * SPEED_OF_LIGHT_M_PER_S),
+  }
+}
+
+// Picture 1: the train, and the same two speeds near light (the preset ship and probe).
+export function pictureOne() {
+  const ship = PRESET_SHIP_SPEED
+  const probe = PRESET_PROBE_SPEED
+  return {
+    train: trainExample(),
+    ship,
+    probe,
+    everyday: everydaySum(ship, probe),
+    rule: combineSpeeds(ship, probe),
+    gap: gapFromEveryday(ship, probe),
+  }
+}
+
+// Picture 2: light in moving water. Shares are of the water's speed v: the everyday sum adds all of it, the rule adds the Fresnel fraction. The refractive index is NOT YET SOURCED.
+export function pictureTwo() {
+  const n = WATER_REFRACTIVE_INDEX
+  return {
+    n,
+    stillWaterSpeed: 1 / n,
+    everydayShare: 1,
+    ruleShare: fresnelDragCoefficient(n),
+  }
+}
+
+// Picture 3: the 1964 flash, and (stage 5) a flash sent from ships of different speeds.
+export function pictureThree() {
+  return {
+    source: PION_SOURCE_SPEED,
+    everyday: pionFlashEveryday(),
+    rule: pionFlashRule(),
+    measured: measuredShareOfLightSpeed(),
+    giveOrTake: measuredGiveOrTakeShare(),
+    flashFromShips: SHIP_SPEED_CHOICES.map((ship) => ({ ship, everyday: everydaySum(ship, 1), rule: combineSpeeds(ship, 1) })),
+  }
+}
+
+// The worked moment of Picture 2: the rule applied to light in still water (1/n, relative to the water) and water moving at v (relative to the lab), step by step. The example water speed
+// (10 m/s) is the page's own choice for the example, not Fizeau's. The refractive index is NOT YET SOURCED.
+export const EXAMPLE_WATER_M_PER_S = 10
+export function fizeauWorked() {
+  const n = WATER_REFRACTIVE_INDEX
+  const vShare = EXAMPLE_WATER_M_PER_S / SPEED_OF_LIGHT_M_PER_S
+  return {
+    n,
+    nSquared: n * n,
+    oneOverNSquared: 1 / (n * n),
+    stillWaterSpeed: 1 / n,
+    share: fresnelDragCoefficient(n),
+    exampleWaterMPerS: EXAMPLE_WATER_M_PER_S,
+    exampleWaterShareOfC: vShare,
+    exampleDenominatorExcess: vShare / n, // the "v / n" that the denominator 1 + v/n adds to 1
+    exampleExactShare: exactDragCoefficient(n, vShare),
+  }
+}
+
+// The worked moment of Picture 3: the rule with a = the pions' speed and b = 1 (light), and the 1964 figures in kilometres per second. The paper's figures are in centimetres per second
+// (machine-read, TO BE CHECKED against the page images); 1 km = 100 000 cm.
+export function pionWorked() {
+  const a = PION_SOURCE_SPEED
+  const top = a + 1
+  const bottom = 1 + a * 1
+  const cKmS = LIGHT_SPEED_CM_PER_S / 1e5
+  return {
+    a,
+    top,
+    bottom,
+    result: top / bottom,
+    lightKmPerS: cKmS,
+    everydayKmPerS: pionFlashEveryday() * cKmS,
+    measuredKmPerS: MEASURED_GAMMA_SPEED_CM_PER_S / 1e5,
+    giveOrTakeKmPerS: MEASURED_GAMMA_SPEED_GIVE_OR_TAKE_CM_PER_S / 1e5,
+    differenceFromLightKmPerS: Math.abs(MEASURED_GAMMA_SPEED_CM_PER_S - LIGHT_SPEED_CM_PER_S) / 1e5,
+    giveOrTakePercentOfLight: (MEASURED_GAMMA_SPEED_GIVE_OR_TAKE_CM_PER_S / LIGHT_SPEED_CM_PER_S) * 100,
+  }
+}

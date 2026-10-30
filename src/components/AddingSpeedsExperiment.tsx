@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { SPEED_ANSWER_CHOICES, FLASH_ANSWER_CHOICES, PRESET_SHIP_SPEED, PRESET_PROBE_SPEED, PION_SOURCE_SPEED } from '../physics/addingSpeeds'
+import { PictureOne, PictureThree, PictureTwo, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './AddingSpeedsPictures'
 
 // Evidence and Imagination, Experiment 3 (docs/experiments/evidence-and-imagination/03-adding-speeds.md).
-// Steps 2 and 3: the title, the status line, the introduction, the "Want to know more?" links and the two predictions (the Run button records them). The pictures, the results and the tutor come in later steps.
-// The introduction's wording is approved (2026-10-30). The wording of the two predictions is Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here gives the result of adding 0.5 c and 0.5 c, says what happens when one of the speeds is
+// Steps 2 to 4: the title, the status line, the introduction, the "Want to know more?" links, the two predictions and the five-stage run with Pictures 1 to 3 and their captions (in `AddingSpeedsPictures.tsx`). The "Now try it yourself" part, the results and the tutor come in later steps.
+// The introduction's wording and the wording of the two predictions are approved (2026-10-30). The stage lines and the picture captions are Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here gives the result of adding 0.5 c and 0.5 c, says what happens when one of the speeds is
 // the speed of light, or gives either test's result, because the predictions and the results ask for them (CLAUDE.md §12). The papers, and NASA's page on the speed of light, are listed only after the run.
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -15,6 +16,19 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 }
 
 const paragraph = { marginTop: 0, marginBottom: '0.5rem' } as const
+
+// ---- The run: stages. The timer only paces the display; no number depends on it (CLAUDE.md §11). ----
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'The everyday rule on a train', 'The same two speeds near light', 'Light in moving water', 'The 1964 flash', 'A flash from ships of different speeds']
+const STAGE_LINES = [
+  '',
+  'Picture 1, panel A, shows the train example with its speeds, and the everyday sum of the walker’s speed and the train’s.',
+  'Panel B shows the spaceship and its probe with the same kind of sum, and what the lab measures. Your first guess is drawn on it.',
+  'Picture 2 shows Fizeau’s flowing water and how much of the water’s speed is added to the light’s, by the everyday sum and by the rule.',
+  'Picture 3, panel A, shows the gamma ray from the pions in 1964: the everyday sum, the rule and the measurement. Your second guess is drawn on it.',
+  'Panel B of Picture 3 asks what a flash sent forward would do from ships of different speeds. The sources are listed with the results.',
+]
 const list = { margin: '0.25rem 0 0.75rem', paddingLeft: '1.25rem' } as const
 
 interface AddingSpeedsExperimentProps {
@@ -22,15 +36,35 @@ interface AddingSpeedsExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function AddingSpeedsExperiment(_props: AddingSpeedsExperimentProps) {
+export function AddingSpeedsExperiment({ onComplete }: AddingSpeedsExperimentProps) {
   const [shipGuess, setShipGuess] = useState<string | null>(null)
   const [flashGuess, setFlashGuess] = useState<string | null>(null)
-  const [recorded, setRecorded] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
   const bothPredicted = shipGuess !== null && flashGuess !== null
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
   const startOver = () => {
     setShipGuess(null)
     setFlashGuess(null)
-    setRecorded(false)
+    setStatus('idle')
+    setStage(0)
   }
 
   const questions = [
@@ -192,7 +226,7 @@ export function AddingSpeedsExperiment(_props: AddingSpeedsExperimentProps) {
             </div>
           ))}
 
-          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
             Run
           </button>
           {recorded && (
@@ -201,8 +235,35 @@ export function AddingSpeedsExperiment(_props: AddingSpeedsExperimentProps) {
             </button>
           )}
           {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
-          {/* Temporary: removed when the run and its pictures are built (Step 4). */}
-          {recorded && <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0' }}>Your predictions are recorded and are not marked here. The pictures come in the next step.</p>}
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong>{' '}
+                {done ? 'Pictures 1 to 3 are drawn. Your predictions are recorded and not marked here.' : STAGE_LINES[stage]}
+              </span>
+            )}
+          </p>
+
+          {recorded && stage >= 1 && (
+            <div>
+              <PictureOne stage={stage} speedGuess={shipGuess} />
+              {pictureOneCaption(stage)}
+              {stage >= 3 && (
+                <>
+                  <PictureTwo />
+                  {pictureTwoCaption()}
+                </>
+              )}
+              {stage >= 4 && (
+                <>
+                  <PictureThree stage={stage} flashGuessId={flashGuess} />
+                  {pictureThreeCaption(stage)}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

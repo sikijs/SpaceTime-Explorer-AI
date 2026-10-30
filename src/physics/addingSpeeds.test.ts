@@ -21,6 +21,15 @@ import {
   FLASH_ANSWER_CHOICES,
   predictionOneAnswerId,
   predictionTwoAnswerId,
+  speedGuessValue,
+  flashGuess,
+  trainExample,
+  pictureOne,
+  pictureTwo,
+  pictureThree,
+  SHIP_SPEED_CHOICES,
+  fizeauWorked,
+  pionWorked,
 } from './addingSpeeds'
 
 describe('the rule for adding speeds', () => {
@@ -130,5 +139,86 @@ describe('independence from predictions', () => {
     predictionOneAnswerId()
     predictionTwoAnswerId()
     expect([combineSpeeds(0.5, 0.5), pionFlashRule(), fresnelDragCoefficient(1.33)]).toEqual(first)
+  })
+})
+
+describe('the guess marks', () => {
+  it('Prediction 1 marks sit at the speed each button names', () => {
+    expect(speedGuessValue('point8')).toBe(0.8)
+    expect(speedGuessValue('one')).toBe(1)
+    expect(speedGuessValue('point5')).toBe(0.5)
+    expect(() => speedGuessValue('nope')).toThrow(RangeError)
+  })
+  it('Prediction 2 marks sit at the speed each button names, and only "less than c" is a marker only', () => {
+    expect(flashGuess('about-2c')).toEqual({ value: 2, markerOnly: false })
+    expect(flashGuess('about-c')).toEqual({ value: 1, markerOnly: false })
+    expect(flashGuess('less-than-c').markerOnly).toBe(true)
+    expect(() => flashGuess('nope')).toThrow(RangeError)
+  })
+})
+
+describe('the run pictures', () => {
+  it('the train: 1 + 20 = 21 m/s, and the rule differs from it only by a factor of about 2 x 10^-16', () => {
+    const t = trainExample()
+    expect(t.everyday).toBe(21)
+    expect(t.excess).toBeCloseTo(2.2253e-16, 19)
+  })
+  it('Picture 1: the preset gives 1.0 c everyday and 0.8 c by the rule, a gap of 0.2 c', () => {
+    const p = pictureOne()
+    expect(p.everyday).toBeCloseTo(1, 12)
+    expect(p.rule).toBeCloseTo(0.8, 12)
+    expect(p.gap).toBeCloseTo(0.2, 12)
+  })
+  it('Picture 2: the everyday sum adds all of the water speed and the rule adds 1 - 1/n^2 of it', () => {
+    const p = pictureTwo()
+    expect(p.everydayShare).toBe(1)
+    expect(p.ruleShare).toBeCloseTo(0.4347, 4)
+    expect(p.stillWaterSpeed).toBeCloseTo(1 / 1.33, 12)
+  })
+  it('Picture 3: the flash is 1.99975 c everyday, c by the rule, and every ship gives c by the rule', () => {
+    const p = pictureThree()
+    expect(p.everyday).toBeCloseTo(1.99975, 10)
+    expect(p.rule).toBeCloseTo(1, 10)
+    expect(p.measured).toBeCloseTo(2.9977 / 2.9979, 10)
+    expect(p.flashFromShips.map((r) => r.ship)).toEqual([...SHIP_SPEED_CHOICES])
+    for (const r of p.flashFromShips) {
+      expect(r.rule).toBeCloseTo(1, 12)
+      expect(r.everyday).toBeCloseTo(1 + r.ship, 12)
+    }
+  })
+})
+
+describe('the worked moment of Picture 2', () => {
+  it('follows 1 - 1/n^2 step by step', () => {
+    const w = fizeauWorked()
+    expect(w.nSquared).toBeCloseTo(1.7689, 10)
+    expect(w.oneOverNSquared).toBeCloseTo(0.5653, 4)
+    expect(w.share).toBeCloseTo(1 - w.oneOverNSquared, 12)
+    expect(w.share).toBeCloseTo(0.4347, 4)
+    expect(w.stillWaterSpeed).toBeCloseTo(0.7519, 4)
+  })
+  it('the example water speed gives a denominator of 1 to about 2.5 parts in 100 million, and the exact share agrees with 1 - 1/n^2 to 1 part in 10 million', () => {
+    const w = fizeauWorked()
+    expect(w.exampleWaterShareOfC).toBeCloseTo(3.3356e-8, 12)
+    expect(w.exampleDenominatorExcess).toBeCloseTo(2.508e-8, 11)
+    expect(Math.abs(w.exampleExactShare / w.share - 1)).toBeLessThan(1e-7)
+  })
+})
+
+describe('the worked moment of Picture 3', () => {
+  it('has the same top and bottom when the probe is light, so the result is exactly 1', () => {
+    const w = pionWorked()
+    expect(w.top).toBeCloseTo(1.99975, 10)
+    expect(w.bottom).toBeCloseTo(1.99975, 10)
+    expect(w.result).toBeCloseTo(1, 12)
+  })
+  it('gives the 1964 figures in km/s: 299 790 for c, 299 770 measured, give-or-take 40, difference 20, and about 599 505 for the everyday sum', () => {
+    const w = pionWorked()
+    expect(w.lightKmPerS).toBeCloseTo(299790, 6)
+    expect(w.measuredKmPerS).toBeCloseTo(299770, 6)
+    expect(w.giveOrTakeKmPerS).toBeCloseTo(40, 6)
+    expect(w.differenceFromLightKmPerS).toBeCloseTo(20, 6)
+    expect(w.everydayKmPerS).toBeCloseTo(599505.05, 1)
+    expect(w.giveOrTakePercentOfLight).toBeCloseTo(0.01334, 4)
   })
 })
