@@ -280,7 +280,7 @@ export function TimeTravelExperiment({ onComplete }: TimeTravelExperimentProps) 
               </p>
               <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                 <li>
-                  <strong>The speed of the moving mouth.</strong> The trip always lasts {PRESET_TRIP_YEARS} years on A’s clock, as before. A faster mouth makes its clock fall further behind.
+                  <strong>The speed of the moving mouth.</strong> The trip always lasts {PRESET_TRIP_YEARS} years on A’s clock, as before. Here “the moving mouth” is mouth B, the one sent away and back. Mouth A stays at home. A moving clock counts fewer years than a clock that stays put, so B’s clock ends up reading less than A’s. The faster B travels, the fewer years its clock counts, so the gap between the two clocks grows. For example, at 0.6 c the stay-at-home clock counts {PRESET_TRIP_YEARS} years while B’s clock counts only {PRESET_TRIP_YEARS * 0.8} years, so B is {PRESET_TRIP_YEARS * 0.2} years behind A. At a higher speed, B counts even fewer years and falls even further behind.
                 </li>
                 <li>
                   <strong>The separation of the mouths.</strong> How far apart the mouths are outside the tunnel when the trip is over. Light needs a certain time to cross it, and nothing can cross faster.

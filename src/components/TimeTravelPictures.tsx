@@ -548,7 +548,7 @@ export function trialCaption(trial: TrialPicture): ReactNode {
     {
       look: 'the dashed part of B’s bar in A1, when you change the speed.',
       means: `at ${trial.speed} c, B’s clock counts ${friendlyDuration(trial.movingYears)} while A’s counts ${friendlyDuration(trial.tripYears)}. The offset is ${friendlyDuration(trial.offsetYears)}.`,
-      matters: 'a faster mouth falls further behind. At low speeds the offset is tiny, so the tunnel’s jump back in time would be tiny too.',
+      matters: 'the moving mouth B is the one whose clock falls behind A’s, because a moving clock counts fewer years. The faster B moves, the fewer years it counts, so the dashed part gets longer and the offset grows. At low speeds the offset is tiny, so the tunnel’s jump back in time would be tiny too.',
     },
     {
       look: 'the cyan mark and the yellow mark in A2, and which one is further right.',
