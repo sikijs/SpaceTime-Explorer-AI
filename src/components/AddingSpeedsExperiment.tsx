@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { SPEED_ANSWER_CHOICES, FLASH_ANSWER_CHOICES, PRESET_SHIP_SPEED, PRESET_PROBE_SPEED, PION_SOURCE_SPEED } from '../physics/addingSpeeds'
 
 // Evidence and Imagination, Experiment 3 (docs/experiments/evidence-and-imagination/03-adding-speeds.md).
-// Step 2: the title, the status line, the introduction and the "Want to know more?" links. The predictions, the run, the pictures, the results and the tutor come in later steps.
-// The wording is Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here gives the result of adding 0.5 c and 0.5 c, says what happens when one of the speeds is
+// Steps 2 and 3: the title, the status line, the introduction, the "Want to know more?" links and the two predictions (the Run button records them). The pictures, the results and the tutor come in later steps.
+// The introduction's wording is approved (2026-10-30). The wording of the two predictions is Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here gives the result of adding 0.5 c and 0.5 c, says what happens when one of the speeds is
 // the speed of light, or gives either test's result, because the predictions and the results ask for them (CLAUDE.md §12). The papers, and NASA's page on the speed of light, are listed only after the run.
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -22,6 +23,55 @@ interface AddingSpeedsExperimentProps {
 }
 
 export function AddingSpeedsExperiment(_props: AddingSpeedsExperimentProps) {
+  const [shipGuess, setShipGuess] = useState<string | null>(null)
+  const [flashGuess, setFlashGuess] = useState<string | null>(null)
+  const [recorded, setRecorded] = useState(false)
+  const bothPredicted = shipGuess !== null && flashGuess !== null
+  const startOver = () => {
+    setShipGuess(null)
+    setFlashGuess(null)
+    setRecorded(false)
+  }
+
+  const questions = [
+    {
+      title: 'Prediction 1: how fast does the lab see the probe move?',
+      text: (
+        <>
+          A spaceship moves at half the speed of light ({PRESET_SHIP_SPEED} c) relative to the lab. It fires a probe straight ahead, in the direction it is moving, at half the speed of light ({PRESET_PROBE_SPEED} c) relative to the spaceship. How
+          fast does someone in the lab measure the probe to be moving?
+        </>
+      ),
+      choices: SPEED_ANSWER_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+      value: shipGuess,
+      set: setShipGuess,
+    },
+    {
+      title: 'Prediction 2: how fast does the lab measure the flash?',
+      text: (
+        <>
+          Here is the setup, step by step.
+          <ol style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+            <li>In a particle accelerator, very fast particles hit a target. The collisions make neutral pions.</li>
+            <li>
+              The pions fly out of the target. The lab measures their speed as {PION_SOURCE_SPEED} c, which is {(PION_SOURCE_SPEED * 100).toFixed(3)} percent of the speed of light: almost as fast as light itself.
+            </li>
+            <li>
+              Each pion falls apart almost at once. One gamma ray (a flash of very energetic light) flies off straight ahead, in the same direction the pion was moving. So the gamma ray is sent out by something that is itself already moving forward
+              very fast.
+            </li>
+            <li>The lab places two detectors in a line, a known distance apart. It notes the moment the gamma ray passes each one and divides the distance by the time between them. That gives the gamma ray’s speed, as the lab measures it.</li>
+          </ol>
+          In the train example, a person who walks forward on a moving train gets the train’s speed added to their own, as the platform sees it. The question is whether the gamma ray gets anything extra from its fast-moving source. How fast does the lab
+          measure the gamma ray to go? This is a separate guess from Prediction 1, so your two answers do not have to agree with each other.
+        </>
+      ),
+      choices: FLASH_ANSWER_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+      value: flashGuess,
+      set: setFlashGuess,
+    },
+  ]
+
   return (
     <div>
       <h2>Experiment 3 — Can Speeds Simply Be Added?</h2>
@@ -108,8 +158,52 @@ export function AddingSpeedsExperiment(_props: AddingSpeedsExperimentProps) {
           </p>
         </div>
 
-        {/* Temporary note: removed as the later steps (predictions, run, results, tutor) are built. */}
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The predictions, the run, the results and the tutor are not built yet.</p>
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed things: the everyday sum beside the measured results, for the same
+            speeds. They are calculated from the mathematics or taken from the two real tests, and they are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess compares. The real pictures stay
+            the same whatever you guess.
+          </p>
+
+          {questions.map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+                {question.text} You are not graded, and a guess is fine.
+              </div>
+              <div>
+                {question.choices.map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => question.set(choice.value)}
+                    disabled={recorded}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null ? `Your prediction: ${question.choices.find((c) => c.value === question.value)?.label}.` : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
+          {/* Temporary: removed when the run and its pictures are built (Step 4). */}
+          {recorded && <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0' }}>Your predictions are recorded and are not marked here. The pictures come in the next step.</p>}
+        </div>
       </div>
     </div>
   )
