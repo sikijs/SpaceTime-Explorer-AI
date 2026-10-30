@@ -255,3 +255,93 @@ export function trialPicture(beta: number, separationLy: number) {
   }
 }
 export type TrialPicture = ReturnType<typeof trialPicture>
+
+// ---- The results (Step 6): the check-up, the steps and the table of what has been tested. The interface only sets these out (CLAUDE.md §9). ----
+export type Comparison = 'the same' | 'more' | 'less'
+// "The same" means within 1 percent of the reference; otherwise more or less. This is a reading aid, not a scientific cut-off.
+export function compare(value: number, reference: number, tolerance: number = 0.01): Comparison {
+  checkPositive(value, 'The value')
+  checkPositive(reference, 'The reference')
+  const ratio = value / reference
+  if (Math.abs(ratio - 1) <= tolerance) return 'the same'
+  return ratio > 1 ? 'more' : 'less'
+}
+
+// Table 1, the check-up. Each calculated number is set beside a reference that is not simply a copy of it: the same offset read two ways, a clock beside the clock that stayed, the offset beside the
+// light-travel time it must beat, and the direction of the clock difference beside the one NASA's Space Place page reports for a clock flown on an aircraft (no number from the flights was read).
+export function resultsCheckUp() {
+  const one = pictureOne()
+  const two = pictureTwo()
+  const three = pictureThree()
+  const offsetFromLink = two.entry.time - two.exit.time
+  const gainedFromDiagram = two.entry.time - two.arrival.time
+  return {
+    movingYears: one.movingYears,
+    stayAtHomeYears: one.stayAtHomeYears,
+    movingOverStayAtHome: one.movingYears / one.stayAtHomeYears,
+    movingVersusStayAtHome: compare(one.movingYears, one.stayAtHomeYears),
+    offsetFormulaYears: one.offsetYears,
+    offsetFromLinkYears: offsetFromLink,
+    offsetVersusLink: compare(one.offsetYears, offsetFromLink),
+    timeGainedYears: three.timeGainedYears,
+    gainedFromDiagramYears: gainedFromDiagram,
+    gainedVersusDiagram: compare(three.timeGainedYears, gainedFromDiagram),
+    lightTravelYears: three.lightTravelYears,
+    offsetOverLight: three.offsetYears / three.lightTravelYears,
+    offsetVersusLight: compare(three.offsetYears, three.lightTravelYears),
+    // The direction of the difference: the moving clock is behind the one that stayed (as in NASA's account of the aircraft clock).
+    movingClockIsBehind: one.movingYears < one.stayAtHomeYears,
+  }
+}
+
+// Table 2, the steps from the speed to the time gained, each with its number.
+export function exampleSteps() {
+  const one = pictureOne()
+  const three = pictureThree()
+  return {
+    speed: one.speed,
+    speedSquared: one.speed * one.speed,
+    oneMinusSquared: 1 - one.speed * one.speed,
+    factor: Math.sqrt(1 - one.speed * one.speed),
+    tripYears: one.tripYears,
+    movingYears: one.movingYears,
+    offsetYears: one.offsetYears,
+    separationLy: one.separationLy,
+    lightTravelYears: three.lightTravelYears,
+    timeGainedYears: three.timeGainedYears,
+  }
+}
+
+// Table 3, what has been tested. Data, not computed. Only NASA's Space Place page was read (2026-10-30); the other rows rest on search results and summaries of abstracts, and the page says so.
+export interface TestedRow {
+  idea: string
+  what: string
+  status: string
+}
+export const TESTED: readonly TestedRow[] = [
+  {
+    idea: 'Travel to the future',
+    what: 'A clock flown round the world on an aircraft came back slightly behind a clock left on the ground. GPS satellite clocks run at a different speed from clocks on the ground, and GPS has to allow for it (NASA Space Place).',
+    status: 'Measured',
+  },
+  {
+    idea: 'A wormhole',
+    what: 'None has been seen (the experiment before this one).',
+    status: 'Not seen',
+  },
+  {
+    idea: 'A path back in time (a closed timelike curve)',
+    what: 'No observation of one has been reported in the sources read. They appear only in the mathematics of some models.',
+    status: 'Not seen',
+  },
+  {
+    idea: 'The idea that nature forbids such paths (“chronology protection”)',
+    what: 'In 1992 Stephen Hawking argued that the energy building up as a closed path formed would stop it. Papers from 2024 to 2026 have examined particular models, and in the two found the idea holds. This is not a proof for every case.',
+    status: 'A conjecture, not proved',
+  },
+  {
+    idea: 'Quantum-computer simulations of closed paths',
+    what: 'A 2026 paper (arXiv:2607.27473) models closed paths on quantum hardware. A simulation tests the mathematics on a computer. It does not make a path back in time.',
+    status: 'Simulated only',
+  },
+]

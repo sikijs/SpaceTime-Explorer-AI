@@ -33,6 +33,10 @@ import {
   DURATION_RULER,
   TRIAL_DEFAULT_SPEED,
   TRIAL_DEFAULT_SEPARATION_LY,
+  compare,
+  resultsCheckUp,
+  exampleSteps,
+  TESTED,
 } from './timeTravel'
 
 describe('travel to the future: the offset between the mouths (the twin formula)', () => {
@@ -242,5 +246,48 @@ describe('"Now try it yourself": the trial picture for the controls', () => {
     expect(friendlyDuration(0.0501)).toBe('18 days')
     expect(friendlyDuration(0.0027)).toBe('1 day')
     expect(() => friendlyDuration(0)).toThrow(RangeError)
+  })
+})
+
+describe('the results: check-up, steps and what has been tested', () => {
+  it('compare: within 1 percent is the same, otherwise more or less', () => {
+    expect(compare(4, 4)).toBe('the same')
+    expect(compare(4.03, 4)).toBe('the same')
+    expect(compare(4.1, 4)).toBe('more')
+    expect(compare(3.9, 4)).toBe('less')
+    expect(() => compare(0, 4)).toThrow(RangeError)
+  })
+  it('the check-up: the offset by the formula equals the tunnel link\'s jump, and the gain equals the diagram\'s, both "the same"', () => {
+    const c = resultsCheckUp()
+    expect(c.offsetFormulaYears).toBeCloseTo(4, 9)
+    expect(c.offsetFromLinkYears).toBeCloseTo(4, 9)
+    expect(c.offsetVersusLink).toBe('the same')
+    expect(c.timeGainedYears).toBeCloseTo(3, 9)
+    expect(c.gainedFromDiagramYears).toBeCloseTo(3, 9)
+    expect(c.gainedVersusDiagram).toBe('the same')
+  })
+  it('the check-up: B counts 0.6 of A, less; the offset is 4 times the light-travel time, more; and the moving clock is behind', () => {
+    const c = resultsCheckUp()
+    expect(c.movingOverStayAtHome).toBeCloseTo(0.6, 9)
+    expect(c.movingVersusStayAtHome).toBe('less')
+    expect(c.offsetOverLight).toBeCloseTo(4, 9)
+    expect(c.offsetVersusLight).toBe('more')
+    expect(c.movingClockIsBehind).toBe(true)
+  })
+  it('the steps: 0.8 squared is 0.64, one minus that is 0.36, the factor 0.6, B counts 6, offset 4, gain 3', () => {
+    const e = exampleSteps()
+    expect(e.speedSquared).toBeCloseTo(0.64, 9)
+    expect(e.oneMinusSquared).toBeCloseTo(0.36, 9)
+    expect(e.factor).toBeCloseTo(0.6, 9)
+    expect(e.tripYears * e.factor).toBeCloseTo(e.movingYears, 9)
+    expect(e.offsetYears).toBeCloseTo(4, 9)
+    expect(e.timeGainedYears).toBeCloseTo(3, 9)
+  })
+  it('the table of what has been tested has five rows, only the forward one marked "Measured", and none claims a path back was seen', () => {
+    expect(TESTED).toHaveLength(5)
+    expect(TESTED.filter((r) => r.status === 'Measured')).toHaveLength(1)
+    expect(TESTED[0].idea).toBe('Travel to the future')
+    expect(TESTED.filter((r) => r.status === 'Not seen')).toHaveLength(2)
+    expect(TESTED.every((r) => r.idea.length > 0 && r.what.length > 0)).toBe(true)
   })
 })
