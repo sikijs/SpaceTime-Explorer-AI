@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { CLOCK_CHOICES, BEFORE_CHOICES, PRESET_SPEED, PRESET_TRIP_YEARS, PRESET_SEPARATION_LY } from '../physics/timeTravel'
 
 // Evidence and Imagination, Experiment 2 (docs/experiments/evidence-and-imagination/02-can-you-travel-back-in-time.md).
-// Step 2: the title, the status line, the introduction and the "Want to know more?" links. The predictions, the run, the pictures, the results and the tutor come in later steps.
-// The wording is Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
+// Steps 2 and 3: the title, the status line, the introduction, the "Want to know more?" links and the two predictions (the Run button records them). The pictures, the results and the tutor come in later steps.
+// The introduction's wording is approved (2026-10-30). The wording of the two predictions is Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here says how long the moving mouth's clock counts, how large the offset is, when a path is closed
 // in time, or what chronology protection is, because the predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -22,6 +23,44 @@ interface TimeTravelExperimentProps {
 }
 
 export function TimeTravelExperiment(_props: TimeTravelExperimentProps) {
+  const [clockGuess, setClockGuess] = useState<string | null>(null)
+  const [beforeGuess, setBeforeGuess] = useState<string | null>(null)
+  const [recorded, setRecorded] = useState(false)
+  const bothPredicted = clockGuess !== null && beforeGuess !== null
+  const startOver = () => {
+    setClockGuess(null)
+    setBeforeGuess(null)
+    setRecorded(false)
+  }
+
+  const questions = [
+    {
+      title: 'Prediction 1: how long does the moving mouth’s own clock say the trip took?',
+      text: (
+        <>
+          Two mouths of a wormhole, A and B, start side by side, with their clocks set equal. Mouth A stays where it is. Mouth B is sent away at {PRESET_SPEED} of the speed of light ({PRESET_SPEED} c, which is {PRESET_SPEED * 100} percent of light’s speed),
+          turns round and comes back, and stops {PRESET_SEPARATION_LY} light-year from A. By A’s clock the whole trip took {PRESET_TRIP_YEARS} years. How many years does B’s own clock say the trip took?
+        </>
+      ),
+      choices: CLOCK_CHOICES.map((c) => ({ value: c.id, label: c.label })),
+      value: clockGuess,
+      set: setClockGuess,
+    },
+    {
+      title: 'Prediction 2: could a traveller get back before they left?',
+      text: (
+        <>
+          Now join the two mouths by a very short tunnel. It connects moments at which the two mouths’ own clocks show the <em>same</em> reading. So someone who steps into mouth B when B’s clock reads a certain time steps out of mouth A when A’s clock
+          reads that same time. The mouths now sit at rest, {PRESET_SEPARATION_LY} light-year apart outside the tunnel (light takes one year to cross that distance, and nothing can go faster). A traveller steps into mouth B, comes out of mouth A, and then
+          runs back outside to mouth B at nearly the speed of light. When they arrive at B, is it before the moment they stepped in? This is a separate guess from Prediction 1, so your two answers do not have to agree with each other.
+        </>
+      ),
+      choices: BEFORE_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+      value: beforeGuess,
+      set: setBeforeGuess,
+    },
+  ]
+
   return (
     <div>
       <h2>Experiment 2 — Can You Travel Back in Time?</h2>
@@ -123,8 +162,50 @@ export function TimeTravelExperiment(_props: TimeTravelExperimentProps) {
           </p>
         </div>
 
-        {/* Temporary note: removed as the later steps (predictions, run, results, tutor) are built. */}
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>The predictions, the run, the results and the tutor are not built yet.</p>
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run will draw show fixed things: how the two clocks end up, the link that the tunnel makes,
+            and whether a path that returns to its own past appears. They are calculated from the mathematics and are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess compares. The real
+            pictures stay the same whatever you guess.
+          </p>
+
+          {questions.map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</p>
+              <div>
+                {question.choices.map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => question.set(choice.value)}
+                    disabled={recorded}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null ? `Your prediction: ${question.choices.find((c) => c.value === question.value)?.label}.` : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
+
+          <button type="button" className="action-button" onClick={() => setRecorded(true)} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
+          {/* Temporary: removed when the run and its pictures are built (Step 4). */}
+          {recorded && <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0' }}>Your predictions are recorded and are not marked here. The pictures come in the next step.</p>}
+        </div>
       </div>
     </div>
   )

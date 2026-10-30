@@ -115,6 +115,15 @@ export function nearestChoice<T>(choices: readonly T[], value: number, valueOf: 
 export function predictionOneAnswerId(): string {
   return nearestChoice(CLOCK_CHOICES, movingClockYears(PRESET_SPEED, PRESET_TRIP_YEARS), (c) => c.years).id
 }
+// Prediction 2: do they get back before they left? A yes or no has no size, so a marker is drawn.
+export const BEFORE_CHOICES = [
+  { id: 'yes', label: 'Yes, they get back before they left', before: true },
+  { id: 'no', label: 'No, they get back after they left', before: false },
+] as const
+export type BeforeChoiceId = (typeof BEFORE_CHOICES)[number]['id']
+export function predictionTwoAnswerId(): BeforeChoiceId {
+  return predictionTwoAnswer() ? 'yes' : 'no'
+}
 // Prediction 2: do they get back before they left (the preset speed, trip and separation)? Answer: yes.
 export function predictionTwoAnswer(): boolean {
   return closedPathExists(clockOffsetYears(PRESET_SPEED, PRESET_TRIP_YEARS), PRESET_SEPARATION_LY)

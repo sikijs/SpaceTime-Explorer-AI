@@ -19,6 +19,8 @@ import {
   nearestChoice,
   predictionOneAnswerId,
   predictionTwoAnswer,
+  predictionTwoAnswerId,
+  BEFORE_CHOICES,
 } from './timeTravel'
 
 describe('travel to the future: the offset between the mouths (the twin formula)', () => {
@@ -108,6 +110,10 @@ describe('answers, buttons and the preset', () => {
     expect(PRESET_SPEED).toBe(0.8)
     expect(PRESET_TRIP_YEARS).toBe(10)
     expect(PRESET_SEPARATION_LY).toBe(1)
+  })
+  it('Prediction 2 has a yes and a no button, and the answer button is "yes"', () => {
+    expect(BEFORE_CHOICES.map((c) => c.id)).toEqual(['yes', 'no'])
+    expect(predictionTwoAnswerId()).toBe('yes')
   })
   it('the control settings give the specified outcomes: 1 light-year closed at 0.8c, not at 0.1c; 1 light-day closed even at 0.1c; 8.589 years at 0.99c', () => {
     const day = SEPARATION_CHOICES_LY[0].ly
