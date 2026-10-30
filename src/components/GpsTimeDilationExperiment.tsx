@@ -500,8 +500,9 @@ export function GpsTimeDilationExperiment({ onComplete, onTutorComplete }: GpsTi
           <p>
             You've now run every experiment in this two-part journey. Everything you've seen is part of two
             theories, both created by Albert Einstein: <strong>special relativity</strong> (1905) and{' '}
-            <strong>general relativity</strong> (1915). Neither name has come up until now, on purpose — first
-            you experienced what they predict, and only now do we name what they actually claim.
+            <strong>general relativity</strong> (1915). You may have met their names before, in the optional guide on
+            the Welcome page or in passing along the way. But the experiments let you experience what these
+            theories predict first, and only now do we set out what each one actually claims.
           </p>
 
           <h3>Special Relativity</h3>
@@ -579,10 +580,11 @@ export function GpsTimeDilationExperiment({ onComplete, onTutorComplete }: GpsTi
             scaled down to something calculable by hand.
           </p>
 
-          <h3>Why we waited until now to say this</h3>
+          <h3>Why the full explanation comes now</h3>
           <p style={{ marginBottom: 0 }}>
-            Naming these theories at the very start would have asked you to accept abstract statements before
-            you had any reason to believe them. Instead, every one of the nine-plus-eleven experiments you ran
+            The Welcome page has a short, optional guide to these two theories, for anyone who likes to see the
+            map first. But the experiments themselves were built the other way round. Asking you to accept
+            abstract statements before you had any reason to believe them would not have taught much. Instead, every one of the nine-plus-eleven experiments you ran
             was one small, concrete piece of evidence — and only now, with all of it in hand, do the two
             abstract-sounding theories turn into: "oh, that's just describing what I already watched happen."
           </p>
