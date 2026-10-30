@@ -11,11 +11,12 @@ import {
   TRIAL_DEFAULT_PROBE_SPEED,
   trialPicture,
 } from '../physics/addingSpeeds'
+import { AddingSpeedsResults } from './AddingSpeedsResults'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, probeLabel, trialCaption } from './AddingSpeedsPictures'
 
 // Evidence and Imagination, Experiment 3 (docs/experiments/evidence-and-imagination/03-adding-speeds.md).
-// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions, the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `AddingSpeedsPictures.tsx`). The results and the tutor come in later steps.
-// The introduction's wording and the wording of the two predictions are approved (2026-10-30). The stage lines and the Picture 1 to 3 captions are approved too (2026-10-30). The Part 2 wording and the Drawing A caption are Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here gives the result of adding 0.5 c and 0.5 c, says what happens when one of the speeds is
+// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the two predictions, the five-stage run with Pictures 1 to 3 and their captions, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A (all in `AddingSpeedsPictures.tsx`), and (Step 6) the results (`AddingSpeedsResults.tsx`). The tutor, the papers list and the chapter summary come in later steps.
+// The introduction's wording and the wording of the two predictions are approved (2026-10-30). The stage lines and the Picture 1 to 3 captions are approved too (2026-10-30). The Part 2 wording and the Drawing A caption are approved too (2026-10-30). The Part 3 results wording is Claude's DRAFT of 2026-10-30, for the owner's approval (CLAUDE.md §28.1). Nothing here gives the result of adding 0.5 c and 0.5 c, says what happens when one of the speeds is
 // the speed of light, or gives either test's result, because the predictions and the results ask for them (CLAUDE.md §12). The papers, and NASA's page on the speed of light, are listed only after the run.
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -339,6 +340,7 @@ export function AddingSpeedsExperiment({ onComplete }: AddingSpeedsExperimentPro
               {trialCaption(trial)}
             </div>
           )}
+          {done && <AddingSpeedsResults shipGuess={shipGuess} flashGuess={flashGuess} />}
         </div>
       </div>
     </div>

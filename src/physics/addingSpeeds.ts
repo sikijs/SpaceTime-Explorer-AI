@@ -264,3 +264,84 @@ export function trialPicture(ship: number, probe: number): TrialPicture {
     probeIsLight: probe === 1,
   }
 }
+
+// ---- The results (Step 6): the check-up, the steps and the table of what has been tested. The interface only sets these out (CLAUDE.md §9). ----
+export type Comparison = 'the same' | 'more' | 'less'
+// "The same" means within 1 percent of the reference; otherwise more or less. This is a reading aid, not a scientific cut-off.
+export function compare(value: number, reference: number, tolerance: number = 0.01): Comparison {
+  if (!Number.isFinite(value) || value <= 0) throw new RangeError('The value must be above zero.')
+  if (!Number.isFinite(reference) || reference <= 0) throw new RangeError('The reference must be above zero.')
+  const ratio = value / reference
+  if (Math.abs(ratio - 1) <= tolerance) return 'the same'
+  return ratio > 1 ? 'more' : 'less'
+}
+
+// Table 1, the check-up. Each calculated number is set beside a reference that is not simply a copy of it: the probe's speed worked back from the rule's result, the rule beside the everyday sum,
+// the water's drag beside the everyday full drag (Fizeau's measured number was not read, so it is not compared), the 1964 measurement beside c (with its own give-or-take) and beside the everyday sum.
+export function resultsCheckUp() {
+  const one = pictureOne()
+  const two = pictureTwo()
+  const three = pictureThree()
+  const workedBack = relativeSpeed(one.rule, one.ship)
+  return {
+    ship: one.ship,
+    probe: one.probe,
+    rule: one.rule,
+    everyday: one.everyday,
+    ruleOverEveryday: one.rule / one.everyday,
+    ruleVersusEveryday: compare(one.rule, one.everyday),
+    probeWorkedBack: workedBack,
+    probeWorkedBackVersusProbe: compare(workedBack, one.probe),
+    waterRuleShare: two.ruleShare,
+    waterEverydayShare: two.everydayShare,
+    waterRuleOverEveryday: two.ruleShare / two.everydayShare,
+    waterRuleVersusEveryday: compare(two.ruleShare, two.everydayShare),
+    pionMeasured: three.measured,
+    pionGiveOrTake: three.giveOrTake,
+    pionMeasuredVersusLight: compare(three.measured, 1),
+    pionMeasuredAgreesWithLight: measuredAgreesWithLightSpeed(),
+    pionEveryday: three.everyday,
+    pionMeasuredOverEveryday: three.measured / three.everyday,
+    pionMeasuredVersusEveryday: compare(three.measured, three.everyday),
+    shipsAllGiveLight: three.flashFromShips.every((r) => compare(r.rule, 1) === 'the same'),
+    shipsCount: three.flashFromShips.length,
+  }
+}
+
+// Table 2, the steps from the two speeds to what the lab measures, for Prediction 1's numbers and for Prediction 2's (the pions and the flash).
+export function stepsTable() {
+  const row = (a: number, b: number) => {
+    const t = trialPicture(a, b)
+    return { a, b, top: t.top, bottom: t.bottom, result: t.rule, everyday: t.everyday, gap: t.gap, percentOfC: t.rulePercentOfC }
+  }
+  return { one: row(PRESET_SHIP_SPEED, PRESET_PROBE_SPEED), two: row(PION_SOURCE_SPEED, 1) }
+}
+
+// Table 3, what has been tested. Data, not computed. Both tests were read only through secondary sources or a machine-read scan, and the page says so.
+export interface TestedRow {
+  idea: string
+  what: string
+  status: string
+}
+export const TESTED: readonly TestedRow[] = [
+  {
+    idea: 'Light in moving water',
+    what: 'In 1851 Hippolyte Fizeau found that light is dragged along by only a fraction of the water’s speed, not all of it. Michelson and Morley confirmed this in 1886. Max von Laue showed in 1907 that the rule gives that fraction.',
+    status: 'Measured (an old test)',
+  },
+  {
+    idea: 'Light from a source moving at 0.99975 c',
+    what: 'In 1964, gamma rays from pions moving at that speed were timed at CERN. The speed came out at (2.9977 ± 0.0004) × 10¹⁰ cm/s, against 2.9979 × 10¹⁰ cm/s for c, so it agrees with c within the give-or-take.',
+    status: 'Measured (one old test)',
+  },
+  {
+    idea: 'Other tests of the rule',
+    what: 'This page looked at two tests only. Whether the rule has been tested in other ways, for example in particle accelerators, was not checked at a source.',
+    status: 'Not checked here',
+  },
+  {
+    idea: 'Speeds that are not along one line',
+    what: 'Not covered on this page. Experiment 7 of the Spacetime Geometry group is about how directions change for a fast observer.',
+    status: 'Not covered here',
+  },
+]

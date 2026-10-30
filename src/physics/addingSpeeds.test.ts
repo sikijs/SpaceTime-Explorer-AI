@@ -34,6 +34,10 @@ import {
   TRIAL_DEFAULT_SHIP_SPEED,
   TRIAL_DEFAULT_PROBE_SPEED,
   PROBE_SPEED_CHOICES,
+  compare,
+  resultsCheckUp,
+  stepsTable,
+  TESTED,
 } from './addingSpeeds'
 
 describe('the rule for adding speeds', () => {
@@ -265,5 +269,48 @@ describe('the trial drawing (Drawing A)', () => {
     const first = trialPicture(0.1, 0.1)
     predictionOneAnswerId()
     expect(trialPicture(0.1, 0.1)).toEqual(first)
+  })
+})
+
+describe('the results', () => {
+  it('compare says the same within 1 percent, otherwise more or less', () => {
+    expect(compare(1, 1)).toBe('the same')
+    expect(compare(1.005, 1)).toBe('the same')
+    expect(compare(0.8, 1)).toBe('less')
+    expect(compare(1.5, 1)).toBe('more')
+    expect(compare(0.8, 1, 0.3)).toBe('the same')
+    expect(() => compare(0, 1)).toThrow(RangeError)
+    expect(() => compare(1, 0)).toThrow(RangeError)
+  })
+  it('the check-up sets each number beside a real reference', () => {
+    const c = resultsCheckUp()
+    expect(c.rule).toBeCloseTo(0.8, 12)
+    expect(c.ruleOverEveryday).toBeCloseTo(0.8, 12)
+    expect(c.ruleVersusEveryday).toBe('less')
+    expect(c.probeWorkedBack).toBeCloseTo(0.5, 10)
+    expect(c.probeWorkedBackVersusProbe).toBe('the same')
+    expect(c.waterRuleShare).toBeCloseTo(0.4347, 4)
+    expect(c.waterRuleVersusEveryday).toBe('less')
+    expect(c.pionMeasuredVersusLight).toBe('the same')
+    expect(c.pionMeasuredAgreesWithLight).toBe(true)
+    expect(c.pionMeasuredOverEveryday).toBeCloseTo(0.5, 3)
+    expect(c.pionMeasuredVersusEveryday).toBe('less')
+    expect(c.shipsAllGiveLight).toBe(true)
+    expect(c.shipsCount).toBe(4)
+  })
+  it('the steps table follows the rule for both predictions', () => {
+    const t = stepsTable()
+    expect(t.one.top).toBeCloseTo(1, 12)
+    expect(t.one.bottom).toBeCloseTo(1.25, 12)
+    expect(t.one.result).toBeCloseTo(0.8, 12)
+    expect(t.one.gap).toBeCloseTo(0.2, 12)
+    expect(t.two.top).toBeCloseTo(1.99975, 10)
+    expect(t.two.bottom).toBeCloseTo(1.99975, 10)
+    expect(t.two.result).toBeCloseTo(1, 12)
+    expect(t.two.percentOfC).toBeCloseTo(100, 8)
+  })
+  it('the table of what has been tested has four rows, two of them measurements', () => {
+    expect(TESTED).toHaveLength(4)
+    expect(TESTED.filter((r) => r.status.startsWith('Measured'))).toHaveLength(2)
   })
 })
