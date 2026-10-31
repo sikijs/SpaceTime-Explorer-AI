@@ -374,3 +374,51 @@ export const TESTED: readonly { idea: string; what: string; status: string }[] =
     status: 'Not covered here',
   },
 ]
+
+// ---- The tutor (Part 4): every number the tutor's words use, and the marks for the two predictions (CLAUDE.md §9, §12, §13) ----
+// The predictions are marked only in the tutor's explanation. "matched" means the learner's button is the one nearest the module's answer.
+export function shareGuessResult(id: string): 'matched' | 'not matched' {
+  shareGuessValue(id)
+  return id === predictionOneAnswerId() ? 'matched' : 'not matched'
+}
+export function lifetimeGuessResult(id: string): 'matched' | 'not matched' {
+  lifetimeGuessValueUs(id)
+  return id === predictionTwoAnswerId() ? 'matched' : 'not matched'
+}
+// The factor worked out in steps, 1 / sqrt(1 - beta^2), for the tutor's worked example.
+export function factorWorked(beta: number) {
+  checkSpeed(beta, 'The speed')
+  const betaSquared = beta * beta
+  const oneMinus = 1 - betaSquared
+  const root = Math.sqrt(oneMinus)
+  return { beta, betaSquared, oneMinus, root, factor: 1 / root }
+}
+export function tutorFigures() {
+  const fast = trialTrip(MOUNT_BETA, MOUNT_HEIGHT_M)
+  const half = trialTrip(0.5, MOUNT_HEIGHT_M)
+  const pic = mountPictureThree()
+  const check = resultsCheckUp()
+  return {
+    fast,
+    half,
+    fastWorked: factorWorked(MOUNT_BETA),
+    halfWorked: factorWorked(0.5),
+    ringWorked: factorWorked(ringBeta()),
+    view: pic.muon,
+    ground: pic.ground,
+    oneLifetimeShare: shareAfterLifetimes(1),
+    counted: mountCountedShare(),
+    simpleModelFactor: fast.gamma,
+    factorMeasured: check.mount.factorMeasured,
+    factorMeasuredGiveOrTake: check.mount.factorMeasuredGiveOrTake,
+    factorPredicted: check.mount.factorPredicted,
+    factorPredictedGiveOrTake: check.mount.factorPredictedGiveOrTake,
+    ringPredictedUs: check.ring.predictedUs,
+    ringPlus: check.ring.plus,
+    ringMinus: check.ring.minus,
+    ringPaperLimitPercent: check.ring.paperLimitPercent,
+    // The question the tutor asks: the same fall at 0.5 c and at 0.995 c, and what makes the difference.
+    tripShorterBy: half.tripUs / fast.tripUs,
+    lifetimeLongerBy: fast.slowClockLifetimeUs / half.slowClockLifetimeUs,
+  }
+}

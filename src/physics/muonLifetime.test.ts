@@ -36,6 +36,10 @@ import {
   paperRestLifetimeMinusDifferencePercent,
   resultsCheckUp,
   stepsTable,
+  factorWorked,
+  lifetimeGuessResult,
+  shareGuessResult,
+  tutorFigures,
   predictionOneAnswerId,
   predictionTwoAnswerId,
   ringBeta,
@@ -340,5 +344,37 @@ describe('what has been tested (Table 3)', () => {
     for (const r of TESTED) expect(r.status.length).toBeGreaterThan(0)
     expect(TESTED.some((r) => r.status === 'Not covered here')).toBe(true)
     expect(TESTED.some((r) => r.status.startsWith('Calculated here'))).toBe(true)
+  })
+})
+
+describe('the tutor’s figures and marks', () => {
+  it('marks Prediction 1 as matched only for "About 75" and Prediction 2 only for "About 65 µs"', () => {
+    for (const c of SHARE_ANSWER_CHOICES) expect(shareGuessResult(c.id)).toBe(c.id === 'about-75' ? 'matched' : 'not matched')
+    for (const c of LIFETIME_ANSWER_CHOICES) expect(lifetimeGuessResult(c.id)).toBe(c.id === 'about-65' ? 'matched' : 'not matched')
+    expect(() => shareGuessResult('nope')).toThrow()
+    expect(() => lifetimeGuessResult('nope')).toThrow()
+  })
+  it('works the factor out in steps: 0.995 gives 0.990025, 0.009975, 0.09987 and 10.013', () => {
+    const w = factorWorked(0.995)
+    expect(w.betaSquared).toBeCloseTo(0.990025, 9)
+    expect(w.oneMinus).toBeCloseTo(0.009975, 9)
+    expect(w.root).toBeCloseTo(0.099875, 5)
+    expect(w.factor).toBeCloseTo(10.013, 3)
+    expect(factorWorked(0.5).factor).toBeCloseTo(1.1547, 4)
+    expect(factorWorked(ringBeta()).factor).toBeCloseTo(29.33, 6)
+    expect(() => factorWorked(1)).toThrow()
+  })
+  it('gives the 0.5 c and 0.995 c comparison: 12.79 and 6.43 µs trips, 2.54 and 22.0 µs lifetimes, 0.65 and 74.67 percent', () => {
+    const t = tutorFigures()
+    expect(t.half.tripUs).toBeCloseTo(12.79, 2)
+    expect(t.fast.tripUs).toBeCloseTo(6.43, 2)
+    expect(t.half.slowClockLifetimeUs).toBeCloseTo(2.537, 3)
+    expect(t.fast.slowClockLifetimeUs).toBeCloseTo(22.0, 1)
+    expect(t.half.slowClockShare * 100).toBeCloseTo(0.65, 2)
+    expect(t.fast.slowClockShare * 100).toBeCloseTo(74.67, 2)
+    expect(t.tripShorterBy).toBeCloseTo(12.79 / 6.43, 2)
+    expect(t.lifetimeLongerBy).toBeCloseTo(22.0 / 2.537, 1)
+    expect(t.view.roadM).toBeCloseTo(191.5, 1)
+    expect(t.oneLifetimeShare).toBeCloseTo(0.368, 3)
   })
 })
