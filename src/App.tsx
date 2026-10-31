@@ -28,6 +28,7 @@ import { LocalGroupCollisionExperiment } from './components/LocalGroupCollisionE
 import { WormholeExperiment } from './components/WormholeExperiment'
 import { TimeTravelExperiment } from './components/TimeTravelExperiment'
 import { AddingSpeedsExperiment } from './components/AddingSpeedsExperiment'
+import { MuonLifetimeExperiment } from './components/MuonLifetimeExperiment'
 import {
   APPROACH_SPEED_KM_S as lgApproach,
   MERGER_DISTANCE_KPC as lgRing,
@@ -1163,6 +1164,14 @@ const chapters: Chapter[] = [
     // Chapter summary and "What's next": Claude's DRAFT of 2026-10-30, for the owner's approval. "What's next" is a planned direction only: Experiment 4 has no specification yet.
     learned: addingSpeedsSummary(),
     next: 'The next experiment in this group turns to another prediction of special relativity that has been tested with real particles: how the ticking of a moving clock is slowed, shown by particles made high in the air that decay very quickly.',
+  },
+  {
+    title: 'How long does a muon live?',
+    group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
+    Component: MuonLifetimeExperiment,
+    // The chapter summary and "What's next" come in a later step; empty text hides the summary hint until then.
+    learned: '',
+    next: '',
   },
 ]
 
