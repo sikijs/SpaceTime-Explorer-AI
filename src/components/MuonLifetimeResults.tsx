@@ -5,7 +5,15 @@ import { ResultsTable } from './WideBinariesExperiment'
 // Evidence and Imagination, Experiment 4: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
 // Every number is read from the physics module (CLAUDE.md §9); this file only sets it out. The tables are the real numbers and never change with the learner's guesses or settings. The wording is
 // Claude's DRAFT of 2026-10-31, for the owner's approval line by line (CLAUDE.md §28.1). Why a moving muon's lifetime is longer, and what the two tests show about it, are left to the tutor
-// (CLAUDE.md §12, §13). The papers behind the numbers are listed later (a later step), after the run.
+// (CLAUDE.md §12, §13). The papers behind the numbers are listed at the end (Step 8), after the run: each link was opened on 2026-10-31; the Frisch and Smith page was refused and is not linked.
+
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
 
 const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
@@ -229,6 +237,31 @@ export function MuonLifetimeResults({ shareGuess, lifetimeGuess }: { shareGuess:
           },
         ]}
       />
+      <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>The papers and pages behind these numbers.</strong> They are listed here, after the run, because they give away the answers to your predictions. Links open in a new tab. Each link was opened on 31 October 2026. Only the abstracts of the CERN and MuLan papers, and the Particle Data Group’s
+          listing, were read for this page. No paper was read in full.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://www.nature.com/articles/268301a0">Bailey, Borer, Combley and others, “Measurements of relativistic time dilatation for positive and negative muons in a circular orbit”, Nature 268, 301 (1977)</ExternalLink>: the CERN ring test in Picture 2 and Table 1. This link goes to the
+            publisher’s page, which shows the abstract. The rest of the paper is behind a subscription and was not read.
+          </li>
+          <li>
+            <ExternalLink href="https://pdglive.lbl.gov/view/S004T">Particle Data Group, the muon’s mean life</ExternalLink>: the listing that gives the average lifetime of a muon at rest, {n4(c.rest.us)} µs, used throughout this page. The group collects published measurements, and each entry names the experiment it comes from.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2108.09182">The MuLan collaboration, “Mulan: a part-per-million measurement of the muon lifetime and determination of the Fermi constant” (arXiv, 2021)</ExternalLink>: the experiment that gives most of the weight to the lifetime at rest. This link goes to the abstract. The paper was not read.
+          </li>
+          <li>
+            <ExternalLink href="https://hyperphysics.gsu.edu/hbase/Particles/muonatm.html">HyperPhysics, “Atmospheric Muons” (Georgia State University)</ExternalLink>: an educational page that says most muons are thought to be made at about 15,000 metres. It is not an official source and gives no measurement, so this page calls 15 km “typical”.
+          </li>
+          <li>
+            <strong>Not linked</strong> (no readable copy could be opened here): Frisch and Smith’s paper on the mountain test, “Measurement of the Relativistic Time Dilation Using μ-Mesons”, American Journal of Physics 31, 342 (1963), whose publisher’s page was refused on 31 October 2026. The counts of {MOUNT_COUNT_TOP_PER_HOUR} and {MOUNT_COUNT_SEA_PER_HOUR} muons an hour on this page come
+            from Wikipedia’s account of the test, not from the paper.
+          </li>
+        </ul>
+      </div>
     </div>
   )
 }
