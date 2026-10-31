@@ -189,7 +189,7 @@ g. **Rossi and Hall (1941)** is named only, from Wikipedia; no paper read.
 3. **Terms are explained where they first appear:** muon, average lifetime (with a party comparison: each hour the same fraction of guests go home), µs, c, the storage ring.
 4. **Nothing gives away the reason for the differences** (§12): no caption names the factor by which a moving muon's lifetime is longer, or the ratio of the two roads in Picture 3. The tutor does that.
 
-**Differences from this specification (not yet approved by the owner):**
+**Differences from this specification (all three approved by the owner on 2026-10-31):**
 1. Picture 1 has a Part A (a muon at rest: four bars for 0, 1, 2 and 3 average lifetimes) above the mountain; the specification's Display lists only the mountain and the ruler.
 2. Picture 3 draws road bars (in metres) and time bars (in µs, the trip and the lifetime) for each row, with the share alive written under each; the specification said "in units of the rest lifetime".
 3. The captions are longer than the specification implies, to meet §29 and the owner's request for simpler, more detailed wording.
