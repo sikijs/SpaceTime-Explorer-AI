@@ -16,6 +16,7 @@ import {
   RING_PAPER_FRACTIONAL_LIMIT,
   SHARE_ANSWER_CHOICES,
   SPEED_CHOICES,
+  TESTED,
   betaFromGamma,
   compare,
   flightTimeInLifetimes,
@@ -33,6 +34,8 @@ import {
   muonView,
   nearestChoice,
   paperRestLifetimeMinusDifferencePercent,
+  resultsCheckUp,
+  stepsTable,
   predictionOneAnswerId,
   predictionTwoAnswerId,
   ringBeta,
@@ -268,5 +271,74 @@ describe('Picture 3: the mountain fall described twice', () => {
     expect(pic.muon.lifetimeUs).toBe(REST_LIFETIME_US)
     expect(pic.muon.share).toBeCloseTo(pic.ground.share, 12)
     expect(pic.ground.share).toBeCloseTo(0.747, 3)
+  })
+})
+
+// Expected values below are worked by hand from the specification's figures (not read back from the module).
+describe('the results check-up', () => {
+  const c = resultsCheckUp()
+  it('sets the mountain shares beside the counted share (412 / 563)', () => {
+    expect(c.mount.counted).toBeCloseTo(412 / 563, 12)
+    expect(c.mount.everyday * 100).toBeCloseTo(5.37, 2)
+    expect(c.mount.slow * 100).toBeCloseTo(74.67, 2)
+    expect(c.mount.everydayVersusCounted).toBe('less')
+    expect(c.mount.slowVersusCounted).toBe('more')
+    expect(c.mount.slowMinusCountedPer100).toBeCloseTo(1.5, 1)
+    expect(c.mount.countedOverEveryday).toBeCloseTo(13.6, 1)
+  })
+  it('stores the paper’s factors and says that 8.8 ± 0.8 and 8.4 ± 2 overlap', () => {
+    expect(c.mount.factorMeasured).toBe(8.8)
+    expect(c.mount.factorPredicted).toBe(8.4)
+    expect(c.mount.factorDifference).toBeCloseTo(0.4, 9)
+    expect(c.mount.factorsOverlap).toBe(true)
+  })
+  it('gives the ring’s calculated lifetime and its two differences from the measurements', () => {
+    expect(c.ring.predictedUs).toBeCloseTo(64.44, 2)
+    expect(c.ring.predictedOverRest).toBeCloseTo(29.33, 9)
+    expect(c.ring.plus.differenceUs).toBeCloseTo(-0.018, 3)
+    expect(c.ring.plus.inside).toBe(true)
+    expect(c.ring.minus.differenceUs).toBeCloseTo(-0.069, 3)
+    expect(c.ring.minus.differencePercent).toBeCloseTo(-0.1078, 4)
+    expect(c.ring.minus.giveOrTakes).toBeCloseTo(-2.395, 2)
+    expect(c.ring.minus.inside).toBe(false)
+    expect(c.ring.plus.measuredOverRest).toBeCloseTo(29.32, 1)
+  })
+  it('states the paper’s own limit, 0.2 percent, and that the μ⁻ difference is below it', () => {
+    expect(c.ring.paperLimitPercent).toBeCloseTo(0.2, 9)
+    expect(c.ring.minusInsidePaperLimit).toBe(true)
+  })
+  it('gives the rest lifetime and the paper’s own μ⁻ rest value, 0.10 percent below it', () => {
+    expect(c.rest.us).toBe(2.1969811)
+    expect(c.rest.paperMinusDifferencePercent).toBeCloseTo(-0.0996, 3)
+    expect(c.rest.paperMinusVersusPdg).toBe('less')
+  })
+})
+
+describe('the steps table', () => {
+  const t = stepsTable()
+  it('works the mountain fall step by step', () => {
+    expect(t.one.beta).toBe(0.995)
+    expect(t.one.timesLonger).toBeCloseTo(10.013, 3)
+    expect(t.one.lifetimeUs).toBeCloseTo(22.0, 1)
+    expect(t.one.tripUs).toBeCloseTo(6.427, 3)
+    expect(t.one.tripLifetimesUnchanged).toBeCloseTo(2.925, 3)
+    expect(t.one.tripLifetimesLonger).toBeCloseTo(0.292, 3)
+    expect(t.one.slowShare * 100).toBeCloseTo(74.67, 2)
+  })
+  it('works the ring step by step', () => {
+    expect(t.two.beta).toBeCloseTo(0.99942, 5)
+    expect(t.two.timesLonger).toBe(29.33)
+    expect(t.two.lifetimeUs).toBeCloseTo(64.44, 2)
+    expect(t.two.measuredPlusUs).toBe(64.419)
+    expect(t.two.measuredMinusUs).toBe(64.368)
+  })
+})
+
+describe('what has been tested (Table 3)', () => {
+  it('has five rows, each with a label, and marks the not-covered row', () => {
+    expect(TESTED).toHaveLength(5)
+    for (const r of TESTED) expect(r.status.length).toBeGreaterThan(0)
+    expect(TESTED.some((r) => r.status === 'Not covered here')).toBe(true)
+    expect(TESTED.some((r) => r.status.startsWith('Calculated here'))).toBe(true)
   })
 })

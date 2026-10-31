@@ -264,3 +264,113 @@ export function compare(value: number, reference: number): Comparison {
 export function withinGiveOrTake(measured: number, reference: number, giveOrTake: number): boolean {
   return Math.abs(measured - reference) <= giveOrTake
 }
+
+// ---- The results (Part 3): every number the check-up and the steps table show (CLAUDE.md §9, §14 "Reading the Results") ----
+// The comparisons are "the same", "more" or "less" (compare) and "inside the give-or-take" (withinGiveOrTake); no other cut-off is made up. Where the model is rougher than the paper (Frisch and Smith), no verdict is given.
+// The paper's stated agreement limit for the ring, 2 x 10^-3 at 95 percent, is the paper's own, and is used only as a statement of it.
+export function resultsCheckUp() {
+  const counted = mountCountedShare()
+  const everyday = mountModelEverydayShare()
+  const slow = mountModelSlowClockShare()
+  const predicted = ringPredictedLifetimeUs()
+  const ringRow = (measuredUs: number, giveOrTakeUs: number) => ({
+    measuredUs,
+    giveOrTakeUs,
+    differenceUs: ringMeasuredMinusPredictedUs(measuredUs),
+    differencePercent: ringMeasuredDifferencePercent(measuredUs),
+    giveOrTakes: ringDifferenceInGiveOrTakes(measuredUs, giveOrTakeUs),
+    inside: ringWithinGiveOrTake(measuredUs, giveOrTakeUs),
+    measuredOverRest: measuredUs / REST_LIFETIME_US,
+  })
+  return {
+    mount: {
+      counted,
+      everyday,
+      slow,
+      everydayVersusCounted: compare(everyday, counted),
+      slowVersusCounted: compare(slow, counted),
+      slowMinusCountedPer100: (slow - counted) * 100,
+      countedOverEveryday: counted / everyday,
+      factorMeasured: MOUNT_MEASURED_FACTOR,
+      factorMeasuredGiveOrTake: MOUNT_MEASURED_FACTOR_GIVE_OR_TAKE,
+      factorPredicted: MOUNT_PREDICTED_FACTOR_AVERAGE,
+      factorPredictedGiveOrTake: MOUNT_PREDICTED_FACTOR_AVERAGE_GIVE_OR_TAKE,
+      factorDifference: Math.abs(MOUNT_MEASURED_FACTOR - MOUNT_PREDICTED_FACTOR_AVERAGE),
+      factorsOverlap: mountFactorsOverlap(),
+    },
+    ring: {
+      predictedUs: predicted,
+      predictedOverRest: predicted / REST_LIFETIME_US,
+      plus: ringRow(RING_MEASURED_TAU_PLUS_US, RING_MEASURED_TAU_PLUS_GIVE_OR_TAKE_US),
+      minus: ringRow(RING_MEASURED_TAU_MINUS_US, RING_MEASURED_TAU_MINUS_GIVE_OR_TAKE_US),
+      paperLimitPercent: RING_PAPER_FRACTIONAL_LIMIT * 100,
+      minusInsidePaperLimit: Math.abs(ringMeasuredDifferencePercent(RING_MEASURED_TAU_MINUS_US)) <= RING_PAPER_FRACTIONAL_LIMIT * 100,
+    },
+    rest: {
+      us: REST_LIFETIME_US,
+      giveOrTakeUs: REST_LIFETIME_GIVE_OR_TAKE_US,
+      paperMinusUs: RING_PAPER_REST_LIFETIME_MINUS_US,
+      paperMinusGiveOrTakeUs: RING_PAPER_REST_LIFETIME_MINUS_GIVE_OR_TAKE_US,
+      paperMinusDifferencePercent: paperRestLifetimeMinusDifferencePercent(),
+      paperMinusVersusPdg: compare(RING_PAPER_REST_LIFETIME_MINUS_US, REST_LIFETIME_US),
+    },
+  }
+}
+
+// The steps table: the mountain fall and the ring, side by side.
+export function stepsTable() {
+  const view = muonView(MOUNT_HEIGHT_M, MOUNT_BETA)
+  const ringGamma = RING_GAMMA
+  return {
+    one: {
+      beta: MOUNT_BETA,
+      heightM: MOUNT_HEIGHT_M,
+      restLifetimeUs: REST_LIFETIME_US,
+      timesLonger: view.gamma,
+      lifetimeUs: view.gamma * REST_LIFETIME_US,
+      tripUs: flightTimeUs(MOUNT_HEIGHT_M, MOUNT_BETA),
+      tripLifetimesUnchanged: flightTimeInLifetimes(MOUNT_HEIGHT_M, MOUNT_BETA),
+      tripLifetimesLonger: flightTimeUs(MOUNT_HEIGHT_M, MOUNT_BETA) / (view.gamma * REST_LIFETIME_US),
+      everydayShare: mountModelEverydayShare(),
+      slowShare: mountModelSlowClockShare(),
+      counted: mountCountedShare(),
+    },
+    two: {
+      beta: ringBeta(),
+      restLifetimeUs: REST_LIFETIME_US,
+      timesLonger: ringGamma,
+      lifetimeUs: ringPredictedLifetimeUs(),
+      measuredPlusUs: RING_MEASURED_TAU_PLUS_US,
+      measuredMinusUs: RING_MEASURED_TAU_MINUS_US,
+    },
+  }
+}
+
+// Table 3: what has been tested, and what has not. The labels are plain; none is a verdict beyond what the sources say.
+export const TESTED: readonly { idea: string; what: string; status: string }[] = [
+  {
+    idea: 'A muon at rest lasts a fixed average time',
+    what: `${REST_LIFETIME_US} µs, to about one part in a million (the Particle Data Group's average, mostly from the MuLan experiment, 2013).`,
+    status: 'Measured',
+  },
+  {
+    idea: 'Many muons made high up reach the ground, in a count on a mountain and at sea level',
+    what: `${MOUNT_COUNT_TOP_PER_HOUR} an hour on the mountain top and ${MOUNT_COUNT_SEA_PER_HOUR} an hour at sea level (Frisch and Smith, 1962). The figures are from a published account, not from the paper.`,
+    status: 'Measured (old; figures second-hand)',
+  },
+  {
+    idea: 'Muons moving round a ring last about 29 times as long as at rest',
+    what: `${RING_MEASURED_TAU_PLUS_US} µs for positive and ${RING_MEASURED_TAU_MINUS_US} µs for negative muons (Bailey and others, CERN, 1977); the paper states agreement with the calculation to ${RING_PAPER_FRACTIONAL_LIMIT * 100} percent at 95 percent confidence.`,
+    status: 'Measured (old; abstract only read)',
+  },
+  {
+    idea: 'A muon’s own description of the fall (a shorter road, its own clock)',
+    what: 'It gives the same share alive as the ground’s description. It is a way of describing the fall, worked out here, not a separate measurement.',
+    status: 'Calculated here; imagined for the question',
+  },
+  {
+    idea: 'Real muons slowing down on the way, made at many heights and speeds',
+    what: 'The page’s model has one muon, one steady speed and one height. The real tests dealt with these details more carefully.',
+    status: 'Not covered here',
+  },
+]
