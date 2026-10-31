@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { MuonLifetimeResults } from './MuonLifetimeResults'
+import { MuonLifetimeTutor } from './MuonLifetimeTutor'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './MuonLifetimePictures'
 import {
   LIFETIME_ANSWER_CHOICES,
@@ -20,7 +21,7 @@ import {
 } from '../physics/muonLifetime'
 
 // Evidence and Imagination, Experiment 4 (docs/experiments/evidence-and-imagination/04-do-fast-muons-live-longer.md).
-// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the predictions, the run with Pictures 1 to 3, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A, and (Step 6) the results (`MuonLifetimeResults.tsx`). The tutor comes in a later step.
+// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the predictions, the run with Pictures 1 to 3, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A, (Step 6) the results (`MuonLifetimeResults.tsx`), and (Step 7) the tutor as Part 4 (`MuonLifetimeTutor.tsx`). The papers list and the chapter summary come in later steps.
 // The wording below is Claude's DRAFT of 2026-10-31, for the owner's approval (CLAUDE.md §28.1). Nothing here says whether a moving muon lasts longer or shorter than a muon at rest, gives the factor
 // by which a moving clock is slowed, or gives either test's result, because the two predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 // Every number comes from the physics module (CLAUDE.md §9).
@@ -53,7 +54,7 @@ interface MuonLifetimeExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function MuonLifetimeExperiment({ onComplete }: MuonLifetimeExperimentProps) {
+export function MuonLifetimeExperiment({ onComplete, onTutorComplete }: MuonLifetimeExperimentProps) {
   const [shareGuess, setShareGuess] = useState<string | null>(null)
   const [lifetimeGuess, setLifetimeGuess] = useState<string | null>(null)
   const oneLifetime = shareAfterLifetimes(1) * 100
@@ -378,6 +379,16 @@ export function MuonLifetimeExperiment({ onComplete }: MuonLifetimeExperimentPro
             </div>
           )}
           {done && <MuonLifetimeResults shareGuess={shareGuess} lifetimeGuess={lifetimeGuess} />}
+
+          {done && shareGuess !== null && lifetimeGuess !== null && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> You have seen the pictures and the tables. This last part is a short conversation with a tutor. It will ask what you noticed, ask you to set your guesses beside the real results, and ask one more question. Then it explains what the numbers show, and tells you how your two guesses compare.
+              </p>
+              <MuonLifetimeTutor shareGuess={shareGuess} lifetimeGuess={lifetimeGuess} onExplained={onTutorComplete} />
+            </div>
+          )}
         </div>
       </div>
     </div>
