@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import {
+  HEIGHT_CHOICES,
   MOUNT_BETA,
   MOUNT_COUNT_SEA_PER_HOUR,
   MOUNT_COUNT_TOP_PER_HOUR,
@@ -158,7 +159,7 @@ export function pictureOneCaption(stage: number): ReactNode {
       ? [
           {
             look: 'the four cyan bars in Part A, from the top bar to the bottom bar.',
-            means: `each bar is shorter than the one above it. Every time ${n1(REST_LIFETIME_US)} µs pass, only about ${n1(shareAfterLifetimes(1) * 100)} of every 100 muons are left. So 100 muons become ${n1(shareAfterLifetimes(1) * 100)}, then ${n1(shareAfterLifetimes(2) * 100)}, then ${n1(shareAfterLifetimes(3) * 100)}.`,
+            means: `each bar is shorter than the one above it. Each time ${n1(REST_LIFETIME_US)} µs pass, about ${n1(shareAfterLifetimes(1) * 100)} of every 100 of the muons still alive at that moment are left. So 100 muons become ${n1(shareAfterLifetimes(1) * 100)}, then ${n1(shareAfterLifetimes(2) * 100)}, then ${n1(shareAfterLifetimes(3) * 100)}.`,
             matters: `muons disappear quickly. The fall from the mountain takes about ${n2(fallLifetimes)} of these ${n1(REST_LIFETIME_US)} µs steps, so you would expect very few muons to be left at the bottom. That is the cyan mark you will look at next.`,
           },
           {
@@ -210,7 +211,7 @@ export function pictureOneCaption(stage: number): ReactNode {
         ...(stage >= 3
           ? [
               <>
-                <strong>The green mark</strong> is a real count. Green means “measured”. <strong>The second cyan mark</strong> is another calculation, like the first one but with a longer average lifetime.
+                <strong>The green mark</strong> is a real count. Green means “measured”. <strong>The second cyan mark</strong> is another calculation, like the first one but with a longer average lifetime. That longer lifetime is taken from special relativity, the theory explained in the first chapter of this site.
               </>,
             ]
           : []),
@@ -349,7 +350,7 @@ export function pictureTwoCaption(): ReactNode {
           <strong>The storage ring.</strong> At CERN, the European particle-physics laboratory, muons were kept going round a circular track in 1977, held in place by magnets. This let the scientists time them for as long as they lasted. The muons went round at {ringBeta().toFixed(5)} c, which is {(ringBeta() * 100).toFixed(2)} percent of the speed of light.
         </>,
         <>
-          <strong>The green marks.</strong> The one on the left is a muon sitting still. The two on the right are the ring’s measured lifetimes, one for positive and one for negative muons. Green means “measured”. Each measurement has a small give-or-take of a few hundredths of a µs, too small to see on this ruler.
+          <strong>The green marks.</strong> The one on the left is a muon sitting still. The two on the right are the ring’s measured lifetimes, one for positive and one for negative muons. Green means “measured”. Each measurement has a “give-or-take”, which is the size of the doubt the scientists put on it. For example, {n3(RING_MEASURED_TAU_PLUS_US)} µs, give-or-take {n3(RING_MEASURED_TAU_PLUS_GIVE_OR_TAKE_US)}, means the true value could be about {n3(RING_MEASURED_TAU_PLUS_GIVE_OR_TAKE_US)} µs more or less. Here it is a few hundredths of a µs, too small to see on this ruler.
         </>,
         <>
           <strong>The cyan mark</strong> is the average lifetime in the ring, calculated here. Cyan means “calculated here”.
@@ -378,11 +379,12 @@ export function pictureTwoCaption(): ReactNode {
 // ---- Picture 3: the same fall in the muon's own view ----
 const P3_W = 760
 const P3_H = 350
+const P3_TIME_SCALE_US = 25 // the time bars are drawn so that a bar of this many µs is 300 pixels long
 
 export function PictureThree() {
   const pic = mountPictureThree()
   const rx = (m: number) => (300 * m) / MOUNT_HEIGHT_M
-  const tx = (us: number) => (300 * us) / 25
+  const tx = (us: number) => (300 * us) / P3_TIME_SCALE_US
   const rows = [
     { key: 'ground', y: 56, color: CYAN, title: 'The ground’s description (calculated here)', data: pic.ground, lifetimeLabel: `the muon’s lifetime, by the ground’s clocks: ${n1(pic.ground.lifetimeUs)} µs`, tripLabel: 'the trip, by the ground’s clocks' },
     { key: 'muon', y: 194, color: PINK, title: 'A muon’s own description (imagined for the question)', data: pic.muon, lifetimeLabel: `the muon’s lifetime, by its own clock: ${n1(pic.muon.lifetimeUs)} µs`, tripLabel: 'the trip, by the muon’s own clock' },
@@ -404,7 +406,7 @@ export function PictureThree() {
           <SvgLines x={20} y={row.y + 86} lines={[`share still alive at sea level: ${pct1(row.data.share)} of every 100`]} fill={TEXT_COLOR} size={11} bold />
         </g>
       ))}
-      <SvgLines x={20} y={P3_H - 22} lines={['Road bars use one scale (the long road is 1 917 m); time bars use another (the longest bar is 25 µs). The two descriptions are not two measurements.']} fill={MUTED_COLOR} size={10} />
+      <SvgLines x={20} y={P3_H - 22} lines={[`Road bars use one scale (the long road is ${spaced(MOUNT_HEIGHT_M)} m); time bars use another (the longest bar is ${P3_TIME_SCALE_US} µs). The two descriptions are not two measurements.`]} fill={MUTED_COLOR} size={10} />
     </svg>
   )
 }
@@ -475,6 +477,7 @@ export function pictureThreeCaption(): ReactNode {
 export type TrialTrip = ReturnType<typeof trialTrip>
 const A_W = 760
 const A_H = 440
+const A_MAX_ROAD_M = Math.max(...HEIGHT_CHOICES.map((h) => h.heightM)) // the longest road the controls allow; the road bars are drawn so that this is 300 pixels long
 // A share out of 100, written so that a very small one is not shown as 0.0.
 const shareText = (share: number) => {
   const per100 = share * 100
@@ -486,7 +489,7 @@ const metresText = (m: number) => (m >= 10000 ? spaced(m) : n1(m))
 
 export function TrialDrawing({ trial }: { trial: TrialTrip }) {
   const sx = (per100: number) => 250 + 380 * (per100 / 100)
-  const rx = (m: number) => (300 * m) / 15000
+  const rx = (m: number) => (300 * m) / A_MAX_ROAD_M
   const everyday = trial.everydayShare * 100
   const slow = trial.slowClockShare * 100
   return (
@@ -513,7 +516,7 @@ export function TrialDrawing({ trial }: { trial: TrialTrip }) {
       <line x1={20} y1={244} x2={A_W - 20} y2={244} stroke="#334155" />
 
       <SvgLines x={20} y={266} lines={['The same fall as a muon would describe it (imagined for the question)']} fill={PINK} size={11} bold />
-      <SvgLines x={20} y={286} lines={['The road, drawn to one scale (the longest road you can choose is 15 000 m):']} fill={MUTED_COLOR} size={10} />
+      <SvgLines x={20} y={286} lines={[`The road, drawn to one scale (the longest road you can choose is ${spaced(A_MAX_ROAD_M)} m):`]} fill={MUTED_COLOR} size={10} />
       <rect x={20} y={294} width={rx(trial.heightM)} height={16} fill={CYAN} fillOpacity={0.4} stroke={CYAN} strokeWidth={1.5} />
       <SvgLines x={20 + rx(trial.heightM) + 8} y={307} lines={[`the ground’s road: ${spaced(trial.heightM)} m`]} fill={TEXT_COLOR} size={11} bold />
       <rect x={20} y={318} width={Math.max(rx(trial.muonRoadM), 1.5)} height={16} fill={PINK} fillOpacity={0.4} stroke={PINK} strokeWidth={1.5} />

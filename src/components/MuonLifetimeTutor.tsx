@@ -90,7 +90,7 @@ export function MuonLifetimeTutor({ shareGuess, lifetimeGuess, onExplained }: Mu
           {tutorStep === 'conceptual' && (
             <>
               <p style={paragraphStyle}>
-                One last question before the explanation. Two groups of muons fall the same {spaced(MOUNT_HEIGHT_M)} metres from the mountain top. One group moves at <strong>0.5 c</strong> and the other at <strong>{MOUNT_BETA} c</strong>. Which group would you expect to have more muons still alive at sea
+                One last question before the explanation. Two groups of muons fall the same {spaced(MOUNT_HEIGHT_M)} metres from the mountain top. One group moves at <strong>{t.half.beta} c</strong> and the other at <strong>{MOUNT_BETA} c</strong>. Which group would you expect to have more muons still alive at sea
                 level? Tell me why you think so.
               </p>
               <p style={paragraphStyle}>Make a guess, even if you are not sure. You can try both speeds in “Now try it yourself” if you like.</p>
@@ -137,7 +137,7 @@ export function MuonLifetimeTutor({ shareGuess, lifetimeGuess, onExplained }: Mu
           </p>
           <p style={paragraphStyle}>
             <strong>2. Where the {n2(t.fast.gamma)} comes from.</strong> The factor is 1 ÷ √(1 − β²), where β is the speed as a fraction of c. For {MOUNT_BETA} c: β × β = {n6(t.fastWorked.betaSquared)}. Then 1 − {n6(t.fastWorked.betaSquared)} = {n6(t.fastWorked.oneMinus)}. The square root of that is{' '}
-            {n4(t.fastWorked.root)}. And 1 ÷ {n4(t.fastWorked.root)} = {n2(t.fastWorked.factor)}. The factor depends only on the speed. At 0.5 c it is {n2(t.halfWorked.factor)}, at {MOUNT_BETA} c it is {n2(t.fastWorked.factor)}, and at the ring’s {t.ringWorked.beta.toFixed(5)} c it is {n2(t.ringWorked.factor)}. The faster the
+            {n4(t.fastWorked.root)}. And 1 ÷ {n4(t.fastWorked.root)} = {n2(t.fastWorked.factor)}. The factor depends only on the speed. At {t.half.beta} c it is {n2(t.halfWorked.factor)}, at {MOUNT_BETA} c it is {n2(t.fastWorked.factor)}, and at the ring’s {t.ringWorked.beta.toFixed(5)} c it is {n2(t.ringWorked.factor)}. The faster the
             muon, the bigger the factor.
           </p>
           <p style={paragraphStyle}>
@@ -155,7 +155,7 @@ export function MuonLifetimeTutor({ shareGuess, lifetimeGuess, onExplained }: Mu
             Those two ranges overlap. So the page shows the idea, not the paper’s full analysis, and its {n1(t.fast.slowClockShare * 100)} is not meant to match the count exactly.
           </p>
           <p style={paragraphStyle}>
-            <strong>6. About the question you were asked.</strong> At 0.5 c the fall takes {n2(t.half.tripUs)} µs and the lifetime is {n2(t.half.slowClockLifetimeUs)} µs, so the trip is {n2(t.half.tripUs / t.half.slowClockLifetimeUs)} lifetimes and {n2(t.half.slowClockShare * 100)} of every 100 arrive. At {MOUNT_BETA} c the trip takes {n2(t.fast.tripUs)} µs and the lifetime is {n1(t.fast.slowClockLifetimeUs)} µs,
+            <strong>6. About the question you were asked.</strong> At {t.half.beta} c the fall takes {n2(t.half.tripUs)} µs and the lifetime is {n2(t.half.slowClockLifetimeUs)} µs, so the trip is {n2(t.half.tripUs / t.half.slowClockLifetimeUs)} lifetimes and {n2(t.half.slowClockShare * 100)} of every 100 arrive. At {MOUNT_BETA} c the trip takes {n2(t.fast.tripUs)} µs and the lifetime is {n1(t.fast.slowClockLifetimeUs)} µs,
             so the trip is {n2(t.fast.tripUs / t.fast.slowClockLifetimeUs)} lifetimes and {n1(t.fast.slowClockShare * 100)} of every 100 arrive. Two things help the faster group. Its trip is about {n1(t.tripShorterBy)} times shorter, and its lifetime is about {n1(t.lifetimeLongerBy)} times longer. Of the two, the longer lifetime does more.
           </p>
           <p style={{ ...paragraphStyle, marginBottom: 0 }}>

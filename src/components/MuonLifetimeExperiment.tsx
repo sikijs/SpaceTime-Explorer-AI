@@ -157,9 +157,9 @@ export function MuonLifetimeExperiment({ onComplete, onTutorComplete }: MuonLife
               made as low as 5 km, that is still about {heightInLightDistances(5000).toFixed(1)} times as far.
             </li>
             <li>
-              <strong>Why that is a puzzle.</strong> Imagine a candle that burns for 10 minutes. Someone carries it along a road that takes 4 hours to walk, and it still arrives alight. You would suspect something odd. Muons are like that candle: by the
-              {' '}{lightMetres.toFixed(0)} metre mark they should have mostly fallen apart, yet many are still detected at the ground. “Average” matters here. A few muons live longer than average, but surviving {heightInLightDistances(15000).toFixed(0)} times the average is
-              extremely rare, so it could not account for the large number detected.
+              <strong>Why that is a puzzle.</strong> Imagine a candle that burns for 10 minutes. Someone carries it along a road that takes 4 hours to walk. You would expect it to be out long before the end of the road. Muons are like that candle: by the
+              {' '}{lightMetres.toFixed(0)} metre mark you would expect most of them to have fallen apart. So how many are still alive when they get down? That is what you will be asked to predict. “Average” matters here. A few muons live longer than average, but lasting{' '}
+              {heightInLightDistances(15000).toFixed(0)} times the average is extremely rare.
             </li>
             <li>
               <strong>A second test, in a laboratory.</strong> Scientists have also tested muons in a laboratory, without waiting for them to fall from the sky. In 1977, at CERN (the European particle-physics laboratory near Geneva), they used magnets to steer muons round and round a circular track called a

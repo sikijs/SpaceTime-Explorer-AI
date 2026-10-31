@@ -393,16 +393,18 @@ export function factorWorked(beta: number) {
   const root = Math.sqrt(oneMinus)
   return { beta, betaSquared, oneMinus, root, factor: 1 / root }
 }
+// The slower speed of the tutor's question (the same fall at this speed and at the mountain speed).
+export const TUTOR_COMPARE_BETA = 0.5
 export function tutorFigures() {
   const fast = trialTrip(MOUNT_BETA, MOUNT_HEIGHT_M)
-  const half = trialTrip(0.5, MOUNT_HEIGHT_M)
+  const half = trialTrip(TUTOR_COMPARE_BETA, MOUNT_HEIGHT_M)
   const pic = mountPictureThree()
   const check = resultsCheckUp()
   return {
     fast,
     half,
     fastWorked: factorWorked(MOUNT_BETA),
-    halfWorked: factorWorked(0.5),
+    halfWorked: factorWorked(TUTOR_COMPARE_BETA),
     ringWorked: factorWorked(ringBeta()),
     view: pic.muon,
     ground: pic.ground,
