@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { PictureOne, PictureThree, PictureTwo, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './MuonLifetimePictures'
+import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './MuonLifetimePictures'
 import {
   LIFETIME_ANSWER_CHOICES,
   MOUNT_BETA,
+  HEIGHT_CHOICES,
   MOUNT_HEIGHT_M,
+  PRESET_HEIGHT_ID,
+  PRESET_SPEED_ID,
   REST_LIFETIME_US,
   SHARE_ANSWER_CHOICES,
+  SPEED_CHOICES,
   heightInLightDistances,
   lightDistanceInOneLifetimeM,
   ringBeta,
   shareAfterLifetimes,
+  trialTrip,
 } from '../physics/muonLifetime'
 
 // Evidence and Imagination, Experiment 4 (docs/experiments/evidence-and-imagination/04-do-fast-muons-live-longer.md).
-// Step 2: the title, the status line, the introduction and the "Want to know more?" links. The predictions, the run, the pictures, the controls, the results and the tutor come in later steps.
+// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the predictions, the run with Pictures 1 to 3, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A. The results and the tutor come in later steps.
 // The wording below is Claude's DRAFT of 2026-10-31, for the owner's approval (CLAUDE.md §28.1). Nothing here says whether a moving muon lasts longer or shorter than a muon at rest, gives the factor
 // by which a moving clock is slowed, or gives either test's result, because the two predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 // Every number comes from the physics module (CLAUDE.md §9).
@@ -54,6 +59,11 @@ export function MuonLifetimeExperiment({ onComplete }: MuonLifetimeExperimentPro
   const twoLifetimes = shareAfterLifetimes(2) * 100
   const threeLifetimes = shareAfterLifetimes(3) * 100
   const lightMetres = lightDistanceInOneLifetimeM()
+  const [speedId, setSpeedId] = useState<string>(PRESET_SPEED_ID)
+  const [heightId, setHeightId] = useState<string>(PRESET_HEIGHT_ID)
+  const trialSpeed = SPEED_CHOICES.find((c) => c.id === speedId) ?? SPEED_CHOICES[0]
+  const trialHeight = HEIGHT_CHOICES.find((c) => c.id === heightId) ?? HEIGHT_CHOICES[0]
+  const trial = trialTrip(trialSpeed.beta, trialHeight.heightM)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -125,6 +135,12 @@ export function MuonLifetimeExperiment({ onComplete }: MuonLifetimeExperimentPro
             experiment is about one such particle, the muon. A muon at rest lasts, on average, only about {REST_LIFETIME_US.toFixed(1)} millionths of a second. The question is how long a muon really lasts when it is moving, and what has actually been measured.
           </p>
 
+          <p style={paragraph}>
+            <strong>How a muon is made.</strong> Space is full of fast particles, called cosmic rays, that come from far away. When one hits the air, it smashes into an air molecule, a bit like a fast snooker ball scattering a tight rack of balls. Many new particles fly out.
+            Some of these are unstable and fall apart almost at once, and when they do, a muon is one of the things they turn into. This can happen anywhere in the air. But a cosmic ray usually hits something soon after it reaches the top of the air, so most muons are made
+            high up, and 15 km is a typical height. The muons then travel on downwards.
+          </p>
+
           <p style={{ ...paragraph, marginBottom: '0.25rem' }}>
             <strong>Why muons look like a puzzle.</strong> Here are the numbers, in steps.
           </p>
@@ -165,7 +181,7 @@ export function MuonLifetimeExperiment({ onComplete }: MuonLifetimeExperimentPro
               they decay.
             </li>
             <li>
-              <strong>Cosmic ray:</strong> a particle or atomic nucleus that comes from space and hits the air high above the ground. The hit makes a shower of other particles, and some of them fall apart into muons. Muons are made over a range of heights (step 2 above gives a typical one).
+              <strong>Cosmic ray:</strong> a fast particle or atomic nucleus that comes from space and hits the air. “How a muon is made”, above, says what happens next.
             </li>
             <li>
               <strong>Decay:</strong> a particle falling apart into other, lighter particles. A muon decays into an electron and other particles.
@@ -299,6 +315,65 @@ export function MuonLifetimeExperiment({ onComplete }: MuonLifetimeExperimentPro
                   {pictureThreeCaption()}
                 </>
               )}
+            </div>
+          )}
+          {done && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> In the pictures above, the muons fell {MOUNT_HEIGHT_M.toLocaleString('en-US')} metres at {MOUNT_BETA} c. Here you can try other numbers. You choose two things:
+              </p>
+              <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>The muon’s speed</strong>, relative to the ground, as a fraction of c.
+                </li>
+                <li>
+                  <strong>The height it starts from</strong>, above the detector. Muons can be made at any height, because cosmic rays can hit the air anywhere on the way down. Most are made high up, and 15 km is a typical height. Real muons start from a whole range of heights. Here you pick one height at a time, to see how the answer changes with the length of the fall.
+                </li>
+              </ol>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>One drawing then shows, for your choices:</p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>How many muons are still alive</strong> at the end of the fall, out of every 100, calculated two ways, as two bars on one ruler.
+                </li>
+                <li>
+                  <strong>The trip time</strong> and how many average lifetimes it is.
+                </li>
+                <li>
+                  <strong>The same fall as a muon would describe it</strong>: its road and its trip time.
+                </li>
+              </ul>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                The real pictures above do not change, and your two guesses do not change this drawing. Only the two settings below do.
+              </p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>These are your own trial values, not new measurements.</strong> For example, if you choose {trialSpeed.label} and {trialHeight.label}, the drawing works out what the same simple model gives for that fall. The muon is imagined for the question. This does not say what real muons did.
+              </p>
+              {(
+                [
+                  { title: 'How fast does the muon move, relative to the ground?', choices: SPEED_CHOICES.map((c) => ({ value: c.id as string, label: c.label })), value: speedId, set: setSpeedId },
+                  { title: 'How high above the detector does it start?', choices: HEIGHT_CHOICES.map((c) => ({ value: c.id as string, label: c.label })), value: heightId, set: setHeightId },
+                ] as const
+              ).map((control) => (
+                <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                  <div>
+                    {control.choices.map((choice) => (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        onClick={() => (control.set as (v: string) => void)(choice.value)}
+                        className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <TrialDrawing trial={trial} />
+              {trialCaption(trial)}
             </div>
           )}
         </div>

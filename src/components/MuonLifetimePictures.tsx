@@ -20,6 +20,7 @@ import {
   ringPredictedLifetimeUs,
   shareAfterLifetimes,
   shareGuessValue,
+  trialTrip,
 } from '../physics/muonLifetime'
 import { CaptionBlock } from './BlackHoleGrowthPictures'
 import type { LookFor } from './WideBinariesExperiment'
@@ -463,6 +464,118 @@ export function pictureThreeCaption(): ReactNode {
       whereFrom={
         <>
           <strong>Calculated here:</strong> every number in both rows. <strong>Imagined for the question:</strong> the pink row, a muon with a ruler and a clock of its own, and {GROUND_LABEL}’s steady fall at {MOUNT_BETA} c. <strong>Measured:</strong> nothing in this picture. The counts are in Picture 1.
+        </>
+      }
+    />
+  )
+}
+
+// ---- Drawing A: the learner's trial values (Part 2). No guess marks: the guesses never change it. ----
+// Wording: Claude's DRAFT of 2026-10-31, for the owner's approval (CLAUDE.md §28.1). Every number comes from `trialTrip` in the physics module.
+export type TrialTrip = ReturnType<typeof trialTrip>
+const A_W = 760
+const A_H = 440
+// A share out of 100, written so that a very small one is not shown as 0.0.
+const shareText = (share: number) => {
+  const per100 = share * 100
+  if (per100 < 0.01) return 'less than 0.01'
+  return per100 < 1 ? per100.toFixed(2) : per100.toFixed(1)
+}
+const speedText = (beta: number) => (beta >= 0.999 ? beta.toFixed(5) : String(Number(beta.toFixed(5))))
+const metresText = (m: number) => (m >= 10000 ? spaced(m) : n1(m))
+
+export function TrialDrawing({ trial }: { trial: TrialTrip }) {
+  const sx = (per100: number) => 250 + 380 * (per100 / 100)
+  const rx = (m: number) => (300 * m) / 15000
+  const everyday = trial.everydayShare * 100
+  const slow = trial.slowClockShare * 100
+  return (
+    <svg viewBox={`0 0 ${A_W} ${A_H}`} width="100%" style={svgStyle} role="img" aria-label="Drawing A: the share of muons still alive, the fall described by the ground and the fall described by a muon, for your trial speed and height">
+      <SvgLines x={20} y={24} lines={['Drawing A. Your trial values']} fill={TEXT_COLOR} size={12} bold />
+      <SvgLines x={20} y={44} lines={['How many muons are still alive at the end of the fall, out of every 100 that start at the top']} fill={MUTED_COLOR} size={10} />
+      <rect x={sx(0)} y={52} width={sx(everyday) - sx(0)} height={22} fill={CYAN} fillOpacity={0.35} stroke={CYAN} strokeWidth={1.5} />
+      <SvgLines x={sx(0) + 8} y={68} lines={[`lifetime unchanged: ${shareText(trial.everydayShare)} of every 100`]} fill={TEXT_COLOR} size={11} bold />
+      <rect x={sx(0)} y={82} width={sx(slow) - sx(0)} height={22} fill={CYAN} fillOpacity={0.6} stroke={CYAN} strokeWidth={1.5} />
+      <SvgLines x={sx(0) + 8} y={98} lines={[`lifetime as special relativity gives it: ${shareText(trial.slowClockShare)} of every 100`]} fill={TEXT_COLOR} size={11} bold />
+      <line x1={sx(0)} y1={116} x2={sx(100)} y2={116} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {[0, 25, 50, 75, 100].map((v) => (
+        <g key={v}>
+          <line x1={sx(v)} y1={111} x2={sx(v)} y2={121} stroke={MUTED_COLOR} />
+          <SvgLines x={sx(v)} y={136} lines={[String(v)]} fill={MUTED_COLOR} size={10} anchor="middle" />
+        </g>
+      ))}
+      <line x1={20} y1={150} x2={A_W - 20} y2={150} stroke="#334155" />
+
+      <SvgLines x={20} y={172} lines={['The fall as the ground describes it (calculated here)']} fill={CYAN} size={11} bold />
+      <SvgLines x={20} y={192} lines={[`The muon falls ${spaced(trial.heightM)} m at ${speedText(trial.beta)} c. The trip takes ${n2(trial.tripUs)} µs by the ground’s clocks.`]} fill={TEXT_COLOR} size={11} />
+      <SvgLines x={20} y={210} lines={[`That is ${n2(trial.lifetimesGround)} of the ${n1(REST_LIFETIME_US)} µs average lifetime of a muon at rest (this gives the lighter bar).`]} fill={TEXT_COLOR} size={11} />
+      <SvgLines x={20} y={228} lines={[`With the lifetime ${n1(trial.slowClockLifetimeUs)} µs instead, the trip is ${n2(trial.tripUs / trial.slowClockLifetimeUs)} of a lifetime (this gives the darker bar).`]} fill={TEXT_COLOR} size={11} />
+      <line x1={20} y1={244} x2={A_W - 20} y2={244} stroke="#334155" />
+
+      <SvgLines x={20} y={266} lines={['The same fall as a muon would describe it (imagined for the question)']} fill={PINK} size={11} bold />
+      <SvgLines x={20} y={286} lines={['The road, drawn to one scale (the longest road you can choose is 15 000 m):']} fill={MUTED_COLOR} size={10} />
+      <rect x={20} y={294} width={rx(trial.heightM)} height={16} fill={CYAN} fillOpacity={0.4} stroke={CYAN} strokeWidth={1.5} />
+      <SvgLines x={20 + rx(trial.heightM) + 8} y={307} lines={[`the ground’s road: ${spaced(trial.heightM)} m`]} fill={TEXT_COLOR} size={11} bold />
+      <rect x={20} y={318} width={Math.max(rx(trial.muonRoadM), 1.5)} height={16} fill={PINK} fillOpacity={0.4} stroke={PINK} strokeWidth={1.5} />
+      <SvgLines x={20 + Math.max(rx(trial.muonRoadM), 1.5) + 8} y={331} lines={[`the muon’s road: ${metresText(trial.muonRoadM)} m`]} fill={TEXT_COLOR} size={11} bold />
+      <SvgLines x={20} y={360} lines={[`The trip takes ${n2(trial.muonTripUs)} µs by the muon’s own clock. Its lifetime by its own clock is ${n1(REST_LIFETIME_US)} µs, so the trip is ${n2(trial.muonLifetimes)} of a lifetime.`]} fill={TEXT_COLOR} size={11} />
+      <SvgLines x={20} y={378} lines={[`The share still alive is ${shareText(trial.muonShare)} of every 100, the same as the darker bar.`]} fill={TEXT_COLOR} size={11} bold />
+      <SvgLines x={20} y={412} lines={['Cyan: calculated here. Pink: imagined for the question. These are your trial values, not measurements.']} fill={MUTED_COLOR} size={10} />
+    </svg>
+  )
+}
+
+export function trialCaption(trial: TrialTrip): ReactNode {
+  const lookFor: LookFor[] = [
+    {
+      look: 'the two cyan bars at the top: the lighter one and the darker one.',
+      means: `for your values, the lighter bar is ${shareText(trial.everydayShare)} muons out of every 100 and the darker bar is ${shareText(trial.slowClockShare)} out of every 100. The lighter bar uses the average lifetime of a muon at rest, ${n1(REST_LIFETIME_US)} µs. The darker bar uses ${n1(trial.slowClockLifetimeUs)} µs.`,
+      matters: 'the gap between the bars is how much the answer changes when the lifetime changes. Try 0.5 c and then 0.99999 c at the same height, and watch the darker bar grow while the lighter bar hardly moves. The page does not say here why the second lifetime is used. The tutor does.',
+    },
+    {
+      look: 'the two road bars in the pink section: the cyan one and the pink one.',
+      means: `the ground’s road is ${spaced(trial.heightM)} m. The muon’s road is ${metresText(trial.muonRoadM)} m. The faster the muon, the shorter its road.`,
+      matters: 'try a height of 15 km. The ground’s road gets longer, but the muon’s road changes with the speed too, so the two descriptions stay different. Each road is measured by one observer with a ruler of their own.',
+    },
+    {
+      look: 'the last line, “the share still alive”, and the darker cyan bar at the top.',
+      means: `both give ${shareText(trial.muonShare)} out of every 100.`,
+      matters: 'whichever way you describe the fall, the number of muons that arrive is the same. You can change the speed and height as many times as you like and the two will always agree.',
+    },
+  ]
+  return (
+    <CaptionBlock
+      title="Drawing A"
+      intro="This drawing follows the two settings above it, speed and starting height. It has three parts. At the top is a ruler from 0 to 100 that shows how many muons, out of every 100 that start at the top, are still alive at the end of the fall. In the middle are the numbers for the fall as the ground describes it. At the bottom are the numbers for the same fall as a muon would describe it."
+      bullets={[
+        <>
+          <strong>The two cyan bars at the top.</strong> Each shows a share out of 100 on the ruler under them, and the number is written on the bar. A longer bar means more muons arrive alive. The lighter bar is calculated with the average lifetime of a muon at rest. The darker bar is calculated with the longer lifetime written in its label. Cyan means “calculated here”.
+        </>,
+        <>
+          <strong>The cyan lines in the middle</strong> give the trip time (distance ÷ speed) and how many average lifetimes it is.
+        </>,
+        <>
+          <strong>The pink section at the bottom</strong> is imagined for the question, because nobody can ride along with a muon. It gives the muon’s own road and trip time. The cyan road bar and the pink road bar are drawn to the same scale, so you can compare their lengths.
+        </>,
+        <>
+          <strong>No white mark</strong> is drawn here. Your guesses never change this drawing.
+        </>,
+      ]}
+      worked={
+        <>
+          <strong>Step 1: the trip time.</strong> Your height is {spaced(trial.heightM)} m and your speed is {speedText(trial.beta)} × 299 792 458 m/s. Distance ÷ speed = {n2(trial.tripUs)} µs.
+          <br />
+          <strong>Step 2: how many lifetimes?</strong> {n2(trial.tripUs)} ÷ {n1(REST_LIFETIME_US)} = {n2(trial.lifetimesGround)} lifetimes.
+          <br />
+          <strong>Step 3: how many are left (lighter bar)?</strong> Each lifetime keeps {n3(shareAfterLifetimes(1))} of the muons. After {n2(trial.lifetimesGround)} lifetimes, {n3(shareAfterLifetimes(1))} to the power {n2(trial.lifetimesGround)} = {n3(trial.everydayShare)}, which is {shareText(trial.everydayShare)} of every 100.
+          <br />
+          <strong>Step 4: try the longer lifetime (darker bar).</strong> {n2(trial.tripUs)} ÷ {n1(trial.slowClockLifetimeUs)} = {n2(trial.tripUs / trial.slowClockLifetimeUs)} lifetimes, and {shareText(trial.slowClockShare)} of every 100 are left.
+        </>
+      }
+      lookFor={lookFor}
+      whereFrom={
+        <>
+          <strong>Calculated here:</strong> both cyan bars and every number in the drawing, with the same simple model as Pictures 1 and 3: one muon, one straight fall at one steady speed. <strong>Imagined for the question:</strong> the muon’s own description, and the fall itself. <strong>Measured:</strong> nothing in this drawing; the real counts are in Picture 1 and the ring is in Picture 2. These are your own trial values, not new measurements. Muons can be made at any height; 15 km is only a typical height, not a measured one, and real muons start from a whole range of heights.
         </>
       }
     />
