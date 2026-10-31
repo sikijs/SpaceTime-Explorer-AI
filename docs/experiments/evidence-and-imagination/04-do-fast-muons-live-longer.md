@@ -221,5 +221,5 @@ g. **Rossi and Hall (1941)** is named only, from Wikipedia; no paper read.
 
 **Unsourced in the tutor:** the remark that in the ring "the muons were timed as a lifetime, not counted at two heights" is the author's own reading of the experiment; the daily-life comparison in the explanation has no source read.
 
-**Differences from this specification (not yet approved):** (a) the conceptual question (0.5 c against 0.995 c) is the author's choice; the specification does not name one; (b) the explanation has seven items where the specification lists five themes, and it omits the specification's "daily-life example for the exponential share", which the introduction already gives (the coin-flipping crowd); (c) the worked factor is shown with a formula, 1 ÷ √(1 − β²), taken from the first chapter and not derived.
+**Differences from this specification (all three approved by the owner on 2026-10-31):** (a) the conceptual question (0.5 c against 0.995 c) is the author's choice; the specification does not name one; (b) the explanation has seven items where the specification lists five themes, and it omits the specification's "daily-life example for the exponential share", which the introduction already gives (the coin-flipping crowd); (c) the worked factor is shown with a formula, 1 ÷ √(1 − β²), taken from the first chapter and not derived.
 
