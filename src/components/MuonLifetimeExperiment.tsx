@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { MuonLifetimeResults } from './MuonLifetimeResults'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './MuonLifetimePictures'
 import {
   LIFETIME_ANSWER_CHOICES,
@@ -19,7 +20,7 @@ import {
 } from '../physics/muonLifetime'
 
 // Evidence and Imagination, Experiment 4 (docs/experiments/evidence-and-imagination/04-do-fast-muons-live-longer.md).
-// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the predictions, the run with Pictures 1 to 3, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A. The results and the tutor come in later steps.
+// Steps 2 to 5: the title, the status line, the introduction, the "Want to know more?" links, the predictions, the run with Pictures 1 to 3, and (Step 5) the "Now try it yourself" part with its two controls and Drawing A, and (Step 6) the results (`MuonLifetimeResults.tsx`). The tutor comes in a later step.
 // The wording below is Claude's DRAFT of 2026-10-31, for the owner's approval (CLAUDE.md §28.1). Nothing here says whether a moving muon lasts longer or shorter than a muon at rest, gives the factor
 // by which a moving clock is slowed, or gives either test's result, because the two predictions and the results ask for them (CLAUDE.md §12). The papers are listed only after the run.
 // Every number comes from the physics module (CLAUDE.md §9).
@@ -376,6 +377,7 @@ export function MuonLifetimeExperiment({ onComplete }: MuonLifetimeExperimentPro
               {trialCaption(trial)}
             </div>
           )}
+          {done && <MuonLifetimeResults shareGuess={shareGuess} lifetimeGuess={lifetimeGuess} />}
         </div>
       </div>
     </div>
