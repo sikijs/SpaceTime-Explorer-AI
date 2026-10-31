@@ -43,6 +43,14 @@ import {
   TOTAL_MASS as lgMass,
 } from './physics/localGroupCollision'
 import { resultsCheckUp as whCheckUp, tutorFigures as whTutorFigures, ECHO_SEARCHES as whEchoSearches } from './physics/wormholes'
+import {
+  MOUNT_BETA as mlBeta,
+  MOUNT_HEIGHT_M as mlHeight,
+  REST_LIFETIME_US as mlRest,
+  lightDistanceInOneLifetimeM as mlLightMetres,
+  resultsCheckUp as mlCheckUp,
+  tutorFigures as mlTutorFigures,
+} from './physics/muonLifetime'
 import { resultsCheckUp as asCheckUp, tutorFigures as asTutorFigures, pionWorked as asPionWorked, pictureOne as asPictureOne } from './physics/addingSpeeds'
 import { resultsCheckUp as ttCheckUp, exampleSteps as ttSteps, tutorFigures as ttTutorFigures, friendlyDuration as ttDuration } from './physics/timeTravel'
 import { exampleSteps as visitorSteps, knownObjects as visitorKnown, pictureTwo as visitorPictureTwo, resultsCheckUp as visitorCheckUp } from './physics/interstellarVisitor'
@@ -355,6 +363,24 @@ function addingSpeedsSummary(): string {
     `In 1964 gamma rays from pions moving at ${w.a} c were measured at ${spaced(w.measuredKmPerS)} kilometres per second, give-or-take ${spaced(w.giveOrTakeKmPerS)}, against ${spaced(w.lightKmPerS)} for c: the speed of light, not the everyday sum of about ${spaced(w.everydayKmPerS)}. ` +
     `This is settled, and the tests are old. They do not cover speeds that are not along one line, and this page did not check other tests of the rule. ` +
     `The numbers come from this page's own calculation, a Wikipedia account of Fizeau, a typed copy of Michelson and Morley's 1886 paper and a machine-read scan of the 1964 paper, whose figures still need checking against its pages. No paper was read in full.`
+  )
+}
+
+// The chapter summary of Evidence and Imagination Experiment 4. Claude's DRAFT of 2026-10-31, for the owner's approval (CLAUDE.md §28.1). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function muonLifetimeSummary(): string {
+  const c = mlCheckUp()
+  const t = mlTutorFigures()
+  const n1 = (x: number) => x.toFixed(1)
+  const n2 = (x: number) => x.toFixed(2)
+  const n3 = (x: number) => x.toFixed(3)
+  const spaced = (x: number) => String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  return (
+    `How long does a muon live? A muon is a particle that falls apart after a short time, so its falling apart can be used as a clock. At rest it lasts ${n3(mlRest)} millionths of a second on average, so light goes only about ${Math.round(mlLightMetres())} metres in that time, yet muons made around 15 kilometres up reach the ground. ` +
+    `On the mountain, if a moving muon lasted only ${n3(mlRest)} µs, about ${n1(c.mount.everyday * 100)} of every 100 would reach sea level after a fall of ${spaced(mlHeight)} metres at ${mlBeta} c. The count in 1962 was ${n1(c.mount.counted * 100)} of every 100, and a calculation that gives a moving muon a lifetime ${n2(t.fast.gamma)} times longer, ${n1(t.fast.slowClockLifetimeUs)} µs, gives ${n1(c.mount.slow * 100)}. ` +
+    `In the storage ring at CERN in 1977, muons going round at ${t.ringWorked.beta.toFixed(5)} c lasted ${n3(c.ring.plus.measuredUs)} and ${n3(c.ring.minus.measuredUs)} µs, against a calculated ${n2(c.ring.predictedUs)} µs, which is ${n2(c.ring.predictedOverRest)} times the lifetime at rest, to within ${n2(Math.abs(c.ring.minus.differencePercent))} percent. ` +
+    `A muon's own description gives the same count: its road is ${n1(t.view.roadM)} metres and the trip is ${n2(t.view.tripUs / t.view.lifetimeUs)} of a lifetime, so ${n1(t.view.share * 100)} of every 100 arrive, and the ground says the clock runs slow where the muon says the road is short. ` +
+    `That a moving clock runs slow, by a factor that depends only on its speed, is settled, and these two tests are old. This page's model is simpler than the real tests: one steady speed gives a factor of ${n2(t.simpleModelFactor)}, where the mountain paper's own calculation gave ${t.factorPredicted} (give-or-take ${t.factorPredictedGiveOrTake}) and its measurement ${t.factorMeasured} (give-or-take ${t.factorMeasuredGiveOrTake}). ` +
+    `The numbers come from this page's own calculation, Wikipedia's account of the mountain test (the paper's page was refused and the paper was not read), the abstract of the CERN paper and the Particle Data Group's listing. No paper was read in full.`
   )
 }
 
@@ -1169,9 +1195,9 @@ const chapters: Chapter[] = [
     title: 'How long does a muon live?',
     group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
     Component: MuonLifetimeExperiment,
-    // The chapter summary and "What's next" come in a later step; empty text hides the summary hint until then.
-    learned: '',
-    next: '',
+    // Chapter summary and "What's next": Claude's DRAFT of 2026-10-31, for the owner's approval. "What's next" is a planned direction only: Experiment 5 has no specification yet.
+    learned: muonLifetimeSummary(),
+    next: 'The next experiment in this group turns from motion to gravity: whether a radio signal that passes close to the Sun arrives late, and by how much.',
   },
 ]
 
