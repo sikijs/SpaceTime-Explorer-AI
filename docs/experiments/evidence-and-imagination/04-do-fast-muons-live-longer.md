@@ -177,3 +177,21 @@ g. **Rossi and Hall (1941)** is named only, from Wikipedia; no paper read.
 10. **Tutor:** the standard four-step sequence, with the muon's view (the short road) as the explanation's second half. Default: yes.
 11. **Terms defined in plain words where they appear:** muon, cosmic ray, decay, average lifetime, share, storage ring. Default: yes.
 12. **Pictures label every shape on the canvas and say plainly which are measured, calculated and imagined** (§14, "Predictions and the Real Results" point 6). Default: yes.
+
+## Implementation Notes (2026-10-31, in progress)
+
+**Built so far:** the physics model and tests (`a7e3557`, `src/physics/muonLifetime.ts` and `muonLifetime.test.ts`, 35 tests) and the interface, the two predictions, the run and Pictures 1 to 3 with their captions (`10269f4`, `MuonLifetimeExperiment.tsx`, `MuonLifetimePictures.tsx`, `App.tsx`). Not built yet: Drawing A and its controls, the results, the tutor, the papers list, the chapter summary and "What's next" (empty in `App.tsx`). Not viewed in a browser at narrow widths or in other browsers.
+
+**The three captions (wording approved by the owner on 2026-10-31, after two rounds of simplifying at the owner's request).** The first draft was found confusing, so the captions were rewritten in plainer words. What the owner asked for, and what the built captions now do:
+
+1. **Each "What to look for" item is one feature, in three parts:** Look at (the feature, named as drawn), What it means (in plain words, with the real numbers) and Why it matters. Items appear only once their feature is drawn (Picture 1's Part B items from stage 2, the green and second cyan items from stage 3).
+2. **Every bar, mark and ruler is explained with numbers, step by step.** Picture 1, Part A: each bar is a moment in time (0, 2.2, 4.4 and 6.6 µs after the start) and the number at its end is how many of the 100 muons are alive then (100.0, 36.8, 13.5 and 5.0). Part B's ruler has an example (a mark at 25 means 25 of 100 arrive). The green item shows 412 ÷ 563 = 0.73. Picture 2 explains why the ruler's spacing is uneven (1 to 10 is as wide as 10 to 100) and reads the marks from left to right with numbers (2.20 µs, then about 64 µs, a jump of about 29 times). Picture 3's worked moment begins with trip time = road ÷ speed in each row.
+3. **Terms are explained where they first appear:** muon, average lifetime (with a party comparison: each hour the same fraction of guests go home), µs, c, the storage ring.
+4. **Nothing gives away the reason for the differences** (§12): no caption names the factor by which a moving muon's lifetime is longer, or the ratio of the two roads in Picture 3. The tutor does that.
+
+**Differences from this specification (not yet approved by the owner):**
+1. Picture 1 has a Part A (a muon at rest: four bars for 0, 1, 2 and 3 average lifetimes) above the mountain; the specification's Display lists only the mountain and the ruler.
+2. Picture 3 draws road bars (in metres) and time bars (in µs, the trip and the lifetime) for each row, with the share alive written under each; the specification said "in units of the rest lifetime".
+3. The captions are longer than the specification implies, to meet §29 and the owner's request for simpler, more detailed wording.
+
+**Open:** the captions' source notes repeat the Open items above (the Frisch and Smith figures come from a published account, not the paper; the ring figures from the paper's abstract).
