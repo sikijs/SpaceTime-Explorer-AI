@@ -30,6 +30,7 @@ import { TimeTravelExperiment } from './components/TimeTravelExperiment'
 import { AddingSpeedsExperiment } from './components/AddingSpeedsExperiment'
 import { MuonLifetimeExperiment } from './components/MuonLifetimeExperiment'
 import { SunDelayExperiment } from './components/SunDelayExperiment'
+import { tutorFigures as sdTutorFigures } from './physics/sunDelay'
 import {
   APPROACH_SPEED_KM_S as lgApproach,
   MERGER_DISTANCE_KPC as lgRing,
@@ -382,6 +383,23 @@ function muonLifetimeSummary(): string {
     `A muon's own description gives the same count: its road is ${n1(t.view.roadM)} metres and the trip is ${n2(t.view.tripUs / t.view.lifetimeUs)} of a lifetime, so ${n1(t.view.share * 100)} of every 100 arrive, and the ground says the clock runs slow where the muon says the road is short. ` +
     `That a moving clock runs slow, by a factor that depends only on its speed, is settled, and these two tests are old. This page's model is simpler than the real tests: one steady speed gives a factor of ${n2(t.simpleModelFactor)}, where the mountain paper's own calculation gave ${t.factorPredicted} (give-or-take ${t.factorPredictedGiveOrTake}) and its measurement ${t.factorMeasured} (give-or-take ${t.factorMeasuredGiveOrTake}). ` +
     `The numbers come from this page's own calculation, Wikipedia's account of the mountain test (the paper's page was refused and the paper was not read), the abstract of the CERN paper and the Particle Data Group's listing. No paper was read in full.`
+  )
+}
+
+// The chapter summary of Evidence and Imagination Experiment 5. Claude's DRAFT of 2026-11-01, for the owner's approval (CLAUDE.md §28.1). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function sunDelaySummary(): string {
+  const t = sdTutorFigures()
+  const n1 = (x: number) => x.toFixed(1)
+  const n2 = (x: number) => x.toFixed(2)
+  const commas = (x: number) => Math.round(x).toLocaleString('en-US')
+  const e5 = (x: number) => `${(x * 1e5).toFixed(1)} × 10⁻⁵`
+  return (
+    `How long does the Sun's gravity delay a radio signal? A signal sent from the Earth to Venus and back, passing so that it just touches the Sun's surface, would take ${n1(t.grazing.flatMinutes)} minutes with no effect from the Sun. By this page's calculation the Sun's gravity adds ${n1(t.grazing.delayUs)} millionths of a second to that, which is ${n1(t.grazing.pathKm)} km of extra path and about 1 part in ${n1(t.grazing.oneInMillions)} million of the trip. Shapiro estimated about ${t.shapiroUs} µs in 1964, as quoted, and this page's number is ${n1(t.shapiroDifferenceUs)} µs more, which the page does not explain. ` +
+    `The extra time has two equal parts: time runs slower near the Sun, which gives ${n1(t.parts.timeSlowingUs)} µs, and space near the Sun is stretched, which gives another ${n1(t.parts.spaceStretchingUs)} µs. The ordinary picture of gravity has only the first part, so it gives half. ` +
+    `Passing ten times farther out gives ${n1(t.at10Us)} µs, which is ${n2(t.timesSmaller10)} times smaller and not ten, because each time the closest distance is multiplied by ten about the same amount, about ${n1(t.tenfoldStepUs)} µs, comes off, so the delay falls slowly. ` +
+    `The Viking landers in 1979 checked the delay to about 1 part in 1,000, and the Cassini spacecraft in 2002 to ${t.tests.cassiniPpm} parts per million, ${Math.round(t.tests.vikingOverCassini)} times closer. The Cassini paper's abstract gives gamma, which is 1 in general relativity and 0 in the Newtonian model, as 1 + (${e5(t.gamma.gammaMinusOne)} ± ${e5(t.gamma.giveOrTake)}), so the gap between the two pictures is about ${commas(t.gamma.gapOverGiveOrTake)} times the give-or-take of the test, and real signals follow the full calculation and not the half. ` +
+    `That the Sun adds time to a signal that passes it, by this amount, is settled, and these tests are old. This page's model is simpler than the real tests: it uses only the main part of the formula, a fuller calculation adds a smaller term thought to be about ${n1(t.fullerTermUs)} µs (remembered, not read from a source), and it leaves out the Sun's hot outer atmosphere, the planets' gravity and the motion of the Earth and Venus. ` +
+    `The numbers come from this page's own calculation, NASA's release about the Cassini test, the abstract of the Cassini paper and Wikipedia's account of Shapiro's figures (his paper was not read). No paper was read in full.`
   )
 }
 
@@ -1204,9 +1222,9 @@ const chapters: Chapter[] = [
     title: 'How long does the Sun\'s gravity delay a radio signal?',
     group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
     Component: SunDelayExperiment,
-    // Chapter summary and "What's next": not written yet (a later step of Experiment 5).
-    learned: '',
-    next: '',
+    // Chapter summary and "What's next": Claude's DRAFT of 2026-11-01, for the owner's approval. "What's next" is a planned direction only: Experiment 6 has no specification yet.
+    learned: sunDelaySummary(),
+    next: 'The next experiment in this group turns from the Sun to the early universe: why the first atomic nuclei came out in the proportions they did, and what the amounts of the lightest elements left in the sky tell us.',
   },
 ]
 
