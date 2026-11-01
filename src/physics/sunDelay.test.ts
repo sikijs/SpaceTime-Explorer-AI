@@ -26,6 +26,10 @@ import {
   distanceGuessTimesSmaller,
   earthDistanceM,
   flatRoundTripMinutes,
+  flatTripBreakdown,
+  guessedFarDelayUs,
+  testPrecisionsPpm,
+  tripWithAndWithoutSun,
   flatRoundTripUs,
   lightDistanceInOneMicrosecondM,
   lightTimeSeconds,
@@ -169,6 +173,40 @@ describe('the Sun\'s extra delay', () => {
     const d = trialDelay('venus', 1)
     expect(d.delayUs).toBeCloseTo(roundTripDelayUs(re, venus, R), 9)
     expect(d.extraPathM).toBeCloseTo((d.delayUs * 1e-6) * C, 6)
+  })
+})
+
+describe('the pictures\' helpers', () => {
+  it('the flat Venus trip past the Sun\'s edge: legs of 1 AU and 0.72 AU, 858.3 s one way, 28.6 minutes round trip', () => {
+    const b = flatTripBreakdown('venus', 1)
+    expect(b.earthLegM / 1e9).toBeCloseTo(149.6, 1)
+    expect(b.targetLegM / 1e9).toBeCloseTo(107.7, 1)
+    expect(b.oneWaySeconds).toBeCloseTo(858.3, 1)
+    expect(b.roundTripMinutes).toBeCloseTo(28.61, 2)
+    expect(b.roundTripSeconds * 1e6).toBeCloseTo(flatRoundTripUs(re, venus, R), 3)
+    expect(b.closestM).toBe(R)
+  })
+  it('the trip with the Sun\'s effect is the trip without it plus the extra time: Venus grazing, 232.5 us longer', () => {
+    const w = tripWithAndWithoutSun('venus', 1)
+    expect(w.withSunUs - w.withoutSunUs).toBeCloseTo(232.47, 1)
+    expect(w.extraUs).toBeCloseTo(roundTripDelayUs(re, venus, R), 9)
+    expect(w.withoutSunUs).toBeCloseTo(flatRoundTripUs(re, venus, R), 6)
+    expect(w.withSunSeconds).toBeGreaterThan(w.withoutSunSeconds)
+    expect(w.withoutSunSeconds).toBeCloseTo(1716.6, 0)
+  })
+  it('Prediction 2\'s guess is drawn at the real 1-radius delay divided by the guess: 232.5, 116.2 and 2.3 us', () => {
+    expect(guessedFarDelayUs('the-same')).toBeCloseTo(232.5, 1)
+    expect(guessedFarDelayUs('about-2-times')).toBeCloseTo(116.2, 1)
+    expect(guessedFarDelayUs('about-100-times')).toBeCloseTo(2.325, 2)
+    expect(() => guessedFarDelayUs('nope')).toThrow(RangeError)
+  })
+  it('the tests\' precisions in parts per million: Shapiro 50,000 to 100,000, Viking 1,000, Cassini 20, a ratio of 50', () => {
+    const p = testPrecisionsPpm()
+    expect(p.shapiroEstimateLow).toBeCloseTo(50000, 6)
+    expect(p.shapiroEstimateHigh).toBeCloseTo(100000, 6)
+    expect(p.viking).toBeCloseTo(1000, 9)
+    expect(p.cassini).toBe(20)
+    expect(p.vikingOverCassini).toBeCloseTo(50, 9)
   })
 })
 

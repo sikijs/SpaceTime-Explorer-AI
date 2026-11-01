@@ -113,6 +113,24 @@ export function trialDelay(targetId: string, closestRadii: number) {
   return { targetId, closestRadii, flatUs, flatMinutes: flatUs / 6e7, delayUs, newtonianUs, delayOverFlat: delayUs / flatUs, extraPathM: (delayUs * 1e-6) * SPEED_OF_LIGHT_M_PER_S }
 }
 
+// The round trip with no effect from the Sun, the round trip with it, and the difference (the extra time), in us, for Picture 2's Part A.
+export function tripWithAndWithoutSun(targetId: string, closestRadii: number) {
+  const t = trialDelay(targetId, closestRadii)
+  return { withoutSunUs: t.flatUs, withSunUs: t.flatUs + t.delayUs, extraUs: t.delayUs, withoutSunSeconds: t.flatUs / 1e6, withSunSeconds: (t.flatUs + t.delayUs) / 1e6 }
+}
+
+// The flat-space trip split into its steps, for the worked moment under Picture 1 (distances in metres, times in seconds).
+export function flatTripBreakdown(targetId: string, closestRadii: number) {
+  const re = earthDistanceM()
+  const rt = targetDistanceM(targetId)
+  const b = closestRadii * SUN_RADIUS_M
+  const earthLegM = legLengthM(re, b)
+  const targetLegM = legLengthM(rt, b)
+  const oneWayM = earthLegM + targetLegM
+  const oneWaySeconds = lightTimeSeconds(oneWayM)
+  return { earthLegM, targetLegM, oneWayM, oneWaySeconds, roundTripSeconds: 2 * oneWaySeconds, roundTripMinutes: (2 * oneWaySeconds) / 60, closestM: b }
+}
+
 // ---- Published figures (stored as quoted, not recomputed; specification, "Sources") ----
 // Shapiro 1964, as Wikipedia quotes it: delays "increased by almost 2 x 10^-4 s", "equivalent to 60 km", measurable "to within about 5 to 10%". The paper was not read.
 export const SHAPIRO_1964_DELAY_US = 200
@@ -127,6 +145,16 @@ export const CASSINI_GAMMA_MINUS_ONE_GIVE_OR_TAKE = 2.3e-5
 export const CASSINI_PRECISION_PPM_JPL = 20
 export const CASSINI_IMPROVEMENT_FACTOR_JPL = 50
 
+// The three tests' precisions in parts per million, as quoted (Shapiro's is his estimate of what a radar test could do, not a result).
+export function testPrecisionsPpm() {
+  return {
+    shapiroEstimateLow: precisionPartsPerMillion(SHAPIRO_1964_PRECISION_PERCENT_LOW / 100),
+    shapiroEstimateHigh: precisionPartsPerMillion(SHAPIRO_1964_PRECISION_PERCENT_HIGH / 100),
+    viking: precisionPartsPerMillion(VIKING_PRECISION),
+    cassini: CASSINI_PRECISION_PPM_JPL,
+    vikingOverCassini: precisionPartsPerMillion(VIKING_PRECISION) / CASSINI_PRECISION_PPM_JPL,
+  }
+}
 // How many parts per million of the delay each test could pin down (precision as a fraction of the delay).
 export function precisionPartsPerMillion(fraction: number): number {
   return fraction * 1e6
@@ -192,6 +220,10 @@ export function predictionTwoTimesSmaller(): number {
 }
 export function predictionTwoAnswerId(): DistanceAnswerId {
   return nearestChoice(DISTANCE_ANSWER_CHOICES, Math.log(predictionTwoTimesSmaller()), (c) => Math.log(c.timesSmaller)).id
+}
+// Where Prediction 2's guess is drawn on Picture 3: the extra time at 10 solar radii if the real extra time at 1 solar radius became "this many times smaller" (a marker for the guess, not a calculation of it).
+export function guessedFarDelayUs(id: string): number {
+  return trialDelay('venus', 1).delayUs / distanceGuessTimesSmaller(id)
 }
 export function distanceGuessTimesSmaller(id: string): number {
   const choice = DISTANCE_ANSWER_CHOICES.find((c) => c.id === id)

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { PictureFour, PictureOne, PictureThree, PictureTwo, pictureFourCaption, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './SunDelayPictures'
 import {
   ASTRONOMICAL_UNIT_M,
   CASSINI_PRECISION_PPM_JPL,
@@ -33,16 +34,55 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 const paragraph = { marginTop: 0, marginBottom: '0.5rem' } as const
 const list = { margin: '0.25rem 0 0.75rem', paddingLeft: '1.25rem' } as const
 
+const STAGE_MS = 2600
+const LAST_STAGE = 5
+const STAGE_NAMES = ['', 'The trip with no effect from the Sun', 'The path past the Sun', 'The extra time', 'The extra time and the closest distance', 'The real tests']
+const STAGE_LINES = [
+  '',
+  'Picture 1, Part A, shows the whole round trip to Venus past the Sun’s edge as it would be with no effect from the Sun’s gravity.',
+  'Part B sketches the path of the signal past the Sun, and the closest distance.',
+  'Picture 2 shows the extra time on a ruler of microseconds. Your first guess is drawn on it.',
+  'Picture 3 shows how the extra time changes as the signal passes farther from the Sun. Your second guess is drawn on it.',
+  'Picture 4 shows how closely three real tests pinned the delay down. The sources are listed after the run.',
+]
+
 interface SunDelayExperimentProps {
   onComplete?: () => void
   onTutorComplete?: () => void
 }
 
-export function SunDelayExperiment(_props: SunDelayExperimentProps) {
+export function SunDelayExperiment({ onComplete }: SunDelayExperimentProps) {
   const [delayGuess, setDelayGuess] = useState<string | null>(null)
   const [distanceGuess, setDistanceGuess] = useState<string | null>(null)
   const venusAu = TARGET_CHOICES.find((c) => c.id === 'venus')!.distanceAu
   const cassiniPpm = CASSINI_PRECISION_PPM_JPL
+  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  const [stage, setStage] = useState(0)
+  const recorded = status !== 'idle'
+  const done = status === 'complete'
+  const bothPredicted = delayGuess !== null && distanceGuess !== null
+  // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
+  useEffect(() => {
+    if (status !== 'running') return
+    const timer = window.setTimeout(() => {
+      if (stage < LAST_STAGE) setStage(stage + 1)
+      else {
+        setStatus('complete')
+        onComplete?.()
+      }
+    }, STAGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [status, stage, onComplete])
+  const run = () => {
+    setStage(1)
+    setStatus('running')
+  }
+  const startOver = () => {
+    setDelayGuess(null)
+    setDistanceGuess(null)
+    setStatus('idle')
+    setStage(0)
+  }
   const sunLightSeconds = lightTimeSeconds(ASTRONOMICAL_UNIT_M)
   const sunLightMinutes = sunLightSeconds / 60
   const microsecondMetres = lightDistanceInOneMicrosecondM()
@@ -228,6 +268,7 @@ export function SunDelayExperiment(_props: SunDelayExperimentProps) {
                     key={choice.value}
                     type="button"
                     onClick={() => question.set(choice.value)}
+                    disabled={recorded}
                     className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
                     style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                   >
@@ -240,6 +281,50 @@ export function SunDelayExperiment(_props: SunDelayExperimentProps) {
               </p>
             </div>
           ))}
+
+          <button type="button" className="action-button" onClick={run} disabled={!bothPredicted || recorded} style={{ padding: '0.6rem 1.5rem' }}>
+            Run
+          </button>
+          {recorded && (
+            <button type="button" className="secondary-button" onClick={startOver} style={{ marginLeft: '0.75rem', padding: '0.6rem 1.25rem' }}>
+              Start over
+            </button>
+          )}
+          {!bothPredicted && !recorded && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Answer both predictions above to run the experiment.</p>}
+          {/* The run's stage, named (CLAUDE.md §14): what the learner is looking at now. */}
+          <p style={{ fontSize: '0.875rem', margin: '1.5rem 0 0.75rem', minHeight: '1.5rem' }}>
+            {status === 'idle' && <span style={{ color: 'var(--text-muted)' }}>The pictures fill in, one stage at a time, after you press Run.</span>}
+            {status !== 'idle' && (
+              <span>
+                <strong>{done ? 'Run complete.' : `Stage ${stage} of ${LAST_STAGE}: ${STAGE_NAMES[stage]}.`}</strong> {done ? 'Pictures 1 to 4 are drawn. Your predictions are recorded and not marked here.' : STAGE_LINES[stage]}
+              </span>
+            )}
+          </p>
+
+          {recorded && stage >= 1 && (
+            <div>
+              <PictureOne stage={stage} />
+              {pictureOneCaption(stage)}
+              {stage >= 3 && (
+                <>
+                  <PictureTwo delayGuessId={delayGuess} />
+                  {pictureTwoCaption()}
+                </>
+              )}
+              {stage >= 4 && (
+                <>
+                  <PictureThree distanceGuessId={distanceGuess} />
+                  {pictureThreeCaption()}
+                </>
+              )}
+              {stage >= 5 && (
+                <>
+                  <PictureFour />
+                  {pictureFourCaption()}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
