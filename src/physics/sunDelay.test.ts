@@ -23,7 +23,11 @@ import {
   compare,
   delayParts,
   roadTripExample,
+  FULLER_TERM_RECALLED_US,
   NASA_RANGING_PRECISION_M,
+  delayGuessResult,
+  distanceGuessResult,
+  tutorFigures,
   TESTED,
   resultsCheckUp,
   stepsTable,
@@ -381,5 +385,45 @@ describe('the results', () => {
     expect(TESTED[2].what).toContain('50 times')
     expect(TESTED.filter((r) => r.status.startsWith('Measured'))).toHaveLength(3)
     expect(TESTED.filter((r) => r.status === 'Not covered here')).toHaveLength(2)
+  })
+})
+
+describe('the tutor', () => {
+  it('marks Prediction 1 as matched only for the 200 us button, and Prediction 2 only for "about 2 times smaller"', () => {
+    for (const c of DELAY_ANSWER_CHOICES) expect(delayGuessResult(c.id)).toBe(c.id === 'about-200' ? 'matched' : 'not matched')
+    for (const c of DISTANCE_ANSWER_CHOICES) expect(distanceGuessResult(c.id)).toBe(c.id === 'about-2-times' ? 'matched' : 'not matched')
+    expect(() => delayGuessResult('nope')).toThrow(RangeError)
+    expect(() => distanceGuessResult('nope')).toThrow(RangeError)
+  })
+  it('the figures: 232.5 us in two equal parts of 116.2, 1.64 and 4.9 times smaller at 10 and 100 radii, the drops 90.8 and 94.3 us against the formula\'s tenfold step of 90.7 us', () => {
+    const f = tutorFigures()
+    expect(f.grazing.delayUs).toBeCloseTo(232.5, 1)
+    expect(f.parts.timeSlowingUs).toBeCloseTo(116.2, 1)
+    expect(f.parts.spaceStretchingUs).toBeCloseTo(116.2, 1)
+    expect(f.ordinaryUs).toBeCloseTo(116.2, 1)
+    expect(f.timesSmaller10).toBeCloseTo(1.64, 2)
+    expect(f.timesSmaller100).toBeCloseTo(4.9, 1)
+    expect(f.dropFrom1To10Us).toBeCloseTo(90.8, 1)
+    expect(f.dropFrom10To100Us).toBeCloseTo(94.3, 1)
+    expect(f.tenfoldStepUs).toBeCloseTo(90.73, 2)
+    expect(Math.abs(f.dropFrom1To10Us - f.tenfoldStepUs)).toBeLessThan(0.2)
+  })
+  it('the tenfold step is the same for any closest distance that is much less than the ends (checked from 1 to 10 and 2 to 20 radii, within 0.2 us)', () => {
+    const f = tutorFigures()
+    const drop = trialDelay('venus', 2).delayUs - trialDelay('venus', 20).delayUs
+    expect(Math.abs(drop - f.tenfoldStepUs)).toBeLessThan(0.3)
+  })
+  it('the gap to Shapiro is 32.5 us; the fuller term is recalled at 19.7 us and would take the grazing delay to 252.2 us', () => {
+    const f = tutorFigures()
+    expect(f.shapiroDifferenceUs).toBeCloseTo(32.5, 1)
+    expect(f.fullerTermUs).toBeCloseTo(19.7, 1)
+    expect(f.fullerTermUs).toBe(FULLER_TERM_RECALLED_US)
+    expect(f.fullerGrazingUs).toBeCloseTo(252.2, 1)
+  })
+  it('the ordinary picture\'s gamma - 1 is -1, which is about 43,478 times the Cassini give-or-take of 2.3e-5', () => {
+    const f = tutorFigures()
+    expect(f.gamma.ordinaryGammaMinusOne).toBe(-1)
+    expect(f.gamma.gapOverGiveOrTake).toBeCloseTo(43478.26, 1)
+    expect(f.tests.cassiniPpm).toBe(20)
   })
 })

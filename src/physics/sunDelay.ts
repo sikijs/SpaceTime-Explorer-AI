@@ -351,3 +351,52 @@ export const TESTED: readonly { idea: string; what: string; status: string }[] =
   },
 ]
 
+// ---- The tutor (Part 4): the predictions are marked only in its explanation (CLAUDE.md §12, §13) ----
+// "matched" means the learner's button is the one nearest the module's answer.
+export function delayGuessResult(id: string): 'matched' | 'not matched' {
+  delayGuessValueUs(id)
+  return id === predictionOneAnswerId() ? 'matched' : 'not matched'
+}
+export function distanceGuessResult(id: string): 'matched' | 'not matched' {
+  distanceGuessTimesSmaller(id)
+  return id === predictionTwoAnswerId() ? 'matched' : 'not matched'
+}
+
+export function tutorFigures() {
+  const grazing = trialDelay('venus', 1)
+  const at10 = trialDelay('venus', PREDICTION_TWO_FAR_RADII)
+  const at100 = trialDelay('venus', FARTHEST_CLOSEST_RADII)
+  const parts = delayParts('venus', 1)
+  const check = resultsCheckUp()
+  return {
+    grazing: {
+      delayUs: grazing.delayUs,
+      flatMinutes: grazing.flatMinutes,
+      flatUs: grazing.flatUs,
+      pathKm: grazing.extraPathM / 1000,
+      oneInMillions: check.grazing.oneInMillions,
+      partsPerTenMillion: grazing.delayOverFlat * 1e7,
+    },
+    parts,
+    ordinaryUs: grazing.newtonianUs,
+    at10Us: at10.delayUs,
+    at100Us: at100.delayUs,
+    timesSmaller10: grazing.delayUs / at10.delayUs,
+    timesSmaller100: grazing.delayUs / at100.delayUs,
+    dropFrom1To10Us: grazing.delayUs - at10.delayUs,
+    dropFrom10To100Us: at10.delayUs - at100.delayUs,
+    // For a path that passes much closer than either end: each tenfold in the closest distance takes 8 (GM / c^3) ln 10 off the round trip.
+    tenfoldStepUs: 8 * SUN_GM_OVER_C3_US * Math.log(10),
+    shapiroUs: SHAPIRO_1964_DELAY_US,
+    shapiroDifferenceUs: grazing.delayUs - SHAPIRO_1964_DELAY_US,
+    fullerTermUs: FULLER_TERM_RECALLED_US,
+    fullerGrazingUs: grazing.delayUs + FULLER_TERM_RECALLED_US,
+    tests: check.tests,
+    gamma: {
+      giveOrTake: CASSINI_GAMMA_MINUS_ONE_GIVE_OR_TAKE,
+      gammaMinusOne: CASSINI_GAMMA_MINUS_ONE,
+      ordinaryGammaMinusOne: GAMMA_NEWTONIAN_STYLE - GAMMA_GENERAL_RELATIVITY,
+      gapOverGiveOrTake: Math.abs(GAMMA_NEWTONIAN_STYLE - GAMMA_GENERAL_RELATIVITY) / CASSINI_GAMMA_MINUS_ONE_GIVE_OR_TAKE,
+    },
+  }
+}

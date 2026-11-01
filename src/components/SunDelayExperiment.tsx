@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SunDelayResults } from './SunDelayResults'
+import { SunDelayTutor } from './SunDelayTutor'
 import { PictureFour, PictureOne, PictureThree, PictureTwo, TrialDrawing, WhySunAddsTime, pictureFourCaption, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './SunDelayPictures'
 import {
   ASTRONOMICAL_UNIT_M,
@@ -57,7 +58,7 @@ interface SunDelayExperimentProps {
   onTutorComplete?: () => void
 }
 
-export function SunDelayExperiment({ onComplete }: SunDelayExperimentProps) {
+export function SunDelayExperiment({ onComplete, onTutorComplete }: SunDelayExperimentProps) {
   const [delayGuess, setDelayGuess] = useState<string | null>(null)
   const [distanceGuess, setDistanceGuess] = useState<string | null>(null)
   const [targetId, setTargetId] = useState<string>(PRESET_TARGET_ID)
@@ -408,6 +409,16 @@ export function SunDelayExperiment({ onComplete }: SunDelayExperimentProps) {
             </div>
           )}
           {done && <SunDelayResults delayGuess={delayGuess} distanceGuess={distanceGuess} />}
+
+          {done && delayGuess !== null && distanceGuess !== null && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> You have seen the pictures and the tables. This last part is a short conversation with a tutor. It will ask what you noticed, ask you to set your guesses beside the real results, and ask one more question. Then it explains what the numbers show, and tells you how your two guesses compare.
+              </p>
+              <SunDelayTutor delayGuess={delayGuess} distanceGuess={distanceGuess} onExplained={onTutorComplete} />
+            </div>
+          )}
         </div>
       </div>
     </div>
