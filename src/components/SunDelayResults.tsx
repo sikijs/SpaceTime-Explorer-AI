@@ -7,6 +7,14 @@ import { ResultsTable } from './WideBinariesExperiment'
 // Claude's DRAFT of 2026-11-01, for the owner's approval line by line (CLAUDE.md §28.1). Which of the two ways of calculating real signals follow, and what the tests show beyond the figures quoted, are left to the tutor
 // (CLAUDE.md §12, §13). The papers and pages behind the numbers are listed at the end (Step 8), after the run.
 
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
+
 const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
 
@@ -233,6 +241,30 @@ export function SunDelayResults({ delayGuess, distanceGuess }: { delayGuess: str
           },
         ]}
       />
+      <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>The papers and pages behind these numbers.</strong> They are listed here, after the run, because they give away what the tests found. Links open in a new tab. The Nature page and the NASA release were opened in a browser on 1 November 2026. The Wikipedia page was read through a fetch tool the same day. Only the
+          abstract of the Cassini paper was read. No paper was read in full.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://www.nature.com/articles/nature01997">Bertotti, Iess and Tortora, “A test of general relativity using radio links with the Cassini spacecraft”, Nature 425, 374–376 (25 September 2003)</ExternalLink>: the Cassini test in Picture 4 and Table 1. This link goes to the publisher’s page, which shows the abstract. The rest of the paper is behind a
+            subscription and was not read. The abstract says the team measured the frequency shift of radio waves (the change in how many wave crests arrive each second) to and from Cassini as they passed near the Sun, and gives the result gamma = 1 + ({sci5(c.gamma.gammaMinusOne)} ± {sci5(c.gamma.giveOrTake)}). It also says that gamma is 1 in general relativity and 0 in the Newtonian model of gravity (the ordinary picture).
+          </li>
+          <li>
+            <ExternalLink href="https://www.jpl.nasa.gov/news/saturn-bound-spacecraft-tests-einsteins-theory/">NASA Jet Propulsion Laboratory, “Saturn-Bound Spacecraft Tests Einstein’s Theory” (2 October 2003)</ExternalLink>: a plain account of the Cassini test, and the source of the “{c.tests.cassiniPpm} parts per million”, the “{c.tests.jplFactor} times greater” and the “one part per thousand” for the Viking landers in 1979 that this page
+            uses. The release names the paper “A New Test of General Relativity With the Cassini Space Mission”, which is not the title that Nature shows. This page uses Nature’s.
+          </li>
+          <li>
+            <ExternalLink href="https://en.wikipedia.org/wiki/Shapiro_time_delay">Wikipedia, “Shapiro time delay”</ExternalLink>: not an official source and not a paper. It is where this page’s formula, Shapiro’s 1964 figures (as it quotes them) and the account of the 1966 and 1967 radar tests come from.
+          </li>
+          <li>
+            <strong>Not linked</strong> (no readable copy could be opened here): Shapiro’s paper, “Fourth Test of General Relativity”, Physical Review Letters 13, 789 (1964), whose publisher’s page was refused on 1 November 2026 (a security check in a browser; HTTP 403 earlier). The figures of about {c.grazing.shapiroUs} µs, {c.grazing.shapiroPathKm} km and {c.shapiroEstimatePercent[0]} to {c.shapiroEstimatePercent[1]} percent are from Wikipedia’s quotation of it, not
+            from the paper. Also not linked: Reasenberg and others, “Viking relativity experiment: verification of signal retardation by solar gravity”, Astrophysical Journal 234, L219 (1979). The Cassini paper lists it as the Viking test of the delay, and its title and place of publication are taken from that list. The archive page asked for human
+            verification and was not opened. The page’s “one part in a thousand” is NASA’s statement, and the Cassini abstract also says that earlier experiments confirmed the delay to about 0.1 percent.
+          </li>
+        </ul>
+      </div>
     </div>
   )
 }
