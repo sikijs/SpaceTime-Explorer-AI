@@ -27,6 +27,8 @@ import {
   earthDistanceM,
   flatRoundTripMinutes,
   flatRoundTripUs,
+  lightDistanceInOneMicrosecondM,
+  lightTimeSeconds,
   nearestChoice,
   oneWayDelayLeadingFormUs,
   oneWayDelayUs,
@@ -72,6 +74,15 @@ const mars = targetDistanceM('mars')
 describe('constants', () => {
   it('GM / c^3 for the Sun is 4.9255 us', () => {
     expect(SUN_GM_OVER_C3_US).toBeCloseTo(4.9255, 3)
+  })
+})
+
+describe('light\'s own timing', () => {
+  it('light takes 499.0 s (8.3 minutes) to go 1 AU and goes 299.8 m in one microsecond', () => {
+    expect(lightTimeSeconds(AU)).toBeCloseTo(499.005, 2)
+    expect(lightTimeSeconds(AU) / 60).toBeCloseTo(8.317, 2)
+    expect(lightDistanceInOneMicrosecondM()).toBeCloseTo(299.792458, 6)
+    expect(() => lightTimeSeconds(-1)).toThrow(RangeError)
   })
 })
 

@@ -29,6 +29,17 @@ function checkGeometry(rEarthM: number, rTargetM: number, closestM: number): voi
   if (closestM >= rEarthM || closestM >= rTargetM) throw new RangeError('The closest distance to the Sun must be less than each end\'s distance from the Sun.')
 }
 
+// ---- Light's own timing, for the introduction's examples ----
+// How long light takes to go a distance, in seconds (Earth to Sun, 1 AU: about 499 s, 8.3 minutes).
+export function lightTimeSeconds(distanceM: number): number {
+  if (!Number.isFinite(distanceM) || distanceM < 0) throw new RangeError('The distance must not be negative.')
+  return distanceM / SPEED_OF_LIGHT_M_PER_S
+}
+// How far light goes in one microsecond, in metres (about 300 m).
+export function lightDistanceInOneMicrosecondM(): number {
+  return SPEED_OF_LIGHT_M_PER_S * 1e-6
+}
+
 // ---- The trip in flat space ----
 // How far an end is from the point of closest approach, along the straight path.
 export function legLengthM(rM: number, closestM: number): number {

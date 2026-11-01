@@ -29,6 +29,7 @@ import { WormholeExperiment } from './components/WormholeExperiment'
 import { TimeTravelExperiment } from './components/TimeTravelExperiment'
 import { AddingSpeedsExperiment } from './components/AddingSpeedsExperiment'
 import { MuonLifetimeExperiment } from './components/MuonLifetimeExperiment'
+import { SunDelayExperiment } from './components/SunDelayExperiment'
 import {
   APPROACH_SPEED_KM_S as lgApproach,
   MERGER_DISTANCE_KPC as lgRing,
@@ -1198,6 +1199,14 @@ const chapters: Chapter[] = [
     // Chapter summary and "What's next": Claude's DRAFT of 2026-10-31, for the owner's approval. "What's next" is a planned direction only: Experiment 5 has no specification yet.
     learned: muonLifetimeSummary(),
     next: 'The next experiment in this group turns from motion to gravity: whether a radio signal that passes close to the Sun arrives late, and by how much.',
+  },
+  {
+    title: 'How long does the Sun\'s gravity delay a radio signal?',
+    group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
+    Component: SunDelayExperiment,
+    // Chapter summary and "What's next": not written yet (a later step of Experiment 5).
+    learned: '',
+    next: '',
   },
 ]
 
