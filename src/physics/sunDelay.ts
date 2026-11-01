@@ -253,3 +253,101 @@ export function distanceGuessTimesSmaller(id: string): number {
   return choice.timesSmaller
 }
 
+// ---- The results (Part 3): every number the check-up, the steps table and the list of tests show (CLAUDE.md §9, §14 "Reading the Results") ----
+// The comparisons are "the same", "more" or "less" (compare) and "inside the give-or-take" (withinGiveOrTake); no other cut-off is made up, and no verdict is given where the model is simpler than the source.
+// NASA's Deep Space Network chapter gives routine ranging precision as "about one metre" (read through a summary, 2026-11-01): used only for scale.
+export const NASA_RANGING_PRECISION_M = 1
+export function resultsCheckUp() {
+  const grazing = trialDelay('venus', 1)
+  const far = trialDelay('venus', PREDICTION_TWO_FAR_RADII)
+  const p = testPrecisionsPpm()
+  const shapiroPathM = SHAPIRO_1964_EQUIVALENT_PATH_KM * 1000
+  const cassiniOfGrazingUs = (grazing.delayUs * CASSINI_PRECISION_PPM_JPL) / 1e6
+  return {
+    grazing: {
+      delayUs: grazing.delayUs,
+      shapiroUs: SHAPIRO_1964_DELAY_US,
+      versusShapiro: compare(grazing.delayUs, SHAPIRO_1964_DELAY_US),
+      differenceUs: grazing.delayUs - SHAPIRO_1964_DELAY_US,
+      differencePercentOfShapiro: ((grazing.delayUs - SHAPIRO_1964_DELAY_US) / SHAPIRO_1964_DELAY_US) * 100,
+      pathKm: grazing.extraPathM / 1000,
+      shapiroPathKm: SHAPIRO_1964_EQUIVALENT_PATH_KM,
+      pathVersusShapiro: compare(grazing.extraPathM, shapiroPathM),
+      pathDifferenceKm: (grazing.extraPathM - shapiroPathM) / 1000,
+      flatUs: grazing.flatUs,
+      flatMinutes: grazing.flatMinutes,
+      partsPerTenMillion: grazing.delayOverFlat * 1e7,
+      oneInMillions: grazing.flatUs / grazing.delayUs / 1e6,
+    },
+    ordinary: { halfUs: grazing.newtonianUs, fullUs: grazing.delayUs, versusFull: compare(grazing.newtonianUs, grazing.delayUs), fractionOfFull: grazing.newtonianUs / grazing.delayUs },
+    far: { delayUs: far.delayUs, radii: PREDICTION_TWO_FAR_RADII, versusGrazing: compare(far.delayUs, grazing.delayUs), timesSmaller: grazing.delayUs / far.delayUs },
+    tests: { vikingPpm: p.viking, cassiniPpm: p.cassini, versusViking: compare(p.cassini, p.viking), vikingOverCassini: p.vikingOverCassini, jplFactor: CASSINI_IMPROVEMENT_FACTOR_JPL },
+    forScale: {
+      cassiniFractionOfGrazingNs: cassiniOfGrazingUs * 1000,
+      cassiniFractionOfGrazingM: cassiniOfGrazingUs * 1e-6 * SPEED_OF_LIGHT_M_PER_S,
+      nasaRangingM: NASA_RANGING_PRECISION_M,
+    },
+    gamma: {
+      gammaMinusOne: CASSINI_GAMMA_MINUS_ONE,
+      giveOrTake: CASSINI_GAMMA_MINUS_ONE_GIVE_OR_TAKE,
+      exactAgreement: 0,
+      zeroInside: withinGiveOrTake(0, CASSINI_GAMMA_MINUS_ONE, CASSINI_GAMMA_MINUS_ONE_GIVE_OR_TAKE),
+      zeroDifference: Math.abs(CASSINI_GAMMA_MINUS_ONE),
+    },
+    cassiniFractionOfGrazingUs: cassiniOfGrazingUs,
+    shapiroEstimatePercent: [SHAPIRO_1964_PRECISION_PERCENT_LOW, SHAPIRO_1964_PRECISION_PERCENT_HIGH] as const,
+  }
+}
+
+// Table 2: Venus, every closest distance the learner can choose, from the surface outwards.
+export function stepsTable() {
+  const at1 = trialDelay('venus', 1).delayUs
+  return closestChoicesFor('venus').map((radii) => {
+    const t = trialDelay('venus', radii)
+    const parts = delayParts('venus', radii)
+    return {
+      radii,
+      distanceMillionKm: (radii * SUN_RADIUS_M) / 1e9,
+      delayUs: t.delayUs,
+      timeSlowingUs: parts.timeSlowingUs,
+      spaceStretchingUs: parts.spaceStretchingUs,
+      timesSmallerThanAt1: at1 / t.delayUs,
+      pathKm: t.extraPathM / 1000,
+    }
+  })
+}
+
+// Table 3: what has been tested, and what has not (a list of what this page found, not of every study).
+export const TESTED: readonly { idea: string; what: string; status: string }[] = [
+  {
+    idea: 'A radar signal that passes close to the Sun takes longer than it would in empty space',
+    what: `Shapiro estimated in 1964 an extra ${SHAPIRO_1964_DELAY_US} µs for a trip to Venus (as quoted). Radar tests with the MIT Haystack antenna in 1966 and 1967 were described as successful and as matching the predicted amount (Wikipedia's account; the figures were not read).`,
+    status: 'Measured (old; figures not read)',
+  },
+  {
+    idea: 'How closely the delay was checked by the Viking landers on Mars, in 1979',
+    what: `About 1 part in 1,000 (NASA's release about the Cassini test gives this as the accuracy of earlier tests).`,
+    status: 'Measured (old; second-hand, through NASA)',
+  },
+  {
+    idea: 'How closely the delay was checked by the Cassini spacecraft, in 2002',
+    what: `${CASSINI_PRECISION_PPM_JPL} parts per million, ${CASSINI_IMPROVEMENT_FACTOR_JPL} times closer than before (NASA's release). In the paper's own terms, (γ − 1) = (${CASSINI_GAMMA_MINUS_ONE * 1e5} ± ${CASSINI_GAMMA_MINUS_ONE_GIVE_OR_TAKE * 1e5}) × 10⁻⁵, from the paper's abstract. The abstract says the team measured the frequency shift of the radio waves (the change in how many wave crests arrive each second) to and from Cassini; NASA's release describes this as measuring the change in the round-trip light time.`,
+    status: 'Measured (the closest test; only the abstract read)',
+  },
+  {
+    idea: 'The extra time at other closest distances (Picture 3), and its two equal parts',
+    what: 'Worked out on this page from the main part of a formula. The split into two equal parts follows Wikipedia’s account, and no paper or textbook was read for it. No test result of this shape was read.',
+    status: 'Calculated here',
+  },
+  {
+    idea: 'Anything newer than Cassini',
+    what: 'A search on 1 November 2026 found no new solar-conjunction test since Cassini. It named the BepiColombo mission as planned, and a 2026 proposal for a laboratory test. Neither was read. The search was limited.',
+    status: 'Not covered here',
+  },
+  {
+    idea: 'The Sun’s hot outer atmosphere, the planets’ own gravity and the motion of the Earth and the target',
+    what: 'The page’s model leaves these out. The real tests had to deal with them, and the Sun’s outer atmosphere also slows radio waves.',
+    status: 'Not covered here',
+  },
+]
+

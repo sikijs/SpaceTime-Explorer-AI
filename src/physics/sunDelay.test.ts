@@ -23,6 +23,10 @@ import {
   compare,
   delayParts,
   roadTripExample,
+  NASA_RANGING_PRECISION_M,
+  TESTED,
+  resultsCheckUp,
+  stepsTable,
   delayAnswerIdFor,
   delayGuessValueUs,
   distanceGuessTimesSmaller,
@@ -311,5 +315,71 @@ describe('answers to the predictions', () => {
   it('the model does not depend on any prediction: repeated calls give the same numbers', () => {
     expect(trialDelay('venus', 1)).toEqual(trialDelay('venus', 1))
     expect(predictionOneDelayUs()).toBe(predictionOneDelayUs())
+  })
+})
+
+describe('the results', () => {
+  const c = resultsCheckUp()
+  it('Table 1, the Venus trip grazing the Sun: 232.5 us against Shapiro\'s quoted 200 us, more by 32.5 us (16.2 percent); 69.7 km against 60 km', () => {
+    expect(c.grazing.delayUs).toBeCloseTo(232.5, 1)
+    expect(c.grazing.versusShapiro).toBe('more')
+    expect(c.grazing.differenceUs).toBeCloseTo(32.5, 1)
+    expect(c.grazing.differencePercentOfShapiro).toBeCloseTo(16.2, 1)
+    expect(c.grazing.pathKm).toBeCloseTo(69.7, 1)
+    expect(c.grazing.pathVersusShapiro).toBe('more')
+    expect(c.grazing.pathDifferenceKm).toBeCloseTo(9.7, 1)
+  })
+  it('the extra time is 1.4 parts in ten million of the 28.6 minute trip, about 1 part in 7.4 million', () => {
+    expect(c.grazing.partsPerTenMillion).toBeCloseTo(1.4, 1)
+    expect(c.grazing.oneInMillions).toBeCloseTo(7.38, 2)
+    expect(c.grazing.flatMinutes).toBeCloseTo(28.6, 1)
+  })
+  it('the ordinary-gravity value is less than the full one, exactly half', () => {
+    expect(c.ordinary.versusFull).toBe('less')
+    expect(c.ordinary.fractionOfFull).toBeCloseTo(0.5, 12)
+    expect(c.ordinary.halfUs).toBeCloseTo(116.2, 1)
+  })
+  it('ten solar radii out: 141.7 us, less than grazing, 1.64 times smaller', () => {
+    expect(c.far.delayUs).toBeCloseTo(141.7, 1)
+    expect(c.far.versusGrazing).toBe('less')
+    expect(c.far.timesSmaller).toBeCloseTo(1.64, 2)
+    expect(c.far.radii).toBe(10)
+  })
+  it('the tests: Cassini 20 ppm is less (a closer fit) than Viking\'s 1,000, a factor of 50 that matches NASA\'s "50 times"', () => {
+    expect(c.tests.versusViking).toBe('less')
+    expect(c.tests.vikingOverCassini).toBeCloseTo(50, 9)
+    expect(c.tests.vikingOverCassini).toBe(c.tests.jplFactor)
+  })
+  it('for scale, 20 ppm of the grazing Venus delay is 4.65 ns, 1.39 m of path, against NASA\'s ranging precision of about 1 m', () => {
+    expect(c.forScale.cassiniFractionOfGrazingNs).toBeCloseTo(4.65, 2)
+    expect(c.forScale.cassiniFractionOfGrazingM).toBeCloseTo(1.394, 2)
+    expect(c.forScale.nasaRangingM).toBe(NASA_RANGING_PRECISION_M)
+  })
+  it('Cassini\'s (gamma - 1) of 2.1e-5 with a give-or-take of 2.3e-5 has zero inside it; with a give-or-take of 2.0e-5 it would not (a tenfold wider range changes the answer)', () => {
+    expect(c.gamma.zeroInside).toBe(true)
+    expect(c.gamma.zeroDifference).toBeCloseTo(2.1e-5, 12)
+    expect(withinGiveOrTake(0, 2.1e-5, 2.0e-5)).toBe(false)
+    expect(withinGiveOrTake(0, 2.1e-5, 2.3e-4)).toBe(true)
+  })
+  it('Table 2: six distances for Venus, extra time falling from 232.5 to 47.4 us, the two parts equal and adding to the total, and 4.9 times smaller at 100 radii', () => {
+    const rows = stepsTable()
+    expect(rows.map((r) => r.radii)).toEqual([1, 2, 5, 10, 50, 100])
+    expect(rows[0].delayUs).toBeCloseTo(232.5, 1)
+    expect(rows[5].delayUs).toBeCloseTo(47.4, 1)
+    expect(rows[0].timesSmallerThanAt1).toBeCloseTo(1, 12)
+    expect(rows[3].timesSmallerThanAt1).toBeCloseTo(1.64, 2)
+    expect(rows[5].timesSmallerThanAt1).toBeCloseTo(4.9, 1)
+    for (const r of rows) {
+      expect(r.timeSlowingUs).toBeCloseTo(r.spaceStretchingUs, 9)
+      expect(r.timeSlowingUs + r.spaceStretchingUs).toBeCloseTo(r.delayUs, 9)
+    }
+    for (let i = 1; i < rows.length; i++) expect(rows[i].delayUs).toBeLessThan(rows[i - 1].delayUs)
+  })
+  it('Table 3 has six rows with the statuses stated, and the Cassini row carries 20 ppm and 50 times', () => {
+    expect(TESTED).toHaveLength(6)
+    expect(TESTED[2].what).toContain('20 parts per million')
+    expect(TESTED[2].what).toContain('50 times')
+    expect(TESTED.filter((r) => r.status.startsWith('Measured'))).toHaveLength(3)
+    expect(TESTED.filter((r) => r.status === 'Not covered here')).toHaveLength(2)
   })
 })

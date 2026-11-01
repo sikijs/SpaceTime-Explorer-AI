@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { SunDelayResults } from './SunDelayResults'
 import { PictureFour, PictureOne, PictureThree, PictureTwo, TrialDrawing, WhySunAddsTime, pictureFourCaption, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './SunDelayPictures'
 import {
   ASTRONOMICAL_UNIT_M,
@@ -406,6 +407,7 @@ export function SunDelayExperiment({ onComplete }: SunDelayExperimentProps) {
               {trialCaption(trial)}
             </div>
           )}
+          {done && <SunDelayResults delayGuess={delayGuess} distanceGuess={distanceGuess} />}
         </div>
       </div>
     </div>
