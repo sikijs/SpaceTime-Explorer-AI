@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   ASTRONOMICAL_UNIT_M,
   CASSINI_PRECISION_PPM_JPL,
+  DELAY_ANSWER_CHOICES,
+  DISTANCE_ANSWER_CHOICES,
   EARTH_DISTANCE_AU,
   TARGET_CHOICES,
   PREDICTION_TWO_FAR_RADII,
@@ -36,6 +39,8 @@ interface SunDelayExperimentProps {
 }
 
 export function SunDelayExperiment(_props: SunDelayExperimentProps) {
+  const [delayGuess, setDelayGuess] = useState<string | null>(null)
+  const [distanceGuess, setDistanceGuess] = useState<string | null>(null)
   const venusAu = TARGET_CHOICES.find((c) => c.id === 'venus')!.distanceAu
   const cassiniPpm = CASSINI_PRECISION_PPM_JPL
   const sunLightSeconds = lightTimeSeconds(ASTRONOMICAL_UNIT_M)
@@ -45,6 +50,36 @@ export function SunDelayExperiment(_props: SunDelayExperimentProps) {
   const venusGrazingMinutes = flatRoundTripMinutes(earthDistanceM(), targetDistanceM('venus'), SUN_RADIUS_M)
   const venusGrazingSeconds = venusGrazingMinutes * 60
   const venusGrazingMicroseconds = venusGrazingSeconds * 1e6
+  const farMillionKm = (PREDICTION_TWO_FAR_RADII * SUN_RADIUS_M) / 1e9
+  const nearMillionKm = SUN_RADIUS_M / 1e9
+  const aboveSurfaceMillionKm = ((PREDICTION_TWO_FAR_RADII - 1) * SUN_RADIUS_M) / 1e9
+  const questions = [
+    {
+      title: 'Prediction 1: how much longer does the trip take?',
+      text: (
+        <>
+          A radio pulse goes from the Earth to Venus, which is on the far side of the Sun, and back. On the way, the signal just touches the Sun’s surface. The surface is 1 solar radius ({nearMillionKm.toFixed(2)} million km) from the Sun’s centre, so this path is 1 solar radius from the centre. With no Sun in the way, the
+          round trip would take about {venusGrazingMinutes.toFixed(1)} minutes. The real trip is timed with the Sun’s gravity acting on the signal. About how much longer does the round trip take because of the Sun’s gravity? Remember that one microsecond (µs) is one
+          millionth of a second.
+        </>
+      ),
+      choices: DELAY_ANSWER_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+      value: delayGuess,
+      set: setDelayGuess,
+    },
+    {
+      title: 'Prediction 2: what if the signal passes farther from the Sun?',
+      text: (
+        <>
+          Now suppose the same trip is made with the signal passing the Sun 10 times farther out: {PREDICTION_TWO_FAR_RADII} solar radii (about {farMillionKm.toFixed(0)} million km) from the Sun’s centre instead of 1. That is {PREDICTION_TWO_FAR_RADII - 1} solar radii (about {aboveSurfaceMillionKm.toFixed(0)} million km) above the Sun’s surface, instead of touching it. The Earth and Venus are where they were. How does the extra
+          time caused by the Sun’s gravity compare with your first answer? This is a separate guess from Prediction 1, so your two answers do not have to agree with each other.
+        </>
+      ),
+      choices: DISTANCE_ANSWER_CHOICES.map((c) => ({ value: c.id as string, label: c.label })),
+      value: distanceGuess,
+      set: setDistanceGuess,
+    },
+  ]
   return (
     <div>
       <h2>Experiment 5 — How Long Does the Sun’s Gravity Delay a Radio Signal?</h2>
@@ -174,6 +209,37 @@ export function SunDelayExperiment(_props: SunDelayExperimentProps) {
           <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.875rem' }}>
             No plain page from NASA, ESA or another official source was found that explains the Shapiro delay itself, apart from one that gives the outcome of a test (listed after the run), so this page explains the idea in its own words.
           </p>
+        </div>
+
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and then run the experiment. The pictures that the run will draw show fixed things: numbers calculated here, set beside what was measured in the
+            real tests. They are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess compares. The real pictures stay the same whatever you guess.
+          </p>
+
+          {questions.map((question) => (
+            <div key={question.title} style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{question.title}</label>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>{question.text} You are not graded, and a guess is fine.</div>
+              <div>
+                {question.choices.map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    onClick={() => question.set(choice.value)}
+                    className={`toggle-button${question.value === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                {question.value !== null ? `Your prediction: ${question.choices.find((c) => c.value === question.value)?.label}.` : 'Choose an option to continue'}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
