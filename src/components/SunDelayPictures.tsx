@@ -7,6 +7,7 @@ import {
   FULLER_TERM_RECALLED_US,
   PREDICTION_TWO_FAR_RADII,
   SHAPIRO_1964_DELAY_US,
+  ROAD_EXAMPLE,
   SHAPIRO_1964_EQUIVALENT_PATH_KM,
   SHAPIRO_1964_PRECISION_PERCENT_HIGH,
   SHAPIRO_1964_PRECISION_PERCENT_LOW,
@@ -14,10 +15,12 @@ import {
   SUN_RADIUS_M,
   TARGET_CHOICES,
   delayGuessValueUs,
+  delayParts,
   distanceGuessTimesSmaller,
   flatTripBreakdown,
   guessedFarDelayUs,
   lightDistanceInOneMicrosecondM,
+  roadTripExample,
   testPrecisionsPpm,
   trialDelay,
   tripWithAndWithoutSun,
@@ -287,7 +290,7 @@ export function pictureTwoCaption(): ReactNode {
         </>,
         <>
           <strong>Part A, the bright block.</strong> The lower trip is longer than the top one, and the bright block at the end of its bar stands for the difference: the <strong>extra time</strong>. It is drawn far too big, so that you can see it. At the true scale it would be much too thin to see, so the two bars really are almost exactly the same
-          length. The Sun’s gravity acts on the signal as it goes past, and that makes the trip take longer than it would with no Sun. Why gravity does that is what the tutor explains, after you have seen all the pictures.
+          length. The Sun’s gravity acts on the signal as it goes past, and that makes the trip take longer than it would with no Sun. The box under this picture explains why.
         </>,
         <>
           <strong>Part B, the ruler, is uneven on purpose.</strong> Each step from one number to the next marked one multiplies the value by ten: 1 to 10 is as wide as 10 to 100, and 100 to 1,000. This lets numbers from a tenth of a microsecond to ten thousand fit on one ruler. For example, 200 µs sits a little more than
@@ -611,7 +614,7 @@ export function trialCaption(trial: Trial): ReactNode {
           <strong>The solid cyan mark</strong> is the extra time by this page’s calculation, the same one as in Pictures 2 and 3, for the settings you chose. Under its number is how much extra path that is: light goes about {Math.round(lightDistanceInOneMicrosecondM())} metres in 1 µs.
         </>,
         <>
-          <strong>The pink mark</strong> is imagined for the question. It is the same calculation made with the ordinary (Newtonian-style) picture of gravity, named after Isaac Newton, the one the Gravity and Curved Spacetime chapter’s Experiment 8 used, which gives half the effect.
+          <strong>The pink mark</strong> is imagined for the question. It is the same calculation made with the ordinary (Newtonian-style) picture of gravity, named after Isaac Newton, the one the Gravity and Curved Spacetime chapter’s Experiment 8 used, which gives half the effect. The box under Picture 2 says why.
         </>,
       ]}
       worked={
@@ -633,5 +636,41 @@ export function trialCaption(trial: Trial): ReactNode {
         </>
       }
     />
+  )
+}
+
+
+// ---- The box under Picture 2: why does the Sun add this time? (CLAUDE.md §14, added at the owner's request; wording approved by the owner on 2026-11-01) ----
+export function WhySunAddsTime() {
+  const parts = delayParts('venus', 1)
+  const r = roadTripExample()
+  const box = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem', padding: '0.75rem 1rem', border: '1px solid var(--border-color, #ccc)', borderLeft: '6px solid #22d3ee', borderRadius: '8px' } as const
+  const p = { marginTop: 0, marginBottom: '0.5rem' } as const
+  return (
+    <div style={box}>
+      <p style={p}>
+        <strong>Why does the Sun add this time?</strong>
+      </p>
+      <p style={p}>The Sun’s gravity changes the trip in two ways. Both come from the Gravity and Curved Spacetime chapter.</p>
+      <ol style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
+        <li>
+          <strong>Time runs slower near the Sun.</strong> In Experiment 2 you saw that a clock close to something heavy runs slower than a clock far away. So, by the clocks far away, such as the ones on the Earth, a signal takes longer to cross the region near the Sun.
+        </li>
+        <li>
+          <strong>Space near the Sun is stretched.</strong> In Experiment 8 you saw that gravity warps space itself. A path through that warped space has more distance in it than the straight line suggests, like a road with more bends than the map shows. So the signal has farther to go.
+        </li>
+      </ol>
+      <p style={p}>
+        <strong>The two add together.</strong> For this trip, by this page’s calculation, the first gives {n1(parts.timeSlowingUs)} µs, the second gives {n1(parts.spaceStretchingUs)} µs, and together they make the {n1(parts.totalUs)} µs in Picture 2. The ordinary picture of gravity from Experiment 8
+        leaves out the stretching of space, so it gives only the first part. That is why the pink mark in Drawing A is half as long.
+      </p>
+      <p style={p}>
+        <strong>A road trip with the same idea.</strong> A trip takes its length divided by its speed. A {ROAD_EXAMPLE.lengthKm} km drive at {ROAD_EXAMPLE.speedKmh} km/h takes {n1(r.base)} minutes. Slow traffic, at {ROAD_EXAMPLE.slowSpeedKmh} km/h, makes it {n1(r.slow)} minutes, which is {n1(r.lateSlow)} minutes late. A road{' '}
+        {ROAD_EXAMPLE.longerLengthKm - ROAD_EXAMPLE.lengthKm} km longer, at {ROAD_EXAMPLE.speedKmh} km/h, makes it {n1(r.longer)} minutes, which is {n1(r.lateLonger)} minutes late. Both together take {n1(r.both)} minutes, {n1(r.lateBoth)} late, nearly the sum of the two.
+      </p>
+      <p style={{ ...p, marginBottom: 0 }}>
+        The signal is not really “slower” where it is. Anyone there measures light going at its usual speed, and it is the faraway observer who finds the trip takes longer. The road trip only shows why two small causes add.
+      </p>
+    </div>
   )
 }

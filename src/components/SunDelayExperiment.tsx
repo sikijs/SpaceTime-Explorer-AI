@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { PictureFour, PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureFourCaption, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './SunDelayPictures'
+import { PictureFour, PictureOne, PictureThree, PictureTwo, TrialDrawing, WhySunAddsTime, pictureFourCaption, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './SunDelayPictures'
 import {
   ASTRONOMICAL_UNIT_M,
   CASSINI_PRECISION_PPM_JPL,
@@ -324,6 +324,7 @@ export function SunDelayExperiment({ onComplete }: SunDelayExperimentProps) {
                 <>
                   <PictureTwo delayGuessId={delayGuess} />
                   {pictureTwoCaption()}
+                  <WhySunAddsTime />
                 </>
               )}
               {stage >= 4 && (

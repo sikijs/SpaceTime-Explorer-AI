@@ -123,6 +123,24 @@ export function tripWithAndWithoutSun(targetId: string, closestRadii: number) {
   return { withoutSunUs: t.flatUs, withSunUs: t.flatUs + t.delayUs, extraUs: t.delayUs, withoutSunSeconds: t.flatUs / 1e6, withSunSeconds: (t.flatUs + t.delayUs) / 1e6 }
 }
 
+// The two parts of the extra time, for the "Why does the Sun add this time?" box: the part the ordinary picture of gravity has (the gamma = 0 value, the slowing of time) and the rest (what the stretching
+// of space adds). In this formula the two are equal; the split follows Wikipedia's account ("twice the Newtonian prediction", time dilation plus radial stretching), which was not checked against a paper.
+export function delayParts(targetId: string, closestRadii: number) {
+  const t = trialDelay(targetId, closestRadii)
+  return { timeSlowingUs: t.newtonianUs, spaceStretchingUs: t.delayUs - t.newtonianUs, totalUs: t.delayUs }
+}
+
+// The road-trip comparison in the same box: a 100 km drive at 100 km/h, then slow traffic (95 km/h), then a road 5 km longer, then both. Times in minutes. An illustration of why two small causes add, not physics.
+export const ROAD_EXAMPLE = { lengthKm: 100, speedKmh: 100, slowSpeedKmh: 95, longerLengthKm: 105 } as const
+export function roadTripExample() {
+  const minutes = (km: number, kmh: number) => (km / kmh) * 60
+  const base = minutes(ROAD_EXAMPLE.lengthKm, ROAD_EXAMPLE.speedKmh)
+  const slow = minutes(ROAD_EXAMPLE.lengthKm, ROAD_EXAMPLE.slowSpeedKmh)
+  const longer = minutes(ROAD_EXAMPLE.longerLengthKm, ROAD_EXAMPLE.speedKmh)
+  const both = minutes(ROAD_EXAMPLE.longerLengthKm, ROAD_EXAMPLE.slowSpeedKmh)
+  return { base, slow, longer, both, lateSlow: slow - base, lateLonger: longer - base, lateBoth: both - base }
+}
+
 // The flat-space trip split into its steps, for the worked moment under Picture 1 (distances in metres, times in seconds).
 export function flatTripBreakdown(targetId: string, closestRadii: number) {
   const re = earthDistanceM()

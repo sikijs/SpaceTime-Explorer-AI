@@ -21,6 +21,8 @@ import {
   VIKING_PRECISION,
   closestChoicesFor,
   compare,
+  delayParts,
+  roadTripExample,
   delayAnswerIdFor,
   delayGuessValueUs,
   distanceGuessTimesSmaller,
@@ -185,6 +187,35 @@ describe('the Sun\'s extra delay', () => {
     const d = trialDelay('venus', 1)
     expect(d.delayUs).toBeCloseTo(roundTripDelayUs(re, venus, R), 9)
     expect(d.extraPathM).toBeCloseTo((d.delayUs * 1e-6) * C, 6)
+  })
+})
+
+describe('the "Why does the Sun add this time?" box', () => {
+  it('the two parts of the Venus grazing delay are 116.2 us each and add to the 232.5 us total, at every setting', () => {
+    const p = delayParts('venus', 1)
+    expect(p.timeSlowingUs).toBeCloseTo(116.2, 1)
+    expect(p.spaceStretchingUs).toBeCloseTo(116.2, 1)
+    expect(p.timeSlowingUs + p.spaceStretchingUs).toBeCloseTo(p.totalUs, 9)
+    expect(p.totalUs).toBeCloseTo(232.5, 1)
+    for (const target of TARGET_CHOICES) {
+      for (const radii of closestChoicesFor(target.id)) {
+        const q = delayParts(target.id, radii)
+        expect(q.timeSlowingUs).toBeCloseTo(q.spaceStretchingUs, 9)
+        expect(q.timeSlowingUs).toBeCloseTo(trialDelay(target.id, radii).newtonianUs, 9)
+      }
+    }
+  })
+  it('the road trip: 60 minutes, 63.2 with slow traffic, 63.0 on the longer road, 66.3 with both; 3.2 + 3.0 is nearly the 6.3 together', () => {
+    const r = roadTripExample()
+    expect(r.base).toBeCloseTo(60, 9)
+    expect(r.slow).toBeCloseTo(63.16, 2)
+    expect(r.longer).toBeCloseTo(63, 9)
+    expect(r.both).toBeCloseTo(66.32, 2)
+    expect(r.lateSlow).toBeCloseTo(3.16, 2)
+    expect(r.lateLonger).toBeCloseTo(3, 9)
+    expect(r.lateBoth).toBeCloseTo(6.32, 2)
+    expect(r.lateBoth).toBeGreaterThan(r.lateSlow + r.lateLonger)
+    expect(r.lateBoth - (r.lateSlow + r.lateLonger)).toBeLessThan(0.2)
   })
 })
 
