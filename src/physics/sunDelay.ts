@@ -98,6 +98,10 @@ export function targetDistanceM(id: string): number {
   if (!t) throw new RangeError(`Unknown target: ${id}`)
   return t.distanceAu * ASTRONOMICAL_UNIT_M
 }
+// How far a target is from the Sun's centre, in solar radii (Mercury about 83, Venus about 155, Mars about 327), the most a path to it can be offered as a closest distance.
+export function targetDistanceInSolarRadii(id: string): number {
+  return targetDistanceM(id) / SUN_RADIUS_M
+}
 export function earthDistanceM(): number {
   return EARTH_DISTANCE_AU * ASTRONOMICAL_UNIT_M
 }

@@ -538,3 +538,100 @@ export function pictureFourCaption(): ReactNode {
     />
   )
 }
+
+// ---- Drawing A (Part 2, "Now try it yourself"): one target and one closest distance, chosen by the learner ----
+export type Trial = ReturnType<typeof trialDelay>
+const TA_W = 760
+const TA_H = 360
+
+function targetName(id: string): string {
+  return TARGET_CHOICES.find((t) => t.id === id)?.label ?? id
+}
+function radiiText(radii: number): string {
+  return radii === 1 ? '1 solar radius (just touching the Sun’s surface)' : `${radii} solar radii`
+}
+
+export function TrialDrawing({ trial }: { trial: Trial }) {
+  const lx = (us: number) => 60 + (640 * Math.log10(us / 0.1)) / Math.log10(1e5)
+  const name = targetName(trial.targetId)
+  return (
+    <svg viewBox={`0 0 ${TA_W} ${TA_H}`} width="100%" style={svgStyle} role="img" aria-label={`Drawing A: the round trip to ${name} with the signal passing the Sun at ${trial.closestRadii} solar radii, and the extra time`}>
+      <SvgLines x={20} y={24} lines={[`Drawing A: a signal from the Earth to ${name} and back, passing ${radiiText(trial.closestRadii)} from the Sun’s centre`]} fill={TEXT_COLOR} size={12} bold />
+      <SvgLines x={20} y={54} lines={['The trip with no effect from the Sun (calculated here):']} fill={MUTED_COLOR} size={11} />
+      <SvgLines x={20} y={72} lines={[`${n1(trial.flatMinutes)} minutes  (${commas(trial.flatUs / 1e6)} seconds, or ${commas(trial.flatUs)} µs)`]} fill={CYAN} size={12} bold />
+      <line x1={20} y1={92} x2={TA_W - 20} y2={92} stroke="#334155" />
+      <SvgLines x={20} y={114} lines={['The extra time, on a ruler in µs where each step multiplies the value by ten']} fill={TEXT_COLOR} size={12} bold />
+      <line x1={lx(0.1)} y1={230} x2={lx(10000)} y2={230} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      {[0.1, 1, 10, 100, 1000, 10000].map((v) => (
+        <g key={v}>
+          <line x1={lx(v)} y1={225} x2={lx(v)} y2={235} stroke={MUTED_COLOR} />
+          <SvgLines x={lx(v)} y={249} lines={[v >= 1000 ? commas(v) : String(v)]} fill={MUTED_COLOR} size={10} anchor="middle" />
+        </g>
+      ))}
+      <line x1={lx(trial.delayUs)} y1={176} x2={lx(trial.delayUs)} y2={230} stroke={CYAN} strokeWidth={3} />
+      <SvgLines x={lx(trial.delayUs) - 8} y={150} lines={['calculated here:', `${n1(trial.delayUs)} µs`, `(${n1(trial.extraPathM / 1000)} km of extra path)`]} fill={CYAN} size={10} bold anchor="end" />
+      <line x1={lx(trial.newtonianUs)} y1={230} x2={lx(trial.newtonianUs)} y2={278} stroke={PINK} strokeWidth={3} />
+      <SvgLines x={lx(trial.newtonianUs) + 8} y={294} lines={['imagined: the ordinary-gravity picture,', `the same calculation with half the effect: ${n1(trial.newtonianUs)} µs`]} fill={PINK} size={10} bold />
+      <SvgLines x={20} y={340} lines={[`The extra time is ${(trial.delayOverFlat * 1e7).toFixed(1)} parts in ten million of the trip.`]} fill={MUTED_COLOR} size={10} />
+    </svg>
+  )
+}
+
+export function trialCaption(trial: Trial): ReactNode {
+  const name = targetName(trial.targetId)
+  const lookFor: LookFor[] = [
+    {
+      look: 'the solid cyan mark on the ruler, and the trip time written above the ruler.',
+      means: `for ${name} and a closest distance of ${radiiText(trial.closestRadii)}, the trip with no effect from the Sun takes ${n1(trial.flatMinutes)} minutes, and by this page’s calculation the Sun adds ${n1(trial.delayUs)} µs to it.`,
+      matters: 'change the planet or the closest distance and watch the mark move. You can see which setting matters more, and how small the extra time stays against the whole trip.',
+    },
+    {
+      look: 'the pink mark, to the left of the cyan one.',
+      means: `it is the extra time that the ordinary picture of gravity, from Experiment 8 of the Gravity and Curved Spacetime chapter, would give for the same trip: ${n1(trial.newtonianUs)} µs. It is imagined for the question, because it is a different calculation, not a measurement.`,
+      matters: 'it shows what the two ways of calculating differ by, for every setting. Which of the two matches real signals is for the results and the tutor to say.',
+    },
+    {
+      look: 'the line at the bottom, “parts in ten million of the trip”.',
+      means: `the extra time divided by the trip: ${n1(trial.delayUs)} µs ÷ ${commas(trial.flatUs)} µs = ${(trial.delayOverFlat * 1e7).toFixed(1)} parts in ten million.`,
+      matters: 'it is the size of what the real tests had to notice. It stays tiny for every setting you can choose.',
+    },
+  ]
+  return (
+    <CaptionBlock
+      title="Drawing A"
+      intro="This drawing shows one trip that you choose with the two settings above it: a signal from the Earth to a planet on the far side of the Sun, and back. It works out the time of the trip and the extra time the Sun adds, for the planet and the closest distance you picked. It does not show your guesses, and the real pictures above do not change when you change the settings."
+      bullets={[
+        <>
+          <strong>The trip time at the top</strong> is how long the round trip would take with no effect from the Sun, worked out from the distance and the speed of light, as in Picture 1. Cyan means “calculated here”. It is given in minutes, in seconds and in µs. A <strong>microsecond (µs)</strong> is one millionth of a second.
+        </>,
+        <>
+          <strong>The ruler</strong> is the extra time in µs. It is uneven on purpose: each step to the next marked number multiplies the value by ten, so 1 to 10 is as wide as 10 to 100. A mark further to the right means a longer extra time.
+        </>,
+        <>
+          <strong>The solid cyan mark</strong> is the extra time by this page’s calculation, the same one as in Pictures 2 and 3, for the settings you chose. Under its number is how much extra path that is: light goes about {Math.round(lightDistanceInOneMicrosecondM())} metres in 1 µs.
+        </>,
+        <>
+          <strong>The pink mark</strong> is imagined for the question. It is the same calculation made with the ordinary (Newtonian-style) picture of gravity, named after Isaac Newton, the one the Gravity and Curved Spacetime chapter’s Experiment 8 used, which gives half the effect.
+        </>,
+      ]}
+      worked={
+        <>
+          <strong>Step 1: the trip with no effect from the Sun.</strong> For {name}, passing {radiiText(trial.closestRadii)} from the Sun’s centre: {commas(trial.flatUs / 1e6)} seconds, which is {n1(trial.flatMinutes)} minutes.
+          <br />
+          <strong>Step 2: the extra time.</strong> By the calculation, the Sun adds {n1(trial.delayUs)} µs.
+          <br />
+          <strong>Step 3: as extra path.</strong> {(trial.delayUs / 1e6).toFixed(7)} s × {commas(SPEED_OF_LIGHT_M_PER_S)} m/s = {n1(trial.extraPathM)} m, which is {n1(trial.extraPathM / 1000)} km.
+          <br />
+          <strong>Step 4: the ordinary-gravity picture.</strong> Half of {n1(trial.delayUs)} is {n1(trial.newtonianUs)} µs, the pink mark.
+        </>
+      }
+      lookFor={lookFor}
+      whereFrom={
+        <>
+          <strong>Calculated here:</strong> the trip time and the cyan mark, from the same formula as the pictures above (the main part of it, applied to a straight path); the planets’ distances are round figures. <strong>Imagined for the question:</strong> the pink mark, a different calculation; the straight path; the signal’s trip to a planet on the far side of the Sun. <strong>Measured:</strong> nothing in this drawing. These are your own trial values, not new measurements, and they do not say that real signals behave like the
+          pink mark.
+        </>
+      }
+    />
+  )
+}

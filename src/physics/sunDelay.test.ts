@@ -42,6 +42,7 @@ import {
   predictionTwoAnswerId,
   predictionTwoTimesSmaller,
   roundTripDelayUs,
+  targetDistanceInSolarRadii,
   targetDistanceM,
   trialDelay,
   withinGiveOrTake,
@@ -78,6 +79,17 @@ const mars = targetDistanceM('mars')
 describe('constants', () => {
   it('GM / c^3 for the Sun is 4.9255 us', () => {
     expect(SUN_GM_OVER_C3_US).toBeCloseTo(4.9255, 3)
+  })
+})
+
+describe('where the targets are', () => {
+  it('Mercury is about 83 solar radii from the Sun\'s centre, Venus 155 and Mars 327; the choices stop short of them', () => {
+    expect(targetDistanceInSolarRadii('mercury')).toBeCloseTo(83.2, 1)
+    expect(targetDistanceInSolarRadii('venus')).toBeCloseTo(154.8, 1)
+    expect(targetDistanceInSolarRadii('mars')).toBeCloseTo(326.8, 1)
+    for (const t of TARGET_CHOICES) {
+      for (const radii of closestChoicesFor(t.id)) expect(radii).toBeLessThan(targetDistanceInSolarRadii(t.id))
+    }
   })
 })
 

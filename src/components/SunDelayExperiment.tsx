@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { PictureFour, PictureOne, PictureThree, PictureTwo, pictureFourCaption, pictureOneCaption, pictureThreeCaption, pictureTwoCaption } from './SunDelayPictures'
+import { PictureFour, PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureFourCaption, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './SunDelayPictures'
 import {
   ASTRONOMICAL_UNIT_M,
   CASSINI_PRECISION_PPM_JPL,
   DELAY_ANSWER_CHOICES,
   DISTANCE_ANSWER_CHOICES,
   EARTH_DISTANCE_AU,
+  PRESET_CLOSEST_RADII,
+  PRESET_TARGET_ID,
   TARGET_CHOICES,
   PREDICTION_TWO_FAR_RADII,
   SUN_RADIUS_M,
+  closestChoicesFor,
   earthDistanceM,
   flatRoundTripMinutes,
   lightDistanceInOneMicrosecondM,
   lightTimeSeconds,
+  targetDistanceInSolarRadii,
   targetDistanceM,
+  trialDelay,
 } from '../physics/sunDelay'
 
 // Evidence and Imagination, Experiment 5 (docs/experiments/evidence-and-imagination/05-does-the-sun-slow-light.md).
@@ -54,6 +59,16 @@ interface SunDelayExperimentProps {
 export function SunDelayExperiment({ onComplete }: SunDelayExperimentProps) {
   const [delayGuess, setDelayGuess] = useState<string | null>(null)
   const [distanceGuess, setDistanceGuess] = useState<string | null>(null)
+  const [targetId, setTargetId] = useState<string>(PRESET_TARGET_ID)
+  const [closestRadii, setClosestRadii] = useState<number>(PRESET_CLOSEST_RADII)
+  // A path to a target cannot pass the Sun's centre farther out than the target is, so a change of target that makes the chosen closest distance impossible moves it to the largest one that is offered.
+  const chooseTarget = (id: string) => {
+    setTargetId(id)
+    const offered = closestChoicesFor(id)
+    if (!offered.includes(closestRadii)) setClosestRadii(offered[offered.length - 1])
+  }
+  const trial = trialDelay(targetId, closestRadii)
+  const mercuryRadii = Math.floor(targetDistanceInSolarRadii('mercury'))
   const venusAu = TARGET_CHOICES.find((c) => c.id === 'venus')!.distanceAu
   const cassiniPpm = CASSINI_PRECISION_PPM_JPL
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
@@ -323,6 +338,71 @@ export function SunDelayExperiment({ onComplete }: SunDelayExperimentProps) {
                   {pictureFourCaption()}
                 </>
               )}
+            </div>
+          )}
+          {done && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> In the pictures above, the signal went to Venus and just touched the Sun’s surface. Here you can try other trips. You choose two things:
+              </p>
+              <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>The planet the signal goes to</strong>: Mercury, Venus or Mars, always on the far side of the Sun from the Earth, which is {earthDistanceM() / ASTRONOMICAL_UNIT_M} AU from the Sun.
+                </li>
+                <li>
+                  <strong>The closest distance</strong>: how near the path comes to the Sun’s <em>centre</em>, in solar radii. It is measured from the centre, not the surface. A closest distance of 1 solar radius means the path just touches the Sun’s surface. Mercury is only about {mercuryRadii} solar radii from the
+                  Sun’s centre, and a path to it cannot pass farther out than that, so 100 solar radii is not offered for Mercury.
+                </li>
+              </ol>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>One drawing then shows, for your choices:</p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <li>
+                  <strong>The trip time</strong> with no effect from the Sun.
+                </li>
+                <li>
+                  <strong>The extra time</strong> that the Sun adds, by this page’s calculation, on a ruler.
+                </li>
+                <li>
+                  <strong>A second, imagined extra time</strong> for comparison, in pink: what the ordinary picture of gravity from Experiment 8 of the Gravity and Curved Spacetime chapter would give for the same trip.
+                </li>
+              </ul>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                The real pictures above do not change, and your two guesses do not change this drawing. Only the two settings below do.
+              </p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>These are your own trial values, not new measurements.</strong> For example, if you choose {TARGET_CHOICES.find((c) => c.id === targetId)?.label} and {closestRadii} solar radii, the drawing works out what the same simple model gives for that trip. It does not say what a real signal did.
+              </p>
+              {(
+                [
+                  { title: 'Which planet does the signal go to?', choices: TARGET_CHOICES.map((c) => ({ value: c.id as string, label: c.label })), value: targetId, set: (v: string) => chooseTarget(v) },
+                  {
+                    title: 'How close to the Sun’s centre does the path come?',
+                    choices: closestChoicesFor(targetId).map((r) => ({ value: String(r), label: r === 1 ? '1 solar radius (just touching the surface)' : `${r} solar radii` })),
+                    value: String(closestRadii),
+                    set: (v: string) => setClosestRadii(Number(v)),
+                  },
+                ] as const
+              ).map((control) => (
+                <div key={control.title} style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>{control.title}</label>
+                  <div>
+                    {control.choices.map((choice) => (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        onClick={() => control.set(choice.value)}
+                        className={`toggle-button${control.value === choice.value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <TrialDrawing trial={trial} />
+              {trialCaption(trial)}
             </div>
           )}
         </div>
