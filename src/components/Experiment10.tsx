@@ -17,9 +17,10 @@ const outcomeChoices: Array<{ value: OutcomeChoice; label: string }> = [
 ]
 
 // The traveler is always younger for any v > 0 (v = 0 is not a valid input here — see
-// twinParadoxExperiment.ts), so the actual outcome never needs the physics result itself.
+// twinParadoxExperiment.ts), so the Earth twin is the older one and the actual outcome never
+// needs the physics result itself. A test checks this against the physics module.
 export function actualOutcome(): OutcomeChoice {
-  return 'travelerOlder'
+  return 'earthOlder'
 }
 
 const optionButtonStyle = (selected: boolean, disabled: boolean) => ({
