@@ -32,6 +32,14 @@ export const STATUS_LABELS: StatusLabel[] = ['Settled', 'Strong evidence', 'Cont
 // Experiment 16 ("Where does gold come from?") was dropped on 2026-10-25, so the group's numbers are 1 to 15 and 17 to 25.
 export const EXPERIMENT_NUMBERS: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25]
 
+// The number a learner sees in the sidebar: the chapters are numbered 1 to 24 in a row, so every experiment after the dropped Experiment 16
+// is one lower than its specification number (the specification's Experiment 25 is the learner's 24). `experiment` in a claim stays the
+// specification number; the page shows `displayNumber(experiment)`.
+export function displayNumber(specNumber: number): number {
+  if (!EXPERIMENT_NUMBERS.includes(specNumber)) throw new RangeError(`There is no Experiment ${specNumber} in this group`)
+  return specNumber > 16 ? specNumber - 1 : specNumber
+}
+
 // A real number from the earlier experiment, with its unit and what it is, read from that experiment's module.
 export interface Figure {
   value: number

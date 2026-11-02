@@ -2,7 +2,7 @@
 // results by the four status labels each experiment already carries. Every figure comes from `frontierClaims`, which reads it from the
 // earlier experiment's own module, so it cannot drift from what the learner saw. See docs/experiments/cosmic-horizons/closing-recap.md
 // (approved with defaults on 2026-11-02). The wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1).
-import { STATUS_LABELS, claimsWithLabel, frontierClaims, labelCounts } from '../physics/frontierRecap'
+import { STATUS_LABELS, claimsWithLabel, displayNumber, frontierClaims, labelCounts } from '../physics/frontierRecap'
 import type { Claim, StatusLabel } from '../physics/frontierRecap'
 
 const textStyle = { fontSize: '0.9375rem', lineHeight: 1.6 } as const
@@ -24,7 +24,7 @@ const LABEL_MEANINGS: Record<StatusLabel, { meaning: string; example: string }> 
   },
   'Strong evidence': {
     meaning: 'one clear result that experts widely accept, but not yet confirmed many different ways.',
-    example: 'the black hole after a merger ended with a larger total surface area than the two before (Experiment 18).',
+    example: 'the black hole after a merger ended with a larger total surface area than the two before (Experiment ' + displayNumber(18) + ').',
   },
   Contested: {
     meaning: 'the data are real, but experts disagree about what they mean.',
@@ -32,7 +32,7 @@ const LABEL_MEANINGS: Record<StatusLabel, { meaning: string; example: string }> 
   },
   Open: {
     meaning: 'we do not know yet.',
-    example: 'what the little red dots are (Experiment 23).',
+    example: 'what the little red dots are (Experiment ' + displayNumber(23) + ').',
   },
 }
 
@@ -58,7 +58,7 @@ export function FrontierRecap() {
         ))}
       </ul>
       <p>
-        One experiment can hold more than one label. A result can be strong while what it means is still open. Experiment 17 is an example:
+        One experiment can hold more than one label. A result can be strong while what it means is still open. Experiment {displayNumber(17)} is an example:
         the star’s fading is strong evidence, what it became is contested, and how often stars do this is open.
       </p>
 
@@ -74,7 +74,7 @@ export function FrontierRecap() {
           <ul style={{ marginTop: 0 }}>
             {claimsWithLabel(label).map((c) => (
               <li key={`${c.experiment}-${c.claim}`}>
-                <strong>Experiment {c.experiment}.</strong> {c.claim}
+                <strong>Experiment {displayNumber(c.experiment)}.</strong> {c.claim}
                 {figureText(c)}
               </li>
             ))}
@@ -90,7 +90,7 @@ export function FrontierRecap() {
         </li>
         <li>
           <strong>A bigger “sigma”.</strong> A hint at about 3 sigma can fade or grow. DESI’s hint about dark energy sits at 2.7 to 3.2 sigma
-          (Experiment 2), and the pulsar-timing hum at about 3 to 4 sigma, not yet 5 (Experiment 22).
+          (Experiment 2), and the pulsar-timing hum at about 3 to 4 sigma, not yet 5 (Experiment {displayNumber(22)}).
         </li>
         <li>
           <strong>A tension that goes away.</strong> KiDS’s lumpiness tension went away with a larger survey; the Dark Energy Survey’s has not

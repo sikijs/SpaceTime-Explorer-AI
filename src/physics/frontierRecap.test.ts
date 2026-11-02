@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EXPERIMENT_NUMBERS, STATUS_LABELS, claimsWithLabel, experimentsWithLabel, frontierClaims, labelCounts } from './frontierRecap'
+import { EXPERIMENT_NUMBERS, STATUS_LABELS, claimsWithLabel, displayNumber, experimentsWithLabel, frontierClaims, labelCounts } from './frontierRecap'
 
 // Required tests of docs/experiments/cosmic-horizons/closing-recap.md. The expected numbers below are written out by hand from the
 // specification's table, so a change to an earlier experiment that moves a figure shows up here.
@@ -31,6 +31,20 @@ describe('frontier recap: the claims cover the whole group', () => {
   it('no experiment has the same claim twice, and none has the same label on the same claim', () => {
     const keys = claims.map((c) => `${c.experiment}|${c.label}|${c.claim}`)
     expect(new Set(keys).size).toBe(keys.length)
+  })
+})
+
+describe('frontier recap: the numbers a learner sees', () => {
+  it('the sidebar numbers run 1 to 24 in a row: the specification’s Experiment 25 is the learner’s 24', () => {
+    expect(EXPERIMENT_NUMBERS.map(displayNumber)).toEqual(Array.from({ length: 24 }, (_, i) => i + 1))
+    expect(displayNumber(15)).toBe(15)
+    expect(displayNumber(17)).toBe(16)
+    expect(displayNumber(25)).toBe(24)
+  })
+
+  it('there is no Experiment 16 or Experiment 26 to display', () => {
+    expect(() => displayNumber(16)).toThrow(RangeError)
+    expect(() => displayNumber(26)).toThrow(RangeError)
   })
 })
 
