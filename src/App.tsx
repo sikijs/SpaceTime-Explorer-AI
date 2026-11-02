@@ -1227,7 +1227,7 @@ const chapters: Chapter[] = [
     Component: LocalGroupCollisionExperiment,
     // Chapter summary: wording approved by the owner. Every number is the one the experiment uses (the physics model's).
     learned: localGroupCollisionSummary(),
-    next: 'This is the last experiment of this group. “Putting It All Together”, below on this page, sorts the twenty-four findings by how settled they are.',
+    next: 'This is the last experiment of this group. “Putting It All Together”, below on this page, sorts the twenty-four findings by how settled they are, and a last chapter, “Looking back”, in the sidebar looks back over the whole project.',
   },
   // Appended at the end of the list so that the saved progress (kept by position in this list) is not disturbed; the sidebar and Previous/Next follow `groupOrder`, which puts this group
   // between "Spacetime Geometry" and "Cosmic Horizons".
