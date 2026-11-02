@@ -129,7 +129,7 @@ Experiment 22 (pulsar timing arrays) and Experiment 23 (how black holes grow) us
 
 ## Implementation Notes (final review, 2026-10-27)
 
-The experiment is built as four parts: the introduction and Part 1 (two predictions, an eight-stage run, Pictures 1 and 2), Part 2 (Now try it yourself, Drawing A), Part 3 (the results) and Part 4 (the tutor), with a chapter summary. Differences from the specification above, for the owner's approval:
+The experiment is built as four parts: the introduction and Part 1 (two predictions, an eight-stage run, Pictures 1 and 2), Part 2 (Now try it yourself, Drawing A), Part 3 (the results) and Part 4 (the tutor), with a chapter summary. Differences from the specification above (**APPROVED by the owner on 2026-11-02**, "approved, all three differences approved"):
 
 1. **Run length.** Eight stages, not five: five for Picture 1 (black holes, horizons, shadows, rings, comparison) and three more for Picture 2 (one black hole, beams of light, the shadow's edge).
 2. **Picture 1 has two panels.** Panel A draws both black holes on one angular scale; panel B is a log ruler of the ratio (0.1 to 10) that carries Prediction 1's white marker. The specification said only "the size scale of Picture 1".
