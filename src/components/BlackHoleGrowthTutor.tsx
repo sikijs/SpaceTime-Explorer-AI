@@ -187,7 +187,7 @@ export function BlackHoleGrowthTutor({ timePrediction, seedPrediction, onExplain
           </p>
           <p style={paragraphStyle}>
             <strong>5. What might change the answer, and why sources disagree.</strong> People have proposed several ways round the problem, and none is settled. A seed that starts much heavier, for example from the collapse of a very massive gas cloud or a very massive star, would save time, as Table 3 shows. A black hole could feed faster than the limit for a while: NASA’s Chandra X-ray
-            Observatory team has reported a black hole that seems to feed at about 2.4 times it. Black holes could merge, as in Experiments 18 to 20, and add their masses. Or the masses of the little red dots could be much lower than first estimated, because the width of the spectral lines that the masses are worked out from may be caused partly by light bouncing off electrons in a cocoon. This
+            Observatory team has reported a black hole that seems to feed at about 2.4 times it. Black holes could merge, as in Experiments 17 to 19, and add their masses. Or the masses of the little red dots could be much lower than first estimated, because the width of the spectral lines that the masses are worked out from may be caused partly by light bouncing off electrons in a cocoon. This
             page does not model any of these, and the sources do not agree on which, if any, happened. That is why this experiment’s label says <strong>Open</strong>.
           </p>
           <p style={paragraphStyle}>

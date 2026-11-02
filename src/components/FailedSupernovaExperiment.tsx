@@ -842,7 +842,7 @@ export function FailedSupernovaExperiment({ onComplete, onTutorComplete }: Faile
   const countRange = failedRange()
   return (
     <div>
-      <h2>Experiment 17 — A Star That Vanished: Can a Star Become a Black Hole Without Exploding? (M31-2014-DS1)</h2>
+      <h2>Experiment 16 — A Star That Vanished: Can a Star Become a Black Hole Without Exploding? (M31-2014-DS1)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>

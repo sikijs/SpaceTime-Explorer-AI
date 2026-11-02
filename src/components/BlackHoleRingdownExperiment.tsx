@@ -679,7 +679,7 @@ export function BlackHoleRingdownExperiment({ onComplete, onTutorComplete }: Bla
   const pct = (n: number) => `${Math.abs(n).toFixed(1)} percent ${n >= 0 ? 'above' : 'below'}`
   return (
     <div>
-      <h2>Experiment 19 — Do Black Holes Ring Like Bells? (GW250114’s Ringdown and the “No-Hair” Test)</h2>
+      <h2>Experiment 18 — Do Black Holes Ring Like Bells? (GW250114’s Ringdown and the “No-Hair” Test)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>
@@ -720,7 +720,7 @@ export function BlackHoleRingdownExperiment({ onComplete, onTutorComplete }: Bla
 
           <p style={paragraph}>
             <strong>Where we left off.</strong> In Black Holes Experiments 1 and 8 you saw that a black hole’s size depends on its mass and on its spin. In Gravitational Waves
-            Experiments 1 to 4 you saw that two black holes circling each other send out gravitational waves. In Experiment 18 of this group you met GW250114, a merger that was
+            Experiments 1 to 4 you saw that two black holes circling each other send out gravitational waves. In Experiment 17 of this group you met GW250114, a merger that was
             recorded very clearly. This experiment asks what the black hole did <em>after</em> the merger.
           </p>
 
@@ -968,7 +968,7 @@ export function BlackHoleRingdownExperiment({ onComplete, onTutorComplete }: Bla
                     { look: 'in each row of panel C, the blue triangle and the green dot with its line.', means: `for the pitch the calculation gives ${rows[0].calculated.toFixed(1)} Hz and the detectors measured ${rows[0].measured.toFixed(1)} Hz (${rows[0].low.toFixed(1)} to ${rows[0].high.toFixed(1)}); for the fade time it gives ${rows[1].calculated.toFixed(2)} ms and they measured ${rows[1].measured.toFixed(2)} ms (${rows[1].low.toFixed(2)} to ${rows[1].high.toFixed(2)}). Each calculated value lies inside the measured range.`, matters: 'the calculation used the black hole’s mass and spin, which were found from the earlier part of the signal, as the two black holes circled. The ringing then gives a second, separate measurement of the same two numbers. That is the test.' },
                   ] : []),
                 ]}
-                whereFrom={<><strong>Measured:</strong>{stage >= 3 ? <> the pitch ({rows[0].measured.toFixed(1)} Hz) and the fade time ({rows[1].measured.toFixed(2)} ms) of the main tone, by the LIGO, Virgo and KAGRA teams. This page’s numbers come from a partial read of their paper, so each should be checked against it.</> : <> nothing is measured yet in the stages shown so far.</>} <strong>Calculated here:</strong> the wave and its fade, from a published formula (good to a few percent) for the mass and spin of the black hole that the merger made ({GW250114_RINGDOWN.finalMassSolar} Suns, spin {GW250114_RINGDOWN.finalSpin}, as in Experiment 18), turned into what the detectors record with the stretch of the redshift ({GW250114_RINGDOWN.redshift}){stage >= 2 ? <>, and the number of swings ({one(pic.dampingTimeMs)} ÷ {one(pic.periodMs)} = {one(swingsPic.realSwings)})</> : null}. <strong>Imagined for the question:</strong> nothing. The white bar is your guess.</>}
+                whereFrom={<><strong>Measured:</strong>{stage >= 3 ? <> the pitch ({rows[0].measured.toFixed(1)} Hz) and the fade time ({rows[1].measured.toFixed(2)} ms) of the main tone, by the LIGO, Virgo and KAGRA teams. This page’s numbers come from a partial read of their paper, so each should be checked against it.</> : <> nothing is measured yet in the stages shown so far.</>} <strong>Calculated here:</strong> the wave and its fade, from a published formula (good to a few percent) for the mass and spin of the black hole that the merger made ({GW250114_RINGDOWN.finalMassSolar} Suns, spin {GW250114_RINGDOWN.finalSpin}, as in Experiment 17), turned into what the detectors record with the stretch of the redshift ({GW250114_RINGDOWN.redshift}){stage >= 2 ? <>, and the number of swings ({one(pic.dampingTimeMs)} ÷ {one(pic.periodMs)} = {one(swingsPic.realSwings)})</> : null}. <strong>Imagined for the question:</strong> nothing. The white bar is your guess.</>}
               />
             </div>
           )}

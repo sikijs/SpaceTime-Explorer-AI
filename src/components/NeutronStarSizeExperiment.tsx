@@ -1006,7 +1006,7 @@ export function NeutronStarSizeExperiment({ onComplete, onTutorComplete }: Neutr
             </p>
             <p style={paragraph}>
               <strong>The roads can change.</strong> The diagram shows the usual roads. A white dwarf in a close pair that takes gas from its partner can explode as a Type Ia
-              supernova (Experiment 14), and then no white dwarf is left at all. Some very heavy stars may collapse without a bright supernova, which Experiment 17 looks at and which
+              supernova (Experiment 14), and then no white dwarf is left at all. Some very heavy stars may collapse without a bright supernova, which Experiment 16 looks at and which
               is still an open question.
             </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>

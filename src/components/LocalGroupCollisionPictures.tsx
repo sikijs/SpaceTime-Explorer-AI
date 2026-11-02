@@ -604,7 +604,7 @@ export function trialCaption(trial: TrialPicture): ReactNode {
                 With a sideways speed of {trial.sidewaysKmS} km/s and a total mass of {massText}, the pair is not bound: Andromeda swings past the Milky Way once and does not come back. For this mass the limit is {n1(trial.unboundKmS)} km/s, and your speed is above it. (With the studies’ mass, 2.3 trillion Suns, the limit is 118.8 km/s.)
               </>
             ),
-            matters: 'a speed that is too high, or a mass that is too small, means gravity cannot hold the pair together. This is the same kind of open path as in Experiment 24, and in this model the two galaxies would never meet again.',
+            matters: 'a speed that is too high, or a mass that is too small, means gravity cannot hold the pair together. This is the same kind of open path as in Experiment 23, and in this model the two galaxies would never meet again.',
           },
         ]),
   ]

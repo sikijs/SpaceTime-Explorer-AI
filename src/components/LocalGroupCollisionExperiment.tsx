@@ -112,7 +112,7 @@ export function LocalGroupCollisionExperiment({ onComplete, onTutorComplete }: L
   const plusMinus = SIDEWAYS_SPEED_2026_PLUS_MINUS_KM_S.toFixed(1)
   return (
     <div>
-      <h2>Experiment 25 — Will the Milky Way and Andromeda Collide? (Two Studies, Two Answers)</h2>
+      <h2>Experiment 24 — Will the Milky Way and Andromeda Collide? (Two Studies, Two Answers)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>Status as of October 2026: Contested. “Contested” means that careful studies disagree.</strong>

@@ -32,7 +32,7 @@ function referenceEntries(): { term: string; meaning: string }[] {
     { term: 'Orbit and orbital period', meaning: 'an orbit is the path of one object going round another, and the orbital period is the time it takes to go round once (Gravity Experiment 6). A year is the Earth’s orbital period round the Sun.' },
     { term: 'Parsec', meaning: 'a unit for distances between stars and black holes. One parsec is about 3.26 light-years, which is about 31 million million kilometres. So 0.01 parsecs is about 0.03 light-years.' },
     { term: 'Nanosecond', meaning: 'a billionth of a second. In one nanosecond, light travels about 30 centimetres.' },
-    { term: 'Supermassive black hole', meaning: 'a black hole millions to billions of times as heavy as the Sun, found at the centre of most large galaxies. The one at the centre of our own galaxy, Sagittarius A*, is about 4 million Suns (Cosmic Horizons Experiment 21).' },
+    { term: 'Supermassive black hole', meaning: 'a black hole millions to billions of times as heavy as the Sun, found at the centre of most large galaxies. The one at the centre of our own galaxy, Sagittarius A*, is about 4 million Suns (Cosmic Horizons Experiment 20).' },
     { term: 'Neutron star', meaning: 'the extremely dense core left behind when a heavy star explodes, with the mass of more than the Sun squeezed into a sphere about 12 kilometres across (Cosmic Horizons Experiment 15).' },
     { term: 'Pulsar', meaning: 'a neutron star that spins and gives out beams of radio waves from near its magnetic poles. As it spins, a beam sweeps round the sky like the light of a lighthouse, and each time it points at the Earth, telescopes pick up a short pulse.' },
     { term: 'Millisecond pulsar', meaning: 'a pulsar that spins hundreds of times every second, so a pulse arrives every few thousandths of a second. They are among the steadiest natural clocks known, which is why they are used here.' },
@@ -524,7 +524,7 @@ export function PulsarTimingBackgroundExperiment({ onComplete, onTutorComplete }
   const sigmaText = (low: number, high: number) => (low === high ? `about ${low}` : `about ${low} to ${high}`)
   return (
     <div>
-      <h2>Experiment 22 — Does the Universe Hum? (Pulsar Timing Arrays)</h2>
+      <h2>Experiment 21 — Does the Universe Hum? (Pulsar Timing Arrays)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>
@@ -544,7 +544,7 @@ export function PulsarTimingBackgroundExperiment({ onComplete, onTutorComplete }
 
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
             <strong>Much heavier black holes.</strong> At the centre of most large galaxies there is a supermassive black hole, millions or billions of times as heavy as the Sun. Our own galaxy has one,
-            Sagittarius A*, and in Experiment 21 you met another, M87*, of 6.5 billion Suns. Galaxies sometimes merge, and when two galaxies merge, the supermassive black holes at their centres can end up in
+            Sagittarius A*, and in Experiment 20 you met another, M87*, of 6.5 billion Suns. Galaxies sometimes merge, and when two galaxies merge, the supermassive black holes at their centres can end up in
             the same galaxy. Over time they can drift towards each other and begin to circle one another: two enormous black holes, in orbit. Just as a pair of small black holes sends out gravitational waves,
             so does a pair of enormous ones.
           </p>

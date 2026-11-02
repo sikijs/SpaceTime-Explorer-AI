@@ -500,7 +500,7 @@ export function BlackHoleShadowExperiment({ onComplete, onTutorComplete }: Black
   const beside = sizeGuess && horizonGuess !== null ? predictionsBeside(sizeGuess, horizonGuess) : null
   return (
     <div>
-      <h2>Experiment 21 — Can We Photograph a Black Hole’s Shadow? (Event Horizon Telescope)</h2>
+      <h2>Experiment 20 — Can We Photograph a Black Hole’s Shadow? (Event Horizon Telescope)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>

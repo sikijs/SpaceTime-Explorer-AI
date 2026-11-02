@@ -645,7 +645,7 @@ export function HorizonAreaLawExperiment({ onComplete, onTutorComplete }: Horizo
   const cu = checkUp()
   return (
     <div>
-      <h2>Experiment 18 — Does a Black Hole’s Surface Area Ever Shrink? (GW250114 and Hawking’s Area Theorem)</h2>
+      <h2>Experiment 17 — Does a Black Hole’s Surface Area Ever Shrink? (GW250114 and Hawking’s Area Theorem)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>

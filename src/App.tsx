@@ -1143,14 +1143,14 @@ const chapters: Chapter[] = [
     // Chapter summary, wording approved by the owner on 2026-10-24 (CLAUDE.md §28.1). Every number is the one the experiment uses (the physics model's). "What's next" names no
     // experiment, because Experiment 16 has no approved specification.
     learned: neutronStarSummary(),
-    next: 'Experiment 17 asks about a star that may have ended without a bright explosion: can a star’s core collapse into a black hole while the star simply fades from view?',
+    next: 'Experiment 16 asks about a star that may have ended without a bright explosion: can a star’s core collapse into a black hole while the star simply fades from view?',
   },
   {
     title: 'A star that vanished: can a star become a black hole without exploding? (M31-2014-DS1)',
     group: 'Cosmic Horizons',
     Component: FailedSupernovaExperiment,
     learned: failedSupernovaSummary(),
-    next: 'Experiment 18 asks a different question about black holes. When two black holes merge, a little of their mass leaves as gravitational waves, so the new black hole is lighter. Does the surface of the black hole shrink too?',
+    next: 'Experiment 17 asks a different question about black holes. When two black holes merge, a little of their mass leaves as gravitational waves, so the new black hole is lighter. Does the surface of the black hole shrink too?',
   },
   {
     title: 'Does a black hole’s surface area ever shrink? (GW250114 and Hawking’s area theorem)',
@@ -1158,7 +1158,7 @@ const chapters: Chapter[] = [
     Component: HorizonAreaLawExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: horizonAreaLawSummary(),
-    next: 'Experiment 19 asks what the new black hole does after the merger. Just after two black holes merge, the one they make is shaken, and it rings, a little like a struck bell. Does the pitch of that ringing match what the black hole’s mass and spin say it should be?',
+    next: 'Experiment 18 asks what the new black hole does after the merger. Just after two black holes merge, the one they make is shaken, and it rings, a little like a struck bell. Does the pitch of that ringing match what the black hole’s mass and spin say it should be?',
   },
   {
     title: 'Do black holes ring like bells? (GW250114’s ringdown and the “no-hair” test)',
@@ -1166,7 +1166,7 @@ const chapters: Chapter[] = [
     Component: BlackHoleRingdownExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleRingdownSummary(),
-    next: 'Experiment 20 asks about black holes that seem too heavy to exist. Single stars should leave no black holes in a range of masses, yet the heaviest merger seen so far contains black holes in or above that range. How could that be?',
+    next: 'Experiment 19 asks about black holes that seem too heavy to exist. Single stars should leave no black holes in a range of masses, yet the heaviest merger seen so far contains black holes in or above that range. How could that be?',
   },
   {
     title: 'Black holes that should not exist: the heaviest merger (GW231123)',
@@ -1175,7 +1175,7 @@ const chapters: Chapter[] = [
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's). "What's next" named no experiment, because
     // Experiment 21 (the shadow) now has one: this "What's next" is draft wording for the owner's approval.
     learned: heaviestMergerSummary(),
-    next: 'Experiment 21 asks how a black hole looks from Earth. Light bent into a black hole leaves a dark shadow against the glowing gas around it, and the Event Horizon Telescope has photographed two of them. How big should such a shadow look?',
+    next: 'Experiment 20 asks how a black hole looks from Earth. Light bent into a black hole leaves a dark shadow against the glowing gas around it, and the Event Horizon Telescope has photographed two of them. How big should such a shadow look?',
   },
   {
     title: 'Can we photograph a black hole’s shadow? (Event Horizon Telescope)',
@@ -1184,7 +1184,7 @@ const chapters: Chapter[] = [
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleShadowSummary(),
     // "What's next" named no experiment, because Experiment 22 (the hum) now has one: this "What's next" is draft wording for the owner's approval.
-    next: 'Experiment 22 asks about much heavier black holes, and about a very different kind of detector. Pairs of supermassive black holes should send out gravitational waves too, but waves very different from the ones LIGO detects. How could they be detected, using stars as clocks?',
+    next: 'Experiment 21 asks about much heavier black holes, and about a very different kind of detector. Pairs of supermassive black holes should send out gravitational waves too, but waves very different from the ones LIGO detects. How could they be detected, using stars as clocks?',
   },
   {
     title: 'Does the universe hum? (pulsar timing arrays)',
@@ -1193,7 +1193,7 @@ const chapters: Chapter[] = [
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: pulsarTimingBackgroundSummary(),
     // "What's next" now points to Experiment 23: this is draft wording for the owner's approval. It does not give away either of Experiment 23's predictions.
-    next: 'Experiment 23 asks about the other end of the story of black holes: how fast one can grow. The very heavy black holes that the James Webb Space Telescope finds in the young universe had to start small and feed, and there is a limit on how fast a black hole can feed. Was there enough time?',
+    next: 'Experiment 22 asks about the other end of the story of black holes: how fast one can grow. The very heavy black holes that the James Webb Space Telescope finds in the young universe had to start small and feed, and there is a limit on how fast a black hole can feed. Was there enough time?',
   },
   {
     title: 'How fast can a black hole grow? (the little red dots)',
@@ -1202,7 +1202,7 @@ const chapters: Chapter[] = [
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: blackHoleGrowthSummary(),
     // "What's next" now points to Experiment 24: this is draft wording for the owner's approval. It does not give away either of Experiment 24's predictions.
-    next: 'Experiment 24 turns from black holes to our own neighbourhood. In 2025 a comet from another star, 3I/ATLAS, passed the Sun and left again. How did the Sun’s gravity shape its path?',
+    next: 'Experiment 23 turns from black holes to our own neighbourhood. In 2025 a comet from another star, 3I/ATLAS, passed the Sun and left again. How did the Sun’s gravity shape its path?',
   },
   {
     title: 'A visitor from another star (how far does the Sun bend its path?)',
@@ -1210,7 +1210,7 @@ const chapters: Chapter[] = [
     Component: InterstellarVisitorExperiment,
     // Chapter summary, draft wording for the owner's approval. Every number is the one the experiment uses (the physics model's).
     learned: interstellarVisitorSummary(),
-    next: 'Experiment 25 turns from a visitor passing the Sun to our own galaxy and its nearest large neighbour. Will the Milky Way and Andromeda collide? Two careful studies, a year apart, gave different answers.',
+    next: 'Experiment 24 turns from a visitor passing the Sun to our own galaxy and its nearest large neighbour. Will the Milky Way and Andromeda collide? Two careful studies, a year apart, gave different answers.',
   },
   {
     title: 'Will the Milky Way and Andromeda collide? (two studies, two answers)',

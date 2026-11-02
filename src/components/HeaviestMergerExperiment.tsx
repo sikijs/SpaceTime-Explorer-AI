@@ -540,7 +540,7 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
   const masses = mine.rows.map((r) => Number(r.massSolar.toFixed(1)))
   return (
     <div>
-      <h2>Experiment 20 — Black Holes That Should Not Exist: The Heaviest Merger (GW231123)</h2>
+      <h2>Experiment 19 — Black Holes That Should Not Exist: The Heaviest Merger (GW231123)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>
@@ -572,8 +572,8 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
           </p>
 
           <p style={paragraph}>
-            <strong>Where we left off.</strong> In Black Holes Experiment 9 you saw how the core of a dead star can become a black hole. In Experiment 17 of this group you met a star that may have
-            become a black hole without a bright explosion. In Experiment 18 you met GW250114, a merger of two black holes that was recorded very clearly, and saw that when two black holes
+            <strong>Where we left off.</strong> In Black Holes Experiment 9 you saw how the core of a dead star can become a black hole. In Experiment 16 of this group you met a star that may have
+            become a black hole without a bright explosion. In Experiment 17 you met GW250114, a merger of two black holes that was recorded very clearly, and saw that when two black holes
             merge a little of their mass leaves as gravitational waves. This experiment turns to the other end of the scale: black holes that seem too heavy to have come from a single star.
           </p>
 
@@ -811,7 +811,7 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
                     <><strong>The pink band</strong> is the gap as theory gives it, from {ruler.gapTheory.low} to {ruler.gapTheory.high} Suns: black holes of those masses are not expected to be left by a single star. <strong>The dashed pink line</strong> is the lower edge of the gap that a 2025 study of the black holes the detectors had seen found instead, {ruler.gapMeasuredLow.value} (+{ruler.gapMeasuredLow.plus}, −{ruler.gapMeasuredLow.minus}), with a short bar for its own give-or-take. <strong>The pink note</strong> says how likely the teams think it is that the lighter black hole is in the gap.</>,
                   ] : []),
                   ...(stage >= 4 ? [
-                    <><strong>In panel B, the teal dots, the arrow and the larger teal dot</strong> are imagined for the question: two black holes of {ex.startSolar} Suns, each below the gap, merge into one. The arrow points to the black hole they make. The note beside it does the sum: {ex.startSolar} + {ex.startSolar} = {ex.sumSolar}, minus {Math.round(ex.share * 100)} percent (about {ex.radiatedSolar} Suns sent out as gravitational waves) leaves {ex.resultSolar}. The {Math.round(ex.share * 100)} percent is an assumption, taken from GW250114 in Experiment 18. For GW231123 itself, the best estimates give a total of {check.totalSolar} Suns before and about {GW231123.finalBestFitSolar} after, so about {check.impliedRadiatedSolar} Suns, or {(check.impliedRadiatedShare * 100).toFixed(1)} percent, were lost. That is a rough subtraction of best estimates, not a measurement.</>,
+                    <><strong>In panel B, the teal dots, the arrow and the larger teal dot</strong> are imagined for the question: two black holes of {ex.startSolar} Suns, each below the gap, merge into one. The arrow points to the black hole they make. The note beside it does the sum: {ex.startSolar} + {ex.startSolar} = {ex.sumSolar}, minus {Math.round(ex.share * 100)} percent (about {ex.radiatedSolar} Suns sent out as gravitational waves) leaves {ex.resultSolar}. The {Math.round(ex.share * 100)} percent is an assumption, taken from GW250114 in Experiment 17. For GW231123 itself, the best estimates give a total of {check.totalSolar} Suns before and about {GW231123.finalBestFitSolar} after, so about {check.impliedRadiatedSolar} Suns, or {(check.impliedRadiatedShare * 100).toFixed(1)} percent, were lost. That is a rough subtraction of best estimates, not a measurement.</>,
                     <><strong>The white mark and the box “YOUR GUESS”</strong> are your answer to Prediction 1. A yes or a no has no size or position of its own, so the white mark is only a marker, a tick for yes, a cross for no and a question mark for not sure, drawn beside the result of the sum. Where it sits means nothing.</>,
                   ] : []),
                 ]}
@@ -1032,7 +1032,7 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
                 ],
                 [
                   'Share of the mass sent out as gravitational waves',
-                  `${share.assumedPercent.toFixed(0)} percent (assumed, from GW250114 in Experiment 18)`,
+                  `${share.assumedPercent.toFixed(0)} percent (assumed, from GW250114 in Experiment 17)`,
                   `${share.impliedPercent.toFixed(2)} percent, from (${n1(check.totalSolar)} − ${GW231123.finalBestFitSolar}) ÷ ${n1(check.totalSolar)} (a rough subtraction of best estimates)`,
                   `${share.differencePoints.toFixed(2)} percentage points apart. Neither is a measured share for GW231123.`,
                 ],
@@ -1067,7 +1067,7 @@ export function HeaviestMergerExperiment({ onComplete, onTutorComplete }: Heavie
                 {
                   name: 'The mass rows',
                   what: `the total of the two black holes before the merger, and the mass of the one after, set beside the ranges that the teams published. The “after” expectation is arithmetic only: the sum minus ${Math.round(ex.share * 100)} percent.`,
-                  means: `${n1(check.totalSolar)} Suns is inside the range ${check.totalRange[0]} to ${check.totalRange[1]}, and ${n1(check.mergedSolar)} is inside ${check.finalRange[0]} to ${check.finalRange[1]}. A merger gives a black hole a little lighter than the two added together, as in Experiment 18.`,
+                  means: `${n1(check.totalSolar)} Suns is inside the range ${check.totalRange[0]} to ${check.totalRange[1]}, and ${n1(check.mergedSolar)} is inside ${check.finalRange[0]} to ${check.finalRange[1]}. A merger gives a black hole a little lighter than the two added together, as in Experiment 17.`,
                   matters: 'it shows that the simple sum-minus-a-little rule used in the pictures is consistent with the real merger, within its wide give-or-takes. The same rule is what lets two black holes below the gap make one inside it.',
                   sure: `the ranges are wide (the range for the total spans ${check.totalRange[1] - check.totalRange[0]} Suns), so many other rules would also fit inside them. The ranges come from LIGO’s summary page, not from the paper itself.`,
                 },

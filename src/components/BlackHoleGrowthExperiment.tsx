@@ -117,7 +117,7 @@ export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: Black
   const targetMillion = Math.round(10 ** CAPERS_LRD_Z9.logMass / 1e6)
   return (
     <div>
-      <h2>Experiment 23 — How Fast Can a Black Hole Grow? (The “Little Red Dots”)</h2>
+      <h2>Experiment 22 — How Fast Can a Black Hole Grow? (The “Little Red Dots”)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>

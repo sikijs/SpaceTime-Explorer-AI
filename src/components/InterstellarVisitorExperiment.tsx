@@ -162,7 +162,7 @@ export function InterstellarVisitorExperiment({ onComplete, onTutorComplete }: I
   const jupiterEscape = Math.round(escapeSpeed(5 * AU) / 1e3)
   return (
     <div>
-      <h2>Experiment 24 — A Visitor From Another Star (How Far Does the Sun Bend Its Path?)</h2>
+      <h2>Experiment 23 — A Visitor From Another Star (How Far Does the Sun Bend Its Path?)</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
         <p style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '0.875rem' }}>
           <strong>
