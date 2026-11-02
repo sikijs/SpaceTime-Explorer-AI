@@ -49,8 +49,8 @@ describe('frontier recap: the numbers a learner sees', () => {
 })
 
 describe('frontier recap: the sorting by label', () => {
-  it('Settled claims are in experiments 9, 11, 23 and 24 (Experiment 12’s “what a red supergiant is” was dropped as not a finding)', () => {
-    expect(experimentsWithLabel('Settled')).toEqual([9, 11, 23, 24])
+  it('Settled claims are in experiments 9, 11, 23, 24 and 25 (Experiment 12’s “what a red supergiant is” was dropped as not a finding; Andromeda’s approach is Settled on its page)', () => {
+    expect(experimentsWithLabel('Settled')).toEqual([9, 11, 23, 24, 25])
   })
 
   it('Contested claims are in experiments 1, 2, 3, 4, 7, 13, 14, 17 and 25', () => {
@@ -72,6 +72,8 @@ describe('frontier recap: the sorting by label', () => {
     const labelsOf = (n: number) => new Set(frontierClaims().filter((c) => c.experiment === n).map((c) => c.label))
     for (const n of [13, 14, 17, 25]) expect(labelsOf(n).size, `Experiment ${n}`).toBe(3)
     expect([...labelsOf(12)].sort()).toEqual(['Open', 'Strong evidence'])
+    // Experiment 1’s page gives the label Contested alone, so the recap does not add an Open entry for it.
+    expect([...labelsOf(1)]).toEqual(['Contested'])
   })
 })
 
@@ -148,6 +150,7 @@ describe('frontier recap: the figures the specification quotes, each read from t
 
   it('Experiment 17: the star faded by more than 10,000 times', () => {
     expect(figureOf(17).value).toBe(10000)
+    expect(figureOf(17).moreThan).toBe(true)
   })
 
   it('Experiment 18: the total area rose 1.57 times', () => {

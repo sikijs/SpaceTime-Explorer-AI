@@ -248,6 +248,8 @@ Physics models reuse modules the project already has, and none needs a physical 
 
 ### The closing recap
 
+**BUILT 2026-11-02 (specification approved with all ten decisions on their defaults): see `closing-recap.md`.** The text below is the original proposal.
+
 A section on the last experiment's page (not an experiment, no new physics), as in the earlier groups: it sorts the results by their status label (twenty-four with Experiment 25) and says which parts the learner can rely on and which may change. Because this is the project's last group, the owner may also want it to be a **final recap of the whole project** (all seven groups: what was settled, what is a strong result, what is contested and what is open), which would also say that "as of October 2026" means the page is a snapshot (Decision 4). It would be proposed on its own, after the experiments, as the earlier recaps were.
 
 ---

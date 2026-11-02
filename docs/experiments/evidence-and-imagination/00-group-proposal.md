@@ -43,7 +43,7 @@ Some things in relativity and cosmology have been **tested** (and the page says 
 
 ## The recap and the Conclusion page
 
-1. **The Frontier recap:** a section on Experiment 25's page (not an experiment, no new physics), as in the earlier groups: it sorts the group's twenty-five results by status label and says which parts a learner can rely on and which may change. To be proposed on its own.
+1. **The Frontier recap:** a section on Experiment 25's page (not an experiment, no new physics), as in the earlier groups: it sorts the group's twenty-four results (Experiment 16 was dropped) by status label and says which parts a learner can rely on and which may change. **Proposed, approved, built and reviewed on 2026-11-02:** see `cosmic-horizons/closing-recap.md`. (The Conclusion page, item 2, is still to be proposed on its own.)
 2. **A "Conclusion" page for the whole project:** a last chapter in the sidebar, not an experiment (no prediction, no run). Proposed content: the journey in one picture (the speed of light is the same for all, so time and space mix, so there is spacetime, so gravity is its curve, so there are black holes, waves and an expanding universe); what has been **tested** and how well, what is **contested** and what is **open**, using the status labels of every group; what "as of October 2026" means (a snapshot); what the page did not check; and where to go next. Every number is read from the experiments' modules. To be proposed on its own, after the group's experiments.
 
 ## Decided on 2026-10-29

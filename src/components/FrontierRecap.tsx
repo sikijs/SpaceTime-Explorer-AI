@@ -13,8 +13,9 @@ function figureText(claim: Claim): string {
   const f = claim.figure
   if (!f) return ''
   const unit = f.unit ? ` ${f.unit}` : ''
+  const lead = f.moreThan ? 'more than ' : ''
   const value = f.high !== undefined ? `${group(f.value, f.decimals)} to ${group(f.high, f.decimals)}` : group(f.value, f.decimals)
-  return ` (${f.what}: ${value}${unit})`
+  return ` (${f.what}: ${lead}${value}${unit})`
 }
 
 const LABEL_MEANINGS: Record<StatusLabel, { meaning: string; example: string }> = {
@@ -75,7 +76,7 @@ export function FrontierRecap() {
           <strong>Microarcsecond</strong> is a millionth of an arcsecond, a tiny angle in the sky. An arcsecond is itself a 3,600th of a degree.
         </li>
         <li>
-          <strong>Names</strong> such as SH0ES, DESI, NANOGrav, JILA and KiDS are the teams, surveys and instruments the experiments introduced. Each experiment’s page says what they are.
+          <strong>Names</strong> such as SH0ES, DESI, NANOGrav, JILA, KiDS, ALPHA-g, NIST, Planck, JWST and Gaia are the teams, surveys, instruments and space telescopes the experiments introduced. PSR J0437−4715, MoM-z14, CAPERS-LRD-z9, GW231123, M87* and 3I/ATLAS are the stars, galaxies, black holes and comet they studied. Each experiment’s page says what they are.
         </li>
       </ul>
 

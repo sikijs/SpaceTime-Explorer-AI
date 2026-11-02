@@ -45,6 +45,8 @@ export interface Figure {
   value: number
   // Set when the figure is a range, from value up to high.
   high?: number
+  // Set when the experiment says "more than" this value, not exactly this value.
+  moreThan?: boolean
   // How many decimal places to show (display rounding only, as in the experiment the figure comes from).
   decimals: number
   unit: string
@@ -130,7 +132,6 @@ export function frontierClaims(): Claim[] {
       claim: 'The two ways of measuring the expansion rate disagree',
       figure: { value: tensionSigma(LATE_MEASUREMENTS[0], EARLY_MEASUREMENT), decimals: 2, unit: 'sigma', what: 'the gap between the SH0ES and Planck measurements' },
     },
-    { experiment: 1, label: 'Open', claim: 'Why the two ways of measuring disagree' },
     {
       experiment: 2,
       label: 'Contested',
@@ -182,7 +183,7 @@ export function frontierClaims(): Claim[] {
     },
     { experiment: 12, label: 'Strong evidence', claim: 'Betelgeuse has a companion' },
     { experiment: 12, label: 'Open', claim: 'The companion’s mass and nature' },
-    { experiment: 13, label: 'Strong evidence', claim: 'A red supergiant exploded, and almost all the energy left as neutrinos' },
+    { experiment: 13, label: 'Strong evidence', claim: 'A red supergiant exploded. Theory and one earlier supernova say almost all the energy leaves as neutrinos, though none were reported from this one' },
     {
       experiment: 13,
       label: 'Contested',
@@ -204,14 +205,14 @@ export function frontierClaims(): Claim[] {
       experiment: 17,
       label: 'Strong evidence',
       claim: 'What was seen: the star faded with no bright supernova',
-      figure: { value: FAILED_SUPERNOVA_DATA.visibleFadeFactor, decimals: 0, unit: 'times', what: 'how much the star faded in visible light' },
+      figure: { value: FAILED_SUPERNOVA_DATA.visibleFadeFactor, moreThan: true, decimals: 0, unit: 'times', what: 'how much the star faded in visible light' },
     },
     { experiment: 17, label: 'Contested', claim: 'What it became: a black hole, or two stars that merged' },
     { experiment: 17, label: 'Open', claim: 'How often massive stars fail' },
     {
       experiment: 18,
       label: 'Strong evidence',
-      claim: 'The total horizon area rose, as Hawking’s 1971 theorem requires',
+      claim: 'The total surface area of the black holes (their horizons) rose after the merger, as Hawking’s 1971 area theorem says it must',
       figure: { value: areaAfterKm2() / totalAreaBeforeKm2(), decimals: 2, unit: 'times', what: 'the area after the merger divided by the area before' },
     },
     {
@@ -223,7 +224,7 @@ export function frontierClaims(): Claim[] {
     {
       experiment: 20,
       label: 'Strong evidence',
-      claim: 'GW231123 was the heaviest merger seen, with very fast spins',
+      claim: 'GW231123 was the heaviest merger seen, between black holes that were probably spinning fast',
       figure: { value: GW231123.finalBestFitSolar, decimals: 0, unit: 'Suns', what: 'the best-fit mass of the final black hole' },
     },
     { experiment: 20, label: 'Open', claim: 'What made such black holes' },
@@ -255,14 +256,14 @@ export function frontierClaims(): Claim[] {
       claim: 'That 3I/ATLAS is interstellar, on an open path',
       figure: { value: atlasBendDegrees(), decimals: 1, unit: 'degrees', what: 'how far the Sun bent its path' },
     },
-    { experiment: 25, label: 'Strong evidence', claim: 'Andromeda is approaching and the galaxies will interact in some way' },
+    { experiment: 25, label: 'Settled', claim: 'Andromeda is coming towards the Milky Way, and its distance is known to a small give-or-take' },
     {
       experiment: 25,
       label: 'Contested',
-      claim: `Whether they merge within 10 billion years: the 2025 study gave ${PUBLISHED_2025.mergerPercentWithin10Gyr} percent`,
+      claim: `Andromeda’s sideways speed, and with it whether they merge within 10 billion years: the 2025 study gave ${PUBLISHED_2025.mergerPercentWithin10Gyr} percent`,
       figure: { value: PUBLISHED_2026.mergerPercent, decimals: 0, unit: 'percent', what: 'the 2026 study' },
     },
-    { experiment: 25, label: 'Open', claim: 'What Andromeda’s sideways motion really is, until Gaia’s next release' },
+    { experiment: 25, label: 'Open', claim: 'How much the other galaxies matter, and what newer measurements will show (Gaia’s next release is expected in December 2026)' },
   ]
 }
 
