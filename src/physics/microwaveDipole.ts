@@ -28,6 +28,12 @@ export const DIPOLE_DIRECTION_GALACTIC = { l: 264.02, b: 48.253 }
 // Earth's mean orbital speed round the Sun, from Frontier 11's module (no source read for this page, Decision 8).
 export const EARTH_ORBITAL_SPEED_KM_S = EARTH.orbitalSpeed / 1000
 
+// The Celsius scale starts 273.15 degrees below the kelvin scale's zero (the definition of the two scales); used only to say what 2.725 K is in everyday terms.
+export const ABSOLUTE_ZERO_CELSIUS = -273.15
+export function celsiusOfKelvin(kelvin: number): number {
+  return kelvin + ABSOLUTE_ZERO_CELSIUS
+}
+
 // ---- Controls (trial values) ----
 export const SPEED_CHOICES_KM_S = [30, 370, 1000, 3000, 30000] as const
 export type SpeedChoice = (typeof SPEED_CHOICES_KM_S)[number]

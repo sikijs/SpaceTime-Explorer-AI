@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ABSOLUTE_ZERO_CELSIUS,
   ANGLE_CHOICES_DEGREES,
   COMPARE_RELATIVE_TOLERANCE,
   DIFFERENCE_ANSWER_CHOICES,
@@ -19,6 +20,7 @@ import {
   SPEED_OF_LIGHT_KM_S,
   SROLL_DIPOLE_AMPLITUDE_UK,
   betaOf,
+  celsiusOfKelvin,
   compare,
   differenceAnswerIdFor,
   differenceGuessKelvin,
@@ -57,6 +59,11 @@ describe('constants as stored (test 1)', () => {
     expect(speedForChoice(MEASURED_SPEED_CHOICE)).toBe(369.82)
     expect(speedForChoice(30)).toBe(30)
     expect(speedForChoice(30000)).toBe(30000)
+  })
+  it('puts the average microwave temperature at about -270.4 degrees Celsius', () => {
+    expect(ABSOLUTE_ZERO_CELSIUS).toBe(-273.15)
+    expect(celsiusOfKelvin(0)).toBe(-273.15)
+    expect(celsiusOfKelvin(MICROWAVE_TEMPERATURE_K)).toBeCloseTo(-270.42452, 5)
   })
   it('rejects a speed that is negative, not finite or at least c', () => {
     expect(() => betaOf(-1)).toThrow(RangeError)

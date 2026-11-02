@@ -31,6 +31,7 @@ import { AddingSpeedsExperiment } from './components/AddingSpeedsExperiment'
 import { MuonLifetimeExperiment } from './components/MuonLifetimeExperiment'
 import { SunDelayExperiment } from './components/SunDelayExperiment'
 import { EarlyUniverseRecipeExperiment } from './components/EarlyUniverseRecipeExperiment'
+import { MicrowaveDipoleExperiment } from './components/MicrowaveDipoleExperiment'
 import { tutorFigures as sdTutorFigures } from './physics/sunDelay'
 import { HELIUM_TO_HYDROGEN_WEIGHT as erHeliumWeight, tutorFigures as erTutorFigures } from './physics/earlyUniverseRecipe'
 import {
@@ -1247,6 +1248,14 @@ const chapters: Chapter[] = [
     // Chapter summary and "What's next": Claude's DRAFT of 2026-11-01, for the owner's approval. "What's next" is a planned direction only: Experiment 7 has no specification yet.
     learned: earlyUniverseRecipeSummary(),
     next: 'The next experiment in this group turns from the first minutes of the universe to the glow they left behind: whether the sky’s microwave glow is equally warm in every direction, and what that could tell us about our own motion.',
+  },
+  {
+    title: 'Is the microwave sky equally warm in every direction?',
+    group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
+    Component: MicrowaveDipoleExperiment,
+    // The chapter summary and "What's next" come in a later step (Step 9); "What's next" will be a planned direction only, since this is the last experiment of the group.
+    learned: '',
+    next: '',
   },
 ]
 
