@@ -356,3 +356,51 @@ export function speedGuessKmS(id: string): number {
   if (!choice) throw new RangeError(`unknown answer for the speed: ${id}`)
   return choice.kmS
 }
+
+// ---- The tutor (Step 7) ----
+// The tutor marks each prediction in its explanation only (CLAUDE.md §12, §13): matched when the learner's button is the button nearest the real value.
+export type GuessResult = 'matched' | 'did not match'
+export function differenceGuessResult(id: string): GuessResult {
+  differenceGuessKelvin(id) // throws on an unknown answer
+  return id === predictionOneAnswerId() ? 'matched' : 'did not match'
+}
+export function speedGuessResult(id: string): GuessResult {
+  speedGuessKmS(id)
+  return id === predictionTwoAnswerId() ? 'matched' : 'did not match'
+}
+
+export interface TutorFigures {
+  real: Dipole
+  beta: number
+  betaOneInParts: number
+  differenceOneInParts: number
+  simpleAheadK: number // T0 (1 + beta): the simple rule used in the worked count
+  simpleBehindK: number // T0 (1 - beta)
+  exactMinusSimpleAheadK: number
+  planckSpeedKmS: number
+  timesEarthSpeed: number
+  percentOfLightSpeed: number
+  doubleSpeedKmS: number
+  doubleSpeedDifferenceOverReal: number // the question the tutor asks: twice the speed, how many times the difference
+  check: ResultsCheckUp
+}
+export function tutorFigures(): TutorFigures {
+  const real = dipole(MEASURED_SPEED_KM_S)
+  const beta = real.beta
+  const doubleSpeedKmS = 2 * MEASURED_SPEED_KM_S
+  return {
+    real,
+    beta,
+    betaOneInParts: 1 / beta,
+    differenceOneInParts: oneInParts(real.aheadMinusBehindK / MICROWAVE_TEMPERATURE_K),
+    simpleAheadK: MICROWAVE_TEMPERATURE_K * (1 + beta),
+    simpleBehindK: MICROWAVE_TEMPERATURE_K * (1 - beta),
+    exactMinusSimpleAheadK: real.aheadK - MICROWAVE_TEMPERATURE_K * (1 + beta),
+    planckSpeedKmS: speedFromAmplitudeKmS(PLANCK_DIPOLE_AMPLITUDE_UK.value),
+    timesEarthSpeed: MEASURED_SPEED_KM_S / EARTH_ORBITAL_SPEED_KM_S,
+    percentOfLightSpeed: (MEASURED_SPEED_KM_S / SPEED_OF_LIGHT_KM_S) * 100,
+    doubleSpeedKmS,
+    doubleSpeedDifferenceOverReal: dipole(doubleSpeedKmS).aheadMinusBehindK / real.aheadMinusBehindK,
+    check: resultsCheckUp(),
+  }
+}

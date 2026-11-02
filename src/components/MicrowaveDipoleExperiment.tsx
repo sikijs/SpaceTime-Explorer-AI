@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { MicrowaveDipoleResults } from './MicrowaveDipoleResults'
+import { MicrowaveDipoleTutor } from './MicrowaveDipoleTutor'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './MicrowaveDipolePictures'
 import { ABSOLUTE_ZERO_CELSIUS, ANGLE_CHOICES_DEGREES, DIFFERENCE_ANSWER_CHOICES, MEASURED_SPEED_CHOICE, MEASURED_SPEED_KM_S, MICROWAVE_TEMPERATURE_K, SPEED_CHOICES_KM_S, SPEED_ANSWER_CHOICES, SPEED_OF_LIGHT_KM_S, celsiusOfKelvin, speedForChoice } from '../physics/microwaveDipole'
 
 // Evidence and Imagination, Experiment 7 (docs/experiments/evidence-and-imagination/07-the-microwave-dipole.md).
-// Steps 2 to 6: the title, the status line, the introduction and the "Want to know more?" note, Part 1's two predictions (five buttons each), the five-stage run with Pictures 1 to 3 (`MicrowaveDipolePictures.tsx`) and (Step 5) Part 2, "Now try it yourself", with its two controls and Drawing A, and (Step 6) Part 3, the results (`MicrowaveDipoleResults.tsx`). The tutor, papers list and chapter summary come in later steps.
+// Steps 2 to 7: the title, the status line, the introduction and the "Want to know more?" note, Part 1's two predictions (five buttons each), the five-stage run with Pictures 1 to 3 (`MicrowaveDipolePictures.tsx`) and (Step 5) Part 2, "Now try it yourself", with its two controls and Drawing A, (Step 6) Part 3, the results (`MicrowaveDipoleResults.tsx`) and (Step 7) Part 4, the tutor (`MicrowaveDipoleTutor.tsx`). The papers list and chapter summary come in later steps.
 // The wording below is Claude's DRAFT of 2026-11-02, for the owner's approval (CLAUDE.md §28.1). Nothing here says how much warmer one direction is than another, that there is a pattern at all, that it comes from motion,
 // how fast anything moves, or that a second test disagrees, because the two predictions and the results ask for them (CLAUDE.md §12). The word "dipole" is left out on purpose: defining it would say there is a pattern.
 // It is defined where it is first needed, after the run. Every number comes from the physics module (CLAUDE.md §9).
@@ -29,8 +30,8 @@ interface MicrowaveDipoleExperimentProps {
   onTutorComplete?: () => void
 }
 
-// `onComplete` is called when the run reaches its last stage. `onTutorComplete` is accepted by the chapter shell and used when the tutor is built (a later step).
-export function MicrowaveDipoleExperiment({ onComplete }: MicrowaveDipoleExperimentProps) {
+// `onComplete` is called when the run reaches its last stage; `onTutorComplete` when the learner reaches the tutor's explanation.
+export function MicrowaveDipoleExperiment({ onComplete, onTutorComplete }: MicrowaveDipoleExperimentProps) {
   const [differenceGuess, setDifferenceGuess] = useState<string | null>(null)
   const [speedGuess, setSpeedGuess] = useState<string | null>(null)
   const [trialSpeedChoice, setTrialSpeedChoice] = useState<number>(MEASURED_SPEED_CHOICE)
@@ -343,6 +344,16 @@ export function MicrowaveDipoleExperiment({ onComplete }: MicrowaveDipoleExperim
             </div>
           )}
           {done && <MicrowaveDipoleResults differenceGuess={differenceGuess} speedGuess={speedGuess} />}
+
+          {done && differenceGuess !== null && speedGuess !== null && (
+            <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                <strong>What we are about to do.</strong> You have seen the pictures and the tables. This last part is a short conversation with a tutor. It will ask what you noticed, ask you to set your guesses beside the real results, and ask one question about the Solar System’s speed before it explains. Only then does it say how your guesses compared.
+              </p>
+              <MicrowaveDipoleTutor differenceGuess={differenceGuess} speedGuess={speedGuess} onExplained={onTutorComplete} />
+            </div>
+          )}
         </div>
       </div>
     </div>

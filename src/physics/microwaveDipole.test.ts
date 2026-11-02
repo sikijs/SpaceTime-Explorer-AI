@@ -12,6 +12,9 @@ import {
   quasarCmbSeparationDegrees,
   skyColourFraction,
   ANGLE_CHOICES_DEGREES,
+  differenceGuessResult,
+  speedGuessResult,
+  tutorFigures,
   QUASAR_2021_CHANCE,
   coinFlipsInARow,
   pairReading,
@@ -475,5 +478,43 @@ describe('the results (Step 6)', () => {
     expect(coinFlipsInARow(QUASAR_2021_CHANCE)).toBeCloseTo(20.93, 2)
     expect(() => coinFlipsInARow(0)).toThrow(RangeError)
     expect(() => coinFlipsInARow(1)).toThrow(RangeError)
+  })
+})
+
+describe('the tutor (Step 7)', () => {
+  it('marks a guess as matched only when it is the button nearest the real value', () => {
+    for (const c of DIFFERENCE_ANSWER_CHOICES) expect(differenceGuessResult(c.id)).toBe(c.id === 'about-0.007' ? 'matched' : 'did not match')
+    for (const c of SPEED_ANSWER_CHOICES) expect(speedGuessResult(c.id)).toBe(c.id === 'about-300' ? 'matched' : 'did not match')
+    expect(() => differenceGuessResult('nope')).toThrow(RangeError)
+    expect(() => speedGuessResult('nope')).toThrow(RangeError)
+  })
+  it('gives the worked count: simple ahead 2.7288 K and behind 2.7221 K, within 2 millionths of a kelvin of the exact rule', () => {
+    const t = tutorFigures()
+    expect(t.simpleAheadK).toBeCloseTo(2.7288425, 6)
+    expect(t.simpleBehindK).toBeCloseTo(2.7221175, 6)
+    expect(t.simpleAheadK.toFixed(4)).toBe('2.7288')
+    expect(t.simpleBehindK.toFixed(4)).toBe('2.7221')
+    expect(Math.abs(t.exactMinusSimpleAheadK)).toBeLessThan(3e-6)
+    expect(t.exactMinusSimpleAheadK).toBeGreaterThan(0)
+  })
+  it('gives twice the speed as about twice the difference, 2.00001 times', () => {
+    const t = tutorFigures()
+    expect(t.doubleSpeedKmS).toBeCloseTo(739.64, 10)
+    expect(t.doubleSpeedDifferenceOverReal).toBeCloseTo(2, 4)
+    expect(t.doubleSpeedDifferenceOverReal).toBeGreaterThan(2)
+  })
+  it('compares the measured speed with the Earth and with light: 12.4 times and 0.123 percent', () => {
+    const t = tutorFigures()
+    expect(t.timesEarthSpeed).toBeCloseTo(12.418, 2)
+    expect(t.percentOfLightSpeed).toBeCloseTo(0.12336, 4)
+    expect(t.planckSpeedKmS).toBeCloseTo(369.816, 3)
+    expect(t.betaOneInParts).toBeCloseTo(810.6, 1)
+    expect(t.differenceOneInParts).toBeCloseTo(405.3, 1)
+  })
+  it('carries the results check-up for the explanation to quote', () => {
+    const t = tutorFigures()
+    expect(t.check.quasarSize.timesExpected).toBeCloseTo(2.22, 10)
+    expect(t.check.direction.separationDegrees).toBeCloseTo(27.79, 2)
+    expect(t.real.aheadMinusBehindK * 1000).toBeCloseTo(6.7242, 4)
   })
 })
