@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { frontierClaims } from './frontierRecap'
 import { evidenceClaims } from './evidenceClaims'
-import { CONCLUSION_GROUP, FEATURED, LABELLED_GROUPS, featuredFindings, groupCounts, groupSizes, labelledChapterShare, labelledExperiments, totalCounts, unlabelledGroups, withoutConclusion } from './projectConclusion'
+import { FEATURED, LABELLED_GROUPS, featuredFindings, groupCounts, groupSizes, labelledChapterShare, labelledExperiments, totalCounts, unlabelledGroups } from './projectConclusion'
 
 // Required tests of docs/experiments/conclusion/00-conclusion-page.md. The expected numbers are written out by hand from the project's
 // chapter list (88 chapters in 8 groups), so a change that moves one shows up here.
@@ -35,18 +35,6 @@ describe('project conclusion: the chapters and groups', () => {
   it('31 of the 88 chapters are in a labelled group, and the other six groups are unlabelled', () => {
     expect(labelledChapterShare(chapters)).toEqual({ labelled: 31, total: 88 })
     expect(unlabelledGroups(allGroups)).toEqual(allGroups.slice(0, 6))
-  })
-})
-
-describe('project conclusion: the page does not count itself', () => {
-  it('the Conclusion chapter is left out, so 89 chapters in the app are 88 on the page and 8 groups, not 9', () => {
-    const inApp = [...chapters, { group: CONCLUSION_GROUP }]
-    expect(inApp).toHaveLength(89)
-    const project = withoutConclusion(inApp)
-    expect(project).toHaveLength(88)
-    expect(groupSizes(project)).toHaveLength(8)
-    expect(unlabelledGroups(groupSizes(project).map((g) => g.group))).not.toContain(CONCLUSION_GROUP)
-    expect(labelledChapterShare(project)).toEqual({ labelled: 31, total: 88 })
   })
 })
 

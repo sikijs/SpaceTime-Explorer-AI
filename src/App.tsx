@@ -131,14 +131,7 @@ interface Chapter {
   title: string
   // The named group of experiments this chapter belongs to; shown once as the page heading.
   group: string
-  // `chapterRefs` and `onSelectChapter` are used only by the Conclusion page, which looks across every chapter; experiments ignore them.
-  Component: ComponentType<{
-    onComplete?: () => void
-    onTutorComplete?: () => void
-    chapterRefs?: { title: string; group: string }[]
-    groupOrder?: string[]
-    onSelectChapter?: (index: number) => void
-  }>
+  Component: ComponentType<{ onComplete?: () => void; onTutorComplete?: () => void }>
   // Shown below the experiment once the learner has run it and finished the tutor's questions.
   learned: string
   next: string
@@ -156,7 +149,6 @@ const groupOrder = [
   'Spacetime Geometry: What Is Real, What Is Seen',
   'Evidence and Imagination: What Has Been Tested, What Has Not',
   'Cosmic Horizons',
-  'Conclusion',
 ]
 
 // A one-sentence overview of a group, shown under its title on every chapter page of that group. Only groups that have one
@@ -1286,15 +1278,6 @@ const chapters: Chapter[] = [
     learned: microwaveDipoleSummary(),
     next: 'This is the last experiment in this group. The group that follows, Cosmic Horizons, turns to recent results that are still being tested, beginning with two measurements of how fast the universe is expanding that do not agree.',
   },
-  // The Conclusion page (docs/experiments/conclusion/00-conclusion-page.md): a last chapter, not an experiment, with no tutor, so it has no summary block (`learned` is empty).
-  // Appended at the end so that the saved progress (kept by position in this list) is not disturbed; the sidebar follows `groupOrder`, which puts it last.
-  {
-    title: 'Looking back: what do we know, how well, and what is still open?',
-    group: 'Conclusion',
-    Component: ProjectConclusion,
-    learned: '',
-    next: '',
-  },
 ]
 
 // The chapters in the order the sidebar shows them (by group, then by position in `chapters`). Previous and Next follow this order; the saved progress still uses positions in `chapters`.
@@ -1309,9 +1292,13 @@ interface Progress {
   explained: number[]
 }
 
-// -1 is the unnumbered Welcome screen, before chapter 0.
+// Two pages sit outside the numbered chapters: -1 is the Welcome screen, before chapter 0, and -2 is the Conclusion page, after the last chapter
+// (docs/experiments/conclusion/00-conclusion-page.md). Neither is an experiment, and neither has a group or a summary.
+const WELCOME = -1
+const CONCLUSION = -2
+
 function isChapterIndex(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) >= -1 && (value as number) < chapters.length
+  return Number.isInteger(value) && (value as number) >= CONCLUSION && (value as number) < chapters.length
 }
 
 function loadProgress(): Progress {
@@ -1358,22 +1345,24 @@ export function App() {
     setExplained((previous) => (previous.includes(index) ? previous : [...previous, index]))
   }
 
-  const isWelcome = currentChapter === -1
+  const isWelcome = currentChapter === WELCOME
+  const isConclusion = currentChapter === CONCLUSION
+  const isStandalone = isWelcome || isConclusion
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(groupOrder.map((groupName) => [groupName, !isWelcome]))
   )
 
   useEffect(() => {
-    if (isWelcome) return
+    if (isStandalone) return
     const activeGroup = chapters[currentChapter].group
     setOpenGroups((previous) => (previous[activeGroup] ? previous : { ...previous, [activeGroup]: true }))
-  }, [currentChapter, isWelcome])
+  }, [currentChapter, isStandalone])
 
-  const activeChapter = isWelcome ? null : chapters[currentChapter]
-  const isCurrentExplained = !isWelcome && explained.includes(currentChapter)
-  const isFirst = currentChapter === -1
+  const activeChapter = isStandalone ? null : chapters[currentChapter]
+  const isCurrentExplained = !isStandalone && explained.includes(currentChapter)
+  const isFirst = isWelcome
   const sidebarPosition = sidebarOrder.indexOf(currentChapter)
-  const isLast = sidebarPosition === sidebarOrder.length - 1
+  const isLastChapter = sidebarPosition === sidebarOrder.length - 1
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#fafafa' }}>
@@ -1393,7 +1382,7 @@ export function App() {
           <nav aria-label="Experiments" className="chapter-nav">
             <button
               type="button"
-              onClick={() => setCurrentChapter(-1)}
+              onClick={() => setCurrentChapter(WELCOME)}
               aria-current={isWelcome ? 'step' : undefined}
               className={`nav-button${isWelcome ? ' is-active' : ''}`}
               style={{
@@ -1484,6 +1473,23 @@ export function App() {
                 </div>
               )
             })}
+            <button
+              type="button"
+              onClick={() => setCurrentChapter(CONCLUSION)}
+              aria-current={isConclusion ? 'step' : undefined}
+              className={`nav-button${isConclusion ? ' is-active' : ''}`}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                marginTop: '0.5rem',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                fontWeight: isConclusion ? 700 : 500,
+              }}
+            >
+              Conclusion
+            </button>
           </nav>
 
           <main className="chapter-main">
@@ -1495,16 +1501,15 @@ export function App() {
                   key={currentChapter}
                   onComplete={() => markComplete(currentChapter)}
                   onTutorComplete={() => markExplained(currentChapter)}
-                  chapterRefs={chapters}
-                  groupOrder={groupOrder}
-                  onSelectChapter={setCurrentChapter}
                 />
               </>
+            ) : isConclusion ? (
+              <ProjectConclusion />
             ) : (
               <Welcome chapters={chapters} onSelectChapter={setCurrentChapter} />
             )}
 
-            {!isWelcome && !isCurrentExplained && activeChapter?.learned !== '' && (
+            {activeChapter !== null && !isCurrentExplained && activeChapter.learned !== '' && (
               <p
                 className="summary-card"
                 style={{
@@ -1549,7 +1554,7 @@ export function App() {
               <button
                 type="button"
                 disabled={isFirst}
-                onClick={() => setCurrentChapter(sidebarPosition <= 0 ? -1 : sidebarOrder[sidebarPosition - 1])}
+                onClick={() => setCurrentChapter(isConclusion ? sidebarOrder[sidebarOrder.length - 1] : sidebarPosition <= 0 ? WELCOME : sidebarOrder[sidebarPosition - 1])}
                 className="primary-button"
                 style={{ padding: '0.6rem 1.4rem', fontSize: '1rem' }}
               >
@@ -1557,8 +1562,8 @@ export function App() {
               </button>
               <button
                 type="button"
-                disabled={isLast}
-                onClick={() => setCurrentChapter(sidebarOrder[sidebarPosition + 1])}
+                disabled={isConclusion}
+                onClick={() => setCurrentChapter(isLastChapter ? CONCLUSION : sidebarOrder[sidebarPosition + 1])}
                 className="primary-button"
                 style={{ padding: '0.6rem 1.4rem', fontSize: '1rem' }}
               >

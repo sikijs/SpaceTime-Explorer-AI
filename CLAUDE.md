@@ -750,7 +750,7 @@ The current technology foundation is:
 
 ## Current UI Layout
 
-The application is a guided journey, a format chosen by the project owner. `src/App.tsx` shows one experiment at a time, as a chapter, in order: Experiments 1 to 6. A sidebar lists the chapters and highlights the current one, and Previous and Next buttons move between them. Chapters are freely reachable; none is locked.
+The application is a guided journey, a format chosen by the project owner. `src/App.tsx` shows one experiment at a time, as a chapter, in order: Experiments 1 to 6. A sidebar lists the chapters and highlights the current one, and Previous and Next buttons move between them. Chapters are freely reachable; none is locked. Two pages sit outside the numbered chapters, with no group and no summary: the **Welcome** page at the top of the sidebar and the **Conclusion** page at the bottom (`ProjectConclusion` in `src/components/ProjectConclusion.tsx`, added 2026-11-02 at the owner's request). The Conclusion page is a short, warm congratulation for a learner who has been through everything: a banner, a look back at what they have picked up, and a pat on the back. It has no statistics, links or caveats, by the owner's direction. Next from the last experiment leads to it, and Previous returns from it.
 
 Each experiment maintains fully independent physics models, UI components, prediction state, and AI tutor behavior. `App` only sequences them; the underlying architecture remains that of separate, independent experiments. Switching chapters remounts the experiment, so its prediction and results reset.
 

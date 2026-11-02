@@ -25,14 +25,6 @@ export interface ChapterRef {
   group: string
 }
 
-// The Conclusion page is itself a chapter in the app's list, but it is not one of the project's experiments, so it is left out of every
-// count on the page (the page would otherwise count itself).
-export const CONCLUSION_GROUP = 'Conclusion'
-
-export function withoutConclusion<T extends ChapterRef>(chapters: T[]): T[] {
-  return chapters.filter((c) => c.group !== CONCLUSION_GROUP)
-}
-
 // How many chapters each group has. The groups come in the order given (the sidebar's `groupOrder`); a group not in that order follows,
 // in the order it first appears in the chapter list. Without an order, the groups come in the order they first appear in the list.
 export function groupSizes(chapters: ChapterRef[], order: string[] = []): { group: string; chapters: number }[] {
