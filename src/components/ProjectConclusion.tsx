@@ -36,11 +36,11 @@ const MOMENTS: { title: string; text: string }[] = [
 // Waves group), time travel (Evidence and Imagination 2) and the expansion-rate headline (Cosmic Horizons 1, the Hubble tension).
 const NEXT_TIME: { moment: string; knowing: string }[] = [
   { moment: 'look up at the night sky', knowing: 'you’ll know you’re seeing the past, because the light has been travelling all that time.' },
-  { moment: 'hear that a black hole has been photographed', knowing: 'you’ll know what that glowing ring is: hot gas around a dark shadow.' },
+  { moment: 'hear that a black hole has been photographed', knowing: 'you’ll know what that glowing ring is: glowing gas around a dark shadow.' },
   { moment: 'hear about gravitational waves', knowing: 'you’ll know what’s rippling (spacetime itself) and how scientists catch it.' },
   {
     moment: 'watch a film about time travel',
-    knowing: 'you’ll know which way is real (forwards, which real clocks have done) and which is still only an idea (backwards).',
+    knowing: 'you’ll know which way is real (forwards, which real clocks have done) and which is still an open question (backwards).',
   },
   {
     moment: 'see a headline about scientists disagreeing over how fast the universe is expanding',
@@ -74,8 +74,8 @@ export function ProjectConclusion() {
         }}
       >
         <Medal />
-        <div style={{ flex: '1 1 18rem' }}>
-          <h2 style={{ margin: 0, color: '#ffffff', fontSize: '2rem' }}>Congratulations!</h2>
+        <div style={{ flex: '1 1 10rem', minWidth: 0 }}>
+          <h2 style={{ margin: 0, color: '#ffffff', fontSize: 'clamp(1.5rem, 5vw, 2rem)', overflowWrap: 'anywhere' }}>Congratulations!</h2>
           <p style={{ margin: '0.25rem 0 0', fontSize: '1.125rem', color: '#e0f2fe' }}>You made it all the way through Frontier and Beyond.</p>
         </div>
       </div>
