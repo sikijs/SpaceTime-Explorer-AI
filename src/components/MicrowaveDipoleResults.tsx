@@ -82,6 +82,7 @@ export function MicrowaveDipoleResults({ differenceGuess, speedGuess }: { differ
   const publishedPercent = (PUBLISHED_SPEED_KM_S.giveOrTake / PUBLISHED_SPEED_KM_S.value) * 100
   const amplitudePercent = (PLANCK_DIPOLE_AMPLITUDE_UK.giveOrTake / PLANCK_DIPOLE_AMPLITUDE_UK.value) * 100
   const flips = coinFlipsInARow(QUASAR_2021_CHANCE)
+  const chanceIn10M = Number((QUASAR_2021_CHANCE * 1e7).toPrecision(6)) // the 2021 paper's chance as "N in 10 million"
   const [s26a, s26b, s26c] = QUASAR_SIGNIFICANCE.bashir2026
   const low26 = Math.min(s26a, s26b, s26c)
   const high26 = Math.max(s26a, s26b, s26c)
@@ -108,7 +109,7 @@ export function MicrowaveDipoleResults({ differenceGuess, speedGuess }: { differ
             <strong>What was read:</strong> NASA’s table of the dipole’s size and direction; the start of the 2025 review and the abstracts of the quasar papers; the 2021 paper’s numbers through a converted web copy. No paper was read in full.
           </li>
           <li>
-            <strong>Not checked here:</strong> the quasar counts themselves, and why the quasar pattern is bigger than expected; the older measurements (COBE, 1996, and WMAP, 2009) that NASA’s table lists, which are not shown; the small yearly change as the Earth goes round the Sun; and any newer result beyond one limited search.
+            <strong>Not checked here:</strong> the quasar counts themselves, and why the quasar pattern is bigger than expected; the older measurements (from COBE in 1996 and WMAP in 2009, two earlier NASA missions that measured the microwave glow) that NASA’s table lists, which are not shown; the small yearly change as the Earth goes round the Sun; and any newer result beyond one limited search.
           </li>
         </ul>
       </div>
@@ -127,7 +128,7 @@ export function MicrowaveDipoleResults({ differenceGuess, speedGuess }: { differ
 
       <p style={paragraph}>
         <strong>How to read these results.</strong> A table of numbers is like a blood test: it means little until someone says what each number is and what it is compared with. So each table has a note under it, called “What this table tells us”. Table 1 sets each number beside a reference and says in plain words how they compare.
-        “Give-or-take” is the size of the doubt that the people who made a number put on it: 3362.08 ± 0.64 means “about 3362.08, give or take 0.64”. Two numbers are called “the same” here only when their give-or-takes added together are big enough for each to reach the other. Otherwise the table says “more” or “less”. It does not say
+        “Give-or-take” is the size of the doubt that the people who made a number put on it: {PLANCK_DIPOLE_AMPLITUDE_UK.value} ± {PLANCK_DIPOLE_AMPLITUDE_UK.giveOrTake} means “about {PLANCK_DIPOLE_AMPLITUDE_UK.value}, give or take {PLANCK_DIPOLE_AMPLITUDE_UK.giveOrTake}”. Two numbers are called “the same” here only when their give-or-takes added together are big enough for each to reach the other. Otherwise the table says “more” or “less”. It does not say
         “good” or “bad”, because there is no accepted range for how closely two directions, or a count and a calculation, should agree.
       </p>
 
@@ -287,7 +288,7 @@ export function MicrowaveDipoleResults({ differenceGuess, speedGuess }: { differ
           ['The direction the counts point to', `l = ${QUASAR_DIRECTION_GALACTIC.l}°, b = ${QUASAR_DIRECTION_GALACTIC.b}°`, 'The 2021 paper.', `${n2(c.direction.separationDegrees)}° from the microwave dipole’s direction (calculated here; the paper states ${c.direction.paperStatesDegrees}°).`],
           [
             'How sure, 2021',
-            `${QUASAR_SIGNIFICANCE.secrest2021}σ (a chance of 5 in 10 million, p = 5 × 10⁻⁷)`,
+            `${QUASAR_SIGNIFICANCE.secrest2021}σ (a chance of ${chanceIn10M} in 10 million, p = ${chanceIn10M} × 10⁻⁷)`,
             'The 2021 paper’s abstract, counted one-sided.',
             `The paper says that if motion alone made the pattern, a count this lopsided would turn up by chance about 5 times in 10 million. That is about as unlikely as a fair coin landing heads ${Math.round(flips)} times in a row.`,
           ],
@@ -314,7 +315,7 @@ export function MicrowaveDipoleResults({ differenceGuess, speedGuess }: { differ
             label: 'What σ means',
             text: (
               <>
-                <em>What it is:</em> a measure of how surprising a result would be if only chance were at work: the bigger the number, the less likely chance is. <em>What it means:</em> for the 2021 paper’s {QUASAR_SIGNIFICANCE.secrest2021}σ the chance is 5 in 10 million, about the same as getting heads {Math.round(flips)} times in a row when flipping a coin ({flips.toFixed(1)} flips if you work it out exactly). <em>Why it matters:</em> it tells you how much weight to give a difference, though not what causes it.{' '}
+                <em>What it is:</em> a measure of how surprising a result would be if only chance were at work: the bigger the number, the less likely chance is. <em>What it means:</em> for the 2021 paper’s {QUASAR_SIGNIFICANCE.secrest2021}σ the chance is {chanceIn10M} in 10 million, about the same as getting heads {Math.round(flips)} times in a row when flipping a coin ({flips.toFixed(1)} flips if you work it out exactly). <em>Why it matters:</em> it tells you how much weight to give a difference, though not what causes it.{' '}
                 <em>How sure:</em> the page worked out the coin-flip comparison from the paper’s own chance. It did not work out a chance for the other two analyses, whose method it did not read in full.
               </>
             ),
@@ -323,7 +324,7 @@ export function MicrowaveDipoleResults({ differenceGuess, speedGuess }: { differ
             label: 'Why the three analyses differ',
             text: (
               <>
-                <em>What it means:</em> the 2026 reanalysis used the same quasars and gives {low26}σ to {high26}σ, lower than 2021’s {QUASAR_SIGNIFICANCE.secrest2021}σ. It says the difference is reduced but “cannot be explained solely by the clustering dipole or mode coupling from the survey mask”. The 2025 review, by authors of the 2021 paper, says it “now exceeds 5σ”. <em>Why it matters:</em> the analyses agree that the counted size is larger than expected, and disagree on how surprising that is. That is why the
+                <em>What it means:</em> the 2026 reanalysis used the same quasars and gives {low26}σ to {high26}σ, lower than 2021’s {QUASAR_SIGNIFICANCE.secrest2021}σ. It says the difference is reduced but “cannot be explained solely by the clustering dipole or mode coupling from the survey mask” (in plain words: not just by the quasars’ own bunching, and not just by gaps in the part of the sky that was surveyed). The 2025 review, by authors of the 2021 paper, says it “now exceeds 5σ”. <em>Why it matters:</em> the analyses agree that the counted size is larger than expected, and disagree on how surprising that is. That is why the
                 page calls this part Contested, and does not choose. <em>How sure:</em> all three are as quoted from abstracts, and the reasons for the differences were not worked out here.
               </>
             ),

@@ -8,7 +8,9 @@ import {
   QUASAR_COUNT,
   QUASAR_DIRECTION_GALACTIC,
   QUASAR_EXPECTED_AMPLITUDE,
+  QUASAR_2021_CHANCE,
   QUASAR_OBSERVED_AMPLITUDE,
+  QUASAR_OFFSET_DEGREES,
   QUASAR_SIGNIFICANCE,
   COLOUR_FULL_SCALE_K,
   DIPOLE_DIRECTION_GALACTIC,
@@ -228,16 +230,18 @@ export function PictureTwo({ differenceGuessId, speedGuessId }: { differenceGues
           <SvgLines x={dx(t)} y={yDiff + 20} lines={[`${t}`]} fill={MUTED_COLOR} size={10} anchor="middle" />
         </g>
       ))}
-      <circle cx={dx(d.aheadMinusBehindK)} cy={yDiff} r={7} fill={CYAN} stroke="#0b1020" strokeWidth={1.5} />
       <SvgLines x={dx(d.aheadMinusBehindK)} y={yDiff - 40} lines={['Straight ahead minus straight behind (Picture 1, Part C),', `worked out from the measured speed: ${k5(d.aheadMinusBehindK)} K (${n2(d.aheadMinusBehindK * 1000)} mK)`]} fill={CYAN} size={11} bold anchor="middle" />
       <line x1={dx(d.aheadMinusBehindK)} y1={yDiff - 22} x2={dx(d.aheadMinusBehindK)} y2={yDiff - 8} stroke={CYAN} />
       <SvgLines x={740} y={yDiff - 44} lines={['The average temperature,', `${MICROWAVE_TEMPERATURE_K} K, is far off`, 'the right end of this ruler →']} fill={MUTED_COLOR} size={9} anchor="end" />
       {differenceGuessId !== null && (
         <g>
-          <Diamond cx={dx(differenceGuessKelvin(differenceGuessId))} cy={yDiff} fill={YOURS_COLOR} />
+          <Diamond cx={dx(differenceGuessKelvin(differenceGuessId))} cy={yDiff} r={12} fill={YOURS_COLOR} />
           <GuessBox x={Math.min(Math.max(dx(differenceGuessKelvin(differenceGuessId)) - 70, 20), 540)} y={yDiff + 44} w={140} lines={['YOUR GUESS', `about ${differenceGuessKelvin(differenceGuessId)} K`]} fromX={dx(differenceGuessKelvin(differenceGuessId))} fromY={yDiff + 8} />
         </g>
       )}
+
+      {/* The real dots are drawn after the white diamonds, so a guess close to a real value cannot hide it. */}
+      <circle cx={dx(d.aheadMinusBehindK)} cy={yDiff} r={7} fill={CYAN} stroke="#0b1020" strokeWidth={1.5} />
 
       <line x1={20} y1={216} x2={P2_W - 20} y2={216} stroke="#334155" />
       <SvgLines x={20} y={238} lines={['B. The speed of the Solar System relative to the glow (a log ruler, in kilometres per second)']} fill={TEXT_COLOR} size={12} bold />
@@ -248,18 +252,20 @@ export function PictureTwo({ differenceGuessId, speedGuessId }: { differenceGues
           <SvgLines x={sx(t)} y={ySpeed + 20} lines={[t.toLocaleString('en-US')]} fill={MUTED_COLOR} size={10} anchor="middle" />
         </g>
       ))}
-      <circle cx={sx(EARTH_ORBITAL_SPEED_KM_S)} cy={ySpeed} r={6} fill={CYAN} stroke="#0b1020" strokeWidth={1.5} />
       <SvgLines x={sx(EARTH_ORBITAL_SPEED_KM_S) - 8} y={ySpeed - 24} lines={['The Earth round the Sun:', `${km(EARTH_ORBITAL_SPEED_KM_S)} km/s (calculated here)`]} fill={CYAN} size={10} anchor="end" />
-      <circle cx={sx(PUBLISHED_SPEED_KM_S.value)} cy={ySpeed} r={7} fill={GREEN} stroke="#0b1020" strokeWidth={1.5} />
       <SvgLines x={sx(PUBLISHED_SPEED_KM_S.value) + 4} y={ySpeed - 50} lines={['Measured with Planck:', `${km(PUBLISHED_SPEED_KM_S.value)} ± ${PUBLISHED_SPEED_KM_S.giveOrTake} km/s`]} fill={GREEN} size={11} bold />
       <line x1={sx(PUBLISHED_SPEED_KM_S.value)} y1={ySpeed - 30} x2={sx(PUBLISHED_SPEED_KM_S.value)} y2={ySpeed - 9} stroke={GREEN} />
       <SvgLines x={740} y={ySpeed - 44} lines={['The speed of light,', `${Math.round(SPEED_OF_LIGHT_KM_S).toLocaleString('en-US')} km/s, is far off`, 'the right end of this ruler →']} fill={MUTED_COLOR} size={9} anchor="end" />
       {speedGuessId !== null && (
         <g>
-          <Diamond cx={sx(speedGuessKmS(speedGuessId))} cy={ySpeed} fill={YOURS_COLOR} />
+          <Diamond cx={sx(speedGuessKmS(speedGuessId))} cy={ySpeed} r={12} fill={YOURS_COLOR} />
           <GuessBox x={Math.min(Math.max(sx(speedGuessKmS(speedGuessId)) - 70, 20), 540)} y={ySpeed + 44} w={140} lines={['YOUR GUESS', `about ${speedGuessKmS(speedGuessId).toLocaleString('en-US')} km/s`]} fromX={sx(speedGuessKmS(speedGuessId))} fromY={ySpeed + 8} />
         </g>
       )}
+
+      {/* The real dots are drawn after the white diamonds, so a guess close to a real value cannot hide it. */}
+      <circle cx={sx(EARTH_ORBITAL_SPEED_KM_S)} cy={ySpeed} r={6} fill={CYAN} stroke="#0b1020" strokeWidth={1.5} />
+      <circle cx={sx(PUBLISHED_SPEED_KM_S.value)} cy={ySpeed} r={7} fill={GREEN} stroke="#0b1020" strokeWidth={1.5} />
 
       <line x1={20} y1={424} x2={P2_W - 20} y2={424} stroke="#334155" />
       <SvgLines x={20} y={446} lines={['C. The measurement the speed is worked out from (Planck, as listed by NASA)']} fill={TEXT_COLOR} size={12} bold />
@@ -347,7 +353,7 @@ export function PictureThree() {
       <rect x={gx(QUASAR_DIRECTION_GALACTIC.l) - 7} y={gy(QUASAR_DIRECTION_GALACTIC.b) - 7} width={14} height={14} fill={GREEN} stroke="#0b1020" strokeWidth={1.5} />
       <SvgLines x={gx(DIPOLE_DIRECTION_GALACTIC.l) - 12} y={gy(DIPOLE_DIRECTION_GALACTIC.b) - 14} lines={['Round dot: the microwave', `dipole (l = ${DIPOLE_DIRECTION_GALACTIC.l}°, b = ${DIPOLE_DIRECTION_GALACTIC.b}°)`]} fill={GREEN} size={10} bold anchor="end" />
       <SvgLines x={gx(QUASAR_DIRECTION_GALACTIC.l) - 12} y={gy(QUASAR_DIRECTION_GALACTIC.b) + 22} lines={['Square: the quasar dipole', `(l = ${QUASAR_DIRECTION_GALACTIC.l}°, b = ${QUASAR_DIRECTION_GALACTIC.b}°)`]} fill={GREEN} size={10} bold anchor="start" />
-      <SvgLines x={480} y={cY + 60} lines={[`The two directions are about ${n1(sep)}° apart`, '(calculated here from the two sets of numbers;', 'the paper states 27.8°).', '', 'The chart is flat and zoomed in, so the', 'angle is worked out on the sphere of the sky,', 'not read off the chart.']} fill={TEXT_COLOR} size={11} />
+      <SvgLines x={480} y={cY + 60} lines={[`The two directions are about ${n1(sep)}° apart`, '(calculated here from the two sets of numbers;', `the paper states ${QUASAR_OFFSET_DEGREES}°).`, '', 'The chart is flat and zoomed in, so the', 'angle is worked out on the sphere of the sky,', 'not read off the chart.']} fill={TEXT_COLOR} size={11} />
 
       <line x1={20} y1={yC - 62} x2={P3_W - 20} y2={yC - 62} stroke="#334155" />
       <SvgLines x={20} y={yC - 42} lines={['C. How sure are three published analyses? (a ruler of sigma, as each source states it)']} fill={TEXT_COLOR} size={12} bold />
@@ -453,7 +459,7 @@ export function pictureOneCaption(stage: number): ReactNode {
       lookFor={lookFor}
       whereFrom={
         <>
-          <strong>Measured:</strong> the average temperature, {MICROWAVE_TEMPERATURE_K} K, and the speed, {PUBLISHED_SPEED_KM_S.value} km/s, both as quoted in a 2025 review (Secrest and colleagues) from Planck. <strong>Calculated here:</strong> the temperature in each direction, from the rule for light and motion that you met in Experiment 8, and the
+          <strong>Measured:</strong> the average temperature, {MICROWAVE_TEMPERATURE_K} K, and the speed, {PUBLISHED_SPEED_KM_S.value} km/s, both as quoted in a 2025 review (Secrest and colleagues) from Planck, a satellite that measured the microwave sky. <strong>Calculated here:</strong> the temperature in each direction, from the rule for light and motion that you met in Experiment 8, and the
           colours made from them. <strong>Imagined for the question:</strong> the arrows, the wave crests and their spacing, and the disk map’s shape (a sketch of the sky, not a photograph). <strong>Your guess:</strong> there is no white mark in this picture. Your guesses are drawn in Picture 2.
         </>
       }
@@ -513,7 +519,7 @@ export function pictureTwoCaption(): ReactNode {
       }
       bullets={[
         <>
-          <strong>New words.</strong> The warm-and-cool pattern in Picture 1’s map is called the <strong>dipole</strong> (“two poles”: one warm, one cool). Its <strong>amplitude</strong> is how far the warm pole is above the average. A <strong>millikelvin</strong> (mK) is one thousandth of a kelvin and a <strong>microkelvin</strong> (µK) is one millionth.
+          <strong>New words.</strong> The warm-and-cool pattern in Picture 1’s map is called the <strong>dipole</strong> (“two poles”: one warm, one cool). Its <strong>amplitude</strong> is how far the warm pole is above the average. A <strong>millikelvin</strong> (mK) is one thousandth of a kelvin and a <strong>microkelvin</strong> (µK) is one millionth. A number written like {PUBLISHED_SPEED_KM_S.value} ± {PUBLISHED_SPEED_KM_S.giveOrTake} means “about {PUBLISHED_SPEED_KM_S.value}, give or take {PUBLISHED_SPEED_KM_S.giveOrTake}”: the <strong>give-or-take</strong> is the size of the doubt that the people who made the number put on it.
         </>,
         <>
           <strong>Part A:</strong> a ruler for how different the temperatures are, between straight ahead and straight behind, in kelvin. The <strong>cyan dot</strong> is the difference between the two temperatures in Picture 1, Part C: straight ahead minus straight behind, which is {k5(d.aheadMinusBehindK)} K, about {n1(d.aheadMinusBehindK * 1000)} thousandths of a kelvin. Those two temperatures were worked out from the measured speed. The glow’s own average temperature,
@@ -548,6 +554,7 @@ export function pictureTwoCaption(): ReactNode {
 }
 
 export function pictureThreeCaption(): ReactNode {
+  const chanceIn10M = Number((QUASAR_2021_CHANCE * 1e7).toPrecision(6)) // the 2021 paper's chance as "N in 10 million"
   const ratio = quasarObservedOverExpected()
   const sep = quasarCmbSeparationDegrees()
   const low26 = Math.min(...QUASAR_SIGNIFICANCE.bashir2026)
@@ -589,11 +596,11 @@ export function pictureThreeCaption(): ReactNode {
       }
       bullets={[
         <>
-          <strong>New words.</strong> <strong>σ (sigma)</strong> says how unlikely it is that chance alone made a result: a bigger number means chance is less likely. The 2021 paper gives 4.9σ as a 5 in 10 million chance (p = 5 × 10⁻⁷), counted one-sided.
+          <strong>New words.</strong> <strong>σ (sigma)</strong> says how unlikely it is that chance alone made a result: a bigger number means chance is less likely. The 2021 paper gives {QUASAR_SIGNIFICANCE.secrest2021}σ as a {chanceIn10M} in 10 million chance (p = {chanceIn10M} × 10⁻⁷), counted one-sided.
         </>,
         <>
-          <strong>Part A:</strong> a plain ruler, from 0 to 0.02, for <em>how lopsided</em> the quasar counts are. The quasars were counted all over the sky. If our motion alone makes the counts lopsided, a few more quasars are seen on one side of the sky than on the opposite side. The number on the ruler says how many more, as a fraction of the average count. So 0.007 means about {n1(QUASAR_EXPECTED_AMPLITUDE * 100)} percent more than average on one side
-          ({n1(QUASAR_EXPECTED_AMPLITUDE * 1000)} in every 1,000), and 0.01554 means about {n1(QUASAR_OBSERVED_AMPLITUDE * 100)} percent more ({n1(QUASAR_OBSERVED_AMPLITUDE * 1000)} in every 1,000). The <strong>dashed cyan circle</strong> is how lopsided the authors of the 2021 paper calculated the counts should be from our motion alone: about {QUASAR_EXPECTED_AMPLITUDE} (the paper rounds it). The <strong>green dot</strong> is how lopsided the counts really are:
+          <strong>Part A:</strong> a plain ruler, from 0 to 0.02, for <em>how lopsided</em> the quasar counts are. The quasars were counted all over the sky. If our motion alone makes the counts lopsided, a few more quasars are seen on one side of the sky than on the opposite side. The number on the ruler says how many more, as a fraction of the average count. So {QUASAR_EXPECTED_AMPLITUDE} means about {n1(QUASAR_EXPECTED_AMPLITUDE * 100)} percent more than average on one side
+          ({n1(QUASAR_EXPECTED_AMPLITUDE * 1000)} in every 1,000), and {QUASAR_OBSERVED_AMPLITUDE} means about {n1(QUASAR_OBSERVED_AMPLITUDE * 100)} percent more ({n1(QUASAR_OBSERVED_AMPLITUDE * 1000)} in every 1,000). The <strong>dashed cyan circle</strong> is how lopsided the authors of the 2021 paper calculated the counts should be from our motion alone: about {QUASAR_EXPECTED_AMPLITUDE} (the paper rounds it). The <strong>green dot</strong> is how lopsided the counts really are:
           {QUASAR_OBSERVED_AMPLITUDE}, more than twice as much.
         </>,
         <>
