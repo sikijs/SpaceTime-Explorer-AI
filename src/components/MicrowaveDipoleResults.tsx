@@ -25,7 +25,15 @@ import { ResultsTable } from './WideBinariesExperiment'
 // Evidence and Imagination, Experiment 7: Part 3, the results (CLAUDE.md §14, "Reading the Results" and "Predictions and the Real Results").
 // Every number is read from the physics module (CLAUDE.md §9); this file only sets it out. The tables are the real numbers and never change with the learner's guesses or settings. The wording is Claude's DRAFT of 2026-11-02,
 // for the owner's approval line by line (CLAUDE.md §28.1). Why a moving observer sees the sky warmer ahead, and what could explain the quasar mismatch, are left to the tutor (CLAUDE.md §12, §13).
-// The papers and pages behind the numbers are listed at the end (a later step), after the run.
+// The papers and pages behind the numbers, and plain pages on the background ideas, are listed at the end (Step 8), after the run.
+
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
 
 const noteStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: '1.5rem' } as const
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
@@ -322,6 +330,58 @@ export function MicrowaveDipoleResults({ differenceGuess, speedGuess }: { differ
           },
         ]}
       />
+
+      <div style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>The papers and pages behind these numbers.</strong> They are listed here, after the run, because some of them give away the answers. Links open in a new tab. They were opened on 2 November 2026, and no paper was read in full.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <em>Where the numbers come from</em>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://lambda.gsfc.nasa.gov/education/lambda_graphics/cmb_dipole.html">NASA LAMBDA, “CMB Solar Dipole Amplitude and Direction” (no date shown)</ExternalLink>: a table of five measurements of the size and direction of the warm-and-cool pattern, from COBE (1996) to a 2021 reanalysis of Planck. It says the pattern is attributed to the Solar System’s motion relative to the glow. The page’s
+            {' '}{PLANCK_DIPOLE_AMPLITUDE_UK.value} ± {PLANCK_DIPOLE_AMPLITUDE_UK.giveOrTake} µK and {SROLL_DIPOLE_AMPLITUDE_UK.value} ± {SROLL_DIPOLE_AMPLITUDE_UK.giveOrTake} µK are from it. It gives no speed.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2505.23526">Secrest, von Hausegger, Rameez, Mohayaee and Sarkar, “Colloquium: The Cosmic Dipole Anomaly”, arXiv:2505.23526 (2025), Reviews of Modern Physics 97, 041001</ExternalLink>: a review of the quasar and radio-galaxy counts and the argument about them. The page’s average temperature, {MICROWAVE_TEMPERATURE_K} K, its speed of {PUBLISHED_SPEED_KM_S.value} ± {PUBLISHED_SPEED_KM_S.giveOrTake} km/s and the rule for the temperature in each direction are from its start,
+            which was read as written. The rest was read through a summary.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2009.14826">Secrest, von Hausegger, Rameez, Mohayaee, Sarkar and Colin, “A Test of the Cosmological Principle with Quasars”, arXiv:2009.14826 (2021), Astrophysical Journal Letters 908, L51</ExternalLink>: the count of {QUASAR_COUNT.toLocaleString('en-US')} quasars and the {QUASAR_SIGNIFICANCE.secrest2021}σ result. The abstract was read as written; the numbers of Table 3 were read through a converted web copy of the text.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/2511.00822">Bashir, Chingangbam and Appleby, “The CatWISE2020 Quasar dipole: A Reassessment of the Cosmic Dipole Anomaly”, arXiv:2511.00822 (2025, revised 26 April 2026), accepted for the Astrophysical Journal</ExternalLink>: the 2026 reanalysis of the same quasars, with its {s26c}σ, {s26b}σ and {s26a}σ. Only the abstract was read.
+          </li>
+          <li>
+            <ExternalLink href="https://arxiv.org/abs/1807.06207">Planck Collaboration, “Planck 2018 results. III. High Frequency Instrument data processing and frequency maps”, arXiv:1807.06207 (2018)</ExternalLink>: the paper behind the Planck dipole measurement. Its abstract says the direction of the warm side is known to within one arc minute, and that the size is known to better than 0.35 µK. Only the abstract was read, and the page’s numbers come from NASA’s table, not from this paper.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <em>Plain pages on the background ideas</em>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <ExternalLink href="https://science.nasa.gov/mission/cobe/science/">NASA, “COBE’s Top Discoveries” (updated 13 August 2026)</ExternalLink>: how the COBE satellite showed that the microwave glow has a temperature of 2.725 K, and found its tiny ripples. It does not mention the warm-and-cool pattern or the Solar System’s motion.
+          </li>
+          <li>
+            <ExternalLink href="https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_and_the_cosmic_microwave_background">ESA, “Planck and the cosmic microwave background” (no date shown)</ExternalLink>: a plain account of the glow, how it was made and what Planck measured. It does not mention the warm-and-cool pattern or the Solar System’s motion.
+          </li>
+          <li>
+            <ExternalLink href="https://www.nist.gov/si-redefinition/kelvin">NIST, “Kelvin: Introduction” (updated 5 January 2026)</ExternalLink>: what the kelvin is and why its scale starts at the coldest possible temperature.
+          </li>
+          <li>
+            <ExternalLink href="https://science.nasa.gov/mission/webb/science-overview/science-explainers/spectroscopy-101-beyond-temperature-and-composition/">NASA, “Spectroscopy 101 – Beyond Temperature and Composition” (updated 9 September 2025)</ExternalLink>: what a redshift and a blueshift are, and that motion toward or away from us shifts light. It describes the shift in wavelength and does not use the word “frequency”.
+          </li>
+          <li>
+            <ExternalLink href="https://pwg.gsfc.nasa.gov/stargaze/Q4.htm">NASA Goddard, “Planck’s constant: Radiation from Hot Objects” (edited 2016, and kept online for archive purposes only)</ExternalLink>: why hot things glow and why their colour changes with temperature, including that the electric charges in a hot object vibrate and give off waves. It is old and long, and it does not mention the warm-and-cool pattern.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0 }}>
+          <strong>Not linked:</strong> a plain page from NASA, ESA or another official source on the warm-and-cool pattern and what it says about the Solar System’s motion. None was found on 2 November 2026: the pages above, NASA’s WMAP overview and NASA’s LAMBDA education pages were opened, and none mentions it. Also not linked: a plain official page on a “frame of reference” (it is explained in Experiment 2 of this site); the Planck papers that give the
+          dipole’s size; the earlier COBE and WMAP papers; and the 1984 paper of Ellis and Baldwin that the quasar test comes from, none of which was read.
+        </p>
+      </div>
     </div>
   )
 }

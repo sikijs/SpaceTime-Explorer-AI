@@ -34,6 +34,7 @@ import { EarlyUniverseRecipeExperiment } from './components/EarlyUniverseRecipeE
 import { MicrowaveDipoleExperiment } from './components/MicrowaveDipoleExperiment'
 import { tutorFigures as sdTutorFigures } from './physics/sunDelay'
 import { HELIUM_TO_HYDROGEN_WEIGHT as erHeliumWeight, tutorFigures as erTutorFigures } from './physics/earlyUniverseRecipe'
+import { MICROWAVE_TEMPERATURE_K as mdAverage, PLANCK_DIPOLE_AMPLITUDE_UK as mdAmplitude, QUASAR_COUNT as mdQuasarCount, QUASAR_SIGNIFICANCE as mdSigma, tutorFigures as mdTutorFigures } from './physics/microwaveDipole'
 import {
   APPROACH_SPEED_KM_S as lgApproach,
   MERGER_DISTANCE_KPC as lgRing,
@@ -415,6 +416,25 @@ function earlyUniverseRecipeSummary(): string {
     `This page's own simplified calculation runs in steps. Neutrons were scarce at the start, 1 for every ${n1(1 / t.real.freezeOutNeutronsPerProton)} protons, by a temperature that this page chose and did not measure. They fell to 1 for every ${n1(t.real.neutronsPerProtonAsOneIn)} protons while they waited ${t.waitS} seconds, because a free neutron lasts only ${Math.round(t.lifetimeS)} seconds on average, and every neutron left was paired with a proton in a helium-4 nucleus. That gives ${n1(t.real.heliumMassShare * 100)} percent helium by weight. A longer wait gives less: ${n1(t.longHeliumPercent)} percent after ${t.longWaitS} seconds. The calculation is a teaching estimate, not a test. ` +
     `The real tests: for helium (the Large Binocular Telescope's value) and for deuterium, the published calculation and the measurement agree within their give-or-takes. A second helium value, from the EMPRESS collaboration, is lower and its range does not reach the calculation's. For lithium-7 the published calculation is ${n1(t.lithiumRatio)} times the measurement, and no cause has been settled. ` +
     `That the light elements were made in the first minutes, and that helium and deuterium match the measurements, is settled, and these tests are long-standing. The lithium gap is open. The numbers come from this page's own calculation, a 2026 review (mostly read through a summary), the abstracts of the Large Binocular Telescope and EMPRESS papers, NIST's page on the neutron's lifetime and two Berkeley Lab pages. No paper was read in full, and the Particle Data Group's review could not be read.`
+  )
+}
+
+// The chapter summary of Evidence and Imagination Experiment 7 (DRAFT wording, for the owner's approval). Every number is read from the experiment's physics module, so the text cannot drift from the page.
+function microwaveDipoleSummary(): string {
+  const t = mdTutorFigures()
+  const r = t.real
+  const c = t.check
+  const n1 = (x: number) => x.toFixed(1)
+  const n2 = (x: number) => x.toFixed(2)
+  const k6 = (x: number) => x.toFixed(6)
+  const low26 = Math.min(...mdSigma.bashir2026)
+  const high26 = Math.max(...mdSigma.bashir2026)
+  return (
+    `Is the microwave sky equally warm in every direction? Almost, but not quite. Straight ahead the glow is ${k6(r.aheadK)} K, straight behind it is ${k6(r.behindK)} K, and sideways it is about the average, ${mdAverage} K. The difference between straight ahead and straight behind is ${n2(r.aheadMinusBehindK * 1000)} mK, about 1 part in ${Math.round(t.differenceOneInParts)} of the glow's temperature. This warm-and-cool pattern is called the dipole. ` +
+    `A Solar System moving at ${n2(r.speedKmS)} km/s relative to the glow's own frame would give that pattern. Planck measured the size of the pattern as ${mdAmplitude.value} µK. Divided by the average temperature and multiplied by the speed of light, that gives ${n2(t.planckSpeedKmS)} km/s, about ${n1(t.timesEarthSpeed)} times the Earth's speed round the Sun and ${n2(t.percentOfLightSpeed)} percent of the speed of light. A speed is always a speed relative to something: the glow's frame is a convenient reference, not a special place in space. ` +
+    `A second test uses distant quasars. If our motion makes the microwave pattern, the count of ${mdQuasarCount.toLocaleString('en-US')} quasars should be lopsided in the same direction, by an amount that can be calculated. The direction is similar, ${n2(c.direction.separationDegrees)}° apart, but the counted size is ${n2(c.quasarSize.timesExpected)} times the expected size. Three analyses give ${mdSigma.secrest2021}σ (2021), "now exceeds 5σ" (a 2025 review) and ${low26}σ to ${high26}σ (a 2026 reanalysis of the same quasars), and the page does not choose between them. ` +
+    `That the microwave sky has a warm side and a cool side matching a motion of about ${Math.round(r.speedKmS)} km/s is settled, and these measurements are old and much repeated. Whether the quasars agree is contested. ` +
+    `The numbers come from this page's own calculation, NASA's table of the dipole's size, the start of a 2025 review, the abstracts of the quasar papers and, for the 2021 paper's numbers, a converted web copy. No paper was read in full, and the page does not show what set the Solar System moving.`
   )
 }
 
@@ -1253,9 +1273,9 @@ const chapters: Chapter[] = [
     title: 'Is the microwave sky equally warm in every direction?',
     group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
     Component: MicrowaveDipoleExperiment,
-    // The chapter summary and "What's next" come in a later step (Step 9); "What's next" will be a planned direction only, since this is the last experiment of the group.
-    learned: '',
-    next: '',
+    // Chapter summary and "What's next": Claude's DRAFT of 2026-11-02, for the owner's approval. This is the last experiment of its group, so "What's next" points to the group that follows in the sidebar.
+    learned: microwaveDipoleSummary(),
+    next: 'This is the last experiment in this group. The group that follows, Cosmic Horizons, turns to recent results that are still being tested, beginning with two measurements of how fast the universe is expanding that do not agree.',
   },
 ]
 
