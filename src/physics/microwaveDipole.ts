@@ -104,6 +104,92 @@ export function speedFromAmplitudeKmS(amplitudeMicrokelvin: number): number {
   return (SPEED_OF_LIGHT_KM_S * (amplitudeMicrokelvin * 1e-6)) / MICROWAVE_TEMPERATURE_K
 }
 
+// ---- Figures for the pictures (Step 4) ----
+// The real motion: the published speed (not the rounded 370 button).
+export const MEASURED_SPEED_KM_S = PUBLISHED_SPEED_KM_S.value
+// beta from a dipole amplitude in microkelvin: beta = A / T0 (first order).
+export function betaFromAmplitude(amplitudeMicrokelvin: number): number {
+  return (amplitudeMicrokelvin * 1e-6) / MICROWAVE_TEMPERATURE_K
+}
+// Where a value sits on a log ruler from min to max: 0 at min, 1 at max (the picture clamps nothing: a value off the ruler gives a number outside 0 to 1).
+export function logFraction(value: number, min: number, max: number): number {
+  if (!(value > 0 && min > 0 && max > min)) throw new RangeError(`a log ruler needs 0 < min < max and a positive value, got ${value} on ${min} to ${max}`)
+  return (Math.log(value) - Math.log(min)) / (Math.log(max) - Math.log(min))
+}
+export const DIFFERENCE_RULER_K = { min: 0.00001, max: 1 } as const // Picture 2, Part A
+export const SPEED_RULER_KM_S = { min: 1, max: 100_000 } as const // Picture 2, Part B
+// The sky map's colour: how far the temperature in a direction is from the average, as a fraction of how far straight ahead is (+1 straight ahead, about 0 sideways, about -1 straight behind). The colours
+// are STRETCHED by this: the real differences are tiny (see oneInParts), so the picture says so.
+export function skyColourFraction(angleDegrees: number, speedKmS: number = MEASURED_SPEED_KM_S): number {
+  const ahead = temperatureAtAngle(0, speedKmS) - MICROWAVE_TEMPERATURE_K
+  if (ahead === 0) return 0
+  return (temperatureAtAngle(angleDegrees, speedKmS) - MICROWAVE_TEMPERATURE_K) / ahead
+}
+// "1 part in N": N = 1 / (the fraction by which a temperature differs from the average).
+export function oneInParts(fraction: number): number {
+  if (fraction === 0) throw new RangeError('no difference has no "1 part in N"')
+  return 1 / Math.abs(fraction)
+}
+export interface PictureOneFigures {
+  dipole: Dipole
+  aheadOneInParts: number // how many times larger than the ahead excess the average is
+  differenceOneInParts: number // the same for the ahead minus behind difference
+}
+export function pictureOneFigures(): PictureOneFigures {
+  const d = dipole(MEASURED_SPEED_KM_S)
+  return {
+    dipole: d,
+    aheadOneInParts: oneInParts(d.aheadWarmerThanAverageK / MICROWAVE_TEMPERATURE_K),
+    differenceOneInParts: oneInParts(d.aheadMinusBehindK / MICROWAVE_TEMPERATURE_K),
+  }
+}
+// The angle between two directions given in Galactic longitude and latitude (degrees), along the sky.
+export function angularSeparationDegrees(l1: number, b1: number, l2: number, b2: number): number {
+  const rad = Math.PI / 180
+  const unit = (l: number, b: number) => [Math.cos(b * rad) * Math.cos(l * rad), Math.cos(b * rad) * Math.sin(l * rad), Math.sin(b * rad)]
+  const u = unit(l1, b1)
+  const v = unit(l2, b2)
+  const dot = Math.min(1, Math.max(-1, u[0] * v[0] + u[1] * v[1] + u[2] * v[2]))
+  return Math.acos(dot) / rad
+}
+
+// ---- Drawing A: the trial settings (Step 5) ----
+// The colour scale of Picture 1 is fixed at the measured motion's warm excess; Drawing A uses the SAME scale for every trial speed, cut off at full colour, so a faster trial looks different from the real one.
+export const COLOUR_FULL_SCALE_K = dipole(MEASURED_SPEED_KM_S).aheadWarmerThanAverageK
+export function trialSkyColourFraction(angleDegrees: number, speedKmS: number): number {
+  const fraction = (temperatureAtAngle(angleDegrees, speedKmS) - MICROWAVE_TEMPERATURE_K) / COLOUR_FULL_SCALE_K
+  return Math.min(1, Math.max(-1, fraction))
+}
+// The real settings of Part 1: the measured speed, looking straight ahead.
+export const REAL_TRIAL_ANGLE_DEGREES = 0
+export interface TrialFigures {
+  speedKmS: number
+  angleDegrees: number
+  trial: Dipole
+  real: Dipole
+  temperatureAtAngleK: number // in the chosen direction, at the trial speed
+  atAngleMinusAverageK: number // positive means warmer than the average
+  speedOverReal: number
+  differenceOverReal: number // the trial's ahead-minus-behind divided by the real one
+  isMeasuredSpeed: boolean
+}
+export function trialFigures(speedKmS: number, angleDegrees: number): TrialFigures {
+  const trial = dipole(speedKmS)
+  const real = dipole(MEASURED_SPEED_KM_S)
+  const atAngle = temperatureAtAngle(angleDegrees, speedKmS)
+  return {
+    speedKmS,
+    angleDegrees,
+    trial,
+    real,
+    temperatureAtAngleK: atAngle,
+    atAngleMinusAverageK: atAngle - MICROWAVE_TEMPERATURE_K,
+    speedOverReal: speedKmS / MEASURED_SPEED_KM_S,
+    differenceOverReal: trial.aheadMinusBehindK / real.aheadMinusBehindK,
+    isMeasuredSpeed: compare(speedKmS, MEASURED_SPEED_KM_S) === 'the same',
+  }
+}
+
 // ---- Quasar figures, QUOTED (specification Sources) ----
 // Secrest and others 2021 (arXiv:2009.14826, ApJ Letters 908, L51): abstract verbatim; the amplitudes read through a converted web copy (ar5iv), which may not be the final version.
 export const QUASAR_COUNT = 1_355_352
@@ -118,6 +204,10 @@ export const QUASAR_SIGNIFICANCE = {
   secrest2025AtLeast: 5, // the review's abstract: "now exceeds 5 sigma"
 } as const
 
+// The same angle worked out from the two directions' Galactic longitude and latitude (the paper states 27.8).
+export function quasarCmbSeparationDegrees(): number {
+  return angularSeparationDegrees(DIPOLE_DIRECTION_GALACTIC.l, DIPOLE_DIRECTION_GALACTIC.b, QUASAR_DIRECTION_GALACTIC.l, QUASAR_DIRECTION_GALACTIC.b)
+}
 // How many times larger the observed quasar dipole is than the quoted expectation (not rounded; the paper says "over twice").
 export function quasarObservedOverExpected(): number {
   return QUASAR_OBSERVED_AMPLITUDE / QUASAR_EXPECTED_AMPLITUDE

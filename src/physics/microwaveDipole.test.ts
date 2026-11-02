@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
   ABSOLUTE_ZERO_CELSIUS,
+  DIFFERENCE_RULER_K,
+  MEASURED_SPEED_KM_S,
+  SPEED_RULER_KM_S,
+  angularSeparationDegrees,
+  betaFromAmplitude,
+  logFraction,
+  oneInParts,
+  pictureOneFigures,
+  quasarCmbSeparationDegrees,
+  skyColourFraction,
   ANGLE_CHOICES_DEGREES,
+  COLOUR_FULL_SCALE_K,
+  trialFigures,
+  trialSkyColourFraction,
   COMPARE_RELATIVE_TOLERANCE,
   DIFFERENCE_ANSWER_CHOICES,
   EARTH_ORBITAL_SPEED_KM_S,
@@ -253,5 +266,139 @@ describe('the module does not change with predictions (test 12)', () => {
     for (const choice of SPEED_ANSWER_CHOICES) speedGuessKmS(choice.id)
     expect(JSON.stringify(dipole(369.82))).toBe(before)
     expect(predictionOneAnswerId()).toBe('about-0.007')
+  })
+})
+
+describe('figures for the pictures (Step 4)', () => {
+  it('uses the published speed, not the rounded button', () => {
+    expect(MEASURED_SPEED_KM_S).toBe(369.82)
+    expect(pictureOneFigures().dipole.speedKmS).toBe(369.82)
+  })
+  it('gets beta from the Planck amplitude, 1.2336e-3', () => {
+    expect(betaFromAmplitude(3362.08)).toBeCloseTo(1.2336e-3, 7)
+    expect(betaFromAmplitude(3362.08) * SPEED_OF_LIGHT_KM_S).toBeCloseTo(369.82, 1)
+  })
+  it('places a value on a log ruler: ends at 0 and 1, a decade a fixed step', () => {
+    expect(logFraction(1e-5, 1e-5, 1)).toBeCloseTo(0, 12)
+    expect(logFraction(1, 1e-5, 1)).toBeCloseTo(1, 12)
+    expect(logFraction(1e-3, 1e-5, 1)).toBeCloseTo(0.4, 12)
+    expect(logFraction(0.00672, DIFFERENCE_RULER_K.min, DIFFERENCE_RULER_K.max)).toBeGreaterThan(logFraction(0.0007, DIFFERENCE_RULER_K.min, DIFFERENCE_RULER_K.max))
+    expect(logFraction(369.82, SPEED_RULER_KM_S.min, SPEED_RULER_KM_S.max)).toBeCloseTo(Math.log10(369.82) / 5, 12)
+    expect(() => logFraction(0, 1, 10)).toThrow(RangeError)
+    expect(() => logFraction(5, 10, 1)).toThrow(RangeError)
+  })
+  it('has rulers that hold every guess button and the real values, and stores their ends', () => {
+    expect(DIFFERENCE_RULER_K).toEqual({ min: 0.00001, max: 1 })
+    expect(SPEED_RULER_KM_S).toEqual({ min: 1, max: 100000 })
+    const real = pictureOneFigures().dipole.aheadMinusBehindK
+    for (const c of DIFFERENCE_ANSWER_CHOICES) {
+      const t = logFraction(c.kelvin, DIFFERENCE_RULER_K.min, DIFFERENCE_RULER_K.max)
+      expect(t).toBeGreaterThan(0)
+      expect(t).toBeLessThan(1)
+    }
+    for (const c of SPEED_ANSWER_CHOICES) {
+      const t = logFraction(c.kmS, SPEED_RULER_KM_S.min, SPEED_RULER_KM_S.max)
+      expect(t).toBeGreaterThan(0)
+      expect(t).toBeLessThan(1)
+    }
+    expect(logFraction(real, DIFFERENCE_RULER_K.min, DIFFERENCE_RULER_K.max)).toBeGreaterThan(0)
+    expect(logFraction(EARTH_ORBITAL_SPEED_KM_S, SPEED_RULER_KM_S.min, SPEED_RULER_KM_S.max)).toBeGreaterThan(0)
+    expect(logFraction(PUBLISHED_SPEED_KM_S.value, SPEED_RULER_KM_S.min, SPEED_RULER_KM_S.max)).toBeLessThan(1)
+  })
+  it('gives the sky colour +1 ahead, about 0 sideways and about -1 behind, falling steadily', () => {
+    expect(skyColourFraction(0)).toBeCloseTo(1, 12)
+    expect(Math.abs(skyColourFraction(90))).toBeLessThan(1e-3)
+    expect(skyColourFraction(180)).toBeCloseTo(-0.99877, 4)
+    const fractions = [0, 30, 60, 90, 120, 150, 180].map((a) => skyColourFraction(a))
+    for (let i = 1; i < fractions.length; i++) expect(fractions[i]).toBeLessThan(fractions[i - 1])
+    expect(skyColourFraction(0, 0)).toBe(0)
+  })
+  it('says the warm pole is about 1 part in 810 above the average, and the difference about 1 part in 405', () => {
+    const f = pictureOneFigures()
+    expect(f.aheadOneInParts).toBeCloseTo(810.2, 0)
+    expect(f.differenceOneInParts).toBeCloseTo(405.3, 0)
+    expect(oneInParts(0.5)).toBe(2)
+    expect(oneInParts(-0.25)).toBe(4)
+    expect(() => oneInParts(0)).toThrow(RangeError)
+  })
+  it('measures the angle between two directions on the sphere', () => {
+    expect(angularSeparationDegrees(10, 20, 10, 20)).toBeCloseTo(0, 6)
+    expect(angularSeparationDegrees(0, 0, 90, 0)).toBeCloseTo(90, 10)
+    expect(angularSeparationDegrees(0, 0, 180, 0)).toBeCloseTo(180, 10)
+    expect(angularSeparationDegrees(0, 90, 123, -90)).toBeCloseTo(180, 10)
+    expect(angularSeparationDegrees(264.02, 48.253, 238.2, 28.8)).toBeCloseTo(angularSeparationDegrees(238.2, 28.8, 264.02, 48.253), 12)
+  })
+  it("works out the quasar dipole's offset from the microwave dipole as the paper's 27.8 degrees", () => {
+    expect(Math.abs(quasarCmbSeparationDegrees() - QUASAR_OFFSET_DEGREES)).toBeLessThan(0.05)
+    expect(quasarCmbSeparationDegrees()).toBeCloseTo(27.79, 2)
+  })
+})
+
+describe("Drawing A's trial settings (Step 5)", () => {
+  it('fixes the colour scale at the measured motion\'s warm excess, 3.3642 mK', () => {
+    expect(COLOUR_FULL_SCALE_K * 1000).toBeCloseTo(3.3642, 4)
+    expect(COLOUR_FULL_SCALE_K).toBeCloseTo(dipole(369.82).aheadWarmerThanAverageK, 15)
+  })
+  it('gives the same colours as Picture 1 at the measured speed', () => {
+    for (const angle of [0, 45, 90, 135, 180]) expect(trialSkyColourFraction(angle, 369.82)).toBeCloseTo(skyColourFraction(angle), 12)
+  })
+  it('is pale at a slow trial speed and cut off at full colour at a fast one', () => {
+    expect(trialSkyColourFraction(0, 29.78)).toBeCloseTo(0.0806, 3)
+    expect(trialSkyColourFraction(0, 1000)).toBe(1)
+    expect(trialSkyColourFraction(180, 1000)).toBe(-1)
+    expect(trialSkyColourFraction(0, 30000)).toBe(1)
+    // Sideways the temperature is T0 * D, below the average by T0 * (1 - D): tiny at 370 km/s, but at 30,000 km/s (a tenth of c) it is 13.7 mK, past the colour scale.
+    expect(Math.abs(trialSkyColourFraction(90, 3000))).toBeLessThan(0.1)
+    expect(trialSkyColourFraction(90, 3000)).toBeLessThan(0)
+    expect(trialSkyColourFraction(90, 30000)).toBe(-1)
+  })
+  it('shows a faster trial as a stronger colour straight ahead until it is cut off', () => {
+    const a = trialSkyColourFraction(0, 30)
+    const b = trialSkyColourFraction(0, 100)
+    const c = trialSkyColourFraction(0, 300)
+    expect(a).toBeLessThan(b)
+    expect(b).toBeLessThan(c)
+    expect(c).toBeLessThan(1)
+  })
+  it('gives the real settings back for the measured speed: ratios 1, same flag, ahead at angle 0', () => {
+    const f = trialFigures(369.82, 0)
+    expect(f.isMeasuredSpeed).toBe(true)
+    expect(f.speedOverReal).toBe(1)
+    expect(f.differenceOverReal).toBe(1)
+    expect(f.temperatureAtAngleK).toBeCloseTo(f.real.aheadK, 12)
+    expect(f.atAngleMinusAverageK).toBeCloseTo(f.real.aheadWarmerThanAverageK, 12)
+  })
+  it('gives the specification\'s difference ratios: 8.11 at 3,000 km/s and 81.5 at 30,000 km/s, and 0.0805 at 29.78 km/s', () => {
+    expect(trialFigures(3000, 0).differenceOverReal).toBeCloseTo(8.1124, 3)
+    expect(trialFigures(30000, 0).differenceOverReal).toBeCloseTo(81.53, 1)
+    expect(trialFigures(29.78, 0).differenceOverReal).toBeCloseTo(0.0805, 3)
+    expect(trialFigures(3000, 0).isMeasuredSpeed).toBe(false)
+  })
+  it('gives the speed ratio: 3000 km/s is 8.112 times the measured speed, and 30 km/s is 0.0811 times it', () => {
+    expect(trialFigures(3000, 0).speedOverReal).toBeCloseTo(3000 / 369.82, 10)
+    expect(trialFigures(3000, 0).speedOverReal).toBeCloseTo(8.1121, 3)
+    expect(trialFigures(30, 0).speedOverReal).toBeCloseTo(0.0811, 3)
+  })
+  it('gives the temperature in the chosen direction: ahead warmer, sideways about the average, behind cooler', () => {
+    const t0 = trialFigures(1000, 0)
+    const t90 = trialFigures(1000, 90)
+    const t180 = trialFigures(1000, 180)
+    expect(t0.atAngleMinusAverageK).toBeGreaterThan(0)
+    expect(t90.atAngleMinusAverageK).toBeCloseTo(2.72548 * (Math.sqrt(1 - (1000 / 299792.458) ** 2) - 1), 12)
+    expect(Math.abs(t90.atAngleMinusAverageK)).toBeLessThan(1e-4)
+    expect(t180.atAngleMinusAverageK).toBeLessThan(0)
+    expect(t180.temperatureAtAngleK).toBeCloseTo(t180.trial.behindK, 12)
+    expect(trialFigures(1000, 45).temperatureAtAngleK).toBeCloseTo(independentTemperature(45, 1000), 9)
+  })
+  it('matches a separate calculation at every control setting', () => {
+    for (const speed of SPEED_CHOICES_KM_S) {
+      const kmS = speedForChoice(speed)
+      for (const angle of ANGLE_CHOICES_DEGREES) {
+        const f = trialFigures(kmS, angle)
+        expect(Math.abs(f.temperatureAtAngleK - independentTemperature(angle, kmS)) / f.temperatureAtAngleK).toBeLessThan(1e-6)
+        const diff = independentTemperature(0, kmS) - independentTemperature(180, kmS)
+        expect(Math.abs(f.trial.aheadMinusBehindK - diff) / diff).toBeLessThan(1e-6)
+      }
+    }
   })
 })
