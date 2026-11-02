@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import { MicrowaveDipoleResults } from './MicrowaveDipoleResults'
 import { PictureOne, PictureThree, PictureTwo, TrialDrawing, pictureOneCaption, pictureThreeCaption, pictureTwoCaption, trialCaption } from './MicrowaveDipolePictures'
 import { ABSOLUTE_ZERO_CELSIUS, ANGLE_CHOICES_DEGREES, DIFFERENCE_ANSWER_CHOICES, MEASURED_SPEED_CHOICE, MEASURED_SPEED_KM_S, MICROWAVE_TEMPERATURE_K, SPEED_CHOICES_KM_S, SPEED_ANSWER_CHOICES, SPEED_OF_LIGHT_KM_S, celsiusOfKelvin, speedForChoice } from '../physics/microwaveDipole'
 
 // Evidence and Imagination, Experiment 7 (docs/experiments/evidence-and-imagination/07-the-microwave-dipole.md).
-// Steps 2 to 5: the title, the status line, the introduction and the "Want to know more?" note, Part 1's two predictions (five buttons each), the five-stage run with Pictures 1 to 3 (`MicrowaveDipolePictures.tsx`) and (Step 5) Part 2, "Now try it yourself", with its two controls and Drawing A. The results, tutor and chapter summary come in later steps.
+// Steps 2 to 6: the title, the status line, the introduction and the "Want to know more?" note, Part 1's two predictions (five buttons each), the five-stage run with Pictures 1 to 3 (`MicrowaveDipolePictures.tsx`) and (Step 5) Part 2, "Now try it yourself", with its two controls and Drawing A, and (Step 6) Part 3, the results (`MicrowaveDipoleResults.tsx`). The tutor, papers list and chapter summary come in later steps.
 // The wording below is Claude's DRAFT of 2026-11-02, for the owner's approval (CLAUDE.md §28.1). Nothing here says how much warmer one direction is than another, that there is a pattern at all, that it comes from motion,
 // how fast anything moves, or that a second test disagrees, because the two predictions and the results ask for them (CLAUDE.md §12). The word "dipole" is left out on purpose: defining it would say there is a pattern.
 // It is defined where it is first needed, after the run. Every number comes from the physics module (CLAUDE.md §9).
@@ -341,6 +342,7 @@ export function MicrowaveDipoleExperiment({ onComplete }: MicrowaveDipoleExperim
               {trialCaption(speedForChoice(trialSpeedChoice), trialAngle)}
             </div>
           )}
+          {done && <MicrowaveDipoleResults differenceGuess={differenceGuess} speedGuess={speedGuess} />}
         </div>
       </div>
     </div>

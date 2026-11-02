@@ -226,6 +226,83 @@ export function insideGiveOrTake(value: number, reference: Measurement): boolean
   return Math.abs(value - reference.value) <= reference.giveOrTake
 }
 
+// ---- The results (Step 6) ----
+// A found value beside a reference, each with its give-or-take: "the same" only when the two ranges reach each other (the sum of the give-or-takes is at least the difference); otherwise "more" or "less".
+export interface PairReading {
+  found: Measurement
+  reference: Measurement
+  difference: number
+  combinedGiveOrTake: number
+  overlap: boolean
+  reading: Comparison
+}
+export function pairReading(found: Measurement, reference: Measurement): PairReading {
+  const difference = Math.abs(found.value - reference.value)
+  const combinedGiveOrTake = found.giveOrTake + reference.giveOrTake
+  const overlap = difference <= combinedGiveOrTake
+  return { found, reference, difference, combinedGiveOrTake, overlap, reading: overlap ? 'the same' : found.value > reference.value ? 'more' : 'less' }
+}
+// A chance of 1 in N, as a run of fair coin flips that all land heads: log2(N). Used only for the 2021 paper's own p-value.
+export function coinFlipsInARow(chance: number): number {
+  if (!(chance > 0 && chance < 1)) throw new RangeError(`a chance must be between 0 and 1, got ${chance}`)
+  return Math.log2(1 / chance)
+}
+export const QUASAR_2021_CHANCE = 5e-7 // the 2021 paper's p-value, "one-sided" (abstract, read verbatim)
+
+export interface ResultsCheckUp {
+  speedFromAmplitude: PairReading // the speed worked out here from Planck's amplitude, beside the published speed
+  twoAnalyses: PairReading // Planck HFI 2020 beside SRoll2.2, two analyses of the same satellite's data
+  pageAmplitude: PairReading // the first-order amplitude from the measured speed, beside Planck's measured amplitude
+  quasarSize: { found: number; expected: number; reading: Comparison; timesExpected: number }
+  direction: { separationDegrees: number; paperStatesDegrees: number }
+}
+export function resultsCheckUp(): ResultsCheckUp {
+  const amplitudeFromSpeed = firstOrderAmplitudeK(MEASURED_SPEED_KM_S) * 1e6
+  return {
+    speedFromAmplitude: pairReading(
+      { value: speedFromAmplitudeKmS(PLANCK_DIPOLE_AMPLITUDE_UK.value), giveOrTake: speedFromAmplitudeKmS(PLANCK_DIPOLE_AMPLITUDE_UK.giveOrTake) },
+      PUBLISHED_SPEED_KM_S,
+    ),
+    twoAnalyses: pairReading(PLANCK_DIPOLE_AMPLITUDE_UK, SROLL_DIPOLE_AMPLITUDE_UK),
+    pageAmplitude: pairReading({ value: amplitudeFromSpeed, giveOrTake: 0 }, PLANCK_DIPOLE_AMPLITUDE_UK),
+    quasarSize: {
+      found: QUASAR_OBSERVED_AMPLITUDE,
+      expected: QUASAR_EXPECTED_AMPLITUDE,
+      reading: compare(QUASAR_OBSERVED_AMPLITUDE, QUASAR_EXPECTED_AMPLITUDE),
+      timesExpected: quasarObservedOverExpected(),
+    },
+    direction: { separationDegrees: quasarCmbSeparationDegrees(), paperStatesDegrees: QUASAR_OFFSET_DEGREES },
+  }
+}
+
+export interface StepsTable {
+  averageK: number
+  speedKmS: number
+  beta: number
+  betaOneInParts: number
+  aheadK: number
+  behindK: number
+  sidewaysK: number
+  aheadMinusBehindK: number
+  amplitudeFirstOrderMicrokelvin: number
+  speedFromPublishedAmplitudeKmS: number
+}
+export function stepsTable(): StepsTable {
+  const d = dipole(MEASURED_SPEED_KM_S)
+  return {
+    averageK: MICROWAVE_TEMPERATURE_K,
+    speedKmS: MEASURED_SPEED_KM_S,
+    beta: d.beta,
+    betaOneInParts: 1 / d.beta,
+    aheadK: d.aheadK,
+    behindK: d.behindK,
+    sidewaysK: d.sidewaysK,
+    aheadMinusBehindK: d.aheadMinusBehindK,
+    amplitudeFirstOrderMicrokelvin: firstOrderAmplitudeK(MEASURED_SPEED_KM_S) * 1e6,
+    speedFromPublishedAmplitudeKmS: speedFromAmplitudeKmS(PLANCK_DIPOLE_AMPLITUDE_UK.value),
+  }
+}
+
 // ---- The predictions' answers and buttons ----
 // Prediction 1: how much cooler the sky straight behind is than straight ahead, in kelvin, on a log ruler.
 export const DIFFERENCE_ANSWER_CHOICES = [

@@ -12,6 +12,11 @@ import {
   quasarCmbSeparationDegrees,
   skyColourFraction,
   ANGLE_CHOICES_DEGREES,
+  QUASAR_2021_CHANCE,
+  coinFlipsInARow,
+  pairReading,
+  resultsCheckUp,
+  stepsTable,
   COLOUR_FULL_SCALE_K,
   trialFigures,
   trialSkyColourFraction,
@@ -400,5 +405,75 @@ describe("Drawing A's trial settings (Step 5)", () => {
         expect(Math.abs(f.trial.aheadMinusBehindK - diff) / diff).toBeLessThan(1e-6)
       }
     }
+  })
+})
+
+describe('the results (Step 6)', () => {
+  it('reads two numbers as "the same" only when their give-or-takes reach each other', () => {
+    expect(pairReading({ value: 10, giveOrTake: 1 }, { value: 11, giveOrTake: 1 }).reading).toBe('the same')
+    expect(pairReading({ value: 10, giveOrTake: 1 }, { value: 12, giveOrTake: 1 }).reading).toBe('the same') // 2 = 1 + 1, they just touch
+    expect(pairReading({ value: 10, giveOrTake: 1 }, { value: 12.5, giveOrTake: 1 }).reading).toBe('less')
+    expect(pairReading({ value: 13, giveOrTake: 1 }, { value: 10, giveOrTake: 1 }).reading).toBe('more')
+    const p = pairReading({ value: 10, giveOrTake: 0.5 }, { value: 11, giveOrTake: 0.25 })
+    expect(p.difference).toBe(1)
+    expect(p.combinedGiveOrTake).toBe(0.75)
+    expect(p.overlap).toBe(false)
+  })
+  it('fails a give-or-take ten times too wide: a tenfold looser pair that should be apart reads "the same"', () => {
+    expect(pairReading({ value: 370, giveOrTake: 0.11 }, { value: 369.82, giveOrTake: 0.01 }).reading).toBe('more')
+    expect(pairReading({ value: 370, giveOrTake: 1.1 }, { value: 369.82, giveOrTake: 0.1 }).reading).toBe('the same')
+  })
+  it('finds the speed from the Planck amplitude the same as the published speed', () => {
+    const r = resultsCheckUp().speedFromAmplitude
+    expect(r.reading).toBe('the same')
+    expect(r.found.value).toBeCloseTo(369.816, 3)
+    expect(r.found.giveOrTake).toBeCloseTo(0.0704, 3)
+    expect(r.reference).toEqual(PUBLISHED_SPEED_KM_S)
+    expect(r.difference).toBeLessThan(0.01)
+  })
+  it('finds the two analyses of the Planck amplitude the same: they differ by 0.18 and their give-or-takes add to 1.00', () => {
+    const r = resultsCheckUp().twoAnalyses
+    expect(r.reading).toBe('the same')
+    expect(r.difference).toBeCloseTo(0.18, 10)
+    expect(r.combinedGiveOrTake).toBeCloseTo(1.0, 10)
+  })
+  it("finds the page's first-order amplitude (3362.12 uK) the same as Planck's, inside its 0.64", () => {
+    const r = resultsCheckUp().pageAmplitude
+    expect(r.found.value).toBeCloseTo(3362.116, 2)
+    expect(r.reading).toBe('the same')
+    expect(r.difference).toBeCloseTo(0.036, 2)
+  })
+  it('reads the quasar dipole as more than expected, 2.22 times', () => {
+    const q = resultsCheckUp().quasarSize
+    expect(q.reading).toBe('more')
+    expect(q.timesExpected).toBeCloseTo(2.22, 10)
+    expect(q.found).toBe(0.01554)
+    expect(q.expected).toBe(0.007)
+  })
+  it('gives the direction offset as 27.79 degrees beside the paper\'s 27.8', () => {
+    const d = resultsCheckUp().direction
+    expect(d.separationDegrees).toBeCloseTo(27.79, 2)
+    expect(d.paperStatesDegrees).toBe(27.8)
+  })
+  it('gives the steps table: beta 0.0012336 (1 part in 810.6), the temperatures, 6.7242 mK and 369.82 km/s', () => {
+    const t = stepsTable()
+    expect(t.averageK).toBe(2.72548)
+    expect(t.speedKmS).toBe(369.82)
+    expect(t.beta).toBeCloseTo(1.2336e-3, 7)
+    expect(t.betaOneInParts).toBeCloseTo(810.6, 1)
+    expect(t.aheadK).toBeCloseTo(2.728844, 6)
+    expect(t.behindK).toBeCloseTo(2.72212, 6)
+    expect(t.sidewaysK).toBeCloseTo(2.725478, 6)
+    expect(t.aheadMinusBehindK * 1000).toBeCloseTo(6.7242, 4)
+    expect(t.amplitudeFirstOrderMicrokelvin).toBeCloseTo(3362.116, 2)
+    expect(t.speedFromPublishedAmplitudeKmS).toBeCloseTo(369.816, 3)
+  })
+  it('turns a chance of 1 in N into a run of coin flips: the 2021 chance of 5 in 10 million is about 21 heads in a row', () => {
+    expect(QUASAR_2021_CHANCE).toBe(5e-7)
+    expect(coinFlipsInARow(0.5)).toBe(1)
+    expect(coinFlipsInARow(0.125)).toBeCloseTo(3, 12)
+    expect(coinFlipsInARow(QUASAR_2021_CHANCE)).toBeCloseTo(20.93, 2)
+    expect(() => coinFlipsInARow(0)).toThrow(RangeError)
+    expect(() => coinFlipsInARow(1)).toThrow(RangeError)
   })
 })
