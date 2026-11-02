@@ -30,7 +30,9 @@ import { TimeTravelExperiment } from './components/TimeTravelExperiment'
 import { AddingSpeedsExperiment } from './components/AddingSpeedsExperiment'
 import { MuonLifetimeExperiment } from './components/MuonLifetimeExperiment'
 import { SunDelayExperiment } from './components/SunDelayExperiment'
+import { EarlyUniverseRecipeExperiment } from './components/EarlyUniverseRecipeExperiment'
 import { tutorFigures as sdTutorFigures } from './physics/sunDelay'
+import { HELIUM_TO_HYDROGEN_WEIGHT as erHeliumWeight, tutorFigures as erTutorFigures } from './physics/earlyUniverseRecipe'
 import {
   APPROACH_SPEED_KM_S as lgApproach,
   MERGER_DISTANCE_KPC as lgRing,
@@ -400,6 +402,18 @@ function sunDelaySummary(): string {
     `The Viking landers in 1979 checked the delay to about 1 part in 1,000, and the Cassini spacecraft in 2002 to ${t.tests.cassiniPpm} parts per million, ${Math.round(t.tests.vikingOverCassini)} times closer. The Cassini paper's abstract gives gamma, which is 1 in general relativity and 0 in the Newtonian model, as 1 + (${e5(t.gamma.gammaMinusOne)} ± ${e5(t.gamma.giveOrTake)}), so the gap between the two pictures is about ${commas(t.gamma.gapOverGiveOrTake)} times the give-or-take of the test, and real signals follow the full calculation and not the half. ` +
     `That the Sun adds time to a signal that passes it, by this amount, is settled, and these tests are old. This page's model is simpler than the real tests: it uses only the main part of the formula, a fuller calculation adds a smaller term thought to be about ${n1(t.fullerTermUs)} µs (remembered, not read from a source), and it leaves out the Sun's hot outer atmosphere, the planets' gravity and the motion of the Earth and Venus. ` +
     `The numbers come from this page's own calculation, NASA's release about the Cassini test, the abstract of the Cassini paper and Wikipedia's account of Shapiro's figures (his paper was not read). No paper was read in full.`
+  )
+}
+
+function earlyUniverseRecipeSummary(): string {
+  const t = erTutorFigures()
+  const n1 = (x: number) => x.toFixed(1)
+  const n2 = (x: number) => x.toFixed(2)
+  return (
+    `What was the early universe's recipe? About a quarter of the weight of the early universe's ordinary matter was helium (${n2(t.lbtPercent)} percent, measured with the Large Binocular Telescope) and about three-quarters was hydrogen, with only traces of deuterium and lithium. Counting atoms, that is ${n2(t.atomsFromMeasured)} helium atoms for every 100 hydrogen atoms, because a helium atom weighs ${erHeliumWeight} times as much as a hydrogen atom. ` +
+    `This page's own simplified calculation runs in steps. Neutrons were scarce at the start, 1 for every ${n1(1 / t.real.freezeOutNeutronsPerProton)} protons, by a temperature that this page chose and did not measure. They fell to 1 for every ${n1(t.real.neutronsPerProtonAsOneIn)} protons while they waited ${t.waitS} seconds, because a free neutron lasts only ${Math.round(t.lifetimeS)} seconds on average, and every neutron left was paired with a proton in a helium-4 nucleus. That gives ${n1(t.real.heliumMassShare * 100)} percent helium by weight. A longer wait gives less: ${n1(t.longHeliumPercent)} percent after ${t.longWaitS} seconds. The calculation is a teaching estimate, not a test. ` +
+    `The real tests: for helium (the Large Binocular Telescope's value) and for deuterium, the published calculation and the measurement agree within their give-or-takes. A second helium value, from the EMPRESS collaboration, is lower and its range does not reach the calculation's. For lithium-7 the published calculation is ${n1(t.lithiumRatio)} times the measurement, and no cause has been settled. ` +
+    `That the light elements were made in the first minutes, and that helium and deuterium match the measurements, is settled, and these tests are long-standing. The lithium gap is open. The numbers come from this page's own calculation, a 2026 review (mostly read through a summary), the abstracts of the Large Binocular Telescope and EMPRESS papers, NIST's page on the neutron's lifetime and two Berkeley Lab pages. No paper was read in full, and the Particle Data Group's review could not be read.`
   )
 }
 
@@ -1225,6 +1239,14 @@ const chapters: Chapter[] = [
     // Chapter summary and "What's next": Claude's DRAFT of 2026-11-01, for the owner's approval. "What's next" is a planned direction only: Experiment 6 has no specification yet.
     learned: sunDelaySummary(),
     next: 'The next experiment in this group turns from the Sun to the early universe: why the first atomic nuclei came out in the proportions they did, and what the amounts of the lightest elements left in the sky tell us.',
+  },
+  {
+    title: 'What was the early universe\'s recipe?',
+    group: 'Evidence and Imagination: What Has Been Tested, What Has Not',
+    Component: EarlyUniverseRecipeExperiment,
+    // Chapter summary and "What's next": Claude's DRAFT of 2026-11-01, for the owner's approval. "What's next" is a planned direction only: Experiment 7 has no specification yet.
+    learned: earlyUniverseRecipeSummary(),
+    next: 'The next experiment in this group turns from the first minutes of the universe to the glow they left behind: whether the sky’s microwave glow is equally warm in every direction, and what that could tell us about our own motion.',
   },
 ]
 
