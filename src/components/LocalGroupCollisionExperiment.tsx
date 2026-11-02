@@ -197,6 +197,10 @@ export function LocalGroupCollisionExperiment({ onComplete, onTutorComplete }: L
           </p>
 
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+            <strong>One more thing.</strong> This is the last experiment in this group. Once you have run it, scroll down to “Putting It All Together” below. It steps back and sorts what all twenty-four experiments found by how settled each finding is.
+          </p>
+
+          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Want to know more?</strong> Plainer-language pages are listed here. Links open in a new tab. This page was written as of October 2026. The papers, and the NASA and ESA pages about the two studies, are listed after the run, because
             they give numbers that the predictions ask for.
           </p>
