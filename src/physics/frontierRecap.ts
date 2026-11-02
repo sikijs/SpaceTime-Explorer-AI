@@ -3,7 +3,7 @@ import { PUBLISHED_SIGMAS } from './evolvingDarkEnergy'
 import { DESI_JULY_2026 } from './neutrinoMass'
 import { MOM_Z14_REDSHIFT } from './earliestGalaxies'
 import { PUBLISHED_RESULTS as WIDE_BINARY_RESULTS } from './wideBinaries'
-import { ALPHA_2023 } from './antimatterGravity'
+import { ALPHA_2023, combinedUncertainty } from './antimatterGravity'
 import { JILA_2022 } from './clockHeight'
 import { NIST_2024 } from './lunarClocks'
 import { PARKER } from './fastestSpacecraft'
@@ -64,10 +64,14 @@ function wideBinaryGamma2026(): number {
   return result.value
 }
 
+function pulsarResult(id: string) {
+  const result = PULSAR_RESULTS.find((r) => r.id === id)
+  if (!result) throw new Error(`The ${id} result is missing from the module`)
+  return result
+}
+
 function nanogravSigmaHigh(): number {
-  const result = PULSAR_RESULTS.find((r) => r.id === 'nanograv')
-  if (!result) throw new Error('The NANOGrav result is missing from the module')
-  return result.sigmaHigh
+  return pulsarResult('nanograv').sigmaHigh
 }
 
 function supernovaMassRange(): [number, number] {
@@ -75,10 +79,44 @@ function supernovaMassRange(): [number, number] {
   return [Math.min(...estimates.map((e) => e.lowSolar)), Math.max(...estimates.map((e) => e.highSolar))]
 }
 
+function dovekieSigma(): number {
+  const bar = PUBLISHED_SIGMAS.find((b) => b.name.startsWith('DES Y5 recalibrated'))
+  if (!bar) throw new Error('The recalibrated DES bar is missing from the module')
+  return bar.sigma
+}
+
 function lymanAlphaSigma(): number {
   const bar = PUBLISHED_SIGMAS.find((b) => b.name.includes('July 2026 Lyman-alpha'))
   if (!bar) throw new Error('The July 2026 DESI bar is missing from the module')
   return bar.sigma
+}
+
+// The numbers the recap's explanatory text quotes (section 3 of the specification), read from the experiments' modules so the text
+// cannot drift from them (CLAUDE.md §9).
+export interface FrontierFacts {
+  // Experiment 2: the lowest and highest of DESI's two bars that the page puts side by side, in sigma.
+  desiSigmaLow: number
+  desiSigmaHigh: number
+  // Experiment 21: the pulsar-timing evidence, from the lowest of the arrays' evidence to NANOGrav's, in sigma.
+  pulsarSigmaLow: number
+  pulsarSigmaHigh: number
+  // Experiment 8: ALPHA-g's ratio to g and the page's combined give-or-take.
+  antimatterRatio: number
+  antimatterPlusMinus: number
+  // Experiment 9: the height of the JILA clock's test, in millimetres.
+  jilaMillimetres: number
+}
+
+export function frontierFacts(): FrontierFacts {
+  return {
+    desiSigmaLow: lymanAlphaSigma(),
+    desiSigmaHigh: dovekieSigma(),
+    pulsarSigmaLow: pulsarResult('epta').sigmaLow,
+    pulsarSigmaHigh: nanogravSigmaHigh(),
+    antimatterRatio: ALPHA_2023.ratio,
+    antimatterPlusMinus: combinedUncertainty(ALPHA_2023.statSys, ALPHA_2023.simulation),
+    jilaMillimetres: JILA_2022.millimetres,
+  }
 }
 
 // Every claim of the group, as in the specification's table. One experiment can hold claims of several labels, so the recap sorts
@@ -90,17 +128,17 @@ export function frontierClaims(): Claim[] {
       experiment: 1,
       label: 'Contested',
       claim: 'The two ways of measuring the expansion rate disagree',
-      figure: { value: tensionSigma(LATE_MEASUREMENTS[0], EARLY_MEASUREMENT), decimals: 2, unit: 'sigma', what: 'the gap between SH0ES 2022 and Planck 2018' },
+      figure: { value: tensionSigma(LATE_MEASUREMENTS[0], EARLY_MEASUREMENT), decimals: 2, unit: 'sigma', what: 'the gap between the SH0ES and Planck measurements' },
     },
     { experiment: 1, label: 'Open', claim: 'Why the two ways of measuring disagree' },
     {
       experiment: 2,
       label: 'Contested',
       claim: 'DESI’s hint that dark energy weakens with time',
-      figure: { value: lymanAlphaSigma(), decimals: 1, unit: 'sigma', what: 'DESI with the CMB, with the July 2026 Lyman-alpha analysis' },
+      figure: { value: lymanAlphaSigma(), decimals: 1, unit: 'sigma', what: 'DESI’s July 2026 analysis, together with the microwave background' },
     },
-    { experiment: 3, label: 'Contested', claim: 'Whether the Dark Energy Survey’s lumpiness is below the microwave background’s (KiDS’s tension went away)' },
-    { experiment: 4, label: 'Contested', claim: 'How small the limit on the neutrinos’ total mass has become, and whether it leaves any room', figure: { value: DESI_JULY_2026.value, decimals: 4, unit: 'eV', what: 'DESI’s July 2026 ceiling on the total neutrino mass' } },
+    { experiment: 3, label: 'Contested', claim: 'Whether the Dark Energy Survey’s lumpiness is below the microwave background’s; the other survey, KiDS, no longer disagrees' },
+    { experiment: 4, label: 'Contested', claim: 'How small the limit on the neutrinos’ total mass has become, and whether it leaves any room', figure: { value: DESI_JULY_2026.value, decimals: 4, unit: 'eV', what: 'DESI’s July 2026 ceiling on the neutrinos’ total mass' } },
     {
       experiment: 5,
       label: 'Strong evidence',
@@ -114,7 +152,7 @@ export function frontierClaims(): Claim[] {
       experiment: 7,
       label: 'Contested',
       claim: 'Whether gravity changes at very small pulls',
-      figure: { value: wideBinaryGamma2026(), decimals: 2, unit: '', what: 'the 2026 wide-binary speed-up (g observed ÷ g predicted)' },
+      figure: { value: wideBinaryGamma2026(), decimals: 2, unit: '', what: 'the 2026 speed-up of wide binaries, observed over predicted' },
     },
     {
       experiment: 8,
@@ -132,8 +170,8 @@ export function frontierClaims(): Claim[] {
     {
       experiment: 10,
       label: 'Strong evidence',
-      claim: 'A lunar clock gains about 56 microseconds a day (a calculation)',
-      figure: { value: NIST_2024.gainMicrosecondsPerDay, decimals: 0, unit: 'µs a day', what: 'the gain of a clock on the Moon over one on the Earth, from the NIST paper' },
+      claim: 'A clock on the Moon runs faster than one on the Earth, by calculation',
+      figure: { value: NIST_2024.gainMicrosecondsPerDay, decimals: 0, unit: 'µs a day', what: 'microseconds gained each day, in the NIST paper' },
     },
     { experiment: 10, label: 'Open', claim: 'No clock on the Moon has measured it yet' },
     {
@@ -142,7 +180,6 @@ export function frontierClaims(): Claim[] {
       claim: 'The probe’s distance and speed, and the physics',
       figure: { value: PARKER.closestApproachSpeed / 1000, decimals: 2, unit: 'km/s', what: 'Parker Solar Probe’s speed at its closest approach' },
     },
-    { experiment: 12, label: 'Settled', claim: 'What a red supergiant is' },
     { experiment: 12, label: 'Strong evidence', claim: 'Betelgeuse has a companion' },
     { experiment: 12, label: 'Open', claim: 'The companion’s mass and nature' },
     { experiment: 13, label: 'Strong evidence', claim: 'A red supergiant exploded, and almost all the energy left as neutrinos' },
@@ -154,8 +191,8 @@ export function frontierClaims(): Claim[] {
     },
     { experiment: 13, label: 'Open', claim: 'Why it shed so much gas' },
     { experiment: 14, label: 'Strong evidence', claim: 'This one remnant came from a double detonation of a white dwarf' },
-    { experiment: 14, label: 'Contested', claim: 'A 2025 paper reads the two calcium shells another way' },
-    { experiment: 14, label: 'Open', claim: 'How many Type Ia supernovae explode this way' },
+    { experiment: 14, label: 'Contested', claim: 'A 2025 paper reads the two shells of calcium in the remnant another way' },
+    { experiment: 14, label: 'Open', claim: 'How many white-dwarf explosions (Type Ia supernovae) happen this way' },
     {
       experiment: 15,
       label: 'Strong evidence',
@@ -167,7 +204,7 @@ export function frontierClaims(): Claim[] {
       experiment: 17,
       label: 'Strong evidence',
       claim: 'What was seen: the star faded with no bright supernova',
-      figure: { value: FAILED_SUPERNOVA_DATA.visibleFadeFactor, decimals: 0, unit: 'times', what: 'the fade in visible light' },
+      figure: { value: FAILED_SUPERNOVA_DATA.visibleFadeFactor, decimals: 0, unit: 'times', what: 'how much the star faded in visible light' },
     },
     { experiment: 17, label: 'Contested', claim: 'What it became: a black hole, or two stars that merged' },
     { experiment: 17, label: 'Open', claim: 'How often massive stars fail' },
@@ -175,7 +212,7 @@ export function frontierClaims(): Claim[] {
       experiment: 18,
       label: 'Strong evidence',
       claim: 'The total horizon area rose, as Hawking’s 1971 theorem requires',
-      figure: { value: areaAfterKm2() / totalAreaBeforeKm2(), decimals: 2, unit: 'times', what: 'the area after the merger over the area before' },
+      figure: { value: areaAfterKm2() / totalAreaBeforeKm2(), decimals: 2, unit: 'times', what: 'the area after the merger divided by the area before' },
     },
     {
       experiment: 19,
@@ -194,7 +231,7 @@ export function frontierClaims(): Claim[] {
       experiment: 21,
       label: 'Strong evidence',
       claim: 'The ring sizes are close to what the masses and distances give',
-      figure: { value: M87_STAR.ringMicroarcsec, decimals: 0, unit: 'µas', what: 'the measured ring of M87*' },
+      figure: { value: M87_STAR.ringMicroarcsec, decimals: 0, unit: 'microarcseconds', what: 'the measured ring of M87*' },
     },
     { experiment: 21, label: 'Open', claim: 'How tightly that tests gravity' },
     {
@@ -204,7 +241,7 @@ export function frontierClaims(): Claim[] {
       figure: { value: nanogravSigmaHigh(), decimals: 0, unit: 'sigma', what: 'the upper end of NANOGrav’s 15-year evidence' },
     },
     { experiment: 22, label: 'Open', claim: 'What makes it' },
-    { experiment: 23, label: 'Settled', claim: 'The Eddington limit and exponential growth' },
+    { experiment: 23, label: 'Settled', claim: 'The limit on how fast a black hole can feed (the Eddington limit), and growth that multiplies' },
     {
       experiment: 23,
       label: 'Strong evidence',
@@ -222,8 +259,8 @@ export function frontierClaims(): Claim[] {
     {
       experiment: 25,
       label: 'Contested',
-      claim: 'Whether they merge within 10 billion years',
-      figure: { value: PUBLISHED_2026.mergerPercent, decimals: 0, unit: 'percent', what: 'the 2026 study’s merger odds (the 2025 study gave ' + PUBLISHED_2025.mergerPercentWithin10Gyr + ' percent)' },
+      claim: `Whether they merge within 10 billion years: the 2025 study gave ${PUBLISHED_2025.mergerPercentWithin10Gyr} percent`,
+      figure: { value: PUBLISHED_2026.mergerPercent, decimals: 0, unit: 'percent', what: 'the 2026 study' },
     },
     { experiment: 25, label: 'Open', claim: 'What Andromeda’s sideways motion really is, until Gaia’s next release' },
   ]

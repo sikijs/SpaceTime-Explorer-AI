@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EXPERIMENT_NUMBERS, STATUS_LABELS, claimsWithLabel, displayNumber, experimentsWithLabel, frontierClaims, labelCounts } from './frontierRecap'
+import { EXPERIMENT_NUMBERS, STATUS_LABELS, claimsWithLabel, displayNumber, experimentsWithLabel, frontierClaims, frontierFacts, labelCounts } from './frontierRecap'
 
 // Required tests of docs/experiments/cosmic-horizons/closing-recap.md. The expected numbers below are written out by hand from the
 // specification's table, so a change to an earlier experiment that moves a figure shows up here.
@@ -49,8 +49,8 @@ describe('frontier recap: the numbers a learner sees', () => {
 })
 
 describe('frontier recap: the sorting by label', () => {
-  it('Settled claims are in experiments 9, 11, 12, 23 and 24', () => {
-    expect(experimentsWithLabel('Settled')).toEqual([9, 11, 12, 23, 24])
+  it('Settled claims are in experiments 9, 11, 23 and 24 (Experiment 12’s “what a red supergiant is” was dropped as not a finding)', () => {
+    expect(experimentsWithLabel('Settled')).toEqual([9, 11, 23, 24])
   })
 
   it('Contested claims are in experiments 1, 2, 3, 4, 7, 13, 14, 17 and 25', () => {
@@ -68,11 +68,34 @@ describe('frontier recap: the sorting by label', () => {
     }
   })
 
-  it('experiments 12, 13, 14, 17 and 25 hold three different labels, one experiment with several labels', () => {
-    for (const n of [12, 13, 14, 17, 25]) {
-      const labels = new Set(frontierClaims().filter((c) => c.experiment === n).map((c) => c.label))
-      expect(labels.size, `Experiment ${n}`).toBe(3)
-    }
+  it('experiments 13, 14, 17 and 25 hold three different labels, and Experiment 12 two (Strong evidence and Open)', () => {
+    const labelsOf = (n: number) => new Set(frontierClaims().filter((c) => c.experiment === n).map((c) => c.label))
+    for (const n of [13, 14, 17, 25]) expect(labelsOf(n).size, `Experiment ${n}`).toBe(3)
+    expect([...labelsOf(12)].sort()).toEqual(['Open', 'Strong evidence'])
+  })
+})
+
+describe('frontier recap: the numbers in the explanatory text', () => {
+  const facts = frontierFacts()
+
+  it('Experiment 2: DESI’s hint sits between 2.7 and 3.2 sigma', () => {
+    expect(facts.desiSigmaLow).toBeCloseTo(2.7, 5)
+    expect(facts.desiSigmaHigh).toBeCloseTo(3.2, 5)
+  })
+
+  it('Experiment 21: the pulsar-timing hum runs from 3 to 4 sigma, below 5', () => {
+    expect(facts.pulsarSigmaLow).toBe(3)
+    expect(facts.pulsarSigmaHigh).toBe(4)
+    expect(facts.pulsarSigmaHigh).toBeLessThan(5)
+  })
+
+  it('Experiment 8: ALPHA-g’s 0.75 has a combined give-or-take of 0.21', () => {
+    expect(facts.antimatterRatio).toBeCloseTo(0.75, 2)
+    expect(facts.antimatterPlusMinus).toBeCloseTo(0.206, 3)
+  })
+
+  it('Experiment 9: the JILA test was across 1 millimetre', () => {
+    expect(facts.jilaMillimetres).toBe(1)
   })
 })
 
@@ -157,7 +180,9 @@ describe('frontier recap: the figures the specification quotes, each read from t
     expect(figureOf(24).value).toBeCloseTo(18.7, 1)
   })
 
-  it('Experiment 25: the 2026 study gave about 90 percent', () => {
+  it('Experiment 25: the 2026 study gave about 90 percent, and the claim names the 2025 study’s 50', () => {
     expect(figureOf(25).value).toBe(90)
+    const claim = frontierClaims().find((c) => c.experiment === 25 && c.label === 'Contested')
+    expect(claim?.claim).toContain('50 percent')
   })
 })

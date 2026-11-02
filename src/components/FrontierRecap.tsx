@@ -2,7 +2,7 @@
 // results by the four status labels each experiment already carries. Every figure comes from `frontierClaims`, which reads it from the
 // earlier experiment's own module, so it cannot drift from what the learner saw. See docs/experiments/cosmic-horizons/closing-recap.md
 // (approved with defaults on 2026-11-02). The wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1).
-import { STATUS_LABELS, claimsWithLabel, displayNumber, frontierClaims, labelCounts } from '../physics/frontierRecap'
+import { STATUS_LABELS, claimsWithLabel, displayNumber, frontierClaims, frontierFacts, labelCounts } from '../physics/frontierRecap'
 import type { Claim, StatusLabel } from '../physics/frontierRecap'
 
 const textStyle = { fontSize: '0.9375rem', lineHeight: 1.6 } as const
@@ -39,6 +39,7 @@ const LABEL_MEANINGS: Record<StatusLabel, { meaning: string; example: string }> 
 export function FrontierRecap() {
   const counts = labelCounts()
   const total = frontierClaims().length
+  const facts = frontierFacts()
 
   return (
     <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem', ...textStyle }}>
@@ -62,10 +63,26 @@ export function FrontierRecap() {
         the star’s fading is strong evidence, what it became is contested, and how often stars do this is open.
       </p>
 
+      <h3>Words used in the lists below</h3>
+      <ul>
+        <li>
+          <strong>Sigma</strong> says how big a gap or a hint is, counted in “give-or-takes” (how far a measured number might be off). The larger the sigma, the less likely it is to be chance. About 3 sigma is a hint, and 5 sigma is the level usually asked for before calling something a discovery.
+        </li>
+        <li>
+          <strong>Redshift</strong> says how much the expansion of the universe has stretched a galaxy’s light. The higher the redshift, the farther away the galaxy is and the earlier in the universe we see it.
+        </li>
+        <li>
+          <strong>Microarcsecond</strong> is a millionth of an arcsecond, a tiny angle in the sky. An arcsecond is itself a 3,600th of a degree.
+        </li>
+        <li>
+          <strong>Names</strong> such as SH0ES, DESI, NANOGrav, JILA and KiDS are the teams, surveys and instruments the experiments introduced. Each experiment’s page says what they are.
+        </li>
+      </ul>
+
       <h3>2. What the group found, by label</h3>
       <p>
-        The twenty-four experiments hold {total} separate findings between them.{' '}
-        {counts.map((c, i) => `${c.claims} ${c.claims === 1 ? 'is' : 'are'} ${c.label.toLowerCase()}, in ${c.experiments} experiments${i < counts.length - 1 ? '; ' : '.'}`).join('')}{' '}
+        The twenty-four experiments hold {total} separate findings between them:{' '}
+        {counts.map((c, i) => `${c.claims} ${c.label.toLowerCase()}${i < counts.length - 2 ? ', ' : i === counts.length - 2 ? ' and ' : '.'}`).join('')}{' '}
         This is a count of findings, not a ranking of experiments.
       </p>
       {STATUS_LABELS.map((label) => (
@@ -85,20 +102,22 @@ export function FrontierRecap() {
       <h3>3. What moves a result from one label to another</h3>
       <ul>
         <li>
-          <strong>A second independent method.</strong> A clock higher up ticking faster is settled because it was seen across a millimetre, a
-          centimetre and, in field tests, hundreds of metres (Experiment 9).
+          <strong>A second independent method.</strong> A clock higher up ticking faster is settled because it was seen across a height of{' '}
+          {facts.jilaMillimetres} millimetre in the laboratory and, in field tests, across hundreds of metres (Experiment 9).
         </li>
         <li>
-          <strong>A bigger “sigma”.</strong> A hint at about 3 sigma can fade or grow. DESI’s hint about dark energy sits at 2.7 to 3.2 sigma
-          (Experiment 2), and the pulsar-timing hum at about 3 to 4 sigma, not yet 5 (Experiment {displayNumber(22)}).
+          <strong>A bigger “sigma”.</strong> A hint at about 3 sigma can fade or grow. DESI’s hint about dark energy sits at {facts.desiSigmaLow} to{' '}
+          {facts.desiSigmaHigh} sigma (Experiment 2), and the pulsar-timing hum at about {facts.pulsarSigmaLow} to {facts.pulsarSigmaHigh} sigma, not yet 5
+          (Experiment {displayNumber(22)}).
         </li>
         <li>
           <strong>A tension that goes away.</strong> KiDS’s lumpiness tension went away with a larger survey; the Dark Energy Survey’s has not
           (Experiment 3).
         </li>
         <li>
-          <strong>A better measurement of the same thing.</strong> ALPHA-g’s 0.75 ± 0.21 of g could be narrowed by a later, more precise
-          campaign (Experiment 8).
+          <strong>A better measurement of the same thing.</strong> ALPHA-g’s {facts.antimatterRatio} ± {facts.antimatterPlusMinus.toFixed(2)} of g is a single measurement
+          with a wide give-or-take. Its team plans upgrades, and other experiments at CERN aim at the same question by different methods, so a more
+          precise measurement is planned (Experiment 8).
         </li>
       </ul>
 
