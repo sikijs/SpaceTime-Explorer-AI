@@ -25,11 +25,24 @@ export interface ChapterRef {
   group: string
 }
 
-// How many chapters each group has, in the order the groups first appear in the list given.
-export function groupSizes(chapters: ChapterRef[]): { group: string; chapters: number }[] {
+// The Conclusion page is itself a chapter in the app's list, but it is not one of the project's experiments, so it is left out of every
+// count on the page (the page would otherwise count itself).
+export const CONCLUSION_GROUP = 'Conclusion'
+
+export function withoutConclusion<T extends ChapterRef>(chapters: T[]): T[] {
+  return chapters.filter((c) => c.group !== CONCLUSION_GROUP)
+}
+
+// How many chapters each group has. The groups come in the order given (the sidebar's `groupOrder`); a group not in that order follows,
+// in the order it first appears in the chapter list. Without an order, the groups come in the order they first appear in the list.
+export function groupSizes(chapters: ChapterRef[], order: string[] = []): { group: string; chapters: number }[] {
   const sizes = new Map<string, number>()
   for (const c of chapters) sizes.set(c.group, (sizes.get(c.group) ?? 0) + 1)
-  return [...sizes].map(([group, count]) => ({ group, chapters: count }))
+  const rank = (group: string) => {
+    const i = order.indexOf(group)
+    return i === -1 ? order.length : i
+  }
+  return [...sizes].map(([group, count]) => ({ group, chapters: count })).sort((a, b) => rank(a.group) - rank(b.group))
 }
 
 // The groups that carry no labels yet (no entry in LABELLED_GROUPS), given the app's group names.
@@ -76,3 +89,34 @@ export function labelledChapterShare(chapters: ChapterRef[]): { labelled: number
   const labelled = new Set(LABELLED_GROUPS.map((g) => g.group))
   return { labelled: chapters.filter((c) => labelled.has(c.group)).length, total: chapters.length }
 }
+
+// The few contested and open findings the Conclusion page names (the specification's section 3). Each is one claim from a labelled group,
+// found by group, experiment number and label, so the wording and the figures come from the claim lists.
+export interface FeaturedKey {
+  group: string
+  experiment: number
+  label: StatusLabel
+}
+
+export const FEATURED: FeaturedKey[] = [
+  { group: 'Cosmic Horizons', experiment: 1, label: 'Contested' },
+  { group: 'Cosmic Horizons', experiment: 2, label: 'Contested' },
+  { group: 'Evidence and Imagination: What Has Been Tested, What Has Not', experiment: 7, label: 'Contested' },
+  { group: 'Evidence and Imagination: What Has Been Tested, What Has Not', experiment: 1, label: 'Open' },
+  { group: 'Evidence and Imagination: What Has Been Tested, What Has Not', experiment: 2, label: 'Open' },
+  { group: 'Evidence and Imagination: What Has Been Tested, What Has Not', experiment: 6, label: 'Open' },
+]
+
+export interface FeaturedFinding extends FeaturedKey {
+  claim: Claim
+}
+
+export function featuredFindings(): FeaturedFinding[] {
+  return FEATURED.map((key) => {
+    const entry = LABELLED_GROUPS.find((g) => g.group === key.group)
+    const claim = entry?.claims().find((c) => c.experiment === key.experiment && c.label === key.label)
+    if (!claim) throw new Error(`No ${key.label} claim for experiment ${key.experiment} of ${key.group}`)
+    return { ...key, claim }
+  })
+}
+

@@ -125,12 +125,20 @@ import { AberrationExperiment } from './components/AberrationExperiment'
 import { DopplerShiftExperiment } from './components/DopplerShiftExperiment'
 import { TravelerSkyExperiment } from './components/TravelerSkyExperiment'
 import { RotatedObjectExperiment } from './components/RotatedObjectExperiment'
+import { ProjectConclusion } from './components/ProjectConclusion'
 
 interface Chapter {
   title: string
   // The named group of experiments this chapter belongs to; shown once as the page heading.
   group: string
-  Component: ComponentType<{ onComplete?: () => void; onTutorComplete?: () => void }>
+  // `chapterRefs` and `onSelectChapter` are used only by the Conclusion page, which looks across every chapter; experiments ignore them.
+  Component: ComponentType<{
+    onComplete?: () => void
+    onTutorComplete?: () => void
+    chapterRefs?: { title: string; group: string }[]
+    groupOrder?: string[]
+    onSelectChapter?: (index: number) => void
+  }>
   // Shown below the experiment once the learner has run it and finished the tutor's questions.
   learned: string
   next: string
@@ -148,6 +156,7 @@ const groupOrder = [
   'Spacetime Geometry: What Is Real, What Is Seen',
   'Evidence and Imagination: What Has Been Tested, What Has Not',
   'Cosmic Horizons',
+  'Conclusion',
 ]
 
 // A one-sentence overview of a group, shown under its title on every chapter page of that group. Only groups that have one
@@ -1277,6 +1286,15 @@ const chapters: Chapter[] = [
     learned: microwaveDipoleSummary(),
     next: 'This is the last experiment in this group. The group that follows, Cosmic Horizons, turns to recent results that are still being tested, beginning with two measurements of how fast the universe is expanding that do not agree.',
   },
+  // The Conclusion page (docs/experiments/conclusion/00-conclusion-page.md): a last chapter, not an experiment, with no tutor, so it has no summary block (`learned` is empty).
+  // Appended at the end so that the saved progress (kept by position in this list) is not disturbed; the sidebar follows `groupOrder`, which puts it last.
+  {
+    title: 'Looking back: what do we know, how well, and what is still open?',
+    group: 'Conclusion',
+    Component: ProjectConclusion,
+    learned: '',
+    next: '',
+  },
 ]
 
 // The chapters in the order the sidebar shows them (by group, then by position in `chapters`). Previous and Next follow this order; the saved progress still uses positions in `chapters`.
@@ -1477,6 +1495,9 @@ export function App() {
                   key={currentChapter}
                   onComplete={() => markComplete(currentChapter)}
                   onTutorComplete={() => markExplained(currentChapter)}
+                  chapterRefs={chapters}
+                  groupOrder={groupOrder}
+                  onSelectChapter={setCurrentChapter}
                 />
               </>
             ) : (

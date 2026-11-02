@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { frontierClaims } from './frontierRecap'
 import { evidenceClaims } from './evidenceClaims'
-import { LABELLED_GROUPS, groupCounts, groupSizes, labelledChapterShare, labelledExperiments, totalCounts, unlabelledGroups } from './projectConclusion'
+import { CONCLUSION_GROUP, FEATURED, LABELLED_GROUPS, featuredFindings, groupCounts, groupSizes, labelledChapterShare, labelledExperiments, totalCounts, unlabelledGroups, withoutConclusion } from './projectConclusion'
 
 // Required tests of docs/experiments/conclusion/00-conclusion-page.md. The expected numbers are written out by hand from the project's
 // chapter list (88 chapters in 8 groups), so a change that moves one shows up here.
@@ -35,6 +35,31 @@ describe('project conclusion: the chapters and groups', () => {
   it('31 of the 88 chapters are in a labelled group, and the other six groups are unlabelled', () => {
     expect(labelledChapterShare(chapters)).toEqual({ labelled: 31, total: 88 })
     expect(unlabelledGroups(allGroups)).toEqual(allGroups.slice(0, 6))
+  })
+})
+
+describe('project conclusion: the page does not count itself', () => {
+  it('the Conclusion chapter is left out, so 89 chapters in the app are 88 on the page and 8 groups, not 9', () => {
+    const inApp = [...chapters, { group: CONCLUSION_GROUP }]
+    expect(inApp).toHaveLength(89)
+    const project = withoutConclusion(inApp)
+    expect(project).toHaveLength(88)
+    expect(groupSizes(project)).toHaveLength(8)
+    expect(unlabelledGroups(groupSizes(project).map((g) => g.group))).not.toContain(CONCLUSION_GROUP)
+    expect(labelledChapterShare(project)).toEqual({ labelled: 31, total: 88 })
+  })
+})
+
+describe('project conclusion: the groups come in the sidebar’s order', () => {
+  it('a chapter list that is not in sidebar order (Evidence and Imagination was appended late) still gives the sidebar’s order', () => {
+    const scrambled = [...chapters.filter((c) => c.group !== EVIDENCE), ...chapters.filter((c) => c.group === EVIDENCE)]
+    expect(groupSizes(scrambled).map((g) => g.group).slice(-2)).toEqual(['Cosmic Horizons', EVIDENCE])
+    expect(groupSizes(scrambled, allGroups).map((g) => g.group)).toEqual(allGroups)
+  })
+
+  it('a group missing from the given order follows the others', () => {
+    const sizes = groupSizes([{ group: 'New group' }, ...chapters], allGroups)
+    expect(sizes.map((g) => g.group).slice(-1)).toEqual(['New group'])
   })
 })
 
@@ -78,3 +103,30 @@ describe('project conclusion: adding labels for an older group updates the figur
     expect(unlabelledGroups(allGroups)).toContain('Cosmology')
   })
 })
+
+describe('project conclusion: the findings the page names', () => {
+  it('every featured finding exists in its group’s claim list, with the label named', () => {
+    const found = featuredFindings()
+    expect(found).toHaveLength(FEATURED.length)
+    for (const f of found) {
+      expect(f.claim.label).toBe(f.label)
+      expect(f.claim.experiment).toBe(f.experiment)
+    }
+  })
+
+  it('there are six: three contested or open from each labelled group’s own claims', () => {
+    const labels = featuredFindings().map((f) => f.label)
+    expect(labels.filter((l) => l === 'Contested')).toHaveLength(3)
+    expect(labels.filter((l) => l === 'Open')).toHaveLength(3)
+  })
+
+  it('a featured finding that does not exist is an error, not a blank', () => {
+    FEATURED.push({ group: 'Cosmic Horizons', experiment: 99, label: 'Open' })
+    try {
+      expect(() => featuredFindings()).toThrow()
+    } finally {
+      FEATURED.pop()
+    }
+  })
+})
+
