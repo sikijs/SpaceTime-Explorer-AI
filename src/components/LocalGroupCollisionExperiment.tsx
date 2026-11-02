@@ -23,6 +23,7 @@ import {
   trialPicture,
 } from '../physics/localGroupCollision'
 import type { FallChoiceId, PassChoiceId } from '../physics/localGroupCollision'
+import { FrontierRecap } from './FrontierRecap'
 import { LocalGroupCollisionResults } from './LocalGroupCollisionResults'
 import { LocalGroupCollisionTutor } from './LocalGroupCollisionTutor'
 import { PictureOne, PictureTwo, TRIAL_MASS_LABELS, TRIAL_SPEED_LABELS, TrialDrawing, pictureOneCaption, pictureTwoCaption, trialCaption } from './LocalGroupCollisionPictures'
@@ -69,6 +70,8 @@ export function LocalGroupCollisionExperiment({ onComplete, onTutorComplete }: L
   const [trialMass, setTrialMass] = useState<number>(TRIAL_DEFAULT_MASS_SOLAR)
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
+  // Set when the learner reaches the tutor's explanation; the closing recap below the tutor is shown only then (CLAUDE.md §12).
+  const [explanationReached, setExplanationReached] = useState(false)
   const recorded = status !== 'idle'
   const done = status === 'complete'
   const bothPredicted = fallGuess !== null && passGuess !== null
@@ -91,6 +94,7 @@ export function LocalGroupCollisionExperiment({ onComplete, onTutorComplete }: L
     setTrialMass(TRIAL_DEFAULT_MASS_SOLAR)
     setStatus('idle')
     setStage(0)
+    setExplanationReached(false)
   }
   const run = () => {
     setStage(1)
@@ -386,9 +390,15 @@ export function LocalGroupCollisionExperiment({ onComplete, onTutorComplete }: L
                   parts use a worked sum or an everyday comparison.
                 </li>
               </ul>
-              <LocalGroupCollisionTutor fallPrediction={fallGuess} passPrediction={passGuess} onExplained={onTutorComplete} />
+              <LocalGroupCollisionTutor fallPrediction={fallGuess} passPrediction={passGuess} onExplained={() => {
+                  setExplanationReached(true)
+                  onTutorComplete?.()
+                }}
+              />
             </div>
           )}
+
+          {done && fallGuess !== null && passGuess !== null && explanationReached && <FrontierRecap />}
         </div>
       </div>
     </div>
