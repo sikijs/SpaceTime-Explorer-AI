@@ -105,9 +105,9 @@ export function ClockHeightTutor({ gapPrediction, heightPrediction, onExplained 
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 2. How does the gap after a year change as the height goes from 1 millimetre to 1 kilometre? Which of those gaps could you imagine measuring, and which seem too small?'}
+              'Look at Picture 2 and Picture 3. Your guesses are drawn in white, in boxes marked YOUR GUESS, on the thin line under the axis of each picture. How does the gap after a year change as the height goes from 1 millimetre to 1 kilometre? Where does your white diamond sit compared with the amber dot for 1 metre, and, in Picture 3, compared with the violet row?'}
             {tutorStep === 'compare' &&
-              `You predicted that two clocks 1 metre apart would read ${gapWords[gapPrediction]} apart after a year, and that a difference in rate of one part in ${tenTo(19)} goes with a height of ${heightWords[heightPrediction]}. Now look at Table 1 and Table 2, and at Pictures 1 to 3. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that two clocks 1 metre apart would read ${gapWords[gapPrediction]} apart after a year, and that a difference in rate of one part in ${tenTo(19)} goes with a height of ${heightWords[heightPrediction]}. Compare the white diamond in Picture 2 with the amber dot for 1 metre, and the one in Picture 3 with the violet row. Then look at Table 1 and Table 2, and at Pictures 1 to 3. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               'A clock on a mountain top ticks a little faster than an identical clock in the valley. Could you use two such clocks to tell which of two places is higher? What else might change the rate of a clock, that you would have to rule out first?'}
           </p>

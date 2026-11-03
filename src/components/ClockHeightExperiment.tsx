@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  clockHeightCheckUp,
+  clockHeightDrawingReference,
+  clockHeightDrawingValues,
+  DRAWING_SCALES,
+  gapGuessSeconds,
+  heightGuessMetres,
+  PREDICTION_PRECISION,
+  predictionGapSeconds,
+  predictionHeightMetres,
   G_EARTH,
   JILA_2022,
   rateDifference,
@@ -21,7 +30,7 @@ import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Cosmic Horizons, Experiment 9 (docs/experiments/cosmic-horizons/09-can-a-clock-tell-its-height.md).
-// Step 6 builds the three controls (the height, the duration and the clock's precision), shown after the run, which add a white mark to each picture and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stages 1 and 3, Picture 2 at stages 2 and 3, Picture 3 at stages 4 and 5, each with a guide. Step 3 built the two predictions. Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of an optical lattice clock
+// Step 6 builds the three controls (the height, the duration and the clock's precision), shown after the run, which add a pink mark to each picture and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stages 1 and 3, Picture 2 at stages 2 and 3, Picture 3 at stages 4 and 5, each with a guide. Step 3 built the two predictions. Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of an optical lattice clock
 // (an illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 (its axes and a guide). Step 7 built the tutor (ClockHeightTutor.tsx) and, in App, the
 // chapter summary. All wording is draft for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. The introduction does not give the rate difference per metre, the gap after a year or the
@@ -37,13 +46,15 @@ const VIEW_WIDTH = 560
 const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
 const ATOM_COLOR = '#fde047' // yellow: a strontium atom
-const LASER_COLOR = '#fb7185' // rose: the laser light that holds the atoms
+const LASER_COLOR = '#ef4444' // red: the laser light that holds the atoms
 const GRAVITY_COLOR = '#38bdf8' // sky blue: gravity
 const CLOCK_COLOR = '#5eead4' // teal: the clock's light
 const EDGE_COLOR = '#c084fc' // purple: the upper and lower edges of the cloud
 const LINE_COLOR = '#fbbf24' // amber: the rate difference and the gap (Pictures 1 and 2)
-const WISCONSIN_COLOR = '#f9a8d4' // pink: the Wisconsin measurement
-const YOURS_COLOR = '#ffffff' // white: the learner's own choice
+const WISCONSIN_COLOR = '#a3e635' // lime: the Wisconsin measurement (pink is kept for the learner's own choice)
+const YOURS_COLOR = '#f472b6' // pink: the learner's own choice (Part 2)
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+const IMAGINED_COLOR = '#a78bfa' // violet: a clock imagined for the question (Prediction 2's)
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -64,6 +75,25 @@ const svgStyle = {
 } as const
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const PredictionTag = ({ n }: { n: 1 | 2 }) => (
+  <span style={{ marginLeft: '0.5rem', padding: '0.05rem 0.4rem', fontSize: '0.75rem', fontWeight: 'bold', border: `1px solid ${GUESS_COLOR}`, borderRadius: '4px', whiteSpace: 'nowrap' }}>
+    your Prediction {n}
+  </span>
+)
+const GAP_SHORT = { microsecond: 'about 3 microseconds', nanosecond: 'about 3 nanoseconds', picosecond: 'about 3 picoseconds' } as const
+const HEIGHT_SHORT = { metre: 'about 1 metre', centimetre: 'about 1 centimetre', millimetre: 'about 1 millimetre' } as const
 
 function SvgLines({ x, y, lines, fill, size = 10, bold = false, anchor = 'start' }: { x: number; y: number; lines: string[]; fill: string; size?: number; bold?: boolean; anchor?: 'start' | 'middle' | 'end' }) {
   return (
@@ -157,7 +187,7 @@ function ClockDrawing() {
 
 const lookForClock: LookFor[] = [
   {
-    look: 'the rose layers and the yellow atoms in them.',
+    look: 'the red layers and the yellow atoms in them.',
     means: 'the laser light makes a pattern that holds the atoms in place, one row to a layer, a little like eggs in an egg carton. Because the atoms are held and barely move, the clock can watch them for a long time.',
     matters: 'a long, steady look at many identical atoms is what makes the clock so precise. One atom would give a noisier answer than a cloud of 100,000.',
   },
@@ -336,7 +366,7 @@ function PictureOne({ stage, yourHeight }: { stage: number; yourHeight: number |
   )
 }
 
-// The learner's own height on Picture 1: a white ring on the line with a label that is moved out of the way of the labels of the marked heights.
+// The learner's own height on Picture 1: a pink ring on the line with a label that is moved out of the way of the labels of the marked heights.
 function YourHeightMark({ metres, point }: { metres: number; point: (m: number) => { x: number; y: number } }) {
   const p = point(metres)
   const taken = MARKED_HEIGHTS.map((h) => {
@@ -375,9 +405,10 @@ const TIME_TICKS: [number, string][] = [
 ]
 const P2_ROWS = [0.001, 0.01, 1, 1000] // the four heights, from the top row to the bottom
 
-function PictureTwo({ stage, yours }: { stage: number; yours: { metres: number; seconds: number; durationName: string } | null }) {
+function PictureTwo({ stage, yours, gapGuess }: { stage: number; yours: { metres: number; seconds: number; durationName: string } | null; gapGuess: TimeScale | null }) {
   const axisY = yours !== null ? 345 : 290
-  const height = yours !== null ? 430 : 370
+  const height = (yours !== null ? 430 : 370) + 96 // room for the guess's own line under the axis
+  const stripY = axisY + 82
   return (
     <svg
       width={VIEW_WIDTH}
@@ -431,6 +462,27 @@ function PictureTwo({ stage, yours }: { stage: number; yours: { metres: number; 
           </g>
         )
       })}
+      {stage >= 2 && gapGuess !== null && (() => {
+        const x = timeToX(Math.log10(gapGuessSeconds(gapGuess)))
+        const boxX = Math.min(Math.max(x - 110, 10), VIEW_WIDTH - 230)
+        return (
+          <g>
+            <text x={20} y={stripY - 16} fill={GUESS_COLOR} fontSize="11">
+              Your guess for Prediction 1: the gap after a year for two clocks 1 metre apart (same scale as above)
+            </text>
+            <line x1={P2_LEFT} y1={stripY} x2={P2_RIGHT} y2={stripY} stroke={MUTED_COLOR} strokeWidth={1} />
+            {TIME_TICKS.map(([exponent]) => (
+              <line key={exponent} x1={timeToX(exponent)} y1={stripY - 3} x2={timeToX(exponent)} y2={stripY + 3} stroke={MUTED_COLOR} />
+            ))}
+            <polygon points={`${x},${stripY - 8} ${x + 8},${stripY} ${x},${stripY + 8} ${x - 8},${stripY}`} fill={GUESS_COLOR} />
+            <line x1={x} y1={stripY + 8} x2={x} y2={stripY + 16} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={stripY + 16} width={220} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + 110} y={stripY + 33} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {GAP_SHORT[gapGuess]}
+            </text>
+          </g>
+        )
+      })()}
       {yours !== null &&
         (() => {
           const y = P2_TOP + 30 + 4 * 52
@@ -464,12 +516,14 @@ const LENGTH_TICKS: [number, string][] = [
 const CLOCKS: { precision: number; lines: string[]; color: string }[] = [
   { precision: 1e-16, lines: ['a clock good to', tenTo(-16)], color: '#fb923c' },
   { precision: 1e-18, lines: ['a clock good to', tenTo(-18)], color: '#fbbf24' },
+  { precision: PREDICTION_PRECISION, lines: ['Prediction 2’s clock', `good to ${tenTo(-19)} (imagined)`], color: IMAGINED_COLOR },
   { precision: JILA_2022.precision, lines: ['the JILA clock of 2022:', `${sciText(JILA_2022.precision, 1)}`], color: CLOCK_COLOR },
 ]
 
-function PictureThree({ stage, yourPrecision }: { stage: number; yourPrecision: number | null }) {
-  const P3_AXIS_Y = yourPrecision !== null ? 330 : 275
-  const P3_HEIGHT = yourPrecision !== null ? 465 : 410
+function PictureThree({ stage, yourPrecision, heightGuess }: { stage: number; yourPrecision: number | null; heightGuess: LengthScale | null }) {
+  const P3_AXIS_Y = yourPrecision !== null ? 385 : 330
+  const P3_HEIGHT = (yourPrecision !== null ? 520 : 465) + 150 // room for the guess's own line under the axis
+  const stripY = P3_AXIS_Y + 128
   return (
     <svg
       width={VIEW_WIDTH}
@@ -477,7 +531,7 @@ function PictureThree({ stage, yourPrecision }: { stage: number; yourPrecision: 
       viewBox={`0 0 ${VIEW_WIDTH} ${P3_HEIGHT}`}
       style={svgStyle}
       role="img"
-      aria-label="The smallest height difference that a clock can notice, on a logarithmic scale from 1 micrometre to 100 metres, for three clocks of better and better precision. From the fifth stage two dashed lines mark the heights that the JILA and Wisconsin teams measured"
+      aria-label="The smallest height difference that a clock can notice, on a logarithmic scale from 1 micrometre to 100 metres, for four clocks of better and better precision. From the fifth stage two dashed lines mark the heights that the JILA and Wisconsin teams measured"
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 3: how good must a clock be?
@@ -516,7 +570,7 @@ function PictureThree({ stage, yourPrecision }: { stage: number; yourPrecision: 
         })}
       {yourPrecision !== null &&
         (() => {
-          const y = P3_TOP + 25 + 3 * 55
+          const y = P3_TOP + 25 + 4 * 55
           const smallest = smallestHeight(yourPrecision)
           const x = lengthToX(Math.log10(smallest))
           return (
@@ -530,6 +584,27 @@ function PictureThree({ stage, yourPrecision }: { stage: number; yourPrecision: 
             </g>
           )
         })()}
+      {stage >= 4 && heightGuess !== null && (() => {
+        const x = lengthToX(Math.log10(heightGuessMetres(heightGuess)))
+        const boxX = Math.min(Math.max(x - 110, 10), VIEW_WIDTH - 230)
+        return (
+          <g>
+            <text x={20} y={stripY - 16} fill={GUESS_COLOR} fontSize="11">
+              Your guess for Prediction 2: the height a clock good to {tenTo(-19)} can notice (same scale as above)
+            </text>
+            <line x1={P3_LEFT} y1={stripY} x2={P3_RIGHT} y2={stripY} stroke={MUTED_COLOR} strokeWidth={1} />
+            {LENGTH_TICKS.map(([exponent]) => (
+              <line key={exponent} x1={lengthToX(exponent)} y1={stripY - 3} x2={lengthToX(exponent)} y2={stripY + 3} stroke={MUTED_COLOR} />
+            ))}
+            <polygon points={`${x},${stripY - 8} ${x + 8},${stripY} ${x},${stripY + 8} ${x - 8},${stripY}`} fill={GUESS_COLOR} />
+            <line x1={x} y1={stripY + 8} x2={x} y2={stripY + 16} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={stripY + 16} width={220} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + 110} y={stripY + 33} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {HEIGHT_SHORT[heightGuess]}
+            </text>
+          </g>
+        )
+      })()}
       {stage >= 5 && (
         <>
           <line x1={lengthToX(-3)} y1={P3_TOP - 12} x2={lengthToX(-3)} y2={P3_AXIS_Y} stroke={CLOCK_COLOR} strokeWidth={1.5} strokeDasharray="5 3" />
@@ -597,6 +672,119 @@ const HEIGHT_CHOICES: ReadonlyArray<{ value: LengthScale; label: string }> = [
   { value: 'centimetre', label: 'About 1 centimetre' },
   { value: 'millimetre', label: 'About 1 millimetre' },
 ]
+
+// ---- Part 2's drawing: your numbers beside the reference values (the learner's own choice, pink; the reference marks, yellow) ----
+const DA_LEFT = 40
+const DA_RIGHT = 520
+const DA_ROW_TOP = 56
+const DA_ROW_STEP = 82
+const DA_HEIGHT = DA_ROW_TOP + 3 * DA_ROW_STEP
+const REF_COLOR = '#fde047' // yellow: a reference value
+
+function YourClockDrawing({ heightM, seconds, precision }: { heightM: number; seconds: number; precision: number }) {
+  const mine = clockHeightDrawingValues(heightM, seconds, precision)
+  const ref = clockHeightDrawingReference()
+  const sc = DRAWING_SCALES
+  const logX = (v: number, r: { min: number; max: number }) => DA_LEFT + (Math.log(v / r.min) / Math.log(r.max / r.min)) * (DA_RIGHT - DA_LEFT)
+  const lengthTick = (exponent: number) => ({ '-6': '1 µm', '-3': '1 mm', '0': '1 m', '3': '1 km', '5': '100 km' } as Record<string, string>)[String(exponent)]
+  const rows = [
+    {
+      key: 'rate', title: 'How much faster the higher clock ticks (a logarithmic scale)', x: (v: number) => logX(v, sc.rate), mine: mine.rate, ref: ref.rate,
+      ticks: [-19, -17, -15, -13, -11], tickLabel: (e: number) => tenTo(e), valueText: (v: number) => sciText(v, 2), refName: 'a height of 1 metre',
+    },
+    {
+      key: 'gap', title: 'How far ahead it is after your time (a logarithmic scale)', x: (v: number) => logX(v, sc.gapSeconds), mine: mine.gapSeconds, ref: ref.gapSeconds,
+      ticks: [-15, -12, -9, -6, -3], tickLabel: (e: number) => ({ '-15': '1 fs', '-12': '1 ps', '-9': '1 ns', '-6': '1 µs', '-3': '1 ms' } as Record<string, string>)[String(e)], valueText: (v: number) => timeText(v), refName: '1 metre for a year',
+    },
+    {
+      key: 'smallest', title: 'The smallest height your clock can notice (a logarithmic scale)', x: (v: number) => logX(v, sc.smallestM), mine: mine.smallestM, ref: ref.smallestM,
+      ticks: [-6, -3, 0, 3, 5], tickLabel: (e: number) => lengthTick(e), valueText: (v: number) => lengthText(v), refName: 'the JILA clock of 2022',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={DA_HEIGHT}
+        viewBox={`0 0 ${VIEW_WIDTH} ${DA_HEIGHT}`}
+        style={svgStyle}
+        role="img"
+        aria-label="Three short logarithmic scales for your own numbers: how much faster a clock at your height ticks, how far ahead it is after your time, and the smallest height that your clock can notice, each with a reference value and your value marked"
+      >
+        <text x={DA_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Drawing A: your numbers beside the real ones
+        </text>
+        <text x={DA_LEFT} y={40} fill={MUTED_COLOR} fontSize="10">
+          Each scale has a yellow line for a reference value and a pink dot for your own choice.
+        </text>
+        {rows.map((row, i) => {
+          const y0 = DA_ROW_TOP + i * DA_ROW_STEP
+          return (
+            <g key={row.key}>
+              <text x={DA_LEFT} y={y0} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                {row.title}
+              </text>
+              <rect x={DA_LEFT} y={y0 + 8} width={DA_RIGHT - DA_LEFT} height={14} fill={MUTED_COLOR} opacity={0.3} />
+              <line x1={row.x(row.ref)} y1={y0 + 4} x2={row.x(row.ref)} y2={y0 + 26} stroke={REF_COLOR} strokeWidth={2.5} />
+              <circle cx={row.x(row.mine)} cy={y0 + 15} r={5.5} fill={YOURS_COLOR} />
+              {row.ticks.map((t) => (
+                <g key={t}>
+                  <line x1={row.x(10 ** t)} y1={y0 + 24} x2={row.x(10 ** t)} y2={y0 + 29} stroke={TEXT_COLOR} />
+                  <text x={row.x(10 ** t)} y={y0 + 40} fill={TEXT_COLOR} fontSize="9" textAnchor="middle">
+                    {row.tickLabel(t)}
+                  </text>
+                </g>
+              ))}
+              <text x={DA_LEFT} y={y0 + 56} fill={MUTED_COLOR} fontSize="10">
+                <tspan fill={YOURS_COLOR}>pink: yours, {row.valueText(row.mine)}</tspan>
+                <tspan> · </tspan>
+                <tspan fill={REF_COLOR}>yellow: {row.refName}, {row.valueText(row.ref)}</tspan>
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+        <p style={paragraph}>
+          <strong>How to read Drawing A.</strong> It puts the numbers of your three choices in one place, each on its own short scale, with a yellow line for a real value to compare them with. Every scale is logarithmic: each step to the right is ten times the one before. It follows the controls above, so it changes when you change them.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The first scale</strong> is the fraction by which a clock at your height ticks faster; the <span style={{ color: REF_COLOR }}>yellow line</span> is the fraction for 1 metre. <strong>The second scale</strong> is how far ahead that clock is after your time; the yellow line is
+            1 metre for a year. <strong>The third scale</strong> is the smallest height your clock can notice; the yellow line is the JILA clock of 2022. A dot <strong>further right</strong> means a bigger fraction, a bigger gap or a coarser clock.
+          </li>
+          <li>
+            <strong>The pink dot</strong> on each scale is your own choice. <strong>At the starting settings</strong> (1 metre, 1 year) the first two dots sit on their yellow lines; change a control to see them part.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment.</strong> For 1 metre, {G_EARTH} × 1 ÷ {sciText(SPEED_OF_LIGHT * SPEED_OF_LIGHT, 3)} = {sciText(ref.rate, 2)}; over a year ({SECONDS_PER_YEAR.toLocaleString('en-US')} s) that gives {timeText(ref.gapSeconds)}. A clock good to {tenTo(-18)} notices {lengthText(smallestHeight(1e-18))}, while JILA’s notices {lengthText(ref.smallestM)}.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <strong>What to look for.</strong>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Look at</strong> the pink dot on the first scale, against the yellow line. <strong>What it means:</strong> a clock {lengthLabel(heightM)} higher ticks faster by {sciText(mine.rate, 2)}, {mine.rate > ref.rate ? 'more' : mine.rate < ref.rate ? 'less' : 'the same'} than the {sciText(ref.rate, 2)} for 1 metre.{' '}
+            <strong>Why it matters:</strong> the fraction is proportional to the height, so ten times the height moves the dot one step to the right.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the second scale. <strong>What it means:</strong> after {seconds === SECONDS_PER_YEAR ? '1 year' : `${seconds.toLocaleString('en-US')} s`} the clocks are {timeText(mine.gapSeconds)} apart, against {timeText(ref.gapSeconds)} for 1 metre and a year.{' '}
+            <strong>Why it matters:</strong> a small fraction adds up with time, so a longer comparison makes a tiny effect bigger.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the third scale. <strong>What it means:</strong> a clock good to {sciText(precision, 1)} notices {lengthText(mine.smallestM)}, {mine.smallestM > ref.smallestM ? 'coarser' : mine.smallestM < ref.smallestM ? 'finer' : 'the same as'} than JILA’s {lengthText(ref.smallestM)}.{' '}
+            <strong>Why it matters:</strong> a better clock notices a smaller height, so the dot moves left as the precision improves.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> JILA’s precision, {sciText(JILA_2022.precision, 1)} (Bothwell et al., Nature 602, 2022). <em>Calculated here:</em> the fraction, the gap and the smallest height, from g × h ÷ c², times the time, and the precision ÷ (g ÷ c²).{' '}
+          <em>Imagined for the question:</em> your height, your time and your clock. The pink dots are your own choice; the yellow lines are real or published values.
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeightExperimentProps) {
   const [gapPrediction, setGapPrediction] = useState<TimeScale | null>(null)
@@ -675,6 +863,9 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
     },
   ]
   const timesAgeOfUniverse = billionYears / 13.8
+  const checkUp = clockHeightCheckUp()
+  const caseGap = predictionGapSeconds()
+  const caseHeight = predictionHeightMetres()
   const nanosecondCentimetres = SPEED_OF_LIGHT * 1e-9 * 100
   return (
     <div>
@@ -729,7 +920,7 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
             </p>
             <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
               <li>
-                <strong>The four rose layers</strong> are thin sheets of laser light that hold the atoms. <strong>The yellow dots</strong> are strontium atoms,
+                <strong>The four red layers</strong> are thin sheets of laser light that hold the atoms. <strong>The yellow dots</strong> are strontium atoms,
                 one row to a layer (about 100,000 in reality, a few here).
               </li>
               <li>
@@ -802,7 +993,7 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other
-            heights, other durations and other clock precisions of your own. Nothing here is graded.
+            heights, other durations and other clock precisions of your own. Nothing here is graded. Your predictions never change the real pictures or tables. They are drawn on Pictures 2 and 3 in white, in a box marked YOUR GUESS, so you can compare them with what was calculated, and they are listed again beside the results. In Part 2 you can try other heights, durations and clock precisions. Those choices are pink: they add a pink mark to each picture and fill a drawing in Part 2 and Table 4, but they never change the real marks, the published results or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -839,6 +1030,10 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
         </div>
 
         <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: how much faster a higher clock ticks, how big the gap between two clocks gets after a year, and how good a clock must be to notice a small height. Nothing here tells you the answers. When the pictures are drawn, your guesses appear on them in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says
             which answer is right, gives the rate per metre, or gives an answer in another unit. */}
@@ -932,7 +1127,7 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
             {stage === 3 &&
               `Pictures 1 and 2 now also show the heights of 1 millimetre, 1 centimetre and 1 kilometre. From 1 millimetre to 1 kilometre is a factor of a million in height, and the rate difference grows by the same factor.`}
             {stage === 4 &&
-              `Picture 3 appears below Picture 2. It turns the question round: for a clock of a given precision, what is the smallest height difference that it can notice? It shows three clocks: one good to ${tenTo(-16)}, one good to ${tenTo(-18)}, and the JILA clock of 2022 (${sciText(JILA_2022.precision, 1)}).`}
+              `Picture 3 appears below Picture 2. It turns the question round: for a clock of a given precision, what is the smallest height difference that it can notice? It shows four clocks: one good to ${tenTo(-16)}, one good to ${tenTo(-18)}, and the JILA clock of 2022 (${sciText(JILA_2022.precision, 1)}).`}
             {stage === 5 &&
               `Picture 3 now marks two heights that were measured: the JILA team’s (a cloud of atoms about a millimetre tall) and the Wisconsin team’s (1 centimetre). Look at where each lies compared with the dots.`}
           </p>
@@ -967,7 +1162,7 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
             )}
             {done && (
               <li>
-                <strong>The white ring</strong> is your own height, from control 1 below the pictures. It starts at 1 metre, on top of the 1 metre dot, and moves along
+                <strong>The pink ring</strong> is your own height, from control 1 below the pictures. It starts at 1 metre, on top of the 1 metre dot, and moves along
                 the line when you change the height. Its label gives the height and the rate difference.
               </li>
             )}
@@ -1015,6 +1210,11 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
                     : []),
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement; g = {G_EARTH} m/s² and the speed of light are constants. <em>Calculated here:</em> every dot and the amber line, from the rule
+                that a higher clock ticks faster by g × h ÷ c² (the rule of Gravity Experiments 2 and 9). <em>Imagined for the question:</em> nothing; after the run, your own height. The pink ring is your own height. This picture carries no
+                guess mark: neither prediction is about it.
+              </p>
             </>
           )}
         </div>
@@ -1023,7 +1223,7 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
         {stage >= 2 && (
           <>
             <div style={{ marginBottom: '1rem' }}>
-              <PictureTwo stage={stage} yours={done ? { metres: yourHeight, seconds: yourDuration.seconds, durationName } : null} />
+              <PictureTwo gapGuess={gapPrediction} stage={stage} yours={done ? { metres: yourHeight, seconds: yourDuration.seconds, durationName } : null} />
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               <p style={paragraph}>
@@ -1043,9 +1243,15 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
                 <li>
                   <strong>The dotted vertical lines</strong> are only a ruler: each one is ten times the one before.
                 </li>
+                {stage >= 2 && (
+                  <li>
+                    <strong>The thin line under the axis, with the white diamond and the YOUR GUESS box,</strong> is your guess for Prediction 1: the gap after a year for two clocks 1 metre apart, on the same scale as the rows above. It is only
+                    where you guessed, not a result, and it does not move when you change anything in Part 2. Compare it with the amber dot in the row “1 m higher”.
+                  </li>
+                )}
                 {done && (
                   <li>
-                    <strong>The white ring on the last row</strong> is your own height and your own time (controls 1 and 2). For the smallest heights over an hour the
+                    <strong>The pink ring on the last row</strong> is your own height and your own time (controls 1 and 2). For the smallest heights over an hour the
                     gap is only a fraction of a picosecond, so the scale also has <strong>femtoseconds</strong> (fs, a thousandth of a picosecond, a
                     quadrillionth of a second).
                   </li>
@@ -1072,6 +1278,11 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
                     means: `after a whole year the higher clock is ahead by only ${timeText(oneMetre.gap)}. That is billionths of a second, far too small to see with any everyday clock.`,
                     matters: 'the effect is real but tiny, and it adds up steadily: the gap after two years would be twice as big. So the longer clocks are compared, the easier the difference is to see.',
                   },
+                  {
+                    look: 'the white diamond under the axis, beside the amber dot in the row “1 m higher”.',
+                    means: `the amber dot is the real gap for 1 metre, ${timeText(caseGap)}; your guess was ${gapPrediction !== null ? GAP_SHORT[gapPrediction] : ''}, at ${gapPrediction !== null ? timeText(gapGuessSeconds(gapPrediction)) : ''}.`,
+                    matters: 'the three possible answers are a thousand times apart, so the scale shows at once how far a guess is from the number: a wrong order of magnitude is a long way along the line.',
+                  },
                   ...(stage >= 3
                     ? [
                         {
@@ -1083,6 +1294,10 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
                     : []),
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement. <em>Calculated here:</em> every gap, from g × h ÷ c² times the time. <em>Imagined for the question:</em> nothing, except the
+                pink ring (your own height and time, after the run). The pink ring is your own choice; the white diamond is your guess.
+              </p>
             </div>
           </>
         )}
@@ -1091,7 +1306,7 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
         {stage >= 4 && (
           <>
             <div style={{ marginBottom: '1rem' }}>
-              <PictureThree stage={stage} yourPrecision={done ? yourPrecision : null} />
+              <PictureThree stage={stage} yourPrecision={done ? yourPrecision : null} heightGuess={heightPrediction} />
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               <p style={paragraph}>
@@ -1105,16 +1320,20 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
               <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
                 <li>
                   <strong>Each row</strong> is a clock, named on the left by its precision: one good to {tenTo(-16)}, one good to {tenTo(-18)} (these two are
-                  example precisions chosen by this experiment) and the JILA clock of 2022, whose published precision is {sciText(JILA_2022.precision, 1)}.
+                  example precisions chosen by this experiment), <strong>the violet row</strong> for a clock good to {tenTo(-19)}, the clock of Prediction 2 (imagined), and the JILA clock of 2022, whose published precision is {sciText(JILA_2022.precision, 1)}.
                 </li>
                 <li>
                   <strong>The dot</strong> in a row is the smallest height difference that the clock can notice. <strong>The line</strong> to the right of the dot
                   shows all the larger heights that the clock can tell apart. A smaller height, to the left of the dot, gives a difference that the clock cannot
                   see.
                 </li>
+                <li>
+                  <strong>The thin line under the axis, with the white diamond and the YOUR GUESS box,</strong> is your guess for Prediction 2: the height that a clock good to {tenTo(-19)} can notice, on the same scale as the rows above. It is only where
+                  you guessed, not a result, and it does not move when you change anything in Part 2. Compare it with the dot on the violet row.
+                </li>
                 {done && (
                   <li>
-                    <strong>The white ring on the last row</strong> is your own clock, from control 3 below the pictures. It starts at {tenTo(-18)}, on top of the second
+                    <strong>The pink ring on the last row</strong> is your own clock, from control 3 below the pictures. It starts at {tenTo(-18)}, on top of the second
                     row’s dot, and moves left as you make the clock more precise.
                   </li>
                 )}
@@ -1122,7 +1341,7 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
                   <>
                     <li>
                       <strong>The two dashed vertical lines</strong> mark the heights that two teams measured. The <strong>teal</strong> line is the JILA team’s
-                      cloud of atoms, about 1 millimetre tall. The <strong>pink</strong> line is the Wisconsin team’s array of atom clouds, which spanned 1
+                      cloud of atoms, about 1 millimetre tall. The <strong>lime</strong> line is the Wisconsin team’s array of atom clouds, which spanned 1
                       centimetre.
                     </li>
                     <li>
@@ -1151,9 +1370,14 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
               <LookForList
                 items={[
                   {
-                    look: 'the three dots, from the top row to the bottom row.',
+                    look: 'the dots of the first two clocks and of the JILA clock.',
                     means: `a clock good to ${tenTo(-16)} can notice ${lengthText(smallestHeight(1e-16))}, one good to ${tenTo(-18)} can notice ${lengthText(smallestHeight(1e-18))}, and the JILA clock could notice ${lengthText(smallestHeight(JILA_2022.precision))}.`,
                     matters: 'a hundred times better precision lets a clock notice a height a hundred times smaller. This is how a clock can be used to tell how high it is: the better the clock, the finer the height.',
+                  },
+                  {
+                    look: 'the violet row and the white diamond under the axis.',
+                    means: `a clock good to ${tenTo(-19)} can notice ${lengthText(caseHeight)}; your guess was ${heightPrediction !== null ? HEIGHT_SHORT[heightPrediction] : ''}, at ${heightPrediction !== null ? lengthText(heightGuessMetres(heightPrediction)) : ''}.`,
+                    matters: 'the violet row sits between the clock good to 10⁻¹⁸ and the JILA clock: a ten times better clock notices a height ten times smaller, so the answer is a tenth of the 10⁻¹⁸ clock’s.',
                   },
                   ...(stage >= 5
                     ? [
@@ -1166,16 +1390,26 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
                     : []),
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> JILA’s precision of {sciText(JILA_2022.precision, 1)} (Bothwell et al., Nature 602, 2022) and the Wisconsin gradient (Zheng et al., Nature Communications 14, 2023), as their
+                abstracts state them. <em>Calculated here:</em> every dot, from the smallest height = precision ÷ (g ÷ c²). <em>Imagined for the question:</em> the clocks good to {tenTo(-16)} and {tenTo(-18)} (examples), the violet clock good to {tenTo(-19)}
+                and, after the run, your own clock. The pink ring is your own clock; the white diamond is your guess.
+              </p>
             </div>
           </>
         )}
 
         {/* The three controls (after the run): the specification's "Learner Controls". */}
         {done && (
+          <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+            We are about to try other numbers of our own: another height difference, another length of time and another clock precision. Your choices add a pink mark to each picture, fill the drawing in this part and Table 4. They never change the real marks, the published results or your guesses.
+          </PartHeader>
+        )}
+        {done && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', border: '1px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Try your own numbers</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
-              The three controls below add a white mark to each picture and fill in Table 4. The “Start over” button puts everything back.
+              <strong>Your guesses do not change the drawings or tables. These settings do.</strong> The height, the time and the clock precision below are trial values of your own, not measurements. Controls 1 and 2 add a pink ring to Picture 1 and to the last row of Picture 2 and move the first two scales of Drawing A; control 3 adds a pink ring to the last row of Picture 3 and moves the third scale. All three fill in Table 4. None of them changes the amber and teal marks, the violet row, Tables 1 to 3 or your guesses. The “Start over” button puts everything back.
             </p>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.25rem' }}>1. How high is the upper clock?</p>
@@ -1224,8 +1458,8 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
               <strong>{durationName}</strong> ({yourDuration.seconds.toLocaleString('en-US')} seconds) it is ahead by <strong>{timeText(mine.timeGap)}</strong>.{' '}
               <span style={{ color: 'var(--text-muted)' }}>
                 ({G_EARTH} × {yourHeight} ÷ ({sciText(cSquared, 3)}) = {sciText(mine.rateDifference, 2)}; {sciText(mine.rateDifference, 2)} ×{' '}
-                {yourDuration.seconds.toLocaleString('en-US')} s = {timeText(mine.timeGap)}. Picture 1 shows your height as a white ring on the line, and Picture 2
-                shows the gap as a white ring on its last row. A month here is a twelfth of a year of 365.25 days.)
+                {yourDuration.seconds.toLocaleString('en-US')} s = {timeText(mine.timeGap)}. Picture 1 shows your height as a pink ring on the line, and Picture 2
+                shows the gap as a pink ring on its last row. A month here is a twelfth of a year of 365.25 days.)
               </span>
             </p>
 
@@ -1250,10 +1484,18 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
                 <>It <strong>cannot</strong> notice your height of {lengthLabel(yourHeight)}: the effect is only {mine.signalToPrecision.toFixed(2)} of its precision.</>
               )}{' '}
               <span style={{ color: 'var(--text-muted)' }}>
-                ({sciText(yourPrecision, 1)} ÷ {sciText(oneMetre.rate, 2)} = {lengthText(mine.smallestHeight)}. Picture 3 shows it as a white ring on its last row.)
+                ({sciText(yourPrecision, 1)} ÷ {sciText(oneMetre.rate, 2)} = {lengthText(mine.smallestHeight)}. Picture 3 shows it as a pink ring on its last row.)
               </span>
             </p>
           </div>
+        )}
+
+        {done && <YourClockDrawing heightM={yourHeight} seconds={yourDuration.seconds} precision={yourPrecision} />}
+
+        {done && (
+          <PartHeader color="#0f766e" title="Part 3: The results">
+            We are about to read the numbers: first a check-up of three published numbers against what the same rule gives, then four tables. A guess never changes them. The choices you made in Part 2 change Table 4, and the page says which.
+          </PartHeader>
         )}
 
         {/* The results (after the run): the status label, three tables, and the links kept back until now (CLAUDE.md §12). The tables only report
@@ -1273,6 +1515,67 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
               published results and plans that this experiment uses, as the sources state them. Table 4 follows the three controls above. Your predictions are not marked here.
             </p>
 
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>The check-up: what we would expect beside what was found</p>
+            <ResultsTable
+              minWidth={620}
+              head={['What was checked', 'What we would expect', 'What was found', 'Reading']}
+              rows={[
+                [
+                  checkUp[0].label,
+                  `${checkUp[0].expected} (units of ${tenTo(-19)} per cm), the expected gradient`,
+                  `${checkUp[0].found} ± ${WISCONSIN_2023.statistical} ± ${WISCONSIN_2023.systematic}, which is ${(checkUp[0].sigmas as number).toFixed(1)} sigma from the expected`,
+                  <strong key="w">{checkUp[0].reading}</strong>,
+                ],
+                [
+                  checkUp[1].label,
+                  `at least ${sciText(checkUp[1].expected, 1)}, the clock’s precision`,
+                  `${sciText(checkUp[1].found, 2)}, which is ${(checkUp[1].found / checkUp[1].expected).toFixed(1)} times the precision`,
+                  <strong key="j">{checkUp[1].reading}</strong>,
+                ],
+                [
+                  checkUp[2].label,
+                  `about ${(checkUp[2].expected * 1e9).toFixed(0)} billionths of a second`,
+                  `${(checkUp[2].found * 1e9).toFixed(1)} billionths of a second`,
+                  <strong key="n">{checkUp[2].reading}</strong>,
+                ],
+              ]}
+            />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.5rem 0 0.75rem' }}>
+              The check-up does not follow the choices you made in Part 2 or your guesses. “More” and “less” compare the found number with the expected one; no cut-off is invented. The sigma combines the two give-or-takes as if they were independent, which is this experiment’s simplification.
+            </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Wisconsin.</strong> <em>What it is:</em> the measured gradient of the clock rate over 1 centimetre beside the one the rule gives. <em>What it means:</em> {checkUp[0].found} is {(checkUp[0].found - checkUp[0].expected).toFixed(1)} above {checkUp[0].expected}, which is {(checkUp[0].sigmas as number).toFixed(1)} sigma, well inside the give or take of about ±{wisconsinCombined.toFixed(1)}.{' '}
+                  <em>Why it matters:</em> a laboratory saw the effect of height on a clock across a single centimetre and it agrees with the rule. The weak link is the systematic give or take (±{WISCONSIN_2023.systematic}), larger than the statistical one (±{WISCONSIN_2023.statistical}).
+                </li>
+                <li>
+                  <strong>JILA.</strong> <em>What it is:</em> the effect across a millimetre beside the smallest rate difference that JILA’s clock could notice. <em>What it means:</em> the effect, {sciText(checkUp[1].found, 2)}, is {(checkUp[1].found / checkUp[1].expected).toFixed(1)} times the {sciText(checkUp[1].expected, 1)} precision.{' '}
+                  <em>Why it matters:</em> the clock was good enough to notice the effect across the height of its own cloud of atoms. The precision is an uncertainty from hours of data on one cloud, not the accuracy of the clock.
+                </li>
+                <li>
+                  <strong>NIST 2010.</strong> <em>What it is:</em> this experiment’s arithmetic for two clocks 33 centimetres apart over 79 years, beside NIST’s own figure. <em>What it means:</em> {(checkUp[2].found * 1e9).toFixed(1)} against about {(checkUp[2].expected * 1e9).toFixed(0)} billionths of a second: the small gap is NIST rounding to “about 90”.{' '}
+                  <em>Why it matters:</em> the same rule that fits the laboratory results also reproduces an older, plainer test, and the effect is far too small for people to notice in a lifetime.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 0, marginBottom: '0.5rem' }}>
+              Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+            </p>
+            <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <li>
+                <strong>Prediction 1, the gap after a year:</strong> {gapPrediction !== null ? GAP_CHOICES.find((c) => c.value === gapPrediction)?.label.toLowerCase() : ''}. The question was for two clocks 1 metre apart. Its number is in Picture 2 (the amber dot in the row “1 m higher”) and in Table 1 (the row for 1 metre).
+              </li>
+              <li>
+                <strong>Prediction 2, the height for one part in {tenTo(19)}:</strong> {heightPrediction !== null ? HEIGHT_CHOICES.find((c) => c.value === heightPrediction)?.label.toLowerCase() : ''}. Its number is in Picture 3 (the violet row) and in Table 2 (the row for {tenTo(-19)}).
+              </li>
+            </ul>
+
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 1: the rate difference and the gap after a year</p>
             <ResultsTable
               minWidth={640}
@@ -1281,7 +1584,10 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
                 const rate = rateDifference(metres)
                 const name = MARKED_HEIGHTS.find((h) => h.metres === metres)?.name ?? ''
                 return [
-                  name,
+                  <>
+                    {name}
+                    {metres === 1 && <PredictionTag n={1} />}
+                  </>,
                   sciText(rate, 2),
                   timeText(timeGap(metres, SECONDS_PER_YEAR)),
                   `${G_EARTH} × ${metres} ÷ (${sciText(cSquared, 3)}) = ${sciText(rate, 2)}; ${sciText(rate, 2)} × ${SECONDS_PER_YEAR.toLocaleString('en-US')} s = ${timeText(timeGap(metres, SECONDS_PER_YEAR))}`,
@@ -1292,13 +1598,32 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
               The rate difference is the fraction by which the higher clock ticks faster. It uses one constant g, which is a good approximation for heights of a few
               kilometres.
             </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The four heights of Pictures 1 and 2, with the fraction by which the higher clock ticks faster and the gap that builds up in a year, and the working in the last column.
+                </li>
+                <li>
+                  <strong>What it means.</strong> For 1 metre the fraction is {sciText(oneMetre.rate, 2)}, one part in about {(1 / oneMetre.rate / 1e15).toFixed(1)} thousand trillion, and after a year the higher clock is ahead by {timeText(oneMetre.gap)}. Ten times the height gives ten times the gap. A daily-life comparison: a clock that gains a few billionths of a second a year would take about {(1 / oneMetre.gap / 1e6).toFixed(0)} million years to gain a second.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The effect is real and exactly proportional to the height, but tiny: only a clock that can notice a difference this small can use it to tell how high it is.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 2: the smallest height that a clock can notice</p>
             <ResultsTable
               minWidth={560}
               head={['Clock precision', 'Smallest height', 'How it is worked out']}
               rows={[1e-16, 1e-18, 1e-19, JILA_2022.precision].map((precision) => [
-                precision === JILA_2022.precision ? `${sciText(precision, 1)} (the JILA clock of 2022)` : tenTo(Math.round(Math.log10(precision))),
+                <>
+                  {precision === JILA_2022.precision ? `${sciText(precision, 1)} (the JILA clock of 2022)` : tenTo(Math.round(Math.log10(precision)))}
+                  {precision === PREDICTION_PRECISION && <PredictionTag n={2} />}
+                </>,
                 lengthText(smallestHeight(precision)),
                 `${precision === JILA_2022.precision ? sciText(precision, 1) : tenTo(Math.round(Math.log10(precision)))} ÷ ${sciText(oneMetre.rate, 2)} = ${lengthText(smallestHeight(precision))}`,
               ])}
@@ -1307,6 +1632,22 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
               “Precision” is the smallest difference in rate that a clock can notice. The two clocks of {tenTo(-16)} and {tenTo(-18)} are examples chosen by this
               experiment, not real clocks. The row for {tenTo(-19)} is the precision that Prediction 2 asked about.
             </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> For each clock precision, the smallest height difference the clock can notice: the precision divided by {sciText(oneMetre.rate, 2)}.
+                </li>
+                <li>
+                  <strong>What it means.</strong> A clock good to {tenTo(-16)} notices {lengthText(smallestHeight(1e-16))}, one good to {tenTo(-18)} notices {lengthText(smallestHeight(1e-18))}, one good to {tenTo(-19)} notices {lengthText(caseHeight)} and the JILA clock, at {sciText(JILA_2022.precision, 1)}, notices {lengthText(smallestHeight(JILA_2022.precision))}. A daily-life comparison: a ruler marked in millimetres can see a millimetre, and one marked in tenths of a millimetre sees a tenth.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> A hundred times better precision notices a height a hundred times smaller, which is how a clock becomes a height gauge. The two example clocks are chosen by this experiment; only the JILA row is a published precision.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 3: the published results and plans</p>
             <ResultsTable
@@ -1354,6 +1695,22 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
               The numbers are quoted as the sources state them. This experiment does not analyse any laboratory’s data and does not claim that the second will be
               redefined.
             </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> What the sources say, as they say it: the JILA and Wisconsin laboratory results, the older NIST test, two field tests with carried clocks and the plan to redefine the second.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The effect has been seen across about a millimetre, a centimetre, hundreds of metres and about a kilometre, each time as the rule says. The second has not been redefined; the 2026 resolution only asks for a proposal in 2030.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> It shows how far the idea has moved from a laboratory curiosity towards a tool, and where it still is a plan. The numbers are quoted from abstracts and releases, so they are as sure as those sources.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Table 4: your own numbers</p>
             <ResultsTable
@@ -1374,6 +1731,23 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
               ]}
             />
 
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.75rem 0 1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The numbers of your own choice: the rate difference for your height, the gap after your time and the smallest height your clock can notice, with the working.
+                </li>
+                <li>
+                  <strong>What it means.</strong> A clock {lengthLabel(yourHeight)} higher ticks faster by {sciText(mine.rateDifference, 2)} and is ahead by {timeText(mine.timeGap)} after {durationName}. A clock good to {sciText(yourPrecision, 1)} notices {lengthText(mine.smallestHeight)}, so it {mine.canResolve ? 'can' : 'cannot'} notice your height.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The last row is the test: the effect must be at least the clock’s precision for the clock to notice it. Change a control in Part 2 to see which side of that line your numbers fall.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>Want to know more?</strong> The papers and the release behind these numbers are listed here now, because their summaries state what the
               predictions asked. Links open in a new tab.
@@ -1390,6 +1764,11 @@ export function ClockHeightExperiment({ onComplete, onTutorComplete }: ClockHeig
 
         {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The chapter summary below the experiment
             (in App) is shown only once the learner reaches the explanation. */}
+        {done && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
+        )}
         {done && gapPrediction !== null && heightPrediction !== null && (
           <ClockHeightTutor gapPrediction={gapPrediction} heightPrediction={heightPrediction} onExplained={() => onTutorComplete?.()} />
         )}
