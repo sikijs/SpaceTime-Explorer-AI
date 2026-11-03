@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { LATE_MEASUREMENTS, runTensionExperiment } from '../physics/hubbleTension'
+import {
+  combinedUncertaintySteps,
+  hubbleTensionCheckUp,
+  LATE_MEASUREMENTS,
+  runTensionExperiment,
+  sigmaBandOnLine,
+  sigmaGuessBand,
+  stretchedBar,
+  stretchedBarsTouch,
+  webbGuessSlot,
+  webbPanelPoint,
+} from '../physics/hubbleTension'
 import type { SigmaRange } from '../physics/hubbleTension'
 import { REAL_UNIVERSE_AGE_YEARS } from '../physics/bigBangExperiment'
 import { ReferencePanel } from './EnergyMomentumExperiment'
@@ -31,6 +42,8 @@ const EARLY_COLOR = '#38bdf8' // sky blue: early-universe measurement
 const LATE_COLOR = '#fb923c' // orange: nearby-universe measurement
 const OVERLAP_COLOR = '#a78bfa' // purple: where the two bell curves overlap
 const AGE_COLOR = '#facc15' // yellow: the real age of the universe
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+const WEBB_COLOR = '#34d399' // green: the Webb result
 const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
 
@@ -89,6 +102,26 @@ const REAL_AGE_BILLION = REAL_UNIVERSE_AGE_YEARS / 1e9
 const xOf = (value: number) => AXIS_LEFT + ((value - AXIS_MIN) / (AXIS_MAX - AXIS_MIN)) * (AXIS_RIGHT - AXIS_LEFT)
 const round2 = (value: number) => Number(value.toFixed(2))
 const fixed2 = (value: number) => value.toFixed(2)
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+
+const TRIAL_COLOR = '#f472b6' // pink: the learner's own trial error bars (the Part 2 control)
+const WEBB_SHORT = { lower: 'lower', same: 'about the same', higher: 'higher' } as const
+// Picture 1's Webb panel (stage 7): its height and its own scale (magnitudes, -0.10 to 0.10).
+const WEBB_PANEL_H = 256
+const WEBB_X0 = 80
+const WEBB_X1 = 500
+const webbX = (magnitudes: number) => WEBB_X0 + ((magnitudes + 0.1) / 0.2) * (WEBB_X1 - WEBB_X0)
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -218,6 +251,17 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
   const scale = 120 / bell(0, 0, minSd)
   const doubt = result.combinedUncertainty
   const wholeSegments = Math.floor(result.tension)
+  const working = combinedUncertaintySteps(early.uncertainty, late.uncertainty)
+  const earlyLow = early.value - early.uncertainty
+  const earlyHigh = early.value + early.uncertainty
+  const lateLow = late.value - late.uncertainty
+  const lateHigh = late.value + late.uncertainty
+  const barsTouch = lateLow <= earlyHigh
+  const ageDifference = Math.abs(result.earlyHubbleTimeBillionYears - result.lateHubbleTimeBillionYears)
+  const sideOfRealAge = (billion: number) => (billion > REAL_AGE_BILLION ? 'to the right of the yellow line (older than 13.8)' : 'to the left of the yellow line (younger than 13.8)')
+  const checkUp = hubbleTensionCheckUp()
+  const touch = stretchedBarsTouch(early, late, stretch)
+  const webbPoint = webbPanelPoint()
 
   // Layout of Picture 3
   const ageMax = 16
@@ -402,7 +446,10 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Your job.</strong> Choose a nearby-universe measurement. Predict how many sigma apart it is from the early-universe
             value, and what happened when the Webb telescope re-measured the same Cepheid stars. Press Run. You are not graded while you
-            predict. The tutor will compare your predictions with the result afterwards.
+            predict. Your predictions never change the real pictures or tables. They are drawn on the pictures in white, in a box marked
+            YOUR GUESS, so you can compare them with what was measured, and they are listed again beside the results. In Part 2 you can try
+            your own error bars; those change the drawing in Part 2 and the numbers in the tables, but not the three pictures, and your guesses change none of them. The
+            tutor will compare your predictions with the result afterwards.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What we assume.</strong> Each uncertainty is treated as a simple, symmetric “give or take”, and two measurements’ errors
@@ -474,6 +521,11 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
               : REFERENCE_ENTRIES
           }
         />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch the measurements appear on a line, one stage at a time. Nothing here tells you
+          the answers. When the pictures are drawn, your guesses appear on them in white.
+        </PartHeader>
 
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The nearby-universe measurement to test</label>
@@ -599,8 +651,8 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
         {/* Picture 1: the measurements on one number line (sky blue = early universe, orange = nearby universe). */}
         <svg
           width={VIEW_WIDTH}
-          height={334}
-          viewBox={`0 0 ${VIEW_WIDTH} 334`}
+          height={stage >= 7 ? 334 + WEBB_PANEL_H : 334}
+          viewBox={`0 0 ${VIEW_WIDTH} ${stage >= 7 ? 334 + WEBB_PANEL_H : 334}`}
           style={svgStyle}
           role="img"
           aria-label="Number line of expansion-rate measurements"
@@ -639,6 +691,53 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
                 opacity={0.85}
               />
             ))}
+
+          {/* Webb's second look (stage 7): the real result on its own scale, and the learner's guess for Prediction 2 as a marker only. */}
+          {stage >= 7 && webbPrediction !== null && (
+            <g>
+              <line x1={AXIS_LEFT} y1={334} x2={AXIS_RIGHT} y2={334} stroke={MUTED_COLOR} strokeDasharray="2 4" />
+              <text x={AXIS_LEFT} y={356} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+                Webb’s second look: Webb minus Hubble, Cepheid brightness
+              </text>
+              <line x1={webbX(0)} y1={398} x2={webbX(0)} y2={434} stroke={MUTED_COLOR} strokeDasharray="4 3" />
+              <line x1={webbX(webbPoint.low)} y1={405} x2={webbX(webbPoint.high)} y2={405} stroke={WEBB_COLOR} strokeWidth={3} />
+              <circle cx={webbX(webbPoint.value)} cy={405} r={5} fill={WEBB_COLOR} />
+              <text x={webbX(webbPoint.value)} y={392} fill={WEBB_COLOR} fontSize="12" textAnchor="middle">
+                Webb − Hubble: {webbPoint.value} ± {(webbPoint.high - webbPoint.value).toFixed(2)} magnitudes
+              </text>
+              <line x1={WEBB_X0} y1={434} x2={WEBB_X1} y2={434} stroke={MUTED_COLOR} strokeWidth={1.5} />
+              {[-0.1, -0.05, 0, 0.05, 0.1].map((v) => (
+                <g key={v}>
+                  <line x1={webbX(v)} y1={430} x2={webbX(v)} y2={438} stroke={MUTED_COLOR} />
+                  <text x={webbX(v)} y={452} fill={MUTED_COLOR} fontSize="11" textAnchor="middle">
+                    {v}
+                  </text>
+                </g>
+              ))}
+              <text x={(WEBB_X0 + WEBB_X1) / 2} y={470} fill={TEXT_COLOR} fontSize="12" textAnchor="middle">
+                Webb minus Hubble (magnitudes); the dashed line at 0 means no change
+              </text>
+              <text x={AXIS_LEFT} y={494} fill={GUESS_COLOR} fontSize="12">
+                Your guess for Prediction 2 (a marker only: it is not on the scale above)
+              </text>
+              {(['lower', 'same', 'higher'] as const).map((choice, i) => {
+                const chosen = webbGuessSlot(webbPrediction) === i
+                return (
+                  <g key={choice}>
+                    <rect x={60 + i * 160} y={502} width={140} height={26} rx={4} fill={chosen ? GUESS_COLOR : 'none'} stroke={chosen ? GUESS_COLOR : MUTED_COLOR} strokeWidth={chosen ? 2 : 1} />
+                    <text x={130 + i * 160} y={519} fill={chosen ? '#0b1020' : MUTED_COLOR} fontSize="12" fontWeight={chosen ? 'bold' : 'normal'} textAnchor="middle">
+                      {WEBB_SHORT[choice]}
+                    </text>
+                  </g>
+                )
+              })}
+              <line x1={130 + webbGuessSlot(webbPrediction) * 160} y1={528} x2={130 + webbGuessSlot(webbPrediction) * 160} y2={546} stroke={GUESS_COLOR} strokeWidth={2} />
+              <rect x={130 + webbGuessSlot(webbPrediction) * 160 - 100} y={546} width={200} height={30} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+              <text x={130 + webbGuessSlot(webbPrediction) * 160} y={566} fill={GUESS_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle">
+                YOUR GUESS: {WEBB_SHORT[webbPrediction]}
+              </text>
+            </g>
+          )}
         </svg>
 
         {/* Guide to Picture 1: the first five bullets and the "what to look for" list are wording approved by the owner on 2026-10-17
@@ -689,32 +788,58 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
               gap between 120.0 and 121.0 would be 1.0.
             </li>
           </ul>
+          <div style={{ display: stage >= 7 || status === 'complete' ? 'block' : 'none' }}>
           <p style={{ marginTop: '0.5rem', marginBottom: '0.25rem' }}>
-            <strong>What to look for, and what it would mean.</strong> Look at the picture once the other measurements have appeared. Here
-            are three things to look at, and what each one would tell you.
+            <strong>A worked moment, with your numbers.</strong> Take {late.name}: {late.value} ± {round2(late.uncertainty)}. Its dot sits at {late.value} and its
+            bar runs from {fixed2(lateLow)} to {fixed2(lateHigh)}. {early.name}’s dot sits at {early.value}, with a bar from {round2(earlyLow)} to {round2(earlyHigh)}. The
+            gap bracket measures {late.value} − {early.value} = {fixed2(result.gap)} km/s/Mpc.{' '}
+            {barsTouch
+              ? 'The two bars overlap, so some values lie inside both.'
+              : `The two bars do not touch: there is empty line between ${round2(earlyHigh)} and ${fixed2(lateLow)}.`}
+          </p>
+          <p style={{ marginTop: '0.5rem', marginBottom: '0.25rem' }}>
+            <strong>What to look for.</strong> Here are three things to look at, what each one means, and why it matters.
           </p>
           <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
             <li>
-              <strong>Where each orange dot sits compared with the dashed line.</strong> The dashed line is the early-universe value. An
-              orange dot to the <em>right</em> of it is a measurement that found a faster expansion than the early-universe value. A dot on or
-              very near the line found nearly the same value. A dot to the <em>left</em> found a slower expansion. The distance from the line
-              tells you how big the difference is, in km/s/Mpc. But the distance alone does not yet tell you whether the difference matters.
-              That needs the next two things.
+              <strong>Look at</strong> where each orange dot sits compared with the dashed blue line. <strong>What it means:</strong> a dot to the right of the line found
+              a faster expansion than the early-universe value, and a dot to the left found a slower one. {late.name} is {fixed2(result.gap)} to the right.{' '}
+              <strong>Why it matters:</strong> the distance from the line is the size of the disagreement, but on its own it cannot say whether that is big or small. That
+              needs the next two things.
             </li>
             <li>
-              <strong>Whether an orange bar and the blue bar touch or overlap.</strong> If the bars overlap, there are values that both
-              measurements say are plausible, so the two could easily be measuring the same true value, and the difference between their
-              best values may be only chance. If there is a clear empty space between the bars, then even the “give or take” of each cannot
-              close the gap, and the difference is harder to put down to chance. That empty space is the idea that sigma turns into a number.
+              <strong>Look at</strong> whether an orange bar and the blue bar touch. <strong>What it means:</strong>{' '}
+              {barsTouch
+                ? `for ${late.name} the bars overlap, so there are values that both measurements say are plausible.`
+                : `for ${late.name} there is empty line between the bars (${round2(earlyHigh)} to ${fixed2(lateLow)}), so no value lies inside both.`}{' '}
+              <strong>Why it matters:</strong> touching bars mean the difference could be chance. An empty space is the idea that sigma turns into a number.
             </li>
             <li>
-              <strong>Which bars are long and which are short.</strong> A short bar is a precise measurement, and a long bar is a less
-              certain one. This changes how to read the distance from the line. A dot that is far from the line but has a very long bar can
-              still be consistent with the line, because it is uncertain. A dot that is just as far away but has a short bar is a bigger
-              puzzle, because the measurement was precise and still landed there. This is why we compare the gap with the “give or take”,
-              and do not look at the gap alone.
+              <strong>Look at</strong> which bars are long and which are short. <strong>What it means:</strong> {early.name}’s bar is {round2(2 * early.uncertainty)} long and{' '}
+              {late.name}’s is {round2(2 * late.uncertainty)} long, so {early.uncertainty < late.uncertainty ? `${early.name} is the more precise` : `${late.name} is the more precise`}.{' '}
+              <strong>Why it matters:</strong> the same distance from the line is a bigger puzzle for a short bar than for a long one, which is why we compare the gap with
+              the “give or take” and do not look at the gap alone.
             </li>
           </ul>
+          </div>
+          {stage >= 7 && (
+            <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>The panel “Webb’s second look” (it appears in the last stage):</strong> a second, separate scale, in magnitudes. A magnitude is the astronomers’ unit of
+                brightness. The green dot and bar are the real result: how much the Webb telescope’s Cepheid brightnesses differed from the Hubble telescope’s, {webbPoint.value}{' '}
+                give or take {(webbPoint.high - webbPoint.value).toFixed(2)}. The dashed line at 0 is “no difference”.
+              </li>
+              <li>
+                <strong>The three white-edged boxes and the YOUR GUESS box:</strong> your guess for Prediction 2. The box you chose is filled white. It is only a marker, so it is
+                not placed on the magnitude scale above it.
+              </li>
+            </ul>
+          )}
+          <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+            <strong>Where the real picture comes from.</strong> <em>Measured:</em> {early.name} by the Planck satellite team; {late.name} and the other nearby-universe values by the
+            teams named in the table below.
+            {stage >= 7 && <> The Webb result was measured by Riess and colleagues in 2024 (arXiv:2401.04773).</>} <em>Calculated here:</em> the gap. <em>Imagined for the question:</em> nothing.
+          </p>
         </div>
 
         {/* Picture 2: how much do the two uncertainties overlap? (bell curves; purple shading = the overlap) */}
@@ -726,8 +851,8 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
           <>
             <svg
               width={VIEW_WIDTH}
-              height={350}
-              viewBox={`0 0 ${VIEW_WIDTH} 350`}
+              height={410}
+              viewBox={`0 0 ${VIEW_WIDTH} 410`}
               style={svgStyle}
               role="img"
               aria-label="Bell curves for the two uncertainties and how many combined give-or-takes fit in the gap"
@@ -788,6 +913,42 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
                   </text>
                 </g>
               )}
+
+              {/* Your guess for Prediction 1: a white band along the same sigma scale as the ticks (a marker of where you guessed, not a result). */}
+              {stage >= 5 &&
+                sigmaPrediction !== null &&
+                (() => {
+                  const band = sigmaBandOnLine(sigmaPrediction, doubt)
+                  const sigmas = sigmaGuessBand(sigmaPrediction)
+                  const startValue = lo + band.from
+                  const endValue = band.to === null ? Infinity : lo + band.to
+                  const offScale = startValue > AXIS_MAX
+                  const x1 = xOf(Math.min(startValue, AXIS_MAX))
+                  const x2 = xOf(Math.min(endValue, AXIS_MAX))
+                  const arrow = endValue > AXIS_MAX
+                  const mid = (x1 + x2) / 2
+                  const boxCenter = Math.min(Math.max(mid, 190), 370)
+                  const bandY = baseY + 150
+                  return (
+                    <g>
+                      {!offScale && <rect x={x1} y={bandY} width={Math.max(x2 - x1, 0)} height={10} fill={GUESS_COLOR} opacity={0.9} />}
+                      {arrow && <polygon points={`${x2},${bandY - 4} ${x2 + 12},${bandY + 5} ${x2},${bandY + 14}`} fill={GUESS_COLOR} />}
+                      <text x={x1} y={bandY - 6} fill={GUESS_COLOR} fontSize="10" textAnchor="middle">
+                        {sigmas.lo}
+                      </text>
+                      {sigmas.hi !== null && !arrow && (
+                        <text x={x2} y={bandY - 6} fill={GUESS_COLOR} fontSize="10" textAnchor="middle">
+                          {sigmas.hi}
+                        </text>
+                      )}
+                      <line x1={mid} y1={bandY + 14} x2={boxCenter} y2={baseY + 172} stroke={GUESS_COLOR} strokeWidth={2} />
+                      <rect x={boxCenter - 180} y={baseY + 172} width={360} height={28} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+                      <text x={boxCenter} y={baseY + 191} fill={GUESS_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle">
+                        YOUR GUESS: {label(SIGMA_CHOICES, sigmaPrediction).toLowerCase()} sigma{offScale ? ' (beyond this line)' : ''}
+                      </text>
+                    </g>
+                  )
+                })()}
             </svg>
 
             {/* Guide to Picture 2: draft wording for the owner's review (CLAUDE.md §14, §28.1, §29). It uses the table example's numbers,
@@ -832,26 +993,41 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
                 </li>
               </ul>
               <p style={{ marginTop: '0.5rem', marginBottom: '0.25rem' }}>
-                <strong>What to look for, and what it would mean.</strong> Here are three things to look at, and what each one would tell you.
+                <strong>A worked moment, with your numbers.</strong> The combined give-or-take: {round2(late.uncertainty)}² + {round2(early.uncertainty)}² = {fixed2(working.bSquared)} +{' '}
+                {fixed2(working.aSquared)} = {fixed2(working.sum)}, and its square root is {fixed2(working.combined)}. The gap, {fixed2(result.gap)}, divided by {fixed2(working.combined)} gives{' '}
+                {fixed2(result.tension)}. So {wholeSegments} full ticks fit along the gap, and a leftover piece of {fixed2(result.tension - wholeSegments)} of a tick: {fixed2(result.tension)} sigma.
               </p>
               <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>How wide each hill is.</strong> A narrow, tall hill is a precise measurement: the true value is probably very close
-                  to its best value. A wide, low hill is a less precise one. So two narrow hills that sit far apart are a stronger
-                  disagreement than two wide hills the same distance apart, because the wide ones could each easily be off by that much.
-                </li>
-                <li>
-                  <strong>How much purple there is.</strong> Purple is the set of values that both measurements accept. A lot of purple means
-                  the two measurements agree about many possible true values, so there is no real conflict. A thin sliver of purple, or none
-                  at all, means there are almost no values that both would accept, so the two measurements are hard to reconcile.
-                </li>
-                <li>
-                  <strong>How many numbered ticks fit along the gap.</strong> Each tick is one combined give-or-take. If only one or two fit,
-                  the gap is about the size of the doubt itself, and chance can easily explain it. The more that fit, the less likely it is that
-                  chance alone explains the gap. As the introduction said, 5 or more is the usual bar in science for calling a difference real
-                  rather than chance. The last, partly filled piece counts too, which is why sigma is not always a whole number.
+                  <strong>The white band and the YOUR GUESS box (they appear with the ticks):</strong> your guess for Prediction 1, drawn on the same scale as the ticks. The small
+                  numbers at its ends are sigma: a band from 2 to 4 sits where 2 to 4 ticks would reach. “More than 6” has no upper end, so it ends in an arrow, and if its start
+                  falls beyond the end of the line the box says so. The band is only where you guessed. It is not a result.
                 </li>
               </ul>
+              <p style={{ marginTop: '0.5rem', marginBottom: '0.25rem' }}>
+                <strong>What to look for.</strong> Here are three things to look at, what each one means, and why it matters.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Look at</strong> how wide each hill is. <strong>What it means:</strong> {early.name}’s hill is {early.uncertainty < late.uncertainty ? 'narrow' : 'wide'} (give or take{' '}
+                  {early.uncertainty}) and {late.name}’s is {late.uncertainty < early.uncertainty ? 'narrow' : 'wide'} (give or take {round2(late.uncertainty)}).{' '}
+                  <strong>Why it matters:</strong> two narrow hills far apart are a stronger disagreement than two wide hills the same distance apart.
+                </li>
+                <li>
+                  <strong>Look at</strong> how much purple there is. <strong>What it means:</strong> the purple is the values both measurements accept. Compare it with the size
+                  of each hill: whatever is not purple is a value that only one of the two measurements accepts. <strong>Why it matters:</strong> a lot of purple means the two
+                  measurements agree about many values, and little or none means they are hard to reconcile.
+                </li>
+                <li>
+                  <strong>Look at</strong> how many numbered ticks fit along the gap. <strong>What it means:</strong> {fixed2(result.tension)} ticks fit. <strong>Why it matters:</strong>{' '}
+                  the more ticks fit, the less likely chance alone explains the gap. This count is the sigma that the Results use, and it is the scale your white band is drawn on.
+                </li>
+              </ul>
+              <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the two best values and their give-or-takes, by the teams named in the table below.{' '}
+                <em>Calculated here:</em> the bell-curve shapes, the combined give-or-take, the tick spacing and sigma. The bell curves are a simple drawing of each give-or-take, not the
+                scientists’ full statistics. <em>Imagined for the question:</em> nothing.
+              </p>
             </div>
 
             {/* Picture 3: what the gap means for the age of the universe */}
@@ -927,151 +1103,341 @@ export function HubbleTensionExperiment({ onComplete, onTutorComplete }: HubbleT
                 </li>
               </ul>
               <p style={{ marginTop: '0.5rem', marginBottom: '0.25rem' }}>
-                <strong>What to look for, and what it would mean.</strong> Here are two things to look at, and what each one would tell you.
+                <strong>A worked moment, with your numbers.</strong> 977.8 ÷ {early.value} gives {result.earlyHubbleTimeBillionYears.toFixed(2)} billion years for {early.name}, and 977.8 ÷ {late.value} gives{' '}
+                {result.lateHubbleTimeBillionYears.toFixed(2)} for {late.name}. The difference is {ageDifference.toFixed(2)} billion years.
+              </p>
+              <p style={{ marginTop: '0.5rem', marginBottom: '0.25rem' }}>
+                <strong>What to look for.</strong> Here are two things to look at, what each one means, and why it matters.
               </p>
               <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>How much longer one bar is than the other, in billions of years.</strong> This is what the gap between the two
-                  expansion rates would mean for the age of the universe. A small difference between the bars means the two values would give
-                  nearly the same age. A large difference means they would give noticeably different ages, so the disagreement matters for
-                  more than one number: it changes the story of how old the universe is. Read the difference from the numbers written on the
-                  bars, not only from how the bars look.
+                  <strong>Look at</strong> how much longer one bar is than the other. <strong>What it means:</strong> the bars differ by {ageDifference.toFixed(2)} billion years.{' '}
+                  <strong>Why it matters:</strong> this is what the gap between the two expansion rates would mean for the rough age of the universe. A disagreement about one
+                  number changes the story of how old the universe is. Read the difference from the numbers on the bars, not only from how the bars look.
                 </li>
                 <li>
-                  <strong>Where each bar ends compared with the yellow line.</strong> A bar that ends to the right of the yellow line gives a
-                  rough age older than the full model’s 13.8. A bar that ends to the left gives a younger one. Because the bars use a rough
-                  rule, a small gap to the line is not a problem in itself. They are not meant to land on it. What matters is the size of the
-                  difference between the bars.
+                  <strong>Look at</strong> where each bar ends compared with the yellow line. <strong>What it means:</strong> the {early.name} bar ends{' '}
+                  {sideOfRealAge(result.earlyHubbleTimeBillionYears)}, and the {late.name} bar ends {sideOfRealAge(result.lateHubbleTimeBillionYears)}.{' '}
+                  <strong>Why it matters:</strong> the bars use a rough rule, so they are not meant to land on the line. What counts is the size of the difference between the bars.
                 </li>
               </ul>
             </div>
 
-            {/* Results: neutral (nothing says why the two values differ), shown only after the run. Draft wording for the owner's review
-                (CLAUDE.md §28.1, §29). The predictions are recorded and not marked; the tutor marks them later. */}
+            {/* Part 2: the one control (after the run). It changes the numbers in the tables, never the three pictures. */}
             {status === 'complete' && (
-              <div style={{ marginTop: '2rem', fontSize: '0.875rem' }}>
-                <h3 style={{ marginTop: 0 }}>Results</h3>
-                <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
-                  These are the numbers behind the three pictures, for {late.name} compared with {early.name}. They only report what was
-                  measured and calculated. They do not say why the numbers are what they are.
-                </p>
-
-                <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '1.5rem' }}>
-                  <tbody>
-                    {(
-                      [
-                        [`${early.name} (early universe)`, `${early.value} ± ${early.uncertainty} km/s/Mpc`],
-                        [`${late.name} (nearby universe)`, `${late.value} ± ${round2(late.uncertainty)} km/s/Mpc`],
-                        ['Gap between the best values', `${fixed2(shown.gap)} km/s/Mpc`],
-                        [`Combined give-or-take${stretch === 1 ? '' : ` (error bars ×${stretch})`}`, `${fixed2(shown.combinedUncertainty)} km/s/Mpc`],
-                        [`Sigma${stretch === 1 ? '' : ` (error bars ×${stretch})`}`, `${fixed2(shown.tension)}`],
-                        [`Hubble time from ${early.name}`, `${shown.earlyHubbleTimeBillionYears.toFixed(2)} billion years`],
-                        [`Hubble time from ${late.name}`, `${shown.lateHubbleTimeBillionYears.toFixed(2)} billion years`],
-                      ] as const
-                    ).map(([name, value]) => (
-                      <tr key={name} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
-                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{name}</td>
-                        <td style={{ padding: '0.4rem 0', fontWeight: 'bold', textAlign: 'right' }}>{value}</td>
-                      </tr>
+              <>
+                <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+                  We are about to make every error bar bigger, to see how much smaller the sigma becomes. These are trial values. They change the drawing in this part and
+                  the numbers in the tables, never the three pictures in Part 1 and never the published measurements.
+                </PartHeader>
+                <div style={{ fontSize: '0.875rem' }}>
+                  <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
+                    Your guesses do not change the drawings or tables. These settings do. They are trial values, not measurements, and the real measurements are not like that.
+                  </p>
+                  <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Try your own error bars</p>
+                  <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
+                    Pretend that every “give or take” in the tables below, in every row, were this many times larger. The drawing below and Tables 1 and 2 in Part 3 follow your choice, and
+                    the tables say so in their headings. The three pictures in Part 1 stay as they were, drawn with the published error bars. Pick ×1 to go back to the published ones.
+                  </p>
+                  <div style={{ marginBottom: '1rem' }}>
+                    {STRETCH_CHOICES.map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setStretch(k)}
+                        className={`toggle-button${stretch === k ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        ×{k}
+                      </button>
                     ))}
-                  </tbody>
-                </table>
-
-                <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Every nearby-universe measurement, compared with {early.name}</p>
-                <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '1.5rem' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
-                      <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>Measurement</th>
-                      <th style={{ padding: '0.4rem 0.5rem' }}>Published value (km/s/Mpc)</th>
-                      <th style={{ padding: '0.4rem 0', textAlign: 'right' }}>Sigma from {early.name}{stretch === 1 ? '' : ` (×${stretch})`}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {LATE_MEASUREMENTS.map((m) => {
-                      const sigma = m === late ? shown.tension : shown.otherLateTensions.find((o) => o.measurement === m)!.tension
-                      return (
-                        <tr key={m.name} style={{ borderBottom: '1px solid var(--border-color, #ccc)', fontWeight: m === late ? 'bold' : 'normal' }}>
-                          <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
-                            {m.name}
-                            {m === late ? ' (the one you chose)' : ''}
-                          </td>
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            {m.value} ± {round2(m.uncertainty)}
-                          </td>
-                          <td style={{ padding: '0.4rem 0', textAlign: 'right' }}>{fixed2(sigma)}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-
-                <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>What if the error bars were bigger?</p>
-                <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
-                  Pretend that every “give or take” above, in every row, were this many times larger. The tables update. The three pictures stay
-                  as they were, drawn with the published error bars.
-                </p>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  {STRETCH_CHOICES.map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => setStretch(k)}
-                      className={`toggle-button${stretch === k ? ' is-selected' : ''}`}
-                      style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-                    >
-                      ×{k}
-                    </button>
-                  ))}
+                  </div>
+                  {/* Drawing A: the real error bars (blue, orange) with the learner's trial bars (pink, imagined) under each. Only the pink bars and the pink sigma move. */}
+                  {(() => {
+                    const bars = [
+                      { m: early, real: EARLY_COLOR, y: 80 },
+                      { m: late, real: LATE_COLOR, y: 160 },
+                    ] as const
+                    const clampX = (v: number) => xOf(Math.min(Math.max(v, AXIS_MIN), AXIS_MAX))
+                    return (
+                      <svg width={VIEW_WIDTH} height={330} viewBox={`0 0 ${VIEW_WIDTH} 330`} style={svgStyle} role="img" aria-label="Real error bars with your trial error bars under each">
+                        <text x={AXIS_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+                          Drawing A: your trial error bars beside the real ones
+                        </text>
+                        <line x1={xOf(early.value)} y1={124} x2={xOf(early.value)} y2={250} stroke={EARLY_COLOR} strokeWidth={1} strokeDasharray="4 3" />
+                        {bars.map(({ m, real, y }) => {
+                          const trial = stretchedBar(m, stretch)
+                          return (
+                            <g key={m.name}>
+                              <text x={xOf(m.value)} y={y - 22} fill={real} fontSize="12" textAnchor="middle">
+                                {m.name}: {m.value} ± {round2(m.uncertainty)} (real)
+                              </text>
+                              <line x1={xOf(m.value - m.uncertainty)} y1={y} x2={xOf(m.value + m.uncertainty)} y2={y} stroke={real} strokeWidth={3} />
+                              <circle cx={xOf(m.value)} cy={y} r={5} fill={real} />
+                              <line x1={clampX(trial.low)} y1={y + 16} x2={clampX(trial.high)} y2={y + 16} stroke={TRIAL_COLOR} strokeWidth={3} />
+                              <circle cx={xOf(m.value)} cy={y + 16} r={4} fill={TRIAL_COLOR} />
+                              {trial.low < AXIS_MIN && <polygon points={`${xOf(AXIS_MIN)},${y + 16} ${xOf(AXIS_MIN) + 9},${y + 11} ${xOf(AXIS_MIN) + 9},${y + 21}`} fill={TRIAL_COLOR} />}
+                              {trial.high > AXIS_MAX && <polygon points={`${xOf(AXIS_MAX)},${y + 16} ${xOf(AXIS_MAX) - 9},${y + 11} ${xOf(AXIS_MAX) - 9},${y + 21}`} fill={TRIAL_COLOR} />}
+                              <text x={xOf(m.value)} y={y + 36} fill={TRIAL_COLOR} fontSize="11" textAnchor="middle">
+                                imagined: ×{stretch} → ± {round2(trial.uncertainty)}
+                              </text>
+                            </g>
+                          )
+                        })}
+                        <AxisTicks y={250} />
+                        <text x={AXIS_LEFT} y={312} fill={TEXT_COLOR} fontSize="12">
+                          Sigma, real error bars: {fixed2(result.tension)}
+                        </text>
+                        <text x={300} y={312} fill={TRIAL_COLOR} fontSize="12" fontWeight="bold">
+                          Sigma, your ×{stretch}: {fixed2(shown.tension)} ({touch ? 'bars touch' : 'bars apart'})
+                        </text>
+                      </svg>
+                    )
+                  })()}
+                  <div style={{ color: 'var(--text-muted)', margin: '1rem 0' }}>
+                    <p style={{ margin: '0 0 0.5rem' }}>
+                      <strong>How to read this drawing.</strong> It is the number line of Picture 1 again, with only two measurements: the early-universe value ({early.name}, sky blue) and the
+                      one you chose ({late.name}, orange). The line is the expansion rate, H₀, in km/s/Mpc (kilometres per second for each megaparsec of distance).
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                      <li>
+                        <strong>The blue and orange dots and bars, marked “real”:</strong> the published best value and the published “give or take”. They never move, whatever you pick.
+                      </li>
+                      <li>
+                        <strong>The pink dots and bars, marked “imagined”:</strong> your trial error bars. Each is the same best value with its give-or-take multiplied by the number
+                        you picked. At ×1 a pink bar lies exactly under the real one. A pink arrow at the end of the line means that bar runs on past it.
+                      </li>
+                      <li>
+                        <strong>The dashed blue line:</strong> the early-universe value, a ruler to hold against the other bar.
+                      </li>
+                      <li>
+                        <strong>The two sigma lines at the bottom:</strong> sigma from the real error bars (white), and sigma from your pink ones, with a note on whether the two pink bars touch.
+                        Sigma is the gap divided by the combined give-or-take, as in Picture 2.
+                      </li>
+                    </ul>
+                    <p style={{ margin: '0.5rem 0 0.25rem' }}>
+                      <strong>A worked moment, with your numbers.</strong>{' '}
+                      {stretch === 1
+                        ? 'At ×1 the pink bars lie exactly on the real ones and the two sigma lines agree. Pick a bigger number to see them part.'
+                        : `At ×${stretch}, ${early.name}’s give-or-take ${early.uncertainty} becomes ${round2(stretchedBar(early, stretch).uncertainty)} and ${late.name}’s ${round2(late.uncertainty)} becomes ${round2(stretchedBar(late, stretch).uncertainty)}. The combined give-or-take grows to ${fixed2(shown.combinedUncertainty)}, the gap stays ${fixed2(shown.gap)}, and sigma falls from ${fixed2(result.tension)} to ${fixed2(shown.gap)} ÷ ${fixed2(shown.combinedUncertainty)} = ${fixed2(shown.tension)}.`}
+                    </p>
+                    <p style={{ margin: '0.5rem 0 0.25rem' }}>
+                      <strong>What to look for.</strong> Here are three things to look at, what each one means, and why it matters.
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                      <li>
+                        <strong>Look at</strong> each pink bar against the real bar above it. <strong>What it means:</strong> the pink bar is {stretch === 1 ? 'the same length' : `${stretch} times as long`}, with the same dot.{' '}
+                        <strong>Why it matters:</strong> a bigger give-or-take means a less certain measurement, so it spreads further along the line.
+                      </li>
+                      <li>
+                        <strong>Look at</strong> whether the two pink bars touch. <strong>What it means:</strong> at ×{stretch} they {touch ? 'touch or overlap' : 'still have empty line between them'}.{' '}
+                        <strong>Why it matters:</strong> touching bars are the picture form of a small sigma: some values would be plausible for both measurements.
+                      </li>
+                      <li>
+                        <strong>Look at</strong> the two sigma lines. <strong>What it means:</strong> {fixed2(result.tension)} with the real bars, {fixed2(shown.tension)} with yours.{' '}
+                        <strong>Why it matters:</strong> how big a disagreement looks depends on how big the uncertainties are. These are trial values. They do not say that the real
+                        error bars are like that.
+                      </li>
+                    </ul>
+                    <p style={{ margin: '0.75rem 0 0' }}>
+                      <strong>Where the real picture comes from.</strong> <em>Measured:</em> the blue and orange values and bars, by the teams named in Table 2 below.{' '}
+                      <em>Calculated here:</em> the pink bars (the published give-or-take times your number) and both sigma lines. <em>Imagined for the question:</em> the pink bars and the
+                      pink sigma. Your guesses are not drawn here, because they never change a picture.
+                    </p>
+                  </div>
+                  <div style={{ color: 'var(--text-muted)' }}>
+                    <p style={{ margin: '0 0 0.5rem' }}>
+                      <strong>What this control does.</strong>
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                      <li>
+                        <strong>What it is:</strong> every give-or-take in the tables is multiplied by 1.5, 2, 3 or 5. <strong>What it means:</strong> the gaps stay put, but the combined
+                        give-or-take grows by the same number, so every sigma is divided by it. For {late.name}, {fixed2(result.tension)} at ×1 becomes {fixed2(runTensionExperiment(late, 2).tension)} at ×2.{' '}
+                        <strong>Why it matters:</strong> it shows how much sigma depends on how large the uncertainties are. These are trial values, not measurements, and the real
+                        measurements are not like that.
+                      </li>
+                    </ul>
+                  </div>
                 </div>
 
-                <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Your predictions (recorded, not marked here)</p>
-                <ul style={{ marginTop: 0, paddingLeft: '1.25rem' }}>
-                  <li>
-                    <strong>Prediction 1, how many sigma apart:</strong> {label(SIGMA_CHOICES, sigmaPrediction)}.
-                  </li>
-                  <li>
-                    <strong>Prediction 2, what the Webb telescope changed:</strong> {label(WEBB_CHOICES, webbPrediction)}.
-                  </li>
-                </ul>
-
-                {/* How to read the results: draft wording (CLAUDE.md §29). It explains each row and the control, and says nothing about why the
-                    values differ. */}
-                <div style={{ color: 'var(--text-muted)', marginTop: '1.5rem' }}>
-                  <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                    <strong>How to read these results.</strong>
+                <PartHeader color="#0f766e" title="Part 3: The results">
+                  We are about to read the numbers: first a check-up against the published values, then the tables. A guess never changes them. The trial values from Part 2 change
+                  the sigma and give-or-take rows, and the page says when they are on.
+                </PartHeader>
+                <div style={{ fontSize: '0.875rem' }}>
+                  <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
+                    These are the numbers behind the three pictures, for {late.name} compared with {early.name}. They only report what was measured and calculated. They do not say why
+                    the numbers are what they are.
                   </p>
-                  <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+
+                  <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>The check-up: what we would expect, and what was found</p>
+                  <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.75rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                        <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>What was checked</th>
+                        <th style={{ padding: '0.4rem 0.5rem' }}>What we would expect</th>
+                        <th style={{ padding: '0.4rem 0.5rem' }}>What was found</th>
+                        <th style={{ padding: '0.4rem 0' }}>Reading</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {checkUp.map((row, i) => (
+                        <tr key={row.label} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                          <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                            {row.label}
+                            {i === 3 ? ' (the row for Prediction 2)' : ''}
+                          </td>
+                          <td style={{ padding: '0.4rem 0.5rem' }}>{i === 2 ? `${row.expected} (the paper’s own figure)` : i === 3 ? '0 (no change)' : row.expected}</td>
+                          <td style={{ padding: '0.4rem 0.5rem' }}>{i === 2 ? fixed2(row.found) : i === 3 ? `${row.found} ± ${(webbPoint.high - webbPoint.value).toFixed(2)}` : row.found}</td>
+                          <td style={{ padding: '0.4rem 0', fontWeight: 'bold' }}>{row.reading}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '1.5rem' }}>
+                    The check-up always uses the published error bars, so neither your guesses nor your trial values change it.
+                  </p>
+                  <div style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                    <p style={{ margin: '0 0 0.5rem' }}>
+                      <strong>What this table tells us.</strong>
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                      <li>
+                        <strong>The two value rows.</strong> They set the numbers this page uses beside the published ones (Planck {checkUp[0].expected}, SH0ES {checkUp[1].expected}). They are{' '}
+                        {checkUp[0].reading} and {checkUp[1].reading}, so nothing was mistyped. Every other number here is built from them.
+                      </li>
+                      <li>
+                        <strong>The sigma row.</strong> The SH0ES paper reports {checkUp[2].expected} sigma against Planck. This page’s simple arithmetic gives {fixed2(checkUp[2].found)}, which
+                        is {checkUp[2].reading}. The paper uses more careful statistics, so the two need not match exactly. It matters because it tells you to read this page’s sigma as a
+                        good approximation, not as the paper’s exact figure.
+                      </li>
+                      <li>
+                        <strong>The Webb row.</strong> The Webb and Hubble Cepheid brightnesses differ by {checkUp[3].found} magnitudes, give or take {(webbPoint.high - webbPoint.value).toFixed(2)}. That
+                        is {checkUp[3].reading}, so the difference cannot be told apart from no difference at all. It matters because this is the number behind Prediction 2.
+                      </li>
+                    </ul>
+                  </div>
+
+                  <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+                  <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
+                    Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+                  </p>
+                  <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem' }}>
                     <li>
-                      <strong>Gap:</strong> the difference between the two best values: the bigger one minus the smaller one. It is the same
-                      gap as in Pictures 1 and 2.
+                      <strong>Prediction 1, how many sigma apart:</strong> {label(SIGMA_CHOICES, sigmaPrediction)}. The question was how many sigma apart {late.name} and {early.name} are. Its
+                      number is in Table 1, in the row “Sigma (the row for Prediction 1)”, and in Picture 2.
                     </li>
                     <li>
-                      <strong>Combined give-or-take:</strong> the doubt about the gap, worked out from the two uncertainties as in the
-                      introduction (multiply each by itself, add, take the square root).
-                    </li>
-                    <li>
-                      <strong>Sigma:</strong> the gap divided by the combined give-or-take: how many of those doubts fit inside the gap. About 1
-                      is an ordinary difference. 5 or more is the usual bar for calling a difference real rather than chance. The scientists’
-                      own papers use more careful statistics, so a sigma they quote can differ a little from the one here.
-                    </li>
-                    <li>
-                      <strong>Hubble time:</strong> 1 ÷ H₀ in billions of years, the rough age that each value gives, as in Picture 3. It is a
-                      rough age, not the real one.
-                    </li>
-                    <li>
-                      <strong>The second table:</strong> every nearby-universe measurement, each compared with {early.name} in exactly the same way,
-                      so you can see them side by side. The one you chose is in bold.
-                    </li>
-                    <li>
-                      <strong>“What if the error bars were bigger?”:</strong> this makes every give-or-take ×1.5, ×2, ×3 or ×5 times larger.
-                      The gaps stay the same, but the combined give-or-take grows by the same factor, so every sigma is divided by that factor.
-                      For example, a gap of 4.0 sigma would become 2.0 sigma with error bars twice as large. It is only a what-if, to show how
-                      much the sigma depends on how large the uncertainties are. It is not a claim that anyone’s error bars are wrong. Pick ×1
-                      to go back to the published ones.
+                      <strong>Prediction 2, what the Webb telescope changed:</strong> {label(WEBB_CHOICES, webbPrediction)}. The question was what the Webb telescope’s second look did to the
+                      nearby-universe value. Its number is in the check-up, in the row “Webb minus Hubble” (the row for Prediction 2), and in Picture 1’s Webb panel.
                     </li>
                   </ul>
+                  {stretch !== 1 && (
+                    <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+                      <strong>Your own error bars are on (×{stretch}).</strong> The rows marked “error bars ×{stretch}” in Tables 1 and 2 use your trial values. Prediction 1 was about the
+                      published error bars, so pick ×1 in Part 2 to compare it with the sigma row.
+                    </p>
+                  )}
+
+                  <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Table 1: the numbers for {late.name}</p>
+                  <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.75rem' }}>
+                    <tbody>
+                      {(
+                        [
+                          [`${early.name} (early universe)`, `${early.value} ± ${early.uncertainty} km/s/Mpc`],
+                          [`${late.name} (nearby universe)`, `${late.value} ± ${round2(late.uncertainty)} km/s/Mpc`],
+                          ['Gap between the best values', `${fixed2(shown.gap)} km/s/Mpc`],
+                          [`Combined give-or-take${stretch === 1 ? '' : ` (error bars ×${stretch})`}`, `${fixed2(shown.combinedUncertainty)} km/s/Mpc`],
+                          [`Sigma (the row for Prediction 1)${stretch === 1 ? '' : ` (error bars ×${stretch})`}`, `${fixed2(shown.tension)}`],
+                          [`Hubble time from ${early.name}`, `${shown.earlyHubbleTimeBillionYears.toFixed(2)} billion years`],
+                          [`Hubble time from ${late.name}`, `${shown.lateHubbleTimeBillionYears.toFixed(2)} billion years`],
+                        ] as const
+                      ).map(([name, value]) => (
+                        <tr key={name} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                          <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{name}</td>
+                          <td style={{ padding: '0.4rem 0', fontWeight: 'bold', textAlign: 'right' }}>{value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                    <p style={{ margin: '0 0 0.5rem' }}>
+                      <strong>What this table tells us.</strong>
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                      <li>
+                        <strong>Gap.</strong> The bigger best value minus the smaller: {fixed2(shown.gap)} km/s/Mpc. It is the size of the disagreement before doubt is counted. It matters
+                        because on its own it cannot tell a real disagreement from chance.
+                      </li>
+                      <li>
+                        <strong>Combined give-or-take.</strong> The doubt about the gap: {fixed2(shown.combinedUncertainty)}, from the square root of the two uncertainties squared and added.
+                        Think of two wobbly rulers: their wobbles add, but not fully, because they are unlikely to wobble the same way. It matters because it is the yardstick the gap is
+                        measured against.
+                      </li>
+                      <li>
+                        <strong>Sigma.</strong> The gap divided by the combined give-or-take: {fixed2(shown.tension)}. About 1 is an ordinary difference, and 5 or more is the usual bar for
+                        calling a difference real. It matters because it turns “far apart” into a number that does not depend on the units. The papers use more careful statistics, so
+                        theirs can differ a little (the check-up shows this).
+                      </li>
+                      <li>
+                        <strong>Hubble time.</strong> 1 ÷ H₀ in billions of years: {shown.earlyHubbleTimeBillionYears.toFixed(2)} and {shown.lateHubbleTimeBillionYears.toFixed(2)}. It is a rough
+                        age, not the real one. It matters because it shows that the disagreement changes a number people care about.
+                      </li>
+                    </ul>
+                  </div>
+
+                  <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Table 2: every nearby-universe measurement, compared with {early.name}</p>
+                  <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.75rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                        <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>Measurement</th>
+                        <th style={{ padding: '0.4rem 0.5rem' }}>Published value (km/s/Mpc)</th>
+                        <th style={{ padding: '0.4rem 0', textAlign: 'right' }}>Sigma from {early.name}{stretch === 1 ? '' : ` (×${stretch})`}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {LATE_MEASUREMENTS.map((m) => {
+                        const sigma = m === late ? shown.tension : shown.otherLateTensions.find((o) => o.measurement === m)!.tension
+                        return (
+                          <tr key={m.name} style={{ borderBottom: '1px solid var(--border-color, #ccc)', fontWeight: m === late ? 'bold' : 'normal' }}>
+                            <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                              {m.name}
+                              {m === late ? ' (the one you chose)' : ''}
+                            </td>
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
+                              {m.value} ± {round2(m.uncertainty)}
+                            </td>
+                            <td style={{ padding: '0.4rem 0', textAlign: 'right' }}>{fixed2(sigma)}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                  <div style={{ color: 'var(--text-muted)' }}>
+                    <p style={{ margin: '0 0 0.5rem' }}>
+                      <strong>What this table tells us.</strong>
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                      <li>
+                        <strong>The sigma column.</strong> The same calculation for every nearby-universe measurement against {early.name}:{' '}
+                        {LATE_MEASUREMENTS.map((m, k) => {
+                          const sigma = m === late ? shown.tension : shown.otherLateTensions.find((o) => o.measurement === m)!.tension
+                          return `${k > 0 ? ', ' : ''}${m.name} ${fixed2(sigma)}`
+                        })}
+                        . It matters because the nearby measurements do not all disagree by the same amount: sigma depends on a measurement’s own give-or-take as well as on its distance
+                        from {early.name}. This table reports numbers only. It does not say which measurement, if any, is wrong.
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
+              </>
+            )}
+
+            {status === 'complete' && (
+              <PartHeader color="#0066cc" title="Part 4: The tutor">
+                We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time: what you notice in the
+                pictures, how your guesses compare with the white marks and the results, and what could explain the disagreement. Nothing is graded.
+              </PartHeader>
             )}
 
             {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The summary below the

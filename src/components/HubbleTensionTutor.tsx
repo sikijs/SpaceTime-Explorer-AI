@@ -91,9 +91,9 @@ export function HubbleTensionTutor({ late, sigmaPrediction, webbPrediction, onEx
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at the three pictures and the tables. What do you notice about where the early-universe value and your nearby-universe measurement sit on the line, and about how their error bars overlap?'}
+              'Look at the three pictures and the tables. What do you notice about where the early-universe value and your nearby-universe measurement sit on the line, and about how their error bars overlap? Your two guesses are drawn in white, in boxes marked YOUR GUESS: a band under the numbered ticks in Picture 2, and a marker in the Webb panel at the bottom of Picture 1. What do you notice about where they sit?'}
             {tutorStep === 'compare' &&
-              `You predicted that the two would be ${sigmaWords[sigmaPrediction]} sigma apart, and that the Webb telescope’s new measurements would make the nearby-universe value ${webbWords[webbPrediction]}. In this run the gap was ${two(result.gap)} km/s/Mpc and the distance in sigma was ${two(result.tension)}. Comparing that with your predictions, what do you notice?`}
+              `You predicted that the two would be ${sigmaWords[sigmaPrediction]} sigma apart, and that the Webb telescope’s new measurements would make the nearby-universe value ${webbWords[webbPrediction]}. In this run the gap was ${two(result.gap)} km/s/Mpc and the distance in sigma was ${two(result.tension)}. Compare the white YOUR GUESS band in Picture 2 with the numbered ticks, and the white marker in the Webb panel with the green Webb result. What do you notice?`}
             {tutorStep === 'conceptual' &&
               'Two careful teams measure the same thing, and get values that their error bars say should not happen by chance. What could explain it? And what would you want to check before deciding?'}
           </p>
