@@ -54,6 +54,14 @@ B0: Table 1 what slows each clock (:1274); Table 2 how much each clock gains (:1
 - O1: white = learner's own place (`YOURS_COLOR` :51).
 - O2: Table 3 area carries a note that "some sources quote 58.7 us" (:1327); the spec already lists this as unresolved (58.7 as a sum not stated by the paper).
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts: after the introduction the page runs on in one column. No coloured lines, headings or leads.
+- **The controls already change Part 1 pictures.** The place, the orbit and the duration add a white mark to each picture (a bar on Picture 1, a ring on Picture 2's last row, a ring on Picture 3's curve) and fill in Table 4. Under the rule a learner's own setting is pink.
+- **Colour clash found.** White was the learner's own place; the Earth's pull at the Moon was rose (close to pink). Fixed by recolouring (own choice pink, the pull red).
+- **Both predictions are about the Moon's dot on Picture 2:** a direction (a marker only) and a size (a diamond, with an arrow at the edge for 56 milliseconds, which is off the scale).
+- **B1 reference.** NIST's 56.02, the "Lunar Time" paper's 3.14 × 10⁻¹¹ and 2.7 microseconds and the 58.7 that some sources quote, all already in Table 3. No published-value column.
+- **Defaults used.** The owner approved all default recommendations and wording in advance (2026-11-03).
+
 ## What an update would touch
 LunarClocksExperiment.tsx (Picture 2, intro, Results), LunarClocksTutor.tsx, lunarClocks.ts/.test.ts, spec, DEVELOPMENT-STATE.md. Size **M** / **L** with Rule B.
 
