@@ -53,8 +53,23 @@ B0: a "Your collection, and the time you chose" table (9 rows, `:1115-1135`); "T
 - O1: none against the specification found.
 - O2: the intro/caption "Try the other two collections (the predictions will be cleared)" (`:934`) works because Prediction 1 names the collection. The "w" explanation in the panel (`:142`) was not checked against a source. The Results text tells the learner nothing about the 3-versus-5-sigma reading beyond the guide.
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts. Everything after the introduction runs on in one column: the choice of collection, the two predictions, Run, the three pictures, then (after the run) the "How far back?" control, the results card, the papers list and the tutor. No coloured lines, headings or leads.
+- **E4.** Leads to draft for all four Parts. Part 1's lead must not give an answer (§12).
+- **The control already changes a Part 1 picture.** "How far back?" (`:1090-1105`) moves the orange dot in Picture 2 on both charts (`:735`, `:791`) and fills the "Your collection, and the time you chose" table and the four-times table. Under the rule, a learner's own setting is pink and a guess is white; the dot is orange (the fit's colour, `FIT_COLOR`) at present. A decision is needed (see Decisions below).
+- **Part 2 has a control but no drawing of its own.** As in Experiment 1, the control's drawing could be a pink dot and its readout in Part 2, or Picture 2's dot could stay where it is and turn pink.
+- **A4 refinement.** Picture 2's left chart is drawn at stage 3, but Prediction 1's answer is the dot at z = 0.5 (`:872`). That dot is the same dot the control moves, so the guess band at z = 0.5 should stay put on the percent scale while the pink dot moves.
+- **B3.** Decide per experiment (plan §7, item 1). Recommended: leave the published-value column out. No published reference exists for the distance or brightness differences; they are calculated here.
+- **B1 reference check needed.** The check-up could use the published sigmas (`PUBLISHED_SIGMAS`, `:42`): DES Y5 4.2 and the recalibrated figure, DESI's 2.8 to 4.2 range if the specification gives one. Before drafting, I will read the specification's source table and say which rows have a real reference. I will not invent cut-offs.
+
+## Decisions needed from the owner (before wording is drafted)
+1. **The orange dot that the control moves.** (a) Leave it orange and add a pink dot beside it only in a new Part 2 drawing, or (b) turn the Picture 2 dot pink ("your time") and add a short Part 2 drawing that follows the control. Recommendation: (b), so pink means the learner's setting everywhere, as in Experiment 12.
+2. **Part 2's drawing.** A small chart in Part 2 that follows the "How far back?" control, with the real curve in grey and orange and the learner's chosen time in pink, and a caption. Recommendation: yes (Experiment 1's owner feedback was that a Part 2 with no drawing felt empty).
+3. **Prediction 2's marker.** A marker beside the DES Y5 bar on Picture 3 (weaker / about the same / stronger is categorical, so the marker is only a marker, said in the caption).
+4. **Check-up rows.** Set after I read the source table. I will propose them in the draft.
+
 ## What an update would touch, and its size (O3, O4)
-`EvolvingDarkEnergyExperiment.tsx`, `EvolvingDarkEnergyTutor.tsx`, `src/physics/evolvingDarkEnergy.ts` and test, the specification. Size **Medium**.
+`EvolvingDarkEnergyExperiment.tsx`, `EvolvingDarkEnergyTutor.tsx`, `src/physics/evolvingDarkEnergy.ts` and test, the specification. Size **Medium** (Medium to Large if Part 2 gets a drawing).
 
 ## Not checked
 Rendering; narrow widths; all SVG label texts; the tutor's explanation text; contents of the 32 tests; the Picture 2 source of numbers.
