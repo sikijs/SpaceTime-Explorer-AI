@@ -53,6 +53,24 @@ B0: table 1 "For (galaxy), redshift z" with Quantity / Value / How worked out (`
 - O1: none found against the specification. Specification status text says "Strong evidence ... Open".
 - O2: the arXiv numbers cited in the intro and results include IDs such as `2609.28257`, `2610.12121` (`:534`, `:1306`) that cannot be verified from this audit; the page's own status says "October 2026". Not checked against sources.
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts. After the introduction the page runs on in one column: the stretched-wave illustration, the two predictions, Run, Pictures 1 to 3, then (after the run) "Look at another galaxy", the results card, the links and the tutor. No coloured lines, headings or leads.
+- **The control already changes Part 1 pictures.** "Look at another galaxy" (`EarliestGalaxiesExperiment.tsx:1104-1160`) moves Picture 1's stretched Lyman-alpha marker, Picture 2's orange sliver and the zoomed bar's run marker (`:250-255`, `:700-1000`) and the first table. Picture 3 and the second table do not change. Under the rule a learner's own setting is pink. At the start value (MoM-z14) the marks show the real run, so the pink marks need a clear rule for what they show then.
+- **The two predictions are about MoM-z14 only.** A guess mark must say so and must not move with the control (an imaginary galaxy has no published age or count to compare).
+- **Imagined versus own setting.** The control offers real record holders (measured) and an imaginary galaxy (imagined). Imaginary stays labelled "imagined"; a chosen record holder is the learner's own setting (pink). Decision 1 asks how to colour each.
+- **Prediction 1 is a sized band, Prediction 2 a ratio band.** P1: "about 1 / 2 / 10 percent" are ranges (under 1.5, 1.5-4, over 4 percent of the present age, `earliestGalaxies.ts:61-62`), drawn as a white band on Picture 2's bar. P2: "fewer / same / a few times / about a hundred times" are ratio bands against the models' 1, drawn on Picture 3's log scale where the survey's dot is at 182. The edges of the "a few times" and "about a hundred times" bands are not defined in the module (the module has `countRange`, `:99`); the owner needs to confirm them (Decision 3).
+- **B1 reference.** A check-up can use the paper's age for MoM-z14 (about 280 million years) against the model's (`paperAgeGapPercent`, `:171`; the first table already shows the gap) and the published count (182 times) against ESA's "about 100 times". Readings "close", "the same", "more" or "less" only; no invented cut-off. The paper's figures come from the specification's source table.
+- **B3.** Leave out a published-value column (decide per experiment, plan §7 item 1): no published reference exists for an imaginary galaxy.
+- **C6 note.** "What to look for" is one or two sentences per picture; each becomes three-part items, shown only once its feature is drawn (Picture 2's look-for line mentions stage 4 features only when they are drawn, `:976-977`, which is already staged).
+- **Naming.** Learner-facing text says "Look at another galaxy" and "imaginary galaxy"; the code uses `whatIf` internally only (not shown to the learner).
+
+## Decisions needed from the owner (before wording is drafted)
+1. **Colours for the moved marks.** Turn the marks that follow the control (Picture 1's stretched marker, Picture 2's sliver and run marker) pink and label them "your galaxy: X (it starts at MoM-z14)", while an imaginary galaxy keeps its own "imagined" label in another colour? Recommendation: yes: pink for a chosen record holder and for the slider's galaxy, with "imagined" added for the slider's.
+2. **A Part 2 drawing.** A small chart in Part 2 of the chosen galaxy's redshift on a 0 to 30 scale, with the four record holders as grey ticks and a pink marker for the choice, and rows for its age and share of the present age. Recommendation: yes (small), or leave the control moving Part 1's pictures only.
+3. **Prediction bands.** Confirm the edges for Prediction 2's four answers on Picture 3's scale (for example "same" = 1 times, "a few times" = 2 to 10, "about a hundred times" = 50 to 500; all are proposals), and that Prediction 1's white band uses the module's 1.5 and 4 percent edges.
+4. **Check-up rows.** MoM-z14's age (paper, about 280 million years) against the model's, and the count (182 times published, about 100 times in the ESA announcement). Recommendation: yes.
+5. **The unverified arXiv IDs (O2).** Check the cited IDs against the sources before the wording is approved. Recommendation: yes; fetch them in Step 2.
+
 ## What an update would touch, and its size (O3, O4)
 `EarliestGalaxiesExperiment.tsx`, `EarliestGalaxiesTutor.tsx`, `src/physics/earliestGalaxies.ts` and test, the specification. Size **Medium**.
 
