@@ -53,8 +53,22 @@ B0: first table, the chosen survey in a column per survey with eight rows (`:119
 - O1: none found; the "kept back" links list is a deliberate §12 choice (`:908`).
 - O2: Experiment 3's intro/Prediction 1 states KiDS-1000 was "about 3 sigma below" (`:954`) - consistent with the module; not verified against the module here. The review notes in `CLAUDE.md` mention the title still hints at Prediction 1.
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts. After the introduction the page runs on in one column: the weak-lensing illustration, the two predictions, Run, three pictures, then (after the run) "Look closer at", the results card, the kept-back links and the tutor. No coloured lines, headings or leads.
+- **The control already changes a Part 1 picture.** "Look closer at" (`LumpinessExperiment.tsx:1166-1190`) draws the chosen survey's curve bold in Picture 2 (`:440-447`, `:1161`) and picks the column of the first table. Under the rule, a learner's own setting is pink. At present the highlight is only a thicker line, in the survey's own colour.
+- **Prediction 2's sigma has no picture.** Picture 1 draws S₈ (not sigma). The only places the sigma appears are the tables, so Rule A, item 5 applies: a small panel on its own sigma scale, added to the nearest picture (Picture 1), with DES's worked-out sigma for each of its two versions and the white band.
+- **Prediction 1 has a natural place.** Picture 3 draws the KiDS-1000 to KiDS-Legacy change. A direction marker (lower / about the same / higher) fits there, drawn only once both KiDS points are drawn.
+- **B1 reference.** The paper's own sigma is already in the tables, so a check-up can set it beside the sigma worked out here. KiDS-1000 gives 2.60 here against "about 3" (the paper); KiDS-Legacy gives 0.84 against 0.73 (the paper). DES's two quoted sigmas (2.0 and 2.3) compare with Planck + ACT + SPT, not Planck alone, so the comparison is not like-for-like and the check-up should say so, not give a reading. The module holds the paper's sigma as text ("about 3"), so a numeric value would be a new, tested field.
+- **B3.** Leave out a published-value column (decide per experiment, plan §7 item 1): the first table already carries the paper's own sigma beside the worked-out one.
+
+## Decisions needed from the owner (before wording is drafted)
+1. **The "Look closer at" highlight in Picture 2.** Turn it pink (a pink halo behind the bold line) so pink always means the learner's setting. Recommendation: yes.
+2. **A Part 2 drawing.** A small number line for the chosen survey, with the microwave value in sky blue and the survey's S₈ and error bar in pink, plus two short bars: sigma worked out here and the paper's own sigma. Recommendation: yes (Experiments 1 and 2 both got one).
+3. **Prediction 2's panel.** A "How many sigma?" panel on its own scale added to Picture 1, showing DES's two worked-out sigma values and the white band for the chosen range (0 to 1, 1 to 2.5, past 2.5), drawn when DES's dots are drawn. Recommendation: yes.
+4. **Check-up rows.** The two KiDS rows (worked-out against the paper's own) with "more", "less" or "the same", and the two DES rows marked "a different comparison" (against Planck + ACT + SPT). Recommendation: yes. A numeric paper sigma for KiDS-1000 would be "3" (from "about 3"), which the table already shows as text.
+
 ## What an update would touch, and its size (O3, O4)
-`LumpinessExperiment.tsx`, `LumpinessTutor.tsx`, `src/physics/lumpiness.ts` and test, the specification. Size **Medium**.
+`LumpinessExperiment.tsx`, `LumpinessTutor.tsx`, `src/physics/lumpiness.ts` and test, the specification. Size **Medium** (Medium to Large with the Part 2 drawing and the sigma panel).
 
 ## Not checked
 Rendering, narrow widths; all SVG label texts; the tutor's explanation body; test contents; whether the 3-panel illustration's labels are complete.
