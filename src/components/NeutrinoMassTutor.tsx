@@ -99,9 +99,9 @@ export function NeutrinoMassTutor({ totalMassEv, timingPrediction, roomPredictio
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 1 and Picture 3. What do you notice about where the neutrinos turn heavy compared with the release of the microwave background in Picture 1, and about the floors and the ceilings in Picture 3?'}
+              'Look at Picture 1 and Picture 3. What do you notice about where the neutrinos turn heavy compared with the release of the microwave background in Picture 1, and about the floors and the ceilings in Picture 3? Your guesses are drawn in white, in boxes marked YOUR GUESS: an arrow in the strip below Picture 1’s timeline, and a band in the strip below Picture 3. What do you notice about where they sit?'}
             {tutorStep === 'compare' &&
-              `You predicted that, for a total of ${formatTotal(PREDICTION_TOTAL_MASS_EV)} eV, the neutrinos would turn from light-like to matter-like ${timingWords[timingPrediction]}, and that between the oscillation floor and DESI’s 2026 ceiling there would be ${roomWords[roomPrediction]}. Look at Pictures 1 and 3 again. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
+              `You predicted that, for a total of ${formatTotal(PREDICTION_TOTAL_MASS_EV)} eV, the neutrinos would turn from light-like to matter-like ${timingWords[timingPrediction]}, and that between the oscillation floor and DESI’s 2026 ceiling there would be ${roomWords[roomPrediction]}. Compare the white arrow under Picture 1’s timeline with where the pink marker sits, and the white band under Picture 3 with the ends of the orange bars. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
             {tutorStep === 'conceptual' &&
               'Two quite different methods, one watching neutrinos change kind in a laboratory and one watching the sky, have squeezed the same number from two sides until they nearly touch. What are the different things that could explain that?'}
           </p>

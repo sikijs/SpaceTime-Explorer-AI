@@ -7,7 +7,9 @@ import {
   MASS_SQUARED_GAPS,
   MAX_TOTAL_MASS_EV,
   NEUTRINO_TEMPERATURE_TODAY_KELVIN,
+  neutrinoCheckUp,
   oscillationFloor,
+  roomGuessBand,
   runNeutrinoMass,
   clumpSmoothing,
   BOUNDS,
@@ -20,6 +22,7 @@ import {
   OMEGA_MATTER,
   PREDICTION_TOTAL_MASS_EV,
   SMOOTHING_FACTOR,
+  timingGuessSide,
 } from '../physics/neutrinoMass'
 import type { HeavyTiming, Room, RoomRange } from '../physics/neutrinoMass'
 import { formatTotal, NeutrinoMassTutor } from './NeutrinoMassTutor'
@@ -43,6 +46,8 @@ interface NeutrinoMassExperimentProps {
 const VIEW_WIDTH = 560
 const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+const TRIAL_COLOR = '#f472b6' // pink: the total mass the learner chose in Part 2 (it starts at DESI's limit)
 const LIGHT_COLOR = '#38bdf8' // sky blue: the microwave background (light), as in Experiment 3
 const NEUTRINO_COLOR = '#a78bfa' // violet: neutrinos
 
@@ -65,6 +70,22 @@ const svgStyle = {
 } as const
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const TIMING_SHORT = { before: 'before the release', after: 'after the release' } as const
+const ROOM_SHORT = { plenty: 'plenty of room', veryLittle: 'very little room', none: 'no room' } as const
+const GUESS_PANEL1_H = 76
+const GUESS_PANEL3_H = 116
 
 // ---- The relic sea (an illustration, not data) ----
 // A seeded random-number generator, so the drawing is the same every time.
@@ -163,7 +184,7 @@ const TIMING_CHOICES: ReadonlyArray<{ value: HeavyTiming; label: string }> = [
   { value: 'after', label: 'After the microwave background was released' },
 ]
 const ROOM_CHOICES: ReadonlyArray<{ value: RoomRange; label: string }> = [
-  { value: 'plenty', label: 'Plenty of room (the maximum is more than twice the minimum)' },
+  { value: 'plenty', label: 'Plenty of room (the maximum is more than 20 percent above the minimum)' },
   { value: 'veryLittle', label: 'Very little room (the maximum is at most 20 percent above the minimum)' },
   { value: 'none', label: 'No room (the maximum is below the minimum)' },
 ]
@@ -171,7 +192,7 @@ const ROOM_CHOICES: ReadonlyArray<{ value: RoomRange; label: string }> = [
 const FLOOR_COLOR = '#34d399' // green: the laboratory floors
 const CEILING_COLOR = '#fb923c' // orange: the sky's ceilings
 const PALE_CEILING_COLOR = '#fdba74' // paler orange: the ceiling that assumes an evolving dark energy
-const HEAVY_COLOR = '#c4b5fd' // pale violet: the turning point
+const HEAVY_COLOR = TRIAL_COLOR // pink: the turning point for the total the learner chose
 
 const xOfZ = (z: number) => AXIS_RIGHT - (Math.log10(1 + z) / Math.log10(1 + AXIS_MAX_Z)) * (AXIS_RIGHT - AXIS_LEFT)
 
@@ -243,7 +264,14 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
   const releaseX = xOfZ(RECOMBINATION_REDSHIFT)
   const heavyX = xOfZ(result.heavyRedshift)
   const oneX = xOfZ(result.heavyRedshiftOneNeutrino)
-  const p1Height = AXIS_Y + 88
+  const p1Base = AXIS_Y + 88
+  const p1Height = stage >= 2 && timingPrediction !== null ? p1Base + GUESS_PANEL1_H : p1Base
+  const checkUp = neutrinoCheckUp()
+  const desiRun = runNeutrinoMass(RUN_TOTAL_MASS_EV)
+  const roomOf = (name: string) => result.rooms.find((r) => r.bound.name === name)!
+  const desi2026 = roomOf('DESI DR2 + CMB (July 2026)')
+  const desi2025 = roomOf('DESI DR2 + CMB (March 2025)')
+  const planckBao = roomOf('Planck 2018 + BAO')
 
   // Picture 2 (the matter share and the smoothing)
   const P2_LEFT = 40
@@ -272,7 +300,8 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
   const eV = (value: number) => P3_LEFT + (value / P3_MAX) * (P3_RIGHT - P3_LEFT)
   const drawnCeilings = CEILINGS.filter((b) => b.drawn).sort((a, b) => a.year - b.year || a.value - b.value)
   const p3AxisY = ROW_TOP + drawnCeilings.length * ROW_STEP + 8
-  const p3Height = p3AxisY + 100
+  const p3Base = p3AxisY + 100
+  const p3Height = roomPrediction !== null ? p3Base + GUESS_PANEL3_H : p3Base
 
   // After the run: the formulas, each with a worked example from the learner's chosen total (the formulas wait until now, §12).
   const heavyOverTypical = eachEv / TYPICAL_ENERGY_TODAY_EV
@@ -506,7 +535,10 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and
-            then try a different total mass. Nothing here is graded.
+            then try a different total mass. Nothing here is graded. Your predictions never change the real pictures or tables. They are drawn on the pictures in
+            white, in a box marked YOUR GUESS, so you can compare them with what was measured and calculated, and they are listed again beside the results. In Part 2
+            you can try a different total for the three neutrino masses. That choice is pink: it moves the pink marks in Pictures 1 and 2 and fills a drawing in Part 2
+            and the first table, but it never changes the floors and ceilings in Picture 3, the second table or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -569,6 +601,11 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
             says which answer is right, and neither gives DESI's limit. */}
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: when the neutrinos turn heavy, how much of the matter they make up and what they do to small clumps, and the
+          floor and the ceilings for their total mass. Nothing here tells you the answers. When the pictures are drawn, your guesses appear on them in white.
+        </PartHeader>
+
         {(
           [
             {
@@ -755,6 +792,35 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 </text>
               </g>
             )}
+
+            {/* Your guess for Prediction 1 (stage 2): only a side of the release marker, for a total of 0.06 eV. It never moves with the control. */}
+            {stage >= 2 &&
+              timingPrediction !== null &&
+              (() => {
+                const oy = p1Base
+                const side = timingGuessSide(timingPrediction)
+                const ay = oy + 44
+                const tip = releaseX + (side === -1 ? -28 : 60)
+                return (
+                  <g>
+                    <line x1={AXIS_LEFT} y1={oy} x2={AXIS_RIGHT} y2={oy} stroke={MUTED_COLOR} strokeDasharray="2 4" />
+                    <text x={AXIS_LEFT} y={oy + 20} fill={GUESS_COLOR} fontSize="12">
+                      Your guess for Prediction 1 (a marker only, for a total of {PREDICTION_TOTAL_MASS_EV} eV)
+                    </text>
+                    <line x1={releaseX} y1={ay - 8} x2={releaseX} y2={ay + 8} stroke={LIGHT_COLOR} strokeWidth={2} />
+                    <text x={releaseX} y={ay + 22} fill={LIGHT_COLOR} fontSize="10">
+                      release
+                    </text>
+                    <line x1={releaseX} y1={ay} x2={tip - side * 8} y2={ay} stroke={GUESS_COLOR} strokeWidth={4} />
+                    <polygon points={`${tip},${ay} ${tip - side * 14},${ay - 7} ${tip - side * 14},${ay + 7}`} fill={GUESS_COLOR} />
+                    <line x1={releaseX} y1={ay} x2={112} y2={ay} stroke={GUESS_COLOR} strokeWidth={2} />
+                    <rect x={112} y={ay - 14} width={290} height={28} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+                    <text x={257} y={ay + 5} fill={GUESS_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle">
+                      YOUR GUESS: {TIMING_SHORT[timingPrediction]} (for {PREDICTION_TOTAL_MASS_EV} eV)
+                    </text>
+                  </g>
+                )
+              })()}
           </svg>
         </div>
 
@@ -788,12 +854,12 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
             {stage >= 2 && (
               <>
             <li>
-              <strong>The violet dashed line and dot</strong> (they appear at stage 2): the redshift at which the three equal neutrinos, of{' '}
+              <strong>The pink dashed line and dot</strong> (they appear at stage 2, and they start at DESI’s limit): the redshift at which the three equal neutrinos, of{' '}
               {eachEv.toFixed(4)} eV each, change from light-like to matter-like. It is labelled with its redshift and the age of the universe
               then.
             </li>
             <li>
-              <strong>The two shaded stretches</strong> (stage 2): before the violet marker (to its left) the neutrinos act like light; after it
+              <strong>The two shaded stretches</strong> (stage 2): before the pink marker (to its left) the neutrinos act like light; after it
               (to its right) they act like matter. When a stretch is too narrow for the whole sentence it is labelled “light-like” or
               “matter-like”.
             </li>
@@ -815,10 +881,45 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
             {millions(result.heavyTimeYears)} million years after the Big Bang.
           </p>
           )}
-          <p style={{ marginTop: 0, marginBottom: 0 }}>
-            <strong>What to look for after Run:</strong> where the violet marker sits, <em>to the left or to the right</em> of the sky-blue one, how far
-            apart they are, and what that would mean for the neutrinos at the time the light was released.
-          </p>
+          {stage >= 2 && (
+            <>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The white arrow and the YOUR GUESS box, in the strip below the timeline:</strong> your guess for Prediction 1, for a total of {PREDICTION_TOTAL_MASS_EV} eV. The arrow points left of the
+                  release marker if you guessed that the neutrinos turn heavy before the release, and right if after. It is only a marker, so its length means nothing, and it does not move when you
+                  change the total in Part 2.
+                </li>
+              </ul>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What to look for.</strong> Here are four things to look at, what each one means, and why it matters.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Look at</strong> where the pink marker sits, to the left or to the right of the sky-blue release marker. <strong>What it means:</strong> for your total ({formatTotal(result.totalMassEv)} eV; it
+                  starts at DESI’s limit) it is {result.heavyTiming === 'after' ? 'to the right' : 'to the left'}: z = {result.heavyRedshift.toFixed(1)}, about {millions(result.heavyTimeYears)} million years after the Big Bang, against about{' '}
+                  {RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')} years for the release. <strong>Why it matters:</strong> it says whether the neutrinos were still light-like or already matter-like when the light of the
+                  microwave background was set free.
+                </li>
+                <li>
+                  <strong>Look at</strong> how far apart the two markers are. <strong>What it means:</strong> the turning point comes about {Math.round(result.timesLaterThanRelease)} times later than the release.{' '}
+                  <strong>Why it matters:</strong> the neutrinos acted like light for a long time, which is why the microwave background and the later pictures see them differently.
+                </li>
+                <li>
+                  <strong>Look at</strong> the small grey circle. <strong>What it means:</strong> if one neutrino carried the whole total it would turn heavy at z = {Math.round(result.heavyRedshiftOneNeutrino)}, much earlier, but still on the same side of
+                  the release, for the totals this page offers. <strong>Why it matters:</strong> the answer to “before or after” does not depend on how the mass is shared.
+                </li>
+                <li>
+                  <strong>Look at</strong> the white arrow. <strong>What it means:</strong> it stays where you guessed, whatever total you choose. <strong>Why it matters:</strong> it keeps your guess for {PREDICTION_TOTAL_MASS_EV} eV apart from the pink marks
+                  for your own total.
+                </li>
+              </ul>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the microwave background’s temperature and the time of its release, from earlier experiments. <em>Calculated here:</em> the redshift and the time when the
+                neutrinos turn heavy, from the rule that their typical energy equals their mass. <em>Imagined for the question:</em> the three equal masses of the total, and the grey circle for one neutrino carrying all of it. The pink marks are
+                your own total (they start at DESI’s limit). The white arrow is your guess.
+              </p>
+            </>
+          )}
         </div>
 
         {/* Picture 2: how much of the matter the neutrinos are (stage 3) and how much they smooth the small clumps (stage 4). */}
@@ -844,9 +945,9 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
               <text x={P2_RIGHT - 6} y={70} fill={TEXT_COLOR} fontSize="11" textAnchor="end">
                 all the matter in the universe (100 percent)
               </text>
-              <rect x={P2_LEFT} y={56} width={Math.max(2, (result.share) * (P2_RIGHT - P2_LEFT))} height={20} fill={NEUTRINO_COLOR} />
-              <text x={P2_LEFT + Math.max(2, result.share * (P2_RIGHT - P2_LEFT)) + 6} y={70} fill={NEUTRINO_COLOR} fontSize="10" fontWeight="bold">
-                ← neutrinos (the violet part)
+              <rect x={P2_LEFT} y={56} width={Math.max(2, (result.share) * (P2_RIGHT - P2_LEFT))} height={20} fill={TRIAL_COLOR} />
+              <text x={P2_LEFT + Math.max(2, result.share * (P2_RIGHT - P2_LEFT)) + 6} y={70} fill={TRIAL_COLOR} fontSize="10" fontWeight="bold">
+                ← neutrinos (the pink part)
               </text>
 
               {/* The zoom: the first zoomPercent percent of that bar, magnified 100 ÷ zoomPercent times */}
@@ -856,7 +957,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 zoom: the first {zoomPercent} percent, magnified {zoomTimes} times
               </text>
               <rect x={P2_LEFT} y={ZOOM_TOP} width={P2_RIGHT - P2_LEFT} height={22} fill="#475569" />
-              <rect x={P2_LEFT} y={ZOOM_TOP} width={zoomShareX - P2_LEFT} height={22} fill={NEUTRINO_COLOR} />
+              <rect x={P2_LEFT} y={ZOOM_TOP} width={zoomShareX - P2_LEFT} height={22} fill={TRIAL_COLOR} />
               <text x={P2_LEFT + 8} y={ZOOM_TOP + 15} fill="#0b1020" fontSize="11" fontWeight="bold">
                 neutrinos: {(result.share * 100).toFixed(2)} percent
               </text>
@@ -904,13 +1005,13 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                   </text>
                   <line x1={massX(0)} y1={smoothY(0)} x2={massX(MAX_TOTAL_MASS_EV)} y2={smoothY(clumpSmoothing(MAX_TOTAL_MASS_EV))} stroke={NEUTRINO_COLOR} strokeWidth={2} />
                   {SMOOTH_PRESETS.map((m) => (
-                    <circle key={m} cx={massX(m)} cy={smoothY(clumpSmoothing(m))} r={m === totalMass ? 5.5 : 3.5} fill={m === totalMass ? '#facc15' : NEUTRINO_COLOR} stroke="#0b1020" />
+                    <circle key={m} cx={massX(m)} cy={smoothY(clumpSmoothing(m))} r={m === totalMass ? 5.5 : 3.5} fill={m === totalMass ? TRIAL_COLOR : NEUTRINO_COLOR} stroke="#0b1020" />
                   ))}
                   {/* A key for the dots, in the empty corner above the line */}
                   {keyOrder.map((m, i) => (
                     <g key={`key-${m}`}>
-                      <circle cx={P2_PLOT_LEFT + 14} cy={P2_PLOT_TOP + 4 + i * 13} r={i === 0 ? 4.5 : 3} fill={i === 0 ? '#facc15' : NEUTRINO_COLOR} />
-                      <text x={P2_PLOT_LEFT + 24} y={P2_PLOT_TOP + 8 + i * 13} fill={i === 0 ? '#facc15' : TEXT_COLOR} fontSize="10">
+                      <circle cx={P2_PLOT_LEFT + 14} cy={P2_PLOT_TOP + 4 + i * 13} r={i === 0 ? 4.5 : 3} fill={i === 0 ? TRIAL_COLOR : NEUTRINO_COLOR} />
+                      <text x={P2_PLOT_LEFT + 24} y={P2_PLOT_TOP + 8 + i * 13} fill={i === 0 ? TRIAL_COLOR : TEXT_COLOR} fontSize="10">
                         {i === 0 ? `this run: ${formatTotal(m)} eV smooths them by ${(clumpSmoothing(m) * 100).toFixed(2)} percent` : `${formatTotal(m)} eV: ${(clumpSmoothing(m) * 100).toFixed(1)} percent`}
                       </text>
                     </g>
@@ -933,12 +1034,12 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
             <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
               <li>
                 <strong>Part A, the long grey bar:</strong> all the matter in the universe, ordinary and dark together, counted as 100 percent.
-                The violet part at its left end is the neutrinos’ share. For small totals it is a very thin sliver that you can hardly see.
+                The pink part at its left end is the neutrinos’ share. For small totals it is a very thin sliver that you can hardly see.
               </li>
               <li>
                 <strong>Part A, the second bar (the “zoom”):</strong> the first {zoomPercent} percent of the bar above, <em>magnified {zoomTimes} times</em> so that
-                the violet part becomes easy to see. (The zoom is the first 1 percent unless the neutrinos’ share is bigger than that, and then it
-                is the first 2, 5 or 10 percent, so that the violet part always fits.) The dashed lines show where it comes from. The violet part of
+                the pink part becomes easy to see. (The zoom is the first 1 percent unless the neutrinos’ share is bigger than that, and then it
+                is the first 2, 5 or 10 percent, so that the pink part always fits.) The dashed lines show where it comes from. The pink part of
                 the zoom is the neutrinos, and its length on the 0 to {zoomPercent} percent scale is their share: {(result.share * 100).toFixed(2)}{' '}
                 percent of the matter. The grey rest is ordinary matter and dark matter.
               </li>
@@ -948,7 +1049,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 smallest clumps are smoothed.
               </li>
               <li>
-                <strong>Part B, the dots and the key:</strong> the yellow dot is this run’s total ({formatTotal(result.totalMassEv)} eV), the violet dots are
+                <strong>Part B, the dots and the key:</strong> the pink dot is the total you chose ({formatTotal(result.totalMassEv)} eV; it starts at DESI’s limit), the violet dots are
                 other totals (the key at the top left lists their values). The line is only used up to {MAX_TOTAL_MASS_EV} eV. For larger
                 masses the neutrinos’ share is not small, and the simple rule behind the line stops being a good estimate.
               </li>
@@ -963,11 +1064,23 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
               = {result.smoothing.toFixed(4)}, or {(result.smoothing * 100).toFixed(2)} percent. In everyday terms, it is as if fine sand were
               mixed into a snowdrift, a few percent of extra stuff that will not settle softens its edges by a few percent.
             </p>
-            <p style={{ marginTop: 0, marginBottom: 0 }}>
-              <strong>What to look for:</strong> how thin the neutrinos’ sliver is, and how it compares to the effect on clumps. A small share of
-              the matter can still change the smallest clumps by a few percent, and surveys of the sky can measure changes of that size. Also,
-              notice that a larger total mass gives a larger share and a larger effect.
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>What to look for.</strong> Here are three things to look at, what each one means, and why it matters.
             </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>Look at</strong> how thin the neutrinos’ pink sliver is. <strong>What it means:</strong> for your total ({formatTotal(result.totalMassEv)} eV) it is {(result.share * 100).toFixed(2)} percent of the matter.{' '}
+                <strong>Why it matters:</strong> a small share can still change the smallest clumps, which is the effect that surveys of the sky can measure.
+              </li>
+              <li>
+                <strong>Look at</strong> where the pink dot sits on the violet line (it appears at stage 4). <strong>What it means:</strong> {(result.smoothing * 100).toFixed(2)} percent smoothing for your total, about {SMOOTHING_FACTOR} times the share.{' '}
+                <strong>Why it matters:</strong> this is the size of the effect that gives the sky a way to weigh the neutrinos.
+              </li>
+              <li>
+                <strong>Look at</strong> what a larger total does (try it in Part 2). <strong>What it means:</strong> at {MAX_TOTAL_MASS_EV} eV the share is {(runNeutrinoMass(MAX_TOTAL_MASS_EV).share * 100).toFixed(2)} percent and the smoothing{' '}
+                {(runNeutrinoMass(MAX_TOTAL_MASS_EV).smoothing * 100).toFixed(1)} percent. <strong>Why it matters:</strong> a larger total gives a larger share and a larger effect, so a heavier total would be easier to see, and a limit on the effect is a limit on the total.
+              </li>
+            </ul>
           </div>
         )}
 
@@ -1061,6 +1174,49 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                   </text>
                 </g>
               ))}
+
+              {/* Your guess for Prediction 2: where you guessed the ceiling lies, on the same eV scale (the first green line is the normal-ordering floor). */}
+              {roomPrediction !== null &&
+                (() => {
+                  const oy = p3Base
+                  const band = roomGuessBand(roomPrediction, 'normal')
+                  const x1 = eV(band.lo)
+                  const x2 = eV(Math.min(band.hi ?? P3_MAX, P3_MAX))
+                  const mid = (x1 + x2) / 2
+                  const lineY = oy + 56
+                  return (
+                    <g>
+                      <line x1={P3_LEFT} y1={oy} x2={P3_RIGHT} y2={oy} stroke={MUTED_COLOR} strokeDasharray="2 4" />
+                      <text x={P3_LEFT} y={oy + 20} fill={GUESS_COLOR} fontSize="12">
+                        Your guess for Prediction 2: where the ceiling lies (same scale as above)
+                      </text>
+                      <line x1={P3_LEFT} y1={lineY} x2={P3_RIGHT} y2={lineY} stroke={MUTED_COLOR} strokeWidth={1.5} />
+                      {P3_TICKS.map((t) => (
+                        <g key={t}>
+                          <line x1={eV(t)} y1={lineY - 3} x2={eV(t)} y2={lineY + 3} stroke={MUTED_COLOR} />
+                          <text x={eV(t)} y={lineY + 16} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                            {t.toFixed(2)}
+                          </text>
+                        </g>
+                      ))}
+                      <line x1={eV(floorNormal)} y1={lineY - 16} x2={eV(floorNormal)} y2={lineY} stroke={FLOOR_COLOR} strokeWidth={2} />
+                      <text x={eV(floorNormal) - 4} y={lineY - 20} fill={FLOOR_COLOR} fontSize="9" textAnchor="end">
+                        normal floor
+                      </text>
+                      <line x1={eV(floorInverted)} y1={lineY - 16} x2={eV(floorInverted)} y2={lineY} stroke={FLOOR_COLOR} strokeWidth={2} />
+                      <text x={eV(floorInverted) + 4} y={lineY - 20} fill={FLOOR_COLOR} fontSize="9">
+                        inverted floor
+                      </text>
+                      <rect x={x1} y={lineY - 5} width={Math.max(x2 - x1, 0)} height={10} fill={GUESS_COLOR} opacity={0.9} />
+                      {band.hi === null && <polygon points={`${x2},${lineY - 9} ${x2 + 12},${lineY} ${x2},${lineY + 9}`} fill={GUESS_COLOR} />}
+                      <line x1={mid} y1={lineY + 5} x2={mid} y2={oy + 84} stroke={GUESS_COLOR} strokeWidth={2} />
+                      <rect x={Math.min(Math.max(mid - 110, 10), VIEW_WIDTH - 230)} y={oy + 84} width={220} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+                      <text x={Math.min(Math.max(mid - 110, 10), VIEW_WIDTH - 230) + 110} y={oy + 101} fill={GUESS_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle">
+                        YOUR GUESS: {ROOM_SHORT[roomPrediction]}
+                      </text>
+                    </g>
+                  )
+                })()}
             </svg>
           </div>
         )}
@@ -1109,9 +1265,35 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
               above that floor, which is {DESI_JULY_2026.value} ÷ {floorNormal.toFixed(4)} = {(DESI_JULY_2026.value / floorNormal).toFixed(3)} times
               the floor.
             </p>
-            <p style={{ marginTop: 0, marginBottom: 0 }}>
-              <strong>What to look for:</strong> how far each orange bar reaches to the right of the first green line, and how that distance has
-              changed from the top bar to the bottom bar, and where each orange bar ends compared with the second green line.
+            <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>The strip at the bottom, with the white band and the YOUR GUESS box:</strong> your guess for Prediction 2, on the same eV scale as the bars above, with the two floors repeated as green marks. “No room”
+                covers 0 up to the normal-ordering floor, “very little room” covers the floor up to 1.2 times it, and “plenty of room” everything above that, ending in an arrow. It is only where you guessed, not a result.
+              </li>
+            </ul>
+            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              <strong>What to look for.</strong> Here are four things to look at, what each one means, and why it matters.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>Look at</strong> how far each orange bar reaches to the right of the first green line. <strong>What it means:</strong> the March 2025 ceiling is {desi2025.normal.ratio.toFixed(3)} times the floor, and the July 2026 ceiling{' '}
+                {desi2026.normal.ratio.toFixed(3)} times it. <strong>Why it matters:</strong> it is the room left for the normal ordering, and it has nearly closed.
+              </li>
+              <li>
+                <strong>Look at</strong> how that distance changed from the top bar to the bottom bar. <strong>What it means:</strong> the ceilings come down from Planck’s {planckBao.bound.value} to DESI’s {desi2026.bound.value}.{' '}
+                <strong>Why it matters:</strong> the limits from the sky have come down toward the floor that the laboratory sets.
+              </li>
+              <li>
+                <strong>Look at</strong> where each orange bar ends compared with the second green line. <strong>What it means:</strong> the 2025 and 2026 ceilings end before it, {desi2025.bound.value} and {desi2026.bound.value} against {floorInverted.toFixed(4)}.{' '}
+                <strong>Why it matters:</strong> if the inverted ordering were true, the total would have to be at least {floorInverted.toFixed(4)} eV, so these ceilings leave it no room.
+              </li>
+              <li>
+                <strong>Look at</strong> the white band. <strong>What it means:</strong> where you guessed the ceiling lies. <strong>Why it matters:</strong> it puts your guess on the same scale as the real bars.
+              </li>
+            </ul>
+            <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> the oscillation experiments’ mass gaps and every ceiling, by the teams named in the second table. <em>Calculated here:</em> the two floors, from the gaps.{' '}
+              <em>Imagined for the question:</em> nothing. The white band is your guess.
             </p>
           </div>
         )}
@@ -1119,12 +1301,18 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
         {/* After the run: the "Try a different total mass" control, the neutral results, the guide to them and the links kept back until now.
             Draft wording for the owner's review (CLAUDE.md §28.1, §29). The results only report; they do not say why. */}
         {status === 'complete' && (
-          <div style={{ marginTop: '2rem' }}>
+          <div style={{ marginTop: '0.5rem' }}>
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              We are about to try a different total for the three neutrino masses and see what it does. Your total moves the pink marks in Pictures 1 and 2, fills the drawing in this part and the first
+              table. It never changes the floors and ceilings in Picture 3, the second table or your guesses.
+            </PartHeader>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              Your guesses do not change the drawings or tables. This setting does. The total you choose is a trial value, not a measurement. It moves the pink marks in Pictures 1 and 2, fills the drawing below
+              and the first table. It does not change Picture 3 or the second table, because the floors and ceilings are published numbers.
+            </p>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Try a different total mass</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-              Choose a total for the three neutrino masses added together (shared equally among the three). The first table below, Picture 1’s
-              violet marker, Picture 2’s share bar and yellow dot, and the worked examples in the “Words and formulas” box change with it.
-              Picture 3 does not, because the floors and ceilings are published numbers. Your predictions stay as they are.
+              Choose a total for the three neutrino masses added together (shared equally among the three). The worked examples in the “Words and formulas” box change with it too.
             </p>
             <div style={{ marginBottom: '1.5rem' }}>
               {TOTAL_PRESETS.map((preset) => (
@@ -1140,11 +1328,209 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
               ))}
             </div>
 
+            {/* Drawing A: the total the learner chose (pink), beside the floors and ceilings (on a 0 to 0.5 eV scale), and what it does to three numbers. */}
+            {(() => {
+              const evX = (value: number) => 40 + (value / MAX_TOTAL_MASS_EV) * 480
+              const axisY = 150
+              const ceilingsDrawn = CEILINGS.filter((b) => b.drawn).sort((a, b) => a.value - b.value)
+              const rows = [
+                { title: 'When the neutrinos turn heavy (redshift z)', max: 350, real: desiRun.heavyRedshift, mine: result.heavyRedshift, text: `z = ${result.heavyRedshift.toFixed(1)}`, y: 280 },
+                { title: 'Their share of all the matter (percent)', max: 4, real: desiRun.share * 100, mine: result.share * 100, text: `${(result.share * 100).toFixed(2)} percent`, y: 350 },
+                { title: 'Smoothing of the smallest clumps (percent)', max: 30, real: desiRun.smoothing * 100, mine: result.smoothing * 100, text: `${(result.smoothing * 100).toFixed(2)} percent`, y: 420 },
+              ] as const
+              const rowX = (value: number, max: number) => 40 + (value / max) * 480
+              return (
+                <svg width={VIEW_WIDTH} height={470} viewBox={`0 0 ${VIEW_WIDTH} 470`} style={svgStyle} role="img" aria-label={`The total you chose, ${formatTotal(totalMass)} eV, beside the floors and ceilings, and what it does to three numbers`}>
+                  <text x={40} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+                    Drawing A: your total beside the floors and ceilings
+                  </text>
+                  <line x1={40} y1={axisY} x2={520} y2={axisY} stroke={MUTED_COLOR} strokeWidth={1.5} />
+                  {[0, 0.1, 0.2, 0.3, 0.4, 0.5].map((t) => (
+                    <g key={t}>
+                      <line x1={evX(t)} y1={axisY - 4} x2={evX(t)} y2={axisY + 4} stroke={MUTED_COLOR} />
+                      <text x={evX(t)} y={axisY + 18} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                        {t.toFixed(1)}
+                      </text>
+                    </g>
+                  ))}
+                  <text x={280} y={axisY + 34} fill={TEXT_COLOR} fontSize="11" textAnchor="middle">
+                    the three neutrino masses added together (eV)
+                  </text>
+                  {[floorNormal, floorInverted].map((f) => (
+                    <line key={f} x1={evX(f)} y1={64} x2={evX(f)} y2={axisY} stroke={FLOOR_COLOR} strokeWidth={2} strokeDasharray="5 3" />
+                  ))}
+                  {ceilingsDrawn.map((b) => (
+                    <polygon key={b.name} points={`${evX(b.value) - 5},${axisY - 18} ${evX(b.value) + 5},${axisY - 18} ${evX(b.value)},${axisY - 4}`} fill={CEILING_COLOR} />
+                  ))}
+                  <line x1={evX(totalMass)} y1={44} x2={evX(totalMass)} y2={axisY} stroke={TRIAL_COLOR} strokeWidth={3} />
+                  <circle cx={evX(totalMass)} cy={axisY} r={6} fill={TRIAL_COLOR} stroke={TEXT_COLOR} />
+                  <text x={Math.min(evX(totalMass) + 8, 400)} y={50} fill={TRIAL_COLOR} fontSize="12" fontWeight="bold">
+                    your total: {formatTotal(totalMass)} eV
+                  </text>
+                  <text x={40} y={206} fill={FLOOR_COLOR} fontSize="10">
+                    green dashed lines: the two floors ({floorNormal.toFixed(4)} and {floorInverted.toFixed(4)})
+                  </text>
+                  <text x={40} y={220} fill={CEILING_COLOR} fontSize="10">
+                    orange triangles: the ceilings ({ceilingsDrawn.map((b) => b.value).join(', ')})
+                  </text>
+                  {rows.map((row) => (
+                    <g key={row.title}>
+                      <text x={40} y={row.y - 30} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                        {row.title}
+                      </text>
+                      <line x1={40} y1={row.y} x2={520} y2={row.y} stroke={MUTED_COLOR} strokeWidth={1.5} />
+                      <text x={40} y={row.y + 16} fill={MUTED_COLOR} fontSize="9">
+                        0
+                      </text>
+                      <text x={520} y={row.y + 16} fill={MUTED_COLOR} fontSize="9" textAnchor="end">
+                        {row.max}
+                      </text>
+                      <line x1={rowX(row.real, row.max)} y1={row.y - 11} x2={rowX(row.real, row.max)} y2={row.y + 11} stroke={MUTED_COLOR} strokeWidth={3} />
+                      <text x={rowX(row.real, row.max)} y={row.y - 14} fill={MUTED_COLOR} fontSize="9" textAnchor={row.real / row.max > 0.8 ? 'end' : 'start'}>
+                        {row.real / row.max > 0.8 ? '' : ' '}DESI’s limit
+                      </text>
+                      <line x1={40} y1={row.y} x2={rowX(row.mine, row.max)} y2={row.y} stroke={TRIAL_COLOR} strokeWidth={3} />
+                      <circle cx={rowX(row.mine, row.max)} cy={row.y} r={6} fill={TRIAL_COLOR} stroke={TEXT_COLOR} />
+                      <text x={Math.min(rowX(row.mine, row.max) + 10, 430)} y={row.y + 28} fill={TRIAL_COLOR} fontSize="11">
+                        your total: {row.text}
+                      </text>
+                    </g>
+                  ))}
+                </svg>
+              )
+            })()}
+
+            <div style={{ marginTop: '1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={paragraph}>
+                <strong>How to read this drawing.</strong> It shows the total you chose beside the published floors and ceilings, and what that total does to three numbers. The first line is a total-mass line from 0 to {MAX_TOTAL_MASS_EV} eV, so
+                it is longer than Picture 3’s, which stops at 0.2 eV.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The green dashed lines:</strong> the two floors, the least the total can be according to the oscillation experiments: {floorNormal.toFixed(4)} eV (normal ordering) and {floorInverted.toFixed(4)} eV (inverted ordering).
+                </li>
+                <li>
+                  <strong>The orange triangles:</strong> the four ceilings drawn in Picture 3, the most the total can be according to the sky: {CEILINGS.filter((b) => b.drawn)
+                    .sort((a, b) => a.value - b.value)
+                    .map((b) => b.value)
+                    .join(', ')}{' '}
+                  eV. Several sit close together, on top of one another.
+                </li>
+                <li>
+                  <strong>The pink line and dot:</strong> your total, {formatTotal(totalMass)} eV. Pink always means the total you chose. It starts at DESI’s limit.
+                </li>
+                <li>
+                  <strong>The three rows below:</strong> what your total does to the redshift at which the neutrinos turn heavy, their share of the matter and the smoothing of small clumps. Each row has its own scale, from 0 to the number at its right end. The
+                  grey tick is the value for DESI’s limit ({formatTotal(RUN_TOTAL_MASS_EV)} eV), the real run. The pink dot is your total.
+                </li>
+              </ul>
+              <p style={paragraph}>
+                <strong>A worked moment, with your numbers.</strong> For {formatTotal(totalMass)} eV shared equally, each neutrino weighs {formatTotal(totalMass)} ÷ 3 = {eachEv.toFixed(4)} eV. They turn heavy at z = {result.heavyRedshift.toFixed(1)} (for DESI’s limit,
+                z = {desiRun.heavyRedshift.toFixed(1)}), make up {(result.share * 100).toFixed(2)} percent of the matter (DESI’s limit: {(desiRun.share * 100).toFixed(2)} percent), and smooth the smallest clumps by {(result.smoothing * 100).toFixed(2)} percent
+                (DESI’s limit: {(desiRun.smoothing * 100).toFixed(2)} percent).
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What to look for.</strong> Here are three things to look at, what each one means, and why it matters.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Look at</strong> where the pink line sits among the green lines and the orange triangles. <strong>What it means:</strong> {formatTotal(totalMass)} eV is{' '}
+                  {totalMass < floorNormal ? 'below both floors' : totalMass < floorInverted ? 'above the normal floor but below the inverted one' : 'above both floors'}, and {totalMass > desi2026.bound.value ? 'above' : 'at or below'} DESI’s July 2026 ceiling of{' '}
+                  {desi2026.bound.value} eV. <strong>Why it matters:</strong> a total below a floor is ruled out by the oscillation experiments, and one above a ceiling is ruled out by the sky, in the standard model.
+                </li>
+                <li>
+                  <strong>Look at</strong> how the three rows change as you choose a larger total. <strong>What it means:</strong> all three pink dots move right together. <strong>Why it matters:</strong> a heavier total makes the neutrinos turn heavy earlier, make up more of the matter and smooth clumps more.
+                </li>
+                <li>
+                  <strong>Look at</strong> the pink marks in Pictures 1 and 2 above. <strong>What it means:</strong> they are your total, the same as here. The white marks never move. <strong>Why it matters:</strong> it keeps what you chose to look at apart from what you guessed.
+                </li>
+              </ul>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the oscillation experiments’ mass gaps (the floors come from them) and the ceilings, by the teams named in the second table. <em>Calculated here:</em> the three rows, from the total.{' '}
+                <em>Imagined for the question:</em> the total you chose, and its equal split into three. The pink marks are your own choice. Your guesses are not drawn here, because they never change a picture.
+              </p>
+            </div>
+
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              We are about to read the numbers: first a check-up of the ceilings against the floors, then the tables. A guess never changes them. The total you chose in Part 2 changes the first table, and the page says which one is on.
+            </PartHeader>
+
             <div style={{ border: '1px solid var(--border-color, #ccc)', borderRadius: '8px', padding: '1rem', fontSize: '0.875rem' }}>
               <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
                 <strong>Results.</strong> These are the numbers behind the three pictures. They only report what was published and what was calculated.
                 They do not say why the numbers are what they are.
               </p>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>The check-up: each ceiling against the floor</p>
+              <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.75rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                    <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>What was checked</th>
+                    <th style={{ padding: '0.4rem 0.5rem' }}>What we would expect</th>
+                    <th style={{ padding: '0.4rem 0.5rem' }}>What was found</th>
+                    <th style={{ padding: '0.4rem 0' }}>Reading</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {checkUp.map((row, i) => (
+                    <tr key={row.label} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                      <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                        {row.label}
+                        {i === 0 ? ' (the row for Prediction 2)' : ''}
+                      </td>
+                      <td style={{ padding: '0.4rem 0.5rem' }}>at least {row.floor.toFixed(4)} eV (the {row.floorName})</td>
+                      <td style={{ padding: '0.4rem 0.5rem' }}>
+                        {row.ceiling} eV ({row.ratio.toFixed(3)} times the floor)
+                      </td>
+                      <td style={{ padding: '0.4rem 0', fontWeight: 'bold' }}>
+                        {row.reading}
+                        {row.reading === 'less' ? ' (below the floor)' : ''}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+                The check-up does not follow the total you chose in Part 2 or your guesses.
+              </p>
+              <div style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  <strong>What this table tells us.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>DESI 2026 against the normal floor.</strong> The ceiling is only {(checkUp[0].ceiling - checkUp[0].floor).toFixed(4)} eV above the floor, which is {checkUp[0].ratio.toFixed(3)} times it. It matters because there is almost no room left for the
+                    normal ordering in the standard model.
+                  </li>
+                  <li>
+                    <strong>Against the inverted floor.</strong> The ceiling is below it by {(checkUp[1].floor - checkUp[1].ceiling).toFixed(4)} eV. It matters because the inverted ordering would have no room at all in the standard model. The page does not say which ordering is true.
+                  </li>
+                  <li>
+                    <strong>DESI 2025.</strong> {checkUp[2].ratio.toFixed(3)} times the floor. It matters because it shows the ceiling came down toward the floor from March 2025 to July 2026.
+                  </li>
+                  <li>
+                    <strong>Planck 2018 + BAO.</strong> {checkUp[3].ratio.toFixed(3)} times the floor, about twice. It matters because it was the loose limit before DESI.
+                  </li>
+                  <li>
+                    <strong>How sure the floors are.</strong> They come from two mass gaps whose numbers were taken from a search result, not read at the paper’s table, so treat them as approximate.
+                  </li>
+                </ul>
+              </div>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+              <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
+                Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+              </p>
+              <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem' }}>
+                <li>
+                  <strong>Prediction 1, when the neutrinos turn heavy:</strong> {timingPrediction !== null ? TIMING_CHOICES.find((c) => c.value === timingPrediction)?.label.toLowerCase() : ''}. The question was for a total of {PREDICTION_TOTAL_MASS_EV} eV. Its numbers are in Table 1
+                  (the rows “Redshift at which they turn heavy” and “How many times later than the release”, for the total you chose in Part 2; DESI’s limit, {formatTotal(RUN_TOTAL_MASS_EV)} eV, is close to {PREDICTION_TOTAL_MASS_EV} eV) and in Picture 1.
+                </li>
+                <li>
+                  <strong>Prediction 2, how much room there is:</strong> {roomPrediction !== null ? ROOM_CHOICES.find((c) => c.value === roomPrediction)?.label.toLowerCase() : ''}. Its numbers are in the check-up (the first row), in Table 2 (the July 2026 DESI row, against the normal
+                  floor) and in Picture 3.
+                </li>
+              </ul>
 
               <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>For a total of {formatTotal(result.totalMassEv)} eV, shared equally</p>
               <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
@@ -1161,10 +1547,10 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                       [
                         ['Each of the three masses', `${eachEv.toFixed(4)} eV`, `${formatTotal(result.totalMassEv)} ÷ 3`],
                         ['A typical neutrino’s energy today', `${result.typicalEnergyTodayEv.toFixed(6)} eV`, `${MEAN_ENERGY_IN_KT} × k × ${result.neutrinoTemperatureKelvin.toFixed(3)} K`],
-                        ['Redshift at which they turn heavy', `z = ${result.heavyRedshift.toFixed(1)}`, `(${eachEv.toFixed(4)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)}) − 1`],
+                        ['Redshift at which they turn heavy (a row for Prediction 1)', `z = ${result.heavyRedshift.toFixed(1)}`, `(${eachEv.toFixed(4)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)}) − 1`],
                         ['Age of the universe then', `about ${millions(result.heavyTimeYears)} million years`, 'the age function of Cosmology Experiment 6, at Planck’s expansion rate'],
                         ['The microwave background’s release', `z = ${RECOMBINATION_REDSHIFT}, ${RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')} years`, 'Cosmology Experiment 3'],
-                        ['How many times later than the release', `${result.timesLaterThanRelease.toFixed(0)} times`, `${Math.round(result.heavyTimeYears).toLocaleString('en-US')} ÷ ${RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')}`],
+                        ['How many times later than the release (a row for Prediction 1)', `${result.timesLaterThanRelease.toFixed(0)} times`, `${Math.round(result.heavyTimeYears).toLocaleString('en-US')} ÷ ${RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')}`],
                         ['Redshift if one neutrino carried the whole total', `z = ${result.heavyRedshiftOneNeutrino.toFixed(1)}`, `(${formatTotal(result.totalMassEv)} ÷ ${result.typicalEnergyTodayEv.toFixed(6)}) − 1`],
                         ['The neutrinos’ share of all the matter', `${(result.share * 100).toFixed(2)} percent`, `${formatTotal(result.totalMassEv)} ÷ ${omegaUnit} ÷ ${(h * h).toFixed(3)} ÷ ${omegaMatter}`],
                         ['Smoothing of the smallest clumps', `${(result.smoothing * 100).toFixed(2)} percent`, `${SMOOTHING_FACTOR} × ${result.share.toFixed(5)}`],
@@ -1178,6 +1564,30 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  <strong>What this table tells us.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>Each of the three masses.</strong> {formatTotal(result.totalMassEv)} ÷ 3 = {eachEv.toFixed(4)} eV. It matters because the turning point depends on the mass of one neutrino, not on the total.
+                  </li>
+                  <li>
+                    <strong>The redshift and the age when they turn heavy.</strong> z = {result.heavyRedshift.toFixed(1)}, about {millions(result.heavyTimeYears)} million years after the Big Bang. It matters because it says when the neutrinos stopped acting like light, and it is the number for Prediction 1.
+                  </li>
+                  <li>
+                    <strong>How many times later than the release.</strong> About {result.timesLaterThanRelease.toFixed(0)} times later than the microwave background’s release, which was {RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')} years after the Big Bang. It matters because it
+                    says the light of the microwave background was released while the neutrinos still acted like light.
+                  </li>
+                  <li>
+                    <strong>The redshift if one neutrino carried the whole total.</strong> z = {result.heavyRedshiftOneNeutrino.toFixed(1)}, the grey circle on Picture 1. It matters because it shows that the answer does not depend on how the mass is shared.
+                  </li>
+                  <li>
+                    <strong>The share of the matter and the smoothing.</strong> {(result.share * 100).toFixed(2)} percent of the matter, smoothing the smallest clumps by {(result.smoothing * 100).toFixed(2)} percent, which is {SMOOTHING_FACTOR} times the share. It matters because a small share can
+                    still be measured by the surveys, which is how the sky puts a limit on the total.
+                  </li>
+                </ul>
               </div>
 
               <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Every floor, ceiling and limit</p>
@@ -1200,6 +1610,7 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                         <tr key={bound.name} style={{ borderBottom: '1px solid var(--border-color, #ccc)', verticalAlign: 'top' }}>
                           <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
                             {bound.name}
+                            {bound.name === 'DESI DR2 + CMB (July 2026)' ? ' (the row for Prediction 2)' : ''}
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{bound.source}</div>
                           </td>
                           <td style={{ padding: '0.4rem 0.5rem' }}>{bound.year}</td>
@@ -1216,39 +1627,23 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
                 </table>
               </div>
 
-              {/* How to read the results: draft wording (CLAUDE.md §29). It explains each row, column and the control, and says nothing about why. */}
               <div style={{ color: 'var(--text-muted)' }}>
-                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                  <strong>How to read these results.</strong>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  <strong>What this table tells us.</strong>
                 </p>
                 <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                   <li>
-                    <strong>The first table</strong> is the chain of arithmetic behind Pictures 1 and 2 for the total you chose: the mass of each
-                    neutrino, the redshift and age at which they turn heavy, how that compares with the microwave background’s release, and the
-                    neutrinos’ share of the matter and its effect on small clumps. The last column shows each step so you can follow it.
+                    <strong>Floors and ceilings.</strong> A floor is a minimum from oscillation experiments, computed here from their measured gaps. A ceiling is a 95 percent upper limit from the sky. It matters because the total has to lie between the two.
                   </li>
                   <li>
-                    <strong>“How many times later than the release”</strong> divides the age when the neutrinos turn heavy by the age when the
-                    microwave background was released.
+                    <strong>KATRIN.</strong> Its limit (90 percent) is for one kind of neutrino, not the sum, so it is not compared with the floors.
                   </li>
                   <li>
-                    <strong>“Redshift if one neutrino carried the whole total”</strong> is the grey circle on Picture 1: the same sum, but with the
-                    whole mass in a single neutrino instead of shared among three.
+                    <strong>The last two columns.</strong> Each ceiling divided by a floor, and how far above it. “Below the floor” means the ceiling is lower than the floor, by the amount shown. The row for Prediction 2 is the July 2026 DESI ceiling against the normal floor:{' '}
+                    {desi2026.normal.ratio.toFixed(3)} times it. It matters because it is the room that is left.
                   </li>
                   <li>
-                    <strong>The second table</strong> lists every floor, ceiling and limit the experiment uses, with its year and where it comes
-                    from. A <em>floor</em> is a minimum from oscillation experiments (computed here from their measured gaps). A <em>ceiling</em>{' '}
-                    is a 95 percent upper limit from the sky. KATRIN’s limit (90 percent) is for one kind of neutrino, not the sum, so it is not
-                    compared with the floors.
-                  </li>
-                  <li>
-                    <strong>The last two columns</strong> compare each ceiling with the two floors: the ceiling divided by the floor, and how far
-                    above the floor it is. “Below the floor” means the ceiling is lower than the floor, by the amount shown. The first table and
-                    these columns use the same numbers as Picture 3.
-                  </li>
-                  <li>
-                    <strong>“Try a different total mass”</strong> changes only the first table, Picture 1’s violet marker, Picture 2’s yellow dot
-                    and the worked examples. It does not change the second table, Picture 3 or your predictions.
+                    <strong>Not changed by your total.</strong> This table and Picture 3 use published numbers, so they never follow the control.
                   </li>
                 </ul>
               </div>
@@ -1306,6 +1701,11 @@ export function NeutrinoMassExperiment({ onComplete, onTutorComplete }: Neutrino
 
         {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The summary below the experiment (in
             App) is shown only once the learner reaches the explanation. */}
+        {status === 'complete' && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
+        )}
         {status === 'complete' && timingPrediction !== null && roomPrediction !== null && (
           <NeutrinoMassTutor
             totalMassEv={totalMass}
