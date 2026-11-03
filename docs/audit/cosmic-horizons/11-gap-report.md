@@ -54,6 +54,14 @@ B0: Table 1 what changes each clock's rate (:1146); Table 2 round the orbit (:11
 - O1: white = learner's own point (`YOURS_COLOR` :44).
 - O2: Prediction 2 buttons are in micro/milli/seconds but Picture 3's top graph is in milliseconds; a mark will need one agreed unit. Spec (213 lines) has no source table of the 3(c) type.
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts: after the introduction the page runs on in one column. No coloured lines, headings or leads.
+- **The controls already change Part 1 pictures.** The slider and the duration add a white mark to each picture (a bar on Picture 1, a ring on Picture 2, a ring on Picture 3) and fill in Table 4. Under the rule a learner's own setting is pink.
+- **Colour clash found.** White was the learner's own point; no other colour clashed.
+- **O2 resolved.** Prediction 2's answers (microseconds, milliseconds, seconds) are placed on a thin line in milliseconds (35 microseconds is 0.035 ms; 35 seconds is 35,000 ms, off the scale, so an arrow at the edge). Prediction 1 is a category, drawn as two direction arrows (a marker only).
+- **B1 reference.** NASA's own words for the closest approach ("430,000 miles per hour", "3.8 million miles") and its speed against the two-body oval. The lag itself has no measurement, so no row.
+- **Defaults used.** The owner approved all default recommendations and wording in advance (2026-11-03).
+
 ## What an update would touch
 FastestSpacecraftExperiment.tsx (Pictures 1 and 3, intro, Results), FastestSpacecraftTutor.tsx, fastestSpacecraft.ts/.test.ts, spec, DEVELOPMENT-STATE.md. Size **M** / **L** with Rule B.
 
