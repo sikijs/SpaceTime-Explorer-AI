@@ -92,9 +92,9 @@ export function EarliestGalaxiesTutor({ redshift, galaxyName, isImaginary, agePr
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 2 and Picture 3. What do you notice about where the galaxy’s light left on the timeline in Picture 2, and about the survey’s estimate compared with the models’ in Picture 3?'}
+              'Look at Picture 2 and Picture 3. Your guesses are drawn in white, in boxes marked YOUR GUESS: a bracket in the magnified strip of Picture 2 and a bracket under the axis of Picture 3. What do you notice about where each bracket sits compared with the orange MoM-z14 tick in Picture 2 and the survey’s teal dot in Picture 3?'}
             {tutorStep === 'compare' &&
-              `You predicted that, when the light of a galaxy at a redshift of about 14.4 left it, ${ageWords[agePrediction]} of the universe’s present age had passed, and that the number of bright galaxies the survey implies would be ${countWords[countPrediction]}. Look at Pictures 2 and 3 again. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
+              `You predicted that, when the light of a galaxy at a redshift of about 14.4 left it, ${ageWords[agePrediction]} of the universe’s present age had passed, and that the number of bright galaxies the survey implies would be ${countWords[countPrediction]}. Compare the white bracket in Picture 2 with the orange tick for MoM-z14, and the white bracket in Picture 3 with the survey’s dot and its bar. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
             {tutorStep === 'conceptual' &&
               `The galaxy MoM-z14 is bright and compact, and its light left it only about ${millions(mom.ageAfterBigBangYears)} million years after the Big Bang. The survey behind it implies far more galaxies like it than the models used before Webb predicted. Which of these would you have to change to explain that: the age of the universe at that redshift, or the way stars form in the first galaxies? Why?`}
           </p>
