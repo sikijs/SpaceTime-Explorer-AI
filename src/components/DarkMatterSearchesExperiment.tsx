@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   chanceOfNoEvents,
+  countGuessValue,
+  darkMatterCheckUp,
+  DRAWING_SCALES,
+  effectGuessSide,
   EXPECTED_AT_LIMIT,
   limitAfter,
   limitAtLiveDays,
@@ -11,8 +15,14 @@ import {
   MAX_TRIES,
   MIN_TRIES,
   OTHER_BORON8_SIGMAS,
+  PREDICTION_EXPOSURE,
+  PREDICTION_STRENGTH,
+  predictionCaseExpectedEvents,
   runDarkMatterSearches,
+  searchDrawingReference,
+  searchDrawingValues,
   SIGMA_LADDER,
+  START_TRIES,
   TRIES_FOR_LZ_GLOBAL,
   XENONNT_LIMIT,
   ZERO_EVENT_CHANCE,
@@ -44,6 +54,8 @@ const FLASH_COLOR = '#fde047' // yellow: the flash of light
 const ELECTRON_COLOR = '#4ade80' // green: the freed electrons
 const ROCK_COLOR = '#475569'
 const CURVE_COLOR = '#fb923c' // orange: the chance of seeing nothing
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+const TRIAL_COLOR = '#f472b6' // pink: the learner's own search and places looked (Part 2)
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -76,6 +88,25 @@ const EFFECT_CHOICES: ReadonlyArray<{ value: GlobalEffect; label: string }> = [
 ]
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const PredictionTag = ({ n }: { n: 1 | 2 }) => (
+  <span style={{ marginLeft: '0.5rem', padding: '0.05rem 0.4rem', fontSize: '0.75rem', fontWeight: 'bold', border: `1px solid ${GUESS_COLOR}`, borderRadius: '4px', whiteSpace: 'nowrap' }}>
+    your Prediction {n}
+  </span>
+)
+const COUNT_SHORT = { point23: 'about 0.23 events', twoPoint3: 'about 2.3 events', twentyThree: 'about 23 events' } as const
+const EFFECT_SHORT = { lower: 'lower than 3.4 sigma', same: 'the same, 3.4 sigma', higher: 'higher than 3.4 sigma' } as const
 
 // ---- The detector (an illustration, not data) ----
 function DetectorDrawing() {
@@ -182,7 +213,8 @@ const P1_RIGHT = 520
 const P1_TOP = 56
 const P1_BOTTOM = 210
 const P1_MAX_N = 6
-const P1_HEIGHT = 290
+const P1_GUESS_Y = P1_BOTTOM + 70 // the guess's own line under the axis, on the same scale
+const P1_HEIGHT = P1_GUESS_Y + 50
 const nToX = (n: number) => P1_LEFT + (n / P1_MAX_N) * (P1_RIGHT - P1_LEFT)
 const chanceToY = (chance: number) => P1_BOTTOM - chance * (P1_BOTTOM - P1_TOP)
 
@@ -208,7 +240,7 @@ const STAGE_NAMES = [
   'One unexpected event',
 ]
 const NO_BACKGROUND_COLOR = '#4ade80' // green: the limit when there is no background
-const GROWS_COLOR = '#f472b6' // pink: the limit when a background grows with the data
+const GROWS_COLOR = '#2dd4bf' // teal: the limit when a background grows with the data (pink is kept for the learner's own setting)
 const RULED_OUT_COLOR = '#f87171' // red: strengths that seeing nothing rules out
 const NOT_RULED_OUT_COLOR = '#64748b' // grey: strengths that it does not rule out
 
@@ -245,8 +277,136 @@ const P3_LEFT = 215
 const P3_RIGHT = 480
 const P3_TOP = 70
 const P3_ROW = 34
-const P3_HEIGHT = 295
+const P3_GUESS_Y = P3_TOP + 5 * P3_ROW + 70 // the guess's own line under the ladder, on the same scale
+const P3_HEIGHT = P3_GUESS_Y + 50
 const sigmaToX = (sigma: number) => P3_LEFT + (sigma / 5) * (P3_RIGHT - P3_LEFT)
+
+// ---- Part 2's drawing: your search beside today's (the learner's own setting, pink; today's limit and the published number, yellow) ----
+const DA_LEFT = 40
+const DA_RIGHT = 520
+const DA_ROW_TOP = 56
+const DA_ROW_STEP = 82
+const DA_HEIGHT = DA_ROW_TOP + 4 * DA_ROW_STEP
+
+function YourSearchDrawing({ strength, exposure, background, tries }: { strength: number; exposure: number; background: Background; tries: number }) {
+  const mine = searchDrawingValues(strength, exposure, background, tries)
+  const ref = searchDrawingReference()
+  const logX = (v: number, sc: { min: number; max: number }) => DA_LEFT + (Math.log(v / sc.min) / Math.log(sc.max / sc.min)) * (DA_RIGHT - DA_LEFT)
+  const linX = (v: number, sc: { min: number; max: number }) => DA_LEFT + ((v - sc.min) / (sc.max - sc.min)) * (DA_RIGHT - DA_LEFT)
+  const fmtEvents = (v: number) => (v < 10 ? v.toFixed(2) : v < 1000 ? v.toFixed(0) : Math.round(v).toLocaleString('en-US'))
+  const rows = [
+    {
+      key: 'expected', title: 'Events a search like yours expects', x: (v: number) => logX(v, DRAWING_SCALES.expected), mine: mine.expected, ref: ref.expected,
+      ticks: [0.1, 1, 10, 100, 1000, 10000, 100000], tickLabel: (v: number) => (v >= 1000 ? `${v / 1000}k` : `${v}`), valueText: (v: number) => `${fmtEvents(v)} events`, refName: 'today’s limit',
+    },
+    {
+      key: 'chance', title: 'Chance of seeing none', x: (v: number) => linX(v, DRAWING_SCALES.chanceNone), mine: mine.chanceNone, ref: ref.chanceNone,
+      ticks: [0, 0.25, 0.5, 0.75, 1], tickLabel: (v: number) => `${Math.round(v * 100)}%`, valueText: (v: number) => `${(v * 100).toFixed(v < 0.001 ? 4 : 1)} percent`, refName: 'at the limit',
+    },
+    {
+      key: 'limit', title: 'The limit after your exposure (weaker is further left)', x: (v: number) => logX(v, DRAWING_SCALES.limitCm2), mine: mine.limitCm2, ref: ref.limitCm2,
+      ticks: [1e-51, 1e-50, 1e-49, 1e-48], tickLabel: (v: number) => formatCm2(v, 1).replace(' cm²', ''), valueText: (v: number) => formatCm2(v), refName: 'LZ’s limit now',
+    },
+    {
+      key: 'sigma', title: 'The 2026 event with your places counted (sigma)', x: (v: number) => linX(v, DRAWING_SCALES.globalSigma), mine: mine.globalSigma, ref: ref.globalSigma,
+      ticks: [0, 1, 2, 3, 4, 5], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(2)} sigma`, refName: 'the published number',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={DA_HEIGHT}
+        viewBox={`0 0 ${VIEW_WIDTH} ${DA_HEIGHT}`}
+        style={svgStyle}
+        role="img"
+        aria-label="Four short scales for your own search: the events it expects, the chance of seeing none, the limit after your exposure and the 2026 event's strength with your number of places counted, each with today's value and your value marked"
+      >
+        <text x={DA_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Drawing A: your search beside today’s
+        </text>
+        <text x={DA_LEFT} y={40} fill={MUTED_COLOR} fontSize="10">
+          Each scale has a yellow line for today’s value and a pink dot for your own search.
+        </text>
+        {rows.map((row, i) => {
+          const y0 = DA_ROW_TOP + i * DA_ROW_STEP
+          return (
+            <g key={row.key}>
+              <text x={DA_LEFT} y={y0} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                {row.title}
+              </text>
+              <rect x={DA_LEFT} y={y0 + 8} width={DA_RIGHT - DA_LEFT} height={14} fill={MUTED_COLOR} opacity={0.3} />
+              <line x1={row.x(row.ref)} y1={y0 + 4} x2={row.x(row.ref)} y2={y0 + 26} stroke={FLASH_COLOR} strokeWidth={2.5} />
+              <circle cx={row.x(row.mine)} cy={y0 + 15} r={5.5} fill={TRIAL_COLOR} />
+              {row.ticks.map((t) => (
+                <g key={t}>
+                  <line x1={row.x(t)} y1={y0 + 24} x2={row.x(t)} y2={y0 + 29} stroke={TEXT_COLOR} />
+                  <text x={row.x(t)} y={y0 + 40} fill={TEXT_COLOR} fontSize="9" textAnchor={row.x(t) <= DA_LEFT + 1 ? 'start' : row.x(t) >= DA_RIGHT - 1 ? 'end' : 'middle'}>
+                    {row.tickLabel(t)}
+                  </text>
+                </g>
+              ))}
+              <text x={DA_LEFT} y={y0 + 56} fill={MUTED_COLOR} fontSize="10">
+                <tspan fill={TRIAL_COLOR}>pink: yours, {row.valueText(row.mine)}</tspan>
+                <tspan> · </tspan>
+                <tspan fill={FLASH_COLOR}>yellow: {row.refName}, {row.valueText(row.ref)}</tspan>
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+        <p style={paragraph}>
+          <strong>How to read Drawing A.</strong> It puts the numbers of your own search in one place, each on its own short scale, with today’s value as a yellow line to compare them with. It
+          follows the controls above, so it changes when you change them.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The first scale</strong> is the number of events your search expects, on a logarithmic scale (each step is ten times the one before; “k” means thousand). The{' '}
+            <span style={{ color: FLASH_COLOR }}>yellow line</span> is today’s limit, {EXPECTED_AT_LIMIT.toFixed(2)} events. <strong>The second scale</strong> is the chance of seeing no event at all,
+            from 0 to 100 percent, with the yellow line at 10 percent. <strong>The third scale</strong> is the limit after your exposure, in cm², on a logarithmic scale where further left means a weaker
+            interaction ruled out; the yellow line is LZ’s limit now. It follows the background you chose. <strong>The fourth scale</strong> is how sure the 2026 event is, in sigma, once the number of places
+            you set are counted; the yellow line is the published {LZ230616.globalSigma} sigma.
+          </li>
+          <li>
+            <strong>The pink dot</strong> on each scale is your own search. <strong>At the starting settings the dots sit on or near the yellow lines</strong> (strength 1, exposure 1, no background,{' '}
+            {START_TRIES} places); change a control to see them move.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment.</strong> Keep the strength at 1 (the limit) and double the exposure to 2. The search now expects 2 × {EXPECTED_AT_LIMIT.toFixed(2)} ={' '}
+          {searchDrawingValues(1, 2, 'none', START_TRIES).expected.toFixed(2)} events. The chance of seeing none is e<sup>−{searchDrawingValues(1, 2, 'none', START_TRIES).expected.toFixed(2)}</sup> ={' '}
+          {(searchDrawingValues(1, 2, 'none', START_TRIES).chanceNone * 100).toFixed(1)} percent, which is 10 percent × 10 percent: twice the exposure squares the chance. With no background the limit halves, to{' '}
+          {formatCm2(searchDrawingValues(1, 2, 'none', START_TRIES).limitCm2)}.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <strong>What to look for.</strong>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Look at</strong> the pink dot on the first two scales. <strong>What it means:</strong> your search expects {fmtEvents(mine.expected)} events, so seeing none has a chance of{' '}
+            {(mine.chanceNone * 100).toFixed(mine.chanceNone < 0.001 ? 4 : 1)} percent, {mine.chanceNone < ref.chanceNone ? 'less' : mine.chanceNone > ref.chanceNone ? 'more' : 'the same'} than the 10 percent at the limit.{' '}
+            <strong>Why it matters:</strong> the further right the first dot (and the further left the second), the more a search that sees nothing would rule out.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the third scale. <strong>What it means:</strong> after your exposure the limit would be {formatCm2(mine.limitCm2)}, against {formatCm2(ref.limitCm2)} now
+            ({background === 'none' ? 'no background' : 'a background that grows with the data'}). <strong>Why it matters:</strong> it shows how much further a longer search could push the limit, and how a background
+            slows it.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the fourth scale. <strong>What it means:</strong> with {tries} places counted the 2026 event is {mine.globalSigma.toFixed(2)} sigma, against the published{' '}
+            {LZ230616.globalSigma}. <strong>Why it matters:</strong> the more places a search looks at, the more chances there are for a chance excess, so the strength of one event depends on how many places were looked.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> LZ’s limit of {formatCm2(LZ_LIMIT_2025.crossSectionCm2)} and the published {LZ230616.globalSigma} sigma (LZ Collaboration). <em>Calculated here:</em> the
+          events, the chance, the limit and the sigma for your settings, with this experiment’s simple counting rules. <em>Imagined for the question:</em> your strength, exposure, background and places looked. The
+          pink dots are your own search; the yellow lines are today’s values.
+        </p>
+      </div>
+    </div>
+  )
+}
 
 const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Dark matter', meaning: 'the unseen material that supplies extra gravity in galaxies and galaxy clusters (Cosmology Experiments 4 and 7). Its gravity is measured. What it is made of is not known.' },
@@ -285,6 +445,9 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
   const exposure = Number(Math.pow(10, exposurePower).toPrecision(2))
   const mine = runDarkMatterSearches(strength, exposure, background, tries)
   const done = status === 'complete'
+  const caseN = predictionCaseExpectedEvents()
+  const checkUp = darkMatterCheckUp()
+  const lzBoron = LZ_DECEMBER_2025.boron8Sigma
   const fix = (value: number) => (value < 0.01 ? value.toExponential(2) : value.toFixed(3))
   const formulaEntries: { term: string; meaning: string }[] = [
     {
@@ -483,7 +646,7 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try a
-            search of your own and change how many places were looked. Nothing here is graded.
+            search of your own and change how many places were looked. Nothing here is graded. Your predictions never change the real pictures or tables. They are drawn on the pictures in white, in a box marked YOUR GUESS, so you can compare them with what was measured and calculated, and they are listed again beside the results. In Part 2 you can try a search of your own and change how many places were looked. Those choices are pink: they move the pink marks in Pictures 1, 2 and 3 and fill a drawing in Part 2 and the first and second tables, but they never change the published numbers, the yellow marks or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -529,6 +692,10 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
         </div>
 
         <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: what seeing nothing rules out, how a limit improves with more data, and how sure the results are. Nothing here tells you the answers. When the pictures are drawn, your guesses appear on them in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
             says which answer is right, gives the 2.6 sigma, the number of places looked, or the 4.5 sigma of the solar neutrinos. */}
@@ -690,8 +857,8 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
                 </text>
                 {done && mine.expected <= P1_MAX_N && (
                   <g>
-                    <circle cx={nToX(mine.expected)} cy={chanceToY(mine.chanceOfNoEvents)} r={6} fill="none" stroke={ELECTRON_COLOR} strokeWidth={2.5} />
-                    <text x={nToX(mine.expected)} y={chanceToY(mine.chanceOfNoEvents) - 12} fill={ELECTRON_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+                    <circle cx={nToX(mine.expected)} cy={chanceToY(mine.chanceOfNoEvents)} r={6} fill="none" stroke={TRIAL_COLOR} strokeWidth={2.5} />
+                    <text x={nToX(mine.expected)} y={chanceToY(mine.chanceOfNoEvents) - 12} fill={TRIAL_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
                       your search: {mine.expected.toFixed(2)}
                     </text>
                   </g>
@@ -702,6 +869,45 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
                 <text x={(nToX(EXPECTED_AT_LIMIT) + P1_RIGHT) / 2} y={P1_BOTTOM - 10} fill={RULED_OUT_COLOR} fontSize="11" textAnchor="middle">
                   ruled out
                 </text>
+              </g>
+            )}
+            {/* Prediction 1's case, imagined for the question (violet), and the learner's guess (white) on a strip under the axis. */}
+            {p1Limit && (
+              <g>
+                <circle cx={nToX(caseN)} cy={chanceToY(chanceOfNoEvents(caseN))} r={10} fill="none" stroke={PARTICLE_COLOR} strokeWidth={2.5} />
+                <text x={nToX(caseN) + 16} y={chanceToY(ZERO_EVENT_CHANCE) - 36} fill={PARTICLE_COLOR} fontSize="10" fontWeight="bold">
+                  imagined case of Prediction 1:
+                </text>
+                <text x={nToX(caseN) + 16} y={chanceToY(ZERO_EVENT_CHANCE) - 24} fill={PARTICLE_COLOR} fontSize="10">
+                  {PREDICTION_STRENGTH} × the limit, {PREDICTION_EXPOSURE} × the exposure = {caseN.toFixed(2)} events
+                </text>
+                {countPrediction !== null && (() => {
+                  const value = countGuessValue(countPrediction)
+                  const off = value > P1_MAX_N
+                  const x = nToX(Math.min(value, P1_MAX_N))
+                  const boxX = Math.min(Math.max(x - 150, 10), VIEW_WIDTH - 310)
+                  return (
+                    <g>
+                      <text x={P1_LEFT} y={P1_GUESS_Y - 14} fill={GUESS_COLOR} fontSize="11">
+                        Your guess for Prediction 1: events expected in its case (same scale as above)
+                      </text>
+                      <line x1={P1_LEFT} y1={P1_GUESS_Y} x2={P1_RIGHT} y2={P1_GUESS_Y} stroke={MUTED_COLOR} strokeWidth={1} />
+                      {[0, 1, 2, 3, 4, 5, 6].map((n) => (
+                        <line key={n} x1={nToX(n)} y1={P1_GUESS_Y - 3} x2={nToX(n)} y2={P1_GUESS_Y + 3} stroke={MUTED_COLOR} />
+                      ))}
+                      {off ? (
+                        <polygon points={`${x - 14},${P1_GUESS_Y - 8} ${x + 4},${P1_GUESS_Y} ${x - 14},${P1_GUESS_Y + 8}`} fill={GUESS_COLOR} />
+                      ) : (
+                        <polygon points={`${x},${P1_GUESS_Y - 8} ${x + 8},${P1_GUESS_Y} ${x},${P1_GUESS_Y + 8} ${x - 8},${P1_GUESS_Y}`} fill={GUESS_COLOR} />
+                      )}
+                      <line x1={x} y1={P1_GUESS_Y + 8} x2={x} y2={P1_GUESS_Y + 14} stroke={GUESS_COLOR} strokeWidth={2} />
+                      <rect x={boxX} y={P1_GUESS_Y + 14} width={300} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+                      <text x={boxX + 150} y={P1_GUESS_Y + 31} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+                        YOUR GUESS: {COUNT_SHORT[countPrediction]}{off ? ' (beyond the right edge)' : ''}
+                      </text>
+                    </g>
+                  )
+                })()}
               </g>
             )}
           </svg>
@@ -723,9 +929,14 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
               {EXPECTED_AT_LIMIT.toFixed(2)}, at which the chance of seeing none is 10 percent, shown by the dashed grey line.
             </li>
             <li>
-              <strong>The green ring</strong> (after the run, once you try your own search below) is your own search: where it sits on the curve.
-              If it is far to the right, seeing nothing would rule out a particle like yours. If it is to the left, it would not. A ring beyond the
-              right edge, at more than 6 events, is not drawn.
+              <strong>The violet ring</strong> (imagined, from stage 2) marks the case that Prediction 1 asked about: an interaction {1 / PREDICTION_STRENGTH} times weaker than the limit,
+              searched for {PREDICTION_EXPOSURE} times longer. It sits on the curve at the number of events that case expects, {caseN.toFixed(2)}.{' '}
+              <strong>The white diamond and the YOUR GUESS box</strong>, on the thin line under the axis (the same scale), are your guess for the number of events in that case. It is only
+              where you guessed, not a result. A guess of 23 is beyond the right edge, so the marker is an arrow at the edge.
+            </li>
+            <li>
+              <strong>The pink ring</strong> (after the run, once you try your own search below) is your own search: where it sits on the curve. If it is far to the right, seeing nothing
+              would rule out a particle like yours. If it is to the left, it would not. A ring beyond the right edge, at more than 6 events, is not drawn.
             </li>
             <li>
               <strong>The red shading</strong> to the right is <strong>ruled out</strong>: for those strengths, seeing nothing would have been a
@@ -739,9 +950,40 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
             chance of seeing none is only {(chanceAt5 * 100).toFixed(1)} percent, so if nothing is seen, a particle that strong is very unlikely to be
             there.
           </p>
-          <p style={{ marginTop: 0, marginBottom: 0 }}>
-            <strong>What to look for.</strong> How quickly the curve falls, and where it crosses the 10 percent line. Everything to the right of that
-            crossing is ruled out by seeing nothing. Everything to the left is not.
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What to look for.</strong>
+          </p>
+          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>Look at</strong> how the orange curve falls. <strong>What it means:</strong> with nothing expected, seeing none is certain (100 percent); with 1 event expected it is{' '}
+              {(chanceAt1 * 100).toFixed(1)} percent, and with 5 it is {(chanceAt5 * 100).toFixed(1)} percent. <strong>Why it matters:</strong> seeing nothing is only unremarkable when little was expected, so a
+              search that sees nothing can only rule out strengths for which it would have expected to see something.
+            </li>
+            {p1Limit && (
+              <>
+                <li>
+                  <strong>Look at</strong> the yellow dot on the dashed 10 percent line. <strong>What it means:</strong> it is today’s limit, {EXPECTED_AT_LIMIT.toFixed(2)} events: for strengths to its right, seeing
+                  none would be a less-than-1-in-10 accident (ruled out); to its left it would not (not ruled out). <strong>Why it matters:</strong> this is what a limit is: a line drawn by the
+                  chance of seeing nothing, not a measurement of the particle.
+                </li>
+                <li>
+                  <strong>Look at</strong> the violet ring and the white marker. <strong>What it means:</strong> the imagined case ({1 / PREDICTION_STRENGTH} times weaker, {PREDICTION_EXPOSURE} times the exposure)
+                  expects {PREDICTION_STRENGTH} × {PREDICTION_EXPOSURE} × {EXPECTED_AT_LIMIT.toFixed(2)} = {caseN.toFixed(2)} events, the same as at the limit; your guess was {countPrediction !== null ? COUNT_SHORT[countPrediction] : ''}.{' '}
+                  <strong>Why it matters:</strong> the expected number depends on the strength and the exposure multiplied together, so a weaker interaction can be made up by a longer search.
+                </li>
+              </>
+            )}
+            {done && (
+              <li>
+                <strong>Look at</strong> the pink ring. <strong>What it means:</strong> your own search expects {mine.expected.toFixed(2)} events, so seeing none would have a chance of {(mine.chanceOfNoEvents * 100).toFixed(1)} percent.{' '}
+                <strong>Why it matters:</strong> it shows whether a null result from a search like yours would rule a particle like yours out.
+              </li>
+            )}
+          </ul>
+          <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+            <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement; the 10 percent rule is a convention for a limit. <em>Calculated here:</em> the curve (the
+            chance of seeing none is e<sup>−N</sup> for N expected events, a standard counting rule) and today’s limit at {EXPECTED_AT_LIMIT.toFixed(2)} events (−ln 0.10). <em>Imagined for the question:</em> the
+            violet case of Prediction 1, and your own search. The pink ring is your own search; the white diamond is your guess.
           </p>
         </div>
 
@@ -788,7 +1030,7 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
               </text>
             )}
             {done && !exposureInRange && (
-              <text x={P2_LEFT} y={P2_HEIGHT - 12} fill={ELECTRON_COLOR} fontSize="11">
+              <text x={P2_LEFT} y={P2_HEIGHT - 12} fill={TRIAL_COLOR} fontSize="11">
                 Your exposure ({Math.round(P2_MIN_DAYS * exposure).toLocaleString('en-US')} live days) is beyond the right edge of this picture.
               </text>
             )}
@@ -798,9 +1040,9 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
                 <path d={limitPath('none')} fill="none" stroke={NO_BACKGROUND_COLOR} strokeWidth={2.5} />
                 {done && exposureInRange && (
                   <g>
-                    <line x1={daysToX(P2_MIN_DAYS * exposure)} y1={P2_TOP} x2={daysToX(P2_MIN_DAYS * exposure)} y2={P2_BOTTOM} stroke={ELECTRON_COLOR} strokeDasharray="3 3" />
-                    <circle cx={daysToX(P2_MIN_DAYS * exposure)} cy={limitToY(LZ_LIMIT_2025.crossSectionCm2 * mine.limitFactor)} r={5} fill="none" stroke={ELECTRON_COLOR} strokeWidth={2.5} />
-                    <text x={daysToX(P2_MIN_DAYS * exposure) + 6} y={P2_BOTTOM - 6} fill={ELECTRON_COLOR} fontSize="10">
+                    <line x1={daysToX(P2_MIN_DAYS * exposure)} y1={P2_TOP} x2={daysToX(P2_MIN_DAYS * exposure)} y2={P2_BOTTOM} stroke={TRIAL_COLOR} strokeDasharray="3 3" />
+                    <circle cx={daysToX(P2_MIN_DAYS * exposure)} cy={limitToY(LZ_LIMIT_2025.crossSectionCm2 * mine.limitFactor)} r={5} fill="none" stroke={TRIAL_COLOR} strokeWidth={2.5} />
+                    <text x={daysToX(P2_MIN_DAYS * exposure) + 6} y={P2_BOTTOM - 6} fill={TRIAL_COLOR} fontSize="10">
                       your exposure
                     </text>
                   </g>
@@ -849,11 +1091,11 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
               weak.
             </li>
             <li>
-              <strong>The pink line</strong> is the limit if <strong>a background grows in step with the data</strong>. Extra flashes that are not dark
+              <strong>The teal line</strong> is the limit if <strong>a background grows in step with the data</strong>. Extra flashes that are not dark
               matter get in the way, so twice the data improves the limit only by about 1.4 times (the square root of 2).
             </li>
             <li>
-              <strong>The green ring and dashed line</strong> (after the run, once you try your own search below) mark your own exposure, on the
+              <strong>The pink ring and dashed line</strong> (after the run, once you try your own search below) mark your own exposure, on the
               line you chose. They are not drawn if your exposure is beyond 1,000 live days, the right edge.
             </li>
             <li>
@@ -868,9 +1110,38 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
             Everyday comparison: a flashlight in a dark room finds a faint object faster with a longer look, but in a room full of mist, a longer look
             helps much less.
           </p>
-          <p style={{ marginTop: 0, marginBottom: 0 }}>
-            <strong>What to look for.</strong> How far apart the two lines are by 1,000 live days, and what that gap says about how much a background
-            can slow the progress of a search. The neutrino fog is not drawn: how high it is depends on the particle’s mass.
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What to look for.</strong>
+          </p>
+          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>Look at</strong> the yellow dot at the left. <strong>What it means:</strong> LZ’s limit now is {formatCm2(LZ_LIMIT_2025.crossSectionCm2)}, after {LZ_LIMIT_2025.liveDays} live days. <strong>Why it matters:</strong> it
+              is the weakest interaction that LZ’s data rule out today, and the starting point from which both lines fall.
+            </li>
+            {p2Shown && (
+              <>
+                <li>
+                  <strong>Look at</strong> how far apart the teal and green lines are at 1,000 live days. <strong>What it means:</strong> {formatCm2(growsAt)} with a growing background against{' '}
+                  {formatCm2(noneAt)} with none, about {(growsAt / noneAt).toFixed(1)} times apart. <strong>Why it matters:</strong> a background that grows with the data slows the progress of a search a great
+                  deal, and the real limit would lie between the lines.
+                </li>
+                <li>
+                  <strong>Look at</strong> what the picture leaves out. <strong>What it means:</strong> the neutrino fog is not drawn, because how high it is depends on the particle’s mass.{' '}
+                  <strong>Why it matters:</strong> it is a reminder that the two lines are an illustration of two idealised cases, not LZ’s own forecast.
+                </li>
+              </>
+            )}
+            {done && exposureInRange && (
+              <li>
+                <strong>Look at</strong> the pink ring and dashed line. <strong>What it means:</strong> your exposure, {Math.round(P2_MIN_DAYS * exposure).toLocaleString('en-US')} live days, on the line you chose: a limit of{' '}
+                {formatCm2(mine.limitCm2)}. <strong>Why it matters:</strong> it shows how much better a search like yours would do than today’s limit.
+              </li>
+            )}
+          </ul>
+          <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+            <strong>Where the real picture comes from.</strong> <em>Measured:</em> LZ’s limit of {formatCm2(LZ_LIMIT_2025.crossSectionCm2)} after {LZ_LIMIT_2025.liveDays} live days (LZ Collaboration, arXiv:2410.17036). <em>Calculated here:</em> the green and
+            teal lines, from two idealised rules (the limit falls as 1 ÷ the exposure with no background, and as 1 ÷ its square root with a growing background). <em>Imagined for the question:</em> the background that grows, and your
+            own exposure. The pink ring is your own search. This picture carries no guess mark: neither prediction is about it.
           </p>
         </div>
 
@@ -914,19 +1185,61 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
             {SIGMA_LADDER.map((rung, i) => {
               if (stage < (rung.kind === 'detection' ? 4 : 5)) return null
               const y = P3_TOP + i * P3_ROW + 4
-              const color = rung.kind === 'detection' ? XENON_COLOR : FLASH_COLOR
+              const color = rung.kind === 'detection' ? XENON_COLOR : i === 4 ? TRIAL_COLOR : FLASH_COLOR
               return (
                 <g key={rung.name}>
                   <text x={P3_LEFT - 8} y={y + 14} fill={TEXT_COLOR} fontSize="10" textAnchor="end">
-                    {i === 3 ? 'LZ 2026 event, at its own place' : i === 4 ? (done ? `LZ 2026 event, ${tries} places counted` : 'LZ 2026 event, all places counted') : rung.name}
+                    {i === 3 ? 'LZ 2026 event, at its own place' : i === 4 ? `LZ 2026 event, ${tries} places counted (yours)` : rung.name}
                   </text>
                   <rect x={P3_LEFT} y={y} width={sigmaToX(i === 4 ? mine.globalSigma : rung.sigma) - P3_LEFT} height={22} fill={color} opacity={0.85} />
                   <text x={sigmaToX(i === 4 ? mine.globalSigma : rung.sigma) + 6} y={y + 15} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
                     {i === 4 ? mine.globalSigma.toFixed(1) : rung.sigma} sigma
                   </text>
+                  {i === 4 && (
+                    <g>
+                      <line x1={sigmaToX(rung.sigma)} y1={y - 3} x2={sigmaToX(rung.sigma)} y2={y + 26} stroke={FLASH_COLOR} strokeWidth={3} />
+                      <text x={P3_RIGHT} y={y + 36} fill={FLASH_COLOR} fontSize="9" textAnchor="end">
+                        yellow tick: the published {rung.sigma} sigma
+                      </text>
+                    </g>
+                  )}
                 </g>
               )
             })}
+            {stage >= 5 && effectPrediction !== null && (() => {
+              const side = effectGuessSide(effectPrediction)
+              const x0 = sigmaToX(LZ230616.localSigma)
+              const tip = x0 + side * 70
+              const boxX = Math.min(Math.max(x0 - 150, 10), VIEW_WIDTH - 310)
+              return (
+                <g>
+                  <text x={20} y={P3_GUESS_Y - 26} fill={GUESS_COLOR} fontSize="11">
+                    Your guess for Prediction 2: all places counted, against 3.4 (same scale)
+                  </text>
+                  <line x1={P3_LEFT} y1={P3_GUESS_Y} x2={P3_RIGHT} y2={P3_GUESS_Y} stroke={MUTED_COLOR} strokeWidth={1} />
+                  {[0, 1, 2, 3, 4, 5].map((sigma) => (
+                    <line key={sigma} x1={sigmaToX(sigma)} y1={P3_GUESS_Y - 3} x2={sigmaToX(sigma)} y2={P3_GUESS_Y + 3} stroke={MUTED_COLOR} />
+                  ))}
+                  <line x1={x0} y1={P3_GUESS_Y - 12} x2={x0} y2={P3_GUESS_Y + 12} stroke={FLASH_COLOR} strokeWidth={2} />
+                  <text x={x0} y={P3_GUESS_Y - 16} fill={FLASH_COLOR} fontSize="9" textAnchor="middle">
+                    3.4
+                  </text>
+                  {side === 0 ? (
+                    <circle cx={x0} cy={P3_GUESS_Y} r={7} fill="none" stroke={GUESS_COLOR} strokeWidth={3} />
+                  ) : (
+                    <g>
+                      <line x1={x0} y1={P3_GUESS_Y} x2={tip - side * 8} y2={P3_GUESS_Y} stroke={GUESS_COLOR} strokeWidth={4} />
+                      <polygon points={`${tip},${P3_GUESS_Y} ${tip - side * 14},${P3_GUESS_Y - 7} ${tip - side * 14},${P3_GUESS_Y + 7}`} fill={GUESS_COLOR} />
+                    </g>
+                  )}
+                  <line x1={side === 0 ? x0 : (x0 + tip) / 2} y1={P3_GUESS_Y + 8} x2={side === 0 ? x0 : (x0 + tip) / 2} y2={P3_GUESS_Y + 14} stroke={GUESS_COLOR} strokeWidth={2} />
+                  <rect x={boxX} y={P3_GUESS_Y + 14} width={300} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+                  <text x={boxX + 150} y={P3_GUESS_Y + 31} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+                    YOUR GUESS: {EFFECT_SHORT[effectPrediction]}
+                  </text>
+                </g>
+              )
+            })()}
           </svg>
         </div>
         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
@@ -942,9 +1255,15 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
               Sun, by PandaX-4T, XENONnT and LZ. They are real signals that a dark-matter detector can see, not dark matter.
             </li>
             <li>
-              <strong>The last two, yellow bars</strong> (they appear in stage 5) are LZ’s one unexpected event of 2026, counted in two ways: first
-              only at the one place where it appeared, and then with all the places the search looked counted. The results explain how the second
-              number is worked out after the run.
+              <strong>The fourth bar, yellow</strong> (it appears in stage 5) is LZ’s one unexpected event of 2026, counted only at the one place where it appeared: 3.4 sigma.
+              <strong> The fifth bar, pink,</strong> is the same event with all the places the search looked counted. Its length follows the number of places you set in Part 2
+              (it starts at {START_TRIES}, which gives the published number), and <strong>the yellow tick</strong> on it marks the published {LZ230616.globalSigma} sigma. The results explain
+              how the number is worked out after the run.
+            </li>
+            <li>
+              <strong>The white marker and the YOUR GUESS box, on the thin line under the bars,</strong> are your guess for Prediction 2, against the 3.4 sigma tick: an arrow to the left for “lower”,
+              a ring on the tick for “the same”, an arrow to the right for “higher”. <strong>It is only a marker:</strong> the length of the arrow means nothing. It does not move when you change the
+              places looked.
             </li>
           </ul>
           <p style={paragraph}>
@@ -952,22 +1271,49 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
             line and not yet at the 5 sigma line: strong evidence, and not yet a discovery by that bar. At 3 sigma, the chance that chance alone gives
             so strong a result is about 1 in {Math.round(1 / oneSidedChance(3)).toLocaleString('en-US')} (counting one direction only).
           </p>
-          <p style={{ marginTop: 0, marginBottom: 0 }}>
-            <strong>What to look for.</strong> Which bars cross the 3 sigma line, which reach the 5 sigma line, and how the two yellow bars compare with
-            each other and with the blue ones.
+          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+            <strong>What to look for.</strong>
+          </p>
+          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+            {stage >= 4 && (
+              <li>
+                <strong>Look at</strong> the three blue bars against the 3 and 5 sigma lines. <strong>What it means:</strong> PandaX-4T ({OTHER_BORON8_SIGMAS.pandaX4T}) and XENONnT ({OTHER_BORON8_SIGMAS.xenonNT}) fall short of 3
+                sigma, and LZ’s {lzBoron} passes 3 and falls short of 5. <strong>Why it matters:</strong> the solar neutrinos are a real signal that a dark-matter detector can see, and LZ’s detection is strong evidence, not yet a discovery by the usual bar.
+              </li>
+            )}
+            {stage >= 5 && (
+              <>
+                <li>
+                  <strong>Look at</strong> the yellow and pink bars for the 2026 event. <strong>What it means:</strong> at its own place it is {LZ230616.localSigma} sigma, past the 3 sigma line; with {tries} places counted (your setting; it starts at {START_TRIES}) it
+                  is {mine.globalSigma.toFixed(1)} sigma, and the yellow tick marks the published {LZ230616.globalSigma}. <strong>Why it matters:</strong> counting every place the search looked changes how surprising the event is.
+                </li>
+                <li>
+                  <strong>Look at</strong> the white marker beside the 3.4 tick. <strong>What it means:</strong> your guess for the 2026 event with all places counted: {EFFECT_SHORT[effectPrediction ?? 'lower']}.{' '}
+                  <strong>Why it matters:</strong> it puts your guess beside the real bars, so you can see which way the second number moved, if it moved.
+                </li>
+              </>
+            )}
+          </ul>
+          <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+            <strong>Where the real picture comes from.</strong> <em>Measured:</em> the sigma of each detection and of the 2026 event at its own place (PandaX-4T, XENONnT and LZ, as the SLAC release and the LZ paper state them) and the
+            published {LZ230616.globalSigma} sigma (LZ Collaboration, arXiv:2609.02823, as quoted by arXiv:2609.08893). <em>Calculated here:</em> the pink bar, from this experiment’s simple illustration of counting places (each place an equal,
+            independent try); LZ worked out its own number differently. <em>Imagined for the question:</em> the number of places you set. The yellow tick is the published number; the white marker is your guess.
           </p>
         </div>
 
         {/* After the run: the two controls, the neutral results and the links kept back until now. Draft wording for the owner's review
             (CLAUDE.md §28.1, §29). The results only report; they do not say why (the tutor explains). */}
         {done && (
-          <div style={{ marginTop: '2rem' }}>
+          <div>
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              We are about to try a search of our own, and change how many places the 2026 search looked. Your choices move the pink marks in Pictures 1, 2 and 3, fill the drawing in this part and the first and second tables. They never change the published numbers, the yellow marks or your guesses.
+            </PartHeader>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Try your own search</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-              Choose how strong a particle’s interaction is and how long the detector runs, and see what a search would expect to count. The strength
+              <strong>Your guesses do not change the drawings or tables. These settings do.</strong> The strength, the exposure, the background and the places looked are trial values of your own, not measurements. Choose how strong a particle’s interaction is and how long the detector runs, and see what a search would expect to count. The strength
               is in units of today’s limit (1 is the limit, 0.1 is ten times weaker), and the exposure is in units of the reference exposure (1 is{' '}
-              {LZ_LIMIT_2025.exposureTonneYears} tonne-years, 10 is ten times as much). Picture 1’s green ring, Picture 2’s green marker and the first
-              table change with your choice. Your predictions stay as they are.
+              {LZ_LIMIT_2025.exposureTonneYears} tonne-years, 10 is ten times as much). Your choice moves Picture 1’s pink ring, Picture 2’s pink marker, Drawing A below and the first table. It does not change the
+              published numbers, the yellow marks, Picture 1’s violet case or your guesses. At the starting settings the pink marks sit on or near the yellow ones, so change a control to see them move.
             </p>
             <div style={{ marginBottom: '0.75rem' }}>
               <label htmlFor="search-strength" style={{ display: 'block', marginBottom: '0.25rem' }}>
@@ -1004,7 +1350,7 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
               The 2026 search looked at many energies and kinds of signal. Choose how many separate places it looked, and see what the strength of the
               event becomes when all of them are counted. About {TRIES_FOR_LZ_GLOBAL.toFixed(0)} places give the published number, in this simple
-              illustration. Picture 3’s last bar and the second table change with your choice.
+              illustration. Your choice moves Picture 3’s pink bar, Drawing A’s last scale and the last row of the second table. It does not change the published {LZ230616.globalSigma} sigma, the yellow tick or the check-up.
             </p>
             <div style={{ marginBottom: '1.5rem' }}>
               <label htmlFor="search-tries" style={{ display: 'block', marginBottom: '0.25rem' }}>
@@ -1012,6 +1358,84 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
               </label>
               <input id="search-tries" type="range" min={MIN_TRIES} max={MAX_TRIES} step={1} value={tries} onChange={(e) => setTries(Number(e.target.value))} style={{ width: '100%', maxWidth: '420px' }} />
             </div>
+
+            <YourSearchDrawing strength={strength} exposure={exposure} background={background} tries={tries} />
+
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              We are about to read the numbers: first a check-up of the published results against the bars they are read against, then two tables. A guess never changes them. The choices you made in Part 2 change the first table and the last row of the second, and the page says which.
+            </PartHeader>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>The check-up: what we would expect beside what was found</p>
+            <div style={{ overflowX: 'auto', marginBottom: '0.75rem' }}>
+              <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '520px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                    <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>What was checked</th>
+                    <th style={{ padding: '0.4rem 0.5rem' }}>What we would expect</th>
+                    <th style={{ padding: '0.4rem 0.5rem' }}>What was found</th>
+                    <th style={{ padding: '0.4rem 0' }}>Reading</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {checkUp.map((row, i) => (
+                    <tr key={row.label} style={{ borderBottom: '1px solid var(--border-color, #ccc)', verticalAlign: 'top' }}>
+                      <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                        {row.label}
+                        {i === 2 && <PredictionTag n={2} />}
+                      </td>
+                      <td style={{ padding: '0.4rem 0.5rem' }}>
+                        {row.expected} sigma{i === 0 ? ' (the usual discovery bar)' : i === 1 || i === 2 ? ' (often called evidence)' : ' (the published number)'}
+                      </td>
+                      <td style={{ padding: '0.4rem 0.5rem' }}>{row.found} sigma</td>
+                      <td style={{ padding: '0.4rem 0', fontWeight: 'bold' }}>{row.reading}{i === 3 ? ' (at the published one decimal)' : ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 0, marginBottom: '0.75rem' }}>
+              The check-up does not follow the choices you made in Part 2 or your guesses (its last row uses {START_TRIES} places, the slider’s start). “More” and “less” come from the physics module; no
+              cut-off is invented. The 3 and 5 sigma bars are the conventions of Experiments 1 and 2 of this group.
+            </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The solar neutrinos.</strong> <em>What it is:</em> LZ’s detection of boron-8 neutrinos beside the 5 sigma bar. <em>What it means:</em> {checkUp[0].found} sigma is {(checkUp[0].expected - checkUp[0].found).toFixed(1)} sigma short of 5.{' '}
+                  <em>Why it matters:</em> it is strong evidence but not a discovery by the usual bar, and these neutrinos are a signal that was expected, so the detection is not a claim of new physics.
+                </li>
+                <li>
+                  <strong>The event at its own place.</strong> <em>What it is:</em> the unexpected 2026 event, counted only where it appeared, beside the 3 sigma bar. <em>What it means:</em> {checkUp[1].found} sigma is{' '}
+                  {(checkUp[1].found - checkUp[1].expected).toFixed(1)} sigma above 3. <em>Why it matters:</em> at its own place the event passes the evidence bar, but this number ignores how many places the search looked.
+                </li>
+                <li>
+                  <strong>With all places counted.</strong> <em>What it is:</em> the same event with every place the search looked counted, beside the 3 sigma bar. <em>What it means:</em> {checkUp[2].found} sigma is{' '}
+                  {(checkUp[2].expected - checkUp[2].found).toFixed(1)} sigma below 3. <em>Why it matters:</em> counted this way the event is below the evidence bar, so it is a hint and not evidence. This is LZ’s own published number.
+                </li>
+                <li>
+                  <strong>This experiment’s illustration.</strong> <em>What it is:</em> the simple counting rule of this page, with {START_TRIES} places, beside LZ’s published number. <em>What it means:</em> it gives{' '}
+                  {checkUp[3].found} sigma, the same as the published {checkUp[3].expected} at one decimal. <em>Why it matters:</em> it shows the idea (more places, more chances for a chance excess) reproduces the size of the effect. It is
+                  the weak link: {START_TRIES} is the number that makes the illustration match, and LZ did not count that way, so the agreement shows the idea, not LZ’s method.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 0, marginBottom: '0.5rem' }}>
+              Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+            </p>
+            <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <li>
+                <strong>Prediction 1, how many events:</strong> {countPrediction !== null ? COUNT_CHOICES.find((c) => c.value === countPrediction)?.label.toLowerCase() : ''}. The question was for a strength {1 / PREDICTION_STRENGTH} times weaker than the limit and
+                an exposure {PREDICTION_EXPOSURE} times the reference, with no background. Its number is in Picture 1 (the violet ring) and in Table 1 (the row “Expected events”, when you set the strength to {PREDICTION_STRENGTH} and the
+                exposure to {PREDICTION_EXPOSURE}).
+              </li>
+              <li>
+                <strong>Prediction 2, how sure:</strong> {effectPrediction !== null ? EFFECT_CHOICES.find((c) => c.value === effectPrediction)?.label.toLowerCase() : ''}. Its number is in the check-up (the third row), in Table 2 (the row for all places counted) and in Picture 3 (the yellow tick).
+              </li>
+            </ul>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 1: your own search</p>
             <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
@@ -1040,7 +1464,10 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
                     ] as const
                   ).map(([quantity, value, how]) => (
                     <tr key={quantity} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
-                      <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{quantity}</td>
+                      <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                        {quantity}
+                        {quantity === 'Expected events' && strength === PREDICTION_STRENGTH && exposure === PREDICTION_EXPOSURE && <PredictionTag n={1} />}
+                      </td>
                       <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right', whiteSpace: 'nowrap' }}>{value}</td>
                       <td style={{ padding: '0.4rem 0 0.4rem 0.5rem', color: 'var(--text-muted)' }}>{how}</td>
                     </tr>
@@ -1050,6 +1477,23 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.5rem 0 0' }}>
                 The “background” rows are the experiment’s own idealised rules, not LZ’s forecast. The background you chose above ({background === 'none' ? 'none' : 'growing'}) is the one used in the Picture 2 marker.
               </p>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.75rem' }}>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  <strong>What this table tells us.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>What it is.</strong> The chain of arithmetic behind Pictures 1 and 2 for the search you chose, with the working in the last column: events expected, the chance of seeing none and at least one, and the limit after your exposure on each background rule.
+                  </li>
+                  <li>
+                    <strong>What it means.</strong> A strength of {strength} times the limit with {exposure} times the exposure expects {strength} × {exposure} × {EXPECTED_AT_LIMIT.toFixed(2)} = {mine.expected.toFixed(2)} events, so seeing none has a chance of{' '}
+                    {(mine.chanceOfNoEvents * 100).toFixed(1)} percent. A daily-life comparison: if a street gets {mine.expected.toFixed(1)} raindrops a minute on average, a minute with none is {mine.chanceOfNoEvents < 0.1 ? 'rare' : 'not unusual'}.
+                  </li>
+                  <li>
+                    <strong>Why it matters.</strong> If the chance of seeing none is much below 10 percent, a search that sees nothing rules out a particle like yours; if it is above 10 percent, it does not. The background rows are this experiment’s idealised rules, not LZ’s forecast.
+                  </li>
+                </ul>
+              </div>
             </div>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 2: the published results</p>
@@ -1076,7 +1520,10 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
                     ] as const
                   ).map(([result, year, value, source]) => (
                     <tr key={result} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
-                      <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{result}</td>
+                      <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                        {result}
+                        {result.startsWith('LZ: the unexpected event, all places looked counted') && <PredictionTag n={2} />}
+                      </td>
                       <td style={{ padding: '0.4rem 0.5rem' }}>{year}</td>
                       <td style={{ padding: '0.4rem 0.5rem' }}>{value}</td>
                       <td style={{ padding: '0.4rem 0 0.4rem 0.5rem', color: 'var(--text-muted)' }}>{source}</td>
@@ -1092,6 +1539,26 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The published results: the limits of LZ ({formatCm2(LZ_LIMIT_2025.crossSectionCm2)}) and XENONnT ({formatCm2(XENONNT_LIMIT.crossSectionCm2)}), the three detections of boron-8 neutrinos, and the 2026 event counted two ways, with the year and the source.
+                  The last row is the only one that follows your choice (the places looked); it is this experiment’s illustration, not a published number.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The limits are on different particle masses ({LZ_LIMIT_2025.massGeV} and {XENONNT_LIMIT.massGeV} GeV/c²) and exposures, so they are not set side by side. The neutrino detections run from{' '}
+                  {OTHER_BORON8_SIGMAS.pandaX4T} to {LZ_DECEMBER_2025.boron8Sigma} sigma, and the event goes from {LZ230616.localSigma} sigma at its own place to {LZ230616.globalSigma} with all places counted.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> A search that finds nothing still teaches something: it rules out the strengths for which it would have expected to see a bump. The one unexpected event is, so far, a hint, and how sure it is depends on how many places were looked.
+                  The 2026 event’s numbers are quoted from the abstract of LZ’s paper.
+                </li>
+              </ul>
             </div>
 
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -1125,6 +1592,11 @@ export function DarkMatterSearchesExperiment({ onComplete, onTutorComplete }: Da
 
         {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The summary below the experiment
             (in App) is shown only once the learner reaches the explanation. */}
+        {done && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
+        )}
         {done && countPrediction !== null && effectPrediction !== null && (
           <DarkMatterSearchesTutor
             strength={strength}

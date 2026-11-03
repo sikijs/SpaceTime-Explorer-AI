@@ -100,9 +100,9 @@ export function DarkMatterSearchesTutor({ strength, exposure, background, tries,
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 1 and Picture 3. What do you notice about where today’s limit sits on Picture 1, and about where the five bars of Picture 3 sit compared with the 3 sigma and 5 sigma lines?'}
+              'Look at Picture 1 and Picture 3. Your guesses are drawn in white, in boxes marked YOUR GUESS: a diamond on the thin line under Picture 1’s axis and an arrow or ring on the thin line under Picture 3’s bars. What do you notice about where each sits compared with the violet ring and today’s limit on Picture 1, and with the 3.4 tick and the yellow tick on Picture 3?'}
             {tutorStep === 'compare' &&
-              `You predicted that a particle ten times weaker than the limit, searched for ten times longer with no background, would be expected to give ${countWords[countPrediction]}, and that, once all the places the search looked are counted, the strength of the 2026 event would be ${effectWords[effectPrediction]}. Now look at Table 1 and Table 2, and at your own search. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that a particle ten times weaker than the limit, searched for ten times longer with no background, would be expected to give ${countWords[countPrediction]}, and that, once all the places the search looked are counted, the strength of the 2026 event would be ${effectWords[effectPrediction]}. Compare the white diamond on Picture 1 with the violet ring, and the white marker on Picture 3 with the pink bar and the yellow tick. Then look at Table 1 and Table 2, and at your own search. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               `A detector that saw nothing for ${LZ_DECEMBER_2025.liveDays} live days is now reported to have seen one strange event. How would you decide whether that event is dark matter, a fluke, or something else? What would you want to know?`}
           </p>
