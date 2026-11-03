@@ -1078,6 +1078,11 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
             right, and neither gives the star's size or the chance. */}
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #d97706' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#d97706' }}>Part 1: Predict, then watch</h3>
+          <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> This part is the experiment itself. You make your two predictions and press Run. The pictures that the run draws show fixed things: a size worked out from the star’s angle and distance, an orbit worked out for the companion, and the chance that noise alone makes a spot as strong as the reported one. They are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess compares with the real result. The real pictures stay the same whatever you guess.
+          </p>
         {(
           [
             {
@@ -1289,10 +1294,15 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
           </div>
         )}
 
+        </div>
+
         {/* The controls (after the run): the distance, the two masses and the strength of the signal. They add a pink mark to each picture and fill Table 4. */}
         {done && (
-          <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
-            <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #be185d' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#be185d' }}>Part 2: Now try it yourself</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> Above, you saw the published values. Here you can try other values for the distance, the two masses and the strength of the signal, and see each one beside the real value.
+          </p>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               Your predictions do not change the pictures or Table 4, because the results come from the physics, not from your guesses. These settings do: change one and watch the pink marks in the three pictures above, and Table 4 below, follow it. While every setting is on its published value, Table 4 says “the same” in every row, so change a setting to see it move. Each choice is a trial value: it shows what would
               happen with that number, and does not say that the real star or signal is like that. Drawing A, in this panel, shows each setting next to the real value, so you can see what a change does without scrolling up. The distance and the masses are values that the papers allow or report.
@@ -1392,8 +1402,11 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
         {/* The results, shown only after the run completes: the status label, three tables, and the links kept back until now. Table 4, the learner's own numbers, comes
             with the controls, a later step. */}
         {done && (
-          <div style={{ marginTop: '2rem' }}>
-            <h3 style={{ marginTop: 0 }}>Results</h3>
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0f766e' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#0f766e' }}>Part 3: The results</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> Here are the numbers behind the pictures, set out in tables, each with a short guide to reading it. Tables 1 to 3 and the check-up are the real numbers, so they never change with your guesses or with your settings in Part 2. Table 4 follows your settings in Part 2, and never your guesses.
+          </p>
             <p style={{ ...paragraph, padding: '0.75rem 1rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px', fontSize: '0.875rem' }}>
               <strong>Where this stands (as of October 2026).</strong> <strong>Settled:</strong> Betelgeuse is a red supergiant, near the end of its life.{' '}
               <strong>Strong evidence:</strong> it has a companion (several independent signs agree with an orbit of about 6 years), but no clear direct image has
@@ -1745,7 +1758,21 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
 
         {/* The tutor, after the results: observe, compare with the predictions, a conceptual question, then the explanation. */}
         {done && reachPrediction !== null && sigmaPrediction !== null && (
-          <BetelgeuseCompanionTutor reachPrediction={reachPrediction} sigmaPrediction={sigmaPrediction} onExplained={onTutorComplete} />
+          <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '6px solid #0066cc' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#0066cc' }}>Part 4: The tutor</h3>
+            <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <strong>What we are about to do.</strong> You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+          </p>
+            <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <li>
+                <strong>Three questions, one at a time.</strong> First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the real results. Third, it asks one bigger question, about what would make you trust the claim of a companion more, and what would make you wait. Type a few words for each. Nothing is graded, and a short answer is fine.
+              </li>
+              <li>
+                <strong>No verdict until you have replied.</strong> The tutor will not say whether your guesses matched until you have answered all three, so you can think it through first.
+              </li>
+            </ul>
+            <BetelgeuseCompanionTutor reachPrediction={reachPrediction} sigmaPrediction={sigmaPrediction} onExplained={onTutorComplete} />
+          </div>
         )}
       </div>
     </div>
