@@ -250,3 +250,45 @@ export function twoAnalysesComparison(): { simulationSolar: number; analysis2026
   const analysis2026AtLeastSolar = doubleDetonationMass(d.analysis2026CoreSolar, d.analysis2026ShellAboveSolar)
   return { simulationSolar, analysis2026AtLeastSolar, differencePercent: ((analysis2026AtLeastSolar - simulationSolar) / simulationSolar) * 100 }
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks and Part 2's drawing ----
+
+// Prediction 1's white marker: the weight (in Suns) that each answer names. The real number it is about is the simulation's weight (a core of 1.028 and a shell of 0.027).
+export function sizeGuessMassSolar(answer: SizeAnswer): number {
+  const found = SIZE_ANSWERS.find((a) => a.label === answer)
+  if (!found) throw new RangeError('Not one of the answers')
+  return found.value
+}
+export function predictionMassSolar(): number {
+  return doubleDetonationMass(WHITE_DWARF_EXPLOSION.simulationCoreSolar, WHITE_DWARF_EXPLOSION.simulationShellSolar)
+}
+// Prediction 2's white marker: the speed that each answer names, and the radius (in parsecs) that a shell moving at that steady speed for the remnant's age would have
+// reached. The real radii are the two calcium shells (1.73 and 2.06 parsecs).
+export function speedGuessKmS(answer: SpeedAnswer): number {
+  const found = SPEED_ANSWERS.find((a) => a.label === answer)
+  if (!found) throw new RangeError('Not one of the answers')
+  return found.value
+}
+export function speedGuessRadiusPc(answer: SpeedAnswer, ageYears: number = WHITE_DWARF_EXPLOSION.defaultAgeYears): number {
+  return distanceTravelledPc(speedGuessKmS(answer), ageYears)
+}
+
+// Part 2's drawing: the learner's three choices beside a reference value, each on its own scale. The reference marks are the simulation's weight, the remnant's
+// default age and no difference in brightness.
+export const DRAWING_SCALES = {
+  radiusEarths: { min: 0, max: 1.5 }, // linear
+  outerSpeedKmS: { min: 0, max: 8000 }, // linear
+  distanceErrorPercent: { min: -6, max: 20 }, // linear: positive when a dimmer supernova makes the distance too large (30 percent dimmer: 19.5)
+}
+export interface WhiteDwarfDrawingValues {
+  radiusEarths: number
+  outerSpeedKmS: number
+  distanceErrorPercent: number
+}
+export function whiteDwarfDrawingValues(settings: WhiteDwarfSettings = {}): WhiteDwarfDrawingValues {
+  const r = runWhiteDwarfExplosion(settings)
+  return { radiusEarths: r.radiusEarths, outerSpeedKmS: r.outerShellSpeedKmS, distanceErrorPercent: r.distanceErrorPercent }
+}
+export function whiteDwarfDrawingReference(): WhiteDwarfDrawingValues {
+  return whiteDwarfDrawingValues()
+}

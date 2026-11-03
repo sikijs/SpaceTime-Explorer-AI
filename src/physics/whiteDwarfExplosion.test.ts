@@ -3,6 +3,13 @@ import { readFileSync } from 'node:fs'
 import {
   CHANDRASEKHAR_LIMIT_SOLAR_MASSES,
   distanceErrorPercent,
+  DRAWING_SCALES,
+  predictionMassSolar,
+  sizeGuessMassSolar,
+  speedGuessKmS,
+  speedGuessRadiusPc,
+  whiteDwarfDrawingReference,
+  whiteDwarfDrawingValues,
   distanceErrorWorkedExample,
   distanceTravelledPc,
   doubleDetonationMass,
@@ -353,3 +360,47 @@ describe('how far a steady speed gets in a number of years (test 17)', () => {
   })
 })
 
+
+describe('audit update: the guess marks and Part 2 drawing', () => {
+  it('Prediction 1\'s guesses are 0.5, 1.0 and 1.4 Suns, the real weight is the simulation\'s 1.055, and 1.0 is the nearest guess', () => {
+    expect(sizeGuessMassSolar('about 0.5 Suns')).toBe(0.5)
+    expect(sizeGuessMassSolar('about 1.0 Sun')).toBe(1.0)
+    expect(sizeGuessMassSolar('about 1.4 Suns')).toBe(1.4)
+    expect(predictionMassSolar()).toBeCloseTo(1.028 + 0.027, 12)
+    expect(predictionMassSolar()).toBeCloseTo(1.055, 12)
+    const nearest = [0.5, 1.0, 1.4].sort((a, b) => Math.abs(a - 1.055) - Math.abs(b - 1.055))[0]
+    expect(nearest).toBe(1.0)
+    expect(sizeAnswer()).toBe('about 1.0 Sun')
+  })
+  it('Prediction 2\'s guesses are 50, 5,000 and 300,000 km/s, and at 325 years they reach 0.017, 1.66 and 99.5 parsecs, against the shells at 1.73 and 2.06', () => {
+    expect(speedGuessKmS('about 50 km/s')).toBe(50)
+    expect(speedGuessKmS('about 5,000 km/s')).toBe(5000)
+    expect(speedGuessKmS('about 300,000 km/s')).toBe(300000)
+    const byHand = (v: number) => (v * 325 * 365.25 * 24 * 3600) / 3.0856775814913673e13
+    expect(speedGuessRadiusPc('about 50 km/s')).toBeCloseTo(byHand(50), 10)
+    expect(speedGuessRadiusPc('about 50 km/s')).toBeCloseTo(0.0166, 3)
+    expect(speedGuessRadiusPc('about 5,000 km/s')).toBeCloseTo(1.66, 2)
+    expect(speedGuessRadiusPc('about 300,000 km/s')).toBeCloseTo(99.5, 0)
+    expect(speedGuessRadiusPc('about 5,000 km/s', 300)).toBeLessThan(speedGuessRadiusPc('about 5,000 km/s', 350))
+    expect(speedAnswer()).toBe('about 5,000 km/s')
+  })
+  it('Part 2\'s drawing: the reference is the simulation\'s weight, the default age and no brightness change, and every choice the controls offer fits the scales', () => {
+    const ref = whiteDwarfDrawingReference()
+    expect(ref.radiusEarths).toBeCloseTo(runWhiteDwarfExplosion().radiusEarths, 12)
+    expect(ref.outerSpeedKmS).toBeCloseTo(shellSpeedKmS(2.06, 325), 8)
+    expect(ref.distanceErrorPercent).toBe(0)
+    const d = WHITE_DWARF_EXPLOSION
+    for (const massSolar of d.massChoicesSolar) {
+      for (const ageYears of d.ageChoicesYears) {
+        for (const brightnessChange of d.brightnessChoices) {
+          const v = whiteDwarfDrawingValues({ massSolar, ageYears, brightnessChange })
+          expect(v.radiusEarths).toBeGreaterThanOrEqual(DRAWING_SCALES.radiusEarths.min)
+          expect(v.radiusEarths).toBeLessThanOrEqual(DRAWING_SCALES.radiusEarths.max)
+          expect(v.outerSpeedKmS).toBeLessThanOrEqual(DRAWING_SCALES.outerSpeedKmS.max)
+          expect(v.distanceErrorPercent).toBeGreaterThanOrEqual(DRAWING_SCALES.distanceErrorPercent.min)
+          expect(v.distanceErrorPercent).toBeLessThanOrEqual(DRAWING_SCALES.distanceErrorPercent.max)
+        }
+      }
+    }
+  })
+})
