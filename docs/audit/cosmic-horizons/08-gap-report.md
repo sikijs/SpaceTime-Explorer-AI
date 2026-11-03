@@ -57,6 +57,14 @@ B0 tables: Table 1 how far each ratio falls; Table 2 measurement vs three possib
 - O2: Prediction 1/2 text already quotes "0.75, give or take about 0.2" (:936,:949); that is by design, not a fault.
 - Spec's own open items (secondary sources, "20 vs 25 percent") unchanged.
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts: after the introduction the page runs on in one column. No coloured lines, headings or leads.
+- **The controls already change Part 1 pictures.** Control 1 moves Picture 1's own curve, control 2 Picture 2's third line, control 3 Picture 3's bar (all white, dashed or solid), and the last rows of Tables 1 and 2 and Table 4. Under the rule a learner's own setting is pink.
+- **Colour clashes found (O1 confirmed and widened).** White was used for the learner's controls and for real things (the combined error bar, the pretend bar, the flash stars); pink was used for "no gravity"; rose (the coils, the "ruled out" verdict) is too close to pink. Fixed by recolouring: own choices pink, computed bars light grey, no gravity violet, coils and ruled out red, flashes pale yellow.
+- **Both predictions are categories** about the possibilities −1 and 1, so each is a marker only, under that possibility's own marker.
+- **B1 reference.** The measured value against each of the three possibilities (the same physics predicts each), and the bell-curve chance against the paper's own for "no gravity". No published-value column.
+- **Defaults used.** The owner approved all default recommendations and wording in advance (2026-11-03).
+
 ## What an update would touch (O3, O4)
 AntimatterGravityExperiment.tsx (PictureTwo, intro, controls note, Results), AntimatterGravityTutor.tsx (prompts), antimatterGravity.ts and .test.ts (guess-to-mark functions, check-up readings), the specification, DEVELOPMENT-STATE.md. Size: **M** for Rule A and C; **L** with a full Rule B reading guide for four tables.
 
