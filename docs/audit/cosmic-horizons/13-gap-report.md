@@ -53,6 +53,14 @@ Remaining Rule B: none structural found.
 - O1: white is the Sun's yardstick line in Picture 3 (`SUN_COLOR` :63) and the learner's setting (`YOURS_COLOR` :65): two meanings, and a third (guess) would follow.
 - O2: spec open items unchanged (no source for 2023ixf's own radiated energy; Chandra's "radiation pressure"). Table 4's reference is the same module, so "the same" at published settings.
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** The page below the introduction ran on in one column, with a heading "Now try it yourself" and "Results" but no Parts, coloured lines or leads.
+- **The controls already change Part 1 pictures.** The core and the gas speed add white marks to Pictures 2 and 3 and fill Table 4. Under the rule a learner's own setting is pink.
+- **Colour clash found (O1 confirmed).** White was both the Sun's yardstick line and the learner's setting. The yardstick is now amber and the setting pink.
+- **A5 corrected.** Prediction 2's answer has a picture after all: Picture 3's stage-5 strip ("22.3 million years ago"). That strip is not to scale in time, so a second line on a logarithmic scale of years was added under it for the guess.
+- **Rule B already met.** The check-up, the notes, Table 4 and the guesses beside the results were kept as they were.
+- **Defaults used.** The owner approved all default recommendations and wording in advance (2026-11-03).
+
 ## What an update would touch
 CatchingASupernovaExperiment.tsx (Picture 3, Picture 2 new panel, intro, source lines), CatchingASupernovaTutor.tsx, catchingASupernova.ts/.test.ts, spec, DEVELOPMENT-STATE.md. Size **M**.
 
