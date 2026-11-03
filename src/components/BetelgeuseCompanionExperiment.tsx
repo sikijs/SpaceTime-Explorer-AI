@@ -1,25 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import {
-  BETELGEUSE,
-  brightnessRatio,
-  chanceOfSigma,
-  chancePercent,
-  COMPANION,
-  compareWithPublished,
-  distanceToLookThisWideMetres,
-  HAIR_WIDTH_MM,
-  keplerWorking,
-  LIGHT_YEARS_PER_PARSEC,
-  oneInChance,
-  periodAgreementPercent,
-  PLANETS,
-  radiusRangeAU,
-  runBetelgeuseCompanion,
-  separationMismatchPercent,
-  SOLAR_RADII_PER_AU,
-  widthAU,
-} from '../physics/betelgeuseCompanion'
+import { BETELGEUSE, brightnessRatio, chanceOfSigma, chancePercent, COMPANION, compareWithPublished, distanceToLookThisWideMetres, HAIR_WIDTH_MM, keplerWorking, LIGHT_YEARS_PER_PARSEC, oneInChance, periodAgreementPercent, PLANETS, radiusRangeAU, runBetelgeuseCompanion, separationMismatchPercent, SOLAR_RADII_PER_AU, widthAU, guessSigma, reachRangeAU, DAYS_PER_YEAR } from '../physics/betelgeuseCompanion'
 import type { Reach, SigmaAnswer } from '../physics/betelgeuseCompanion'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { BetelgeuseCompanionTutor } from './BetelgeuseCompanionTutor'
@@ -28,7 +9,7 @@ import type { LookFor } from './WideBinariesExperiment'
 
 // Cosmic Horizons, Experiment 12 (docs/experiments/cosmic-horizons/12-betelgeuse-and-its-companion.md).
 // Step 8 builds the tutor (BetelgeuseCompanionTutor.tsx) and, in App, the chapter summary.
-// Step 7 builds the three controls (the distance, the two masses and the strength of the signal), shown after the run, which add a white mark to each picture, and Table 4.
+// Step 7 builds the three controls (the distance, the two masses and the strength of the signal), shown after the run, which add a pink mark to each picture, and Table 4.
 // Step 6 builds the five-stage run: Picture 1 fills in at stages 1 and 2, Picture 2 at stage 3 and Picture 3 at stages 4 and 5, each with a guide. The results, the
 // controls, the tutor and the chapter summary are later steps.
 // Step 5 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records the predictions, because the run is a later step.
@@ -50,7 +31,9 @@ const COMPANION_COLOR = '#22d3ee' // cyan: the companion and its orbit
 const BAND_COLOR = '#fdba74' // pale orange: the range of sizes the papers allow
 const NOISE_COLOR = '#a5b4fc' // lavender: the noise curve
 const TAIL_COLOR = '#fde047' // yellow: the tail (the chance of noise alone)
-const YOURS_COLOR = '#ffffff' // white: the learner's own choice
+const YOURS_COLOR = '#f472b6' // pink: the learner's own trial settings (the "Now try it yourself" controls)
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+const FIVE_SIGMA_COLOR = '#a3e635' // lime: the 5 sigma bar, the usual bar for a discovery
 const PLANET_COLORS: Record<string, string> = { Mercury: '#d4d4d8', Venus: '#fcd34d', Earth: '#38bdf8', Mars: '#f87171', Jupiter: '#fdba74' }
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -195,6 +178,23 @@ const STAGE_MS = 2600
 const LAST_STAGE = 5
 const STAGE_NAMES = ['', 'Betelgeuse in the Solar System', 'How sure is the size?', 'The companion’s orbit', 'How strong is the hint?', 'Predicted in advance']
 
+// The learner's guess, drawn as a white box labelled "YOUR GUESS" joined by a line to the mark it is about. It shows the guess only: nothing says right or wrong (CLAUDE.md §12, §13).
+const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1)
+function GuessBox({ x, y, width, answer, fromX, fromY, toX, toY }: { x: number; y: number; width: number; answer: string; fromX: number; fromY: number; toX: number; toY: number }) {
+  return (
+    <g>
+      <line x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={GUESS_COLOR} strokeWidth={1.5} />
+      <rect x={x} y={y} width={width} height={34} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2.5} />
+      <text x={x + width / 2} y={y + 14} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+        YOUR GUESS
+      </text>
+      <text x={x + width / 2} y={y + 27} fill={GUESS_COLOR} fontSize="9" fontWeight="bold" textAnchor="middle">
+        {answer}
+      </text>
+    </g>
+  )
+}
+
 // The learner's own choices after the run (every value comes from the physics module).
 interface Yours {
   distancePc: number
@@ -214,13 +214,22 @@ const P1_PX_PER_AU = 40
 const P1_X = 280
 const P1_Y = 284
 
-function PictureOne({ stage, yours }: { stage: number; yours: Yours | null }) {
+function PictureOne({ stage, yours, guessReach }: { stage: number; yours: Yours | null; guessReach: Reach | null }) {
   const height = 546
   const result = runBetelgeuseCompanion()
   const range = radiusRangeAU()
   const px = (au: number) => au * P1_PX_PER_AU
   const labelY = [192, 218, 244, 270] // the left-hand labels of Mercury, Venus, Earth and Mars
   const inner = PLANETS.slice(0, 4)
+  // The learner's guess is a range of radius, so it is drawn as a zone between two circles (open-ended for "past Jupiter"), from stage 1 when the real disc appears.
+  const guessRange = guessReach ? reachRangeAU(guessReach) : null
+  const guessOuter = guessRange ? (guessRange.maxAU === null ? 420 : px(guessRange.maxAU)) : 0
+  const guessInner = guessRange ? px(guessRange.minAU) : 0
+  const guessMid = guessRange ? (guessRange.maxAU === null ? guessInner + 22 : (guessInner + guessOuter) / 2) : 0
+  const guessAnchor = { x: P1_X + guessMid * Math.cos(Math.PI * (50 / 180)), y: P1_Y - guessMid * Math.sin(Math.PI * (50 / 180)) }
+  const zonePath = (outer: number, inner: number) =>
+    `M ${P1_X - outer} ${P1_Y} a ${outer} ${outer} 0 1 0 ${2 * outer} 0 a ${outer} ${outer} 0 1 0 ${-2 * outer} 0 Z` +
+    (inner > 0 ? ` M ${P1_X - inner} ${P1_Y} a ${inner} ${inner} 0 1 0 ${2 * inner} 0 a ${inner} ${inner} 0 1 0 ${-2 * inner} 0 Z` : '')
   return (
     <svg
       width={VIEW_WIDTH}
@@ -228,7 +237,7 @@ function PictureOne({ stage, yours }: { stage: number; yours: Yours | null }) {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 1, to scale: the Sun at the centre with the orbits of Mercury, Venus, Earth, Mars and Jupiter as circles round it. A large orange disc, Betelgeuse's surface if its centre were at the Sun, covers the orbits of Mercury, Venus, Earth and Mars and stops short of Jupiter's orbit. Its radius is ${result.radiusAU.toFixed(2)} astronomical units${stage >= 2 ? `, and a paler band marks the range of radius the papers allow, ${range.min.toFixed(1)} to ${range.max.toFixed(1)} astronomical units, which also stops short of Jupiter's orbit` : ''}${yours ? `. A white outline shows the radius for the learner's chosen distance of ${yours.distancePc} parsecs, ${yours.radiusAU.toFixed(2)} astronomical units` : ''}`}
+      aria-label={`Picture 1, to scale: the Sun at the centre with the orbits of Mercury, Venus, Earth, Mars and Jupiter as circles round it. A large orange disc, Betelgeuse's surface if its centre were at the Sun, covers the orbits of Mercury, Venus, Earth and Mars and stops short of Jupiter's orbit. Its radius is ${result.radiusAU.toFixed(2)} astronomical units${stage >= 2 ? `, and a paler band marks the range of radius the papers allow, ${range.min.toFixed(1)} to ${range.max.toFixed(1)} astronomical units, which also stops short of Jupiter's orbit` : ''}${yours ? `. A white outline shows the radius for the learner's chosen distance of ${yours.distancePc} parsecs, ${yours.radiusAU.toFixed(2)} astronomical units` : ''}${guessReach ? ` A white dashed zone labelled YOUR GUESS shows your guess, ${lowerFirst(REACH_CHOICES.find((c) => c.value === guessReach)?.label ?? guessReach)}.` : ''}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 1: Betelgeuse next to the Solar System
@@ -254,7 +263,16 @@ function PictureOne({ stage, yours }: { stage: number; yours: Yours | null }) {
         </g>
       )}
 
-      {/* The learner's own distance: a white outline of the radius at that distance. */}
+      {/* The learner's guess (Prediction 1): a white zone between the circles that bound the range they chose. Drawn with the real disc, from stage 1. */}
+      {guessRange && stage >= 1 && (
+        <g>
+          <path d={zonePath(guessOuter, guessInner)} fill={GUESS_COLOR} fillOpacity={0.12} fillRule="evenodd" stroke="none" />
+          {guessInner > 0 && <circle cx={P1_X} cy={P1_Y} r={guessInner} fill="none" stroke={GUESS_COLOR} strokeWidth={2.5} strokeDasharray="7 4" />}
+          {guessRange.maxAU !== null && <circle cx={P1_X} cy={P1_Y} r={guessOuter} fill="none" stroke={GUESS_COLOR} strokeWidth={2.5} strokeDasharray="7 4" />}
+        </g>
+      )}
+
+      {/* The learner's own distance: a pink outline of the radius at that distance. */}
       {yours && (
         <g>
           <circle cx={P1_X} cy={P1_Y} r={px(yours.radiusAU)} fill="none" stroke={YOURS_COLOR} strokeWidth={2.5} strokeDasharray="7 4" />
@@ -283,6 +301,11 @@ function PictureOne({ stage, yours }: { stage: number; yours: Yours | null }) {
       {/* The Sun, at the centre, drawn larger than it is. */}
       <circle cx={P1_X} cy={P1_Y} r={3} fill="#fbbf24" />
       <SvgLines x={P1_X + 6} y={P1_Y + 14} lines={['Sun']} fill="#fbbf24" bold anchor="start" size={10} />
+
+      {/* The box for the guess, joined to the zone by a line. */}
+      {guessRange && guessReach && stage >= 1 && (
+        <GuessBox x={352} y={46} width={194} answer={lowerFirst(REACH_CHOICES.find((c) => c.value === guessReach)?.label ?? guessReach)} fromX={449} fromY={80} toX={guessAnchor.x} toY={guessAnchor.y} />
+      )}
 
       {/* The scale bar. */}
       <line x1={20} y1={height - 24} x2={20 + P1_PX_PER_AU} y2={height - 24} stroke={TEXT_COLOR} strokeWidth={2} />
@@ -343,7 +366,7 @@ function PictureTwo({ yours }: { yours: Yours | null }) {
         <SvgLines
           x={12}
           y={height - 56}
-          lines={[`your choice (white): Betelgeuse ${yours.betelgeuseMass}`, `and the companion ${yours.companionMass} solar masses`, `time for one orbit: ${yours.periodYears.toFixed(2)} years (${Math.round(yours.periodDays).toLocaleString('en-US')} days)`, `at ${yours.distancePc} parsecs the orbit is ${yours.ratio.toFixed(2)} stellar radii`]}
+          lines={[`your choice (pink): Betelgeuse ${yours.betelgeuseMass}`, `and the companion ${yours.companionMass} solar masses`, `time for one orbit: ${yours.periodYears.toFixed(2)} years (${Math.round(yours.periodDays).toLocaleString('en-US')} days)`, `at ${yours.distancePc} parsecs the orbit is ${yours.ratio.toFixed(2)} stellar radii`]}
           fill={YOURS_COLOR}
           bold
           size={9}
@@ -401,7 +424,7 @@ function wrapText(text: string, width: number): string[] {
   return lines
 }
 
-function PictureThree({ stage, yours }: { stage: number; yours: Yours | null }) {
+function PictureThree({ stage, yours, guessAnswer }: { stage: number; yours: Yours | null; guessAnswer: SigmaAnswer | null }) {
   const height = stage >= 5 ? 566 : 300
   const z = COMPANION.reportedSigma
   const points: string[] = []
@@ -422,7 +445,7 @@ function PictureThree({ stage, yours }: { stage: number; yours: Yours | null }) 
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 3: a bell curve showing how large a spot random noise alone makes, measured in sigma, with the middle most common. The part of the curve beyond ${z} sigma is shaded yellow: noise alone makes a spot at least that strong about 1 time in ${Math.round(oneInChance(z))}. A marker at 5 sigma shows the usual bar for a discovery, about 1 time in ${millionsText(oneInChance(5))}${stage >= 5 ? '. Below the curve, five boxes list the five things the team predicted in advance and found: when the companion appears, its distance from Betelgeuse, its direction, its brightness and its mass' : ''}`}
+      aria-label={`Picture 3: a bell curve showing how large a spot random noise alone makes, measured in sigma, with the middle most common. The part of the curve beyond ${z} sigma is shaded yellow: noise alone makes a spot at least that strong about 1 time in ${Math.round(oneInChance(z))}. A marker at 5 sigma shows the usual bar for a discovery, about 1 time in ${millionsText(oneInChance(5))}${stage >= 5 ? '. Below the curve, five boxes list the five things the team predicted in advance and found: when the companion appears, its distance from Betelgeuse, its direction, its brightness and its mass' : ''}${guessAnswer && stage >= 4 ? ` A white ring labelled YOUR GUESS marks your guess on the curve, at ${guessSigma(guessAnswer).toFixed(1)} sigma, the spot size whose chance would be ${lowerFirst(SIGMA_CHOICES.find((c) => c.value === guessAnswer)?.label ?? guessAnswer)}.` : ''}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 3: how strong is the hint?
@@ -448,17 +471,32 @@ function PictureThree({ stage, yours }: { stage: number; yours: Yours | null }) 
           <line x1={sigmaToX(z)} y1={P3_BASE} x2={sigmaToX(z)} y2={sigmaToY(z) - 28} stroke={TAIL_COLOR} strokeWidth={2} />
           <SvgLines x={sigmaToX(z) + 8} y={92} lines={[`the reported spot: ${z} sigma`, `shaded: the chance that noise alone makes`, `a spot at least this strong, 1 time in ${Math.round(oneInChance(z))}`]} fill={TAIL_COLOR} bold size={10} />
           <line x1={sigmaToX(z) + 6} y1={118} x2={sigmaToX(z) + 14} y2={sigmaToY(z) + 10} stroke={TAIL_COLOR} strokeWidth={1} strokeDasharray="2 3" />
-          <line x1={sigmaToX(5)} y1={P3_BASE} x2={sigmaToX(5)} y2={P3_BASE - 36} stroke={TEXT_COLOR} strokeWidth={2} />
-          <SvgLines x={548} y={P3_BASE - 66} lines={['5 sigma, the usual bar for a', `discovery: 1 time in ${millionsText(oneInChance(5))}`]} fill={TEXT_COLOR} bold anchor="end" size={10} />
+          <line x1={sigmaToX(5)} y1={P3_BASE} x2={sigmaToX(5)} y2={P3_BASE - 36} stroke={FIVE_SIGMA_COLOR} strokeWidth={2} />
+          <SvgLines x={548} y={P3_BASE - 66} lines={['5 sigma, the usual bar for a', `discovery: 1 time in ${millionsText(oneInChance(5))}`]} fill={FIVE_SIGMA_COLOR} bold anchor="end" size={10} />
         </g>
       )}
 
-      {/* The learner's own setting: a white marker on the curve and a label. */}
+      {/* The learner's guess (Prediction 2): a white ring on the curve at the spot size whose tail would be the chance they chose, with a white box joined to it. Drawn with the reported spot, from stage 4. */}
+      {guessAnswer && stage >= 4 && (() => {
+        const g = guessSigma(guessAnswer)
+        const gx = sigmaToX(g)
+        const gy = sigmaToY(g)
+        const lineLength = Math.hypot(gx - 166, gy - 127) // the line from the box to the ring stops at the ring's edge (radius 7)
+        return (
+          <g>
+            <line x1={gx} y1={P3_BASE} x2={gx} y2={gy + 8} stroke={GUESS_COLOR} strokeWidth={1.5} strokeDasharray="2 3" />
+            <circle cx={gx} cy={gy} r={7} fill="none" stroke={GUESS_COLOR} strokeWidth={2.5} />
+            <GuessBox x={10} y={110} width={156} answer={lowerFirst(SIGMA_CHOICES.find((c) => c.value === guessAnswer)?.label ?? guessAnswer)} fromX={166} fromY={127} toX={gx - (7 * (gx - 166)) / lineLength} toY={gy - (7 * (gy - 127)) / lineLength} />
+          </g>
+        )
+      })()}
+
+      {/* The learner's own setting: a pink marker on the curve and a label. */}
       {yours && stage >= 4 && (
         <g>
           <line x1={sigmaToX(yours.sigma)} y1={P3_BASE} x2={sigmaToX(yours.sigma)} y2={sigmaToY(yours.sigma) - 6} stroke={YOURS_COLOR} strokeWidth={2.5} />
           <path d={`M ${sigmaToX(yours.sigma) - 6} ${sigmaToY(yours.sigma) - 16} L ${sigmaToX(yours.sigma) + 6} ${sigmaToY(yours.sigma) - 16} L ${sigmaToX(yours.sigma)} ${sigmaToY(yours.sigma) - 5} Z`} fill={YOURS_COLOR} />
-          <SvgLines x={548} y={56} lines={[`your setting (the white marker): ${yours.sigma} sigma,`, `1 time in ${yours.oneIn < 1000 ? Math.round(yours.oneIn) : millionsText(yours.oneIn)}`]} fill={YOURS_COLOR} bold anchor="end" size={10} />
+          <SvgLines x={548} y={56} lines={[`your setting (the pink marker): ${yours.sigma} sigma,`, `1 time in ${yours.oneIn < 1000 ? Math.round(yours.oneIn) : millionsText(yours.oneIn)}`]} fill={YOURS_COLOR} bold anchor="end" size={10} />
         </g>
       )}
 
@@ -516,6 +554,156 @@ const DISTANCE_CHOICES = [153, 168, 195] as const
 const BETELGEUSE_MASS_CHOICES = BETELGEUSE.massChoicesSolar
 const COMPANION_MASS_CHOICES = COMPANION.massChoicesSolar
 const SIGMA_WHAT_IFS = [1.5, 2, 3, 5] as const
+
+// ---- Drawing A, in "Now try it yourself": three number lines, each directly under the control that moves it. On each line the real value hangs below the line and the
+// learner's trial value (pink) stands above it, so a change moves only the pink mark. The guesses (white) do not move. Every value comes from the physics module; only the
+// pixel scale is worked out here, as in Picture 1. ----
+const DA_X0 = 30
+const DA_X1 = 530
+const DA_TITLE = 'Drawing A: your trial values beside the real ones'
+const upTriangle = (x: number, tipY: number) => `${x - 6},${tipY + 9} ${x + 6},${tipY + 9} ${x},${tipY}` // points up, below the line
+const downTriangle = (x: number, tipY: number) => `${x - 6},${tipY - 10} ${x + 6},${tipY - 10} ${x},${tipY}` // points down, above the line
+
+function DrawingNumbers({ lineY, values, x, format }: { lineY: number; values: number[]; x: (v: number) => number; format: (v: number) => string }) {
+  return (
+    <g>
+      {values.map((v) => (
+        <g key={v}>
+          <line x1={x(v)} y1={lineY - 3} x2={x(v)} y2={lineY + 3} stroke={MUTED_COLOR} />
+          <text x={x(v)} y={lineY + 28} fill={MUTED_COLOR} fontSize="9" textAnchor="middle">
+            {format(v)}
+          </text>
+        </g>
+      ))}
+    </g>
+  )
+}
+
+// Strip 1: the star's radius, in AU. Follows the distance control. Carries the Prediction 1 guess as a white band.
+function DrawingStripRadius({ yours, guessReach }: { yours: Yours; guessReach: Reach | null }) {
+  const real = runBetelgeuseCompanion()
+  const LINE = 104
+  const x = (au: number) => Math.min(DA_X1, Math.max(DA_X0, DA_X0 + (au / 6) * (DA_X1 - DA_X0)))
+  const range = guessReach ? reachRangeAU(guessReach) : null
+  const bandX1 = range ? x(range.minAU) : 0
+  const bandX2 = range ? (range.maxAU === null ? DA_X1 : x(range.maxAU)) : 0
+  const target = range ? (range.maxAU === null ? 515 : (bandX1 + bandX2) / 2) : 0
+  const guessText = guessReach ? lowerFirst(REACH_CHOICES.find((c) => c.value === guessReach)?.label ?? guessReach) : ''
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={168}
+      viewBox={`0 0 ${VIEW_WIDTH} 168`}
+      style={svgStyle}
+      role="img"
+      aria-label={`${DA_TITLE}. The star’s radius on a line from 0 to 6 AU, with ticks for the planets’ orbits. The real radius, ${real.radiusAU.toFixed(2)} AU, hangs below the line; your trial radius, ${yours.radiusAU.toFixed(2)} AU at ${yours.distancePc} parsecs, stands above it in pink.${guessReach ? ` A white band labelled YOUR GUESS marks your guess, ${guessText}.` : ''}`}
+    >
+      <text x={20} y={18} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+        {DA_TITLE}
+      </text>
+      <SvgLines x={20} y={36} lines={['The star’s radius, in AU (1 AU = the Earth’s distance from the Sun)']} fill={MUTED_COLOR} />
+      <text x={20} y={64} fill={STAR_COLOR} fontSize="10" fontWeight="bold">
+        {`▲ real: ${real.radiusAU.toFixed(2)} AU`}
+      </text>
+      <text x={150} y={64} fill={YOURS_COLOR} fontSize="10" fontWeight="bold">
+        {`▼ yours: ${yours.radiusAU.toFixed(2)} AU`}
+      </text>
+      <line x1={DA_X0} y1={LINE} x2={DA_X1} y2={LINE} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      <DrawingNumbers lineY={LINE} values={[0, 1, 2, 3, 4, 5, 6]} x={x} format={(v) => String(v)} />
+      {range && <rect x={bandX1} y={LINE - 6} width={bandX2 - bandX1} height={12} fill={GUESS_COLOR} fillOpacity={0.35} stroke={GUESS_COLOR} strokeWidth={2} strokeDasharray="5 3" />}
+      {PLANETS.map((planet, i) => (
+        <g key={planet.name}>
+          <line x1={x(planet.orbitAU)} y1={LINE - 6} x2={x(planet.orbitAU)} y2={LINE + 6} stroke={PLANET_COLORS[planet.name]} strokeWidth={2.5} />
+          <SvgLines x={x(planet.orbitAU)} y={LINE + 44 + (i % 2) * 12} lines={[planet.name]} fill={PLANET_COLORS[planet.name]} bold anchor="middle" size={9} />
+        </g>
+      ))}
+      <polygon points={upTriangle(x(real.radiusAU), LINE + 3)} fill={STAR_COLOR} />
+      <polygon points={downTriangle(x(yours.radiusAU), LINE - 3)} fill={YOURS_COLOR} />
+      {range && guessReach && <GuessBox x={352} y={44} width={194} answer={guessText} fromX={449} fromY={78} toX={target} toY={LINE - 7} />}
+    </svg>
+  )
+}
+
+// Strip 2: the companion's orbit time, in years. Follows the two mass controls. It has no guess, because no prediction is about the orbit time. The line starts at 5 years, not 0.
+function DrawingStripOrbit({ yours }: { yours: Yours }) {
+  const real = runBetelgeuseCompanion()
+  const LINE = 76
+  const x = (years: number) => Math.min(DA_X1, Math.max(DA_X0, DA_X0 + ((years - 5) / 1.5) * (DA_X1 - DA_X0)))
+  const [lowDays, highDays] = COMPANION.observedPeriodRangeDays
+  const daysText = `${lowDays.toLocaleString('en-US')} to ${highDays.toLocaleString('en-US')} days`
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={134}
+      viewBox={`0 0 ${VIEW_WIDTH} 134`}
+      style={svgStyle}
+      role="img"
+      aria-label={`The companion’s orbit time on a line from 5 to 6.5 years. A pale band marks the observed long cycle, ${daysText}. The orbit time for the published masses, ${real.periodYears.toFixed(2)} years, hangs below the line; your trial orbit time, ${yours.periodYears.toFixed(2)} years, stands above it in pink.`}
+    >
+      <SvgLines x={20} y={18} lines={['The companion’s orbit time, in years (this line starts at 5, not 0)']} fill={MUTED_COLOR} />
+      <text x={20} y={44} fill={COMPANION_COLOR} fontSize="10" fontWeight="bold">
+        {`▲ published values: ${real.periodYears.toFixed(2)} years`}
+      </text>
+      <text x={250} y={44} fill={YOURS_COLOR} fontSize="10" fontWeight="bold">
+        {`▼ yours: ${yours.periodYears.toFixed(2)} years`}
+      </text>
+      <line x1={DA_X0} y1={LINE} x2={DA_X1} y2={LINE} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      <DrawingNumbers lineY={LINE} values={[5, 5.5, 6, 6.5]} x={x} format={(v) => v.toFixed(1)} />
+      <rect
+        x={x(lowDays / DAYS_PER_YEAR)}
+        y={LINE - 6}
+        width={x(highDays / DAYS_PER_YEAR) - x(lowDays / DAYS_PER_YEAR)}
+        height={12}
+        fill={BAND_COLOR}
+        fillOpacity={0.45}
+        stroke={BAND_COLOR}
+        strokeWidth={1.5}
+        strokeDasharray="4 3"
+      />
+      <polygon points={upTriangle(x(real.periodYears), LINE + 3)} fill={COMPANION_COLOR} />
+      <polygon points={downTriangle(x(yours.periodYears), LINE - 3)} fill={YOURS_COLOR} />
+      <SvgLines x={20} y={LINE + 48} lines={[`observed long cycle: ${daysText}`]} fill={BAND_COLOR} bold size={10} />
+    </svg>
+  )
+}
+
+// Strip 3: how strong the hint is, in sigma. Follows the signal-strength control. Carries the Prediction 2 guess as a white ring.
+function DrawingStripSigma({ yours, guessAnswer }: { yours: Yours; guessAnswer: SigmaAnswer | null }) {
+  const LINE = 104
+  const x = (sigma: number) => DA_X0 + (sigma / 5.5) * (DA_X1 - DA_X0)
+  const g = guessAnswer ? guessSigma(guessAnswer) : 0
+  const guessText = guessAnswer ? lowerFirst(SIGMA_CHOICES.find((c) => c.value === guessAnswer)?.label ?? guessAnswer) : ''
+  return (
+    <svg
+      width={VIEW_WIDTH}
+      height={160}
+      viewBox={`0 0 ${VIEW_WIDTH} 160`}
+      style={svgStyle}
+      role="img"
+      aria-label={`How strong the hint is, in sigma, on a line from 0 to 5.5. The reported spot, ${COMPANION.reportedSigma} sigma, hangs below the line; your trial strength, ${yours.sigma} sigma, stands above it in pink. A lime tick marks 5 sigma, the usual bar for a discovery.${guessAnswer ? ` A white ring labelled YOUR GUESS marks your guess, ${guessText}, at ${g.toFixed(1)} sigma.` : ''}`}
+    >
+      <SvgLines x={20} y={18} lines={['How strong the hint is, in sigma']} fill={MUTED_COLOR} />
+      <text x={20} y={50} fill={TAIL_COLOR} fontSize="10" fontWeight="bold">
+        {`▲ reported: ${COMPANION.reportedSigma} sigma`}
+      </text>
+      <text x={170} y={50} fill={YOURS_COLOR} fontSize="10" fontWeight="bold">
+        {`▼ yours: ${yours.sigma} sigma`}
+      </text>
+      <line x1={DA_X0} y1={LINE} x2={DA_X1} y2={LINE} stroke={MUTED_COLOR} strokeWidth={1.5} />
+      <DrawingNumbers lineY={LINE} values={[0, 1, 2, 3, 4, 5]} x={x} format={(v) => String(v)} />
+      <line x1={x(5)} y1={LINE - 8} x2={x(5)} y2={LINE + 8} stroke={FIVE_SIGMA_COLOR} strokeWidth={3} />
+      <SvgLines x={DA_X1} y={LINE + 48} lines={['5 sigma: the usual bar for a discovery']} fill={FIVE_SIGMA_COLOR} bold anchor="end" size={10} />
+      <polygon points={upTriangle(x(COMPANION.reportedSigma), LINE + 3)} fill={TAIL_COLOR} />
+      <polygon points={downTriangle(x(yours.sigma), LINE - 3)} fill={YOURS_COLOR} />
+      {guessAnswer && (
+        <g>
+          <circle cx={x(g)} cy={LINE} r={7} fill="none" stroke={GUESS_COLOR} strokeWidth={2.5} />
+          <GuessBox x={352} y={30} width={194} answer={guessText} fromX={449} fromY={64} toX={x(g)} toY={LINE - 7} />
+        </g>
+      )}
+    </svg>
+  )
+}
 
 interface BetelgeuseCompanionExperimentProps {
   onComplete?: () => void
@@ -597,6 +785,23 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
   const allPublished = isSame(cmp.distancePercent) && cmp.betelgeuseMass === 0 && cmp.companionMass === 0 && cmp.sigmaSame
   const massesChanged = cmp.betelgeuseMass !== 0 || cmp.companionMass !== 0
   const lightYears = distanceChoice * LIGHT_YEARS_PER_PARSEC
+  const lookForDrawingA: LookFor[] = [
+    {
+      look: 'the pink mark on the radius line, against the planets’ ticks.',
+      means: 'how far out the star would reach at the distance you chose, and which orbits it would cover.',
+      matters: 'the star’s size depends on how far away it is, so a size is only as good as the distance behind it.',
+    },
+    {
+      look: 'the pink mark against the pale band on the orbit-time line.',
+      means: 'whether the orbit time for the masses you chose falls inside the cycle seen in the star’s light.',
+      matters: 'a companion is a reason to take the idea seriously only if its orbit matches that cycle.',
+    },
+    {
+      look: 'the pink mark against the lime tick on the sigma line.',
+      means: 'how far your chosen strength is from the usual bar for a discovery.',
+      matters: 'the same faint spot is a hint at 1.5 sigma and would count as a discovery at 5 sigma.',
+    },
+  ]
   const lookForPictureOne: LookFor[] = [
     {
       look: 'the large orange disc, and the five rings (the orbits of Mercury, Venus, Earth, Mars and Jupiter), with Jupiter’s ring outside the disc.',
@@ -638,7 +843,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
       matters: 'a result that noise makes 1 time in 15 is not rare. By itself this spot cannot be called a discovery, and the team calls it a probable detection.',
     },
     {
-      look: 'the white marker at 5 sigma, far out on the right of the curve.',
+      look: 'the lime marker at 5 sigma, far out on the right of the curve.',
       means: `5 sigma is the usual bar for calling something a discovery. Noise alone makes a spot that strong only 1 time in ${millionsText(oneInChance(5))}. The tail beyond it is far too thin to see on the curve.`,
       matters: 'the reported spot is a long way from that bar, which is why the next step in the picture matters: what else points the same way.',
     },
@@ -816,8 +1021,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other values
             for the distance, the masses and the strength of the signal. Nothing here is graded. Your predictions are your own guesses, made before you see anything: they do
-            not change the pictures or the tables, which come from the physics and the published numbers. They are shown again beside the results so you can compare. What does
-            change the pictures and Table 4 is the “Now try it yourself” controls, which appear after the run finishes.
+            not change the pictures or the tables, which come from the physics and the published numbers. Each guess is drawn on the picture it is about, as a white mark in a box labelled “YOUR GUESS”, so you can compare it with the real picture, and it is shown again beside the results. What does change the pictures and Table 4 is the “Now try it yourself” controls, which appear after the run finishes. Their marks are pink, never white.
           </p>
 
           <p style={paragraph}>
@@ -970,7 +1174,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
         {/* Picture 1: the star and the orbits from stage 1, the range from stage 2. */}
         {hasRun && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureOne stage={stage} yours={done ? yoursFor : null} />
+            <PictureOne stage={stage} yours={done ? yoursFor : null} guessReach={reachPrediction} />
           </div>
         )}
         {hasRun && (
@@ -991,6 +1195,20 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               <strong>A worked moment.</strong> The star’s angle is {BETELGEUSE.angularDiameterMas} milliarcseconds across, and it is {BETELGEUSE.distancePc} parsecs away. One milliarcsecond at one
               parsec is 0.001 AU, so the width is {BETELGEUSE.angularDiameterMas} × {BETELGEUSE.distancePc} × 0.001 = {width.toFixed(2)} AU, and the radius, half of
               that, is {result.radiusAU.toFixed(2)} AU. One AU is {SOLAR_RADII_PER_AU.toFixed(0)} solar radii, so that is {Math.round(result.radiusSolarRadii)} solar radii.
+            </p>
+            {reachPrediction !== null && (
+              <p style={paragraph}>
+                <strong>Your guess.</strong> The white dashed zone is your guess from before the run. You guessed a range (inside Earth’s orbit, past Mars but not as far as
+                Jupiter, or past Jupiter’s orbit), so it is drawn as a zone between orbits, not as one circle. It only marks where you guessed. It does not change the star,
+                which comes from the measurements.
+              </p>
+            )}
+            <p style={paragraph}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> the star’s angle across, {BETELGEUSE.angularDiameterMas} milliarcseconds (Howell and others
+              2025), and its distance, {BETELGEUSE.distancePc} parsecs (Joyce and others 2020); the paler band comes from the ranges of angle and distance the papers give.{' '}
+              <em>Calculated here:</em> the radius, half the angle times the distance (Table 1), and the five orbits as circles at the planets’ standard distances (standard
+              values, not taken from a paper). <em>Imagined for the question:</em> Betelgeuse in the Sun’s place. It is not there; the question asks what it would cover if it
+              were. <em>Your guess:</em> the white zone, drawn from your answer only.
             </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>What to look for.</strong>
@@ -1027,7 +1245,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
 
         {stage >= 4 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureThree stage={stage} yours={done ? yoursFor : null} />
+            <PictureThree stage={stage} yours={done ? yoursFor : null} guessAnswer={sigmaPrediction} />
           </div>
         )}
         {stage >= 4 && (
@@ -1037,7 +1255,7 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               sizes, the small ones most often and the big ones rarely. The scale along the bottom is in <strong>sigma</strong>, how many give-or-takes bigger than the
               average noise a spot is. The <strong>yellow shaded tail</strong> is all the spots at least as strong as the reported one ({sigma} sigma), and its size
               compared with the whole curve is the chance that noise alone makes one: {chancePercent(sigma).toFixed(1)} percent, 1 time in {Math.round(oneInChance(sigma))}. This counts only spots that are too strong, not too weak, as in
-              Experiment 1. The <strong>white marker</strong> at 5 sigma is the usual bar for a discovery.
+              Experiment 1. The <strong>lime marker</strong> at 5 sigma is the usual bar for a discovery.
             </p>
             {stage >= 5 && (
               <p style={paragraph}>
@@ -1051,6 +1269,19 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               <strong>A worked moment.</strong> The reported spot is {sigma} sigma. The chance of noise alone making a spot at least that strong is the area of the shaded
               tail, {chanceOfSigma(sigma).toFixed(4)}, and 1 ÷ {chanceOfSigma(sigma).toFixed(4)} = {oneInChance(sigma).toFixed(1)}, so about 1 time in {Math.round(oneInChance(sigma))}. At 5 sigma the same working gives 1 time in {millionsText(oneInChance(5))}.
             </p>
+            {sigmaPrediction !== null && (
+              <p style={paragraph}>
+                <strong>Your guess.</strong> The white ring is your guess from before the run. A guess about “how often” has no place on this picture by itself, so it is drawn
+                where on the curve a spot that often would sit: 0 sigma for 1 time in 2, about 1.5 sigma for 1 time in 15, about 5 sigma for 1 time in 3.5 million. It is only a
+                marker for your guess. It does not change the curve.
+              </p>
+            )}
+            <p style={paragraph}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> the size of the reported spot, {sigma} sigma (Howell and others 2025). <em>Calculated here:</em>{' '}
+              the bell curve, the shaded tail (the chance that noise alone makes a spot at least that strong, counting one direction only) and the chance at 5 sigma.{' '}
+              <em>Imagined for the question:</em> “noise alone”: the curve asks what spots would look like if nothing were there. <em>Your guess:</em> the white ring, drawn from
+              your answer only.
+            </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>What to look for.</strong>
             </p>
@@ -1058,13 +1289,13 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
           </div>
         )}
 
-        {/* The controls (after the run): the distance, the two masses and the strength of the signal. They add a white mark to each picture and fill Table 4. */}
+        {/* The controls (after the run): the distance, the two masses and the strength of the signal. They add a pink mark to each picture and fill Table 4. */}
         {done && (
           <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
             <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              Your predictions do not change the pictures or Table 4, because the results come from the physics, not from your guesses. These settings do: change one and watch the white marks in the three pictures above, and Table 4 below, follow it. While every setting is on its published value, Table 4 says “the same” in every row, so change a setting to see it move. Each choice is a trial value: it shows what would
-              happen with that number, and does not say that the real star or signal is like that. The distance and the masses are values that the papers allow or report.
+              Your predictions do not change the pictures or Table 4, because the results come from the physics, not from your guesses. These settings do: change one and watch the pink marks in the three pictures above, and Table 4 below, follow it. While every setting is on its published value, Table 4 says “the same” in every row, so change a setting to see it move. Each choice is a trial value: it shows what would
+              happen with that number, and does not say that the real star or signal is like that. Drawing A, in this panel, shows each setting next to the real value, so you can see what a change does without scrolling up. The distance and the masses are values that the papers allow or report.
             </p>
 
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How far away is Betelgeuse?</p>
@@ -1074,6 +1305,9 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               {mine.planetsInside.join(', ')}. Jupiter’s orbit ({PLANETS[4].orbitAU} AU) is still outside. The size changes with the distance, and the answer to Prediction 1
               does not.
             </p>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <DrawingStripRadius yours={yoursFor} guessReach={reachPrediction} />
+            </div>
 
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is Betelgeuse? (solar masses)</p>
             <ChoiceButtons options={BETELGEUSE_MASS_CHOICES} value={betelgeuseMassChoice} onChange={setBetelgeuseMassChoice} format={(v) => `${v}`} />
@@ -1089,6 +1323,9 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               {mine.periodYears.toFixed(2)} years ({Math.round(mine.periodDays).toLocaleString('en-US')} days). Try the lightest and the heaviest companion with the same Betelgeuse:
               the time hardly changes. The masses are the papers’ estimates, and this experiment does not choose among them.
             </p>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <DrawingStripOrbit yours={yoursFor} />
+            </div>
 
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How strong is the spot? (sigma)</p>
             <ChoiceButtons options={SIGMA_WHAT_IFS} value={sigmaChoice} onChange={setSigmaChoice} format={(v) => `${v} sigma${v === COMPANION.reportedSigma ? ' (as reported)' : ''}`} />
@@ -1096,6 +1333,59 @@ export function BetelgeuseCompanionExperiment({ onComplete, onTutorComplete }: B
               A spot of {sigmaChoice} sigma is made by noise alone about 1 time in {mine.oneIn < 1000 ? Math.round(mine.oneIn) : millionsText(mine.oneIn)} (counting one direction). This is a trial value:
               the real spot is {sigma} sigma.
             </p>
+            <div style={{ margin: '1rem 0' }}>
+              <DrawingStripSigma yours={yoursFor} guessAnswer={sigmaPrediction} />
+            </div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={paragraph}>
+                <strong>How to read Drawing A.</strong> <strong>What it shows.</strong> Three short lines, one for each thing you can change above. On each line, the real value hangs below
+                the line and your trial value stands above it, in pink. While every setting is on its published value, each pink mark sits straight above its real mark. Change a
+                setting and only the pink mark moves.
+              </p>
+              <p style={paragraph}>
+                <strong>The three lines.</strong>
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <em>Radius, in AU.</em> How far out the star’s surface reaches. The five small ticks are the planets’ orbits, so you can see which orbits fall inside the star. It
+                  follows “How far away is Betelgeuse?”.
+                </li>
+                <li>
+                  <em>Orbit time, in years.</em> How long the companion would take to go round once. The pale band is the long cycle seen in Betelgeuse’s light,{' '}
+                  {COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to {COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days (about{' '}
+                  {(COMPANION.observedPeriodRangeDays[0] / DAYS_PER_YEAR).toFixed(1)} to {(COMPANION.observedPeriodRangeDays[1] / DAYS_PER_YEAR).toFixed(1)} years). It follows the two
+                  mass controls. This line starts at 5 years, not 0, so that small differences can be seen.
+                </li>
+                <li>
+                  <em>Sigma.</em> How strong the faint spot is, measured in give-or-takes above the noise. It follows “How strong is the spot?”. The lime tick at 5 sigma is the usual bar
+                  for a discovery.
+                </li>
+              </ul>
+              <p style={paragraph}>
+                <strong>Your guesses.</strong> Your two guesses from before the run are drawn in white: Prediction 1 as a band on the radius line, Prediction 2 as a ring on the sigma line,
+                as on Pictures 1 and 3. They do not move when you change a setting, because a guess is not a setting.
+              </p>
+              <p style={paragraph}>
+                <strong>A worked moment.</strong> At {DISTANCE_CHOICES[2]} parsecs the star’s radius is half the angle times the distance: ½ × {BETELGEUSE.angularDiameterMas} ×{' '}
+                {DISTANCE_CHOICES[2]} × 0.001 = {runBetelgeuseCompanion({ distancePc: DISTANCE_CHOICES[2] }).radiusAU.toFixed(2)} AU. On the radius line the pink mark moves from{' '}
+                {result.radiusAU.toFixed(2)} AU to {runBetelgeuseCompanion({ distancePc: DISTANCE_CHOICES[2] }).radiusAU.toFixed(2)} AU, while the orange mark stays at{' '}
+                {result.radiusAU.toFixed(2)} AU.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What to look for.</strong>
+              </p>
+              <LookForList items={lookForDrawingA} />
+              <p style={paragraph}>
+                These are trial values. They show what would happen with that number. They do not say that the real star or signal is like that.
+              </p>
+              <p style={{ ...paragraph, marginBottom: 0 }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the star’s angle across, {BETELGEUSE.angularDiameterMas} milliarcseconds (Howell and others 2025), its
+                distance, {BETELGEUSE.distancePc} parsecs (Joyce and others 2020), the reported spot, {COMPANION.reportedSigma} sigma, and the long cycle,{' '}
+                {COMPANION.observedPeriodRangeDays[0].toLocaleString('en-US')} to {COMPANION.observedPeriodRangeDays[1].toLocaleString('en-US')} days (Dupree and others 2026; Goldberg and
+                others 2024). <em>Calculated here:</em> the radius, the orbit time (from the model separation and the two masses) and the chance for each sigma. <em>Imagined for the
+                question:</em> your trial values, and the star in the Sun’s place. <em>Your guess:</em> the white marks, drawn from your answers only.
+              </p>
+            </div>
           </div>
         )}
 
