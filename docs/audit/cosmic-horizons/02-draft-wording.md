@@ -1,5 +1,5 @@
 # Audit draft: Cosmic Horizons Experiment 2 (Does dark energy change? DESI)
-Date: 2026-11-03 | Status: DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1). Nothing is built. Physics unchanged.
+Date: 2026-11-03 | Status: wording approved by the owner 2026-11-03; built and checked in Chrome. Difference: Drawing A's marks are pink, not orange. The Table 1 and Table 2 notes and Drawing A's caption were drafted in the page and approved there.
 
 Decisions taken ("take the recommendations", 2026-11-03): (1) the dot that "How far back?" moves turns pink; (2) Part 2 gets a drawing that follows the control; (3) Prediction 2 gets a marker beside the DES bars on Picture 3; (4) check-up rows only where a real reference exists, no invented cut-offs; Rule B item 3 (a published-value column) is left out, because no published reference exists for the distance or brightness differences.
 
