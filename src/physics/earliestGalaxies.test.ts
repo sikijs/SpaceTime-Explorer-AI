@@ -1,7 +1,19 @@
 import { describe, it, expect } from 'vitest'
 import {
   ageAfterBigBangYears,
+  ageShareBand,
   ageShareRange,
+  countBand,
+  COUNT_SCALE_MIN,
+  DRAWING_SCALES,
+  earliestGalaxiesCheckUp,
+  galaxyDrawingValues,
+  MOM_Z14_BREAK_REDSHIFT,
+  momZ14DrawingValues,
+  SLIDER_MIN_REDSHIFT,
+  MAX_REDSHIFT,
+  ABOUT_ONE_UPPER_PERCENT,
+  ABOUT_TWO_UPPER_PERCENT,
   countRange,
   distanceThenLightYearsPlanck,
   distanceTodayLightYearsPlanck,
@@ -278,5 +290,72 @@ describe('derived figures the tutor and the results show (review, finding a)', (
     expect(ticksAboveOne(182)).toBeCloseTo(2.26, 2)
     expect(() => ticksAboveOne(0)).toThrow(RangeError)
     expect(() => ticksAboveOne(-3)).toThrow(RangeError)
+  })
+})
+
+describe('audit update: guess marks, check-up and Part 2 drawing', () => {
+  it('Prediction 1 bands share the module\'s edges, are contiguous and the last is open', () => {
+    expect(ageShareBand('about1')).toEqual({ loPercent: 0, hiPercent: ABOUT_ONE_UPPER_PERCENT })
+    expect(ageShareBand('about2')).toEqual({ loPercent: ABOUT_ONE_UPPER_PERCENT, hiPercent: ABOUT_TWO_UPPER_PERCENT })
+    expect(ageShareBand('about10')).toEqual({ loPercent: ABOUT_TWO_UPPER_PERCENT, hiPercent: null })
+  })
+  it('MoM-z14\'s share (2.06 percent) falls inside the band of its own range, and in no other', () => {
+    const pct = shareOfPresentAge(MOM_Z14_REDSHIFT) * 100
+    const inBand = (r: 'about1' | 'about2' | 'about10') => {
+      const b = ageShareBand(r)
+      return pct >= b.loPercent && (b.hiPercent === null || pct <= b.hiPercent)
+    }
+    expect(ageShareRange(MOM_Z14_REDSHIFT)).toBe('about2')
+    expect(inBand('about2')).toBe(true)
+    expect(inBand('about1')).toBe(false)
+    expect(inBand('about10')).toBe(false)
+  })
+  it('Prediction 2 bands are contiguous from 0.1, with edges 0.5, 2 and 50, and the last is open', () => {
+    expect(countBand('fewer')).toEqual({ lo: COUNT_SCALE_MIN, hi: 0.5 })
+    expect(countBand('same')).toEqual({ lo: 0.5, hi: 2 })
+    expect(countBand('few')).toEqual({ lo: 2, hi: 50 })
+    expect(countBand('hundred')).toEqual({ lo: 50, hi: null })
+    expect(countBand('fewer').hi).toBe(countBand('same').lo)
+    expect(countBand('same').hi).toBe(countBand('few').lo)
+    expect(countBand('few').hi).toBe(countBand('hundred').lo)
+  })
+  it('the published best estimate (182) lies in the band of its own range, the survey\'s low end (77) too, and 100 lies inside the quoted range', () => {
+    const range = countRange()
+    const b = countBand(range)
+    expect(range).toBe('hundred')
+    expect(NUMBER_DENSITY_EXCESS.best).toBeGreaterThanOrEqual(b.lo)
+    expect(NUMBER_DENSITY_EXCESS.low).toBeGreaterThanOrEqual(b.lo)
+    expect(NUMBER_DENSITY_EXCESS.low).toBeLessThanOrEqual(NUMBER_DENSITY_EXCESS.headline)
+    expect(NUMBER_DENSITY_EXCESS.headline).toBeLessThanOrEqual(NUMBER_DENSITY_EXCESS.high)
+  })
+  it('the check-up has three rows about MoM-z14 with the right readings', () => {
+    const rows = earliestGalaxiesCheckUp()
+    expect(rows).toHaveLength(3)
+    expect(rows[0].expected).toBe(280e6)
+    expect(rows[0].found).toBeCloseTo(ageAfterBigBangYears(MOM_Z14_REDSHIFT), 6)
+    expect(rows[0].reading).toBe('more')
+    expect(rows[1].expected).toBe(100)
+    expect(rows[1].found).toBe(182)
+    expect(rows[1].reading).toBe('more')
+    expect(rows[1].note).toBe('the headline lies inside the quoted range')
+    expect(rows[2].expected).toBe(MOM_Z14_REDSHIFT)
+    expect(rows[2].found).toBe(MOM_Z14_BREAK_REDSHIFT)
+    expect(rows[2].found).toBe(14.42)
+    expect(rows[2].reading).toBe('less')
+  })
+  it('Part 2\'s drawing values match the run, and every galaxy the control offers fits its scales', () => {
+    const v = galaxyDrawingValues(10.603)
+    expect(v.arrivalNm).toBeCloseTo(LYMAN_ALPHA_NM * 11.603, 8)
+    expect(v.timeMyr).toBeCloseTo(runEarliestGalaxies(10.603).ageAfterBigBangYears / 1e6, 8)
+    expect(v.sharePercent).toBeCloseTo(3.16, 2)
+    expect(momZ14DrawingValues().redshift).toBe(MOM_Z14_REDSHIFT)
+    const zs = [SLIDER_MIN_REDSHIFT, MAX_REDSHIFT, ...RECORDS.map((r) => r.redshift)]
+    for (const z of zs) {
+      const d = galaxyDrawingValues(z)
+      expect(d.redshift).toBeLessThanOrEqual(DRAWING_SCALES.redshift.max)
+      expect(d.arrivalNm).toBeLessThanOrEqual(DRAWING_SCALES.arrivalNm.max)
+      expect(d.timeMyr).toBeLessThanOrEqual(DRAWING_SCALES.timeMyr.max)
+      expect(d.sharePercent).toBeLessThanOrEqual(DRAWING_SCALES.sharePercent.max)
+    }
   })
 })

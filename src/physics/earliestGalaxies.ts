@@ -182,3 +182,94 @@ export function ticksAboveOne(times: number): number {
   if (!Number.isFinite(times) || times <= 0) throw new RangeError('The multiple must be positive')
   return Math.log10(times)
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks, the check-up and Part 2's drawing ----
+
+// Prediction 1's white bracket, in percent of the present age, on the same scale as Picture 2's top bar. "about 10 percent" has no upper edge
+// (hiPercent is null: drawn to the end of the bar with an arrow head).
+export interface AgeShareBand {
+  loPercent: number
+  hiPercent: number | null
+}
+export function ageShareBand(range: AgeShareRange): AgeShareBand {
+  if (range === 'about1') return { loPercent: 0, hiPercent: ABOUT_ONE_UPPER_PERCENT }
+  if (range === 'about2') return { loPercent: ABOUT_ONE_UPPER_PERCENT, hiPercent: ABOUT_TWO_UPPER_PERCENT }
+  return { loPercent: ABOUT_TWO_UPPER_PERCENT, hiPercent: null }
+}
+
+// The edges of Prediction 2's answers, in times the models' number (the module's own: fewer below 0.5, same 0.5 to 2, a few times 2 to 50, a hundred
+// times 50 and up), and the lowest value of Picture 3's extended scale.
+export const COUNT_SAME_LOWER = 0.5
+export const COUNT_FEW_LOWER = 2
+export const COUNT_HUNDRED_LOWER = 50
+export const COUNT_SCALE_MIN = 0.1
+export const COUNT_SCALE_MAX = 1000
+export interface CountBand {
+  lo: number
+  hi: number | null
+}
+export function countBand(range: CountRange): CountBand {
+  if (range === 'fewer') return { lo: COUNT_SCALE_MIN, hi: COUNT_SAME_LOWER }
+  if (range === 'same') return { lo: COUNT_SAME_LOWER, hi: COUNT_FEW_LOWER }
+  if (range === 'few') return { lo: COUNT_FEW_LOWER, hi: COUNT_HUNDRED_LOWER }
+  return { lo: COUNT_HUNDRED_LOWER, hi: null }
+}
+
+// MoM-z14's redshift from the Lyman-alpha break (Naidu et al.); MOM_Z14_REDSHIFT (14.44) is from the emission lines.
+export const MOM_Z14_BREAK_REDSHIFT = 14.42
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export interface EarliestGalaxiesCheckUpRow {
+  label: string
+  expected: number
+  found: number
+  reading: CheckUpReading // the found value against the expected one; no cut-off is invented
+  note?: string
+}
+function compareValues(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+
+// The check-up: three rows about MoM-z14. It does not depend on the galaxy the learner chose or on the guesses.
+export function earliestGalaxiesCheckUp(): EarliestGalaxiesCheckUpRow[] {
+  const modelAge = ageAfterBigBangYears(MOM_Z14_REDSHIFT)
+  const { best, low, high, headline } = NUMBER_DENSITY_EXCESS
+  return [
+    { label: 'MoM-z14: age after the Big Bang, the model against the paper (years)', expected: MOM_Z14_PAPER_AGE_YEARS, found: modelAge, reading: compareValues(modelAge, MOM_Z14_PAPER_AGE_YEARS) },
+    {
+      label: 'The count of bright galaxies: the survey\'s best estimate against the 100 times in the announcements (times the models)',
+      expected: headline,
+      found: best,
+      reading: compareValues(best, headline),
+      note: headline >= low && headline <= high ? 'the headline lies inside the quoted range' : 'the headline lies outside the quoted range',
+    },
+    { label: 'MoM-z14: redshift from the Lyman-alpha break against the emission lines', expected: MOM_Z14_REDSHIFT, found: MOM_Z14_BREAK_REDSHIFT, reading: compareValues(MOM_Z14_BREAK_REDSHIFT, MOM_Z14_REDSHIFT) },
+  ]
+}
+
+// Part 2's drawing: the scales of its three rows and the values for a chosen galaxy; the reference marks are MoM-z14's.
+export const DRAWING_SCALES = {
+  redshift: { min: 0, max: MAX_REDSHIFT },
+  arrivalNm: { min: 0, max: 4000 },
+  timeMyr: { min: 0, max: 1000 },
+  sharePercent: { min: 0, max: 8 },
+}
+export interface GalaxyDrawingValues {
+  redshift: number
+  arrivalNm: number
+  timeMyr: number
+  sharePercent: number
+}
+export function galaxyDrawingValues(redshift: number): GalaxyDrawingValues {
+  const r = runEarliestGalaxies(redshift)
+  return {
+    redshift,
+    arrivalNm: r.lymanAlphaObservedNm,
+    timeMyr: r.ageAfterBigBangYears / 1e6,
+    sharePercent: r.shareOfPresentAge * 100,
+  }
+}
+export function momZ14DrawingValues(): GalaxyDrawingValues {
+  return galaxyDrawingValues(MOM_Z14_REDSHIFT)
+}
