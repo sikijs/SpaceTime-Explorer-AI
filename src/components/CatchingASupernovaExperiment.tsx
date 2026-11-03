@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  DRAWING_SCALES,
+  predictionLightOneIn,
+  predictionTravelYears,
+  shareGuessErg,
+  supernovaDrawingReference,
+  supernovaDrawingValues,
+  travelGuessYears,
   collapseWorkedExample,
   compareWithPublished,
   distanceRangeMpc,
@@ -34,7 +41,7 @@ import type { LookFor } from './WideBinariesExperiment'
 
 // Cosmic Horizons, Experiment 13 (docs/experiments/cosmic-horizons/13-catching-a-supernova.md).
 // Step 6 builds the tutor (CatchingASupernovaTutor.tsx) and, in App, the chapter summary.
-// Step 5 builds the two controls (the core and the speed of the gas; a distance control was dropped at the owner's request on 2026-10-23), shown after the run, which add white marks to Pictures 2 and 3, and the results
+// Step 5 builds the two controls (the core and the speed of the gas; a distance control was dropped at the owner's request on 2026-10-23), shown after the run, which add pink marks to Pictures 2 and 3, and the results
 // with the reading guide (the check-up, four tables with notes, the predictions beside the results and the held-back paper links).
 // Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (the star's mass estimates) at stages 1 and 2, Picture 2 (the gas it shed) at
 // stage 3 and Picture 3 (where the energy went, and how long ago the light left) at stages 4 and 5. The controls, the results, the tutor and the chapter summary are later steps.
@@ -60,9 +67,24 @@ const NEW_COLOR = '#22d3ee' // cyan: the 2026 paper's two ranges
 const GAS_COLOR = '#c084fc' // purple: the gas the star shed, and the gas's motion
 const COLLAPSE_COLOR = '#f87171' // red: the energy freed by the collapse
 const LIGHT_COLOR = '#fde047' // yellow: the visible light
-const SUN_COLOR = '#ffffff' // white: the Sun's whole-life output, the yardstick
+const SUN_COLOR = '#f59e0b' // amber: the Sun's whole-life output, the yardstick (white is kept for the learner's guess)
 const RING_COLOR = '#94a3b8' // grey: Neptune's orbit, for scale
-const YOURS_COLOR = '#ffffff' // white: the learner's own choice
+const YOURS_COLOR = '#f472b6' // pink: the learner's own choice (Part 2)
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const SHARE_SHORT = { 'about half': 'about half of the energy', '1 in 10': '1 in 10', '1 in 100': '1 in 100', '1 in 10,000': '1 in 10,000' } as const
+const TRAVEL_SHORT = { 'a few months': 'a few months', 'about 20 thousand years': 'about 20 thousand years', 'about 20 million years': 'about 20 million years' } as const
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -369,7 +391,7 @@ function PictureTwo({ yearsBefore, shellAU, speed, yours }: { yearsBefore: [numb
       <SvgLines x={P2_X} y={height - 10} lines={[`gas speed taken as ${speed} km/s (the authors’ assumption): time = radius ÷ speed`]} fill={MUTED_COLOR} anchor="middle" />
       {/* The learner's own speed (after the run): white. */}
       {yours && (
-        <SvgLines x={P2_X} y={height - 30} lines={[`your setting (white): ${yours.speed} km/s, so the gas was shed ${yours.yearsBefore[0].toFixed(1)} to ${yours.yearsBefore[1].toFixed(1)} years before`]} fill={YOURS_COLOR} bold anchor="middle" size={10} />
+        <SvgLines x={P2_X} y={height - 30} lines={[`your setting (pink): ${yours.speed} km/s, so the gas was shed ${yours.yearsBefore[0].toFixed(1)} to ${yours.yearsBefore[1].toFixed(1)} years before`]} fill={YOURS_COLOR} bold anchor="middle" size={10} />
       )}
     </svg>
   )
@@ -382,9 +404,9 @@ const P3_MAX_LOG = 55
 const P3_PX_PER_DECADE = (545 - P3_LEFT) / (P3_MAX_LOG - P3_MIN_LOG)
 const p3x = (erg: number) => P3_LEFT + (Math.log10(erg) - P3_MIN_LOG) * P3_PX_PER_DECADE
 
-function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | null }) {
+function PictureThree({ stage, yours, shareGuess, travelGuess }: { stage: number; yours: YoursThree | null; shareGuess: VisibleShareAnswer | null; travelGuess: LightTravelAnswer | null }) {
   const run = runCatchingASupernova()
-  const height = 500
+  const height = 500 + 220 // room for the two guesses' own lines (one under the energy bars, one under the travel-time strip)
   const collapseErg = run.collapseErg
   const gasErg = ergFromJoules(run.gasMotionJ)
   const lightErg = ergFromJoules(run.lightJ)
@@ -403,7 +425,7 @@ function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | nul
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 3: where did the energy go? Three horizontal bars on a scale where each step to the right is ten times more energy: the collapse frees ${sciText(collapseErg)} erg, the motion of the blown-off gas carries ${sciText(gasErg)} erg and the visible light carries ${sciText(lightErg)} erg, up to ${sciText(lightHigh)}. A white dashed line marks the Sun's whole-life output, ${sciText(sunErg)} erg. The light's bar is about 1 part in ${thousandsComma(run.lightOneIn)} of the collapse's${stage >= 5 ? `. Below, a strip shows that the light took ${millions(run.lightTravelYears)} million years to arrive from M101` : ''}`}
+      aria-label={`Picture 3: where did the energy go? Three horizontal bars on a scale where each step to the right is ten times more energy: the collapse frees ${sciText(collapseErg)} erg, the motion of the blown-off gas carries ${sciText(gasErg)} erg and the visible light carries ${sciText(lightErg)} erg, up to ${sciText(lightHigh)}. A amber dashed line marks the Sun's whole-life output, ${sciText(sunErg)} erg. The light's bar is about 1 part in ${thousandsComma(run.lightOneIn)} of the collapse's${stage >= 5 ? `. Below, a strip shows that the light took ${millions(run.lightTravelYears)} million years to arrive from M101` : ''}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 3: where did the energy go?
@@ -436,7 +458,7 @@ function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | nul
       <SvgLines x={p3x(gasErg) + 8} y={164} lines={[`${sciText(gasErg)} erg`]} fill={GAS_COLOR} bold size={11} />
       <SvgLines x={P3_LEFT} y={246} lines={[`${sciText(lightErg)} erg`, `(the pale part: up to ${sciText(lightHigh)})`]} fill={LIGHT_COLOR} bold size={10} />
 
-      {/* The learner's own core (after the run): a white mark on the collapse bar. */}
+      {/* The learner's own core (after the run): a pink mark on the collapse bar. */}
       {yours && (
         <g>
           <line x1={p3x(yours.collapseErg)} y1={96} x2={p3x(yours.collapseErg)} y2={138} stroke={YOURS_COLOR} strokeWidth={3} />
@@ -448,9 +470,33 @@ function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | nul
       <line x1={p3x(sunErg)} y1={80} x2={p3x(sunErg)} y2={axisY} stroke={SUN_COLOR} strokeWidth={1.5} strokeDasharray="6 4" />
       <SvgLines x={p3x(sunErg) - 6} y={64} lines={['the Sun’s whole-life output:', `${sciText(sunErg)} erg`]} fill={SUN_COLOR} bold anchor="end" size={9} />
 
+      {/* Prediction 1's guess (from stage 4): on its own thin line under the bars, on the same energy scale, at the energy that the guessed share would put into light. */}
+      {shareGuess !== null && (() => {
+        const stripY = axisY + 70
+        const x = p3x(shareGuessErg(shareGuess))
+        const boxX = Math.min(Math.max(x - 150, 10), VIEW_WIDTH - 310)
+        return (
+          <g>
+            <SvgLines x={20} y={stripY - 22} lines={['Your guess for Prediction 1: the energy that would come out as visible light (same scale as above)']} fill={GUESS_COLOR} size={11} />
+            <line x1={P3_LEFT} y1={stripY} x2={545} y2={stripY} stroke={MUTED_COLOR} strokeWidth={1} />
+            {[48, 49, 50, 51, 52, 53, 54, 55].map((e) => (
+              <line key={e} x1={p3x(10 ** e)} y1={stripY - 3} x2={p3x(10 ** e)} y2={stripY + 3} stroke={MUTED_COLOR} />
+            ))}
+            <line x1={p3x(lightErg)} y1={stripY - 12} x2={p3x(lightErg)} y2={stripY + 12} stroke={LIGHT_COLOR} strokeWidth={2.5} />
+            <SvgLines x={p3x(lightErg) + 6} y={stripY + 22} lines={['the calculated light, 1 × 10⁴⁹']} fill={LIGHT_COLOR} size={9} />
+            <polygon points={`${x},${stripY - 8} ${x + 8},${stripY} ${x},${stripY + 8} ${x - 8},${stripY}`} fill={GUESS_COLOR} />
+            <line x1={x} y1={stripY + 8} x2={x} y2={stripY + 30} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={stripY + 30} width={300} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + 150} y={stripY + 47} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {SHARE_SHORT[shareGuess]}
+            </text>
+          </g>
+        )
+      })()}
+
       {/* Stage 5: how long ago the light left. */}
       {stage >= 5 && (
-        <g>
+        <g transform="translate(0 100)">
           <line x1={20} y1={336} x2={540} y2={336} stroke={MUTED_COLOR} strokeOpacity={0.4} />
           <SvgLines x={20} y={356} lines={['How long ago? The light we saw in May 2023 had to cross the distance to M101.']} fill={TEXT_COLOR} bold size={11} />
           <Arrow x1={60} y1={412} x2={500} y2={412} color={LIGHT_COLOR} />
@@ -462,7 +508,35 @@ function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | nul
           <SvgLines x={500} y={440} lines={['the light arrives;', 'it is seen from Earth']} fill={LIGHT_COLOR} anchor="middle" size={9} />
           <SvgLines x={280} y={404} lines={[`${SUPERNOVA.distanceMpc} Mpc = ${millions(run.lightYears)} million light-years`]} fill={TEXT_COLOR} bold anchor="middle" size={10} />
           <SvgLines x={280} y={432} lines={['travel time = distance ÷ the speed of light']} fill={MUTED_COLOR} anchor="middle" size={9} />
-          <SvgLines x={280} y={height - 8} lines={['not to scale in time: the strip only shows the order']} fill={MUTED_COLOR} anchor="middle" size={9} />
+          <SvgLines x={280} y={492} lines={['not to scale in time: the strip only shows the order']} fill={MUTED_COLOR} anchor="middle" size={9} />
+          {/* Prediction 2's guess: how long before May 2023, on a log scale of years, beside the calculated travel time. */}
+          {travelGuess !== null && (() => {
+            const stripY = 546
+            const yx = (years: number) => 60 + ((Math.log10(years) + 1) / 9) * 440
+            const x = yx(travelGuessYears(travelGuess))
+            const real = yx(predictionTravelYears())
+            const boxX = Math.min(Math.max(x - 150, 10), VIEW_WIDTH - 310)
+            return (
+              <g>
+                <SvgLines x={20} y={stripY - 24} lines={['Your guess for Prediction 2: how long before May 2023 the star exploded (a log scale of years)']} fill={GUESS_COLOR} size={11} />
+                <line x1={60} y1={stripY} x2={500} y2={stripY} stroke={MUTED_COLOR} strokeWidth={1} />
+                {([[0, '1 year'], [3, '1,000 years'], [6, '1 million years'], [8, '100 million years']] as const).map(([e, label]) => (
+                  <g key={e}>
+                    <line x1={yx(10 ** e)} y1={stripY - 4} x2={yx(10 ** e)} y2={stripY + 4} stroke={MUTED_COLOR} />
+                    <SvgLines x={yx(10 ** e)} y={stripY - 8} lines={[label]} fill={MUTED_COLOR} size={9} anchor="middle" />
+                  </g>
+                ))}
+                <line x1={real} y1={stripY - 12} x2={real} y2={stripY + 12} stroke={COLLAPSE_COLOR} strokeWidth={2.5} />
+                <SvgLines x={real} y={stripY + 24} lines={[`the calculated time, ${millions(predictionTravelYears())} million years`]} fill={COLLAPSE_COLOR} size={9} anchor="middle" />
+                <polygon points={`${x},${stripY - 8} ${x + 8},${stripY} ${x},${stripY + 8} ${x - 8},${stripY}`} fill={GUESS_COLOR} />
+                <line x1={x} y1={stripY + 8} x2={x} y2={stripY + 34} stroke={GUESS_COLOR} strokeWidth={2} />
+                <rect x={boxX} y={stripY + 34} width={300} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+                <text x={boxX + 150} y={stripY + 51} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+                  YOUR GUESS: {TRAVEL_SHORT[travelGuess]}
+                </text>
+              </g>
+            )
+          })()}
         </g>
       )}
     </svg>
@@ -499,6 +573,115 @@ interface CatchingASupernovaExperimentProps {
   onTutorComplete?: () => void
 }
 
+// ---- Part 2's drawing: your settings beside the published ones (the learner's own choice, pink; the reference marks, yellow) ----
+const DA_LEFT = 40
+const DA_RIGHT = 520
+const DA_ROW_TOP = 56
+const DA_ROW_STEP = 82
+const DA_HEIGHT = DA_ROW_TOP + 3 * DA_ROW_STEP
+const REF_COLOR = '#fde047' // yellow: a reference value
+
+function YourSupernovaDrawing({ settings }: { settings: { coreMassSolar: number; coreRadiusKm: number; windSpeedKmS: number } }) {
+  const mine = supernovaDrawingValues(settings)
+  const ref = supernovaDrawingReference()
+  const sc = DRAWING_SCALES
+  const logX = (v: number, r: { min: number; max: number }) => DA_LEFT + (Math.log(v / r.min) / Math.log(r.max / r.min)) * (DA_RIGHT - DA_LEFT)
+  const linX = (v: number, r: { min: number; max: number }) => DA_LEFT + ((v - r.min) / (r.max - r.min)) * (DA_RIGHT - DA_LEFT)
+  const rows = [
+    {
+      key: 'collapse', title: 'The energy the collapse frees, in erg (a logarithmic scale)', x: (v: number) => logX(v, sc.collapseErg), mine: mine.collapseErg, ref: ref.collapseErg,
+      ticks: [1e53, 2e53, 5e53, 1e54], tickLabel: (v: number) => sciText(v, 0), valueText: (v: number) => `${sciText(v)} erg`, refName: 'the usual core',
+    },
+    {
+      key: 'light', title: 'The visible light is 1 part in N of the collapse’s energy (a logarithmic scale)', x: (v: number) => logX(v, sc.lightOneIn), mine: mine.lightOneIn, ref: ref.lightOneIn,
+      ticks: [1e4, 2e4, 5e4, 1e5, 2e5], tickLabel: (v: number) => `${v / 1000}k`, valueText: (v: number) => `1 in ${Math.round(v).toLocaleString('en-US')}`, refName: 'the usual core',
+    },
+    {
+      key: 'shed', title: 'How many years before the explosion the outer gas was shed', x: (v: number) => linX(v, sc.outerShedYears), mine: mine.outerShedYears, ref: ref.outerShedYears,
+      ticks: [0, 2, 4, 6, 8, 10, 12, 14], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(1)} years`, refName: 'the authors’ 50 km/s',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={DA_HEIGHT}
+        viewBox={`0 0 ${VIEW_WIDTH} ${DA_HEIGHT}`}
+        style={svgStyle}
+        role="img"
+        aria-label="Three short scales for your own settings: the energy the collapse frees, the visible light as a share of it, and how many years before the explosion the outer gas was shed, each with the published value marked and your value marked"
+      >
+        <text x={DA_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Drawing A: your settings beside the published ones
+        </text>
+        <text x={DA_LEFT} y={40} fill={MUTED_COLOR} fontSize="10">
+          Each scale has a yellow line for the published value and a pink dot for your own setting.
+        </text>
+        {rows.map((row, i) => {
+          const y0 = DA_ROW_TOP + i * DA_ROW_STEP
+          return (
+            <g key={row.key}>
+              <text x={DA_LEFT} y={y0} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                {row.title}
+              </text>
+              <rect x={DA_LEFT} y={y0 + 8} width={DA_RIGHT - DA_LEFT} height={14} fill={MUTED_COLOR} opacity={0.3} />
+              <line x1={row.x(row.ref)} y1={y0 + 4} x2={row.x(row.ref)} y2={y0 + 26} stroke={REF_COLOR} strokeWidth={2.5} />
+              <circle cx={row.x(row.mine)} cy={y0 + 15} r={5.5} fill={YOURS_COLOR} />
+              {row.ticks.map((t) => (
+                <g key={t}>
+                  <line x1={row.x(t)} y1={y0 + 24} x2={row.x(t)} y2={y0 + 29} stroke={TEXT_COLOR} />
+                  <text x={row.x(t)} y={y0 + 40} fill={TEXT_COLOR} fontSize="9" textAnchor={row.x(t) <= DA_LEFT + 1 ? 'start' : row.x(t) >= DA_RIGHT - 1 ? 'end' : 'middle'}>
+                    {row.tickLabel(t)}
+                  </text>
+                </g>
+              ))}
+              <text x={DA_LEFT} y={y0 + 56} fill={MUTED_COLOR} fontSize="10">
+                <tspan fill={YOURS_COLOR}>pink: yours, {row.valueText(row.mine)}</tspan>
+                <tspan> · </tspan>
+                <tspan fill={REF_COLOR}>yellow: {row.refName}, {row.valueText(row.ref)}</tspan>
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+        <p style={paragraph}>
+          <strong>How to read Drawing A.</strong> It puts the numbers of your settings in one place, each on its own short scale, with a yellow line for the published value to compare them with. It follows the settings above, so it changes when you change them.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The first scale</strong> is the energy that the collapse frees for your core (its mass and radius), in erg, on a logarithmic scale (each step is a multiple, not an addition); the <span style={{ color: REF_COLOR }}>yellow line</span> is the usual core of {SUPERNOVA.coreMassSolar} Suns and {SUPERNOVA.coreRadiusKm} km.{' '}
+            <strong>The second scale</strong> is how many times the collapse’s energy is bigger than the visible light: “1 in 40,000” means the light is one part in forty thousand of it; “k” means thousand. <strong>The third scale</strong> is how many years before the explosion the outer edge of the dense gas was shed, for the speed you chose; the yellow line is the authors’ assumption of {SUPERNOVA.windSpeedKmS} km/s.
+          </li>
+          <li>
+            <strong>The pink dot</strong> on each scale is your own setting. <strong>At the published settings</strong> all three dots sit on their yellow lines, so change a setting to see them move.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment.</strong> The collapse of a {SUPERNOVA.coreMassSolar}-Sun core to {SUPERNOVA.coreRadiusKm} km frees about {sciText(ref.collapseErg)} erg. The visible light is {sciText(SUPERNOVA.lightErg, 0)} erg, so the light is 1 part in {Math.round(ref.lightOneIn).toLocaleString('en-US')}. Gas at {SUPERNOVA.gasShellRadiiCm[1].toExponential(0)} cm moving at {SUPERNOVA.windSpeedKmS} km/s took {ref.outerShedYears.toFixed(1)} years to get there.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <strong>What to look for.</strong>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Look at</strong> the pink dot on the first scale. <strong>What it means:</strong> a core of {settings.coreMassSolar} Suns and {settings.coreRadiusKm} km frees {sciText(mine.collapseErg)} erg, against {sciText(ref.collapseErg)} for the usual core. <strong>Why it matters:</strong> a heavier or smaller core frees more energy, because the energy goes as the mass squared divided by the radius.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the second scale. <strong>What it means:</strong> for your core the visible light is 1 part in {Math.round(mine.lightOneIn).toLocaleString('en-US')}, against 1 in {Math.round(ref.lightOneIn).toLocaleString('en-US')}. <strong>Why it matters:</strong> whichever core you choose, the light stays a tiny share, so most of the energy leaves some other way.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the third scale. <strong>What it means:</strong> at {settings.windSpeedKmS} km/s the outer gas was shed {mine.outerShedYears.toFixed(1)} years before the explosion, against {ref.outerShedYears.toFixed(1)}. <strong>Why it matters:</strong> a faster gas covers the same distance in less time, and the speed was assumed, not measured.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> the visible light’s range, the gas’s radii (from the first spectra) and nothing about the core itself. <em>Calculated here:</em> the energy (G × M² ÷ R), the share and the years (radius ÷ speed). <em>Imagined for the question:</em> the core and the speed you choose. The pink dots are your own settings; the yellow lines are the published ones.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: CatchingASupernovaExperimentProps) {
   const [sharePrediction, setSharePrediction] = useState<VisibleShareAnswer | null>(null)
   const [travelPrediction, setTravelPrediction] = useState<LightTravelAnswer | null>(null)
@@ -510,6 +693,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
   const [speedChoice, setSpeedChoice] = useState<number>(SUPERNOVA.windSpeedKmS)
   const hasRun = status !== 'idle'
   const done = status === 'complete'
+  const realOneIn = predictionLightOneIn()
   const bothPredicted = sharePrediction !== null && travelPrediction !== null
 
   // Presentation only: advances one stage at a time. The numbers do not depend on this timer (CLAUDE.md §11).
@@ -642,7 +826,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
       matters: 'the flash we photograph is only a tiny share of the energy of the event. This is what you were asked to guess in Prediction 1. Where the rest of the collapse’s energy goes is for the tutor.',
     },
     {
-      look: 'the white dashed line, the Sun’s whole-life output.',
+      look: 'the amber dashed line, the Sun’s whole-life output.',
       means: `it marks the energy the Sun will give out over about ten billion years, ${sciText(ergFromJoules(sunLifetimeEnergyJ()))} erg. The blast’s motion is about ${inSunLifetimes(result.gasMotionJ).toFixed(1)} of that, the collapse about ${Math.round(inSunLifetimes(result.collapseJ))} times it, and the visible light only about ${inSunLifetimes(result.lightJ).toFixed(3)} of it.`,
       matters: `the supernova’s light is about ${(inSunLifetimes(result.lightJ) * 100).toFixed(1)} percent of all the Sun will ever give out (up to about ${(inSunLifetimes(joulesFromErg(SUPERNOVA.lightRangeErg[1])) * 100).toFixed(0)} percent at the top of the range), released in weeks. That is a great deal of light, and it is still a tiny share of what the collapse frees.`,
     },
@@ -822,8 +1006,8 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other values for the
             collapsing core and the speed of the gas. Nothing here is graded. Your predictions are your own guesses, made before you see anything: they
-            do not change the pictures or the tables, which come from the physics and the published numbers. They are shown again beside the results so you can compare. What
-            does change the pictures and Table 4 is the “Now try it yourself” controls, which appear after the run finishes.
+            do not change the pictures or the tables, which come from the physics and the published numbers. They are drawn on Picture 3 in white, in a box marked YOUR GUESS, and shown again beside the results so you can compare. What
+            does change the pictures and Table 4 is the “Now try it yourself” controls, which appear after the run finishes. Their marks are pink, and they never change the real marks, the published numbers or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -866,6 +1050,10 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
         </div>
 
         <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: what the teams think the star weighed, the gas it shed in its last years, and where the energy of the collapse went and how long ago the light set out. Nothing here tells you the answers. When Picture 3 is drawn, your guesses appear on it in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
             right, and neither gives the share of the light or the distance. */}
@@ -987,6 +1175,10 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureOne.slice(0, stage >= 2 ? 3 : 2)} />
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> every range is a team’s published estimate of the star’s mass (Pledger and Shara; Kilpatrick and others; Niu and others; Soraisam and others; and the others named in the picture); some were read only in a summary, as the picture says.{' '}
+              <em>Calculated here:</em> only where each range is drawn. <em>Imagined for the question:</em> nothing. This picture carries no guess mark and does not change with your settings: neither prediction is about it.
+            </p>
           </div>
         )}
         {stage >= 3 && (
@@ -1014,11 +1206,15 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureTwo} />
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> the inner and outer edges of the dense gas, from the first spectra (Jacobson-Galan and others, 2023). <em>Calculated here:</em> the years before the explosion, from the time = radius ÷ speed, with the speed taken as 50 km/s (the authors’ assumption).{' '}
+              <em>Imagined for the question:</em> nothing, except the speed you choose after the run. The pink label is your own speed. This picture carries no guess mark: neither prediction is about it.
+            </p>
           </div>
         )}
         {stage >= 4 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureThree stage={stage} yours={yoursThree} />
+            <PictureThree stage={stage} yours={yoursThree} shareGuess={sharePrediction} travelGuess={travelPrediction} />
           </div>
         )}
         {stage >= 4 && (
@@ -1028,7 +1224,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
               frees; <strong>the blast</strong> (purple), the energy of motion of the gas that is thrown outward; and <strong>the visible light</strong> (yellow), the light that
               telescopes photograph. The scale along the bottom is a <strong>log scale</strong>: each step to the right, from one tick to the next, is 10 times more energy,
               so a bar that looks only a little longer can hold a hundred or a thousand times more. The energy is in <strong>ergs</strong>; 10 million ergs make 1 joule. The{' '}
-              <strong>white dashed line</strong> is a yardstick everyone can picture: all the energy the Sun will give out in its whole life.
+              <strong>amber dashed line</strong> is a yardstick everyone can picture: all the energy the Sun will give out in its whole life.
             </p>
             {stage >= 5 && (
               <p style={paragraph}>
@@ -1050,24 +1246,64 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
                 </>
               )}
             </p>
+            <p style={paragraph}>
+              <strong>The thin line under the three bars, with the white diamond and the YOUR GUESS box,</strong> is your guess for Prediction 1: the energy that would come out as visible light if your guessed share were right, on the same scale as the bars. The short yellow line on it is the
+              calculated light. It is only where you guessed, not a result.
+              {stage >= 5 && (
+                <>
+                  {' '}
+                  <strong>The second thin line, at the bottom, with its white diamond and YOUR GUESS box,</strong> is your guess for Prediction 2: how long before May 2023 the star exploded, on a logarithmic scale of years (each step is ten times the one before). The short red line on it is the calculated travel time of the light. It
+                  is only where you guessed, not a result.
+                </>
+              )}{' '}
+              Neither guess moves when you change anything in Part 2.
+            </p>
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureThree.slice(0, stage >= 5 ? 4 : 3)} />
+            <LookForList
+              items={[
+                {
+                  look: 'the white diamond on the first thin line, beside the yellow line.',
+                  means: `the calculated light is 1 part in about ${Math.round(realOneIn).toLocaleString('en-US')} of the energy of the collapse; your guess was ${sharePrediction !== null ? SHARE_SHORT[sharePrediction] : ''}, which puts ${sharePrediction !== null ? sciText(shareGuessErg(sharePrediction)) : ''} erg into light.`,
+                  matters: 'the bars are on a scale where each step is ten times more energy, so a guess of one part in ten, one in a hundred or one in ten thousand is a whole step or two away from the next: the picture shows at once how far a guess is.',
+                },
+                ...(stage >= 5
+                  ? [
+                      {
+                        look: 'the white diamond on the second thin line, beside the red line.',
+                        means: `the light set out about ${millions(predictionTravelYears())} million years before May 2023; your guess was ${travelPrediction !== null ? TRAVEL_SHORT[travelPrediction] : ''}, at ${travelPrediction !== null ? travelGuessYears(travelPrediction).toLocaleString('en-US') : ''} years.`,
+                        matters: 'on a logarithmic scale the three possible answers are far apart, so a wrong order of magnitude is a long way along the line: we see M101 as it was millions of years ago, not as it is now.',
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> the visible light (the literature range, 10⁴⁹ to 10⁵⁰ erg), the gas’s motion (about 10⁵¹ erg), the distance to M101 (Riess and others, 2022) and the Sun’s output. <em>Calculated here:</em> the energy of the collapse (G × M² ÷ R, for a neutron star of {SUPERNOVA.coreMassSolar} Suns
+              and {SUPERNOVA.coreRadiusKm} km) and the light’s travel time (distance ÷ the speed of light). <em>Imagined for the question:</em> nothing, except the core you choose after the run. The pink mark is your own core; the white diamonds are your guesses.
+            </p>
           </div>
         )}
 
-        {/* The controls (after the run): the core and the speed of the gas. They add a white mark to Pictures 2 and 3, and fill Table 4. */}
+        {done && (
+          <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+            We are about to try other values for the collapsing core and for the speed of the gas. Your choices add pink marks to Pictures 2 and 3, fill the drawing in this part and Table 4. They never change the real marks, the published numbers or your guesses.
+          </PartHeader>
+        )}
+
+        {/* The controls (after the run): the core and the speed of the gas. They add a pink mark to Pictures 2 and 3, and fill Table 4. */}
         {done && (
           <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
-            <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
+            <h3 style={{ marginTop: 0 }}>Your settings</h3>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               Your predictions do not change the pictures or Table 4, because the results come from the physics, not from your guesses. These settings do: change one and watch
-              the white marks in Pictures 2 and 3 above, and Table 4 below, follow it. Picture 1 does not change, because the mass estimates are the teams’, not yours. While every
+              the pink marks in Pictures 2 and 3 above, and Table 4 below, follow it. Picture 1 does not change, because the mass estimates are the teams’, not yours. While every
               setting is on its published value, Table 4 says “the same” in every row, so change a setting to see it move. Each choice is a trial value: it shows what would
               happen with that number, and does not say that the real star is like that.
             </p>
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the collapsing core? (solar masses) It moves the white mark in Picture 3.</p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the collapsing core? (solar masses) It moves the pink mark in Picture 3.</p>
             <ChoiceButtons options={SUPERNOVA.coreMassChoicesSolar} value={coreMassChoice} onChange={setCoreMassChoice} format={(v) => `${v}${v === SUPERNOVA.coreMassSolar ? ' (the usual value)' : ''}`} />
             <p style={{ ...paragraph, fontWeight: 'bold' }}>How big is the core after it collapses? (radius in kilometres)</p>
             <ChoiceButtons options={SUPERNOVA.coreRadiusChoicesKm} value={coreRadiusChoice} onChange={setCoreRadiusChoice} format={(v) => `${v} km${v === SUPERNOVA.coreRadiusKm ? ' (the usual value)' : ''}`} />
@@ -1075,7 +1311,7 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
               A core of {coreMassChoice} Suns, {coreRadiusChoice} km in radius, frees {sciText(mine.collapseErg)} erg ({Math.round(mine.sunLifetimes.collapse)} times the Sun’s whole-life output). The light,{' '}
               {sciText(ergFromJoules(mine.lightJ))} erg, is then 1 part in {oneInText(mine.lightOneIn)} of it.
             </p>
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>How fast was the gas moving? (kilometres a second) It moves the white label in Picture 2.</p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How fast was the gas moving? (kilometres a second) It moves the pink label in Picture 2.</p>
             <ChoiceButtons options={SUPERNOVA.windSpeedChoicesKmS} value={speedChoice} onChange={setSpeedChoice} format={(v) => `${v} km/s${v === SUPERNOVA.windSpeedKmS ? ' (the authors’ assumption)' : ''}`} />
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
               At {speedChoice} km/s the gas now at the inner and outer edges left the star {mine.gasShedYearsBefore[0].toFixed(1)} and {mine.gasShedYearsBefore[1].toFixed(1)} years before the explosion. A faster
@@ -1084,10 +1320,18 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
           </div>
         )}
 
+        {done && <YourSupernovaDrawing settings={settings} />}
+
+        {done && (
+          <PartHeader color="#0f766e" title="Part 3: The results">
+            We are about to read the numbers: your predictions beside the results, a check-up that sets what we would expect beside what was found, and four tables, each with a note. A guess never changes them. The settings you chose in Part 2 change Table 4, and the page says which.
+          </PartHeader>
+        )}
+
         {/* The results, shown only after the run completes: the status label, the predictions again, the check-up, four tables, and the links kept back until now. */}
         {done && (
           <div style={{ marginTop: '2rem' }}>
-            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <h3 style={{ marginTop: 0 }}>The numbers behind the pictures</h3>
             <p style={{ ...paragraph, padding: '0.75rem 1rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px', fontSize: '0.875rem' }}>
               <strong>Where this stands (as of October 2026).</strong> <strong>Strong evidence:</strong> a red supergiant exploded in M101 in May 2023 (the star was photographed
               before it blew up, and the first spectra showed gas it had shed). <strong>Strong evidence from theory and from one earlier supernova (SN 1987A):</strong> almost all
@@ -1426,6 +1670,11 @@ export function CatchingASupernovaExperiment({ onComplete, onTutorComplete }: Ca
               </li>
             </ul>
           </div>
+        )}
+        {done && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
         )}
         {/* The tutor, after the results: observe, compare with the predictions, a conceptual question, then the explanation. */}
         {done && sharePrediction !== null && travelPrediction !== null && (

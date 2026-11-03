@@ -111,9 +111,9 @@ export function CatchingASupernovaTutor({ sharePrediction, travelPrediction, onE
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 3. Which bar is the longest and which is the shortest? Remember that each step along the scale is 10 times more energy, so roughly how many times longer is the longest than the shortest? And in Picture 1, do the seven estimates of the star’s mass agree with each other?'}
+              'Look at Picture 3. Your guesses are drawn in white, in boxes marked YOUR GUESS, on thin lines under the bars and at the bottom: where do they sit compared with the yellow and red lines? Which bar is the longest and which is the shortest? Remember that each step along the scale is 10 times more energy, so roughly how many times longer is the longest than the shortest? And in Picture 1, do the seven estimates of the star’s mass agree with each other?'}
             {tutorStep === 'compare' &&
-              `You predicted that the visible light would be ${shareWords[sharePrediction]} of the energy the collapse frees, and that the star really exploded ${travelWords[travelPrediction]} before May 2023. Now look at Tables 1 to 3 and at Pictures 1, 2 and 3. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that the visible light would be ${shareWords[sharePrediction]} of the energy the collapse frees, and that the star really exploded ${travelWords[travelPrediction]} before May 2023. Compare the white diamonds in Picture 3 with the yellow line (the light) and the red line (the travel time). Then look at Tables 1 to 3 and at Pictures 1, 2 and 3. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               'The star was photographed before it exploded, and seven teams worked out its mass from those pictures and others. They did not all agree. What would you want to know about each method before deciding which one to trust?'}
           </p>
