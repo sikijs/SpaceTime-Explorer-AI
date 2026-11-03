@@ -140,3 +140,93 @@ export function runClockHeight(heightM: number, seconds: number, precision: numb
     canResolve: ratio >= 1,
   }
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks, the check-up and Part 2's drawing ----
+
+// Prediction 1's case: two clocks 1 metre apart, after a year. Prediction 2's case: a clock good to 1 part in 10^19.
+export const PREDICTION_HEIGHT_M = 1
+export const PREDICTION_PRECISION = 1e-19
+
+// The value each answer names, for the white marker: the gap in seconds (3 microseconds, 3 nanoseconds or 3 picoseconds) and the height in metres
+// (1 metre, 1 centimetre or 1 millimetre).
+export const GAP_GUESS_SECONDS: Record<TimeScale, number> = { microsecond: 3e-6, nanosecond: 3e-9, picosecond: 3e-12 }
+export const HEIGHT_GUESS_METRES: Record<LengthScale, number> = { metre: 1, centimetre: 0.01, millimetre: 0.001 }
+export function gapGuessSeconds(scale: TimeScale): number {
+  return GAP_GUESS_SECONDS[scale]
+}
+export function heightGuessMetres(scale: LengthScale): number {
+  return HEIGHT_GUESS_METRES[scale]
+}
+// The real numbers the two guesses are about.
+export function predictionGapSeconds(): number {
+  return timeGap(PREDICTION_HEIGHT_M, SECONDS_PER_YEAR)
+}
+export function predictionHeightMetres(): number {
+  return smallestHeight(PREDICTION_PRECISION)
+}
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export interface ClockHeightCheckUpRow {
+  label: string
+  expected: number
+  found: number
+  unit: string
+  sigmas: number | null // for the Wisconsin row
+  reading: CheckUpReading // the found value against the expected one; no cut-off is invented
+}
+function compareValues(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+// NIST's 2010 release (33 centimetres higher, over a lifetime of 79 years): "about 90 billionths of a second" (Table 3's source).
+export const NIST_2010 = { heightM: 0.33, years: 79, effectSeconds: 90e-9 }
+// The check-up: three published numbers beside what the same physics gives. It does not depend on the learner's controls or guesses.
+export function clockHeightCheckUp(): ClockHeightCheckUpRow[] {
+  const sigmas = sigmasFromExpected(WISCONSIN_2023.measured, WISCONSIN_2023.statistical, WISCONSIN_2023.systematic, WISCONSIN_2023.expected)
+  const nistFound = timeGap(NIST_2010.heightM, NIST_2010.years * SECONDS_PER_YEAR)
+  return [
+    {
+      label: 'Wisconsin 2023: the measured gradient against the expected one (units of 10⁻¹⁹ per centimetre)',
+      expected: WISCONSIN_2023.expected,
+      found: WISCONSIN_2023.measured,
+      unit: '10⁻¹⁹ per cm',
+      sigmas,
+      reading: compareValues(WISCONSIN_2023.measured, WISCONSIN_2023.expected),
+    },
+    {
+      label: 'JILA 2022: the effect across a millimetre against the clock’s precision (the effect must be at least the precision to be seen)',
+      expected: JILA_2022.precision,
+      found: rateDifference(JILA_2022.millimetres / 1000),
+      unit: 'fraction',
+      sigmas: null,
+      reading: compareValues(rateDifference(JILA_2022.millimetres / 1000), JILA_2022.precision),
+    },
+    {
+      label: 'NIST 2010: the effect of 33 centimetres over 79 years, this experiment’s arithmetic against NIST’s “about 90 billionths of a second”',
+      expected: NIST_2010.effectSeconds,
+      found: nistFound,
+      unit: 's',
+      sigmas: null,
+      reading: compareValues(nistFound, NIST_2010.effectSeconds),
+    },
+  ]
+}
+
+// Part 2's drawing: the learner's three choices beside a reference value, each on its own logarithmic scale.
+export const DRAWING_SCALES = {
+  rate: { min: 1e-20, max: 1e-11 },
+  gapSeconds: { min: 1e-16, max: 1e-3 }, // from 1 hour at 1 mm to 1 year at 10 km
+  smallestM: { min: 1e-6, max: 1e5 },
+}
+export interface ClockHeightDrawingValues {
+  rate: number
+  gapSeconds: number
+  smallestM: number
+}
+export function clockHeightDrawingValues(heightM: number, seconds: number, precision: number): ClockHeightDrawingValues {
+  return { rate: rateDifference(heightM), gapSeconds: timeGap(heightM, seconds), smallestM: smallestHeight(precision) }
+}
+// The reference marks: a metre (the rate and the gap after a year) and the JILA clock's smallest height.
+export function clockHeightDrawingReference(): ClockHeightDrawingValues {
+  return { rate: rateDifference(1), gapSeconds: timeGap(1, SECONDS_PER_YEAR), smallestM: smallestHeight(JILA_2022.precision) }
+}

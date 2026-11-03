@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import {
+  clockHeightCheckUp,
+  clockHeightDrawingReference,
+  clockHeightDrawingValues,
+  DRAWING_SCALES,
   exactRateDifference,
+  gapGuessSeconds,
+  heightGuessMetres,
+  NIST_2010,
+  PREDICTION_HEIGHT_M,
+  PREDICTION_PRECISION,
+  predictionGapSeconds,
+  predictionHeightMetres,
   G_EARTH,
   gapAnswer,
   heightAnswer,
@@ -186,5 +197,67 @@ describe('the module stands alone (test 10)', () => {
   it('imports nothing from the other experiments\' physics modules', () => {
     const source = readFileSync(new URL('./clockHeight.ts', import.meta.url), 'utf8')
     expect(source).not.toMatch(/^import /m)
+  })
+})
+
+describe('audit update: the guess marks, the check-up and Part 2 drawing', () => {
+  it('Prediction 1\'s case (1 metre, one year) gaps by 3.45 nanoseconds, and the guess values are 3 microseconds, 3 nanoseconds and 3 picoseconds (increasing powers of a thousand)', () => {
+    expect(PREDICTION_HEIGHT_M).toBe(1)
+    const byHand = (9.81 * 1 * 31_557_600) / (299_792_458 * 299_792_458)
+    expect(predictionGapSeconds()).toBeCloseTo(byHand, 20)
+    expect(predictionGapSeconds()).toBeCloseTo(3.445e-9, 12)
+    expect(gapGuessSeconds('microsecond')).toBe(3e-6)
+    expect(gapGuessSeconds('nanosecond')).toBe(3e-9)
+    expect(gapGuessSeconds('picosecond')).toBe(3e-12)
+    expect(gapGuessSeconds('microsecond') / gapGuessSeconds('nanosecond')).toBeCloseTo(1000, 6)
+    expect(timeScale(predictionGapSeconds())).toBe('nanosecond')
+    expect(gapAnswer()).toBe('nanosecond')
+  })
+  it('Prediction 2\'s case (a clock good to 1e-19) sees 0.916 millimetres, and the guess values are 1 m, 1 cm and 1 mm', () => {
+    expect(PREDICTION_PRECISION).toBe(1e-19)
+    const byHand = (1e-19 * 299_792_458 * 299_792_458) / 9.81
+    expect(predictionHeightMetres()).toBeCloseTo(byHand, 12)
+    expect(predictionHeightMetres()).toBeCloseTo(9.16e-4, 5)
+    expect(heightGuessMetres('metre')).toBe(1)
+    expect(heightGuessMetres('centimetre')).toBe(0.01)
+    expect(heightGuessMetres('millimetre')).toBe(0.001)
+    expect(lengthScale(predictionHeightMetres())).toBe('millimetre')
+    expect(heightAnswer()).toBe('millimetre')
+  })
+  it('the check-up has three rows: Wisconsin 12.4 against 10.9 ("more", 0.58 sigma), JILA\'s 1 millimetre effect of 1.09e-19 against 7.6e-21 ("more") and NIST 33 cm over 79 years of about 89.8 nanoseconds against 90 ("less")', () => {
+    const rows = clockHeightCheckUp()
+    expect(rows).toHaveLength(3)
+    expect(rows[0]).toMatchObject({ expected: 10.9, found: 12.4, reading: 'more' })
+    expect(rows[0].sigmas).toBeCloseTo(1.5 / Math.sqrt(0.7 ** 2 + 2.5 ** 2), 10)
+    expect(rows[0].sigmas).toBeCloseTo(0.58, 2)
+    expect(rows[1].expected).toBe(7.6e-21)
+    expect(rows[1].found).toBeCloseTo((9.81 * 0.001) / (299_792_458 * 299_792_458), 25)
+    expect(rows[1].found / rows[1].expected).toBeCloseTo(14.4, 1)
+    expect(rows[1].reading).toBe('more')
+    expect(NIST_2010).toEqual({ heightM: 0.33, years: 79, effectSeconds: 90e-9 })
+    expect(rows[2].found).toBeCloseTo(8.98e-8, 10)
+    expect(rows[2].reading).toBe('less')
+  })
+  it('Part 2\'s drawing: the values match the run, the references are a metre, a year and the JILA clock, and every control setting fits the scales', () => {
+    const ref = clockHeightDrawingReference()
+    expect(ref.rate).toBeCloseTo(1.0916e-16, 19)
+    expect(ref.gapSeconds).toBeCloseTo(3.445e-9, 12)
+    expect(ref.smallestM).toBeCloseTo(smallestHeight(JILA_2022.precision), 15)
+    const v = clockHeightDrawingValues(1, SECONDS_PER_YEAR, 1e-18)
+    expect(v.gapSeconds).toBeCloseTo(predictionGapSeconds(), 20)
+    expect(v.smallestM).toBeCloseTo(smallestHeight(1e-18), 12)
+    for (const h of [0.001, 1, 10000]) {
+      for (const seconds of [3600, SECONDS_PER_YEAR]) {
+        for (const precision of [1e-21, 1e-18, 1e-14]) {
+          const d = clockHeightDrawingValues(h, seconds, precision)
+          expect(d.rate).toBeGreaterThanOrEqual(DRAWING_SCALES.rate.min)
+          expect(d.rate).toBeLessThanOrEqual(DRAWING_SCALES.rate.max)
+          expect(d.gapSeconds).toBeGreaterThanOrEqual(DRAWING_SCALES.gapSeconds.min)
+          expect(d.gapSeconds).toBeLessThanOrEqual(DRAWING_SCALES.gapSeconds.max)
+          expect(d.smallestM).toBeGreaterThanOrEqual(DRAWING_SCALES.smallestM.min)
+          expect(d.smallestM).toBeLessThanOrEqual(DRAWING_SCALES.smallestM.max)
+        }
+      }
+    }
   })
 })
