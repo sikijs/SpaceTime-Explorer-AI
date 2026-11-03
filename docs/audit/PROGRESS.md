@@ -66,7 +66,7 @@ Columns: **Report** = gap report written; **Gaps chosen** = owner has said which
 | Cosmic Horizons 1 | [Hubble tension](cosmic-horizons/01-gap-report.md) | M | 2026-11-02 | 2026-11-03 ([draft](cosmic-horizons/01-draft-wording.md)) | 2026-11-03 | 2026-11-03 | 2026-11-03 | 2026-11-03 (see notes) | 2026-11-03 | `31a16e7`, `4fb67a5`, `9ae0a20` |  |
 | Cosmic Horizons 2 | [Does dark energy change?](cosmic-horizons/02-gap-report.md) | M | 2026-11-02 (Rule E added 2026-11-03) | 2026-11-03 ([draft](cosmic-horizons/02-draft-wording.md)) | 2026-11-03 | 2026-11-03 | 2026-11-03 | 2026-11-03 (see notes) | 2026-11-03 | `965f0db`, `f1cc968`, docs |
 | Cosmic Horizons 3 | [How lumpy is the universe?](cosmic-horizons/03-gap-report.md) | M | 2026-11-02 (Rule E added 2026-11-03) | 2026-11-03 ([draft](cosmic-horizons/03-draft-wording.md)) | 2026-11-03 | 2026-11-03 | 2026-11-03 | 2026-11-03 (see notes) | 2026-11-03 | `2b3952e`, `4f1c9b7`, docs |
-| Cosmic Horizons 4 | [Can the universe weigh a neutrino?](cosmic-horizons/04-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
+| Cosmic Horizons 4 | [Can the universe weigh a neutrino?](cosmic-horizons/04-gap-report.md) | M | 2026-11-02 (Rule E added 2026-11-03) |  |  |  |  |  |  |  |
 | Cosmic Horizons 5 | [How early can galaxies form?](cosmic-horizons/05-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Cosmic Horizons 6 | [Where is the dark matter?](cosmic-horizons/06-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
 | Cosmic Horizons 7 | [Wide binary stars](cosmic-horizons/07-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
