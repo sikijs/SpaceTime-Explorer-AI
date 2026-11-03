@@ -59,3 +59,7 @@ BetelgeuseCompanionExperiment.tsx (Pictures 1 and 3, intro line, source lines), 
 
 ## Not checked
 Browser rendering; contents of the pre-run links; Tables 2 to 4 notes read in full; the Words panel.
+
+## Resolution (2026-11-02)
+Every Rule A gap above was fixed at the owner's direction, and Drawing A was added to "Now try it yourself" at the owner's request: see `12-update-draft.md` (the approved draft) and the specification's "Implementation Notes" (commits `c0e2776`, `45e0edc`, `f0149c2`). The white clash (O1) was resolved by recolouring the settings (pink) and the 5 sigma marker (lime). Left as it was, by the owner's decision: Picture 1's look-for wording "the white line". The unused 'past Earth' value of the `Reach` type (O2) was not removed (not chosen).
+

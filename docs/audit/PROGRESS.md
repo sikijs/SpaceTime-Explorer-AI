@@ -74,8 +74,10 @@ Columns: **Report** = gap report written; **Gaps chosen** = owner has said which
 | Cosmic Horizons 9 | [Can a clock tell its height?](cosmic-horizons/09-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
 | Cosmic Horizons 10 | [Does time tick faster on the Moon?](cosmic-horizons/10-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
 | Cosmic Horizons 11 | [The fastest spacecraft](cosmic-horizons/11-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
-| Cosmic Horizons 12 | [Betelgeuse](cosmic-horizons/12-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
+| Cosmic Horizons 12 | [Betelgeuse](cosmic-horizons/12-gap-report.md) | M | 2026-11-02 | 2026-11-02 | 2026-11-02 | 2026-11-02 | 2026-11-02 | 2026-11-02 (see notes) | 2026-11-02 | `c0e2776`, `45e0edc`, `f0149c2` |
 | Cosmic Horizons 13 | [Catching a supernova](cosmic-horizons/13-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Cosmic Horizons 14 | [What makes a white dwarf explode?](cosmic-horizons/14-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 
 Other audit work: Relativity 10 outcome bug fixed 2026-11-02 (`9c3e0d2`). Open decisions for the owner are listed in `docs/AUDIT-PLAN.md` §7 and, for this round, in `docs/audit/INDEX.md`.
+
+Notes: Cosmic Horizons 12 was the first experiment audited. Browser check covered most answers and all three Drawing A lines; not checked: "past Jupiter" on Picture 1, "1 in 15" on Picture 3, narrow widths, other browsers, keyboard use, a real learner. `CLAUDE.md` §14 ("Where it applies"), `AGENTS.md` and `docs/PROJECT.md` still say Experiments 1 to 14 of Cosmic Horizons follow the earlier rule; the owner has not asked for those statements to change.
