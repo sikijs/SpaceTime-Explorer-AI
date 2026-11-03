@@ -158,3 +158,63 @@ Touch: `BetelgeuseCompanionExperiment.tsx` (a new `DrawingA` component and its p
 - Which placement, (a), (b) or (c).
 - Whether strip 2's non-zero start is acceptable, or whether it should start at 0 (the 0.05-year differences between settings would then be about 3 pixels wide).
 - Not checked: the narrow-width appearance of the drawing; the unit "AU" and "give-or-takes" are already defined in Pictures 1 and 3.
+
+---
+
+## 9. The page in four Parts (owner's request, 2026-11-02: "the whole page separated as part 1, 2, 3, 4 with a line separating each part", as in the learner's Experiment 24)
+
+**Status: approved (leads as written; the papers list stays in Part 3) and built; commit `4f00a1e`.** Experiment 12 was built before this layout existed. It has the same pieces in the same order, but they run on without Part headings or dividing lines. This change adds them. It follows Experiment 24's pattern (specification 25): each Part starts with a thick coloured line, a coloured heading and a short "What we are about to do" lead. The introduction, its "Want to know more?" list and the "Words and formulas" panel stay above Part 1, as in Experiment 24, with no heading.
+
+### 9.1 Where the Parts go
+
+| Part | Heading | Colour | What it holds today | Change |
+|---|---|---|---|---|
+| 1 | Predict, then watch | amber `#d97706` | the two predictions, Run, the five-stage run, Pictures 1 to 3 and their captions | wrapped in a Part 1 section with a heading and lead |
+| 2 | Now try it yourself | pink `#be185d` | the controls and Drawing A | its box (a grey rounded border) becomes the Part 2 section; heading and lead added; its existing note stays |
+| 3 | The results | teal `#0f766e` | the status label, the check-up, Tables 1 to 4, the predictions block, and the "papers behind these results" list | wrapped as a Part 3 section; the heading "Results" becomes "Part 3: The results"; lead added |
+| 4 | The tutor | blue `#0066cc` | the tutor | wrapped in a Part 4 section with a heading, a lead and two short points |
+
+These are the same colours and structure as the other experiments built this way (15 files already use them). Nothing inside a Part moves, and no picture, table, number or tutor step changes. Parts 2, 3 and 4 appear when they do today (after the run, and for Part 4 once both predictions are made).
+
+### 9.2 New wording (for approval, line by line)
+
+**Part 1 heading and lead:**
+
+> **Part 1: Predict, then watch**
+>
+> **What we are about to do.** This part is the experiment itself. You make your two predictions and press Run. The pictures that the run draws show fixed things: a size worked out from the star’s angle and distance, an orbit worked out for the companion, and the chance that noise alone makes a spot as strong as the reported one. They are the same for everyone. When they are drawn, your guesses appear on them in white, so you can see how each guess compares with the real result. The real pictures stay the same whatever you guess.
+
+**Part 2 heading and lead** (placed above the existing note, which stays as it is):
+
+> **Part 2: Now try it yourself**
+>
+> **What we are about to do.** Above, you saw the published values. Here you can try other values for the distance, the two masses and the strength of the signal, and see each one beside the real value.
+
+**Part 3 heading and lead:**
+
+> **Part 3: The results**
+>
+> **What we are about to do.** Here are the numbers behind the pictures, set out in tables, each with a short guide to reading it. Tables 1 to 3 and the check-up are the real numbers, so they never change with your guesses or with your settings in Part 2. Table 4 follows your settings in Part 2, and never your guesses.
+
+**Part 4 heading, lead and points:**
+
+> **Part 4: The tutor**
+>
+> **What we are about to do.** You have now seen the pictures and the tables. This last part is a short conversation with a tutor, to help you make sense of them.
+> - **Three questions, one at a time.** First, the tutor asks what you see in Pictures 1 and 2. Second, it asks you to compare your own guesses (the white marks) with the real results. Third, it asks one bigger question, about what would make you trust the claim of a companion more, and what would make you wait. Type a few words for each. Nothing is graded, and a short answer is fine.
+> - **No verdict until you have replied.** The tutor will not say whether your guesses matched until you have answered all three, so you can think it through first.
+
+### 9.3 Checks the wording rests on
+
+- The Part 1 lead's "a size worked out from the star’s angle and distance, an orbit worked out for the companion, and the chance…" matches Pictures 1 to 3; it gives none of the answers (the size, the orbit time or the chance), so it keeps §12.
+- The Part 4 points match the tutor as built: observe (Pictures 1 and 2), compare (your guesses and the white marks), a conceptual question about trusting the claim, then the explanation, which is the only place the predictions are marked.
+- Table 4 and the check-up: "Tables 1 to 3 and the check-up" are the fixed numbers; Table 4 is the one that follows the Part 2 settings. Checked against the page's own table notes before building.
+
+### 9.4 What it would touch
+
+`BetelgeuseCompanionExperiment.tsx` only (section wrappers, headings and leads). Specification and `DEVELOPMENT-STATE.md`, with approval. No tutor or module change.
+
+### 9.5 Not decided
+
+- Whether the "papers behind these results" list should stay inside Part 3 (proposed) or sit after Part 4, as a separate closing block. In Experiment 24 the links list comes after the run, inside the results part.
+- Not checked yet: how the four dividing lines look in the browser.

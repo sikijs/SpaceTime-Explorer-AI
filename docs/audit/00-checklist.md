@@ -41,6 +41,16 @@ Mark each item **Met**, **Partly met** or **Not met**, or **N/A** with a reason.
 - D3. A "Want to know more?" list of links, visible from the start: paper or official release for each result, and a plain official page for each background idea; or a recorded "no plain official page found" gap (rule 3(c)).
 - D4. Results reading guide (§29 rule 4; same as Rule B).
 
+## Rule E: The page in four Parts (added 2026-11-02, after Cosmic Horizons 12; not yet a written rule in `CLAUDE.md`)
+The pattern began with Experiment 15 and is used by every experiment built to the newer layout (for example the learner's Experiment 24). Check, by reading the component:
+- E1. The page below the introduction is split into **Part 1: Predict, then watch** (the predictions, Run, the stages and the pictures), **Part 2: Now try it yourself** (the controls and any drawing that follows them), **Part 3: The results** and **Part 4: The tutor**. An experiment with no controls or no tutor step says which Part it lacks.
+- E2. Each Part starts with a thick coloured line, a coloured heading and a short "What we are about to do" lead, in the shared colours: amber `#d97706`, pink `#be185d`, teal `#0f766e`, blue `#0066cc`.
+- E3. The introduction, the "Want to know more?" list (Cosmic Horizons) and any "Words and formulas" panel stay above Part 1, with no Part heading.
+- E4. Each lead is accurate for its Part (Part 1's gives none of the answers; Part 3's says which tables never change with a guess or a setting; Part 4's matches the tutor's steps).
+- E5. Where the experiment has more than one part of its own (Spacetime Geometry 5 and 6 have three and two), say how they map onto the four Parts. Do not decide it.
+
+The first 71 gap reports were written before this item existed. They do not cover Rule E, and each experiment's Step 1 re-read must add it.
+
 ## Other things to record (not rules, but the owner needs to know)
 - O1. Anything that conflicts with `docs/PROJECT.md`, `AGENTS.md` or the specification (CLAUDE.md §3, §20). Report, do not decide.
 - O2. Anything in the learner-facing text that looks wrong, early (§12) or unsourced. Report, do not fix.
