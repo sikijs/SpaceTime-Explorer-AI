@@ -2,20 +2,32 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import {
   A0,
+  boostGuessRatio,
+  boostGuessSpeed,
   boostRange,
   contaminatedRatio,
+  contaminationGuessRatio,
   contaminationRange,
+  DRAWING_SCALES,
+  gammaCheckUp,
   darkMatterInsideSolarMasses,
   fakeBoostPercent,
   fractionToFake,
   GAMMA_MOND_WIDE_BINARY,
   orbitalSpeed,
+  PREDICTION_PAIR,
+  PREDICTION_TRIPLES,
+  predictionPairSpeeds,
+  predictionTriplesRatio,
   PUBLISHED_RESULTS,
   pullInA0,
   pullOnPair,
   runWideBinaries,
   speedBoost,
   speedBoostPercent,
+  toyCheckUp,
+  wideBinariesDrawingReference,
+  wideBinariesDrawingValues,
 } from './wideBinaries'
 
 // Tests for Cosmic Horizons Experiment 7 (docs/experiments/cosmic-horizons/07-wide-binary-stars.md, "Required Physics Tests").
@@ -229,5 +241,75 @@ describe('the module stands alone', () => {
   it('imports nothing from the other experiments\' physics modules', () => {
     const source = readFileSync(new URL('./wideBinaries.ts', import.meta.url), 'utf8')
     expect(source).not.toMatch(/^import /m)
+  })
+})
+
+describe('audit update: guess marks, check-up and Part 2 drawing', () => {
+  it('Prediction 1\'s pair (1.5 Suns, 10,000 AU) moves at 364.8 m/s under Newton and 1.1832 times that under a 1.4 pull', () => {
+    expect(PREDICTION_PAIR).toEqual({ massSuns: 1.5, separationAu: 10000 })
+    const speeds = predictionPairSpeeds()
+    expect(speeds.newton).toBeCloseTo(364.8, 0)
+    expect(speeds.boosted / speeds.newton).toBeCloseTo(Math.sqrt(1.4), 12)
+  })
+  it('the boost guess ratios are 1, 1.2, 1.4 and 2, increasing, and the true ratio (1.183) is nearest to the "about 20 percent" answer', () => {
+    expect(boostGuessRatio('none')).toBe(1)
+    expect(boostGuessRatio('about20')).toBe(1.2)
+    expect(boostGuessRatio('about40')).toBe(1.4)
+    expect(boostGuessRatio('about100')).toBe(2)
+    expect(boostGuessSpeed('about20')).toBeCloseTo(predictionPairSpeeds().newton * 1.2, 10)
+    const truth = speedBoost(GAMMA_MOND_WIDE_BINARY)
+    const names = ['none', 'about20', 'about40', 'about100'] as const
+    const nearest = [...names].sort((a, b) => Math.abs(boostGuessRatio(a) - truth) - Math.abs(boostGuessRatio(b) - truth))[0]
+    expect(nearest).toBe('about20')
+    expect(boostRange(speedBoostPercent(GAMMA_MOND_WIDE_BINARY))).toBe('about20')
+  })
+  it('Prediction 2\'s case (1 pair in 5, twice as fast) averages 1.2 times Newton\'s, and the guess ratios are 1.02, 1.2 and 2', () => {
+    expect(PREDICTION_TRIPLES).toEqual({ fraction: 0.2, factor: 2 })
+    expect(predictionTriplesRatio()).toBeCloseTo(1.2, 12)
+    expect(contaminationGuessRatio('about2')).toBe(1.02)
+    expect(contaminationGuessRatio('about20')).toBe(1.2)
+    expect(contaminationGuessRatio('about100')).toBe(2)
+    expect(contaminationRange(0.2, 2)).toBe('about20')
+  })
+  it('the check-up lists the five boost factors and says which of 1 and 1.4 each published range includes', () => {
+    const rows = gammaCheckUp()
+    expect(rows).toHaveLength(5)
+    const by = (value: number) => rows.find((r) => r.value === value)!
+    expect(by(1.43)).toMatchObject({ includesNewton: false, includesBoost: true, reading: 'the boost only' })
+    expect(by(1.49)).toMatchObject({ includesNewton: false, includesBoost: true, reading: 'the boost only' })
+    expect(by(1.6)).toMatchObject({ includesNewton: false, includesBoost: false, reading: 'neither' })
+    expect(by(1.0)).toMatchObject({ includesNewton: true, includesBoost: false, reading: 'Newton only' })
+    expect(by(1.56)).toMatchObject({ includesNewton: false, includesBoost: true, reading: 'the boost only' })
+    expect(by(1.6).low).toBeCloseTo(1.46, 12)
+    expect(by(1.6).high).toBeCloseTo(1.84, 12)
+  })
+  it('the toy check-up compares the case\'s 20 percent fake boost with the 18.3 percent that a 1.4 pull gives: "more"', () => {
+    const t = toyCheckUp()
+    expect(t.expected).toBeCloseTo((Math.sqrt(1.4) - 1) * 100, 10)
+    expect(t.found).toBeCloseTo(20, 10)
+    expect(t.reading).toBe('more')
+  })
+  it('Part 2\'s drawing: the values match the run, the references are the Prediction 1 pair, 1 a0 and 18.3 percent, and every control setting fits the scales', () => {
+    const ref = wideBinariesDrawingReference()
+    expect(ref.newtonSpeed).toBeCloseTo(predictionPairSpeeds().newton, 10)
+    expect(ref.pullInA0).toBe(1)
+    expect(ref.fakeBoostPercent).toBeCloseTo(18.32, 2)
+    const v = wideBinariesDrawingValues(1.5, 10000, 0.2, 2)
+    expect(v.newtonSpeed).toBeCloseTo(364.8, 0)
+    expect(v.pullInA0).toBeCloseTo(0.74, 2)
+    expect(v.fakeBoostPercent).toBeCloseTo(20, 10)
+    for (const mass of [0.5, 1.5, 3]) {
+      for (const sep of [500, 10000, 30000]) {
+        for (const fraction of [0, 0.5]) {
+          for (const factor of [1, 3]) {
+            const d = wideBinariesDrawingValues(mass, sep, fraction, factor)
+            expect(d.newtonSpeed).toBeLessThanOrEqual(DRAWING_SCALES.speed.max)
+            expect(d.pullInA0).toBeGreaterThanOrEqual(DRAWING_SCALES.pullA0.min)
+            expect(d.pullInA0).toBeLessThanOrEqual(DRAWING_SCALES.pullA0.max)
+            expect(d.fakeBoostPercent).toBeLessThanOrEqual(DRAWING_SCALES.fakeBoostPercent.max)
+          }
+        }
+      }
+    }
   })
 })

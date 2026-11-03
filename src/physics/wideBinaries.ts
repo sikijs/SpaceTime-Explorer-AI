@@ -294,3 +294,85 @@ export function runWideBinaries(totalMassSuns: number, separationAu: number, gam
     darkMatterInsideSolarMasses: darkMatterInsideSolarMasses(separationAu),
   }
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks, the check-up and Part 2's drawing ----
+
+// Prediction 1's case: a pair of 1.5 Suns 10,000 AU apart, with a pull 1.4 times Newton's. Prediction 2's case: 1 pair in 5 is a triple, each moving twice as fast.
+export const PREDICTION_PAIR = { massSuns: 1.5, separationAu: 10000 }
+export const PREDICTION_TRIPLES = { fraction: 0.2, factor: 2 }
+
+// The speeds of the Prediction 1 pair under Newton's law and under the stronger pull, in m/s (from the module's own rules).
+export function predictionPairSpeeds(): { newton: number; boosted: number } {
+  const newton = orbitalSpeed(PREDICTION_PAIR.massSuns, PREDICTION_PAIR.separationAu)
+  return { newton, boosted: newton * speedBoost(GAMMA_MOND_WIDE_BINARY) }
+}
+
+// Prediction 1's white marker: the speed, as a multiple of Newton's, that each answer names (no difference, 20 percent faster, 40 percent faster, twice).
+export const BOOST_GUESS_RATIOS: Record<BoostRange, number> = { none: 1, about20: 1.2, about40: 1.4, about100: 2 }
+export function boostGuessRatio(range: BoostRange): number {
+  return BOOST_GUESS_RATIOS[range]
+}
+export function boostGuessSpeed(range: BoostRange): number {
+  return predictionPairSpeeds().newton * boostGuessRatio(range)
+}
+// Prediction 2's white marker: the average speed, as a multiple of Newton's, that each answer names (a 2, 20 or 100 percent rise).
+export const CONTAMINATION_GUESS_RATIOS: Record<ContaminationRange, number> = { about2: 1.02, about20: 1.2, about100: 2 }
+export function contaminationGuessRatio(range: ContaminationRange): number {
+  return CONTAMINATION_GUESS_RATIOS[range]
+}
+// The average speed of the Prediction 2 case, as a multiple of Newton's (1.2).
+export function predictionTriplesRatio(): number {
+  return contaminatedRatio(PREDICTION_TRIPLES.fraction, PREDICTION_TRIPLES.factor)
+}
+
+// The check-up: each published boost factor with its range, set beside the two lines it is read against: Newton's law (1) and the MOND papers' 1.4.
+// "Includes" is a plain fact about the published range (the value less its lower give-or-take to the value plus its upper one); no cut-off is invented.
+export type GammaReading = 'both' | 'Newton only' | 'the boost only' | 'neither'
+export interface GammaCheckUpRow {
+  name: string
+  year: number
+  binaries: number | null
+  value: number
+  low: number
+  high: number
+  includesNewton: boolean
+  includesBoost: boolean
+  reading: GammaReading
+}
+export function gammaCheckUp(): GammaCheckUpRow[] {
+  return PUBLISHED_RESULTS.filter((r) => r.kind === 'gamma').map((r) => {
+    const value = r.value as number
+    const low = value - r.errorMinus
+    const high = value + r.errorPlus
+    const includesNewton = low <= 1 && 1 <= high
+    const includesBoost = low <= GAMMA_MOND_WIDE_BINARY && GAMMA_MOND_WIDE_BINARY <= high
+    const reading: GammaReading = includesNewton && includesBoost ? 'both' : includesNewton ? 'Newton only' : includesBoost ? 'the boost only' : 'neither'
+    return { name: r.name, year: r.year, binaries: r.binaries, value, low, high, includesNewton, includesBoost, reading }
+  })
+}
+// The toy model's check-up row: the fake boost of Prediction 2's case beside the boost the MOND papers expect (both in percent).
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export function toyCheckUp(): { expected: number; found: number; reading: CheckUpReading } {
+  const expected = speedBoostPercent(GAMMA_MOND_WIDE_BINARY)
+  const found = fakeBoostPercent(PREDICTION_TRIPLES.fraction, PREDICTION_TRIPLES.factor)
+  return { expected, found, reading: found === expected ? 'the same' : found > expected ? 'more' : 'less' }
+}
+
+// Part 2's drawing: the numbers of the learner's pair and triples, each on its own scale; the reference marks are the Prediction 1 pair's speed,
+// 1 a0 (the pull below which MOND says gravity changes) and the boost the MOND papers expect.
+export const DRAWING_SCALES = {
+  speed: { min: 0, max: 3000 }, // m/s, linear
+  pullA0: { min: 0.01, max: 1000 }, // logarithmic
+  fakeBoostPercent: { min: 0, max: 100 }, // linear
+}
+export interface WideBinariesDrawingValues {
+  newtonSpeed: number
+  pullInA0: number
+  fakeBoostPercent: number
+}
+export function wideBinariesDrawingValues(massSuns: number, separationAu: number, fraction: number, factor: number): WideBinariesDrawingValues {
+  return { newtonSpeed: orbitalSpeed(massSuns, separationAu), pullInA0: pullInA0(massSuns, separationAu), fakeBoostPercent: fakeBoostPercent(fraction, factor) }
+}
+export function wideBinariesDrawingReference(): WideBinariesDrawingValues {
+  return { newtonSpeed: predictionPairSpeeds().newton, pullInA0: 1, fakeBoostPercent: speedBoostPercent(GAMMA_MOND_WIDE_BINARY) }
+}
