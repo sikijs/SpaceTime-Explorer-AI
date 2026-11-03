@@ -100,9 +100,9 @@ export function AntimatterGravityTutor({ fallsUpPrediction, readingPrediction, o
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 2. Where do the markers for −1, 0 and 1 sit, compared with the measured value 0.75 and the three bars around it? Which of the three possibilities is the closest to the measured value, and which is the furthest?'}
+              'Look at Picture 2. Your guesses are drawn in white, in boxes marked YOUR GUESS, under the markers for −1 and 1. Where do the markers for −1, 0 and 1 sit, compared with the measured value 0.75 and the three bars around it? Which of the three possibilities is the closest to the measured value, and which is the furthest?'}
             {tutorStep === 'compare' &&
-              `You predicted that the measurement is ${fallsUpWords[fallsUpPrediction]}, and that a measurement of 0.75 give or take about 0.2 ${readingWords[readingPrediction]}. Now look at Table 2 and at Picture 2. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that the measurement is ${fallsUpWords[fallsUpPrediction]}, and that a measurement of 0.75 give or take about 0.2 ${readingWords[readingPrediction]}. Compare the two white YOUR GUESS boxes in Picture 2 with the verdicts above them. Then look at Table 2. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               'The ALPHA paper reports a ratio of 0.75, yet the team does not say that antimatter falls more slowly than ordinary matter. Why not? What would you need to see before you could say it?'}
           </p>

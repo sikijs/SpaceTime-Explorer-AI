@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   ALPHA_2023,
+  antimatterCheckUp,
+  antimatterDrawingReference,
+  antimatterDrawingValues,
   combinedUncertainty,
   compatibility,
   fallDistance,
+  DRAWING_SCALES,
+  FALLS_UP_RATIO,
   G_EARTH,
+  LIKE_MATTER_RATIO,
   runAntimatterGravity,
   sigmaNeeded,
   sigmasFrom,
@@ -22,7 +28,7 @@ import type { LookFor } from './WideBinariesExperiment'
 
 // Cosmic Horizons, Experiment 8 (docs/experiments/cosmic-horizons/08-does-antimatter-fall-down.md).
 // Step 6 builds the three controls (the ratio, the error bar with the possibility to test, and the difference to see), shown after the run, which change Picture 1's
-// white dashed curve, Picture 2's third line, Picture 3's white bar and a last row in Tables 1 and 2, and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stage 1, Picture 2 at stages 2 to 4 and Picture 3 at stage 5, each with a guide. Step 3 built the two predictions. Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of the ALPHA-g trap (an
+// pink dashed curve, Picture 2's third line, Picture 3's pink bar and a last row in Tables 1 and 2, and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stage 1, Picture 2 at stages 2 to 4 and Picture 3 at stage 5, each with a guide. Step 3 built the two predictions. Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of the ALPHA-g trap (an
 // illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 with its guide. Step 7 built the tutor (AntimatterGravityTutor.tsx) and, in App, the chapter summary. All wording is draft for the owner's line-by-line
 // approval (CLAUDE.md §28.1), written to the standard of §29. The introduction does not give the measured ratio, the sigma values or the verdicts (that
 // is what the two predictions ask, §12). The interface only displays numbers from src/physics (CLAUDE.md §9); the only calculation here is where a
@@ -38,15 +44,18 @@ const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
 const MATTER_COLOR = '#38bdf8' // sky blue: ordinary matter (a ratio of 1)
 const ATOM_COLOR = '#fde047' // yellow: an antihydrogen atom
-const BARRIER_COLOR = '#fb7185' // rose: a magnetic barrier
+const BARRIER_COLOR = '#ef4444' // red: a magnetic barrier
 const ESCAPE_COLOR = '#4ade80' // green: an atom escaping
 const DETECTOR_COLOR = '#c084fc' // purple: a detector
 const TRAP_LINE_COLOR = '#fbbf24' // amber: the length of the trap
 const ALPHA_COLOR = '#5eead4' // teal: ALPHA's measured value
-const NONE_COLOR = '#f472b6' // pink: no gravity (a ratio of 0)
+const NONE_COLOR = '#a78bfa' // violet: no gravity (a ratio of 0)
 const UP_COLOR = '#fb923c' // orange: falls up (a ratio of -1)
-const YOURS_COLOR = '#ffffff' // white, dashed: the learner's own choice
-const VERDICT_COLORS: Record<Compatibility, string> = { compatible: '#4ade80', borderline: '#fbbf24', disfavoured: '#fb923c', ruledOut: '#fb7185' }
+const YOURS_COLOR = '#f472b6' // pink, dashed: the learner's own choice (Part 2)
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+const GREY_BAR_COLOR = '#cbd5e1' // light grey: a computed error bar (the two together; the pretend one)
+const FLASH_COLOR = '#fde68a' // pale yellow: the flash when an atom annihilates
+const VERDICT_COLORS: Record<Compatibility, string> = { compatible: '#4ade80', borderline: '#fbbf24', disfavoured: '#fb923c', ruledOut: '#ef4444' }
 const VERDICT_WORDS: Record<Compatibility, string> = { compatible: 'compatible', borderline: 'borderline', disfavoured: 'disfavoured', ruledOut: 'ruled out' }
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -68,6 +77,25 @@ const svgStyle = {
 } as const
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const PredictionTag = ({ n }: { n: 1 | 2 }) => (
+  <span style={{ marginLeft: '0.5rem', padding: '0.05rem 0.4rem', fontSize: '0.75rem', fontWeight: 'bold', border: `1px solid ${GUESS_COLOR}`, borderRadius: '4px', whiteSpace: 'nowrap' }}>
+    your Prediction {n}
+  </span>
+)
+const FALLS_UP_SHORT = { compatible: 'compatible', borderline: 'borderline', ruledOut: 'ruled out' } as const
+const READING_SHORT = { slower: 'slower', cannotTell: 'cannot tell', exactlyLikeMatter: 'exactly like matter' } as const
 
 // ---- The ALPHA-g trap (an illustration, not data) ----
 // What is drawn follows the Nature paper (PMC10533407, read 2026-10-21): a vertical trap held by two ring-shaped "mirror coils" (electromagnets, one at
@@ -100,7 +128,7 @@ function TrapDrawing() {
   const flash = (x: number, y: number) => (
     <polygon
       points={`${x},${y - 9} ${x + 3},${y - 3} ${x + 9},${y} ${x + 3},${y + 3} ${x},${y + 9} ${x - 3},${y + 3} ${x - 9},${y} ${x - 3},${y - 3}`}
-      fill="#ffffff"
+      fill={FLASH_COLOR}
       stroke={ESCAPE_COLOR}
       strokeWidth={1}
     />
@@ -341,7 +369,7 @@ function PictureOne({ stage, userRatio }: { stage: number; userRatio: number | n
           <path d={curvePath(MEASURED)} fill="none" stroke={ALPHA_COLOR} strokeWidth={2.5} />
           <circle cx={timeToX(timeAtTrapAlpha)} cy={distanceToY(TRAP_LENGTH_M)} r={4.5} fill={ALPHA_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
           {endLabel(MEASURED, ALPHA_COLOR, 'ratio 0.75, the', 'value ALPHA reported')}
-          {/* A ratio of 0 lies along the time axis, so it is drawn as a thick pink line on top of it. */}
+          {/* A ratio of 0 lies along the time axis, so it is drawn as a thick violet line on top of it. */}
           <line x1={P1_LEFT} y1={zeroY} x2={P1_RIGHT} y2={zeroY} stroke={NONE_COLOR} strokeWidth={3.5} />
           {endLabel(0, NONE_COLOR, 'ratio 0: no gravity,', 'it does not fall')}
           <path d={curvePath(-1)} fill="none" stroke={UP_COLOR} strokeWidth={2.5} />
@@ -358,7 +386,7 @@ function PictureOne({ stage, userRatio }: { stage: number; userRatio: number | n
   )
 }
 
-// The learner's own ratio on Picture 1: a white dashed curve, clipped to the picture, with a dot where it crosses the trap's height and a label in the
+// The learner's own ratio on Picture 1: a pink dashed curve, clipped to the picture, with a dot where it crosses the trap's height and a label in the
 // margin that is moved out of the way of the other labels.
 function UserCurve({ ratio }: { ratio: number }) {
   const zeroY = distanceToY(0)
@@ -471,11 +499,12 @@ function Marker({ ratio, axisY, sigma, stemTop, textY, head, lines }: { ratio: n
   )
 }
 
-function PictureTwo({ stage, yours }: { stage: number; yours: { sigma: number; possibility: number } | null }) {
+function PictureTwo({ stage, yours, fallsUpGuess, readingGuess }: { stage: number; yours: { sigma: number; possibility: number } | null; fallsUpGuess: FallsUpAnswer | null; readingGuess: ReadingAnswer | null }) {
   const axisY = 230
   const axis2Y = 440
   const axis3Y = 650
-  const height = yours !== null ? 790 : stage >= 4 ? 565 : 395
+  const extra = stage >= 3 ? 36 : 0 // room for the two YOUR GUESS boxes under the markers
+  const height = (yours !== null ? 790 : stage >= 4 ? 565 : 395) + extra
   const x0 = ratioToX(MEASURED)
   return (
     <svg
@@ -500,7 +529,7 @@ function PictureTwo({ stage, yours }: { stage: number; yours: { sigma: number; p
       <line x1={x0} y1={90} x2={x0} y2={axisY} stroke={ALPHA_COLOR} strokeWidth={1} strokeDasharray="2 3" />
       <RangeBar y={105} sigma={ALPHA_2023.statSys} color={ALPHA_COLOR} label={`±${ALPHA_2023.statSys}: counting and equipment`} />
       <RangeBar y={128} sigma={ALPHA_2023.simulation} color="#fbbf24" label={`±${ALPHA_2023.simulation}: the simulation`} />
-      <RangeBar y={151} sigma={COMBINED} color="#ffffff" label={`±${COMBINED.toFixed(3)}: the two together`} labelColor={TEXT_COLOR} />
+      <RangeBar y={151} sigma={COMBINED} color={GREY_BAR_COLOR} label={`±${COMBINED.toFixed(3)}: the two together`} labelColor={TEXT_COLOR} />
       <NumberLine y={axisY} />
       <circle cx={x0} cy={axisY} r={6} fill={ALPHA_COLOR} stroke={TEXT_COLOR} strokeWidth={1.5} />
 
@@ -510,22 +539,41 @@ function PictureTwo({ stage, yours }: { stage: number; yours: { sigma: number; p
           <Marker key={p.ratio} ratio={p.ratio} axisY={axisY} sigma={COMBINED} stemTop={178} textY={268} head={p.head} lines={p.lines} />
         ))}
 
+      {/* The learner's two guesses (stage 3): categories, so each is a marker only, in a box under the possibility that its question was about. */}
+      {stage >= 3 &&
+        (
+          [
+            { ratio: FALLS_UP_RATIO, text: fallsUpGuess !== null ? FALLS_UP_SHORT[fallsUpGuess] : null },
+            { ratio: LIKE_MATTER_RATIO, text: readingGuess !== null ? READING_SHORT[readingGuess] : null },
+          ] as const
+        ).map((g) =>
+          g.text === null ? null : (
+            <g key={g.ratio}>
+              <line x1={ratioToX(g.ratio)} y1={352} x2={ratioToX(g.ratio)} y2={360} stroke={GUESS_COLOR} strokeWidth={2} />
+              <rect x={ratioToX(g.ratio) - 91 + (g.ratio === FALLS_UP_RATIO ? -5 : 5)} y={360} width={182} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+              <text x={ratioToX(g.ratio) + (g.ratio === FALLS_UP_RATIO ? -5 : 5)} y={377} fill={GUESS_COLOR} fontSize="10" fontWeight="bold" textAnchor="middle">
+                YOUR GUESS: {g.text}
+              </text>
+            </g>
+          ),
+        )}
+
       {/* A smaller, pretend error bar (stage 4). */}
       {stage >= 4 && (
-        <>
+        <g transform={`translate(0 ${extra})`}>
           <text x={P2_LEFT} y={382} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
             What if the error bar were smaller? (a pretend example, not a result)
           </text>
-          <RangeBar y={408} sigma={SMALL_SIGMA} color="#ffffff" label={`±${SMALL_SIGMA.toFixed(2)}`} labelColor={TEXT_COLOR} />
+          <RangeBar y={408} sigma={SMALL_SIGMA} color={GREY_BAR_COLOR} label={`±${SMALL_SIGMA.toFixed(2)}`} labelColor={TEXT_COLOR} />
           <NumberLine y={axis2Y} />
           <circle cx={x0} cy={axis2Y} r={6} fill={ALPHA_COLOR} stroke={TEXT_COLOR} strokeWidth={1.5} />
           <Marker ratio={1} axisY={axis2Y} sigma={SMALL_SIGMA} stemTop={420} textY={478} head="ratio 1" lines={['falls like', 'ordinary matter']} />
-        </>
+        </g>
       )}
 
       {/* The learner's own error bar and possibility (after the run). */}
       {yours !== null && (
-        <>
+        <g transform={`translate(0 ${extra})`}>
           <text x={P2_LEFT} y={592} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
             Your choice: the error bar and the possibility that you picked below
           </text>
@@ -535,7 +583,7 @@ function PictureTwo({ stage, yours }: { stage: number; yours: { sigma: number; p
           {POSSIBILITIES.filter((p) => p.ratio === yours.possibility).map((p) => (
             <Marker key={p.ratio} ratio={p.ratio} axisY={axis3Y} sigma={yours.sigma} stemTop={630} textY={688} head={p.head} lines={p.lines} />
           ))}
-        </>
+        </g>
       )}
     </svg>
   )
@@ -549,7 +597,7 @@ function PictureThree({ difference, sigmas }: { difference: number; sigmas: numb
   const needed = sigmaNeeded(difference, sigmas)
   const rows: { y: number; color: string; title: string; sigma: number }[] = [
     { y: 100, color: ALPHA_COLOR, title: 'ALPHA’s measurement of 2023', sigma: COMBINED },
-    { y: 190, color: '#ffffff', title: `Needed to see a ${(difference * 100).toFixed(0)} percent difference at ${sigmas} sigma`, sigma: needed },
+    { y: 190, color: YOURS_COLOR, title: `Needed to see a ${(difference * 100).toFixed(0)} percent difference at ${sigmas} sigma`, sigma: needed },
     { y: 280, color: '#4ade80', title: 'The team’s aim: 1 percent or better', sigma: PLANNED_SIGMA },
   ]
   const height = 370
@@ -631,12 +679,12 @@ const PAPER_LINKS: { href: string; label: string; what: string }[] = [
 
 const lookForTrap: LookFor[] = [
   {
-    look: 'the two rose bars (the mirror coils) and the green arrows that leave through them.',
+    look: 'the two red bars (the mirror coils) and the green arrows that leave through them.',
     means: 'the team turns the current in both coils down, so the magnetic lids weaken. An atom that can then get past a lid leaves, through the top or through the bottom, and is not held again.',
     matters: 'gravity helps an atom going down and hinders one going up. If gravity pulls antihydrogen down, more atoms should leave through the bottom than through the top. Without a way out at both ends there would be nothing to compare.',
   },
   {
-    look: 'the white stars on the grey box, and the purple strips on both sides.',
+    look: 'the pale yellow stars on the grey box, and the purple strips on both sides.',
     means: 'an atom that leaves annihilates on the walls of the apparatus, in a flash. The detectors around the trap follow the particles from that flash and work out where it happened, which also tells the team whether it was at the top or the bottom.',
     matters: 'annihilation is how the team sees an atom at all: they cannot photograph one, so they count the flashes and where they happen.',
   },
@@ -646,6 +694,121 @@ const lookForTrap: LookFor[] = [
     matters: 'a trap this small means that very small forces matter. The atoms are so slow that a small push, such as gravity, decides which way they go.',
   },
 ]
+
+// ---- Part 2's drawing: your numbers beside the reference values (the learner's own choice, pink; the reference marks, yellow) ----
+const DA_LEFT = 40
+const DA_RIGHT = 520
+const DA_ROW_TOP = 56
+const DA_ROW_STEP = 82
+const DA_HEIGHT = DA_ROW_TOP + 3 * DA_ROW_STEP
+const REF_COLOR = '#fde047' // yellow: a reference value
+
+function YourNumbersDrawing({ ratio, sigma, possibility, difference, nSigma }: { ratio: number; sigma: number; possibility: number; difference: number; nSigma: number }) {
+  const mine = antimatterDrawingValues(ratio, sigma, possibility, difference, nSigma)
+  const ref = antimatterDrawingReference(possibility)
+  const sc = DRAWING_SCALES
+  const linX = (v: number, r: { min: number; max: number }) => DA_LEFT + ((v - r.min) / (r.max - r.min)) * (DA_RIGHT - DA_LEFT)
+  const logX = (v: number, r: { min: number; max: number }) => DA_LEFT + (Math.log(v / r.min) / Math.log(r.max / r.min)) * (DA_RIGHT - DA_LEFT)
+  const rows = [
+    {
+      key: 'distance', title: 'How far your ratio falls in one second (metres; a negative number means it rises)', x: (v: number) => linX(v, sc.distanceM), mine: mine.distanceInOneSecond, ref: ref.distanceInOneSecond,
+      ticks: [-10, -5, 0, 5, 10], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(2)} m`, refName: 'ordinary matter (ratio 1)',
+    },
+    {
+      key: 'sigmas', title: `How many sigma ALPHA’s ${MEASURED} is from the possibility ${possibility} (a logarithmic scale)`, x: (v: number) => logX(v, sc.sigmas), mine: mine.sigmas, ref: ref.sigmas,
+      ticks: [0.1, 1, 10, 100], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(2)} sigma`, refName: 'with ALPHA’s own error bar',
+    },
+    {
+      key: 'needed', title: 'The error bar a test needs to see your difference (a logarithmic scale)', x: (v: number) => logX(v, sc.errorBar), mine: mine.errorBarNeeded, ref: ref.errorBarNeeded,
+      ticks: [0.001, 0.01, 0.1, 1], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `±${v < 0.1 ? v.toFixed(4) : v.toFixed(3)}`, refName: 'ALPHA’s error bar',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={DA_HEIGHT}
+        viewBox={`0 0 ${VIEW_WIDTH} ${DA_HEIGHT}`}
+        style={svgStyle}
+        role="img"
+        aria-label="Three short scales for your own numbers: how far your ratio falls in one second, how many sigma ALPHA's measured value is from the possibility you test with your error bar, and the error bar that a test needs for your difference, each with a reference value and your value marked"
+      >
+        <text x={DA_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Drawing A: your numbers beside the real ones
+        </text>
+        <text x={DA_LEFT} y={40} fill={MUTED_COLOR} fontSize="10">
+          Each scale has a yellow line for a real value and a pink dot for your own choice.
+        </text>
+        {rows.map((row, i) => {
+          const y0 = DA_ROW_TOP + i * DA_ROW_STEP
+          return (
+            <g key={row.key}>
+              <text x={DA_LEFT} y={y0} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                {row.title}
+              </text>
+              <rect x={DA_LEFT} y={y0 + 8} width={DA_RIGHT - DA_LEFT} height={14} fill={MUTED_COLOR} opacity={0.3} />
+              <line x1={row.x(row.ref)} y1={y0 + 4} x2={row.x(row.ref)} y2={y0 + 26} stroke={REF_COLOR} strokeWidth={2.5} />
+              <circle cx={row.x(row.mine)} cy={y0 + 15} r={5.5} fill={YOURS_COLOR} />
+              {row.ticks.map((t) => (
+                <g key={t}>
+                  <line x1={row.x(t)} y1={y0 + 24} x2={row.x(t)} y2={y0 + 29} stroke={TEXT_COLOR} />
+                  <text x={row.x(t)} y={y0 + 40} fill={TEXT_COLOR} fontSize="9" textAnchor={row.x(t) <= DA_LEFT + 1 ? 'start' : row.x(t) >= DA_RIGHT - 1 ? 'end' : 'middle'}>
+                    {row.tickLabel(t)}
+                  </text>
+                </g>
+              ))}
+              <text x={DA_LEFT} y={y0 + 56} fill={MUTED_COLOR} fontSize="10">
+                <tspan fill={YOURS_COLOR}>pink: yours, {row.valueText(row.mine)}</tspan>
+                <tspan> · </tspan>
+                <tspan fill={REF_COLOR}>yellow: {row.refName}, {row.valueText(row.ref)}</tspan>
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+        <p style={paragraph}>
+          <strong>How to read Drawing A.</strong> It puts the numbers of your three choices in one place, each on its own short scale, with a yellow line for a real value to compare them with. It follows the controls above, so it changes when you change them.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The first scale</strong> is how far an atom with your ratio falls in one second, in metres (a negative number means it rises); the <span style={{ color: REF_COLOR }}>yellow line</span> is how far ordinary matter falls, {ref.distanceInOneSecond.toFixed(2)} m.{' '}
+            <strong>The second scale</strong> is how many sigma ALPHA’s {MEASURED} is from the possibility you chose to test, given your error bar, on a logarithmic scale (each step is ten times the one before); the yellow line is the same number with ALPHA’s own error bar.{' '}
+            <strong>The third scale</strong> is the error bar that a test would need to see the difference you chose at the sigma you chose, also logarithmic; the yellow line is ALPHA’s error bar, ±{COMBINED.toFixed(3)}. On the second scale a <strong>dot to the right</strong> means a possibility
+            that is further from the measured value, so it is more clearly ruled out; on the third a <strong>dot to the left</strong> means a more precise test is needed.
+          </li>
+          <li>
+            <strong>The pink dot</strong> on each scale is your own choice. <strong>At the starting settings</strong> the second dot sits on its yellow line; change a control to see them part.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment.</strong> A ratio of 1 falls ½ × 1 × {G_EARTH} × 1² = {fallDistance(1, 1).toFixed(2)} m in one second. With an error bar of 0.10, the possibility 1 is |{MEASURED} − 1| ÷ 0.10 = {antimatterDrawingValues(1, 0.1, 1, 0.2, 3).sigmas.toFixed(1)} sigma away, against {ref.sigmas.toFixed(1)} sigma with ALPHA’s bar. To see a difference of 0.20 at 3 sigma a test needs 0.20 ÷ 3 = ±{(0.2 / 3).toFixed(3)}.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <strong>What to look for.</strong>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Look at</strong> the pink dot on the first scale, against the yellow line. <strong>What it means:</strong> your ratio {ratio.toFixed(2)} {mine.distanceInOneSecond > 0 ? 'falls' : mine.distanceInOneSecond < 0 ? 'rises' : 'stays put'} {Math.abs(mine.distanceInOneSecond).toFixed(2)} m in one second, against the {ref.distanceInOneSecond.toFixed(2)} m of ordinary matter.{' '}
+            <strong>Why it matters:</strong> the sign and size of the number are what a measurement has to tell apart: down, none or up.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the second scale. <strong>What it means:</strong> with your error bar of ±{sigma.toFixed(3)}, the possibility {possibility} is {mine.sigmas.toFixed(2)} sigma from {MEASURED}, against {ref.sigmas.toFixed(2)} sigma with ALPHA’s bar.{' '}
+            <strong>Why it matters:</strong> a narrower error bar turns the same gap into more sigma, so a possibility that cannot be ruled out today could be later.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the third scale. <strong>What it means:</strong> to see a difference of {(difference * 100).toFixed(0)} percent at {nSigma} sigma the error bar must be at most ±{mine.errorBarNeeded < 0.1 ? mine.errorBarNeeded.toFixed(4) : mine.errorBarNeeded.toFixed(3)}, which is {COMBINED > mine.errorBarNeeded ? `${(COMBINED / mine.errorBarNeeded).toFixed(1)} times narrower than` : 'no narrower than'} ALPHA’s.{' '}
+            <strong>Why it matters:</strong> it says how much more precise a test must be to see a gap of the size you chose.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> ALPHA’s value {MEASURED} and its give-or-takes (ALPHA Collaboration, Nature 621, 716-722, 2023). <em>Calculated here:</em> the fall in one second, the gap in sigma and the error bar needed, from distance = ½ × ratio × g × time², gap ÷ error bar
+          and difference ÷ sigma. <em>Imagined for the question:</em> your ratio, error bar, possibility, difference and number of sigma. The pink dots are your own choice; the yellow lines are real values.
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: AntimatterGravityExperimentProps) {
   const timeAtTrapLength = timeToFall(1, TRAP_LENGTH_M) as number
@@ -701,13 +864,14 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
   const mine = runAntimatterGravity(userRatio, userSigma, difference)
   const aimPhrase =
     neededExample >= PLANNED_SIGMA
-      ? `The aim of ±${PLANNED_SIGMA} is about ${(neededExample / PLANNED_SIGMA).toFixed(1)} times narrower than the white bar, so a test that precise could see this difference at ${nSigma} sigma.`
-      : `The aim of ±${PLANNED_SIGMA} is about ${(PLANNED_SIGMA / neededExample).toFixed(1)} times wider than the white bar, so a test that precise could not yet see this difference at ${nSigma} sigma.`
+      ? `The aim of ±${PLANNED_SIGMA} is about ${(neededExample / PLANNED_SIGMA).toFixed(1)} times narrower than the pink bar, so a test that precise could see this difference at ${nSigma} sigma.`
+      : `The aim of ±${PLANNED_SIGMA} is about ${(PLANNED_SIGMA / neededExample).toFixed(1)} times wider than the pink bar, so a test that precise could not yet see this difference at ${nSigma} sigma.`
   const mineSigmas = possibility === 1 ? mine.sigmasFromMatter : possibility === 0 ? mine.sigmasFromNoGravity : mine.sigmasFromFallingUp
   const mineVerdict = possibility === 1 ? mine.verdictMatter : possibility === 0 ? mine.verdictNoGravity : mine.verdictFallingUp
   const timeAtTrapAlpha = timeToFall(MEASURED, TRAP_LENGTH_M) as number
   const alphaFallAtMatterTime = fallDistance(MEASURED, timeAtTrapLength)
   const done = status === 'complete'
+  const checkUp = antimatterCheckUp()
   const sq = (value: number) => (value * value).toFixed(4)
   // Formulas with worked examples: shown in the "Words and formulas" panel only after the run (the specification's "Results"). Every number is from the module.
   const formulaEntries: { term: string; meaning: string }[] = [
@@ -820,12 +984,12 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                 reality, a dozen here).
               </li>
               <li>
-                <strong>The two rose bars</strong> are the mirror coils, the ring-shaped electromagnets at the top and the bottom. Their magnetic fields push
+                <strong>The two red bars</strong> are the mirror coils, the ring-shaped electromagnets at the top and the bottom. Their magnetic fields push
                 the atoms back in, like lids. The team weakens both fields by turning the current down.
               </li>
               <li>
                 <strong>The grey box</strong> around the trap stands for the walls of the apparatus. The <strong>green arrows</strong> show an atom that got past a
-                lid, one upward and one downward. The <strong>white stars</strong> show the flash when it hits the wall and annihilates.
+                lid, one upward and one downward. The <strong>pale yellow stars</strong> show the flash when it hits the wall and annihilates.
               </li>
               <li>
                 <strong>The two purple dashed strips</strong> are the detectors. In reality they form a cylinder around the whole trap, so from the side you see
@@ -892,7 +1056,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other
-            ratios, other give-or-takes and other differences of your own. Nothing here is graded.
+            ratios, other give-or-takes and other differences of your own. Nothing here is graded. Your predictions never change the real pictures or tables. They are drawn on Picture 2 in white, in a box marked YOUR GUESS, so you can compare them with what was measured and calculated, and they are listed again beside the results. In Part 2 you can try other ratios, other give-or-takes and other differences. Those choices are pink: they move the pink dashed curve in Picture 1, the pink line in Picture 2 and the pink bar in Picture 3, and fill a drawing in Part 2 and the last rows of Tables 1 and 2 and Table 4, but they never change the measured value, the published results or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -924,6 +1088,10 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
         </div>
 
         <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: what a ratio means for a falling atom, what ALPHA measured and how far it is from each possibility, and how precise a test must be. Nothing here tells you the answers. When Picture 2 shows the possibilities, your guesses appear on it in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says
             which answer is right, gives a sigma, or says what the measurement found. */}
@@ -1053,7 +1221,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
             )}
             {done && (
               <li>
-                <strong>The white dashed curve</strong> is your own ratio, from control 1 below the pictures. It starts at {MEASURED}, so it lies on top of the
+                <strong>The pink dashed curve</strong> is your own ratio, from control 1 below the pictures. It starts at {MEASURED}, so it lies on top of the
                 teal curve until you move the slider. If a ratio falls so fast that its curve would leave the picture, the picture cuts it off.
               </li>
             )}
@@ -1064,7 +1232,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                   as hard as it pulls ordinary matter.
                 </li>
                 <li>
-                  <strong>The pink line</strong> is a ratio of 0. There is no pull at all, so the atom stays where it is. It lies along the time line, because
+                  <strong>The violet line</strong> is a ratio of 0. There is no pull at all, so the atom stays where it is. It lies along the time line, because
                   “fallen by 0 metres” is that line.
                 </li>
                 <li>
@@ -1090,7 +1258,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
               <LookForList
                 items={[
                   {
-                    look: 'the pink line and the orange curve, compared with the blue curve.',
+                    look: 'the violet line and the orange curve, compared with the blue curve.',
                     means: 'a ratio of 0 stays put, and a ratio of −1 rises exactly as far as ordinary matter falls: the orange curve is the blue one turned upside down.',
                     matters: 'these are the possibilities that “does antimatter fall up?” is about. The three curves, one for each, are very different from each other, so a measurement could in principle tell them apart.',
                   },
@@ -1106,6 +1274,10 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                   },
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the ratio of {MEASURED} (ALPHA Collaboration, Nature 621, 716-722, 2023) and g = {G_EARTH} m/s². <em>Calculated here:</em> every curve, from distance = ½ × ratio × g × time².{' '}
+                <em>Imagined for the question:</em> the ratios of 0 and −1 (possibilities, not results) and, after the run, your own ratio. The pink dashed curve is your own ratio. This picture carries no guess mark: neither prediction is about it.
+              </p>
             </>
           )}
         </div>
@@ -1114,7 +1286,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
         {stage >= 2 && (
           <>
             <div style={{ marginBottom: '1rem' }}>
-              <PictureTwo stage={stage} yours={done ? { sigma: userSigma, possibility } : null} />
+              <PictureTwo stage={stage} yours={done ? { sigma: userSigma, possibility } : null} fallsUpGuess={fallsUpPrediction} readingGuess={readingPrediction} />
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               <p style={paragraph}>
@@ -1130,7 +1302,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                   <strong>The three bars above the dot</strong> are three give-or-takes, each drawn from {MEASURED} minus the give or take to {MEASURED} plus it.
                   The <strong>teal bar</strong> (±{ALPHA_2023.statSys}) comes from counting too few atoms and from small faults in the equipment. The{' '}
                   <strong>amber bar</strong> (±{ALPHA_2023.simulation}) comes from the computer simulation, which links the counts to an acceleration and is
-                  itself not exact. The <strong>white bar</strong> (±{COMBINED.toFixed(3)}) is the two together.
+                  itself not exact. The <strong>light-grey bar</strong> (±{COMBINED.toFixed(3)}) is the two together.
                 </li>
                 {stage >= 3 && (
                   <>
@@ -1142,7 +1314,11 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                       <strong>The verdict</strong> uses this experiment’s own scale: <strong>compatible</strong> below 2 sigma (the measurement cannot rule the
                       possibility out), <strong>borderline</strong> from 2 to 3, <strong>disfavoured</strong> from 3 to 5 (a hint that it is wrong), and{' '}
                       <strong>ruled out</strong> at 5 or more (the usual bar for a discovery). The marker’s colour follows the verdict: green, amber, orange,
-                      rose.
+                      red.
+                    </li>
+                    <li>
+                      <strong>The white boxes marked YOUR GUESS</strong> under the markers at −1 and 1 are your two guesses: the one under −1 for Prediction 1 (is falling up compatible with the measurement?) and the one under 1 for Prediction 2
+                      (does the measurement show that it falls more slowly?). <strong>Each is only a marker:</strong> it says what you guessed, not what the numbers show, and it does not change when you change anything in Part 2.
                     </li>
                   </>
                 )}
@@ -1154,7 +1330,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                 )}
                 {done && (
                   <li>
-                    <strong>The third line</strong> (a white bar and one marker) is your own choice, from control 2 below the pictures: the error bar you set and
+                    <strong>The third line</strong> (a pink bar and one marker) is your own choice, from control 2 below the pictures: the error bar you set and
                     the one possibility you picked. It starts at ALPHA’s error bar and the possibility 1, so it begins as a copy of the first line’s marker at 1.
                     The marker’s text gives its gap, sigma and verdict for your error bar.
                   </li>
@@ -1197,6 +1373,15 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                         },
                       ]
                     : []),
+                  ...(stage >= 3
+                    ? [
+                        {
+                          look: 'the two white YOUR GUESS boxes, and the verdicts above them.',
+                          means: `the marker at −1 says ${VERDICT_WORDS[compatibility(fromUp)]} (${fromUp.toFixed(1)} sigma) and the marker at 1 says ${VERDICT_WORDS[compatibility(fromMatter)]} (${fromMatter.toFixed(1)} sigma). Your guesses were ${fallsUpPrediction !== null ? FALLS_UP_SHORT[fallsUpPrediction] : ''} for falling up and ${readingPrediction !== null ? READING_SHORT[readingPrediction] : ''} for the reading of 0.75.`,
+                          matters: 'putting your guess under the real verdict lets you see, in one place, whether the measurement can rule a possibility out (a large sigma) or cannot tell it from the measured value (a small one).',
+                        },
+                      ]
+                    : []),
                   ...(stage >= 4
                     ? [
                         {
@@ -1208,6 +1393,11 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                     : []),
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the value {MEASURED} and its two give-or-takes, ±{ALPHA_2023.statSys} and ±{ALPHA_2023.simulation} (ALPHA Collaboration, Nature 621, 716-722, 2023).{' '}
+                <em>Calculated here:</em> the combined bar (the two in quadrature, which treats them as independent), each gap in sigma and each verdict (this experiment’s own scale of 2, 3 and 5 sigma). <em>Imagined for the question:</em> the
+                three possibilities, the smaller error bar of the lower line, and your own error bar and possibility. The pink bar and marker are your own choice; the white boxes are your guesses.
+              </p>
             </div>
           </>
         )}
@@ -1226,10 +1416,10 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
               </p>
               <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>The teal bar</strong> is ALPHA’s measurement of 2023, ±{COMBINED.toFixed(2)}, the same give or take as the white bar of Picture 2.
+                  <strong>The teal bar</strong> is ALPHA’s measurement of 2023, ±{COMBINED.toFixed(2)}, the same give or take as the light-grey bar of Picture 2.
                 </li>
                 <li>
-                  <strong>The white bar</strong> is the error bar that a test would need in order to see a difference of {(diffPercent).toFixed(0)}{' '}
+                  <strong>The pink bar</strong> is the error bar that a test would need in order to see a difference of {(diffPercent).toFixed(0)}{' '}
                   percent (a gap of {difference} in the ratio) at {nSigma} sigma. This experiment uses a simple rule: the error bar needed is the
                   difference divided by the number of sigma. After the run you can change the difference and the number of sigma (control 3), and this bar
                   follows.
@@ -1250,27 +1440,37 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
               <LookForList
                 items={[
                   {
-                    look: 'the teal bar, compared with the white bar.',
+                    look: 'the teal bar, compared with the pink bar.',
                     means: `ALPHA’s bar is about ${(COMBINED / neededExample).toFixed(0)} times wider than the bar needed to see a ${(diffPercent).toFixed(0)} percent difference at ${nSigma} sigma.`,
                     matters: 'a measurement can only see differences bigger than its error bar allows. A gap smaller than that is lost in the give or take.',
                   },
                   {
-                    look: 'the green bar, compared with the white bar.',
+                    look: 'the green bar, compared with the pink bar.',
                     means: `the green bar is the precision that the team aims for. ${aimPhrase}`,
-                    matters: 'the narrower the bar, the smaller the difference that a test could see. A bar that is wider than the white bar cannot see the difference you chose; a bar that is narrower can.',
+                    matters: 'the narrower the bar, the smaller the difference that a test could see. A bar that is wider than the pink bar cannot see the difference you chose; a bar that is narrower can.',
                   },
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> ALPHA’s error bar, ±{COMBINED.toFixed(3)}, from its two give-or-takes, and the team’s aim of “1 percent or better” (a review, arXiv:2503.22471). <em>Calculated here:</em>{' '}
+                the error bar that a test needs (the difference ÷ the number of sigma). <em>Imagined for the question:</em> the difference to see and the number of sigma, which you choose. The pink bar is your own choice. This picture
+                carries no guess mark: neither prediction is about it.
+              </p>
             </div>
           </>
         )}
 
         {/* The three controls (after the run): the specification's "Learner Controls". */}
         {done && (
+          <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+            We are about to try other numbers of our own: another ratio for a falling atom, another error bar and possibility to test, and another difference to see. Your choices move the pink marks in Pictures 1, 2 and 3, fill the drawing in this part and the last rows of Tables 1 and 2 and Table 4. They never change the measured value, the published results or your guesses.
+          </PartHeader>
+        )}
+        {done && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', border: '1px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Try your own numbers</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
-              The three controls below change the pictures and tables. The measured value, {MEASURED}, stays fixed. The “Start over” button puts everything back.
+              <strong>Your guesses do not change the drawings or tables. These settings do.</strong> The ratio, the error bar, the possibility, the difference and the number of sigma below are trial values of your own, not measurements. Control 1 moves Picture 1’s pink dashed curve, the first scale of Drawing A and the last row of Table 1; control 2 moves Picture 2’s pink line and marker, the second scale and the last row of Table 2; control 3 moves Picture 3’s pink bar, the third scale and Table 4. None of them changes the measured value, {MEASURED}, the other curves, bars and markers, Table 3 or your guesses. At the starting settings the pink marks sit on or near the real ones, so change a control to see them move. The “Start over” button puts everything back.
             </p>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.25rem' }}>1. What if antimatter fell with a ratio of…?</p>
@@ -1298,7 +1498,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                 </>
               )}{' '}
               <span style={{ color: 'var(--text-muted)' }}>
-                (½ × {userRatio.toFixed(2)} × {G_EARTH} × 1² = {mine.distanceInOneSecond.toFixed(2)} m. Picture 1 shows it as the white dashed curve
+                (½ × {userRatio.toFixed(2)} × {G_EARTH} × 1² = {mine.distanceInOneSecond.toFixed(2)} m. Picture 1 shows it as the pink dashed curve
                 {Math.abs(fallDistance(userRatio, P1_MAX_SECONDS)) > P1_MAX_DISTANCE ? ', which leaves the picture before 0.5 seconds' : ''}.)
               </span>
             </p>
@@ -1370,7 +1570,7 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
               To see a difference of {diffPercent} percent at {nSigma} sigma, the error bar must be at most <strong>±{neededExample < 0.1 ? neededExample.toFixed(4) : neededExample.toFixed(3)}</strong>.{' '}
               <span style={{ color: 'var(--text-muted)' }}>
                 ({difference.toFixed(2)} ÷ {nSigma} = {neededExample < 0.1 ? neededExample.toFixed(4) : neededExample.toFixed(3)}. ALPHA’s ±{COMBINED.toFixed(3)} is{' '}
-                {COMBINED > neededExample ? `${(COMBINED / neededExample).toFixed(1)} times too wide` : `narrow enough`} for this. Picture 3 shows it as the white bar.)
+                {COMBINED > neededExample ? `${(COMBINED / neededExample).toFixed(1)} times too wide` : `narrow enough`} for this. Picture 3 shows it as the pink bar.)
               </span>
             </p>
           </div>
@@ -1378,6 +1578,16 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
 
         {/* The results (after the run): the status label, three tables, and the links kept back until now (CLAUDE.md §12). The tables only report
             numbers; the explanation is the tutor's. */}
+        {done && (
+          <YourNumbersDrawing ratio={userRatio} sigma={userSigma} possibility={possibility} difference={difference} nSigma={nSigma} />
+        )}
+
+        {done && (
+          <PartHeader color="#0f766e" title="Part 3: The results">
+            We are about to read the numbers: first a check-up of the measured value against the three possibilities, then four tables. A guess never changes them. The choices you made in Part 2 change the last rows of Tables 1 and 2 and Table 4, and the page says which.
+          </PartHeader>
+        )}
+
         {done && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Results</p>
@@ -1391,6 +1601,70 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
               These tables only report numbers, step by step. Table 1 repeats the four ratios of Picture 1, with your own ratio as its last row. Table 2 is Picture 2’s three possibilities, with your own error bar and possibility as its last row. Table 3
               lists the published results and plans that this experiment uses, as the sources state them. Table 4 follows your choice of difference. Your predictions are not marked here.
             </p>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>The check-up: what we would expect beside what was found</p>
+            <ResultsTable
+              minWidth={620}
+              head={['What was checked', 'What we would expect', 'What was found', 'Reading']}
+              rows={[
+                ...checkUp.slice(0, 3).map((row) => [
+                  <>
+                    {row.label}
+                    {row.expected === LIKE_MATTER_RATIO && <PredictionTag n={2} />}
+                    {row.expected === FALLS_UP_RATIO && <PredictionTag n={1} />}
+                  </>,
+                  `a ratio of ${row.expected}`,
+                  `${MEASURED}, which is ${(row.sigmas as number).toFixed(1)} sigma from it: ${VERDICT_WORDS[row.verdict as Compatibility]}`,
+                  <strong key="r">{row.reading}</strong>,
+                ]),
+                [
+                  checkUp[3].label,
+                  chanceText(checkUp[3].expected),
+                  chanceText(checkUp[3].found),
+                  <strong key="c">{checkUp[3].reading}</strong>,
+                ],
+              ]}
+            />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.5rem 0 0.75rem' }}>
+              The check-up does not follow the choices you made in Part 2 or your guesses. “More” and “less” compare the measured {MEASURED} with the possibility (or one chance with the other); the verdict words use this experiment’s own scale
+              (compatible below 2 sigma, borderline 2 to 3, disfavoured 3 to 5, ruled out at 5 or more). No other cut-off is invented.
+            </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Against ordinary matter.</strong> <em>What it is:</em> ALPHA’s ratio beside a ratio of 1, how ordinary matter falls. <em>What it means:</em> {MEASURED} is {(1 - MEASURED).toFixed(2)} below 1, which is {checkUp[0].sigmas?.toFixed(1)} sigma, so the measurement cannot tell it from 1.{' '}
+                  <em>Why it matters:</em> the measurement does not show that antihydrogen falls more slowly than matter, and it does not show that it falls exactly like it either. The weak link is the give or take, about a fifth of g.
+                </li>
+                <li>
+                  <strong>Against no gravity.</strong> <em>What it is:</em> the same ratio beside 0. <em>What it means:</em> {MEASURED} is {MEASURED} above 0, which is {checkUp[1].sigmas?.toFixed(1)} sigma: {VERDICT_WORDS[checkUp[1].verdict as Compatibility]}.{' '}
+                  <em>Why it matters:</em> it is a hint that antihydrogen is pulled by the Earth, not strong enough by this scale to rule out no gravity; the paper’s own method gives a chance of {chanceText(checkUp[3].expected)}.
+                </li>
+                <li>
+                  <strong>Against falling up.</strong> <em>What it is:</em> the same ratio beside −1. <em>What it means:</em> the gap is {(MEASURED + 1).toFixed(2)}, which is {checkUp[2].sigmas?.toFixed(1)} sigma: {VERDICT_WORDS[checkUp[2].verdict as Compatibility]}.{' '}
+                  <em>Why it matters:</em> antihydrogen is attracted to the Earth, not pushed away, to within the give or take. This is the part of the result that is firm.
+                </li>
+                <li>
+                  <strong>The two chances.</strong> <em>What it is:</em> the chance, if there were no gravity, of a result this far away, from this experiment’s bell curve and from the paper’s own method. <em>What it means:</em> {chanceText(checkUp[3].found)} against {chanceText(checkUp[3].expected)}:{' '}
+                  {checkUp[3].reading}. <em>Why it matters:</em> the simple bell curve here lands close to the paper’s own number, so it is a fair stand-in, though the paper’s method is the one to trust.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 0, marginBottom: '0.5rem' }}>
+              Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+            </p>
+            <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <li>
+                <strong>Prediction 1, is falling up compatible:</strong> {fallsUpPrediction !== null ? FALLS_UP_SHORT[fallsUpPrediction] : ''}. Its number is in Picture 2 (the marker at −1), in the check-up (the third row) and in Table 2 (the row for a ratio of −1).
+              </li>
+              <li>
+                <strong>Prediction 2, does 0.75 show a slower fall:</strong> {readingPrediction !== null ? READING_SHORT[readingPrediction] : ''}. Its number is in Picture 2 (the marker at 1), in the check-up (the first row) and in Table 2 (the row for a ratio of 1).
+              </li>
+            </ul>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 1: how far each ratio falls</p>
             <ResultsTable
@@ -1412,6 +1686,22 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.5rem 0 1.5rem' }}>
               A negative distance means that it rises. The time to fall the trap’s height is only a size for the idea: ALPHA-g does not time a fall.
             </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The four ratios of Picture 1, and your own, as numbers: how far each falls in one second and how long it takes to fall the trap’s {(TRAP_LENGTH_M * 100).toFixed(1)} cm.
+                </li>
+                <li>
+                  <strong>What it means.</strong> A ratio of 1 falls {fallDistance(1, 1).toFixed(2)} m in one second and takes {(timeToFall(1, TRAP_LENGTH_M) as number).toFixed(3)} s to fall the trap’s height; ALPHA’s {MEASURED} falls {fallDistance(MEASURED, 1).toFixed(2)} m, a quarter less, and takes {(timeAtTrapAlpha).toFixed(3)} s; a ratio of 0 does not move and −1 rises {Math.abs(fallDistance(-1, 1)).toFixed(2)} m. A daily-life comparison: a ratio of 0.75 is like a ball falling on a planet with three-quarters of Earth’s gravity.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The differences between the rows are large, so a measurement good to a fifth can already tell falling down from falling up. Telling 0.75 from 1 needs more precision.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 2: the measurement against three possibilities</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
@@ -1430,7 +1720,11 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                 const sigmas = sigmasFrom(MEASURED, COMBINED, r)
                 const gap = Math.abs(MEASURED - r)
                 return [
-                  `${r}: ${name}`,
+                  <>
+                    {`${r}: ${name}`}
+                    {r === FALLS_UP_RATIO && <PredictionTag n={1} />}
+                    {r === LIKE_MATTER_RATIO && <PredictionTag n={2} />}
+                  </>,
                   gap.toFixed(2),
                   sigmas.toFixed(2),
                   chanceText(twoSidedChance(sigmas)),
@@ -1454,6 +1748,22 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
               of {chanceText(2.9e-4)} for a ratio of 0, close to the {chanceText(twoSidedChance(fromNone))} here. The verdict scale is this experiment’s own choice
               (compatible below 2 sigma, borderline 2 to 3, disfavoured 3 to 5, ruled out at 5 or more).
             </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> ALPHA’s value set against the three possibilities, as a gap, a gap in sigma, a chance from a bell curve and a verdict, with your own error bar and possibility as the last row.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The possibility at 1 is {fromMatter.toFixed(1)} sigma away (compatible), at 0 it is {fromNone.toFixed(1)} sigma (disfavoured) and at −1 it is {fromUp.toFixed(1)} sigma (ruled out). Your last row is {mineSigmas.toFixed(1)} sigma for the possibility {possibility} with your error bar.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> This is how a measurement becomes a statement: what it can rule out (falling up) and what it cannot (falling like matter). The bell-curve chances and the verdict scale are this experiment’s simplification.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 3: the published results and plans</p>
             <ResultsTable
@@ -1511,6 +1821,22 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
               of systematic error. This experiment does not analyse ALPHA’s data and does not claim a new
               law of gravity.
             </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> What the sources say, as they say it: ALPHA’s 2023 value and the paper’s own chances, the precision and the repeat in 2024, and the plans of ALPHA, GBAR and AEgIS.
+                </li>
+                <li>
+                  <strong>What it means.</strong> One measurement, to about 20 to 25 percent, says that antihydrogen is attracted to the Earth. The plans aim much higher: 1 percent or better (ALPHA) and a hundred-thousandth (GBAR), though no result is reported for them yet.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> “Does antimatter fall exactly like matter?” is open. Two reviews state the precision differently and differ on how hard 1 percent is, so how soon it can be answered is itself uncertain.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Table 4: how small an error bar a test needs</p>
             <ResultsTable
@@ -1524,6 +1850,23 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
                 ['The team’s aim', `±${PLANNED_SIGMA}`, `“1 percent or better”, drawn as ±${PLANNED_SIGMA} on the ratio (this experiment’s own reading)`],
               ]}
             />
+
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.75rem 0 1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The error bar that a test would need to see the difference you chose, at 3 sigma and at 5 sigma, beside ALPHA’s error bar and the team’s aim.
+                </li>
+                <li>
+                  <strong>What it means.</strong> For a difference of {diffPercent} percent, ±{mine.sigmaNeededAt3.toFixed(4)} at 3 sigma and ±{mine.sigmaNeededAt5.toFixed(4)} at 5 sigma; ALPHA’s ±{COMBINED.toFixed(3)} is {(COMBINED / mine.sigmaNeededAt3).toFixed(1)} and {(COMBINED / mine.sigmaNeededAt5).toFixed(1)} times wider. A daily-life comparison: to see a one-millimetre bump on a table you need a ruler that reads to a tenth of a millimetre.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> A test can only see gaps bigger than its error bar allows, so the question of whether antimatter falls <em>exactly</em> like matter needs a much narrower bar than the first measurement had. The aim of ±{PLANNED_SIGMA} is this experiment’s own reading of “1 percent”.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>Want to know more?</strong> The papers and the news item behind these numbers are listed here now, because their summaries state what the
@@ -1541,6 +1884,11 @@ export function AntimatterGravityExperiment({ onComplete, onTutorComplete }: Ant
 
         {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The chapter summary below the experiment
             (in App) is shown only once the learner reaches the explanation. */}
+        {done && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
+        )}
         {done && fallsUpPrediction !== null && readingPrediction !== null && (
           <AntimatterGravityTutor
             fallsUpPrediction={fallsUpPrediction}
