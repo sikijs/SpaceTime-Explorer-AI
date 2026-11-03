@@ -145,3 +145,108 @@ export function webbEffect(): WebbEffect {
   }
   return 'same'
 }
+
+// ---- Audit update (docs/audit/cosmic-horizons/01-draft-wording.md): numbers for the guess marks and the check-up ----
+
+// Prediction 1's band, in sigma. "under2" is 0 to 2, "twoToFour" is 2 to 4, "fourToSix" is 4 to 6, "over6" starts at 6 and has no upper end (hi is null).
+export interface SigmaBand {
+  lo: number
+  hi: number | null
+}
+
+export function sigmaGuessBand(range: SigmaRange): SigmaBand {
+  switch (range) {
+    case 'under2':
+      return { lo: 0, hi: 2 }
+    case 'twoToFour':
+      return { lo: 2, hi: 4 }
+    case 'fourToSix':
+      return { lo: 4, hi: 6 }
+    case 'over6':
+      return { lo: 6, hi: null }
+  }
+}
+
+// The same band as distances along the gap, in km/s/Mpc, measured from the early value toward the nearby value: one sigma is one combined give-or-take
+// long, which is the length of one tick on Picture 2. `to` is null when the band has no upper end.
+export function sigmaBandOnLine(range: SigmaRange, combined: number): { from: number; to: number | null } {
+  requirePositiveUncertainty(combined)
+  const { lo, hi } = sigmaGuessBand(range)
+  return { from: lo * combined, to: hi === null ? null : hi * combined }
+}
+
+// The Webb panel's real point and bar, in magnitudes (Webb minus Hubble Cepheid brightness).
+export function webbPanelPoint(): { value: number; low: number; high: number } {
+  const { differenceMagnitudes: d, uncertaintyMagnitudes: u } = WEBB_CEPHEID_RESULT
+  return { value: d, low: d - u, high: d + u }
+}
+
+// Prediction 2 has no size of its own on the magnitude scale (the project has no rule linking the sign of the brightness difference to the direction
+// of H0), so its guess is only a marker in one of three slots, left to right.
+export const WEBB_GUESS_SLOTS: WebbEffect[] = ['lower', 'same', 'higher']
+export function webbGuessSlot(choice: WebbEffect): number {
+  return WEBB_GUESS_SLOTS.indexOf(choice)
+}
+
+// Published values the check-up sets beside this page's numbers. SH0ES reports 5 sigma for its comparison with Planck (Riess et al., arXiv:2112.04510,
+// abstract, checked 2026-10-16); the page's simple arithmetic gives 4.89.
+export const SHOES_PUBLISHED_SIGMA = 5
+export const PUBLISHED_VALUES = {
+  'Planck 2018': { value: 67.4, uncertainty: 0.5 },
+  'SH0ES 2022': { value: 73.04, uncertainty: 1.04 },
+} as const
+
+export type CheckUpReading = 'the same' | 'more' | 'less' | 'smaller than its own uncertainty' | 'larger than its own uncertainty'
+export interface CheckUpRow {
+  label: string
+  expected: number
+  found: number
+  reading: CheckUpReading
+}
+
+function compare(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+
+// The check-up: always at the published error bars (a trial stretch never changes it). Four rows: the two published values, the sigma against
+// SH0ES's own quoted 5 (no cut-off is invented: only "the same", "more" or "less"), and the Webb difference against its own uncertainty.
+export function hubbleTensionCheckUp(): CheckUpRow[] {
+  const planck = EARLY_MEASUREMENT
+  const shoes = MEASUREMENTS.find((m) => m.name === 'SH0ES 2022')!
+  const sigma = tensionSigma(planck, shoes)
+  const { differenceMagnitudes: d, uncertaintyMagnitudes: u } = WEBB_CEPHEID_RESULT
+  return [
+    { label: 'Planck 2018, value', expected: PUBLISHED_VALUES['Planck 2018'].value, found: planck.value, reading: compare(planck.value, PUBLISHED_VALUES['Planck 2018'].value) },
+    { label: 'SH0ES 2022, value', expected: PUBLISHED_VALUES['SH0ES 2022'].value, found: shoes.value, reading: compare(shoes.value, PUBLISHED_VALUES['SH0ES 2022'].value) },
+    { label: 'SH0ES 2022 against Planck, sigma', expected: SHOES_PUBLISHED_SIGMA, found: sigma, reading: compare(sigma, SHOES_PUBLISHED_SIGMA) },
+    {
+      label: 'Webb minus Hubble, Cepheid brightness (magnitudes)',
+      expected: 0,
+      found: d,
+      reading: Math.abs(d) < u ? 'smaller than its own uncertainty' : 'larger than its own uncertainty',
+    },
+  ]
+}
+
+// The working behind the combined give-or-take, for the Picture 2 worked moment: each uncertainty squared, their sum, and its square root.
+export function combinedUncertaintySteps(a: number, b: number): { aSquared: number; bSquared: number; sum: number; combined: number } {
+  const combined = combinedUncertainty(a, b)
+  return { aSquared: a * a, bSquared: b * b, sum: a * a + b * b, combined }
+}
+
+// Part 2's drawing: a measurement's error bar with its give-or-take multiplied by a trial stretch k >= 1 (the best value does not move).
+export function stretchedBar(m: HubbleMeasurement, stretch: number): { value: number; uncertainty: number; low: number; high: number } {
+  if (!(stretch >= 1)) {
+    throw new RangeError('Stretch must be at least 1')
+  }
+  const uncertainty = m.uncertainty * stretch
+  return { value: m.value, uncertainty, low: m.value - uncertainty, high: m.value + uncertainty }
+}
+
+// Whether the two stretched error bars touch or overlap (the picture-form of a small sigma).
+export function stretchedBarsTouch(a: HubbleMeasurement, b: HubbleMeasurement, stretch: number): boolean {
+  const x = stretchedBar(a, stretch)
+  const y = stretchedBar(b, stretch)
+  return x.low <= y.high && y.low <= x.high
+}

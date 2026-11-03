@@ -1,15 +1,24 @@
 import { describe, it, expect } from 'vitest'
 import {
   combinedUncertainty,
+  combinedUncertaintySteps,
   EARLY_MEASUREMENT,
+  hubbleTensionCheckUp,
   hubbleTimeBillionYears,
   LATE_MEASUREMENTS,
   MEASUREMENTS,
   runTensionExperiment,
+  sigmaBandOnLine,
+  stretchedBar,
+  stretchedBarsTouch,
+  sigmaGuessBand,
   sigmaRange,
   stretchNeeded,
   tensionSigma,
   WEBB_CEPHEID_RESULT,
+  WEBB_GUESS_SLOTS,
+  webbGuessSlot,
+  webbPanelPoint,
   webbEffect,
 } from './hubbleTension'
 import { hubbleTimeYears } from './bigBangExperiment'
@@ -225,5 +234,112 @@ describe('the prediction answers (tutor marking)', () => {
     expect(WEBB_CEPHEID_RESULT.uncertaintyMagnitudes).toBe(0.03)
     expect(WEBB_CEPHEID_RESULT.crowdingRejectedAtSigma).toBe(8.2)
     expect(webbEffect()).toBe('same')
+  })
+})
+
+// Audit update: numbers for the guess marks and the check-up. Expected values are written out by hand.
+describe('guess marks and check-up (audit update)', () => {
+  it('gives each Prediction 1 range its band in sigma, and the last has no upper end', () => {
+    expect(sigmaGuessBand('under2')).toEqual({ lo: 0, hi: 2 })
+    expect(sigmaGuessBand('twoToFour')).toEqual({ lo: 2, hi: 4 })
+    expect(sigmaGuessBand('fourToSix')).toEqual({ lo: 4, hi: 6 })
+    expect(sigmaGuessBand('over6')).toEqual({ lo: 6, hi: null })
+  })
+
+  it('bands join end to end, so the ranges do not overlap or leave a gap', () => {
+    expect(sigmaGuessBand('under2').hi).toBe(sigmaGuessBand('twoToFour').lo)
+    expect(sigmaGuessBand('twoToFour').hi).toBe(sigmaGuessBand('fourToSix').lo)
+    expect(sigmaGuessBand('fourToSix').hi).toBe(sigmaGuessBand('over6').lo)
+  })
+
+  it('turns a band into km/s/Mpc along the gap: one sigma is one combined give-or-take', () => {
+    // SH0ES against Planck: combined = sqrt(0.5^2 + 1.04^2) = sqrt(1.3316) = 1.15400...
+    const combined = Math.sqrt(0.25 + 1.0816)
+    const band = sigmaBandOnLine('twoToFour', combined)
+    expect(band.from).toBeCloseTo(2.308, 3)
+    expect(band.to).toBeCloseTo(4.616, 3)
+    expect(sigmaBandOnLine('over6', combined).to).toBeNull()
+    expect(sigmaBandOnLine('over6', combined).from).toBeCloseTo(6.924, 3)
+  })
+
+  it('a different guess gives a different band', () => {
+    const c = 1.154
+    expect(sigmaBandOnLine('under2', c).from).not.toBe(sigmaBandOnLine('fourToSix', c).from)
+  })
+
+  it('refuses a combined give-or-take that is not positive', () => {
+    expect(() => sigmaBandOnLine('under2', 0)).toThrow(RangeError)
+  })
+
+  it('draws the Webb panel point at -0.01 with a bar from -0.04 to 0.02', () => {
+    const p = webbPanelPoint()
+    expect(p.value).toBe(-0.01)
+    expect(p.low).toBeCloseTo(-0.04, 10)
+    expect(p.high).toBeCloseTo(0.02, 10)
+  })
+
+  it('puts each Webb guess in its own marker slot, left to right: lower, about the same, higher', () => {
+    expect(WEBB_GUESS_SLOTS).toEqual(['lower', 'same', 'higher'])
+    expect(webbGuessSlot('lower')).toBe(0)
+    expect(webbGuessSlot('same')).toBe(1)
+    expect(webbGuessSlot('higher')).toBe(2)
+  })
+
+  it('the check-up has four rows with the expected and found numbers', () => {
+    const rows = hubbleTensionCheckUp()
+    expect(rows).toHaveLength(4)
+    expect(rows[0]).toMatchObject({ expected: 67.4, found: 67.4, reading: 'the same' })
+    expect(rows[1]).toMatchObject({ expected: 73.04, found: 73.04, reading: 'the same' })
+    // 5.64 / 1.15400 = 4.8876, which rounds to 4.89, less than the 5 the SH0ES paper quotes
+    expect(rows[2].expected).toBe(5)
+    expect(rows[2].found).toBeCloseTo(4.89, 2)
+    expect(rows[2].reading).toBe('less')
+    expect(rows[3]).toMatchObject({ expected: 0, found: -0.01, reading: 'smaller than its own uncertainty' })
+  })
+
+  it('the check-up sigma equals the module sigma, and is the same whatever trial stretch the page shows', () => {
+    expect(hubbleTensionCheckUp()[2].found).toBe(tensionSigma(planck, shoes))
+    expect(hubbleTensionCheckUp()).toEqual(hubbleTensionCheckUp())
+  })
+
+  it('the other two nearby sigmas written in Draft 2 are right: H0DN 6.41 and CCHP 1.50', () => {
+    expect(tensionSigma(planck, h0dn)).toBeCloseTo(6.41, 2)
+    expect(tensionSigma(planck, cchp)).toBeCloseTo(1.5, 2)
+  })
+
+  it('the Hubble times in Draft 2 are right: 14.51 for Planck, 13.39 for SH0ES, a difference of 1.12', () => {
+    const a = hubbleTimeBillionYears(planck.value)
+    const b = hubbleTimeBillionYears(shoes.value)
+    expect(a).toBeCloseTo(14.51, 2)
+    expect(b).toBeCloseTo(13.39, 2)
+    expect(a - b).toBeCloseTo(1.12, 2)
+  })
+
+  it('shows the working of the combined give-or-take: 0.5 squared 0.25, 1.04 squared 1.0816, sum 1.3316, root 1.154', () => {
+    const w = combinedUncertaintySteps(0.5, 1.04)
+    expect(w.aSquared).toBeCloseTo(0.25, 10)
+    expect(w.bSquared).toBeCloseTo(1.0816, 10)
+    expect(w.sum).toBeCloseTo(1.3316, 10)
+    expect(w.combined).toBeCloseTo(1.154, 3)
+    expect(w.combined).toBe(combinedUncertainty(0.5, 1.04))
+  })
+
+  it('stretches an error bar about its best value: SH0ES 73.04 +/- 1.04 at x2 runs from 70.96 to 75.12', () => {
+    const b = stretchedBar(shoes, 2)
+    expect(b.value).toBe(73.04)
+    expect(b.uncertainty).toBeCloseTo(2.08, 10)
+    expect(b.low).toBeCloseTo(70.96, 10)
+    expect(b.high).toBeCloseTo(75.12, 10)
+    expect(stretchedBar(shoes, 1).low).toBeCloseTo(72, 10)
+    expect(() => stretchedBar(shoes, 0.5)).toThrow(RangeError)
+  })
+
+  it('says when the stretched bars touch: SH0ES and Planck do not at x1, still do not at x3, and do at x5', () => {
+    // x1: 72.00 vs 67.9 apart. x3: SH0ES low 73.04-3.12=69.92, Planck high 67.4+1.5=68.9: apart. x5: SH0ES low 73.04-5.2=67.84, Planck high 67.4+2.5=69.9: touch.
+    expect(stretchedBarsTouch(planck, shoes, 1)).toBe(false)
+    expect(stretchedBarsTouch(planck, shoes, 3)).toBe(false)
+    expect(stretchedBarsTouch(planck, shoes, 5)).toBe(true)
+    // the trial stretch never moves a best value, and the order of the two does not matter
+    expect(stretchedBarsTouch(shoes, planck, 5)).toBe(true)
   })
 })
