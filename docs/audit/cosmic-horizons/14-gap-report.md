@@ -53,6 +53,15 @@ Remaining: none structural found.
 - O1: white = the learner's settings; to be changed if white means the guess.
 - O2: Table 1's note says the two helium-layer figures "do not agree" while the check-up row for the weight says "Close": different quantities, but a learner may read them as conflicting.
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** The page below the introduction ran on in one column, with a "Now try it yourself" box and a "Results" heading but no Parts, coloured lines or leads.
+- **The controls already change Part 1 pictures.** The weight, the age and the brightness difference add white marks to Pictures 1 and 3. Under the rule a learner's own setting is pink.
+- **Colour clash found (O1 confirmed).** White was the learner's setting; now pink.
+- **A4 answered.** Picture 1 had no stage prop, so a guess mark there would have shown the simulation's weight from the start; the strip is drawn from stage 3, when Picture 2 gives the weight, and Picture 1 now takes the stage.
+- **Prediction 2 is a speed, drawn as a distance.** The shells are drawn as radii, so the guess is the distance that speed would cover in the remnant's age, on a log scale of parsecs, beside the two real shells.
+- **Rule B already met.** The check-up, the notes and the guesses beside the results were kept as they were.
+- **Defaults used.** The owner approved all default recommendations and wording in advance (2026-11-03).
+
 ## What an update would touch
 WhiteDwarfExplosionExperiment.tsx (Pictures 1, 3, source lines, intro), WhiteDwarfExplosionTutor.tsx, whiteDwarfExplosion.ts/.test.ts, spec, DEVELOPMENT-STATE.md. Size **M**.
 
