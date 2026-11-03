@@ -4,6 +4,16 @@ import {
   DAYS_PER_MONTH,
   DAYS_PER_YEAR,
   directionAnswer,
+  directionGuessSide,
+  DRAWING_SCALES,
+  lunarClocksCheckUp,
+  lunarDrawingReference,
+  lunarDrawingValues,
+  LUNAR_TIME_2025,
+  predictionGainMicroseconds,
+  sizeGuessMicroseconds,
+  sizeGuessSeconds,
+  SOME_SOURCES_MICROSECONDS_PER_DAY,
   directionOf,
   earthEquatorTerms,
   earthOrbitTerms,
@@ -194,5 +204,59 @@ describe('the module stands alone (test 10)', () => {
   it('imports nothing from the other experiments\' physics modules', () => {
     const source = readFileSync(new URL('./lunarClocks.ts', import.meta.url), 'utf8')
     expect(source).not.toMatch(/^import /m)
+  })
+})
+
+describe('audit update: the guess marks, the check-up and Part 2 drawing', () => {
+  it('the real gain is 55.97 microseconds a day (the answer to both predictions), and the direction marker is only a side', () => {
+    expect(predictionGainMicroseconds()).toBeCloseTo(55.97, 1)
+    expect(predictionGainMicroseconds()).toBeCloseTo(gainMicrosecondsPerDay(earthEquatorTerms(), moonSurfaceTerms()), 12)
+    expect(directionAnswer()).toBe('faster')
+    expect(directionGuessSide('slower')).toBe(-1)
+    expect(directionGuessSide('same')).toBe(0)
+    expect(directionGuessSide('faster')).toBe(1)
+  })
+  it('the size guesses are 56 nanoseconds, 56 microseconds and 56 milliseconds (powers of a thousand apart), and the middle one is nearest the real gap', () => {
+    expect(sizeGuessSeconds('nanosecond')).toBe(56e-9)
+    expect(sizeGuessSeconds('microsecond')).toBe(56e-6)
+    expect(sizeGuessSeconds('millisecond')).toBe(56e-3)
+    expect(sizeGuessMicroseconds('microsecond')).toBeCloseTo(56, 10)
+    expect(sizeGuessMicroseconds('millisecond') / sizeGuessMicroseconds('microsecond')).toBeCloseTo(1000, 6)
+    const real = predictionGainMicroseconds()
+    const names = ['nanosecond', 'microsecond', 'millisecond'] as const
+    const nearest = [...names].sort((a, b) => Math.abs(Math.log10(sizeGuessMicroseconds(a) / real)) - Math.abs(Math.log10(sizeGuessMicroseconds(b) / real)))[0]
+    expect(nearest).toBe('microsecond')
+    expect(sizeAnswer()).toBe('microsecond')
+  })
+  it('the check-up has four rows: 55.97 against NIST\'s 56.02 ("less"), the Moon\'s own term 3.14e-11 and 2.7 microseconds a day (both "the same" at the published digits), and 58.68 against 58.7 ("less")', () => {
+    const rows = lunarClocksCheckUp()
+    expect(rows).toHaveLength(4)
+    expect(rows[0].expected).toBe(56.02)
+    expect(rows[0].found).toBeCloseTo(55.97, 1)
+    expect(rows[0].reading).toBe('less')
+    expect(LUNAR_TIME_2025.fraction).toBe(3.14e-11)
+    expect(rows[1]).toMatchObject({ expected: 3.14e-11, found: 3.14e-11, reading: 'the same' })
+    expect(rows[2]).toMatchObject({ expected: 2.7, found: 2.7, reading: 'the same' })
+    expect(SOME_SOURCES_MICROSECONDS_PER_DAY).toBe(58.7)
+    expect(rows[3].found).toBeCloseTo(58.7, 1)
+    expect(['the same', 'less']).toContain(rows[3].reading)
+  })
+  it('Part 2\'s drawing: the values match the run, the reference is the Moon\'s surface for a day, and every place and duration fits the scales', () => {
+    const ref = lunarDrawingReference()
+    expect(ref.gainMicrosecondsPerDay).toBeCloseTo(55.97, 1)
+    expect(ref.gapMicroseconds).toBeCloseTo(55.97, 1)
+    const v = lunarDrawingValues('moonSurface', 0, SECONDS_PER_DAY * DAYS_PER_MONTH)
+    expect(v.gapMicroseconds).toBeCloseTo(55.97 * DAYS_PER_MONTH, 0)
+    const places = ['earthEquator', 'earthOrbit', 'gps', 'geostationary', 'moonSurface', 'moonOrbit'] as const
+    for (const place of places) {
+      for (const altitudeM of [2e4, 4e5, 1e7]) {
+        for (const seconds of [SECONDS_PER_DAY, SECONDS_PER_DAY * DAYS_PER_YEAR]) {
+          const d = lunarDrawingValues(place, altitudeM, seconds)
+          expect(d.gainMicrosecondsPerDay).toBeGreaterThanOrEqual(DRAWING_SCALES.gainPerDay.min)
+          expect(d.gainMicrosecondsPerDay).toBeLessThanOrEqual(DRAWING_SCALES.gainPerDay.max)
+          expect(d.gapMicroseconds).toBeLessThanOrEqual(DRAWING_SCALES.gapMicroseconds.max)
+        }
+      }
+    }
   })
 })

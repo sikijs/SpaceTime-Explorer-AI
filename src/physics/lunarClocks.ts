@@ -169,3 +169,76 @@ export function runLunarClocks(place: Place, altitudeM: number, seconds: number)
   const gain = gainMicrosecondsPerDay(reference, clock)
   return { place, altitudeM, seconds, terms: clock, gainMicrosecondsPerDay: gain, gapSeconds: gapSeconds(reference, clock, seconds), direction: directionOf(gain) }
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks, the check-up and Part 2's drawing ----
+
+// The real number both predictions are about: how many microseconds a day a clock on the Moon's surface gains on one on the Earth's equator.
+export function predictionGainMicroseconds(): number {
+  return gainMicrosecondsPerDay(earthEquatorTerms(), moonSurfaceTerms())
+}
+// Prediction 1's marker: only a side of the Earth's clock (slower = -1, the same = 0, faster = +1). It has no size of its own.
+export function directionGuessSide(direction: Direction): -1 | 0 | 1 {
+  if (direction === 'slower') return -1
+  if (direction === 'same') return 0
+  return 1
+}
+// Prediction 2's marker: the gap after one day that each answer names (56 nanoseconds, 56 microseconds or 56 milliseconds), in seconds and in microseconds.
+export const SIZE_GUESS_SECONDS: Record<TimeScale, number> = { nanosecond: 56e-9, microsecond: 56e-6, millisecond: 56e-3 }
+export function sizeGuessSeconds(scale: TimeScale): number {
+  return SIZE_GUESS_SECONDS[scale]
+}
+export function sizeGuessMicroseconds(scale: TimeScale): number {
+  return SIZE_GUESS_SECONDS[scale] * 1e6
+}
+
+// The "Lunar Time" paper (Defraigne, Meynadier and Bourgoin, arXiv:2511.02709): against unscaled Lunar Coordinate Time a clock on the Moon's surface differs by
+// about 3.14e-11 (about 2.7 microseconds a day). Some sources quote 58.7 microseconds a day for the Moon: the clocks' 56 plus that 2.7.
+export const LUNAR_TIME_2025 = { fraction: 3.14e-11, microsecondsPerDay: 2.7 }
+export const SOME_SOURCES_MICROSECONDS_PER_DAY = 58.7
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export interface LunarCheckUpRow {
+  label: string
+  expected: number
+  found: number
+  unit: string
+  reading: CheckUpReading // the found value against the expected one; no cut-off is invented
+}
+function compareValues(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+// Digits that the published value gives (3 for the fraction, 2 for the 2.7 and 3 for the 58.7 and 56.02 in this module).
+export function roundedTo(value: number, significantFigures: number): number {
+  return Number(value.toPrecision(significantFigures))
+}
+// The check-up: this experiment's numbers beside the published ones they correspond to. It does not depend on the learner's controls or guesses.
+export function lunarClocksCheckUp(): LunarCheckUpRow[] {
+  const gain = predictionGainMicroseconds()
+  const ownFraction = moonSurfaceTerms().gravityOwn
+  const ownMicroseconds = ownFraction * SECONDS_PER_DAY * 1e6
+  return [
+    { label: 'NIST 2024: a clock on the Moon against one on the Earth’s equator', expected: NIST_2024.gainMicrosecondsPerDay, found: gain, unit: 'µs a day', reading: compareValues(gain, NIST_2024.gainMicrosecondsPerDay) },
+    { label: '“Lunar Time” 2025: the Moon’s own gravity term, as a fraction', expected: LUNAR_TIME_2025.fraction, found: roundedTo(ownFraction, 3), unit: 'fraction', reading: compareValues(roundedTo(ownFraction, 3), LUNAR_TIME_2025.fraction) },
+    { label: '“Lunar Time” 2025: the same term, in microseconds a day', expected: LUNAR_TIME_2025.microsecondsPerDay, found: roundedTo(ownMicroseconds, 2), unit: 'µs a day', reading: compareValues(roundedTo(ownMicroseconds, 2), LUNAR_TIME_2025.microsecondsPerDay) },
+    { label: 'The 58.7 that some sources quote: this experiment’s two parts added', expected: SOME_SOURCES_MICROSECONDS_PER_DAY, found: roundedTo(gain + ownMicroseconds, 3), unit: 'µs a day', reading: compareValues(roundedTo(gain + ownMicroseconds, 3), SOME_SOURCES_MICROSECONDS_PER_DAY) },
+  ]
+}
+
+// Part 2's drawing: the learner's place and time beside a reference value, each on its own scale.
+export const DRAWING_SCALES = {
+  gainPerDay: { min: -30, max: 62 }, // microseconds a day, linear (as Picture 2)
+  gapMicroseconds: { min: 0.1, max: 1e5 }, // the size of the gap after the time, logarithmic
+}
+export interface LunarDrawingValues {
+  gainMicrosecondsPerDay: number
+  gapMicroseconds: number // the size, always positive; the sign is in `gainMicrosecondsPerDay`
+}
+export function lunarDrawingValues(place: Place, altitudeM: number, seconds: number): LunarDrawingValues {
+  const r = runLunarClocks(place, altitudeM, seconds)
+  return { gainMicrosecondsPerDay: r.gainMicrosecondsPerDay, gapMicroseconds: Math.abs(r.gapSeconds) * 1e6 }
+}
+// The reference marks: a clock on the Moon's surface, one day.
+export function lunarDrawingReference(): LunarDrawingValues {
+  return lunarDrawingValues('moonSurface', 0, SECONDS_PER_DAY)
+}
