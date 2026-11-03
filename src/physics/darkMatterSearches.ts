@@ -203,3 +203,85 @@ export function runDarkMatterSearches(strength: number, exposure: number, backgr
     triesForLzGlobal: TRIES_FOR_LZ_GLOBAL,
   }
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks, the check-up and Part 2's drawing ----
+
+// Prediction 1 is about a fixed case: a strength ten times weaker than the limit and an exposure ten times the reference, with no background.
+export const PREDICTION_STRENGTH = 0.1
+export const PREDICTION_EXPOSURE = 10
+export function predictionCaseExpectedEvents(): number {
+  return expectedEvents(PREDICTION_STRENGTH, PREDICTION_EXPOSURE)
+}
+// The number of events each answer of Prediction 1 names, for the white marker on Picture 1's horizontal axis.
+export const COUNT_GUESS_VALUES: Record<CountRange, number> = { point23: 0.23, twoPoint3: 2.3, twentyThree: 23 }
+export function countGuessValue(choice: CountRange): number {
+  return COUNT_GUESS_VALUES[choice]
+}
+
+// Prediction 2's marker has no size of its own: only a side of the local 3.4 sigma (lower = -1, the same = 0, higher = +1).
+export function effectGuessSide(choice: GlobalEffect): -1 | 0 | 1 {
+  if (choice === 'lower') return -1
+  if (choice === 'same') return 0
+  return 1
+}
+
+// The two conventional bars used throughout this group (Experiments 1 and 2): about 3 sigma is often called evidence, 5 sigma the usual bar for a discovery.
+export const EVIDENCE_SIGMA = 3
+export const DISCOVERY_SIGMA = 5
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export interface DarkMatterCheckUpRow {
+  label: string
+  expected: number // the bar or published value the found value is set beside
+  found: number
+  reading: CheckUpReading // no cut-off is invented
+}
+function compareValues(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+// The published significance is quoted to one decimal place, so the illustration's global sigma is compared at that precision.
+export const PUBLISHED_SIGMA_DECIMALS = 1
+export function roundedToPublished(value: number): number {
+  return Number(value.toFixed(PUBLISHED_SIGMA_DECIMALS))
+}
+
+// The check-up: four rows that set a published sigma beside the bar it is usually read against, and the illustration's global sigma beside the published one.
+// It does not depend on the learner's controls or guesses (the last row uses 14 places looked, the slider's start).
+export const START_TRIES = 14
+export function darkMatterCheckUp(): DarkMatterCheckUpRow[] {
+  const illustration = globalSigma(LZ230616.localSigma, START_TRIES)
+  return [
+    { label: 'LZ: the boron-8 solar neutrinos, against the discovery bar', expected: DISCOVERY_SIGMA, found: LZ_DECEMBER_2025.boron8Sigma, reading: compareValues(LZ_DECEMBER_2025.boron8Sigma, DISCOVERY_SIGMA) },
+    { label: 'LZ: the unexpected event at its own place, against the evidence bar', expected: EVIDENCE_SIGMA, found: LZ230616.localSigma, reading: compareValues(LZ230616.localSigma, EVIDENCE_SIGMA) },
+    { label: 'LZ: the unexpected event with all places counted, against the evidence bar', expected: EVIDENCE_SIGMA, found: LZ230616.globalSigma, reading: compareValues(LZ230616.globalSigma, EVIDENCE_SIGMA) },
+    {
+      label: `This experiment's illustration with ${START_TRIES} places looked, against LZ's published global significance (compared at the published one decimal)`,
+      expected: LZ230616.globalSigma,
+      found: roundedToPublished(illustration),
+      reading: compareValues(roundedToPublished(illustration), LZ230616.globalSigma),
+    },
+  ]
+}
+
+// Part 2's drawing: the values of the learner's own search beside today's, each on its own scale.
+export const DRAWING_SCALES = {
+  expected: { min: 0.1, max: 100000 }, // logarithmic
+  chanceNone: { min: 0, max: 1 }, // linear
+  limitCm2: { min: 1e-51, max: 3e-48 }, // logarithmic
+  globalSigma: { min: 0, max: 5 }, // linear
+}
+export interface SearchDrawingValues {
+  expected: number
+  chanceNone: number
+  limitCm2: number
+  globalSigma: number
+}
+export function searchDrawingValues(strength: number, exposure: number, background: Background, tries: number): SearchDrawingValues {
+  const r = runDarkMatterSearches(strength, exposure, background, tries)
+  return { expected: r.expected, chanceNone: r.chanceOfNoEvents, limitCm2: r.limitCm2, globalSigma: r.globalSigma }
+}
+// The reference marks of the drawing: today's limit (strength 1, exposure 1, no background) and the published 2.6 sigma.
+export function searchDrawingReference(): SearchDrawingValues {
+  return { expected: EXPECTED_AT_LIMIT, chanceNone: ZERO_EVENT_CHANCE, limitCm2: LZ_LIMIT_2025.crossSectionCm2, globalSigma: LZ230616.globalSigma }
+}

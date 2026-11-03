@@ -2,7 +2,21 @@ import { describe, it, expect } from 'vitest'
 import {
   chanceOfAtLeastOneEvent,
   chanceOfNoEvents,
+  COUNT_GUESS_VALUES,
+  countGuessValue,
   countRange,
+  darkMatterCheckUp,
+  DISCOVERY_SIGMA,
+  DRAWING_SCALES,
+  effectGuessSide,
+  EVIDENCE_SIGMA,
+  PREDICTION_EXPOSURE,
+  PREDICTION_STRENGTH,
+  predictionCaseExpectedEvents,
+  roundedToPublished,
+  searchDrawingReference,
+  searchDrawingValues,
+  START_TRIES,
   EXPECTED_AT_LIMIT,
   expectedEvents,
   globalChance,
@@ -229,5 +243,78 @@ describe('module source (test 13)', () => {
     expect(reuse).toBeDefined()
     for (const name of ['oneSidedChance', 'chanceOfAtLeastOne', 'sigmaLabel']) expect(reuse).toContain(name)
     expect(source).not.toMatch(/function oneSidedChance|function chanceOfAtLeastOne\b|function sigmaLabel/)
+  })
+})
+
+describe('audit update: guess marks, check-up and Part 2 drawing', () => {
+  it('Prediction 1\'s case (0.1 times the limit, 10 times the exposure) expects 2.3026 events, the same as at the limit, and its range is "twoPoint3"', () => {
+    expect(PREDICTION_STRENGTH).toBe(0.1)
+    expect(PREDICTION_EXPOSURE).toBe(10)
+    expect(predictionCaseExpectedEvents()).toBeCloseTo(-Math.log(0.1) * 0.1 * 10, 12)
+    expect(predictionCaseExpectedEvents()).toBeCloseTo(2.302585, 6)
+    expect(countRange(PREDICTION_STRENGTH, PREDICTION_EXPOSURE)).toBe('twoPoint3')
+  })
+  it('the guess values are the three answers (0.23, 2.3, 23), increasing, each in its own range, and the right one is the case\'s expected number to two figures', () => {
+    expect(countGuessValue('point23')).toBe(0.23)
+    expect(countGuessValue('twoPoint3')).toBe(2.3)
+    expect(countGuessValue('twentyThree')).toBe(23)
+    const v = Object.values(COUNT_GUESS_VALUES)
+    expect(v).toEqual([...v].sort((a, b) => a - b))
+    expect(countGuessValue('twoPoint3')).toBeCloseTo(predictionCaseExpectedEvents(), 0)
+    expect(Math.abs(countGuessValue('point23') - predictionCaseExpectedEvents())).toBeGreaterThan(2)
+  })
+  it('Prediction 2\'s marker is only a side of the local 3.4 sigma: -1, 0, +1', () => {
+    expect(effectGuessSide('lower')).toBe(-1)
+    expect(effectGuessSide('same')).toBe(0)
+    expect(effectGuessSide('higher')).toBe(1)
+  })
+  it('the check-up has four rows with the right readings, from the module\'s published numbers', () => {
+    const rows = darkMatterCheckUp()
+    expect(rows).toHaveLength(4)
+    expect(EVIDENCE_SIGMA).toBe(3)
+    expect(DISCOVERY_SIGMA).toBe(5)
+    expect(rows[0]).toMatchObject({ expected: 5, found: 4.5, reading: 'less' })
+    expect(rows[1]).toMatchObject({ expected: 3, found: 3.4, reading: 'more' })
+    expect(rows[2]).toMatchObject({ expected: 3, found: 2.6, reading: 'less' })
+    expect(rows[3].expected).toBe(2.6)
+    expect(rows[3].found).toBe(roundedToPublished(globalSigma(3.4, START_TRIES)))
+    expect(rows[3].reading).toBe('the same')
+  })
+  it('14 places is the whole number of places whose sigma is nearest the published 2.6 (2.597), and it rounds to 2.6 at the published precision', () => {
+    expect(START_TRIES).toBe(14)
+    expect(roundedToPublished(globalSigma(3.4, 14))).toBe(2.6)
+    const gap = (t: number) => Math.abs(globalSigma(3.4, t) - 2.6)
+    expect(gap(14)).toBeLessThan(gap(13))
+    expect(gap(14)).toBeLessThan(gap(15))
+    expect(globalSigma(3.4, 14)).toBeCloseTo(2.597, 3)
+    expect(roundedToPublished(globalSigma(3.4, 5))).not.toBe(2.6)
+    expect(roundedToPublished(globalSigma(3.4, 40))).not.toBe(2.6)
+  })
+  it('Part 2\'s drawing: the values match the run, the reference is today\'s limit and the published 2.6, and every control setting fits the scales', () => {
+    const ref = searchDrawingReference()
+    expect(ref.expected).toBeCloseTo(2.302585, 6)
+    expect(ref.chanceNone).toBe(0.1)
+    expect(ref.limitCm2).toBe(2.2e-48)
+    expect(ref.globalSigma).toBe(2.6)
+    const v = searchDrawingValues(0.1, 10, 'none', 14)
+    expect(v.expected).toBeCloseTo(2.302585, 6)
+    expect(v.chanceNone).toBeCloseTo(0.1, 12)
+    expect(v.limitCm2).toBeCloseTo(2.2e-49, 6 + 49)
+    for (const strength of [0.1, 1, 10]) {
+      for (const exposure of [1, 10, 1000]) {
+        for (const background of ['none', 'grows'] as const) {
+          for (const tries of [1, 14, 100]) {
+            const d = searchDrawingValues(strength, exposure, background, tries)
+            expect(d.expected).toBeGreaterThanOrEqual(DRAWING_SCALES.expected.min)
+            expect(d.expected).toBeLessThanOrEqual(DRAWING_SCALES.expected.max)
+            expect(d.limitCm2).toBeGreaterThanOrEqual(DRAWING_SCALES.limitCm2.min)
+            expect(d.limitCm2).toBeLessThanOrEqual(DRAWING_SCALES.limitCm2.max)
+            expect(d.globalSigma).toBeLessThanOrEqual(DRAWING_SCALES.globalSigma.max)
+            expect(d.chanceNone).toBeGreaterThanOrEqual(0)
+            expect(d.chanceNone).toBeLessThanOrEqual(1)
+          }
+        }
+      }
+    }
   })
 })
