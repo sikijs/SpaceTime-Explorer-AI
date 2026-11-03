@@ -198,3 +198,78 @@ export function runFastestSpacecraft(distanceM: number, seconds: number): Fastes
     effects: effectsOf(clock),
   }
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks, the check-up and Part 2's drawing ----
+
+// The real number Prediction 2 is about: how many milliseconds a day the probe's clock is behind the Earth's at the probe's closest point.
+export function predictionLagMilliseconds(): number {
+  return lagMillisecondsPerDay(earthTerms(), closestApproachTerms())
+}
+// The gap after one day that each answer of Prediction 2 names (35 microseconds, 35 milliseconds or 35 seconds), in seconds and in milliseconds.
+export const SIZE_GUESS_SECONDS: Record<TimeScale, number> = { microsecond: 35e-6, millisecond: 35e-3, second: 35 }
+export function sizeGuessSeconds(scale: TimeScale): number {
+  return SIZE_GUESS_SECONDS[scale]
+}
+export function sizeGuessMilliseconds(scale: TimeScale): number {
+  return SIZE_GUESS_SECONDS[scale] * 1e3
+}
+// Prediction 1's marker: only a direction for each of the two effects (+1: it slows the clock, to the right of the zero line; -1: it speeds the clock up, to the
+// left). "Work against each other" is drawn as gravity slowing and motion speeding up; which of the two does which is not part of the guess.
+export function effectsGuessDirections(effects: Effects): { gravity: 1 | -1; motion: 1 | -1 } {
+  if (effects === 'both slow') return { gravity: 1, motion: 1 }
+  if (effects === 'both speed up') return { gravity: -1, motion: -1 }
+  return { gravity: 1, motion: -1 }
+}
+
+// NASA's own wording of the closest approach (its pages read give "430,000 miles per hour" and "3.8 million miles"), against the Guinness figures in `PARKER`.
+export const NASA_WORDING = { milesPerHour: 430_000, millionMiles: 3.8 }
+const METRES_PER_MILE = 1609.344
+export function roundedTo(value: number, significantFigures: number): number {
+  return Number(value.toPrecision(significantFigures))
+}
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export interface FastestCheckUpRow {
+  label: string
+  expected: number
+  found: number
+  unit: string
+  reading: CheckUpReading // the found value against the expected one; no cut-off is invented
+}
+function compareValues(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+// The check-up: the page's own closest-approach numbers against NASA's wording, and the two-body oval's speed against NASA's. The lag itself has no published
+// measurement to compare with (it is a calculation), so it has no row. It does not depend on the learner's controls or guesses.
+export function fastestSpacecraftCheckUp(): FastestCheckUpRow[] {
+  const mph = (PARKER.closestApproachSpeed * 3600) / METRES_PER_MILE
+  const millionMiles = (PARKER.closestApproachAltitude / METRES_PER_MILE) / 1e6
+  const ovalKmS = orbitSpeed(closestApproachDistance()) / 1000
+  const nasaKmS = PARKER.closestApproachSpeed / 1000
+  return [
+    { label: 'The closest-approach speed in miles an hour, against NASA’s “430,000”', expected: NASA_WORDING.milesPerHour, found: roundedTo(mph, 2), unit: 'miles an hour', reading: compareValues(roundedTo(mph, 2), NASA_WORDING.milesPerHour) },
+    { label: 'The closest-approach height above the Sun in millions of miles, against NASA’s “3.8 million”', expected: NASA_WORDING.millionMiles, found: roundedTo(millionMiles, 2), unit: 'million miles', reading: compareValues(roundedTo(millionMiles, 2), NASA_WORDING.millionMiles) },
+    { label: 'The speed of this experiment’s two-body oval at the closest point, against NASA’s speed', expected: nasaKmS, found: ovalKmS, unit: 'km/s', reading: compareValues(ovalKmS, nasaKmS) },
+  ]
+}
+
+// Part 2's drawing: the learner's point on the orbit beside the closest point, each on its own scale.
+export const DRAWING_SCALES = {
+  lagMsPerDay: { min: -4, max: 38 }, // as Picture 3's top graph
+  speedKmS: { min: 0, max: 200 },
+  gapMs: { min: 0.01, max: 1e5 }, // the size of the gap after the time, logarithmic (a gap of zero, at the Earth-match distance, is drawn at the left edge)
+}
+export interface FastestDrawingValues {
+  lagMsPerDay: number
+  speedKmS: number
+  gapMs: number // the size, always positive; the sign is in `lagMsPerDay`
+}
+export function fastestDrawingValues(distanceM: number, seconds: number): FastestDrawingValues {
+  const r = runFastestSpacecraft(distanceM, seconds)
+  return { lagMsPerDay: r.lagMillisecondsPerDay, speedKmS: speedAt(distanceM) / 1000, gapMs: Math.abs(r.gapSeconds) * 1000 }
+}
+// The reference marks: the probe's closest point, after one day.
+export function fastestDrawingReference(): FastestDrawingValues {
+  return fastestDrawingValues(closestApproachDistance(), SECONDS_PER_DAY)
+}

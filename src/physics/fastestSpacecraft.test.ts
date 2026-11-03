@@ -4,12 +4,21 @@ import {
   ASTRONOMICAL_UNIT,
   closestApproachDistance,
   closestApproachTerms,
+  DRAWING_SCALES,
   earthMatchDistance,
   earthTerms,
   EARTH,
   effectsAnswer,
+  effectsGuessDirections,
   effectsOf,
   farOrbitDistance,
+  fastestDrawingReference,
+  fastestDrawingValues,
+  fastestSpacecraftCheckUp,
+  NASA_WORDING,
+  predictionLagMilliseconds,
+  sizeGuessMilliseconds,
+  sizeGuessSeconds,
   gapSeconds,
   lagMillisecondsPerDay,
   lagOverOneOrbitSeconds,
@@ -236,5 +245,61 @@ describe('the predictions\' answers and the run (test 11)', () => {
   it('has the same orbit average as the average computed from the orbit\'s own numbers', () => {
     expect(orbitAverageTerms().gravity).toBeGreaterThan(0)
     expect(orbitAverageTerms().speed).toBeCloseTo(orbitAverageTerms().gravity / 2, 20)
+  })
+})
+
+describe('audit update: the guess marks, the check-up and Part 2 drawing', () => {
+  it('the real lag at the closest point is 34.8 milliseconds a day (the answer to Prediction 2), and the size guesses are 35 microseconds, 35 milliseconds and 35 seconds (powers of a thousand apart)', () => {
+    expect(predictionLagMilliseconds()).toBeCloseTo(lagMillisecondsPerDay(earthTerms(), closestApproachTerms()), 12)
+    expect(predictionLagMilliseconds()).toBeCloseTo(34.8, 0)
+    expect(sizeGuessSeconds('microsecond')).toBe(35e-6)
+    expect(sizeGuessSeconds('millisecond')).toBe(35e-3)
+    expect(sizeGuessSeconds('second')).toBe(35)
+    expect(sizeGuessMilliseconds('second') / sizeGuessMilliseconds('millisecond')).toBeCloseTo(1000, 6)
+    const real = predictionLagMilliseconds()
+    const names = ['microsecond', 'millisecond', 'second'] as const
+    const nearest = [...names].sort((a, b) => Math.abs(Math.log10(sizeGuessMilliseconds(a) / real)) - Math.abs(Math.log10(sizeGuessMilliseconds(b) / real)))[0]
+    expect(nearest).toBe('millisecond')
+    expect(sizeAnswer()).toBe('millisecond')
+  })
+  it('Prediction 1\'s marker is only a direction for each effect: both slow (+1, +1), both speed up (-1, -1), work against (+1, -1), and the real answer is "both slow"', () => {
+    expect(effectsGuessDirections('both slow')).toEqual({ gravity: 1, motion: 1 })
+    expect(effectsGuessDirections('both speed up')).toEqual({ gravity: -1, motion: -1 })
+    expect(effectsGuessDirections('work against each other')).toEqual({ gravity: 1, motion: -1 })
+    expect(effectsAnswer()).toBe('both slow')
+    expect(closestApproachTerms().gravity).toBeGreaterThan(0)
+    expect(closestApproachTerms().speed).toBeGreaterThan(0)
+  })
+  it('the check-up has three rows: 192.22 km/s is 430,000 miles an hour and 6,167,590 km is 3.8 million miles at NASA\'s digits ("the same"), and the oval\'s 190.7 km/s is less than NASA\'s 192.22', () => {
+    const rows = fastestSpacecraftCheckUp()
+    expect(rows).toHaveLength(3)
+    expect(NASA_WORDING).toEqual({ milesPerHour: 430_000, millionMiles: 3.8 })
+    expect((192_220 * 3600) / 1609.344).toBeCloseTo(429_984, 0)
+    expect(rows[0]).toMatchObject({ expected: 430_000, found: 430_000, reading: 'the same' })
+    expect(rows[1]).toMatchObject({ expected: 3.8, found: 3.8, reading: 'the same' })
+    expect(rows[2].expected).toBeCloseTo(192.22, 6)
+    expect(rows[2].found).toBeCloseTo(190.7, 0)
+    expect(rows[2].reading).toBe('less')
+    expect(((192.22 - rows[2].found) / 192.22) * 100).toBeCloseTo(0.8, 0)
+  })
+  it('Part 2\'s drawing: the values match the run, the reference is the closest point for a day, and every point on the orbit and every duration fits the scales', () => {
+    const ref = fastestDrawingReference()
+    expect(ref.lagMsPerDay).toBeCloseTo(34.8, 0)
+    expect(ref.speedKmS).toBeCloseTo(192.22, 6)
+    expect(ref.gapMs).toBeCloseTo(34.8, 0)
+    const v = fastestDrawingValues(farOrbitDistance(), SECONDS_PER_DAY)
+    expect(v.lagMsPerDay).toBeCloseTo(runFastestSpacecraft(farOrbitDistance(), SECONDS_PER_DAY).lagMillisecondsPerDay, 12)
+    for (const fraction of [0, 0.25, 0.5, 1]) {
+      const distanceM = closestApproachDistance() * Math.pow(farOrbitDistance() / closestApproachDistance(), fraction)
+      for (const seconds of [SECONDS_PER_DAY, 88 * SECONDS_PER_DAY, 365.25 * SECONDS_PER_DAY]) {
+        const d = fastestDrawingValues(distanceM, seconds)
+        expect(d.lagMsPerDay).toBeGreaterThanOrEqual(DRAWING_SCALES.lagMsPerDay.min)
+        expect(d.lagMsPerDay).toBeLessThanOrEqual(DRAWING_SCALES.lagMsPerDay.max)
+        expect(d.speedKmS).toBeGreaterThanOrEqual(DRAWING_SCALES.speedKmS.min)
+        expect(d.speedKmS).toBeLessThanOrEqual(DRAWING_SCALES.speedKmS.max)
+        expect(d.gapMs).toBeGreaterThanOrEqual(DRAWING_SCALES.gapMs.min)
+        expect(d.gapMs).toBeLessThanOrEqual(DRAWING_SCALES.gapMs.max)
+      }
+    }
   })
 })
