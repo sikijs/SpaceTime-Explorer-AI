@@ -222,6 +222,21 @@ export function reachOf(radius: number): Reach {
 export function sizeAnswer(): Reach {
   return reachOf(radiusAU(BETELGEUSE.angularDiameterMas, BETELGEUSE.distancePc))
 }
+// The range of radius, in astronomical units, that an answer covers, for drawing the learner's guess on Picture 1. It uses the same boundaries as `reachOf`, so the lower edge
+// belongs to its own range and the upper edge to the next. `maxAU` is null for "past Jupiter", which has no upper limit.
+export function reachRangeAU(reach: Reach): { minAU: number; maxAU: number | null } {
+  const orbit = (name: string) => PLANETS.find((p) => p.name === name)!.orbitAU
+  switch (reach) {
+    case 'inside Earth':
+      return { minAU: 0, maxAU: orbit('Earth') }
+    case 'past Earth':
+      return { minAU: orbit('Earth'), maxAU: orbit('Mars') }
+    case 'past Mars':
+      return { minAU: orbit('Mars'), maxAU: orbit('Jupiter') }
+    case 'past Jupiter':
+      return { minAU: orbit('Jupiter'), maxAU: null }
+  }
+}
 
 // Prediction 2: how often would noise alone make a spot at least as strong as the reported one? The three answer buttons.
 export type SigmaAnswer = '1 in 2' | '1 in 15' | '1 in 3.5 million'
@@ -238,6 +253,24 @@ export function sigmaAnswer(): SigmaAnswer {
     if (Math.abs(Math.log10(a.oneIn) - truth) < Math.abs(Math.log10(best.oneIn) - truth)) best = a
   }
   return best.label
+}
+
+// For drawing the learner's guess on Picture 3: the size of spot, in sigma, whose one-direction tail chance is 1 time in `oneIn`. It is the inverse of `oneInChance`, found by
+// halving an interval, because `chanceOfSigma` falls steadily as sigma grows. A chance of 1 time in 2 or rarer is needed, because the tail never exceeds one half.
+export function sigmaForChance(oneIn: number): number {
+  if (!Number.isFinite(oneIn) || oneIn < 2) throw new RangeError('The chance must be 1 time in 2 or rarer')
+  let low = 0
+  let high = 40
+  for (let i = 0; i < 200; i++) {
+    const mid = (low + high) / 2
+    if (oneInChance(mid) < oneIn) low = mid
+    else high = mid
+  }
+  return (low + high) / 2
+}
+// Where the learner's answer to Prediction 2 sits on Picture 3, in sigma: the spot size whose tail would be exactly the chance they chose.
+export function guessSigma(answer: SigmaAnswer): number {
+  return sigmaForChance(SIGMA_ANSWERS.find((a) => a.label === answer)!.oneIn)
 }
 
 // The learner's choices (the defaults are the published values).

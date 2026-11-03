@@ -6,16 +6,17 @@ import {
   brightnessRatio,
   chanceOfSigma,
   chancePercent,
-  compareWithPublished,
   COMPANION,
+  compareWithPublished,
   DAYS_PER_YEAR,
   distanceToLookThisWideMetres,
+  guessSigma,
   HAIR_WIDTH_MM,
-  LIGHT_YEARS_PER_PARSEC,
-  matchingDistancePc,
   headsInARow,
   keplerPeriodYears,
   keplerWorking,
+  LIGHT_YEARS_PER_PARSEC,
+  matchingDistancePc,
   modelSeparationAU,
   oneInChance,
   parsecsFromLightYears,
@@ -28,13 +29,15 @@ import {
   radiusRangeAU,
   radiusSolarRadii,
   reachOf,
+  reachRangeAU,
   runBetelgeuseCompanion,
   separationAU,
-  separationMismatchPercent,
   separationInRadii,
+  separationMismatchPercent,
   sigmaAnswer,
-  SOLAR_RADII_PER_AU,
+  sigmaForChance,
   sizeAnswer,
+  SOLAR_RADII_PER_AU,
   widthAU,
 } from './betelgeuseCompanion'
 
@@ -389,6 +392,64 @@ describe('the predictions\' answers and the run (test 11)', () => {
     it('sigma: flags a change and keeps the published one-in chance', () => {
       expect(compareWithPublished({ sigma: 3 }).sigmaSame).toBe(false)
       expect(rel(compareWithPublished({ sigma: 3 }).oneInPublished, 14.97)).toBeLessThan(1e-3)
+    })
+  })
+})
+
+// The guess marks (the owner's audit update of 2026-11-02): where each answer to the two predictions sits on Pictures 1 and 3.
+describe('Betelgeuse: the guess marks', () => {
+  describe('reachRangeAU', () => {
+    it('gives the range of radius each answer covers, from the planets\' orbits', () => {
+      const orbit = (name: string) => PLANETS.find((p) => p.name === name)!.orbitAU
+      expect(reachRangeAU('inside Earth')).toEqual({ minAU: 0, maxAU: orbit('Earth') })
+      expect(reachRangeAU('past Earth')).toEqual({ minAU: orbit('Earth'), maxAU: orbit('Mars') })
+      expect(reachRangeAU('past Mars')).toEqual({ minAU: orbit('Mars'), maxAU: orbit('Jupiter') })
+      expect(reachRangeAU('past Jupiter')).toEqual({ minAU: orbit('Jupiter'), maxAU: null })
+    })
+    it('agrees with reachOf: a radius inside a range gives back that answer, and the lower edge belongs to its own range', () => {
+      for (const reach of ['inside Earth', 'past Earth', 'past Mars', 'past Jupiter'] as const) {
+        const { minAU, maxAU } = reachRangeAU(reach)
+        const inside = maxAU === null ? minAU + 3 : (minAU + maxAU) / 2
+        expect(reachOf(inside)).toBe(reach)
+        if (minAU > 0) expect(reachOf(minAU)).toBe(reach)
+        if (maxAU !== null) expect(reachOf(maxAU)).not.toBe(reach)
+      }
+    })
+    it('the ranges join end to end with no gap, from 0 outwards', () => {
+      const order = ['inside Earth', 'past Earth', 'past Mars', 'past Jupiter'] as const
+      expect(reachRangeAU(order[0]).minAU).toBe(0)
+      for (let i = 0; i < order.length - 1; i++) expect(reachRangeAU(order[i]).maxAU).toBe(reachRangeAU(order[i + 1]).minAU)
+    })
+  })
+
+  describe('sigmaForChance and guessSigma', () => {
+    it('is the inverse of oneInChance: the chance at the answer is the chance asked for', () => {
+      for (const oneIn of [2, 3, 15, 100, 1000, 3.5e6, 1e9]) {
+        expect(oneInChance(sigmaForChance(oneIn)) / oneIn).toBeCloseTo(1, 6)
+      }
+    })
+    it('1 time in 2 is 0 sigma (the middle of the curve, counting one direction)', () => {
+      expect(sigmaForChance(2)).toBeCloseTo(0, 6)
+    })
+    it('1 time in 15 is about 1.5 sigma and 1 time in 3.5 million about 5 sigma', () => {
+      expect(sigmaForChance(15)).toBeCloseTo(1.5, 2)
+      expect(sigmaForChance(3.5e6)).toBeCloseTo(5, 2)
+    })
+    it('a rarer chance gives a larger sigma', () => {
+      expect(sigmaForChance(10)).toBeLessThan(sigmaForChance(100))
+      expect(sigmaForChance(100)).toBeLessThan(sigmaForChance(1e6))
+    })
+    it('rejects a chance above 1 in 2 and a value that is not a number', () => {
+      expect(() => sigmaForChance(1.5)).toThrow(RangeError)
+      expect(() => sigmaForChance(0)).toThrow(RangeError)
+      expect(() => sigmaForChance(Number.NaN)).toThrow(RangeError)
+      expect(() => sigmaForChance(Infinity)).toThrow(RangeError)
+    })
+    it('guessSigma gives 0, about 1.5 and about 5 for the three answers, and the reported spot sits at the "1 in 15" answer', () => {
+      expect(guessSigma('1 in 2')).toBeCloseTo(0, 6)
+      expect(guessSigma('1 in 15')).toBeCloseTo(1.5, 2)
+      expect(guessSigma('1 in 3.5 million')).toBeCloseTo(5, 2)
+      expect(Math.abs(guessSigma('1 in 15') - COMPANION.reportedSigma)).toBeLessThan(0.01)
     })
   })
 })
