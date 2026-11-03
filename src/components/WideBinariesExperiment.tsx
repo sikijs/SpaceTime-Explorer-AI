@@ -467,9 +467,9 @@ function PictureTwo({ fraction, factor, contaminationGuess }: { fraction: number
       {contaminationGuess !== null && (() => {
         const guessRatio = contaminationGuessRatio(contaminationGuess)
         const off = guessRatio > ratioMax
-        const gy = off ? P2_TOP - 4 : ratioToY(guessRatio)
+        const gy = off ? P2_TOP + 12 : ratioToY(guessRatio)
         const gx = caseX + 18
-        const boxX = off ? 300 : 352
+        const boxX = off ? 316 : 352
         const boxY = off ? 28 : P2_BOTTOM - 30
         return (
           <g>
@@ -479,9 +479,9 @@ function PictureTwo({ fraction, factor, contaminationGuess }: { fraction: number
               <polygon points={`${gx},${gy - 8} ${gx + 8},${gy} ${gx},${gy + 8} ${gx - 8},${gy}`} fill={GUESS_COLOR} />
             )}
             <line x1={gx} y1={off ? gy - 10 : gy + 8} x2={boxX} y2={boxY + 12} stroke={GUESS_COLOR} strokeWidth={2} />
-            <rect x={boxX} y={boxY} width={off ? 220 : 200} height={24} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
-            <text x={boxX + (off ? 110 : 100)} y={boxY + 16} fill={GUESS_COLOR} fontSize={off ? '11' : '10'} fontWeight="bold" textAnchor="middle">
-              YOUR GUESS: {CONTAMINATION_SHORT[contaminationGuess]}{off ? ' (off the top)' : ''}
+            <rect x={boxX} y={boxY} width={off ? 238 : 200} height={24} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + (off ? 119 : 100)} y={boxY + 16} fill={GUESS_COLOR} fontSize={off ? '11' : '10'} fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {CONTAMINATION_SHORT[contaminationGuess]}{off ? ' ↑' : ''}
             </text>
           </g>
         )
