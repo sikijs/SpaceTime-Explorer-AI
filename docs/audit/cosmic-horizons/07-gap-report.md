@@ -53,6 +53,14 @@ B0: Table 1a "your pair" (`:1388`); Table 1b "hidden triples (your choice)" (`:1
 - O1: none against the specification found beyond the reading guide, which the spec predates.
 - O2: Picture 2 is described as a "what if" (`:1172`), the wording the owner later asked to avoid for controls (§14); this is a picture description, not a control, so report only. Also the Picture 1 blue dot already "marks the pair described under the picture" (`:1127`), so a learner might read it as a guess mark; a white "YOUR GUESS" mark must be clearly distinct. Table 2's note that results "are not always directly comparable" matters for any check-up design.
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts: after the introduction the page runs on in one column. No coloured lines, headings or leads.
+- **The controls already change Part 1 pictures.** "Choose a pair" moves Picture 1's dots and Table 1a; "How many pairs are really triples?" moves Picture 2's line and dot and Table 1b. Under the rule a learner's own setting is pink.
+- **Colour clashes found.** The stronger-pull colour (rose) is too close to pink; Picture 2's toy line and dot were purple (the imagined sample); Picture 2's ring was white, and white now means only a guess. Fixed by recolouring (orange, pink, yellow) and rewording the captions.
+- **Both predictions are about fixed cases** (1.5 Suns at 10,000 AU; 1 pair in 5 at twice as fast), so their marks must not move with the controls: each case is drawn as a violet imagined mark and the guess as a white diamond.
+- **B1 reference.** The published boost factors set beside the two lines they are read against (1 and 1.4) give the check-up; the owner's rule on comparability means the reading says only which line each published range includes. No published-value column.
+- **Defaults used.** The owner approved all default recommendations and wording in advance (2026-11-03).
+
 ## What an update would touch, and its size (O3, O4)
 `WideBinariesExperiment.tsx`, `WideBinariesTutor.tsx`, `src/physics/wideBinaries.ts` and test, the specification. Size **Large** (reading guide for three tables, marks on two pictures).
 
