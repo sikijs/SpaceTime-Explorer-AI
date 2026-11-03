@@ -207,3 +207,68 @@ export function runNeutrinoMass(totalMassEv: number): NeutrinoMassResult {
     })),
   }
 }
+
+// ---- Audit update (docs/audit/cosmic-horizons/04-draft-wording.md): numbers for the guess marks and the check-up ----
+
+// Prediction 2's band, in eV along Picture 3's total-mass line: "none" is below the floor (0 to the floor), "veryLittle" runs from the floor to 1.2 times
+// it, "plenty" is above that (hi is null). The edges match roomRange.
+export interface MassBand {
+  lo: number
+  hi: number | null
+}
+export function roomGuessBand(range: RoomRange, ordering: Ordering): MassBand {
+  const floor = oscillationFloor(ordering)
+  switch (range) {
+    case 'none':
+      return { lo: 0, hi: floor }
+    case 'veryLittle':
+      return { lo: floor, hi: floor * ROOM_VERY_LITTLE_RATIO }
+    case 'plenty':
+      return { lo: floor * ROOM_VERY_LITTLE_RATIO, hi: null }
+  }
+}
+
+// Prediction 1's marker: only a side of the release marker (before = -1, to its left on Picture 1's timeline, which runs from the early universe on the
+// left to today on the right; after = +1, to its right). It has no size of its own.
+export function timingGuessSide(choice: HeavyTiming): -1 | 1 {
+  return choice === 'before' ? -1 : 1
+}
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export interface NeutrinoCheckUpRow {
+  label: string
+  floorName: string
+  floor: number
+  ceiling: number
+  ratio: number
+  reading: CheckUpReading
+}
+function compareValues(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+
+// The check-up: a ceiling set beside a floor. The reading is "more" when the ceiling is above the floor, "less" when it is below (no room), and "the same"
+// when equal; no cut-off is invented. The four rows are the DESI July 2026 ceiling against both floors, the March 2025 ceiling against the normal floor, and
+// Planck 2018 + BAO against the normal floor. It does not depend on the total the learner chose.
+export function neutrinoCheckUp(): NeutrinoCheckUpRow[] {
+  const find = (name: string) => BOUNDS.find((b) => b.name === name)!
+  const specs: Array<{ label: string; boundName: string; ordering: Ordering }> = [
+    { label: 'DESI July 2026 ceiling, against the normal-ordering floor', boundName: 'DESI DR2 + CMB (July 2026)', ordering: 'normal' },
+    { label: 'The same ceiling, against the inverted-ordering floor', boundName: 'DESI DR2 + CMB (July 2026)', ordering: 'inverted' },
+    { label: 'DESI March 2025 ceiling, against the normal-ordering floor', boundName: 'DESI DR2 + CMB (March 2025)', ordering: 'normal' },
+    { label: 'Planck 2018 + BAO ceiling, against the normal-ordering floor', boundName: 'Planck 2018 + BAO', ordering: 'normal' },
+  ]
+  return specs.map(({ label, boundName, ordering }) => {
+    const ceiling = find(boundName).value
+    const floor = oscillationFloor(ordering)
+    return {
+      label,
+      floorName: ordering === 'normal' ? 'normal-ordering floor' : 'inverted-ordering floor',
+      floor,
+      ceiling,
+      ratio: ceiling / floor,
+      reading: compareValues(ceiling, floor),
+    }
+  })
+}

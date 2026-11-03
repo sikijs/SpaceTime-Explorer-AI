@@ -3,6 +3,9 @@ import {
   BOUNDS,
   CEILINGS,
   clumpSmoothing,
+  neutrinoCheckUp,
+  roomGuessBand,
+  timingGuessSide,
   energyDensityShare,
   heavyBeforeRelease,
   heavyRedshift,
@@ -268,5 +271,81 @@ describe('out-of-range inputs (test 15)', () => {
     expect(() => heavyBeforeRelease(0)).toThrow(RangeError)
     expect(() => runNeutrinoMass(-1)).toThrow(RangeError)
     expect(() => heavyTimeYears(0.0001)).toThrow(RangeError) // below the typical energy today, so not yet matter-like
+  })
+})
+
+// Audit update: numbers for the guess marks and the check-up. Expected values were worked out by hand: floor normal = sqrt(7.49e-5) + sqrt(2.513e-3) =
+// 0.008655 + 0.050130 = 0.058785; floor inverted = sqrt(2.484e-3) + sqrt(2.484e-3 + 7.49e-5) = 0.049840 + 0.050585 = 0.100425.
+describe('guess marks and check-up (audit update)', () => {
+  it('gives each Prediction 2 answer its band along the eV line: 0 to the floor, floor to 1.2 floor, above', () => {
+    const floor = 0.058785
+    const none = roomGuessBand('none', 'normal')
+    const little = roomGuessBand('veryLittle', 'normal')
+    const plenty = roomGuessBand('plenty', 'normal')
+    expect(none.lo).toBe(0)
+    expect(none.hi).toBeCloseTo(floor, 5)
+    expect(little.lo).toBeCloseTo(floor, 5)
+    expect(little.hi).toBeCloseTo(floor * 1.2, 5)
+    expect(plenty.lo).toBeCloseTo(0.07054, 4)
+    expect(plenty.hi).toBeNull()
+    expect(none.hi).toBe(little.lo)
+    expect(little.hi).toBe(plenty.lo)
+  })
+
+  it('the bands agree with roomRange at their edges, for the normal and the inverted floor', () => {
+    for (const ordering of ['normal', 'inverted'] as const) {
+      const floor = oscillationFloor(ordering)
+      expect(roomRange(floor * 0.999, ordering)).toBe('none')
+      expect(roomRange(floor, ordering)).toBe('veryLittle')
+      expect(roomRange(floor * 1.2, ordering)).toBe('veryLittle')
+      expect(roomRange(floor * 1.201, ordering)).toBe('plenty')
+      expect(roomGuessBand('plenty', ordering).lo).toBeCloseTo(floor * 1.2, 10)
+    }
+  })
+
+  it('the real answer, the July 2026 ceiling against the normal floor, is in the "very little" band', () => {
+    const band = roomGuessBand('veryLittle', 'normal')
+    expect(desiJuly2026).toBeGreaterThanOrEqual(band.lo)
+    expect(desiJuly2026).toBeLessThanOrEqual(band.hi!)
+  })
+
+  it('puts the Prediction 1 marker to the left for "before" and to the right for "after"', () => {
+    expect(timingGuessSide('before')).toBe(-1)
+    expect(timingGuessSide('after')).toBe(1)
+  })
+
+  it('the check-up has four rows with the ratios 1.007, 0.589, 1.092 and 2.041, and no cut-off invented', () => {
+    const rows = neutrinoCheckUp()
+    expect(rows).toHaveLength(4)
+    expect(rows[0].floor).toBeCloseTo(0.0588, 4)
+    expect(rows[0].ceiling).toBe(0.0592)
+    expect(rows[0].ratio).toBeCloseTo(1.007, 3)
+    expect(rows[0].reading).toBe('more')
+    expect(rows[1].floor).toBeCloseTo(0.1004, 4)
+    expect(rows[1].ratio).toBeCloseTo(0.589, 3)
+    expect(rows[1].reading).toBe('less')
+    expect(rows[2].ratio).toBeCloseTo(1.092, 3)
+    expect(rows[2].reading).toBe('more')
+    expect(rows[3].ceiling).toBe(0.12)
+    expect(rows[3].ratio).toBeCloseTo(2.041, 3)
+    expect(rows[3].reading).toBe('more')
+  })
+
+  it('the draft numbers for the pink total at 0.1 and 0.5 eV are right: z 62.1 and 314.7, share 0.75 and 3.75 percent, smoothing 6.0 and 30.0 percent', () => {
+    const a = runNeutrinoMass(0.1)
+    expect(a.heavyRedshift).toBeCloseTo(62.1, 1)
+    expect(a.share * 100).toBeCloseTo(0.75, 2)
+    expect(a.smoothing * 100).toBeCloseTo(6.0, 1)
+    const b = runNeutrinoMass(0.5)
+    expect(b.heavyRedshift).toBeCloseTo(314.7, 0)
+    expect(b.share * 100).toBeCloseTo(3.75, 2)
+    expect(b.smoothing * 100).toBeCloseTo(30, 0)
+  })
+
+  it("DESI's limit gives z 36.4, a share of 0.44 percent and a smoothing of 3.55 percent", () => {
+    const r = runNeutrinoMass(desiJuly2026)
+    expect(r.heavyRedshift).toBeCloseTo(36.4, 1)
+    expect(r.share * 100).toBeCloseTo(0.44, 2)
+    expect(r.smoothing * 100).toBeCloseTo(3.55, 2)
   })
 })
