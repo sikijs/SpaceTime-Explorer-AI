@@ -2,11 +2,19 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import {
   ALPHA_2023,
+  antimatterCheckUp,
+  antimatterDrawingReference,
+  antimatterDrawingValues,
   combinedUncertainty,
   compatibility,
   fallDistance,
+  DRAWING_SCALES,
   fallsUpAnswer,
+  FALLS_UP_RATIO,
   G_EARTH,
+  LIKE_MATTER_RATIO,
+  NO_GRAVITY_RATIO,
+  PAPER_CHANCE_NO_GRAVITY,
   readingAnswer,
   runAntimatterGravity,
   sigmaNeeded,
@@ -204,5 +212,57 @@ describe('the module stands alone (test 11)', () => {
   it('imports nothing from the other experiments\' physics modules', () => {
     const source = readFileSync(new URL('./antimatterGravity.ts', import.meta.url), 'utf8')
     expect(source).not.toMatch(/^import /m)
+  })
+})
+
+describe('audit update: the guess marks, the check-up and Part 2 drawing', () => {
+  it('the possibilities the two predictions are about are -1 and 1, and their answers come from the verdicts at those possibilities', () => {
+    expect(FALLS_UP_RATIO).toBe(-1)
+    expect(LIKE_MATTER_RATIO).toBe(1)
+    expect(NO_GRAVITY_RATIO).toBe(0)
+    const combined = combinedUncertainty(ALPHA_2023.statSys, ALPHA_2023.simulation)
+    expect(compatibility(sigmasFrom(ALPHA_2023.ratio, combined, FALLS_UP_RATIO))).toBe('ruledOut')
+    expect(fallsUpAnswer()).toBe('ruledOut')
+    expect(compatibility(sigmasFrom(ALPHA_2023.ratio, combined, LIKE_MATTER_RATIO))).toBe('compatible')
+    expect(readingAnswer()).toBe('cannotTell')
+  })
+  it('the check-up has four rows: 0.75 is less than 1, more than 0 and more than -1, at 1.2, 3.6 and 8.5 sigma, and the chance for no gravity is below the paper\'s', () => {
+    const rows = antimatterCheckUp()
+    expect(rows).toHaveLength(4)
+    expect(rows[0]).toMatchObject({ expected: 1, found: 0.75, reading: 'less', verdict: 'compatible' })
+    expect(rows[0].sigmas).toBeCloseTo(0.25 / Math.sqrt(0.13 ** 2 + 0.16 ** 2), 10)
+    expect(rows[0].sigmas).toBeCloseTo(1.21, 2)
+    expect(rows[1]).toMatchObject({ expected: 0, found: 0.75, reading: 'more', verdict: 'disfavoured' })
+    expect(rows[1].sigmas).toBeCloseTo(3.64, 2)
+    expect(rows[2]).toMatchObject({ expected: -1, found: 0.75, reading: 'more', verdict: 'ruledOut' })
+    expect(rows[2].sigmas).toBeCloseTo(8.49, 2)
+    expect(rows[3].expected).toBe(PAPER_CHANCE_NO_GRAVITY)
+    expect(rows[3].expected).toBe(2.9e-4)
+    expect(rows[3].found).toBeCloseTo(twoSidedChance(rows[1].sigmas as number), 15)
+    expect(rows[3].reading).toBe(rows[3].found > 2.9e-4 ? 'more' : 'less')
+  })
+  it('Part 2\'s drawing: the values match the run, the references are ordinary matter\'s 4.905 m, ALPHA\'s own sigma and its 0.205 error bar, and every control setting fits the scales', () => {
+    const ref = antimatterDrawingReference(1)
+    expect(ref.distanceInOneSecond).toBeCloseTo(4.905, 10)
+    expect(ref.sigmas).toBeCloseTo(1.21, 2)
+    expect(ref.errorBarNeeded).toBeCloseTo(Math.sqrt(0.13 ** 2 + 0.16 ** 2), 12)
+    const v = antimatterDrawingValues(0.75, 0.205, 1, 0.2, 3)
+    expect(v.distanceInOneSecond).toBeCloseTo(0.5 * 0.75 * 9.81, 10)
+    expect(v.errorBarNeeded).toBeCloseTo(0.2 / 3, 12)
+    for (const ratio of [-1.5, 0, 2]) {
+      for (const sigma of [0.01, 0.205, 0.5]) {
+        for (const possibility of [-1, 0, 1]) {
+          for (const [difference, n] of [[0.01, 5], [0.5, 3]]) {
+            const d = antimatterDrawingValues(ratio, sigma, possibility, difference, n)
+            expect(d.distanceInOneSecond).toBeGreaterThanOrEqual(DRAWING_SCALES.distanceM.min)
+            expect(d.distanceInOneSecond).toBeLessThanOrEqual(DRAWING_SCALES.distanceM.max)
+            expect(d.sigmas).toBeGreaterThanOrEqual(DRAWING_SCALES.sigmas.min)
+            expect(d.sigmas).toBeLessThanOrEqual(DRAWING_SCALES.sigmas.max)
+            expect(d.errorBarNeeded).toBeGreaterThanOrEqual(DRAWING_SCALES.errorBar.min)
+            expect(d.errorBarNeeded).toBeLessThanOrEqual(DRAWING_SCALES.errorBar.max)
+          }
+        }
+      }
+    }
   })
 })

@@ -152,3 +152,77 @@ export function runAntimatterGravity(ratio: number, sigma: number, difference: n
     sigmaNeededAt5: sigmaNeeded(difference, 5),
   }
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks, the check-up and Part 2's drawing ----
+
+// The possibility each prediction is about: Prediction 1 asks about falling up (ratio -1), Prediction 2 about falling like ordinary matter (ratio 1).
+// Both guesses are categories, so each is drawn as a marker only, under the possibility's own marker on Picture 2.
+export const FALLS_UP_RATIO = -1
+export const LIKE_MATTER_RATIO = 1
+export const NO_GRAVITY_RATIO = 0
+
+// The paper's own chance for "no gravity" (ratio 0), by its own method (Nature 621, 716-722), quoted in Table 3.
+export const PAPER_CHANCE_NO_GRAVITY = 2.9e-4
+// The precision the two reviews state for the same measurement, in percent of g ("about 20%" in March 2025, "~25%" in December 2025).
+export const REVIEW_PRECISIONS_PERCENT = { march2025: 20, december2025: 25 }
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export interface AntimatterCheckUpRow {
+  label: string
+  expected: number
+  found: number
+  sigmas: number | null // the gap in sigma, for the possibility rows
+  verdict: Compatibility | null // by this experiment's own edges (2, 3 and 5 sigma)
+  reading: CheckUpReading // the found value against the expected one; no cut-off is invented
+}
+function compareValues(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+// The check-up: ALPHA's measured ratio against each of the three possibilities (the same physics predicts each), and the chance this experiment's bell curve
+// gives for "no gravity" against the paper's own. It does not depend on the learner's controls or guesses.
+export function antimatterCheckUp(): AntimatterCheckUpRow[] {
+  const combined = combinedUncertainty(ALPHA_2023.statSys, ALPHA_2023.simulation)
+  const row = (label: string, possibility: number): AntimatterCheckUpRow => {
+    const sigmas = sigmasFrom(ALPHA_2023.ratio, combined, possibility)
+    return { label, expected: possibility, found: ALPHA_2023.ratio, sigmas, verdict: compatibility(sigmas), reading: compareValues(ALPHA_2023.ratio, possibility) }
+  }
+  const noneSigmas = sigmasFrom(ALPHA_2023.ratio, combined, NO_GRAVITY_RATIO)
+  return [
+    row('ALPHA’s ratio against ordinary matter’s ratio', LIKE_MATTER_RATIO),
+    row('ALPHA’s ratio against no gravity', NO_GRAVITY_RATIO),
+    row('ALPHA’s ratio against falling up with the full strength of g', FALLS_UP_RATIO),
+    {
+      label: 'The chance for “no gravity”: this experiment’s bell curve against the paper’s own method',
+      expected: PAPER_CHANCE_NO_GRAVITY,
+      found: twoSidedChance(noneSigmas),
+      sigmas: noneSigmas,
+      verdict: null,
+      reading: compareValues(twoSidedChance(noneSigmas), PAPER_CHANCE_NO_GRAVITY),
+    },
+  ]
+}
+
+// Part 2's drawing: the learner's three choices beside a reference value, each on its own scale.
+export const DRAWING_SCALES = {
+  distanceM: { min: -10, max: 10 }, // metres fallen in one second, linear (negative: it rises)
+  sigmas: { min: 0.1, max: 200 }, // logarithmic
+  errorBar: { min: 0.001, max: 1 }, // logarithmic
+}
+export interface AntimatterDrawingValues {
+  distanceInOneSecond: number
+  sigmas: number
+  errorBarNeeded: number
+}
+export function antimatterDrawingValues(ratio: number, sigma: number, possibility: number, difference: number, nSigma: number): AntimatterDrawingValues {
+  return {
+    distanceInOneSecond: fallDistance(ratio, 1),
+    sigmas: sigmasFrom(ALPHA_2023.ratio, sigma, possibility),
+    errorBarNeeded: sigmaNeeded(difference, nSigma),
+  }
+}
+// The reference marks: ordinary matter's fall in one second, ALPHA's own error bar for the same possibility, and ALPHA's combined error bar.
+export function antimatterDrawingReference(possibility: number): AntimatterDrawingValues {
+  const combined = combinedUncertainty(ALPHA_2023.statSys, ALPHA_2023.simulation)
+  return { distanceInOneSecond: fallDistance(1, 1), sigmas: sigmasFrom(ALPHA_2023.ratio, combined, possibility), errorBarNeeded: combined }
+}
