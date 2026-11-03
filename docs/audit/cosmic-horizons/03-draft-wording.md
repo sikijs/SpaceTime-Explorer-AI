@@ -1,5 +1,5 @@
 # Audit draft: Cosmic Horizons Experiment 3 (How lumpy is the universe? S8: KiDS, DES)
-Date: 2026-11-03 | Status: DRAFT for the owner's line-by-line approval (CLAUDE.md §28.1). Nothing is built. Physics unchanged.
+Date: 2026-11-03 | Status: wording approved by the owner 2026-11-03; built and checked in Chrome. Difference: the DES check-up is two rows (one per version). The Table 1 and Table 2 notes and Drawing A's caption were drafted in the page and approved there.
 
 Decisions taken ("take the recommendations", 2026-11-03): (1) the "Look closer at" highlight in Picture 2 gets a pink halo; (2) Part 2 gets a drawing that follows the control; (3) Prediction 2 gets a "How many sigma?" panel on its own scale, added to Picture 1; (4) check-up rows only where a real reference exists, no invented cut-offs. Rule B item 3 (a published-value column) is left out: the first table already carries the paper's own sigma beside the worked-out one.
 
