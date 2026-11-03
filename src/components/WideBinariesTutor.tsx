@@ -115,9 +115,9 @@ export function WideBinariesTutor({ massSuns, separationAu, fraction, factor, bo
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 1 and Picture 3. In Picture 1, how much higher is the rose line than the blue one? In Picture 3, how do the five published results compare with the blue line (γ = 1) and the rose line (γ ≈ 1.4)?'}
+              'Look at Picture 1, Picture 2 and Picture 3. Your guesses are drawn in white, in boxes marked YOUR GUESS: a diamond beside the violet rings in Picture 1 and another beside the violet ring in Picture 2. What do you notice about where each sits compared with the violet marks? In Picture 3, how do the five published results compare with the blue line (γ = 1) and the orange line (γ ≈ 1.4)?'}
             {tutorStep === 'compare' &&
-              `You predicted that a pull ${GAMMA_MOND_WIDE_BINARY} times as strong would make two stars 10,000 AU apart orbit ${boostWords[boostPrediction]}, and that a study in which 1 pair in 5 is secretly a triple moving twice as fast would have an average speed ${contaminationWords[contaminationPrediction]} higher. Now look at Table 1a and Table 1b, and at your own pair and your own triples. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that a pull ${GAMMA_MOND_WIDE_BINARY} times as strong would make two stars 10,000 AU apart orbit ${boostWords[boostPrediction]}, and that a study in which 1 pair in 5 is secretly a triple moving twice as fast would have an average speed ${contaminationWords[contaminationPrediction]} higher. Compare the white diamond in Picture 1 with the violet rings, and the white diamond in Picture 2 with the violet ring. Then look at Table 1a and Table 1b, and at your own pair and your own triples. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               'Two teams look at the same kind of Gaia data and get different answers. What could make that happen, and what would you want to check before you believed either of them?'}
           </p>

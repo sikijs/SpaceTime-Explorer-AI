@@ -6,9 +6,17 @@ import {
   contaminatedRatio,
   darkMatterInsideSolarMasses,
   fractionToFake,
+  boostGuessSpeed,
+  contaminationGuessRatio,
+  DRAWING_SCALES,
   G,
   GAMMA_MOND_WIDE_BINARY,
+  gammaCheckUp,
   orbitalSpeed,
+  PREDICTION_PAIR,
+  PREDICTION_TRIPLES,
+  predictionPairSpeeds,
+  predictionTriplesRatio,
   PUBLISHED_RESULTS,
   pullInA0,
   pullOnPair,
@@ -16,6 +24,9 @@ import {
   SOLAR_MASS_KG,
   speedBoost,
   speedBoostPercent,
+  toyCheckUp,
+  wideBinariesDrawingReference,
+  wideBinariesDrawingValues,
 } from '../physics/wideBinaries'
 import type { BoostRange, ContaminationRange } from '../physics/wideBinaries'
 import { ReferencePanel } from './EnergyMomentumExperiment'
@@ -45,8 +56,11 @@ const STAR_B_COLOR = '#fb923c' // orange: the other star
 const ORBIT_COLOR = '#64748b'
 const ARROW_COLOR = '#4ade80' // green: the direction of motion
 const NEWTON_COLOR = '#38bdf8' // sky blue: Newton's law
-const BOOST_COLOR = '#fb7185' // rose: a pull 1.4 times as strong (the MOND papers' prediction)
-const HIDDEN_COLOR = '#c084fc' // purple: a sample with hidden triples
+const BOOST_COLOR = '#fb923c' // orange: a pull 1.4 times as strong (the MOND papers' prediction)
+const HIDDEN_COLOR = '#a78bfa' // violet: the pair or sample that a prediction asks about (imagined for the question)
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+const TRIAL_COLOR = '#f472b6' // pink: the learner's own pair and triples (Part 2)
+const RING_COLOR = '#fde047' // yellow: where the pink line crosses the expected speed
 const RESULT_COLOR = '#5eead4' // teal: a published result
 const BELOW_A0_COLOR = '#fbbf24' // amber: a pull below a0
 
@@ -89,6 +103,25 @@ const CONTAMINATION_CHOICES: ReadonlyArray<{ value: ContaminationRange; label: s
 ]
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const PredictionTag = ({ n }: { n: 1 | 2 }) => (
+  <span style={{ marginLeft: '0.5rem', padding: '0.05rem 0.4rem', fontSize: '0.75rem', fontWeight: 'bold', border: `1px solid ${GUESS_COLOR}`, borderRadius: '4px', whiteSpace: 'nowrap' }}>
+    your Prediction {n}
+  </span>
+)
+const BOOST_SHORT = { none: 'no noticeable difference', about20: 'about 20 percent faster', about40: 'about 40 percent faster', about100: 'about twice as fast' } as const
+const CONTAMINATION_SHORT = { about2: 'about 2 percent faster', about20: 'about 20 percent faster', about100: 'about 100 percent faster' } as const
 
 // ---- Two stars orbiting (an illustration, not data) ----
 function OrbitDrawing() {
@@ -171,7 +204,7 @@ const P1_LEFT = 95
 const P1_RIGHT = 520
 const P1_TOP = 56
 const P1_BOTTOM = 210
-const P1_HEIGHT = 330
+const P1_HEIGHT = 362
 const P1_MIN_AU = 500
 const P1_MAX_AU = 30000
 const P1_MASS = 1.5 // solar masses: the experiment's own choice, not a published value
@@ -193,7 +226,7 @@ const speedCurve = (mass: number, factor: number, axisMax: number) => {
 const speedAxisMax = (mass: number) => Math.max(2000, Math.ceil((orbitalSpeed(mass, P1_MIN_AU) * speedBoost(GAMMA_MOND_WIDE_BINARY)) / 500) * 500)
 const formatPull = (value: number) => (value >= 10 ? value.toFixed(0) : value >= 1 ? value.toFixed(1) : value.toFixed(2))
 
-function PictureOne({ stage, mass, separationAu }: { stage: number; mass: number; separationAu: number }) {
+function PictureOne({ stage, mass, separationAu, boostGuess }: { stage: number; mass: number; separationAu: number; boostGuess: BoostRange | null }) {
   const boost = speedBoost(GAMMA_MOND_WIDE_BINARY)
   const axisMax = speedAxisMax(mass)
   const speedToY = (speed: number) => P1_BOTTOM - (speed / axisMax) * (P1_BOTTOM - P1_TOP)
@@ -202,6 +235,9 @@ function PictureOne({ stage, mass, separationAu }: { stage: number; mass: number
   const pairX = auToX(separationAu)
   const newtonSpeed = orbitalSpeed(mass, separationAu)
   const boostedSpeed = newtonSpeed * boost
+  // Prediction 1's pair (imagined for the question: it never moves with the controls).
+  const case1 = predictionPairSpeeds()
+  const case1X = auToX(PREDICTION_PAIR.separationAu)
   return (
     <svg
       width={VIEW_WIDTH}
@@ -277,23 +313,39 @@ function PictureOne({ stage, mass, separationAu }: { stage: number; mass: number
           </text>
         </>
       )}
-      {stage >= 1 && (
-        <text x={270} y={130} fill={TEXT_COLOR} fontSize="10">
-          dots: the pair marked below the picture
-        </text>
-      )}
 
       {/* The marked pair. */}
       {stage >= 1 && (
         <>
-          <circle cx={pairX} cy={speedToY(newtonSpeed)} r={5} fill={NEWTON_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
-          {stage >= 3 && <circle cx={pairX} cy={speedToY(boostedSpeed)} r={5} fill={BOOST_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />}
-          <text x={P1_LEFT} y={P1_HEIGHT - 26} fill={TEXT_COLOR} fontSize="10">
-            The pair: {mass} Suns, {separationAu.toLocaleString('en-US')} AU apart. Newton: {newtonSpeed.toFixed(0)} m/s
+          <circle cx={case1X} cy={speedToY(case1.newton)} r={11} fill="none" stroke={HIDDEN_COLOR} strokeWidth={2} />
+          {stage >= 3 && <circle cx={case1X} cy={speedToY(case1.boosted)} r={11} fill="none" stroke={HIDDEN_COLOR} strokeWidth={2} />}
+          <circle cx={pairX} cy={speedToY(newtonSpeed)} r={5} fill={NEWTON_COLOR} stroke={TRIAL_COLOR} strokeWidth={2.5} />
+          {stage >= 3 && <circle cx={pairX} cy={speedToY(boostedSpeed)} r={5} fill={BOOST_COLOR} stroke={TRIAL_COLOR} strokeWidth={2.5} />}
+          <text x={20} y={P1_HEIGHT - 42} fill={HIDDEN_COLOR} fontSize="10">
+            Violet rings: Prediction 1’s pair (imagined), {PREDICTION_PAIR.massSuns} Suns at {PREDICTION_PAIR.separationAu.toLocaleString('en-US')} AU. Newton: {case1.newton.toFixed(0)} m/s
+            {stage >= 3 ? `; stronger pull: ${case1.boosted.toFixed(0)} m/s.` : '.'}
+          </text>
+          <text x={20} y={P1_HEIGHT - 26} fill={TRIAL_COLOR} fontSize="10">
+            Pink rings: your pair: {mass} Suns, {separationAu.toLocaleString('en-US')} AU apart. Newton: {newtonSpeed.toFixed(0)} m/s
             {stage >= 3 ? `. Stronger pull: ${boostedSpeed.toFixed(0)} m/s.` : '.'}
           </text>
         </>
       )}
+      {stage >= 3 && boostGuess !== null && (() => {
+        const gy = speedToY(boostGuessSpeed(boostGuess))
+        const gx = case1X + 18
+        return (
+          <g>
+            <line x1={P1_LEFT} y1={gy} x2={gx - 8} y2={gy} stroke={GUESS_COLOR} strokeWidth={1} strokeDasharray="2 3" />
+            <polygon points={`${gx},${gy - 8} ${gx + 8},${gy} ${gx},${gy + 8} ${gx - 8},${gy}`} fill={GUESS_COLOR} />
+            <line x1={gx} y1={gy - 8} x2={gx} y2={142} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={300} y={118} width={220} height={24} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={410} y={134} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {BOOST_SHORT[boostGuess]}
+            </text>
+          </g>
+        )
+      })()}
       <text x={P1_LEFT} y={P1_HEIGHT - 10} fill={MUTED_COLOR} fontSize="10">
         The mass of {mass} Suns is this experiment’s own choice, not a measured pair.
       </text>
@@ -306,13 +358,13 @@ const P2_LEFT = 70
 const P2_RIGHT = 520
 const P2_TOP = 60
 const P2_BOTTOM = 220
-const P2_HEIGHT = 312
+const P2_HEIGHT = 330
 const P2_MAX_FRACTION = 0.5
 const DEFAULT_FRACTION_PERCENT = 20 // Prediction 2's example: 1 pair in 5
 const DEFAULT_FACTOR = 2 // Prediction 2's example: a hidden-triple pair moves twice as fast
 const fractionToX = (fraction: number) => P2_LEFT + (fraction / P2_MAX_FRACTION) * (P2_RIGHT - P2_LEFT)
 
-function PictureTwo({ fraction, factor }: { fraction: number; factor: number }) {
+function PictureTwo({ fraction, factor, contaminationGuess }: { fraction: number; factor: number; contaminationGuess: ContaminationRange | null }) {
   const expected = speedBoost(GAMMA_MOND_WIDE_BINARY)
   const lineEnd = contaminatedRatio(P2_MAX_FRACTION, factor)
   const ratioMax = lineEnd <= 1.5 ? 1.5 : Math.ceil(lineEnd * 5 - 1e-9) / 5 // 1.5 for a factor up to 2, then in steps of 0.2
@@ -325,9 +377,12 @@ function PictureTwo({ fraction, factor }: { fraction: number; factor: number }) 
   const linePoints = [0, 0.1, 0.2, 0.3, 0.4, 0.5].map((f) => `${f === 0 ? 'M' : 'L'}${fractionToX(f).toFixed(1)},${ratioToY(contaminatedRatio(f, factor)).toFixed(1)}`).join(' ')
   const dotX = fractionToX(fraction)
   const dotY = ratioToY(ratio)
+  // Prediction 2's case (imagined for the question): 1 pair in 5 moving twice as fast, which averages 1.2 times Newton's; it never moves with the controls.
+  const caseX = fractionToX(PREDICTION_TRIPLES.fraction)
+  const caseY = ratioToY(predictionTriplesRatio())
   const bx = needed !== null ? fractionToX(Math.min(needed, P2_MAX_FRACTION)) : 0
   const dotLabelBelow = dotY + 14 < P2_BOTTOM - 4
-  // The expected-speed label goes below its line when the purple line is above it at the right and there is room, and above the line otherwise.
+  // The expected-speed label goes below its line when the pink line is above it at the right and there is room, and above the line otherwise.
   const expectedLabelBelow = lineEnd > expected && ratioToY(expected) + 32 <= P2_BOTTOM - 2
   const expectedLabelY = expectedLabelBelow ? ratioToY(expected) + 16 : ratioToY(expected) - 20
   return (
@@ -375,23 +430,24 @@ function PictureTwo({ fraction, factor }: { fraction: number; factor: number }) 
       <text x={P2_RIGHT - 6} y={expectedLabelY + 13} fill={BOOST_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
         {expected.toFixed(2)} × Newton’s
       </text>
-      <path d={linePoints} fill="none" stroke={HIDDEN_COLOR} strokeWidth={2.5} />
-      <text x={P2_LEFT + 8} y={P2_TOP + 4} fill={HIDDEN_COLOR} fontSize="10" fontWeight="bold">
-        purple line: the sample’s average speed when each hidden triple
+      <path d={linePoints} fill="none" stroke={TRIAL_COLOR} strokeWidth={2.5} />
+      <text x={P2_LEFT + 8} y={P2_TOP + 4} fill={TRIAL_COLOR} fontSize="10" fontWeight="bold">
+        pink line: the sample’s average speed when each hidden triple
       </text>
-      <text x={P2_LEFT + 8} y={P2_TOP + 17} fill={HIDDEN_COLOR} fontSize="10" fontWeight="bold">
+      <text x={P2_LEFT + 8} y={P2_TOP + 17} fill={TRIAL_COLOR} fontSize="10" fontWeight="bold">
         moves {factor} times as fast as a true pair
       </text>
 
-      {/* The learner's choice (it starts at Prediction 2's example), and where the purple line meets the expected speed. */}
-      <circle cx={dotX} cy={dotY} r={5} fill={HIDDEN_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
-      <text x={dotX + 9} y={dotLabelBelow ? dotY + 14 : dotY - 9} fill={TEXT_COLOR} fontSize="10">
+      {/* The learner's choice (it starts at Prediction 2's example), and where the pink line meets the expected speed. */}
+      <circle cx={caseX} cy={caseY} r={11} fill="none" stroke={HIDDEN_COLOR} strokeWidth={2} />
+      <circle cx={dotX} cy={dotY} r={5} fill={TRIAL_COLOR} stroke={TEXT_COLOR} strokeWidth={1} />
+      <text x={dotX + 9} y={dotLabelBelow ? dotY + 14 : dotY - 9} fill={TRIAL_COLOR} fontSize="10">
         your choice
       </text>
       {ringShown && needed !== null && (
         <>
-          <line x1={bx} y1={ratioToY(expected)} x2={bx} y2={P2_BOTTOM} stroke={TEXT_COLOR} strokeDasharray="3 3" />
-          <circle cx={bx} cy={ratioToY(expected)} r={4} fill="none" stroke={TEXT_COLOR} strokeWidth={2} />
+          <line x1={bx} y1={ratioToY(expected)} x2={bx} y2={P2_BOTTOM} stroke={RING_COLOR} strokeDasharray="3 3" />
+          <circle cx={bx} cy={ratioToY(expected)} r={4} fill="none" stroke={RING_COLOR} strokeWidth={2} />
           <text x={bx + 8} y={P2_BOTTOM - 22} fill={TEXT_COLOR} fontSize="10" stroke="#0b1020" strokeWidth={3} paintOrder="stroke">
             {(needed * 100).toFixed(1)} percent triples
           </text>
@@ -408,8 +464,33 @@ function PictureTwo({ fraction, factor }: { fraction: number; factor: number }) 
         </text>
       )}
 
-      <text x={P2_LEFT} y={P2_HEIGHT - 26} fill={TEXT_COLOR} fontSize="10">
-        The dot: {(fraction * 100).toFixed(0)} percent triples, each {factor} times as fast: average {ratio.toFixed(2)} × Newton’s.
+      {contaminationGuess !== null && (() => {
+        const guessRatio = contaminationGuessRatio(contaminationGuess)
+        const off = guessRatio > ratioMax
+        const gy = off ? P2_TOP - 4 : ratioToY(guessRatio)
+        const gx = caseX + 18
+        const boxX = off ? 300 : 352
+        const boxY = off ? 28 : P2_BOTTOM - 30
+        return (
+          <g>
+            {off ? (
+              <polygon points={`${gx - 8},${gy + 4} ${gx},${gy - 10} ${gx + 8},${gy + 4}`} fill={GUESS_COLOR} />
+            ) : (
+              <polygon points={`${gx},${gy - 8} ${gx + 8},${gy} ${gx},${gy + 8} ${gx - 8},${gy}`} fill={GUESS_COLOR} />
+            )}
+            <line x1={gx} y1={off ? gy - 10 : gy + 8} x2={boxX} y2={boxY + 12} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={boxY} width={off ? 220 : 200} height={24} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + (off ? 110 : 100)} y={boxY + 16} fill={GUESS_COLOR} fontSize={off ? '11' : '10'} fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {CONTAMINATION_SHORT[contaminationGuess]}{off ? ' (off the top)' : ''}
+            </text>
+          </g>
+        )
+      })()}
+      <text x={20} y={P2_HEIGHT - 42} fill={HIDDEN_COLOR} fontSize="10">
+        Violet ring: Prediction 2’s case (imagined): {PREDICTION_TRIPLES.fraction * 100} percent triples, each {PREDICTION_TRIPLES.factor} times as fast: {predictionTriplesRatio().toFixed(2)} × Newton’s.
+      </text>
+      <text x={20} y={P2_HEIGHT - 26} fill={TRIAL_COLOR} fontSize="10">
+        Pink dot: your choice: {(fraction * 100).toFixed(0)} percent triples, each {factor} times as fast: average {ratio.toFixed(2)} × Newton’s.
       </text>
       <text x={P2_LEFT} y={P2_HEIGHT - 10} fill={MUTED_COLOR} fontSize="10">
         A toy model: some pairs move faster; the rest move as Newton’s law says.
@@ -541,7 +622,7 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
 ]
 
 // ---- The results tables and the paper links (after the run) ----
-export function ResultsTable({ head, rows, minWidth }: { head: string[]; rows: string[][]; minWidth: number }) {
+export function ResultsTable({ head, rows, minWidth }: { head: string[]; rows: ReactNode[][]; minWidth: number }) {
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: `${minWidth}px`, fontSize: '0.875rem' }}>
@@ -555,8 +636,8 @@ export function ResultsTable({ head, rows, minWidth }: { head: string[]; rows: s
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row[0]} style={{ borderBottom: '1px solid var(--border-color, #ccc)', verticalAlign: 'top' }}>
+          {rows.map((row, r) => (
+            <tr key={r} style={{ borderBottom: '1px solid var(--border-color, #ccc)', verticalAlign: 'top' }}>
               {row.map((cell, i) => (
                 <td key={i} style={{ padding: '0.4rem 0.5rem 0.4rem 0', color: i === 0 || i === 1 ? undefined : 'var(--text-muted)' }}>
                   {cell}
@@ -652,6 +733,124 @@ export function LookForList({ items }: { items: LookFor[] }) {
   )
 }
 
+// ---- Part 2's drawing: your pair and triples beside the reference values (the learner's own choice, pink; the reference marks, yellow) ----
+const DA_LEFT = 40
+const DA_RIGHT = 520
+const DA_ROW_TOP = 56
+const DA_ROW_STEP = 82
+const DA_HEIGHT = DA_ROW_TOP + 3 * DA_ROW_STEP
+
+function YourPairDrawing({ mass, separationAu, fraction, factor }: { mass: number; separationAu: number; fraction: number; factor: number }) {
+  const mine = wideBinariesDrawingValues(mass, separationAu, fraction, factor)
+  const ref = wideBinariesDrawingReference()
+  const sc = DRAWING_SCALES
+  const linX = (v: number, r: { min: number; max: number }) => DA_LEFT + ((v - r.min) / (r.max - r.min)) * (DA_RIGHT - DA_LEFT)
+  const logX = (v: number, r: { min: number; max: number }) => DA_LEFT + (Math.log(v / r.min) / Math.log(r.max / r.min)) * (DA_RIGHT - DA_LEFT)
+  const rows = [
+    {
+      key: 'speed', title: 'Newton’s speed for your pair (metres per second)', x: (v: number) => linX(v, sc.speed), mine: mine.newtonSpeed, ref: ref.newtonSpeed,
+      ticks: [0, 500, 1000, 1500, 2000, 2500, 3000], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(0)} m/s`, refName: 'the pair of Prediction 1',
+    },
+    {
+      key: 'pull', title: 'The pull between your stars, in a₀ (a logarithmic scale)', x: (v: number) => logX(v, sc.pullA0), mine: mine.pullInA0, ref: ref.pullInA0,
+      ticks: [0.01, 0.1, 1, 10, 100, 1000], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v < 10 ? v.toFixed(2) : v.toFixed(0)} a₀`, refName: 'a₀, where MOND says gravity changes',
+    },
+    {
+      key: 'fake', title: 'The boost your triples fake (percent faster than Newton’s)', x: (v: number) => linX(v, sc.fakeBoostPercent), mine: mine.fakeBoostPercent, ref: ref.fakeBoostPercent,
+      ticks: [0, 20, 40, 60, 80, 100], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(1)} percent`, refName: 'the boost the MOND papers expect',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={DA_HEIGHT}
+        viewBox={`0 0 ${VIEW_WIDTH} ${DA_HEIGHT}`}
+        style={svgStyle}
+        role="img"
+        aria-label="Three short scales for your own choice: Newton's orbital speed of your pair, the pull between its stars in units of a0, and the boost that your hidden triples fake, each with a reference value and your value marked"
+      >
+        <text x={DA_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Drawing A: your pair and triples
+        </text>
+        <text x={DA_LEFT} y={40} fill={MUTED_COLOR} fontSize="10">
+          Each scale has a yellow line for a reference value and a pink dot for your own choice.
+        </text>
+        {rows.map((row, i) => {
+          const y0 = DA_ROW_TOP + i * DA_ROW_STEP
+          return (
+            <g key={row.key}>
+              <text x={DA_LEFT} y={y0} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                {row.title}
+              </text>
+              <rect x={DA_LEFT} y={y0 + 8} width={DA_RIGHT - DA_LEFT} height={14} fill={MUTED_COLOR} opacity={0.3} />
+              <line x1={row.x(row.ref)} y1={y0 + 4} x2={row.x(row.ref)} y2={y0 + 26} stroke={RING_COLOR} strokeWidth={2.5} />
+              <circle cx={row.x(row.mine)} cy={y0 + 15} r={5.5} fill={TRIAL_COLOR} />
+              {row.ticks.map((t) => (
+                <g key={t}>
+                  <line x1={row.x(t)} y1={y0 + 24} x2={row.x(t)} y2={y0 + 29} stroke={TEXT_COLOR} />
+                  <text x={row.x(t)} y={y0 + 40} fill={TEXT_COLOR} fontSize="9" textAnchor={row.x(t) <= DA_LEFT + 1 ? 'start' : row.x(t) >= DA_RIGHT - 1 ? 'end' : 'middle'}>
+                    {row.tickLabel(t)}
+                  </text>
+                </g>
+              ))}
+              <text x={DA_LEFT} y={y0 + 56} fill={MUTED_COLOR} fontSize="10">
+                <tspan fill={TRIAL_COLOR}>pink: yours, {row.valueText(row.mine)}</tspan>
+                <tspan> · </tspan>
+                <tspan fill={RING_COLOR}>yellow: {row.refName}, {row.valueText(row.ref)}</tspan>
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+        <p style={paragraph}>
+          <strong>How to read Drawing A.</strong> It puts the numbers of your own pair and your own triples in one place, each on its own short scale, with a yellow line to compare them with. It follows the controls above,
+          so it changes when you change them.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The first scale</strong> is Newton’s orbital speed for the pair you chose, in metres per second; the <span style={{ color: RING_COLOR }}>yellow line</span> is the speed of the pair of Prediction 1.{' '}
+            <strong>The second scale</strong> is the pull between your two stars in units of a₀, on a logarithmic scale (each step is ten times the one before); the yellow line is 1 a₀, the pull below which MOND says gravity
+            changes. A dot <strong>to the left of the yellow line</strong> is a pull below a₀. <strong>The third scale</strong> is the boost your hidden triples fake, in percent faster than Newton’s; the yellow line is the {ref.fakeBoostPercent.toFixed(1)}{' '}
+            percent boost that the MOND papers expect.
+          </li>
+          <li>
+            <strong>The pink dot</strong> on each scale is your own choice. <strong>At the starting choice</strong> (the pair and the triples of the two predictions) the first dot sits on its yellow line and the
+            third is close to its own; change a control to see them move.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment.</strong> Take 3 Suns at 500 AU. Newton’s speed is √(G × M ÷ s) = {wideBinariesDrawingValues(3, 500, 0, 1).newtonSpeed.toFixed(0)} m/s, and the pull is{' '}
+          {wideBinariesDrawingValues(3, 500, 0, 1).pullInA0.toFixed(0)} a₀, far to the right of the yellow line, so this pair is no test of MOND. Take 0.5 Suns at 30,000 AU: {wideBinariesDrawingValues(0.5, 30000, 0, 1).newtonSpeed.toFixed(0)} m/s and{' '}
+          {wideBinariesDrawingValues(0.5, 30000, 0, 1).pullInA0.toFixed(2)} a₀, far to the left, in the zone where the two ideas differ.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <strong>What to look for.</strong>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Look at</strong> the pink dot against the yellow line on the first scale. <strong>What it means:</strong> your pair moves at {mine.newtonSpeed.toFixed(0)} m/s under Newton’s law, {mine.newtonSpeed > ref.newtonSpeed ? 'faster' : mine.newtonSpeed < ref.newtonSpeed ? 'slower' : 'the same'} than the {ref.newtonSpeed.toFixed(0)} m/s of the pair of Prediction 1.{' '}
+            <strong>Why it matters:</strong> a closer or heavier pair moves faster, so a given percent boost is a bigger number of metres per second to measure.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the second scale. <strong>What it means:</strong> the pull between your stars is {mine.pullInA0 < 10 ? mine.pullInA0.toFixed(2) : mine.pullInA0.toFixed(0)} a₀, {mine.pullInA0 < 1 ? 'below' : 'above'} the 1 a₀ line.{' '}
+            <strong>Why it matters:</strong> only pairs with a pull below a₀ can tell Newton’s law from MOND, so this scale says whether your pair is a real test.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the third scale. <strong>What it means:</strong> your triples fake a boost of {mine.fakeBoostPercent.toFixed(1)} percent, {mine.fakeBoostPercent > ref.fakeBoostPercent + 1e-9 ? 'more' : mine.fakeBoostPercent < ref.fakeBoostPercent - 1e-9 ? 'less' : 'the same'} than the{' '}
+            {ref.fakeBoostPercent.toFixed(1)} percent that the MOND papers expect. <strong>Why it matters:</strong> a share of hidden triples that fakes as much as the expected boost could produce the signal with no change to gravity.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing here is a measurement; the 1.4 behind the yellow 18.3 percent is the papers’ boost. <em>Calculated here:</em> the speed, the pull and the
+          faked boost for your choice, from Newton’s law and the average (1 − f) × 1 + f × k. <em>Imagined for the question:</em> your pair, your share of triples and how much faster a triple moves. The pink dots are your own choice.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBinariesExperimentProps) {
   const [boostPrediction, setBoostPrediction] = useState<BoostRange | null>(null)
   const [contaminationPrediction, setContaminationPrediction] = useState<ContaminationRange | null>(null)
@@ -739,6 +938,9 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
   const pullA0At30000 = pullInA0(mass, 30000)
   const addedPer10Percent = contaminatedRatio(0.1, mine.factor) - 1
   const ratioAt2Percent = contaminatedRatio(0.02, mine.factor)
+  const caseSpeeds = predictionPairSpeeds()
+  const checkUpRows = gammaCheckUp()
+  const toy = toyCheckUp()
   const lookForPicture1: LookFor[] = [
     {
       look: 'how steeply the blue curve falls, and how low it is at the right-hand end.',
@@ -757,9 +959,14 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
     ...(stage >= 3
       ? [
           {
-            look: 'how far above the blue curve the rose line sits, and whether the gap looks big or small.',
+            look: 'how far above the blue curve the orange line sits, and whether the gap looks big or small.',
             means: `a pull ${GAMMA_MOND_WIDE_BINARY} times as strong makes the speed ${boostFactor.toFixed(2)} times as high, ${boostPercent.toFixed(0)} percent more. For the pair marked, at ${separationAu.toLocaleString('en-US')} AU, that is about ${(mine.boostedSpeed - mine.newtonSpeed).toFixed(0)} m/s more, on top of ${mine.newtonSpeed.toFixed(0)} m/s. The gap is the same fraction everywhere because the picture is drawn that way.`,
             matters: 'the effect that astronomers are looking for is small: about a fifth of the speed. To see it, the speeds of the stars must be measured to much better than a fifth, and anything that fakes a fifth (see Picture 2) has to be ruled out.',
+          },
+          {
+            look: 'the violet rings and the white diamond.',
+            means: `the violet pair (${PREDICTION_PAIR.massSuns} Suns, ${PREDICTION_PAIR.separationAu.toLocaleString('en-US')} AU) moves at ${caseSpeeds.newton.toFixed(0)} m/s under Newton’s law and ${caseSpeeds.boosted.toFixed(0)} m/s under a pull ${GAMMA_MOND_WIDE_BINARY} times as strong, ${boostPercent.toFixed(1)} percent faster; your guess was ${boostPrediction !== null ? BOOST_SHORT[boostPrediction] : ''}, at ${boostPrediction !== null ? boostGuessSpeed(boostPrediction).toFixed(0) : ''} m/s.`,
+            matters: 'the speed depends on the square root of the pull, so a pull 1.4 times as strong gives much less than 1.4 times the speed. The expected signal is smaller than the pull’s change alone suggests.',
           },
         ]
       : []),
@@ -767,10 +974,15 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
   const above = mine.contaminatedRatio > boostFactor + 1e-9 ? 'above' : mine.contaminatedRatio < boostFactor - 1e-9 ? 'below' : 'on'
   const lookForPicture2: LookFor[] = [
     {
-      look: 'where the purple line crosses the rose dashed line, and the share of triples at the foot of the dotted line.',
+      look: 'the violet ring and the white diamond.',
+      means: `the violet case (${PREDICTION_TRIPLES.fraction * 100} percent triples, each ${PREDICTION_TRIPLES.factor} times as fast) averages ${predictionTriplesRatio().toFixed(2)} times Newton’s, a rise of ${((predictionTriplesRatio() - 1) * 100).toFixed(0)} percent; your guess was ${contaminationPrediction !== null ? CONTAMINATION_SHORT[contaminationPrediction] : ''}, at ${contaminationPrediction !== null ? contaminationGuessRatio(contaminationPrediction).toFixed(2) : ''} times.`,
+      matters: `${(PREDICTION_TRIPLES.fraction * 100).toFixed(0)} percent hidden triples is close to the ${boostPercent.toFixed(1)} percent boost that the MOND papers expect, so a modest share of hidden triples could produce a signal of the size that is being looked for.`,
+    },
+    {
+      look: 'where the pink line crosses the orange dashed line, and the share of triples at the foot of the dotted line.',
       means:
         needed === null
-          ? 'your triples move no faster than true pairs (the factor is 1), so the purple line is flat at 1.00 and never reaches the rose line.'
+          ? 'your triples move no faster than true pairs (the factor is 1), so the pink line is flat at 1.00 and never reaches the orange line.'
           : ringShown
             ? `if hidden triples move ${mine.factor} times as fast, a sample in which ${(needed * 100).toFixed(1)} percent of the “pairs” are triples has an average speed of ${boostFactor.toFixed(2)} times Newton’s, the same as the boost the MOND papers expect.`
             : `with triples that move only ${mine.factor} times as fast, it would take ${(needed * 100).toFixed(0)} percent of the “pairs” to reach the expected speed: more than the 50 percent that the picture shows, so there is no crossing.`,
@@ -782,15 +994,15 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
             : 'the slower the triples, the more of them it takes. The expected boost is easy to fake only if the hidden companions make a pair move a lot faster.',
     },
     {
-      look: 'the purple dot (your choice) against the rose line.',
-      means: `the dot, at ${mine.contaminatedRatio.toFixed(2)}, is ${above} the rose line (${boostFactor.toFixed(2)}).${needed !== null ? ` Your share, ${(mine.fraction * 100).toFixed(0)} percent, is ${mine.fraction >= needed ? 'at least' : 'less than'} the ${(needed * 100).toFixed(1)} percent that is needed.` : ''}`,
+      look: 'the pink dot (your choice) against the orange line.',
+      means: `the dot, at ${mine.contaminatedRatio.toFixed(2)}, is ${above} the orange line (${boostFactor.toFixed(2)}).${needed !== null ? ` Your share, ${(mine.fraction * 100).toFixed(0)} percent, is ${mine.fraction >= needed ? 'at least' : 'less than'} the ${(needed * 100).toFixed(1)} percent that is needed.` : ''}`,
       matters:
         mine.contaminatedRatio >= boostFactor - 1e-9
           ? 'at this share, the hidden triples alone would produce at least the expected “boost”, with no change to gravity.'
-          : 'at this share, the hidden triples fake only part of the expected boost. Try moving the sliders until the dot reaches the rose line.',
+          : 'at this share, the hidden triples fake only part of the expected boost. Try moving the sliders until the dot reaches the orange line.',
     },
     {
-      look: 'how steeply the purple line rises.',
+      look: 'how steeply the pink line rises.',
       means:
         mine.factor === 1
           ? 'it does not rise: a triple that moves no faster than a true pair changes nothing.'
@@ -800,12 +1012,12 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
   ]
   const lookForPicture3: LookFor[] = [
     {
-      look: 'which dots lie near the blue line (γ = 1), which near the rose line (γ ≈ 1.4), and which in between.',
-      means: 'a dot near the blue line is a result that looks like Newton’s law. A dot near the rose line is a result that looks like the boost that MOND predicts.',
+      look: 'which dots lie near the blue line (γ = 1), which near the orange line (γ ≈ 1.4), and which in between.',
+      means: 'a dot near the blue line is a result that looks like Newton’s law. A dot near the orange line is a result that looks like the boost that MOND predicts.',
       matters: 'this is the question of the experiment: is there a boost or not? The dots are not all in one place.',
     },
     {
-      look: 'whether each teal line includes the blue line, the rose line, both or neither.',
+      look: 'whether each teal line includes the blue line, the orange line, both or neither.',
       means: 'a line that includes a value means that the paper’s data are consistent with that value. A line that leaves it out means that the paper’s data disfavour it. A line that includes both means that the data cannot tell the two apart.',
       matters: 'a result only counts for or against an idea if its line leaves the other idea out. Look at which rows manage to do that.',
     },
@@ -966,7 +1178,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then choose a
-            pair of your own and change how many of the pairs are really triples. Nothing here is graded.
+            pair of your own and change how many of the pairs are really triples. Nothing here is graded. Your predictions never change the real pictures or tables. They are drawn on the pictures in white, in a box marked YOUR GUESS, so you can compare them with what was calculated, and they are listed again beside the results. In Part 2 you can choose a pair and change how many pairs are really triples. Those choices are pink: they move the pink rings in Picture 1 and the pink line and dot in Picture 2, and fill a drawing in Part 2 and Tables 1a and 1b, but they never change the published results, the violet marks or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -999,6 +1211,10 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
         </div>
 
         <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: how fast two stars orbit, how hidden stars can fake a faster speed, and what the published teams found. Nothing here tells you the answers. When the pictures are drawn, your guesses appear on them in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
             says which answer is right, gives the square-root rule, or gives the size of the signal that is being looked for. */}
@@ -1092,17 +1308,17 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
             {stage === 2 &&
               `The row of numbers under the horizontal axis is the pull between the stars at each separation, in units of a₀ (the small pull, about ${sci(A0)} m/s², below which MOND says gravity changes). It falls from about ${pullA0At1000.toFixed(0)} a₀ at 1,000 AU to ${inA0.toFixed(2)} a₀ at 10,000 AU. The amber numbers are below a₀.`}
             {stage === 3 &&
-              `The rose dashed line is the speed if gravity pulled ${GAMMA_MOND_WIDE_BINARY} times as hard as Newton’s law says, the boost that the MOND papers predict for wide binaries in the Galaxy. At ${P1_PAIR_AU.toLocaleString('en-US')} AU it gives about ${boostedAt10000.toFixed(0)} m/s, against Newton’s ${speedAt10000.toFixed(0)} m/s.`}
+              `The orange dashed line is the speed if gravity pulled ${GAMMA_MOND_WIDE_BINARY} times as hard as Newton’s law says, the boost that the MOND papers predict for wide binaries in the Galaxy. At ${P1_PAIR_AU.toLocaleString('en-US')} AU it gives about ${boostedAt10000.toFixed(0)} m/s, against Newton’s ${speedAt10000.toFixed(0)} m/s.`}
             {stage === 4 &&
-              'Picture 2 appears below Picture 1. It asks what happens to the average speed of a study if some of its “pairs” are secretly triples, whose hidden third star makes them move faster. The purple line is the average; the rose dashed line is the speed that the MOND papers expect.'}
+              'Picture 2 appears below Picture 1. It asks what happens to the average speed of a study if some of its “pairs” are secretly triples, whose hidden third star makes them move faster. The pink line is the average; the orange dashed line is the speed that the MOND papers expect.'}
             {stage === 5 &&
-              'Picture 3 appears below Picture 2. It shows the boost γ that each published result gives, with the range the paper states. The blue line is γ = 1 (Newton’s law) and the rose dashed line is γ ≈ 1.4 (the MOND papers’ prediction).'}
+              'Picture 3 appears below Picture 2. It shows the boost γ that each published result gives, with the range the paper states. The blue line is γ = 1 (Newton’s law) and the orange dashed line is γ ≈ 1.4 (the MOND papers’ prediction).'}
           </p>
         )}
 
         {/* Picture 1: Newton's curve and a marked pair from stage 1, the pull row from stage 2, the stronger-pull line from stage 3. */}
         <div style={{ marginBottom: '1rem' }}>
-          <PictureOne stage={stage} mass={mass} separationAu={separationAu} />
+          <PictureOne stage={stage} mass={mass} separationAu={separationAu} boostGuess={boostPrediction} />
         </div>
         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
           <p style={paragraph}>
@@ -1123,23 +1339,36 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
               </li>
             )}
             {stage >= 1 && (
+              <>
               <li>
-                <strong>The blue dot</strong> marks the pair described under the picture. At first it is the pair in Prediction 1, {P1_PAIR_AU.toLocaleString('en-US')} AU
-                apart; after the run you can choose another. The line under the picture gives its speed.
+                <strong>The pink rings, with a blue dot (Newton) and, from stage 3, an orange dot (the stronger pull) inside them,</strong> mark <strong>your pair</strong>, described under the picture. At first it
+                is the pair in Prediction 1, {P1_PAIR_AU.toLocaleString('en-US')} AU apart; after the run you can choose another in Part 2.
               </li>
+              <li>
+                <strong>The violet rings</strong> (imagined) always mark the pair that Prediction 1 asked about: {PREDICTION_PAIR.massSuns} Suns, {PREDICTION_PAIR.separationAu.toLocaleString('en-US')} AU apart.
+                They do not move when you choose another pair, so at first the pink rings sit inside them.
+              </li>
+              </>
             )}
             {stage >= 2 && (
               <li>
                 <strong>The row of numbers under the horizontal axis</strong> (labelled “pull, in a₀”) is the pull between the stars at that separation,
                 g = G × M ÷ s². <strong>a₀</strong> is a small pull, about {sci(A0)} m/s², below which MOND says gravity changes. So “74” means 74 times a₀, and
-                “0.74” means less than a₀. <strong>Amber numbers</strong> are below a₀, white ones are above. For scale, the Earth’s pull at its surface is 9.8 m/s².
+                “0.74” means less than a₀. <strong>Amber numbers</strong> are below a₀, plain ones are above. For scale, the Earth’s pull at its surface is 9.8 m/s².
               </li>
             )}
             {stage >= 3 && (
               <li>
-                <strong>The rose dashed line</strong> is the speed if gravity pulled {GAMMA_MOND_WIDE_BINARY} times as hard as Newton’s law says. The papers say
+                <strong>The orange dashed line</strong> is the speed if gravity pulled {GAMMA_MOND_WIDE_BINARY} times as hard as Newton’s law says. The papers say
                 this is the boost that MOND predicts for wide binaries in our Galaxy. The picture does not show how a boost would switch on with separation
                 (the papers do not agree on that), so this line is simply drawn at the same fixed ratio above the blue curve at every separation.
+              </li>
+            )}
+            {stage >= 3 && (
+              <li>
+                <strong>The white diamond and the YOUR GUESS box</strong> (from stage 3) are your guess for Prediction 1: the speed you guessed for the violet pair under a pull {GAMMA_MOND_WIDE_BINARY} times as
+                strong, read off the vertical axis along the dotted white line. It is only where you guessed, not a result. It sits a little to the right of the violet rings so that it does not hide them; its
+                distance to the side means nothing, and it does not move when you choose another pair.
               </li>
             )}
           </ul>
@@ -1150,7 +1379,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
             {stage >= 3 && (
               <>
                 {' '}
-                On the rose line, the pair at {separationAu.toLocaleString('en-US')} AU moves at about {mine.boostedSpeed.toFixed(0)} m/s. Divide it by Newton’s{' '}
+                On the orange line, the pair at {separationAu.toLocaleString('en-US')} AU moves at about {mine.boostedSpeed.toFixed(0)} m/s. Divide it by Newton’s{' '}
                 {mine.newtonSpeed.toFixed(0)} m/s and you get {boostFactor.toFixed(2)}, the same ratio at every separation.
               </>
             )}
@@ -1159,13 +1388,18 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
             <strong>What to look for.</strong>
           </p>
           <LookForList items={lookForPicture1} />
+          <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+            <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement of a real pair; the 1.4 is the boost the papers give (Chae and colleagues; Banik and colleagues).{' '}
+            <em>Calculated here:</em> the blue curve, the row of pulls and the orange line, from Newton’s law and the rule that the speed is the square root of the pull’s ratio. <em>Imagined for the question:</em> the pair itself
+            ({P1_MASS} Suns is this experiment’s own choice), the violet pair of Prediction 1 and your own pair. The pink rings are your pair; the white diamond is your guess.
+          </p>
         </div>
 
         {/* Picture 2 (stage 4). */}
         {stage >= 4 && (
           <>
             <div style={{ marginBottom: '1rem' }}>
-              <PictureTwo fraction={mine.fraction} factor={mine.factor} />
+              <PictureTwo fraction={mine.fraction} factor={mine.factor} contaminationGuess={contaminationPrediction} />
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               <p style={paragraph}>
@@ -1185,7 +1419,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
                 <li>
                   <strong>The vertical line</strong> is the <strong>average speed of the whole sample</strong>, written as a multiple of Newton’s speed.
                   <strong> 1.00</strong> means the average is exactly what Newton’s law says. <strong>1.10</strong> means 10 percent faster, and{' '}
-                  <strong>1.20</strong> means 20 percent faster. The same measure is used in Picture 1, where the rose line is {boostFactor.toFixed(2)} times
+                  <strong>1.20</strong> means 20 percent faster. The same measure is used in Picture 1, where the orange line is {boostFactor.toFixed(2)} times
                   as high as the blue one.
                 </li>
               </ul>
@@ -1194,27 +1428,32 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
               </p>
               <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
                 <li>
-                  <strong>The purple line</strong> is the sample’s average speed, for every share of triples, when each triple moves{' '}
+                  <strong>The pink line</strong> is the sample’s average speed, for every share of triples, when each triple moves{' '}
                   <strong>{mine.factor} times as fast</strong> as a true pair (in Prediction 2 it was twice as fast; you can change it with the controls below).
                   It starts at 1.00 on the left, where there are no triples, and rises in a straight line to {contaminatedRatio(P2_MAX_FRACTION, mine.factor).toFixed(2)} on
                   the right, where half of the pairs are triples. The factor is a choice made for illustration.
                 </li>
                 <li>
-                  <strong>The rose dashed line</strong> is the speed that the MOND papers expect, {boostFactor.toFixed(2)} times Newton’s. It is the same boost
-                  as the rose line in Picture 1, and it is drawn here as a flat line because it does not depend on the share of triples. It is the “signal” a
+                  <strong>The orange dashed line</strong> is the speed that the MOND papers expect, {boostFactor.toFixed(2)} times Newton’s. It is the same boost
+                  as the orange line in Picture 1, and it is drawn here as a flat line because it does not depend on the share of triples. It is the “signal” a
                   team is looking for.
                 </li>
                 <li>
-                  <strong>The purple dot</strong> is the share and the factor you have chosen. At first it is the example of Prediction 2: 1 pair in every 5
+                  <strong>The pink dot</strong> is the share and the factor you have chosen. At first it is the example of Prediction 2: 1 pair in every 5
                   (20 percent) is a triple, and it moves twice as fast. The line under the picture gives the average speed at that share.
                 </li>
                 <li>
-                  <strong>The white ring and the dotted line below it</strong> mark the place where the purple line crosses the rose dashed line. Read down
-                  the dotted line to the horizontal axis to find the share of triples at which that happens. The label beside it says what that share is.
-                  If the triples are slow, the purple line does not reach the rose line within 50 percent, and the ring is not drawn; the picture then says so.
+                  <strong>The violet ring</strong> (imagined) always marks the case that Prediction 2 asked about: 20 percent triples, each twice as fast, which averages {predictionTriplesRatio().toFixed(2)} times Newton’s.
+                  It does not move when you change the controls, so at first the pink dot sits inside it. <strong>The white diamond and the YOUR GUESS box</strong> are your guess for Prediction 2: the average speed you guessed
+                  for that case, read off the vertical axis. It is only where you guessed, not a result. If your guess is above the top of the picture, the marker is an arrow at the top edge and the box sits in the top corner.
                 </li>
                 <li>
-                  <strong>The words on the picture</strong> repeat this: the purple label names the purple line, the rose label names the dashed line, and the
+                  <strong>The yellow ring and the dotted line below it</strong> mark the place where the pink line crosses the orange dashed line. Read down
+                  the dotted line to the horizontal axis to find the share of triples at which that happens. The label beside it says what that share is.
+                  If the triples are slow, the pink line does not reach the orange line within 50 percent, and the ring is not drawn; the picture then says so.
+                </li>
+                <li>
+                  <strong>The words on the picture</strong> repeat this: the pink label names the pink line, the orange label names the dashed line, and the
                   note at the bottom says that this is a toy model.
                 </li>
               </ul>
@@ -1222,12 +1461,12 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
                 <strong>A worked moment.</strong> Take 100 pairs in a study. {(100 - mine.fraction * 100).toFixed(0)} are true pairs and move at 1.0 times
                 Newton’s speed. {(mine.fraction * 100).toFixed(0)} are triples and move at {mine.factor} times. The average is (
                 {(100 - mine.fraction * 100).toFixed(0)} × 1.0 + {(mine.fraction * 100).toFixed(0)} × {mine.factor}) ÷ 100 = {mine.contaminatedRatio.toFixed(2)}. That is
-                the purple dot.
+                the pink dot.
                 {ringShown && needed !== null && (
                   <>
                     {' '}
-                    For the white ring, the share is {(needed * 100).toFixed(1)} percent: ({((1 - needed) * 100).toFixed(1)} × 1.0 + {(needed * 100).toFixed(1)} ×{' '}
-                    {mine.factor}) ÷ 100 = {contaminatedRatio(needed, mine.factor).toFixed(2)}, which is the rose line’s height.
+                    For the yellow ring, the share is {(needed * 100).toFixed(1)} percent: ({((1 - needed) * 100).toFixed(1)} × 1.0 + {(needed * 100).toFixed(1)} ×{' '}
+                    {mine.factor}) ÷ 100 = {contaminatedRatio(needed, mine.factor).toFixed(2)}, which is the orange line’s height.
                   </>
                 )}
               </p>
@@ -1239,6 +1478,11 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
                 <strong>What to look for.</strong>
               </p>
               <LookForList items={lookForPicture2} />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement; the 1.4 behind the orange dashed line is the papers’ boost. <em>Calculated here:</em> the pink line, from the average
+                (1 − f) × 1 + f × k, and the orange line. <em>Imagined for the question:</em> the whole toy model: the share of triples, how much faster a triple moves, the violet case of Prediction 2 and your own choice. The pink line and dot are
+                your choice; the white diamond is your guess.
+              </p>
             </div>
           </>
         )}
@@ -1254,7 +1498,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
                 <strong>How to read Picture 3.</strong> Unlike Pictures 1 and 2, this picture is <strong>not a model</strong>. It shows what teams of astronomers
                 published, as of October 2026, after studying wide binaries with data from Gaia. Each team reports a number called the{' '}
                 <strong>gravity boost factor γ</strong>: how many times stronger than Newton’s law the pull between the stars seems to be.{' '}
-                <strong>γ = 1</strong> means Newton’s law, with no boost. <strong>γ = 1.4</strong> is the boost of Picture 1’s rose line, and it means a pull 1.4
+                <strong>γ = 1</strong> means Newton’s law, with no boost. <strong>γ = 1.4</strong> is the boost of Picture 1’s orange line, and it means a pull 1.4
                 times as strong. This experiment does not repeat their analysis.
               </p>
               <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -1284,7 +1528,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
                   <strong>The blue vertical line</strong> is γ = 1, Newton’s law. A result that lies on it shows no boost.
                 </li>
                 <li>
-                  <strong>The rose dashed vertical line</strong> is γ ≈ {GAMMA_MOND_WIDE_BINARY}, the boost that the MOND papers predict for wide binaries in the
+                  <strong>The orange dashed vertical line</strong> is γ ≈ {GAMMA_MOND_WIDE_BINARY}, the boost that the MOND papers predict for wide binaries in the
                   Galaxy (the same {GAMMA_MOND_WIDE_BINARY} as in Pictures 1 and 2).
                 </li>
                 <li>
@@ -1299,8 +1543,8 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
               </ul>
               <p style={paragraph}>
                 <strong>A worked moment.</strong> Take the top row, “Chae 2023”, read as 1.43 ± 0.06. The dot is at γ = 1.43. The line runs from 1.43 − 0.06 = 1.37 to
-                1.43 + 0.06 = 1.49. The blue line (γ = 1) is far outside that range, and the rose dashed line (γ = 1.4) is inside it. Now take the fourth row, a
-                value of 1.00 (+0.24, −0.19): its line runs from 1.00 − 0.19 = 0.81 to 1.00 + 0.24 = 1.24. It contains the blue line and does not reach the rose
+                1.43 + 0.06 = 1.49. The blue line (γ = 1) is far outside that range, and the orange dashed line (γ = 1.4) is inside it. Now take the fourth row, a
+                value of 1.00 (+0.24, −0.19): its line runs from 1.00 − 0.19 = 0.81 to 1.00 + 0.24 = 1.24. It contains the blue line and does not reach the orange
                 one. Two rows, two different pictures of the same kind of data.
               </p>
               <p style={paragraph}>
@@ -1313,6 +1557,10 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
               </p>
               <div style={{ marginBottom: '0.75rem' }}>
                 <LookForList items={lookForPicture3} />
+          <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+            <strong>Where the real picture comes from.</strong> <em>Measured:</em> every dot and its range, by the teams named beside them (Chae; Chae and colleagues; Saad and Ting), as their abstracts state them. <em>Calculated here:</em> only
+            where each is drawn. <em>Imagined for the question:</em> nothing. This picture carries no guess mark: neither prediction is about it.
+          </p>
               </div>
               <p style={{ marginTop: 0, marginBottom: 0 }}>
                 This picture shows only what was published. It does not say which team is right, the numbers are quoted as the papers state them and are not
@@ -1325,11 +1573,14 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
         {/* After the run: the neutral results and the links kept back until now (they state what the predictions asked, CLAUDE.md §12). Draft
             wording for the owner's review (§28.1, §29). The results only report; they do not say why (the tutor explains, in a later step). */}
         {done && (
-          <div style={{ marginTop: '2rem' }}>
+          <div>
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              We are about to choose a pair of stars of our own, and change how many of the “pairs” in a study are really triples. Your choices move the pink marks in Pictures 1 and 2, fill the drawing in this part and Tables 1a and 1b. They never change the published results, the violet marks or your guesses.
+            </PartHeader>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Choose a pair</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-              Choose the total mass of the two stars and how far apart they are. The dots in Picture 1 and Table 1a change with your choice, and so do the
-              speeds in the line below. The stronger-pull line is always {GAMMA_MOND_WIDE_BINARY} times the pull of Newton’s law. Your predictions stay as they are.
+              <strong>Your guesses do not change the drawings or tables. These settings do.</strong> The mass, the separation, the share of triples and how much faster a triple moves are trial values of your own, not measurements. Choose the total mass of the two stars and how far apart they are. The pink rings in Picture 1, Drawing A and Table 1a change with your choice, and so do the
+              speeds in the line below. They do not change the violet rings, the white diamond or Picture 3. The stronger-pull line is always {GAMMA_MOND_WIDE_BINARY} times the pull of Newton’s law. At the starting choice (the pair of Prediction 1) the pink rings sit inside the violet ones, so choose another pair to see them move.
             </p>
             <div style={{ marginBottom: '0.75rem' }}>
               <label htmlFor="pair-mass" style={{ display: 'block', marginBottom: '0.25rem' }}>
@@ -1360,7 +1611,7 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>How many pairs are really triples?</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
               Choose what share of the “pairs” in a study are really triples, and how many times faster a triple moves than a true pair (1 means no faster).
-              The purple dot and line in Picture 2 and Table 1b change with your choice. They start at the example of Prediction 2: 20 percent, twice as fast.
+              The pink dot and line in Picture 2, Drawing A and Table 1b change with your choice. They start at the example of Prediction 2: 20 percent, twice as fast; the violet ring and the white diamond do not move. At the starting choice the pink dot sits inside the violet ring.
             </p>
             <div style={{ marginBottom: '0.75rem' }}>
               <label htmlFor="triple-share" style={{ display: 'block', marginBottom: '0.25rem' }}>
@@ -1379,7 +1630,72 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
               <strong>{mine.speedBoostPercent.toFixed(1)} percent</strong>.
             </p>
 
-            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Results</p>
+            <YourPairDrawing mass={mass} separationAu={separationAu} fraction={mine.fraction} factor={mine.factor} />
+
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              We are about to read the numbers: first a check-up of the published boost factors against the two lines they are read against, then the tables. A guess never changes them. The choices you made in Part 2 change Tables 1a and 1b, and the page says which.
+            </PartHeader>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>The check-up: what we would expect beside what was found</p>
+            <ResultsTable
+              minWidth={620}
+              head={['What was checked', 'What we would expect', 'What was found', 'Reading']}
+              rows={[
+                ...checkUpRows.map((row) => [
+                  `${row.name}, ${row.year} (${row.binaries === null ? 'binaries not given' : row.binaries.toLocaleString('en-US') + ' binaries'})`,
+                  `γ = 1 if Newton’s law holds; γ = ${GAMMA_MOND_WIDE_BINARY} if the boost of the MOND papers`,
+                  `γ = ${row.value} (the range runs from ${row.low.toFixed(2)} to ${row.high.toFixed(2)})`,
+                  <strong key="r">{row.reading === 'both' ? 'the range includes both 1 and 1.4' : row.reading === 'Newton only' ? 'the range includes 1, not 1.4' : row.reading === 'the boost only' ? 'the range includes 1.4, not 1' : 'the range includes neither 1 nor 1.4'}</strong>,
+                ]),
+                [
+                  <>The toy sample of Prediction 2 (imagined): 1 pair in 5 is a triple moving twice as fast<PredictionTag n={2} /></>,
+                  `${toy.expected.toFixed(1)} percent faster (the boost a pull of ${GAMMA_MOND_WIDE_BINARY} gives)`,
+                  `${toy.found.toFixed(1)} percent faster`,
+                  <strong key="t">{toy.reading}</strong>,
+                ],
+              ]}
+            />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.5rem 0 0.75rem' }}>
+              The check-up does not follow the choices you made in Part 2 or your guesses. The published results measure different things on different samples, so the reading says only which of the two lines each published range includes. It does not
+              say which team is right. “More” and “less” come from the physics module; no cut-off is invented.
+            </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The two large samples (Chae 2023 and 2024).</strong> <em>What it is:</em> two results from thousands of pairs. <em>What it means:</em> γ = {checkUpRows[0].value} and {checkUpRows[1].value}, ranges that include 1.4 and leave out 1.
+                  <em> Why it matters:</em> if their method is right, the pull between wide pairs is about 1.4 times Newton’s. The weak link is a systematic error, such as hidden triples, which moves the dot and not the range.
+                </li>
+                <li>
+                  <strong>The 36-binary results (Chae 2026 and Saad and Ting 2026).</strong> <em>What it is:</em> three results from the same 36 pairs, worked out three ways. <em>What it means:</em> γ = {checkUpRows[2].value} (a range above 1.4, so it includes neither line),{' '}
+                  {checkUpRows[3].value} (a range that includes 1 and not 1.4) and {checkUpRows[4].value} (a range that includes 1.4 and not 1). <em>Why it matters:</em> the same data gave different answers depending on how the orbits were worked out,
+                  and the dots run from {checkUpRows[3].value.toFixed(2)} to {checkUpRows[2].value.toFixed(2)}, a spread bigger than any one range. This is why the question is called Contested.
+                </li>
+                <li>
+                  <strong>The toy sample.</strong> <em>What it is:</em> the fake boost of Prediction 2’s imagined case beside the boost a 1.4 pull gives. <em>What it means:</em> {toy.found.toFixed(1)} percent against {toy.expected.toFixed(1)} percent: more. <em>Why it matters:</em>{' '}
+                  a modest share of hidden triples could make a signal as big as the one being looked for. It is a toy model with the numbers chosen for illustration, so it shows that this could happen, not that it does.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 0, marginBottom: '0.5rem' }}>
+              Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+            </p>
+            <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <li>
+                <strong>Prediction 1, how much faster:</strong> {boostPrediction !== null ? BOOST_CHOICES.find((c) => c.value === boostPrediction)?.label.toLowerCase() : ''}. The question was for a pair of {PREDICTION_PAIR.massSuns} Suns, {PREDICTION_PAIR.separationAu.toLocaleString('en-US')} AU
+                apart, with a pull {GAMMA_MOND_WIDE_BINARY} times as strong. Its number is in Picture 1 (the violet rings) and in Table 1a (the row “Difference from Newton’s speed”, when your pair is that pair).
+              </li>
+              <li>
+                <strong>Prediction 2, how much can hidden stars fake:</strong> {contaminationPrediction !== null ? CONTAMINATION_CHOICES.find((c) => c.value === contaminationPrediction)?.label.toLowerCase() : ''}. The question was for 1 pair in 5 being a
+                triple that moves twice as fast. Its number is in Picture 2 (the violet ring), in the check-up (the last row) and in Table 1b (the row “Boost that the triples fake”, when your triples are that case).
+              </li>
+            </ul>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Tables</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
               These tables only report numbers, step by step. Tables 1a and 1b follow the pair and the triples you chose above. Table 2 lists every published
               result this experiment uses, as the papers state it. Your predictions are not marked here.
@@ -1401,9 +1717,33 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
                 ['Pull in units of a₀', `${mine.pullInA0.toFixed(2)} a₀`, `${sci(mine.pull, 3)} ÷ ${sci(A0)}`],
                 ['Gravity boost factor γ', `${mine.gamma}`, 'the papers’ prediction for wide binaries in the Galaxy'],
                 ['Speed if the pull were γ times as strong', `${mine.boostedSpeed.toFixed(0)} m/s`, `${mine.newtonSpeed.toFixed(0)} × √${mine.gamma} = ${mine.newtonSpeed.toFixed(0)} × ${boostFactor.toFixed(3)}`],
-                ['Difference from Newton’s speed', `${mine.speedBoostPercent.toFixed(1)} percent`, `(${boostFactor.toFixed(3)} − 1) × 100`],
+                [
+                  <>
+                    Difference from Newton’s speed
+                    {mass === PREDICTION_PAIR.massSuns && separationAu === PREDICTION_PAIR.separationAu && <PredictionTag n={1} />}
+                  </>,
+                  `${mine.speedBoostPercent.toFixed(1)} percent`,
+                  `(${boostFactor.toFixed(3)} − 1) × 100`,
+                ],
               ]}
             />
+
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.75rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The chain of arithmetic behind Picture 1 for your pair, with the working in the last column: the speed and the pull from Newton’s law, and the speed if the pull were {GAMMA_MOND_WIDE_BINARY} times as strong.
+                </li>
+                <li>
+                  <strong>What it means.</strong> For {mass} Suns at {separationAu.toLocaleString('en-US')} AU, Newton’s speed is {mine.newtonSpeed.toFixed(0)} m/s and the pull is {mine.pullInA0.toFixed(2)} a₀. A pull {GAMMA_MOND_WIDE_BINARY} times as strong gives √{GAMMA_MOND_WIDE_BINARY} = {boostFactor.toFixed(3)} times the speed, {mine.speedBoostPercent.toFixed(1)} percent more, because speed grows only as the square root of the pull. A daily-life comparison: to run twice as fast you need four times the power, not twice.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The boost the papers look for is only about {mine.speedBoostPercent.toFixed(0)} percent in speed, so the speeds have to be known to better than that, and a pair with a pull above a₀ is no test at all.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Table 1b: hidden triples (your choice)</p>
             <ResultsTable
@@ -1417,7 +1757,14 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
                   mine.contaminatedRatio.toFixed(2),
                   `(1 − ${mine.fraction.toFixed(2)}) × 1 + ${mine.fraction.toFixed(2)} × ${mine.factor} = ${(1 - mine.fraction).toFixed(2)} + ${(mine.fraction * mine.factor).toFixed(2)}`,
                 ],
-                ['Boost that the triples fake', `${mine.fakeBoostPercent.toFixed(1)} percent`, `${mine.fraction.toFixed(2)} × (${mine.factor} − 1) × 100`],
+                [
+                  <>
+                    Boost that the triples fake
+                    {mine.fraction === PREDICTION_TRIPLES.fraction && mine.factor === PREDICTION_TRIPLES.factor && <PredictionTag n={2} />}
+                  </>,
+                  `${mine.fakeBoostPercent.toFixed(1)} percent`,
+                  `${mine.fraction.toFixed(2)} × (${mine.factor} − 1) × 100`,
+                ],
                 ['Boost that the MOND papers expect', `${mine.speedBoostPercent.toFixed(1)} percent`, 'from Table 1a'],
                 [
                   'Share of triples that would fake the expected boost',
@@ -1428,6 +1775,24 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
                 ],
               ]}
             />
+
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.75rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The toy model’s arithmetic for your triples: the average speed of a sample in which a share of the “pairs” are triples, the boost that fakes, and the share that would fake the boost the papers expect.
+                </li>
+                <li>
+                  <strong>What it means.</strong> {(mine.fraction * 100).toFixed(0)} percent triples, each {mine.factor} times as fast, average {mine.contaminatedRatio.toFixed(2)} times Newton’s: a fake boost of {mine.fakeBoostPercent.toFixed(1)} percent, against the {mine.speedBoostPercent.toFixed(1)} percent expected.
+                  A daily-life comparison: if 80 tests score 50 and 20 score 100, the average is 60. <em>Why it matters:</em> a few high marks pull an average up, and a few hidden triples pull the average speed up in the same way.
+                </li>
+                <li>
+                  <strong>How sure this is.</strong> This is a toy model with numbers chosen for illustration. It shows that hidden triples <em>could</em> fake a boost, not that they do.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Table 2: the published results</p>
             <ResultsTable
@@ -1449,6 +1814,22 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
               The numbers come from the papers’ abstracts and are quoted as the papers state them. They measure different things on different samples, so they
               are not always directly comparable. “–” means that the abstract gives no single value.
             </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> Every published result this experiment uses, with the number of binaries, what is reported, the value and what the paper says. Five of the rows are boost factors and are drawn in Picture 3; the others report something that is not comparable.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The results disagree: some find a boost near 1.4, others find none, and some of the same 36 binaries give both answers. The rows that favour Newton’s law (for example Banik and colleagues, 19 sigma, and Cookson and colleagues) use different samples and methods from the rows that favour a boost.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> This is why the question is called Contested: careful teams read the same kind of Gaia data and do not agree. The numbers are quoted from abstracts, so the tables show what was published, not who is right.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>Want to know more?</strong> The scientific papers behind these numbers are listed here now, because their summaries state what the
@@ -1469,6 +1850,11 @@ export function WideBinariesExperiment({ onComplete, onTutorComplete }: WideBina
 
         {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The chapter summary below the experiment
             (in App) is shown only once the learner reaches the explanation. */}
+        {done && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
+        )}
         {done && boostPrediction !== null && contaminationPrediction !== null && (
           <WideBinariesTutor
             massSuns={mass}
