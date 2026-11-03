@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  DRAWING_SCALES,
+  predictionMassSolar,
+  sizeGuessMassSolar,
+  speedGuessKmS,
+  speedGuessRadiusPc,
+  whiteDwarfDrawingReference,
+  whiteDwarfDrawingValues,
   CHANDRASEKHAR_LIMIT_SOLAR_MASSES,
   distanceErrorPercent,
   EARTH_RADIUS_KM,
@@ -21,7 +28,7 @@ import type { LookFor } from './WideBinariesExperiment'
 
 // Cosmic Horizons, Experiment 14 (docs/experiments/cosmic-horizons/14-what-makes-a-white-dwarf-explode.md).
 // Step 6 builds the tutor (WhiteDwarfExplosionTutor.tsx) and, in App, the chapter summary.
-// Step 5 builds the three controls (the white dwarf's weight, the remnant's age and a brightness difference), shown after the run, which add white marks to Pictures 1 and 3, and the
+// Step 5 builds the three controls (the white dwarf's weight, the remnant's age and a brightness difference), shown after the run, which add pink marks to Pictures 1 and 3, and the
 // results with the reading guide (the check-up, three tables with notes, the predictions beside the results and the held-back paper links).
 // Step 4 builds the five-stage run and the three pictures, each with a guide: Picture 1 (white dwarf sizes and the limit) at stage 1, Picture 2 (the two routes) at stages 2 and 3,
 // Picture 3 (the two calcium shells, then the distance strip) at stages 4 and 5. The controls, the results and the tutor are later steps.
@@ -39,6 +46,20 @@ const CORE_COLOR = '#93c5fd' // light blue: the carbon-oxygen core of the white 
 const HELIUM_COLOR = '#fcd34d' // yellow: the helium layer
 const PARTNER_COLOR = '#fb923c' // orange: the partner star
 const GAS_COLOR = '#c084fc' // purple: gas flowing from the partner to the white dwarf
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const SIZE_SHORT = { 'about 0.5 Suns': 'about 0.5 Suns', 'about 1.0 Sun': 'about 1.0 Sun', 'about 1.4 Suns': 'about 1.4 Suns' } as const
+const SPEED_SHORT = { 'about 50 km/s': 'about 50 km/s', 'about 5,000 km/s': 'about 5,000 km/s', 'about 300,000 km/s': 'about 300,000 km/s' } as const
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -151,7 +172,8 @@ const SHELL_COLOR = '#34d399' // green: the calcium shells
 const FLASH_COLOR = '#fde047' // bright yellow: ignition
 const ERROR_COLOR = '#fb923c' // orange: a distance error
 const PICTURE_THREE_PX_PER_PC = 80 // the drawing's scale in Picture 3
-const YOURS_COLOR = '#ffffff' // white: the learner's own trial value
+const YOURS_COLOR = '#f472b6' // pink: the learner's own trial value (Part 2)
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
 
 interface YoursOne {
   massSolar: number
@@ -170,9 +192,9 @@ const thousandsComma = (value: number): string => Math.round(value).toLocaleStri
 const roundTo = (value: number, step: number): number => Math.round(value / step) * step
 
 // ---- Picture 1: how big is a white dwarf, and where is its limit? ----
-function PictureOne({ yours }: { yours: YoursOne | null }) {
+function PictureOne({ yours, stage, sizeGuess }: { yours: YoursOne | null; stage: number; sizeGuess: SizeAnswer | null }) {
   const d = WHITE_DWARF_EXPLOSION
-  const height = 420
+  const height = stage >= 3 ? 540 : 420 // room for the guess's own line from stage 3
   const cy = 125
   const px = 44 // pixels for one Earth radius
   const xs = [190, 295, 385, 465]
@@ -220,6 +242,30 @@ function PictureOne({ yours }: { yours: YoursOne | null }) {
           <SvgLines x={scaleX(yours.massSolar)} y={scaleY + 42} lines={[`your setting: ${yours.massSolar} Suns`, `radius ${yours.radiusEarths.toFixed(2)} Earth radii (${thousandsComma(roundTo(yours.radiusKm, 10))} km)`]} fill={YOURS_COLOR} bold size={9} anchor="middle" />
         </g>
       )}
+      {/* Prediction 1's guess (from stage 3, when the simulation's weight is shown in Picture 2): on its own thin line, on the same mass scale, beside the simulation's weight. */}
+      {stage >= 3 && sizeGuess !== null && (() => {
+        const stripY = scaleY + 115
+        const x = scaleX(sizeGuessMassSolar(sizeGuess))
+        const real = scaleX(predictionMassSolar())
+        const boxX = Math.min(Math.max(x - 150, 10), VIEW_WIDTH - 310)
+        return (
+          <g>
+            <SvgLines x={20} y={stripY - 22} lines={['Your guess for Prediction 1: the weight of the white dwarf in the remnant (same scale as above)']} fill={GUESS_COLOR} size={11} />
+            <line x1={scaleX(0)} y1={stripY} x2={scaleX(1.5)} y2={stripY} stroke={MUTED_COLOR} strokeWidth={1} />
+            {[0, 0.5, 1.0, 1.5].map((t) => (
+              <line key={t} x1={scaleX(t)} y1={stripY - 3} x2={scaleX(t)} y2={stripY + 3} stroke={MUTED_COLOR} />
+            ))}
+            <line x1={real} y1={stripY - 12} x2={real} y2={stripY + 12} stroke={FLASH_COLOR} strokeWidth={2.5} />
+            <SvgLines x={real - 6} y={stripY + 22} lines={[`the simulation’s white dwarf: ${predictionMassSolar().toFixed(3)} Suns`]} fill={FLASH_COLOR} size={9} anchor="end" />
+            <polygon points={`${x},${stripY - 8} ${x + 8},${stripY} ${x},${stripY + 8} ${x - 8},${stripY}`} fill={GUESS_COLOR} />
+            <line x1={x} y1={stripY + 8} x2={x} y2={stripY + 24} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={stripY + 24} width={300} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + 150} y={stripY + 41} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {SIZE_SHORT[sizeGuess]}
+            </text>
+          </g>
+        )
+      })()}
       <SvgLines x={20} y={height - 8} lines={['Drawn to scale: the sizes of the white dwarfs and the Earth are in proportion; the mass scale is a separate line.']} fill={MUTED_COLOR} />
     </svg>
   )
@@ -298,17 +344,17 @@ function PictureTwo({ stage }: { stage: number }) {
 }
 
 // ---- Picture 3: the remnant's two calcium shells (stage 4); the distance strip is added at stage 5 ----
-function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | null }) {
+function PictureThree({ stage, yours, speedGuess }: { stage: number; yours: YoursThree | null; speedGuess: SpeedAnswer | null }) {
   const d = WHITE_DWARF_EXPLOSION
   const run = runWhiteDwarfExplosion()
-  const height = stage >= 5 ? 700 : 470
+  const height = stage >= 5 ? 805 : 575 // room for the guess's own line under the picture
   const cx = 280
   const cy = 225
   const pxPerPc = PICTURE_THREE_PX_PER_PC
   const inner = d.innerShellPc * pxPerPc
   const outer = d.outerShellPc * pxPerPc
   const changes = d.pictureBrightnessChanges
-  const stripTop = 470
+  const stripTop = 575
   const barX = 150
   const barMax = 220 // pixels for 20 percent
   return (
@@ -334,8 +380,38 @@ function PictureThree({ stage, yours }: { stage: number; yours: YoursThree | nul
       <SvgLines x={540} y={74} lines={[`outer calcium shell: ${d.outerShellPc} pc`, `(${run.outerShellLightYears.toFixed(1)} light-years)`, `about ${thousandsComma(roundTo(run.outerShellSpeedKmS, 10))} km/s on average`]} fill={SHELL_COLOR} bold size={9} anchor="end" />
       <SvgLines x={cx} y={cy + outer + 26} lines={[`gap between the shells: ${run.shellGapPc.toFixed(2)} pc = ${run.shellGapLightYears.toFixed(2)} light-years`]} fill={TEXT_COLOR} bold anchor="middle" size={10} />
       {yours && (
-        <SvgLines x={cx} y={cy + outer + 46} lines={[`your setting (white): age ${yours.ageYears} years: inner shell ${thousandsComma(roundTo(yours.innerSpeedKmS, 10))} km/s, outer shell ${thousandsComma(roundTo(yours.outerSpeedKmS, 10))} km/s`]} fill={YOURS_COLOR} bold anchor="middle" size={9} />
+        <SvgLines x={cx} y={cy + outer + 46} lines={[`your setting (pink): age ${yours.ageYears} years: inner shell ${thousandsComma(roundTo(yours.innerSpeedKmS, 10))} km/s, outer shell ${thousandsComma(roundTo(yours.outerSpeedKmS, 10))} km/s`]} fill={YOURS_COLOR} bold anchor="middle" size={9} />
       )}
+      {/* Prediction 2's guess: the radius that a shell moving at the guessed steady speed for the remnant's age would have reached, on a log scale of parsecs, beside the two shells. */}
+      {speedGuess !== null && (() => {
+        const stripY = 496
+        const lx = (pc: number) => 60 + ((Math.log10(pc) + 2) / 4) * 440
+        const guessPc = speedGuessRadiusPc(speedGuess, run.ageYears)
+        const x = lx(Math.min(Math.max(guessPc, 0.01), 100))
+        const boxW = 380
+        const boxX = Math.min(Math.max(x - boxW / 2, 10), VIEW_WIDTH - boxW - 10)
+        return (
+          <g>
+            <SvgLines x={20} y={stripY - 26} lines={[`Your guess for Prediction 2: how far that speed gets in ${run.ageYears} years (log scale, parsecs)`]} fill={GUESS_COLOR} size={11} />
+            <line x1={60} y1={stripY} x2={500} y2={stripY} stroke={MUTED_COLOR} strokeWidth={1} />
+            {([[0.01, '0.01'], [0.1, '0.1'], [1, '1'], [10, '10'], [100, '100 pc']] as const).map(([pc, label]) => (
+              <g key={pc}>
+                <line x1={lx(pc)} y1={stripY - 4} x2={lx(pc)} y2={stripY + 4} stroke={MUTED_COLOR} />
+                <SvgLines x={lx(pc)} y={stripY - 8} lines={[label]} fill={MUTED_COLOR} size={9} anchor="middle" />
+              </g>
+            ))}
+            <line x1={lx(d.innerShellPc)} y1={stripY - 12} x2={lx(d.innerShellPc)} y2={stripY + 12} stroke={SHELL_COLOR} strokeWidth={2.5} />
+            <line x1={lx(d.outerShellPc)} y1={stripY - 12} x2={lx(d.outerShellPc)} y2={stripY + 12} stroke={SHELL_COLOR} strokeWidth={2.5} strokeOpacity={0.6} />
+            <SvgLines x={lx(d.outerShellPc) + 6} y={stripY + 24} lines={[`the shells: ${d.innerShellPc} and ${d.outerShellPc} pc`]} fill={SHELL_COLOR} size={9} />
+            <polygon points={`${x},${stripY - 8} ${x + 8},${stripY} ${x},${stripY + 8} ${x - 8},${stripY}`} fill={GUESS_COLOR} />
+            <line x1={x} y1={stripY + 8} x2={x} y2={stripY + 34} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={stripY + 34} width={boxW} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + boxW / 2} y={stripY + 51} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {SPEED_SHORT[speedGuess]}, which reaches {guessPc < 0.1 ? guessPc.toFixed(3) : guessPc < 10 ? guessPc.toFixed(2) : guessPc.toFixed(1)} pc
+            </text>
+          </g>
+        )
+      })()}
       {stage >= 5 && (
         <g>
           <line x1={20} y1={stripTop - 12} x2={VIEW_WIDTH - 20} y2={stripTop - 12} stroke={MUTED_COLOR} strokeWidth={1} />
@@ -422,6 +498,114 @@ const SPEED_CHOICES: ReadonlyArray<{ value: SpeedAnswer; label: string }> = [
 interface WhiteDwarfExplosionExperimentProps {
   onComplete?: () => void
   onTutorComplete?: () => void
+}
+
+// ---- Part 2's drawing: your settings beside the published ones (the learner's own choice, pink; the reference marks, yellow) ----
+const DA_LEFT = 40
+const DA_RIGHT = 520
+const DA_ROW_TOP = 56
+const DA_ROW_STEP = 82
+const DA_HEIGHT = DA_ROW_TOP + 3 * DA_ROW_STEP
+const REF_COLOR = '#fde047' // yellow: a reference value
+
+function YourWhiteDwarfDrawing({ settings }: { settings: { massSolar: number; ageYears: number; brightnessChange: number } }) {
+  const mine = whiteDwarfDrawingValues(settings)
+  const ref = whiteDwarfDrawingReference()
+  const sc = DRAWING_SCALES
+  const linX = (v: number, r: { min: number; max: number }) => DA_LEFT + ((v - r.min) / (r.max - r.min)) * (DA_RIGHT - DA_LEFT)
+  const rows = [
+    {
+      key: 'radius', title: 'How wide a white dwarf of your weight is, in Earth radii', x: (v: number) => linX(v, sc.radiusEarths), mine: mine.radiusEarths, ref: ref.radiusEarths,
+      ticks: [0, 0.5, 1, 1.5], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(2)} Earth radii`, refName: 'the simulation’s white dwarf',
+    },
+    {
+      key: 'speed', title: 'How fast the outer shell has moved on average, for your age (kilometres a second)', x: (v: number) => linX(v, sc.outerSpeedKmS), mine: mine.outerSpeedKmS, ref: ref.outerSpeedKmS,
+      ticks: [0, 2000, 4000, 6000, 8000], tickLabel: (v: number) => v.toLocaleString('en-US'), valueText: (v: number) => `${thousandsComma(roundTo(v, 10))} km/s`, refName: 'the usual age, 325 years',
+    },
+    {
+      key: 'error', title: 'How much too large a distance from brightness would be (percent; below zero: too small)', x: (v: number) => linX(v, sc.distanceErrorPercent), mine: mine.distanceErrorPercent, ref: ref.distanceErrorPercent,
+      ticks: [-5, 0, 5, 10, 15, 20], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(1)} percent`, refName: 'no difference',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={DA_HEIGHT}
+        viewBox={`0 0 ${VIEW_WIDTH} ${DA_HEIGHT}`}
+        style={svgStyle}
+        role="img"
+        aria-label="Three short scales for your own settings: how wide a white dwarf of your weight is, how fast the outer shell has moved on average for your age, and how far off a distance from brightness would be for your brightness difference, each with a reference value and your value marked"
+      >
+        <text x={DA_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Drawing A: your settings beside the published ones
+        </text>
+        <text x={DA_LEFT} y={40} fill={MUTED_COLOR} fontSize="10">
+          Each scale has a yellow line for a reference value and a pink dot for your own setting.
+        </text>
+        {rows.map((row, i) => {
+          const y0 = DA_ROW_TOP + i * DA_ROW_STEP
+          return (
+            <g key={row.key}>
+              <text x={DA_LEFT} y={y0} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                {row.title}
+              </text>
+              <rect x={DA_LEFT} y={y0 + 8} width={DA_RIGHT - DA_LEFT} height={14} fill={MUTED_COLOR} opacity={0.3} />
+              <line x1={row.x(row.ref)} y1={y0 + 4} x2={row.x(row.ref)} y2={y0 + 26} stroke={REF_COLOR} strokeWidth={2.5} />
+              <circle cx={row.x(row.mine)} cy={y0 + 15} r={5.5} fill={YOURS_COLOR} />
+              {row.ticks.map((t) => (
+                <g key={t}>
+                  <line x1={row.x(t)} y1={y0 + 24} x2={row.x(t)} y2={y0 + 29} stroke={TEXT_COLOR} />
+                  <text x={row.x(t)} y={y0 + 40} fill={TEXT_COLOR} fontSize="9" textAnchor={row.x(t) <= DA_LEFT + 1 ? 'start' : row.x(t) >= DA_RIGHT - 1 ? 'end' : 'middle'}>
+                    {row.tickLabel(t)}
+                  </text>
+                </g>
+              ))}
+              <text x={DA_LEFT} y={y0 + 56} fill={MUTED_COLOR} fontSize="10">
+                <tspan fill={YOURS_COLOR}>pink: yours, {row.valueText(row.mine)}</tspan>
+                <tspan> · </tspan>
+                <tspan fill={REF_COLOR}>yellow: {row.refName}, {row.valueText(row.ref)}</tspan>
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+        <p style={paragraph}>
+          <strong>How to read Drawing A.</strong> It puts the numbers of your settings in one place, each on its own short scale, with a yellow line for a reference value to compare them with. It follows the settings above, so it changes when you change them.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The first scale</strong> is how wide a white dwarf of your weight is, in Earth radii; the <span style={{ color: REF_COLOR }}>yellow line</span> is the simulation’s white dwarf. <strong>The second scale</strong> is the average speed of the outer calcium shell for the age you chose, in kilometres a second; the yellow line is the usual age of {WHITE_DWARF_EXPLOSION.defaultAgeYears} years.{' '}
+            <strong>The third scale</strong> is how much too large (to the right) or too small (to the left) a distance worked out from brightness would be if the supernova were as much brighter or dimmer as you chose; the yellow line is no difference.
+          </li>
+          <li>
+            <strong>The pink dot</strong> on each scale is your own setting. <strong>At the published settings</strong> all three dots sit on their yellow lines, so change a setting to see them move.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment.</strong> The outer shell is {WHITE_DWARF_EXPLOSION.outerShellPc} parsecs out. At {WHITE_DWARF_EXPLOSION.defaultAgeYears} years its average speed is {WHITE_DWARF_EXPLOSION.outerShellPc} × {thousandsComma(KM_PER_PARSEC / 1e9)} thousand million km ÷ ({WHITE_DWARF_EXPLOSION.defaultAgeYears} × 31,557,600 s) ≈ {thousandsComma(roundTo(ref.outerSpeedKmS, 10))} km/s. At 350 years the same shell would have averaged {thousandsComma(roundTo(whiteDwarfDrawingValues({ ageYears: 350 }).outerSpeedKmS, 10))} km/s.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <strong>What to look for.</strong>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Look at</strong> the pink dot on the first scale. <strong>What it means:</strong> a white dwarf of {settings.massSolar} Suns is {mine.radiusEarths.toFixed(2)} Earth radii wide, against {ref.radiusEarths.toFixed(2)} for the simulation’s. <strong>Why it matters:</strong> a heavier white dwarf is a smaller one, so the dot moves left as the weight goes up.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the second scale. <strong>What it means:</strong> at {settings.ageYears} years the outer shell averages {thousandsComma(roundTo(mine.outerSpeedKmS, 10))} km/s, against {thousandsComma(roundTo(ref.outerSpeedKmS, 10))} at {WHITE_DWARF_EXPLOSION.defaultAgeYears}. <strong>Why it matters:</strong> an older remnant means the same distance was covered more slowly, so the average speed falls as the age rises.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the third scale. <strong>What it means:</strong> a supernova {settings.brightnessChange === 0 ? 'with no difference in brightness' : `${Math.abs(settings.brightnessChange) * 100} percent ${settings.brightnessChange < 0 ? 'dimmer' : 'brighter'}`} makes a distance {mine.distanceErrorPercent >= 0 ? 'too large' : 'too small'} by {Math.abs(mine.distanceErrorPercent).toFixed(1)} percent. <strong>Why it matters:</strong> a small difference in true brightness carries into a distance error about half as big, which is why it matters what makes a white dwarf explode.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> the shells’ radii and the remnant’s age (Das and others, 2025). <em>Calculated here:</em> the radius (Black Holes Experiment 9’s formula), the average speed (radius ÷ age) and the distance error (brightness falls as 1 ÷ distance²). <em>Imagined for the question:</em> your weight, your age and your brightness difference. The pink dots are your own settings; the yellow lines are reference values.
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: WhiteDwarfExplosionExperimentProps) {
@@ -680,8 +864,8 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other values for the
             white dwarf’s weight, the remnant’s age and a difference in brightness. Nothing here is graded. Your predictions are your own guesses, made before you see
-            anything: they do not change the pictures or the tables, which come from the physics and the published numbers. They are shown again beside the results so you can
-            compare. What does change the pictures is the “Now try it yourself” controls, which appear after the run finishes.
+            anything: they do not change the pictures or the tables, which come from the physics and the published numbers. They are drawn in white, in a box marked YOUR GUESS, on Pictures 1 and 3, and shown again beside the results so you can
+            compare. What does change the pictures is the “Now try it yourself” controls, which appear after the run finishes. Their marks are pink, and they never change the real marks, the published numbers or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -722,6 +906,10 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
         </div>
 
         <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: how big a white dwarf is and where its limit is, two ways one might explode, and the two shells of calcium round the remnant of one real explosion. Nothing here tells you the answers. When the pictures are drawn, your guesses appear on them in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says which answer is
             right, and neither gives the white dwarf's mass in the remnant or the shells' speed. */}
@@ -813,7 +1001,7 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
         {/* Picture 1 (stage 1 on). */}
         {hasRun && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureOne yours={yoursOne} />
+            <PictureOne yours={yoursOne} stage={stage} sizeGuess={sizePrediction} />
           </div>
         )}
         {hasRun && (
@@ -834,6 +1022,27 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureOne} />
+            {stage >= 3 && (
+              <>
+                <p style={{ ...paragraph, marginTop: '0.75rem' }}>
+                  <strong>The thin line under the picture, with the white diamond and the YOUR GUESS box</strong> (from stage 3), is your guess for Prediction 1: the weight of the white dwarf in the remnant, on the same scale of weight as above. The short yellow line on it is the simulation’s white dwarf,
+                  {' '}{predictionMassSolar().toFixed(3)} Suns. It is only where you guessed, not a result, and it does not move when you change anything in Part 2.
+                </p>
+                <LookForList
+                  items={[
+                    {
+                      look: 'the white diamond on the thin line, beside the yellow line.',
+                      means: `the simulation that best matches the remnant has a white dwarf of ${predictionMassSolar().toFixed(3)} Suns, a core of ${d.simulationCoreSolar} and a helium layer of ${d.simulationShellSolar}; your guess was ${sizePrediction !== null ? SIZE_SHORT[sizePrediction] : ''}.`,
+                      matters: `the limit is ${CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns, so a guess of 1.4 puts the white dwarf at the limit and a guess below it puts it clearly under: the line shows at once how far below the limit the real white dwarf was.`,
+                    },
+                  ]}
+                />
+              </>
+            )}
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement of a real white dwarf; the weight of the simulation’s white dwarf comes from Das and others (2025), as the study reports it. <em>Calculated here:</em> the sizes of the circles, from Black Holes Experiment 9’s formula, and the limit.{' '}
+              <em>Imagined for the question:</em> the four weights drawn and, after the run, your own weight. The pink marker is your own weight; the white diamond is your guess.
+            </p>
           </div>
         )}
 
@@ -873,13 +1082,16 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureTwo.slice(0, stage >= 3 ? 3 : 1)} />
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture; the simulation’s core and helium layer are from Das and others (2025). <em>Calculated here:</em> nothing; it is a sketch. <em>Imagined for the question:</em> the whole sketch of the two ideas. This picture carries no guess mark and does not change with your settings: neither prediction is about it.
+            </p>
           </div>
         )}
 
         {/* Picture 3: the shells from stage 4, the distance strip from stage 5. */}
         {stage >= 4 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureThree stage={stage} yours={yoursThree} />
+            <PictureThree stage={stage} yours={yoursThree} speedGuess={speedPrediction} />
           </div>
         )}
         {stage >= 4 && (
@@ -910,20 +1122,43 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>What to look for.</strong>
             </p>
+            <p style={{ ...paragraph, marginTop: '0.75rem' }}>
+              <strong>The thin line under the picture, with the white diamond and the YOUR GUESS box,</strong> is your guess for Prediction 2, turned into a distance: how far a shell moving at the speed you guessed, at a steady pace, would have got in {result.ageYears} years, on a logarithmic scale of parsecs
+              (each step is ten times the one before). The two green lines are the real shells, at {d.innerShellPc} and {d.outerShellPc} parsecs. It is only where you guessed, not a result; a guess of 300,000 km/s, nearly the speed of light, would have got about 99 parsecs, so it is near the right-hand end.
+              It does not move when you change anything in Part 2.
+            </p>
             <LookForList items={lookForPictureThree.slice(0, stage >= 5 ? 3 : 2)} />
+            <LookForList
+              items={[
+                {
+                  look: 'the white diamond on the thin line, beside the two green lines.',
+                  means: `a shell moving at ${speedPrediction !== null ? speedGuessKmS(speedPrediction).toLocaleString('en-US') : ''} km/s for ${result.ageYears} years would have got ${speedPrediction !== null ? speedGuessRadiusPc(speedPrediction, result.ageYears).toFixed(2) : ''} parsecs; the real outer shell is at ${d.outerShellPc}, so it moved at about ${thousandsComma(roundTo(result.outerShellSpeedKmS, 10))} km/s on average.`,
+                  matters: 'a speed and an age give a distance, and the real shells are about two parsecs out: a guess far to the left would have left the gas near the centre, and one far to the right would have flung it out of the picture.',
+                },
+              ]}
+            />
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> the two shell radii, {d.innerShellPc} ± {d.shellUncertaintyPc} and {d.outerShellPc} ± {d.shellUncertaintyPc} parsecs, and the age of 300 to 350 years (Das and others, 2025; ESO). <em>Calculated here:</em> the shells’ average speeds (radius ÷ age) and the distance strip (brightness falls as 1 ÷ distance²).{' '}
+              <em>Imagined for the question:</em> the brightness differences of the strip and, after the run, your age and difference. The pink marks are your own settings; the white diamond is your guess.
+            </p>
           </div>
         )}
 
-        {/* The controls (after the run): the white dwarf's weight, the remnant's age and a brightness difference. They add white marks to Pictures 1 and 3. */}
+        {done && (
+          <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+            We are about to try other values for the white dwarf’s weight, the remnant’s age and a difference in brightness. Your choices add pink marks to Pictures 1 and 3, fill the drawing in this part. They never change the real marks, the published numbers or your guesses.
+          </PartHeader>
+        )}
+        {/* The controls (after the run): the white dwarf's weight, the remnant's age and a brightness difference. They add pink marks to Pictures 1 and 3. */}
         {done && (
           <div style={{ marginTop: '2rem', padding: '1rem 1.25rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
-            <h3 style={{ marginTop: 0 }}>Now try it yourself</h3>
+            <h3 style={{ marginTop: 0 }}>Your settings</h3>
             <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              Your predictions do not change the pictures, because the results come from the physics, not from your guesses. These settings do: change one and watch the white
+              Your predictions do not change the pictures, because the results come from the physics, not from your guesses. These settings do: change one and watch the pink
               marks in Pictures 1 and 3 above follow it. Picture 2 does not change, because it is a sketch of two ideas.
               Each choice is a trial value: it shows what would happen with that number, and does not say that the real white dwarf or the real remnant is like that.
             </p>
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the white dwarf? (Suns) It moves the white marker in Picture 1.</p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How heavy is the white dwarf? (Suns) It moves the pink marker in Picture 1.</p>
             <ChoiceButtons
               options={d.massChoicesSolar}
               value={massChoice}
@@ -934,13 +1169,13 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
               A white dwarf of {mine.massSolar} Suns has a radius of about {thousandsComma(roundTo(mine.radiusKm, 10))} km, {mine.radiusEarths.toFixed(2)} Earth radii. It is {mine.gapBelowLimitSolar.toFixed(3)} Suns below the
               limit of {CHANDRASEKHAR_LIMIT_SOLAR_MASSES}, {mine.percentBelowLimit.toFixed(0)} percent below it.
             </p>
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>How old is the remnant? (years) It moves the white labels in Picture 3.</p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How old is the remnant? (years) It moves the pink labels in Picture 3.</p>
             <ChoiceButtons options={d.ageChoicesYears} value={ageChoice} onChange={setAgeChoice} format={(v) => `${v} years${v === d.defaultAgeYears ? ' (the middle of the paper’s range)' : ''}`} />
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
               At {mine.ageYears} years the average speeds are {thousandsComma(roundTo(mine.innerShellSpeedKmS, 10))} km/s for the inner shell and {thousandsComma(roundTo(mine.outerShellSpeedKmS, 10))} km/s for the outer one. An older remnant
               means the same distance took longer, so a lower average speed. The paper gives the age as {ageLow} to {ageHigh} years.
             </p>
-            <p style={{ ...paragraph, fontWeight: 'bold' }}>How much dimmer or brighter is the supernova than assumed? (percent) It moves the white bar in Picture 3.</p>
+            <p style={{ ...paragraph, fontWeight: 'bold' }}>How much dimmer or brighter is the supernova than assumed? (percent) It moves the pink bar in Picture 3.</p>
             <ChoiceButtons
               options={d.brightnessChoices}
               value={brightnessChoice}
@@ -955,10 +1190,18 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
           </div>
         )}
 
+        {done && <YourWhiteDwarfDrawing settings={settings} />}
+
+        {done && (
+          <PartHeader color="#0f766e" title="Part 3: The results">
+            We are about to read the numbers: your predictions beside the results, a check-up that sets what we would expect beside what was found, and three tables, each with a note. A guess never changes them. The settings you chose in Part 2 change the pink marks and Drawing A, and the page says which.
+          </PartHeader>
+        )}
+
         {/* The results, shown only after the run completes: the status label, the predictions again, the check-up, three tables, and the links kept back until now. */}
         {done && (
           <div style={{ marginTop: '2rem' }}>
-            <h3 style={{ marginTop: 0 }}>Results</h3>
+            <h3 style={{ marginTop: 0 }}>The numbers behind the pictures</h3>
             <p style={{ ...paragraph, padding: '0.75rem 1rem', border: '2px solid var(--border-color, #ccc)', borderRadius: '8px', fontSize: '0.875rem' }}>
               <strong>Where this stands (as of October 2026).</strong> <strong>Strong evidence:</strong> this one remnant, SNR 0509-67.5, was made by a double detonation of a white dwarf
               of about {Math.round(result.simulationMassSolar)} Sun, well below the limit (two research groups’ simulations match its calcium shells and its small-scale structure).{' '}
@@ -1200,6 +1443,11 @@ export function WhiteDwarfExplosionExperiment({ onComplete, onTutorComplete }: W
               </li>
             </ul>
           </div>
+        )}
+        {done && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
         )}
         {/* The tutor, after the results: observe, compare with the predictions, a conceptual question, then the explanation. */}
         {done && sizePrediction !== null && speedPrediction !== null && (

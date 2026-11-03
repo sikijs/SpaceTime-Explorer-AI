@@ -88,9 +88,9 @@ export function WhiteDwarfExplosionTutor({ sizePrediction, speedPrediction, onEx
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 1. Which white dwarf is the smallest and which is the heaviest, and what happens to the size as the weight goes up? Then look at Picture 3: how many shells of calcium are there, and how far apart are they?'}
+              'Look at Picture 1. Which white dwarf is the smallest and which is the heaviest, and what happens to the size as the weight goes up? Then look at Picture 3: how many shells of calcium are there, and how far apart are they? Your guesses are drawn in white, in boxes marked YOUR GUESS, on thin lines under Pictures 1 and 3: where do they sit compared with the yellow line and the green lines?'}
             {tutorStep === 'compare' &&
-              `You predicted that the white dwarf in the remnant was ${sizeWords[sizePrediction]}, and that the outer shell has moved ${speedWords[speedPrediction]}. Now look at Tables 1 and 2 and at Pictures 2 and 3. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that the white dwarf in the remnant was ${sizeWords[sizePrediction]}, and that the outer shell has moved ${speedWords[speedPrediction]}. Compare the white diamond under Picture 1 with the yellow line (the simulation’s white dwarf), and the one under Picture 3 with the two green lines (the shells). Then look at Tables 1 and 2 and at Pictures 2 and 3. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               'Two teams look at the same remnant. One says the two shells of calcium show a double detonation. Another says they could come from instabilities in a different kind of explosion. What would you want to measure next to tell them apart?'}
           </p>
