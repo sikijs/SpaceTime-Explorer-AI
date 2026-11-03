@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  DRAWING_SCALES,
+  effectsGuessDirections,
+  fastestDrawingReference,
+  fastestDrawingValues,
+  fastestSpacecraftCheckUp,
+  predictionLagMilliseconds,
+  sizeGuessMilliseconds,
   ASTRONOMICAL_UNIT,
   closestApproachDistance,
   closestApproachTerms,
@@ -27,7 +34,7 @@ import type { LookFor } from './WideBinariesExperiment'
 
 // Cosmic Horizons, Experiment 11 (docs/experiments/cosmic-horizons/11-the-fastest-spacecraft.md).
 // Step 7 builds the tutor (FastestSpacecraftTutor.tsx) and, in App, the chapter summary.
-// Step 6 builds the controls (the point on the orbit, and the time), shown after the run, which add a white mark to each picture and a Table 4.
+// Step 6 builds the controls (the point on the orbit, and the time), shown after the run, which add a pink mark to each picture and a Table 4.
 // Step 5 builds the results (the status label, three tables, the formulas in the "Words and formulas" panel and the link kept back until after the run).
 // Step 4 builds the five-stage run: Picture 1 fills in at stages 1 to 3, Picture 2 at stage 4 and Picture 3 at stage 5, each with a guide.
 // Step 3 builds the two predictions (their answer buttons, Run gated on both, and Start over); Run only records them, because the run is Step 4.
@@ -41,7 +48,8 @@ const VIEW_WIDTH = 560
 const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
 const SUN_COLOR = '#fbbf24' // amber: the Sun
-const YOURS_COLOR = '#ffffff' // white: the learner's own choice
+const YOURS_COLOR = '#f472b6' // pink: the learner's own choice (Part 2)
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
 const EARTH_COLOR = '#38bdf8' // sky blue: the Earth and its orbit
 const VENUS_COLOR = '#fdba74' // peach: Venus's orbit
 const PROBE_COLOR = '#4ade80' // green: the probe and its orbit
@@ -69,6 +77,25 @@ const svgStyle = {
 } as const
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const PredictionTag = ({ n }: { n: 1 | 2 }) => (
+  <span style={{ marginLeft: '0.5rem', padding: '0.05rem 0.4rem', fontSize: '0.75rem', fontWeight: 'bold', border: `1px solid ${GUESS_COLOR}`, borderRadius: '4px', whiteSpace: 'nowrap' }}>
+    your Prediction {n}
+  </span>
+)
+const EFFECTS_SHORT = { 'both slow': 'both slow the clock', 'both speed up': 'both speed the clock up', 'work against each other': 'they work against each other' } as const
+const SIZE_SHORT = { microsecond: 'about 35 microseconds', millisecond: 'about 35 milliseconds', second: 'about 35 seconds' } as const
 
 function SvgLines({ x, y, lines, fill, size = 10, bold = false, anchor = 'start' }: { x: number; y: number; lines: string[]; fill: string; size?: number; bold?: boolean; anchor?: 'start' | 'middle' | 'end' }) {
   return (
@@ -195,10 +222,10 @@ const secondsText = (value: number) => (Math.abs(value) < 1 ? `${(value * 1000).
 
 type Yours = { distanceM: number; terms: { gravity: number; speed: number; total: number }; lag: number; speedKmS: number } | null
 
-function PictureOne({ stage, yours }: { stage: number; yours: Yours }) {
-  const yoursLabel = yours ? `. A third bar outlined in white shows the learner's chosen point on the orbit, ${(yours.distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU from the Sun, with its own gravity and motion parts` : ''
+function PictureOne({ stage, yours, effectsGuess }: { stage: number; yours: Yours; effectsGuess: Effects | null }) {
+  const yoursLabel = yours ? `. A third bar outlined in pink shows the learner's chosen point on the orbit, ${(yours.distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU from the Sun, with its own gravity and motion parts` : ''
   const shift = yours ? 90 : 0 // the room for the learner's own bar
-  const height = 350 + shift
+  const height = 350 + shift + 130 // room for the guess's own strip under the legend
   const earth = earthTerms()
   const probe = closestApproachTerms()
   const earthY = 82
@@ -289,7 +316,7 @@ function PictureOne({ stage, yours }: { stage: number; yours: Yours }) {
         </g>
       )}
 
-      {/* The learner's own point on the orbit: a third bar, outlined in white. */}
+      {/* The learner's own point on the orbit: a third bar, outlined in pink. */}
       {yours && (
         <g>
           <SvgLines x={P1_LEFT - 12} y={262} lines={['your point on', 'the orbit']} fill={YOURS_COLOR} bold anchor="end" />
@@ -310,6 +337,43 @@ function PictureOne({ stage, yours }: { stage: number; yours: Yours }) {
           />
         </g>
       )}
+
+      {/* Prediction 1's guess (from stage 2): only a direction for each effect, on a strip under the legend. Right of the zero line slows the clock, left speeds it up. */}
+      {stage >= 2 && effectsGuess !== null && (() => {
+        const dirs = effectsGuessDirections(effectsGuess)
+        const base = 392 + shift
+        const arrow = (y: number, dir: 1 | -1, label: string) => {
+          const tip = P1_LEFT + dir * 70
+          return (
+            <g>
+              <SvgLines x={P1_LEFT - 12} y={y + 4} lines={[label]} fill={GUESS_COLOR} bold anchor="end" />
+              <line x1={P1_LEFT} y1={y} x2={tip - dir * 8} y2={y} stroke={GUESS_COLOR} strokeWidth={4} />
+              <polygon points={`${tip},${y} ${tip - dir * 14},${y - 7} ${tip - dir * 14},${y + 7}`} fill={GUESS_COLOR} />
+            </g>
+          )
+        }
+        return (
+          <g>
+            <text x={20} y={base - 26} fill={GUESS_COLOR} fontSize="11">
+              Your guess for Prediction 1 (a marker only): which way each effect moves the clock
+            </text>
+            <line x1={P1_LEFT} y1={base - 14} x2={P1_LEFT} y2={base + 40} stroke={FAR_COLOR} strokeWidth={2} />
+            <text x={P1_LEFT + 74} y={base - 6} fill={MUTED_COLOR} fontSize="9">
+              right: slows the clock
+            </text>
+            <text x={P1_LEFT - 74} y={base - 6} fill={MUTED_COLOR} fontSize="9" textAnchor="end">
+              left: speeds it up
+            </text>
+            {arrow(base, dirs.gravity, 'gravity')}
+            {arrow(base + 26, dirs.motion, 'motion')}
+            <line x1={P1_LEFT} y1={base + 40} x2={P1_LEFT} y2={base + 50} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={P1_LEFT - 130} y={base + 50} width={300} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={P1_LEFT + 20} y={base + 67} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {EFFECTS_SHORT[effectsGuess]}
+            </text>
+          </g>
+        )
+      })()}
 
       {/* The legend. */}
       <rect x={20} y={312 + shift} width={12} height={12} fill={GRAVITY_COLOR} />
@@ -361,7 +425,7 @@ function PictureTwo({ stage, yours }: { stage: number; yours: Yours }) {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 2: the probe's oval orbit round the Sun, drawn to scale, with five marked points from the far end on the left to the closest point on the right. Each point has a label giving its distance from the Sun, the probe's speed there, and by how many milliseconds a day the probe's clock differs from a clock on the Earth. The difference is large at the closest point and shrinks to a small negative number at the far end${yours ? `. A white ring marks the learner's chosen point, ${(yours.distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU from the Sun` : ''}`}
+      aria-label={`Picture 2: the probe's oval orbit round the Sun, drawn to scale, with five marked points from the far end on the left to the closest point on the right. Each point has a label giving its distance from the Sun, the probe's speed there, and by how many milliseconds a day the probe's clock differs from a clock on the Earth. The difference is large at the closest point and shrinks to a small negative number at the far end${yours ? `. A pink ring marks the learner's chosen point, ${(yours.distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU from the Sun` : ''}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 2: how the probe’s clock differs from the Earth’s round its orbit
@@ -399,7 +463,7 @@ function PictureTwo({ stage, yours }: { stage: number; yours: Yours }) {
           <SvgLines
             x={centreX - 40}
             y={P2_SUN_Y - 8}
-            lines={['your point (the white ring):', `${(yours.distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU from the Sun, ${yours.speedKmS.toFixed(0)} km/s`, `${yours.lag >= 0 ? 'behind' : 'ahead'} by ${Math.abs(yours.lag).toFixed(2)} ms a day`]}
+            lines={['your point (the pink ring):', `${(yours.distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU from the Sun, ${yours.speedKmS.toFixed(0)} km/s`, `${yours.lag >= 0 ? 'behind' : 'ahead'} by ${Math.abs(yours.lag).toFixed(2)} ms a day`]}
             fill={YOURS_COLOR}
             bold
             size={10}
@@ -429,8 +493,8 @@ const MIN_AU_LOG = Math.log10(0.04)
 const MAX_AU_LOG = Math.log10(0.8)
 const auToX = (au: number) => P3_LEFT + ((Math.log10(au) - MIN_AU_LOG) / (MAX_AU_LOG - MIN_AU_LOG)) * (P3_RIGHT - P3_LEFT)
 
-function PictureThree({ yours }: { yours: Yours }) {
-  const height = 450
+function PictureThree({ yours, sizeGuess }: { yours: Yours; sizeGuess: TimeScale | null }) {
+  const height = 450 + 100 // room for the guess's own line under the top graph
   const near = closestApproachDistance()
   const far = farOrbitDistance()
   const earth = earthTerms()
@@ -458,7 +522,7 @@ function PictureThree({ yours }: { yours: Yours }) {
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       style={svgStyle}
       role="img"
-      aria-label={`Picture 3. Top: a curve of how many milliseconds a day the probe's clock is behind a clock on the Earth, against the probe's distance from the Sun on a logarithmic scale. The curve starts high at the closest point and falls steadily, crossing zero near 0.70 AU and ending slightly below zero at the far end. Bottom: two bars comparing the lag that builds up over one whole 88-day orbit if the closest-point rate lasted all the time, which is long, with the lag that really builds up, which is much shorter${yours ? `. A white ring on the curve marks the learner's chosen point, ${(yours.distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU from the Sun` : ''}`}
+      aria-label={`Picture 3. Top: a curve of how many milliseconds a day the probe's clock is behind a clock on the Earth, against the probe's distance from the Sun on a logarithmic scale. The curve starts high at the closest point and falls steadily, crossing zero near 0.70 AU and ending slightly below zero at the far end. Bottom: two bars comparing the lag that builds up over one whole 88-day orbit if the closest-point rate lasted all the time, which is long, with the lag that really builds up, which is much shorter${yours ? `. A pink ring on the curve marks the learner's chosen point, ${(yours.distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU from the Sun` : ''}`}
     >
       <text x={20} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         Picture 3: the lag against the distance, and over a whole orbit
@@ -506,7 +570,49 @@ function PictureThree({ yours }: { yours: Yours }) {
         </g>
       )}
 
+      {/* Prediction 2's guess: on its own thin line under the top graph, in milliseconds a day, on the same scale as the graph's vertical axis. */}
+      {sizeGuess !== null && (() => {
+        const stripY = P3_BOTTOM + 86
+        const stripX = (v: number) => P3_LEFT + ((v - MIN_LAG) / (MAX_LAG - MIN_LAG)) * (P3_RIGHT - P3_LEFT)
+        const ms = sizeGuessMilliseconds(sizeGuess)
+        const off = ms > MAX_LAG
+        const x = stripX(Math.min(ms, MAX_LAG))
+        const boxW = off ? 380 : 300
+        const boxX = Math.min(Math.max(x - boxW / 2, 10), VIEW_WIDTH - boxW - 10)
+        return (
+          <g>
+            <text x={20} y={stripY - 20} fill={GUESS_COLOR} fontSize="11">
+              Your guess for Prediction 2: the lag after one day at the closest point, in ms
+            </text>
+            <line x1={P3_LEFT} y1={stripY} x2={P3_RIGHT} y2={stripY} stroke={MUTED_COLOR} strokeWidth={1} />
+            {[0, 10, 20, 30].map((v) => (
+              <g key={v}>
+                <line x1={stripX(v)} y1={stripY - 3} x2={stripX(v)} y2={stripY + 3} stroke={MUTED_COLOR} />
+                <text x={stripX(v)} y={stripY - 7} fill={MUTED_COLOR} fontSize="9" textAnchor="middle">
+                  {v}
+                </text>
+              </g>
+            ))}
+            <line x1={stripX(closestLag)} y1={stripY - 12} x2={stripX(closestLag)} y2={stripY + 12} stroke={CLOCK_COLOR} strokeWidth={2.5} />
+            <text x={stripX(closestLag) - 6} y={stripY + 20} fill={CLOCK_COLOR} fontSize="9" textAnchor="end">
+              the calculated lag, {closestLag.toFixed(1)}
+            </text>
+            {off ? (
+              <polygon points={`${x - 14},${stripY - 8} ${x + 4},${stripY} ${x - 14},${stripY + 8}`} fill={GUESS_COLOR} />
+            ) : (
+              <polygon points={`${x},${stripY - 8} ${x + 8},${stripY} ${x},${stripY + 8} ${x - 8},${stripY}`} fill={GUESS_COLOR} />
+            )}
+            <line x1={x} y1={stripY + 8} x2={x} y2={stripY + 28} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={stripY + 28} width={boxW} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + boxW / 2} y={stripY + 45} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {SIZE_SHORT[sizeGuess]}{off ? ' (beyond the right edge)' : ''}
+            </text>
+          </g>
+        )
+      })()}
+
       {/* Stage 5: the lag over one whole orbit. */}
+      <g transform="translate(0 100)">
       <line x1={20} y1={308} x2={540} y2={308} stroke={MUTED_COLOR} strokeWidth={0.5} />
       <SvgLines x={20} y={326} lines={[`The lag after one whole orbit of ${PARKER.periodDays} days, against the Earth’s clock (seconds)`]} fill={TEXT_COLOR} bold size={11} />
       <SvgLines x={BAR_LEFT - 10} y={358} lines={['if the closest-point', 'rate lasted all orbit']} fill={CLOCK_COLOR} bold size={10} anchor="end" />
@@ -515,6 +621,7 @@ function PictureThree({ yours }: { yours: Yours }) {
       <SvgLines x={BAR_LEFT - 10} y={408} lines={['the real orbit', '(its rate changes)']} fill={PROBE_COLOR} bold size={10} anchor="end" />
       <rect x={BAR_LEFT} y={396} width={barX(actual) - BAR_LEFT} height={26} fill={PROBE_COLOR} />
       <SvgLines x={barX(actual) + 8} y={414} lines={[`${actual.toFixed(3)} s`]} fill={PROBE_COLOR} bold size={11} />
+      </g>
     </svg>
   )
 }
@@ -567,6 +674,118 @@ const SIZE_CHOICES: ReadonlyArray<{ value: TimeScale; label: string }> = [
 interface FastestSpacecraftExperimentProps {
   onComplete?: () => void
   onTutorComplete?: () => void
+}
+
+// ---- Part 2's drawing: your point on the orbit beside the closest point (the learner's own choice, pink; the reference marks, yellow) ----
+const DA_LEFT = 40
+const DA_RIGHT = 520
+const DA_ROW_TOP = 56
+const DA_ROW_STEP = 82
+const DA_HEIGHT = DA_ROW_TOP + 3 * DA_ROW_STEP
+const REF_COLOR = '#fde047' // yellow: a reference value
+
+function YourOrbitDrawing({ distanceM, seconds, durationName }: { distanceM: number; seconds: number; durationName: string }) {
+  const mine = fastestDrawingValues(distanceM, seconds)
+  const ref = fastestDrawingReference()
+  const sc = DRAWING_SCALES
+  const linX = (v: number, r: { min: number; max: number }) => DA_LEFT + ((v - r.min) / (r.max - r.min)) * (DA_RIGHT - DA_LEFT)
+  const logX = (v: number) => (v <= sc.gapMs.min ? DA_LEFT : DA_LEFT + (Math.log(v / sc.gapMs.min) / Math.log(sc.gapMs.max / sc.gapMs.min)) * (DA_RIGHT - DA_LEFT))
+  const gapText = (v: number) => (v < 1000 ? `${v.toFixed(2)} ms` : `${(v / 1000).toFixed(2)} s`)
+  const rows = [
+    {
+      key: 'lag', title: 'How many milliseconds a day the probe’s clock is behind the Earth’s (below zero: ahead)', x: (v: number) => linX(v, sc.lagMsPerDay), mine: mine.lagMsPerDay, ref: ref.lagMsPerDay,
+      ticks: [0, 10, 20, 30], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(2)} ms`, refName: 'the closest point',
+    },
+    {
+      key: 'speed', title: 'The probe’s speed (kilometres a second)', x: (v: number) => linX(v, sc.speedKmS), mine: mine.speedKmS, ref: ref.speedKmS,
+      ticks: [0, 50, 100, 150, 200], tickLabel: (v: number) => `${v}`, valueText: (v: number) => `${v.toFixed(1)} km/s`, refName: 'the closest point',
+    },
+    {
+      key: 'gap', title: `The size of the gap after ${durationName}, if the probe stayed there (a logarithmic scale)`, x: logX, mine: mine.gapMs, ref: ref.gapMs,
+      ticks: [0.1, 1, 10, 100, 1000, 10000, 100000], tickLabel: (v: number) => (v >= 1000 ? `${v / 1000}k` : `${v}`), valueText: gapText, refName: 'the closest point after a day',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={DA_HEIGHT}
+        viewBox={`0 0 ${VIEW_WIDTH} ${DA_HEIGHT}`}
+        style={svgStyle}
+        role="img"
+        aria-label="Three short scales for your own point on the orbit: how many milliseconds a day the probe's clock is behind the Earth's, the probe's speed and the size of the gap after your time, each with the closest point marked as a reference and your value marked"
+      >
+        <text x={DA_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Drawing A: your point beside the closest point
+        </text>
+        <text x={DA_LEFT} y={40} fill={MUTED_COLOR} fontSize="10">
+          Each scale has a yellow line for the closest point and a pink dot for your own point.
+        </text>
+        {rows.map((row, i) => {
+          const y0 = DA_ROW_TOP + i * DA_ROW_STEP
+          return (
+            <g key={row.key}>
+              <text x={DA_LEFT} y={y0} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                {row.title}
+              </text>
+              <rect x={DA_LEFT} y={y0 + 8} width={DA_RIGHT - DA_LEFT} height={14} fill={MUTED_COLOR} opacity={0.3} />
+              <line x1={row.x(row.ref)} y1={y0 + 4} x2={row.x(row.ref)} y2={y0 + 26} stroke={REF_COLOR} strokeWidth={2.5} />
+              <circle cx={row.x(row.mine)} cy={y0 + 15} r={5.5} fill={YOURS_COLOR} />
+              {row.ticks.map((t) => (
+                <g key={t}>
+                  <line x1={row.x(t)} y1={y0 + 24} x2={row.x(t)} y2={y0 + 29} stroke={TEXT_COLOR} />
+                  <text x={row.x(t)} y={y0 + 40} fill={TEXT_COLOR} fontSize="9" textAnchor={row.x(t) <= DA_LEFT + 1 ? 'start' : row.x(t) >= DA_RIGHT - 1 ? 'end' : 'middle'}>
+                    {row.tickLabel(t)}
+                  </text>
+                </g>
+              ))}
+              <text x={DA_LEFT} y={y0 + 56} fill={MUTED_COLOR} fontSize="10">
+                <tspan fill={YOURS_COLOR}>pink: yours, {row.valueText(row.mine)}</tspan>
+                <tspan> · </tspan>
+                <tspan fill={REF_COLOR}>yellow: {row.refName}, {row.valueText(row.ref)}</tspan>
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+        <p style={paragraph}>
+          <strong>How to read Drawing A.</strong> It puts the numbers of your own point on the orbit in one place, each on its own short scale, with a yellow line for the closest point to compare them with. It follows the controls above, so it changes when you change them.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The first scale</strong> is how many milliseconds a day the probe’s clock is behind the Earth’s clock (a millisecond is a thousandth of a second); a dot below zero would mean it is ahead. The <span style={{ color: REF_COLOR }}>yellow line</span> is the closest point.{' '}
+            <strong>The second scale</strong> is the probe’s speed in kilometres a second; the yellow line is NASA’s {ref.speedKmS.toFixed(2)}. <strong>The third scale</strong> is the size of the gap after the time you chose, if the probe stayed at that point, on a logarithmic scale (each step is ten times the one
+            before; “k” means thousand); the yellow line is the closest point after one day.
+          </li>
+          <li>
+            <strong>The pink dot</strong> on each scale is your own point. <strong>At the starting choice</strong> (the closest point, one day) all three dots sit on their yellow lines; move the slider to see them part.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment.</strong> At the closest point the probe’s clock is {ref.lagMsPerDay.toFixed(2)} ms a day behind, so after {PARKER.periodDays} days at that rate the gap would be {ref.lagMsPerDay.toFixed(2)} × {PARKER.periodDays} = {(ref.lagMsPerDay * PARKER.periodDays).toFixed(0)} ms, about {((ref.lagMsPerDay * PARKER.periodDays) / 1000).toFixed(1)} seconds. A real probe is slower farther out, so over a real orbit the gap is much smaller.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <strong>What to look for.</strong>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Look at</strong> the pink dot on the first scale, against the yellow line. <strong>What it means:</strong> at {(distanceM / ASTRONOMICAL_UNIT).toFixed(2)} AU the clock is {mine.lagMsPerDay >= 0 ? 'behind' : 'ahead of'} the Earth’s by {Math.abs(mine.lagMsPerDay).toFixed(2)} ms a day, against {ref.lagMsPerDay.toFixed(2)} at the closest point.{' '}
+            <strong>Why it matters:</strong> the lag falls steadily as the probe moves out, because both gravity and speed weaken.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the second scale. <strong>What it means:</strong> the probe moves at {mine.speedKmS.toFixed(1)} km/s here, against {ref.speedKmS.toFixed(2)} at the closest point. <strong>Why it matters:</strong> speed is half of the story: slowing down moves the dot left and reduces the motion part of the lag.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the third scale. <strong>What it means:</strong> after {durationName} at that rate the gap is {gapText(mine.gapMs)}, against {gapText(ref.gapMs)} for the closest point after a day. <strong>Why it matters:</strong> a small daily lag adds up with time, but a real probe does not stay at one point.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> the closest point’s speed, {ref.speedKmS.toFixed(2)} km/s (NASA; Guinness World Records). <em>Calculated here:</em> the lag, the oval’s speed and the gap, from the clock-rate rule. <em>Imagined for the question:</em> your point on the orbit and the time it stays there. The pink dots are your own point; the yellow lines are the closest point.
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: FastestSpacecraftExperimentProps) {
@@ -639,6 +858,8 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
     ]
   })
   const solarRadii = nearM / SUN.radius
+  const checkUp = fastestSpacecraftCheckUp()
+  const realLag = predictionLagMilliseconds()
   const ovalNearSpeedKmS = orbitSpeed(nearM) / 1000
   const formulaEntries: { term: string; meaning: string }[] = [
     {
@@ -832,7 +1053,7 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then look at other points
-            on the probe’s orbit. Nothing here is graded.
+            on the probe’s orbit. Nothing here is graded. Your predictions never change the real pictures or tables. They are drawn on Pictures 1 and 3 in white, in a box marked YOUR GUESS, so you can compare them with what was calculated, and they are listed again beside the results. In Part 2 you can look at other points on the orbit and other durations. Those choices are pink: they add a pink mark to each picture and fill a drawing in Part 2 and Table 4, but they never change the real marks, the published facts or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -878,6 +1099,10 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
         </div>
 
         <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: what slows a clock on the Earth and on the probe, where the probe is along its orbit, and how far its clock falls behind each day and over a whole orbit. Nothing here tells you the answers. When the pictures are drawn, your guesses appear on them in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says
             which answer is right, or gives the sizes of the terms. */}
@@ -981,7 +1206,7 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
         {/* Picture 1: the Earth's bar from stage 1, the probe's bar from stage 2, the difference from stage 3. */}
         {status !== 'idle' && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureOne stage={stage} yours={done ? yoursFor : null} />
+            <PictureOne stage={stage} yours={done ? yoursFor : null} effectsGuess={effectsPrediction} />
           </div>
         )}
         {status !== 'idle' && (
@@ -1001,6 +1226,12 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
                 <strong>The top bar</strong> is a clock on the Earth’s equator (it appears at stage 1). <strong>The bottom bar</strong> is the probe at its closest
                 point to the Sun (stage 2).
               </li>
+              {stage >= 2 && (
+                <li>
+                  <strong>The white arrows and the YOUR GUESS box on the strip under the legend</strong> (stage 2 on) are your guess for Prediction 1: one arrow for gravity and one for motion, to the right of the purple zero line for “slows the clock” and to the left for
+                  “speeds it up”. <strong>It is only a marker:</strong> the length of an arrow means nothing, and for “they work against each other” which of the two points which way is not part of your guess. It does not move when you change anything in Part 2.
+                </li>
+              )}
               {stage >= 3 && (
                 <li>
                   <strong>The yellow bracket</strong> (stage 3) is the gap between the ends of the two bars: how much more one clock is slowed than the other.
@@ -1018,6 +1249,21 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureOne.slice(0, stage >= 3 ? 3 : stage >= 2 ? 2 : 0)} />
+            {stage >= 2 && (
+              <LookForList
+                items={[
+                  {
+                    look: 'the white arrows on the strip, beside the lavender and green parts of the probe’s bar.',
+                    means: `the probe’s gravity part (${sciText(probe.gravity)}) and its motion part (${sciText(probe.speed)}) both lengthen the bar, so both slow the clock; your guess was ${effectsPrediction !== null ? EFFECTS_SHORT[effectsPrediction] : ''}.`,
+                    matters: 'gravity and speed each slow a clock, and at the probe’s closest point they point the same way and add. Where they point opposite ways, as on a low orbit round the Earth, they partly cancel.',
+                  },
+                ]}
+              />
+            )}
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> the probe’s closest height above the Sun and its speed there (NASA; the Guinness World Records entry for 24 December 2024) and the constants. <em>Calculated here:</em> every bar, from the rule that a clock is slowed by GM ÷ (r × c²) plus v² ÷ (2 × c²).{' '}
+              <em>Imagined for the question:</em> nothing; after the run, your own point on the orbit. The pink-outlined bar is your own point; the white arrows are your guess. The mission has not measured this lag: it is a calculation.
+            </p>
           </div>
         )}
 
@@ -1043,12 +1289,16 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureTwo} />
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> the closest point (NASA; Guinness World Records). <em>Calculated here:</em> the oval, from Kepler’s third law with a period of about {PARKER.periodDays} days, and the marked points; the period is a round figure that was not read from a NASA page.{' '}
+              <em>Imagined for the question:</em> nothing; after the run, your own point. The pink ring is your own point. This picture carries no guess mark: neither prediction is about it.
+            </p>
           </div>
         )}
 
         {stage >= 5 && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            <PictureThree yours={done ? yoursFor : null} />
+            <PictureThree yours={done ? yoursFor : null} sizeGuess={sizePrediction} />
           </div>
         )}
         {stage >= 5 && (
@@ -1066,6 +1316,10 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
               <strong>green bar</strong> uses the rate the probe really has at each moment of the orbit, averaged over time, so it is much shorter.
             </p>
             <p style={paragraph}>
+              <strong>The thin line under the top graph, with the white diamond and the YOUR GUESS box,</strong> is your guess for Prediction 2: how many milliseconds a day the probe’s clock is behind the Earth’s at the closest point, on the same scale as the graph’s vertical axis.
+              The short yellow line on it is the calculated lag. It is only where you guessed, not a result; a guess of 35 seconds is beyond the right edge, so it is an arrow at the edge. It does not move when you change anything in Part 2.
+            </p>
+            <p style={paragraph}>
               <strong>A worked moment.</strong> Over a whole orbit the probe’s two parts average {sciText(average.total)} (1.5 × GM ÷ (a × c²), with a the orbit’s long half-width), against {sciText(earth.total)} for
               the Earth. The difference, {sciText(average.total - earth.total)}, times {PARKER.periodDays} × {SECONDS_PER_DAY.toLocaleString('en-US')} s = {actualOrbit.toFixed(3)} s.
             </p>
@@ -1073,16 +1327,35 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
               <strong>What to look for.</strong>
             </p>
             <LookForList items={lookForPictureThree} />
+            <LookForList
+              items={[
+                {
+                  look: 'the white diamond on the thin line, beside the yellow line.',
+                  means: `the yellow line is the calculated lag at the closest point, ${realLag.toFixed(1)} milliseconds a day, the same as the yellow dot at the top of the green curve; your guess was ${sizePrediction !== null ? SIZE_SHORT[sizePrediction] : ''}, at ${sizePrediction !== null ? sizeGuessMilliseconds(sizePrediction).toLocaleString('en-US') : ''} ms.`,
+                  matters: 'the three possible answers are a thousand times apart, so on a scale of milliseconds a wrong order of magnitude is a long way off: a thousandth of the real lag, or a thousand times more.',
+                },
+              ]}
+            />
+            <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+              <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement. <em>Calculated here:</em> the curve and the bars, from the clock-rate rule applied along the two-body oval and to a whole orbit. <em>Imagined for the question:</em> nothing, except your own
+              point after the run. The pink ring is your own point; the white diamond is your guess.
+            </p>
           </div>
         )}
 
 
-        {/* The controls (after the run): the point on the orbit and the time. They add a white mark to each picture and fill Table 4. */}
+        {done && (
+          <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+            We are about to put the probe at other points on its orbit, and choose for how long it stays there. Your choices add a pink mark to each picture, fill the drawing in this part and Table 4. They never change the real marks, the published facts or your guesses.
+          </PartHeader>
+        )}
+
+        {/* The controls (after the run): the point on the orbit and the time. They add a pink mark to each picture and fill Table 4. */}
         {done && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Now try other points on the orbit</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-              Move the slider to put the probe at a different point on its orbit, from its closest point to its far end, and choose for how long it stays there. A white mark
+              <strong>Your guesses do not change the drawings or tables. These settings do.</strong> The point on the orbit and the time are trial values of your own, not measurements, and they add a pink mark to Picture 1 (a bar), Picture 2 (a ring) and Picture 3 (a ring), move the pink dots of Drawing A and fill in Table 4; they do not change the other bars, dots and curves, Tables 1 to 3 or your guesses. At the starting point (the closest point, one day) the pink marks sit on the real ones, so move the slider to see them move. Move the slider to put the probe at a different point on its orbit, from its closest point to its far end, and choose for how long it stays there. A pink mark
               on each picture shows your point, and Table 4 below gives the numbers (km/s is kilometres a second, ms is a millisecond). The slider is on a log scale, like Picture 3: equal steps multiply the distance.
             </p>
             <label htmlFor="orbit-slider" style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.25rem' }}>
@@ -1126,6 +1399,14 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
           </div>
         )}
 
+        {done && <YourOrbitDrawing distanceM={yourDistanceM} seconds={yourDuration.seconds} durationName={durationName} />}
+
+        {done && (
+          <PartHeader color="#0f766e" title="Part 3: The results">
+            We are about to read the numbers: first a check-up of the closest-approach numbers against NASA’s own words, then four tables. A guess never changes them. The choices you made in Part 2 change Table 4, and the page says which.
+          </PartHeader>
+        )}
+
         {/* The results (after the run): the status label, three tables, and the link kept back until now (CLAUDE.md §12). The tables only report numbers;
             the explanation is the tutor's. */}
         {done && (
@@ -1143,18 +1424,82 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
               uses, as the sources state them. In the tables, ms is a millisecond (a thousandth of a second), s is a second, km/s is kilometres a second and AU is the Earth’s distance from the Sun. Table 4 follows your own point on the orbit, from the controls above. Your predictions are not marked here.
             </p>
 
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>The check-up: what we would expect beside what was found</p>
+            <ResultsTable
+              minWidth={620}
+              head={['What was checked', 'What we would expect (NASA)', 'What was found (here)', 'Reading']}
+              rows={checkUp.map((row, i) => [
+                row.label,
+                i === 2 ? `${row.expected.toFixed(2)} ${row.unit}` : `${row.expected.toLocaleString('en-US')} ${row.unit}`,
+                i === 2 ? `${row.found.toFixed(1)} ${row.unit}` : `${row.found.toLocaleString('en-US')} ${row.unit}`,
+                <strong key={i}>{row.reading}</strong>,
+              ])}
+            />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.5rem 0 0.75rem' }}>
+              The check-up does not follow the choices you made in Part 2 or your guesses. The first two rows are compared at the two figures that NASA’s words give, so “the same” means the same to those figures. “More” and “less” compare the found number with the expected one; no cut-off is invented.
+              <strong> The lag itself has no row:</strong> the mission has not measured it, so there is no published number to set it beside. It is a calculation.
+            </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The speed.</strong> <em>What it is:</em> the probe’s closest-approach speed, {(PARKER.closestApproachSpeed / 1000).toFixed(2)} km/s, in miles an hour, beside NASA’s “430,000 miles per hour”. <em>What it means:</em> the two agree to the two figures NASA gives.{' '}
+                  <em>Why it matters:</em> the number this experiment calculates from is the number NASA states, only in other units.
+                </li>
+                <li>
+                  <strong>The height.</strong> <em>What it is:</em> the closest height above the Sun in millions of miles, beside NASA’s “3.8 million miles”. <em>What it means:</em> they agree to those figures. <em>Why it matters:</em> the same: the probe really does come that close.
+                </li>
+                <li>
+                  <strong>The oval.</strong> <em>What it is:</em> the speed that this experiment’s simple two-body oval gives at the closest point, beside NASA’s speed. <em>What it means:</em> {checkUp[2].found.toFixed(1)} km/s against {checkUp[2].expected.toFixed(2)}, {(((checkUp[2].expected - checkUp[2].found) / checkUp[2].expected) * 100).toFixed(1)} percent less.{' '}
+                  <em>Why it matters:</em> the oval is a good picture of the orbit but not the real orbit, so the points away from the closest point are an illustration; that is the weak link for Pictures 2 and 3.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 0, marginBottom: '0.5rem' }}>
+              Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+            </p>
+            <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <li>
+                <strong>Prediction 1, gravity and speed:</strong> {effectsPrediction !== null ? EFFECTS_CHOICES.find((c) => c.value === effectsPrediction)?.label.toLowerCase() : ''}. Its numbers are in Picture 1 (the lavender and green parts of the probe’s bar) and in Table 1 (the rows “Gravity” and “Motion”).
+              </li>
+              <li>
+                <strong>Prediction 2, how far behind after a day:</strong> {sizePrediction !== null ? SIZE_CHOICES.find((c) => c.value === sizePrediction)?.label.toLowerCase() : ''}. Its number is in Picture 3 (the yellow dot and line at the closest point) and in Table 1 (the row “Lag in one day”).
+              </li>
+            </ul>
+
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 1: what changes each clock’s rate</p>
             <ResultsTable
               minWidth={560}
               head={['Part', 'Clock on the Earth’s equator', 'Probe at its closest point', 'How it is worked out']}
               rows={[
-                ['Gravity', sciText(earth.gravity), sciText(probe.gravity), 'GM ÷ (distance × c²); for the Earth’s clock the Earth’s own plus the Sun’s at 1 AU'],
-                ['Motion', sciText(earth.speed), sciText(probe.speed), 'v² ÷ (2c²); for the Earth’s clock its speed round the Sun plus its spin'],
+                [<>Gravity<PredictionTag n={1} /></>, sciText(earth.gravity), sciText(probe.gravity), 'GM ÷ (distance × c²); for the Earth’s clock the Earth’s own plus the Sun’s at 1 AU'],
+                [<>Motion<PredictionTag n={1} /></>, sciText(earth.speed), sciText(probe.speed), 'v² ÷ (2c²); for the Earth’s clock its speed round the Sun plus its spin'],
                 ['Total slowing', sciText(earth.total), sciText(probe.total), 'the two parts added'],
                 ['Difference (probe − Earth)', sciText(difference), '', `${sciText(probe.total)} − ${sciText(earth.total)}`],
-                ['Lag in one day', `${lagDay.toFixed(2)} ms`, '', `${sciText(difference)} × ${SECONDS_PER_DAY.toLocaleString('en-US')} s`],
+                [<>Lag in one day<PredictionTag n={2} /></>, `${lagDay.toFixed(2)} ms`, '', `${sciText(difference)} × ${SECONDS_PER_DAY.toLocaleString('en-US')} s`],
               ]}
             />
+
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The two things that slow a clock, gravity and motion, for the Earth’s clock and for the probe at its closest point, their sums and the difference, and the lag in one day.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The Earth’s clock is slowed by {sciText(earth.total)} and the probe’s by {sciText(probe.total)}: the probe’s is slowed much more, by gravity ({sciText(probe.gravity)}) and motion ({sciText(probe.speed)}) in nearly equal parts, so after one day it is {realLag.toFixed(1)} milliseconds behind. A daily-life comparison: a watch that loses a thirtieth of a second a day.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> At the closest point gravity and motion point the same way, so they add, and the result is a lag far bigger than for any other spacecraft in this series. It is still tiny: about a thirtieth of a second a day.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', margin: '1.5rem 0 0.5rem' }}>Table 2: round the orbit</p>
             <ResultsTable
@@ -1177,6 +1522,23 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
               and the closest point are not exactly on one curve. The real orbit is not exactly an oval.
             </p>
 
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The probe’s distance from the Sun, its speed, its total slowing and its lag a day at five points on the oval, from the far end to the closest point.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The lag grows from {farResult.lagMillisecondsPerDay.toFixed(2)} ms a day at the far end to {realLag.toFixed(1)} ms at the closest point. The oval’s points are an illustration: the oval’s speed at the closest point is {ovalNearSpeedKmS.toFixed(1)} km/s, a little below NASA’s.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The closer the probe is, the deeper in the Sun’s gravity and the faster it moves, so the more its clock is slowed; far out the effect nearly vanishes and can even reverse.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ fontWeight: 'bold', margin: '1.5rem 0 0.5rem' }}>Table 3: the published facts this experiment uses</p>
             <ResultsTable
               minWidth={560}
@@ -1193,6 +1555,23 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
               The sources do not give the length of one orbit in the pages read; the 88 days is the figure usually given for the probe’s current orbit and is not read from a
               NASA page. The size of the Sun’s radius and the Earth’s speed are standard values, not read from a source for this page.
             </p>
+
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> What the sources say, as they say it: the closest approach, the Sun’s and the Earth’s numbers and the mission’s published facts that this experiment uses.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The closest approach is 6,167,590 km above the Sun’s surface at 192.22 km/s. The Sun’s radius and gravity, and the orbit’s period of about 88 days, are standard or round figures, not read from NASA pages.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The size of the lag depends on these inputs, so each is only as sure as its source; the closest-approach numbers are the firmest.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', margin: '1.5rem 0 0.5rem' }}>Table 4: your point on the orbit</p>
             <ResultsTable
@@ -1211,6 +1590,23 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
               ]}
             />
 
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The numbers of your own choice: your distance from the Sun, the probe’s speed there, the two slowing parts, the lag a day and the gap after your time, with the working.
+                </li>
+                <li>
+                  <strong>What it means.</strong> At {yourAu} AU the probe’s clock is {mine.lagMillisecondsPerDay >= 0 ? 'behind' : 'ahead of'} the Earth’s by {Math.abs(mine.lagMillisecondsPerDay).toFixed(2)} ms a day, so after {durationName} at that rate the gap is {secondsText(Math.abs(mine.gapSeconds))}.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> It shows how the same rule gives a bigger or smaller lag as the probe moves, and that the gap is only a rate times a time: a real probe does not stay at one point.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>Want to know more?</strong> The scientific paper on the mission is listed here now. It is written for scientists. The link opens in a new tab.
             </p>
@@ -1225,6 +1621,11 @@ export function FastestSpacecraftExperiment({ onComplete, onTutorComplete }: Fas
 
         {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The chapter summary below the experiment
             (in App) is shown only once the learner reaches the explanation. */}
+        {done && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
+        )}
         {done && effectsPrediction !== null && sizePrediction !== null && (
           <FastestSpacecraftTutor effectsPrediction={effectsPrediction} sizePrediction={sizePrediction} onExplained={() => onTutorComplete?.()} />
         )}

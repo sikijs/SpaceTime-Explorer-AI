@@ -249,9 +249,9 @@ describe('the predictions\' answers and the run (test 11)', () => {
 })
 
 describe('audit update: the guess marks, the check-up and Part 2 drawing', () => {
-  it('the real lag at the closest point is 34.8 milliseconds a day (the answer to Prediction 2), and the size guesses are 35 microseconds, 35 milliseconds and 35 seconds (powers of a thousand apart)', () => {
+  it('the real lag at the closest point is 35.0 milliseconds a day (the answer to Prediction 2), and the size guesses are 35 microseconds, 35 milliseconds and 35 seconds (powers of a thousand apart)', () => {
     expect(predictionLagMilliseconds()).toBeCloseTo(lagMillisecondsPerDay(earthTerms(), closestApproachTerms()), 12)
-    expect(predictionLagMilliseconds()).toBeCloseTo(34.8, 0)
+    expect(predictionLagMilliseconds()).toBeCloseTo(35.0, 1)
     expect(sizeGuessSeconds('microsecond')).toBe(35e-6)
     expect(sizeGuessSeconds('millisecond')).toBe(35e-3)
     expect(sizeGuessSeconds('second')).toBe(35)
@@ -284,9 +284,9 @@ describe('audit update: the guess marks, the check-up and Part 2 drawing', () =>
   })
   it('Part 2\'s drawing: the values match the run, the reference is the closest point for a day, and every point on the orbit and every duration fits the scales', () => {
     const ref = fastestDrawingReference()
-    expect(ref.lagMsPerDay).toBeCloseTo(34.8, 0)
+    expect(ref.lagMsPerDay).toBeCloseTo(35.0, 1)
     expect(ref.speedKmS).toBeCloseTo(192.22, 6)
-    expect(ref.gapMs).toBeCloseTo(34.8, 0)
+    expect(ref.gapMs).toBeCloseTo(35.0, 1)
     const v = fastestDrawingValues(farOrbitDistance(), SECONDS_PER_DAY)
     expect(v.lagMsPerDay).toBeCloseTo(runFastestSpacecraft(farOrbitDistance(), SECONDS_PER_DAY).lagMillisecondsPerDay, 12)
     for (const fraction of [0, 0.25, 0.5, 1]) {

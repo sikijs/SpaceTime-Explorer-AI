@@ -116,9 +116,9 @@ export function FastestSpacecraftTutor({ effectsPrediction, sizePrediction, onEx
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 1. Which of the two clocks is slowed more? In the probe’s bar, how do the lavender part (gravity) and the green part (motion) compare? How long is the probe’s bar next to the Earth’s?'}
+              'Look at Picture 1. Which of the two clocks is slowed more? In the probe’s bar, how do the lavender part (gravity) and the green part (motion) compare? How long is the probe’s bar next to the Earth’s? Your guesses are drawn in white, in boxes marked YOUR GUESS, on thin lines under Picture 1 and under the top graph of Picture 3. Where do they sit compared with the real bars and the yellow dot?'}
             {tutorStep === 'compare' &&
-              `You predicted that, at the closest point, the Sun’s gravity and the probe’s speed would ${effectsWords[effectsPrediction]}, and that after one day the two clocks would be ${sizeWords[sizePrediction]}. Now look at Table 1 and Table 2, and at Pictures 1, 2 and 3. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that, at the closest point, the Sun’s gravity and the probe’s speed would ${effectsWords[effectsPrediction]}, and that after one day the two clocks would be ${sizeWords[sizePrediction]}. Compare the white arrows under Picture 1 with the lavender and green parts of the probe’s bar, and the white diamond under Picture 3’s top graph with the yellow line. Then look at Table 1 and Table 2, and at Pictures 1, 2 and 3. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               'At the closest point, gravity and motion slow the probe’s clock by almost the same amount. What do you think happens to each of them as the probe moves out toward the far end of its orbit? And do you think its clock could ever tick faster than the clock on the Earth?'}
           </p>
