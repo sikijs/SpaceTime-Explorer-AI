@@ -48,7 +48,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 6 | Why do planets orbit instead of falling in? | `06-orbits.md` | Complete (wording approved) |
 | 7 | What is a black hole? | `07-black-holes.md` | Complete (wording approved) |
 | 8 | Does gravity bend light? | `08-light-bending.md` | Complete (wording approved) |
-| 9 | Real clocks in orbit: GPS, with a closing synthesis | `09-gps-time-dilation.md` | Complete (wording approved); the closing synthesis names special and general relativity's postulates |
+| 9 | Real clocks in orbit: GPS, with a closing synthesis | `09-gps-time-dilation.md` | Complete (wording approved); the closing synthesis names special and general relativity's postulates Audit update (2026-11-03, `92f660c`, `b4fd576`): brought to §14's rules (white YOUR GUESS diamonds on strips under Pictures 2 and 3, an imagined violet row for Prediction 2's clock, pink marks for your own numbers, Drawing A in Part 2, a three-row check-up and notes, the page in four Parts, tutor prompts name the marks); 4 new physics tests (26 in the file); the owner approved the default choices in advance. |
 
 **Gravitational Waves** (`docs/experiments/gravitational-waves/`). This chapter is closed at Experiment 7 (2026-10-05, at the owner's direction); no further experiment is planned.
 

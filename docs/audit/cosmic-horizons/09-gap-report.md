@@ -54,6 +54,14 @@ B0: Table 1 rate difference and gap after a year (:1276); Table 2 smallest heigh
 - O1: white = learner's controls (`YOURS_COLOR` :46); would clash with white = guess.
 - O2: none found. CLAUDE.md status notes the 2025 mountain campaign is unsourced (spec's open item).
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts: after the introduction the page runs on in one column. No coloured lines, headings or leads.
+- **The controls already change Part 1 pictures.** Controls 1 and 2 add a white ring to Picture 1 and to Picture 2's last row; control 3 adds one to Picture 3's last row; all three fill in Table 4. Under the rule a learner's own setting is pink.
+- **Colour clashes found.** White was the learner's own choice; the Wisconsin line was pink; the laser layers were rose (close to pink). Fixed by recolouring (own choices pink, Wisconsin lime, laser red).
+- **Prediction 2's answer had no picture row.** The 10⁻¹⁹ clock appears only in Table 2 (O1 correction: the gap report said "the 10⁻¹⁹ row of Picture 3", which does not exist). Under the rule it is added to Picture 3 as its own imagined (violet) row, and the guess is drawn against it.
+- **B1 reference.** Three published numbers beside what the same rule gives (Wisconsin's expected gradient, JILA's precision, NIST 2010's 79-year effect). No published-value column.
+- **Defaults used.** The owner approved all default recommendations and wording in advance (2026-11-03).
+
 ## What an update would touch
 ClockHeightExperiment.tsx (Pictures 2 and 3, intro, Results), ClockHeightTutor.tsx, clockHeight.ts/.test.ts, spec, DEVELOPMENT-STATE.md. Size **M** (Rule A + C) / **L** with Rule B.
 
