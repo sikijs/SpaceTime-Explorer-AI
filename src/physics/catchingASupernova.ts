@@ -347,3 +347,47 @@ export function compareWithPublished(settings: SupernovaSettings = {}): TrialCom
     gasYearsMatchPaper: rounded[0] === LITERATURE.paperGasYears[0] && rounded[1] === LITERATURE.paperGasYears[1],
   }
 }
+
+// ---- Audit update (2026-11-03): numbers for the guess marks and Part 2's drawing ----
+
+// Prediction 1's white marker: each answer names a share of the collapse's energy, "1 in N", so it names an energy on Picture 3's scale: the collapse's energy ÷ N.
+export const SHARE_GUESS_ONE_IN: Record<VisibleShareAnswer, number> = { 'about half': 2, '1 in 10': 10, '1 in 100': 100, '1 in 10,000': 10_000 }
+export function shareGuessOneIn(answer: VisibleShareAnswer): number {
+  return SHARE_GUESS_ONE_IN[answer]
+}
+// The energy, in erg, that a guess of "1 in N" would put into visible light, for the published collapse (1.4 solar masses, 12 km).
+export function shareGuessErg(answer: VisibleShareAnswer): number {
+  return runCatchingASupernova().collapseErg / SHARE_GUESS_ONE_IN[answer]
+}
+// Prediction 2's white marker: each answer names a time, in years before May 2023.
+export const TRAVEL_GUESS_YEARS: Record<LightTravelAnswer, number> = { 'a few months': 0.25, 'about 20 thousand years': 2e4, 'about 20 million years': 2e7 }
+export function travelGuessYears(answer: LightTravelAnswer): number {
+  return TRAVEL_GUESS_YEARS[answer]
+}
+// The real numbers the two guesses are about: the light's travel time (years) and the visible light's share (1 in N) for the published values.
+export function predictionTravelYears(): number {
+  return lightTravelYears(SUPERNOVA.distanceMpc)
+}
+export function predictionLightOneIn(): number {
+  return runCatchingASupernova().lightOneIn
+}
+
+// Part 2's drawing: the learner's two choices beside the published values, each on its own scale. The reference marks are the published core (1.4 solar masses, 12 km) and
+// the authors' 50 km/s.
+export const DRAWING_SCALES = {
+  collapseErg: { min: 1e53, max: 2e54 }, // logarithmic
+  lightOneIn: { min: 1e4, max: 2e5 }, // logarithmic: the collapse's energy as a multiple of the visible light
+  outerShedYears: { min: 0, max: 14 }, // linear
+}
+export interface SupernovaDrawingValues {
+  collapseErg: number
+  lightOneIn: number
+  outerShedYears: number
+}
+export function supernovaDrawingValues(settings: SupernovaSettings = {}): SupernovaDrawingValues {
+  const r = runCatchingASupernova(settings)
+  return { collapseErg: r.collapseErg, lightOneIn: r.lightOneIn, outerShedYears: r.gasShedYearsBefore[1] }
+}
+export function supernovaDrawingReference(): SupernovaDrawingValues {
+  return supernovaDrawingValues()
+}

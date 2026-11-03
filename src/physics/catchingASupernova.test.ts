@@ -7,6 +7,14 @@ import {
   collapseWorkedExample,
   compareWithPublished,
   distanceRangeMpc,
+  DRAWING_SCALES,
+  predictionLightOneIn,
+  predictionTravelYears,
+  shareGuessErg,
+  shareGuessOneIn,
+  supernovaDrawingReference,
+  supernovaDrawingValues,
+  travelGuessYears,
   distanceUncertaintyPercent,
   ergFromJoules,
   gasTimeWorkedExample,
@@ -395,5 +403,49 @@ describe('the nearest answer is the nearest on a scale of powers of ten (test 15
   })
   it('an exact match is chosen', () => {
     for (const a of answers) expect(nearestLog(answers, a.oneIn).oneIn).toBe(a.oneIn)
+  })
+})
+
+describe('audit update: the guess marks and Part 2 drawing', () => {
+  it('Prediction 1\'s guesses are 1 in 2, 10, 100 and 10,000 of the collapse\'s energy (increasing in N, decreasing in energy), and the real share, about 1 in 43,000, is nearest to 1 in 10,000', () => {
+    expect(shareGuessOneIn('about half')).toBe(2)
+    expect(shareGuessOneIn('1 in 10')).toBe(10)
+    expect(shareGuessOneIn('1 in 100')).toBe(100)
+    expect(shareGuessOneIn('1 in 10,000')).toBe(10_000)
+    const collapse = runCatchingASupernova().collapseErg
+    expect(shareGuessErg('about half')).toBeCloseTo(collapse / 2, 0)
+    expect(shareGuessErg('1 in 10,000')).toBeCloseTo(collapse / 10_000, 0)
+    expect(shareGuessErg('about half')).toBeGreaterThan(shareGuessErg('1 in 10'))
+    expect(shareGuessErg('1 in 100')).toBeGreaterThan(shareGuessErg('1 in 10,000'))
+    const real = predictionLightOneIn()
+    expect(real).toBeGreaterThan(1e4)
+    expect(real).toBeLessThan(1e5)
+    expect(visibleShareAnswer()).toBe('1 in 10,000')
+  })
+  it('Prediction 2\'s guesses are 0.25 years, 20 thousand years and 20 million years, and the real travel time, 22.3 million years, is nearest to 20 million', () => {
+    expect(travelGuessYears('a few months')).toBe(0.25)
+    expect(travelGuessYears('about 20 thousand years')).toBe(2e4)
+    expect(travelGuessYears('about 20 million years')).toBe(2e7)
+    expect(predictionTravelYears()).toBeCloseTo(6.85e6 * 3.26156, 0)
+    expect(predictionTravelYears() / 1e6).toBeCloseTo(22.3, 1)
+    expect(lightTravelAnswer()).toBe('about 20 million years')
+  })
+  it('Part 2\'s drawing: the reference is the published core and speed, the values follow the settings, and every choice the controls offer fits the scales', () => {
+    const ref = supernovaDrawingReference()
+    expect(ref.collapseErg).toBeCloseTo(runCatchingASupernova().collapseErg, 0)
+    expect(ref.outerShedYears).toBeCloseTo(runCatchingASupernova().gasShedYearsBefore[1], 12)
+    expect(ref.outerShedYears).toBeCloseTo(6.3, 1)
+    for (const coreMassSolar of SUPERNOVA.coreMassChoicesSolar) {
+      for (const coreRadiusKm of SUPERNOVA.coreRadiusChoicesKm) {
+        for (const windSpeedKmS of SUPERNOVA.windSpeedChoicesKmS) {
+          const d = supernovaDrawingValues({ coreMassSolar, coreRadiusKm, windSpeedKmS })
+          expect(d.collapseErg).toBeGreaterThanOrEqual(DRAWING_SCALES.collapseErg.min)
+          expect(d.collapseErg).toBeLessThanOrEqual(DRAWING_SCALES.collapseErg.max)
+          expect(d.lightOneIn).toBeGreaterThanOrEqual(DRAWING_SCALES.lightOneIn.min)
+          expect(d.lightOneIn).toBeLessThanOrEqual(DRAWING_SCALES.lightOneIn.max)
+          expect(d.outerShedYears).toBeLessThanOrEqual(DRAWING_SCALES.outerShedYears.max)
+        }
+      }
+    }
   })
 })
