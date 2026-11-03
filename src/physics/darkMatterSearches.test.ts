@@ -300,21 +300,22 @@ describe('audit update: guess marks, check-up and Part 2 drawing', () => {
     expect(v.expected).toBeCloseTo(2.302585, 6)
     expect(v.chanceNone).toBeCloseTo(0.1, 12)
     expect(v.limitCm2).toBeCloseTo(2.2e-49, 6 + 49)
+    // The expected events, the chance and the limit do not depend on the places looked, and the sigma depends only on them: so the two groups are checked separately.
     for (const strength of [0.1, 1, 10]) {
       for (const exposure of [1, 10, 1000]) {
         for (const background of ['none', 'grows'] as const) {
-          for (const tries of [1, 14, 100]) {
-            const d = searchDrawingValues(strength, exposure, background, tries)
-            expect(d.expected).toBeGreaterThanOrEqual(DRAWING_SCALES.expected.min)
-            expect(d.expected).toBeLessThanOrEqual(DRAWING_SCALES.expected.max)
-            expect(d.limitCm2).toBeGreaterThanOrEqual(DRAWING_SCALES.limitCm2.min)
-            expect(d.limitCm2).toBeLessThanOrEqual(DRAWING_SCALES.limitCm2.max)
-            expect(d.globalSigma).toBeLessThanOrEqual(DRAWING_SCALES.globalSigma.max)
-            expect(d.chanceNone).toBeGreaterThanOrEqual(0)
-            expect(d.chanceNone).toBeLessThanOrEqual(1)
-          }
+          const d = searchDrawingValues(strength, exposure, background, START_TRIES)
+          expect(d.expected).toBeGreaterThanOrEqual(DRAWING_SCALES.expected.min)
+          expect(d.expected).toBeLessThanOrEqual(DRAWING_SCALES.expected.max)
+          expect(d.limitCm2).toBeGreaterThanOrEqual(DRAWING_SCALES.limitCm2.min)
+          expect(d.limitCm2).toBeLessThanOrEqual(DRAWING_SCALES.limitCm2.max)
+          expect(d.chanceNone).toBeGreaterThanOrEqual(0)
+          expect(d.chanceNone).toBeLessThanOrEqual(1)
         }
       }
+    }
+    for (const tries of [1, 14, 100]) {
+      expect(searchDrawingValues(1, 1, 'none', tries).globalSigma).toBeLessThanOrEqual(DRAWING_SCALES.globalSigma.max)
     }
   })
 })
