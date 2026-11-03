@@ -113,9 +113,9 @@ export function BetelgeuseCompanionTutor({ reachPrediction, sigmaPrediction, onE
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 1. Next to the orbits of the planets, how big is Betelgeuse? Which orbits lie inside it, and which outside? And in Picture 2, how does the companion’s orbit compare with the star itself?'}
+              'Look at Picture 1. Next to the orbits of the planets, how big is Betelgeuse? Which orbits lie inside it, and which outside? And in Picture 2, how does the companion’s orbit compare with the star itself? Your white YOUR GUESS zone is on Picture 1 too: where does it sit next to the orange disc?'}
             {tutorStep === 'compare' &&
-              `You predicted that Betelgeuse’s surface would reach ${reachWords[reachPrediction]}, and that noise alone would make a spot as strong as the reported one ${sigmaWords[sigmaPrediction]}. Now look at Tables 1 to 3 and at Pictures 1, 2 and 3. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that Betelgeuse’s surface would reach ${reachWords[reachPrediction]}, and that noise alone would make a spot as strong as the reported one ${sigmaWords[sigmaPrediction]}. Now look at Tables 1 to 3 and at Pictures 1, 2 and 3, including your white YOUR GUESS marks on Pictures 1 and 3. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               'A team looked at the place and time where a companion was predicted, and saw a faint spot at 1.5 sigma. Other teams, using other kinds of data, found signs that follow the same cycle of about six years. What would make you trust the claim more, and what would make you wait?'}
           </p>
