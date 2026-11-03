@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
+  bandRelation,
   curveFor,
   EARLY_MEASUREMENT,
   kidsShift,
+  lumpinessCheckUp,
+  paperSigma,
+  shiftGuessDirection,
+  sigmaGuessBand,
   LATE_MEASUREMENTS,
   MEASUREMENTS,
   PLANCK_OWN,
@@ -236,5 +241,75 @@ describe('the uncertainties used (added in Step 4)', () => {
     expect(r.earlyUncertaintyUsed).toBe(0.016)
     expect(r.combinedUncertainty).toBeCloseTo(Math.sqrt(0.024 ** 2 + 0.016 ** 2), 12)
     expect(r.gap / r.combinedUncertainty).toBeCloseTo(r.tension, 12)
+  })
+})
+
+// Audit update: numbers for the guess marks, the check-up and the captions. Expected values come from a separate calculation.
+describe('guess marks, check-up and caption numbers (audit update)', () => {
+  it("gives each Prediction 2 answer its sigma band, joined end to end, the last open", () => {
+    expect(sigmaGuessBand('under1')).toEqual({ lo: 0, hi: 1 })
+    expect(sigmaGuessBand('oneToTwoAndAHalf')).toEqual({ lo: 1, hi: 2.5 })
+    expect(sigmaGuessBand('over2AndAHalf')).toEqual({ lo: 2.5, hi: null })
+    expect(sigmaGuessBand('under1').hi).toBe(sigmaGuessBand('oneToTwoAndAHalf').lo)
+    expect(sigmaGuessBand('oneToTwoAndAHalf').hi).toBe(sigmaGuessBand('over2AndAHalf').lo)
+  })
+
+  it('every band agrees with tensionRange at its edges', () => {
+    expect(tensionRange(0.99)).toBe('under1')
+    expect(tensionRange(1)).toBe('oneToTwoAndAHalf')
+    expect(tensionRange(2.5)).toBe('oneToTwoAndAHalf')
+    expect(tensionRange(2.51)).toBe('over2AndAHalf')
+  })
+
+  it('both DES versions fall in the band for "between 1 and 2.5 sigma": 1.69 and 2.05', () => {
+    expect(tensionSigma(desNla, planck)).toBeCloseTo(1.69, 2)
+    expect(tensionSigma(desTatt, planck)).toBeCloseTo(2.05, 2)
+    for (const des of [desNla, desTatt]) {
+      const band = sigmaGuessBand('oneToTwoAndAHalf')
+      const sigma = tensionSigma(des, planck)
+      expect(sigma).toBeGreaterThanOrEqual(band.lo)
+      expect(sigma).toBeLessThanOrEqual(band.hi!)
+    }
+  })
+
+  it('gives Prediction 1 only a direction: lower -1, about the same 0, higher +1', () => {
+    expect(shiftGuessDirection('lower')).toBe(-1)
+    expect(shiftGuessDirection('same')).toBe(0)
+    expect(shiftGuessDirection('higher')).toBe(1)
+  })
+
+  it("places each survey against Planck's band (0.818 to 0.850): every dot below, only KiDS-Legacy's bar reaches it", () => {
+    expect(bandRelation(kids1000)).toEqual({ dot: 'below', barReachesBand: false })
+    expect(bandRelation(kidsLegacy)).toEqual({ dot: 'below', barReachesBand: true })
+    expect(bandRelation(desNla)).toEqual({ dot: 'below', barReachesBand: false })
+    expect(bandRelation(desTatt)).toEqual({ dot: 'below', barReachesBand: false })
+  })
+
+  it("records the papers' own sigma: about 3, 0.73, 2.0 and 2.3; the DES ones use a different baseline", () => {
+    expect(paperSigma(kids1000)).toEqual({ value: 3, approximate: true, baseline: 'Planck alone' })
+    expect(paperSigma(kidsLegacy).value).toBe(0.73)
+    expect(paperSigma(desNla)).toMatchObject({ value: 2, baseline: 'Planck + ACT + SPT' })
+    expect(paperSigma(desTatt)).toMatchObject({ value: 2.3, baseline: 'Planck + ACT + SPT' })
+    expect(() => paperSigma(planck)).toThrow(RangeError)
+  })
+
+  it('the check-up has five rows: Planck from its own numbers (0.831 against 0.834), KiDS-1000 2.60 against 3, KiDS-Legacy 0.84 against 0.73, DES a different comparison', () => {
+    const rows = lumpinessCheckUp()
+    expect(rows).toHaveLength(5)
+    expect(rows[0].expected).toBeCloseTo(0.831, 3)
+    expect(rows[0].found).toBe(0.834)
+    expect(rows[0].reading).toBe('more')
+    expect(rows[1]).toMatchObject({ expected: 3, reading: 'less' })
+    expect(rows[1].found).toBeCloseTo(2.6, 2)
+    expect(rows[2]).toMatchObject({ expected: 0.73, reading: 'more' })
+    expect(rows[2].found).toBeCloseTo(0.84, 2)
+    expect(rows[3]).toMatchObject({ expected: 2, reading: 'a different comparison' })
+    expect(rows[3].found).toBeCloseTo(1.69, 2)
+    expect(rows[4]).toMatchObject({ expected: 2.3, reading: 'a different comparison' })
+    expect(rows[4].found).toBeCloseTo(2.05, 2)
+  })
+
+  it('the check-up sigma equals the module sigma', () => {
+    expect(lumpinessCheckUp()[1].found).toBe(tensionSigma(kids1000, planck))
   })
 })

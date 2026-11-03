@@ -151,3 +151,93 @@ export function runLumpiness(focus: S8Measurement): LumpinessResult {
     planckOwnPoint: { omegaMatter: PLANCK_OWN.omegaMatter, sigma8: PLANCK_OWN.sigma8, s8: s8(PLANCK_OWN.sigma8, PLANCK_OWN.omegaMatter) },
   }
 }
+
+// ---- Audit update (docs/audit/cosmic-horizons/03-draft-wording.md): numbers for the guess marks, the check-up and the captions ----
+
+// Prediction 2's band, in sigma. The ranges match tensionRange: below 1, up to and including 2.5, above 2.5 (hi is null for the last).
+export interface SigmaBand {
+  lo: number
+  hi: number | null
+}
+export function sigmaGuessBand(range: TensionRange): SigmaBand {
+  switch (range) {
+    case 'under1':
+      return { lo: 0, hi: 1 }
+    case 'oneToTwoAndAHalf':
+      return { lo: 1, hi: 2.5 }
+    case 'over2AndAHalf':
+      return { lo: 2.5, hi: null }
+  }
+}
+
+// Prediction 1's marker: only a direction (lower -1, about the same 0, higher +1). It has no size of its own.
+export function shiftGuessDirection(choice: ShiftDirection): -1 | 0 | 1 {
+  return choice === 'lower' ? -1 : choice === 'higher' ? 1 : 0
+}
+
+// Where a survey's dot sits against the microwave-background band (best value minus its downward uncertainty to plus its upward one), and whether the
+// survey's own error bar reaches into the band. A bar that reaches the band overlaps the microwave background's bar.
+export function bandRelation(survey: S8Measurement): { dot: 'below' | 'inside' | 'above'; barReachesBand: boolean } {
+  const low = EARLY_MEASUREMENT.value - EARLY_MEASUREMENT.down
+  const high = EARLY_MEASUREMENT.value + EARLY_MEASUREMENT.up
+  const dot = survey.value < low ? 'below' : survey.value > high ? 'above' : 'inside'
+  const barReachesBand = survey.value - survey.down <= high && survey.value + survey.up >= low
+  return { dot, barReachesBand }
+}
+
+// The paper's own comparison with the microwave background, as a number. KiDS-1000's is "about 3" (approximate). DES's two compare with Planck
+// + ACT + SPT, not Planck alone, so they are not like-for-like with the sigma worked out here.
+export interface PaperSigma {
+  value: number
+  approximate: boolean
+  baseline: 'Planck alone' | 'Planck + ACT + SPT'
+}
+const PAPER_SIGMAS: Record<string, PaperSigma> = {
+  'KiDS-1000': { value: 3, approximate: true, baseline: 'Planck alone' },
+  'KiDS-Legacy': { value: 0.73, approximate: false, baseline: 'Planck alone' },
+  'DES Y6 (NLA)': { value: 2.0, approximate: false, baseline: 'Planck + ACT + SPT' },
+  'DES Y6 (TATT)': { value: 2.3, approximate: false, baseline: 'Planck + ACT + SPT' },
+}
+export function paperSigma(survey: S8Measurement): PaperSigma {
+  const entry = PAPER_SIGMAS[survey.name]
+  if (!entry) throw new RangeError('No paper sigma is recorded for this measurement')
+  return entry
+}
+
+export type CheckUpReading = 'the same' | 'more' | 'less' | 'a different comparison'
+export interface LumpinessCheckUpRow {
+  label: string
+  expected: number
+  found: number
+  reading: CheckUpReading
+}
+function compareValues(found: number, expected: number): 'the same' | 'more' | 'less' {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+
+// The check-up: Planck's S8 worked out from its own two numbers against the quoted value, and each survey's sigma worked out here against the paper's own.
+// For DES the paper compares with a different baseline, so the reading says so and gives no more or less. Only "the same", "more" or "less" are used for
+// a like-for-like pair: no cut-off is invented. It does not depend on the survey the learner looks closer at.
+export function lumpinessCheckUp(): LumpinessCheckUpRow[] {
+  const early = EARLY_MEASUREMENT
+  const rows: LumpinessCheckUpRow[] = [
+    {
+      label: "Planck's S₈, from its own σ₈ and Ωm",
+      expected: s8(PLANCK_OWN.sigma8, PLANCK_OWN.omegaMatter),
+      found: early.value,
+      reading: compareValues(early.value, s8(PLANCK_OWN.sigma8, PLANCK_OWN.omegaMatter)),
+    },
+  ]
+  for (const survey of LATE_MEASUREMENTS) {
+    const paper = paperSigma(survey)
+    const found = tensionSigma(survey, early)
+    rows.push({
+      label: `${survey.name}, sigma`,
+      expected: paper.value,
+      found,
+      reading: paper.baseline === 'Planck alone' ? compareValues(found, paper.value) : 'a different comparison',
+    })
+  }
+  return rows
+}
