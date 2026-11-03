@@ -53,6 +53,14 @@ B0: "Table 1: your own search" (7 rows with a "How it is worked out" column, `:1
 - O1: none found against the specification beyond the missing reading guide, which the spec predates (`CLAUDE.md` §14 "Reading the Results" was set 2026-10-22; Experiments 1 to 11 were not given it).
 - O2: Prediction 1 is about a fixed case (0.1 times the limit, 10 times the exposure) while "Try your own search" moves the real green ring, so a P1 mark and the control would need to say they are about different cases. The page states the strength in "units of today's limit" (`:967`).
 
+## Rule E and re-read additions (2026-11-03)
+- **E1 to E3 Not met.** No Parts: after the introduction the page runs on in one column (predictions, Run, three pictures, then after the run the controls, tables, links and tutor). No coloured lines, headings or leads.
+- **The controls already change Part 1 pictures.** "Try your own search" moves Picture 1's green ring, Picture 2's green ring and dashed line and the first table; "How many places did you look?" moves Picture 3's last bar and the second table's last row. Under the rule a learner's own setting is pink. The green ring uses the electron colour; Picture 2's "background that grows" line is pink today, which clashes with pink meaning the learner's setting.
+- **Prediction 1 is about a fixed case** (0.1 × the limit, 10 × the exposure), not the control's values, so its mark must not move with the controls and the case needs its own labelled mark (imagined).
+- **Prediction 2 is about the published 2.6 sigma,** while Picture 3's last bar follows the places-looked control: a fixed yellow tick at 2.6 keeps the real value visible.
+- **B1 reference.** The published sigmas set beside the 3 and 5 sigma conventions (Experiments 1 and 2) give four check-up rows; no published-value column (decide per experiment, plan §7 item 1).
+- **Defaults used.** The owner approved all default recommendations and wording in advance (2026-11-03), so no question was put: pink for the settings' marks, a Part 2 drawing, the white marks as above, the four-row check-up.
+
 ## What an update would touch, and its size (O3, O4)
 `DarkMatterSearchesExperiment.tsx`, `DarkMatterSearchesTutor.tsx`, `src/physics/darkMatterSearches.ts` and test, the specification. Size **Large** (marks on two pictures plus a new reading guide: check-up, notes under two tables, prediction block).
 
