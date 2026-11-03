@@ -1,6 +1,21 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { EARLY_MEASUREMENT, LATE_MEASUREMENTS, MEASUREMENTS, PLANCK_OWN, runLumpiness, s8, shift, sigma8OnCurve, tensionSigma } from '../physics/lumpiness'
+import {
+  bandRelation,
+  EARLY_MEASUREMENT,
+  LATE_MEASUREMENTS,
+  lumpinessCheckUp,
+  MEASUREMENTS,
+  paperSigma,
+  PLANCK_OWN,
+  runLumpiness,
+  s8,
+  shift,
+  shiftGuessDirection,
+  sigma8OnCurve,
+  sigmaGuessBand,
+  tensionSigma,
+} from '../physics/lumpiness'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { LumpinessTutor } from './LumpinessTutor'
 import type { LumpinessResult, ShiftDirection, TensionRange } from '../physics/lumpiness'
@@ -28,6 +43,8 @@ const TICKS = [0.7, 0.72, 0.74, 0.76, 0.78, 0.8, 0.82, 0.84, 0.86, 0.88]
 const EARLY_COLOR = '#38bdf8' // sky blue: the microwave-background prediction
 const LATE_COLOR = '#fb923c' // orange: a survey's measurement
 const PALE_LATE_COLOR = '#fdba74' // paler orange: the other way of modelling the same DES result
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
+const TRIAL_COLOR = '#f472b6' // pink: the survey the learner chose to look closer at (Part 2)
 const TEXT_COLOR = '#e2e8f0'
 const MUTED_COLOR = '#94a3b8'
 
@@ -117,6 +134,33 @@ const YEAR_TICKS = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027]
 const S8_TICKS = [0.72, 0.76, 0.8, 0.84, 0.88]
 const yearX = (year: number) => P3_LEFT + ((year - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * (P3_RIGHT - P3_LEFT)
 const s8Y = (value: number) => P3_BOTTOM - ((value - S8_AXIS_MIN) / (S8_AXIS_MAX - S8_AXIS_MIN)) * (P3_BOTTOM - P3_TOP)
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+
+// A paper's own sigma as written ("about 3", "2.0", "0.73"), from the module.
+const paperText = (m: (typeof MEASUREMENTS)[number]) => {
+  const p = paperSigma(m)
+  return `${p.approximate ? 'about ' : ''}${p.value.toFixed(p.approximate ? 0 : Math.round(p.value * 100) % 10 === 0 ? 1 : 2)}`
+}
+const SHIFT_SHORT = { lower: 'lower', same: 'about the same', higher: 'higher' } as const
+const RANGE_SHORT = { under1: 'within 1 sigma', oneToTwoAndAHalf: 'between 1 and 2.5 sigma', over2AndAHalf: 'more than 2.5 sigma' } as const
+// Picture 1's "How many sigma?" panel (stage 3): its own scale, 0 to 3 sigma.
+const SIGMA_PANEL_H = 200
+const SIGMA_MAX = 3
+const sigmaX = (sigma: number) => AXIS_LEFT + (sigma / SIGMA_MAX) * (AXIS_RIGHT - AXIS_LEFT)
+// Drawing A, in Part 2: the survey the learner chose, beside the microwave-background value (S₈ line as in Picture 1, sigma bars on a 0 to 3 scale).
+const DA_SIGMA_X0 = 200
+const DA_SIGMA_X1 = 520
+const daSigmaX = (sigma: number) => DA_SIGMA_X0 + (sigma / SIGMA_MAX) * (DA_SIGMA_X1 - DA_SIGMA_X0)
 const signed3 = (value: number) => (value < 0 ? `−${Math.abs(value).toFixed(3)}` : `+${value.toFixed(3)}`)
 
 const xOf = (value: number) => AXIS_LEFT + ((value - AXIS_MIN) / (AXIS_MAX - AXIS_MIN)) * (AXIS_RIGHT - AXIS_LEFT)
@@ -347,19 +391,21 @@ function LensingDrawing() {
             longer, and they run round the bump, like the rungs of a ring, strongest in the patches nearest it.
           </li>
         </ul>
-        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>What to look for.</strong> Here are three things to look at, what each one means, and why it matters.
+        </p>
         <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
           <li>
-            <strong>The jump from panel B to panel C.</strong> In B the lean is hidden in the crowd. In C, averaging many galaxies makes it
-            clear. This is the whole trick of weak lensing.
+            <strong>Look at</strong> the jump from panel B to panel C. <strong>What it means:</strong> in B the lean is hidden in the crowd of ovals. In C, averaging 250 galaxies in
+            each patch makes it clear. <strong>Why it matters:</strong> this averaging is the whole trick of weak lensing.
           </li>
           <li>
-            <strong>The orange lines go round the bump.</strong> So a pattern of lines going round a spot tells you there is matter there, even
-            though nothing is visible.
+            <strong>Look at</strong> the orange lines going round the bump. <strong>What it means:</strong> they run round the bump like the rungs of a ring. <strong>Why it matters:</strong> a
+            pattern going round a spot tells you there is matter there, though nothing is visible.
           </li>
           <li>
-            <strong>The grey lines are almost points.</strong> With no matter in the way, the average has no direction, which is why a lean
-            that does show up can be trusted as a signal.
+            <strong>Look at</strong> the grey lines. <strong>What it means:</strong> they are almost points. <strong>Why it matters:</strong> with no matter in the way, the average has no
+            direction, so a lean that does show up can be trusted as a signal.
           </li>
         </ul>
       </div>
@@ -431,6 +477,19 @@ function Picture2({ result, highlight }: { result: LumpinessResult; highlight: s
         </text>
 
         {/* One curve of equal S8 for each measurement */}
+        {result.curves
+          .filter((c) => highlight.includes(c.measurement.name))
+          .map((c) => (
+            <polyline
+              key={`glow-${c.measurement.name}`}
+              points={c.points.map((pt) => `${omegaX(pt.omegaMatter).toFixed(1)},${sigma8Y(pt.sigma8).toFixed(1)}`).join(' ')}
+              fill="none"
+              stroke={TRIAL_COLOR}
+              strokeWidth={13}
+              strokeOpacity={0.55}
+              strokeLinecap="round"
+            />
+          ))}
         {result.curves.map((c) => (
           <polyline
             key={c.measurement.name}
@@ -488,7 +547,7 @@ function Picture2({ result, highlight }: { result: LumpinessResult; highlight: s
             S₈. Every curve crosses it at its own S₈, and that is why 0.3 appears in the formula.
           </li>
           <li>
-            <strong>The white dot</strong> is the microwave background’s own pair: σ₈ = {planckOwn.sigma8} and Ωm = {planckOwn.omegaMatter}, which make S₈ ={' '}
+            <strong>The pale dot</strong> is the microwave background’s own pair: σ₈ = {planckOwn.sigma8} and Ωm = {planckOwn.omegaMatter}, which make S₈ ={' '}
             {planckOwn.s8.toFixed(3)}. It lies almost exactly on the sky-blue curve for {early.value}. (The two numbers differ in the third
             decimal because different analyses of the same data differ slightly.)
           </li>
@@ -499,20 +558,24 @@ function Picture2({ result, highlight }: { result: LumpinessResult; highlight: s
           {early.value} ÷ 1.0801 = {(early.value / Math.sqrt(0.35 / 0.3)).toFixed(3)}. Both pairs give the same S₈, which is why a lensing measurement cannot say which pair is
           true. It fixes the curve, not a point on it.
         </p>
-        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>What to look for.</strong> Here are {highlight.length > 0 ? 'three' : 'two'} things to look at, what each one means, and why it matters.
+        </p>
         <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
           <li>
-            <strong>How close the curves are to each other.</strong> A difference of a few hundredths in S₈ moves a whole curve only a little. The
-            curves are all about as far apart as the gaps you saw in Picture 1.
+            <strong>Look at</strong> how close the curves are to each other. <strong>What it means:</strong> a difference of a few hundredths in S₈ moves a whole curve only a little. The
+            curves are about as far apart as the gaps you saw in Picture 1. <strong>Why it matters:</strong> it shows why small differences in S₈ matter.
           </li>
           <li>
-            <strong>The order of the curves.</strong> They keep the same order everywhere: a lower S₈ is a lower curve at every Ωm. So “this survey is
-            lower” does not depend on which Ωm you pick.
+            <strong>Look at</strong> the order of the curves. <strong>What it means:</strong> a lower S₈ is a lower curve at every Ωm. <strong>Why it matters:</strong> “this survey is lower”
+            does not depend on which Ωm you pick, and lensing compares S₈, the same thing in every survey.
           </li>
-          <li>
-            <strong>Why the surveys are compared by S₈.</strong> It is the combination lensing measures best, so comparing S₈ compares the same
-            thing in every survey.
-          </li>
+          {highlight.length > 0 && (
+            <li>
+              <strong>Look at</strong> the pink glow. <strong>What it means:</strong> it is on the curve of the survey you chose in Part 2 ({highlight.join(' and ')}). <strong>Why it matters:</strong>{' '}
+              it keeps the survey you chose to look at apart from your guesses, which are not drawn in this picture.
+            </li>
+          )}
         </ul>
       </div>
     </div>
@@ -520,7 +583,7 @@ function Picture2({ result, highlight }: { result: LumpinessResult; highlight: s
 }
 
 // ---- Picture 3: how the values changed (stage 5) ----
-function Picture3() {
+function Picture3({ shiftPrediction }: { shiftPrediction: ShiftDirection | null }) {
   const early = EARLY_MEASUREMENT
   const kids1000 = MEASUREMENTS.find((m) => m.name === 'KiDS-1000')!
   const kidsLegacy = MEASUREMENTS.find((m) => m.name === 'KiDS-Legacy')!
@@ -603,6 +666,30 @@ function Picture3() {
         <text x={xKids1000 + 10} y={s8Y(kids1000.value) + 18} fill={LATE_COLOR} fontSize="11">
           KiDS-1000: {kids1000.value}
         </text>
+        {shiftPrediction !== null &&
+          (() => {
+            // Your guess for Prediction 1: only a direction (up for higher, down for lower, a short tick for about the same). Its length means nothing.
+            const direction = shiftGuessDirection(shiftPrediction)
+            const ax = xKids1000 - 28
+            const ay = s8Y(kids1000.value)
+            return (
+              <g>
+                {direction === 0 ? (
+                  <line x1={ax - 9} y1={ay} x2={ax + 9} y2={ay} stroke={GUESS_COLOR} strokeWidth={4} />
+                ) : (
+                  <>
+                    <line x1={ax} y1={ay} x2={ax} y2={ay - direction * 22} stroke={GUESS_COLOR} strokeWidth={4} />
+                    <polygon points={`${ax},${ay - direction * 32} ${ax - 7},${ay - direction * 18} ${ax + 7},${ay - direction * 18}`} fill={GUESS_COLOR} />
+                  </>
+                )}
+                <line x1={ax} y1={ay + (direction === 1 ? 0 : direction === -1 ? 34 : 6)} x2={ax} y2={298} stroke={GUESS_COLOR} strokeWidth={2} />
+                <rect x={ax - 56} y={298} width={160} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+                <text x={ax + 24} y={316} fill={GUESS_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle">
+                  YOUR GUESS: {SHIFT_SHORT[shiftPrediction]}
+                </text>
+              </g>
+            )
+          })()}
         <text x={xKidsLegacy} y={s8Y(early.value + early.up) - 5} fill={LATE_COLOR} fontSize="11" textAnchor="middle">
           KiDS-Legacy: {kidsLegacy.value}
         </text>
@@ -639,32 +726,47 @@ function Picture3() {
             <strong>The dashed arrow between the two KiDS dots</strong> goes from KiDS’s first full analysis to its re-analysis. The words on it
             give how much S₈ changed: {signed3(kidsShiftValue)}. A plus sign means higher.
           </li>
+          <li>
+            <strong>The white arrow and the YOUR GUESS box</strong> (left of the KiDS-1000 dot): your guess for Prediction 1. Up means you guessed that KiDS’s S₈ came out higher, down means lower, and a
+            short tick means about the same. It is only a marker: its length means nothing, and it is not a result.
+          </li>
         </ul>
         <p style={paragraph}>
           <strong>A worked moment, with real numbers.</strong> The arrow’s number is the difference of the two dots: {kidsLegacy.value} −{' '}
           {kids1000.value} = {signed3(kidsShiftValue)}. For comparison, the band’s “give or take” is {early.up}, so the KiDS change is about{' '}
           {(Math.abs(kidsShiftValue) / early.up).toFixed(1)} times the width of the band on one side.
         </p>
-        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
+        <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+          <strong>What to look for.</strong> Here are three things to look at, what each one means, and why it matters.
+        </p>
         <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
           <li>
-            <strong>Where each dot sits compared with the band.</strong> A dot inside the band agrees with the prediction within its “give or
-            take”. A dot below it says the universe is smoother than predicted.
+            <strong>Look at</strong> where each dot sits compared with the band. <strong>What it means:</strong>{' '}
+            {[kids1000, kidsLegacy, desNla, desTatt]
+              .map((m) => {
+                const r = bandRelation(m)
+                return `${m.name} is ${r.dot} it${r.barReachesBand ? ', and its bar reaches into it' : ''}`
+              })
+              .join('; ')}
+            . <strong>Why it matters:</strong> a dot inside the band agrees with the prediction within its “give or take”. A dot below it says the universe is smoother than predicted.
           </li>
           <li>
-            <strong>What the arrow did to the KiDS dot.</strong> Compare the position of the dot before and after, relative to the band. This is how
-            a tension can change when a measurement is improved.
+            <strong>Look at</strong> what the arrow did to the KiDS dot, and at the white arrow beside it. <strong>What it means:</strong> the KiDS dot moved by {signed3(kidsShiftValue)}, about{' '}
+            {(Math.abs(kidsShiftValue) / early.up).toFixed(1)} times the band’s width on one side. The white arrow is your guess for that move. <strong>Why it matters:</strong> this is how a tension
+            can change when a measurement is improved.
           </li>
           <li>
-            <strong>Whether the other survey followed.</strong> The two DES dots are the newest. Look at where they sit relative to the band, and
-            compare with the KiDS dots. If every survey moved the same way, a single cause would be the natural suspect; if they did not, something
-            specific to each survey may be at work.
-          </li>
-          <li>
-            <strong>What the picture cannot tell you:</strong> which survey is right, or why a value changed. It only shows the numbers the
-            papers published.
+            <strong>Look at</strong> whether the other survey followed. <strong>What it means:</strong> the two DES dots, the newest, sit at {desNla.value} and {desTatt.value}.{' '}
+            <strong>Why it matters:</strong> if every survey moved the same way, a single cause would be the natural suspect. If they did not, something specific to each survey may be at work.
           </li>
         </ul>
+        <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+          <strong>What the picture cannot tell you:</strong> which survey is right, or why a value changed. It only shows the numbers the papers published.
+        </p>
+        <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> every S₈ value and error bar, by the Planck, KiDS and DES teams, and the year each paper was posted.{' '}
+          <em>Calculated here:</em> the change between the two KiDS dots. <em>Imagined for the question:</em> nothing. The white arrow is your guess.
+        </p>
       </div>
     </div>
   )
@@ -688,6 +790,8 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
   const kidsChange = shift(MEASUREMENTS.find((m) => m.name === 'KiDS-1000')!, MEASUREMENTS.find((m) => m.name === 'KiDS-Legacy')!)
   const bothPredicted = shiftPrediction !== null && rangePrediction !== null
   const kids1000 = MEASUREMENTS.find((m) => m.name === 'KiDS-1000')!
+  const fixedGap = (m: (typeof MEASUREMENTS)[number]) => (result.early.value - m.value).toFixed(3)
+  const checkUp = lumpinessCheckUp()
 
   // Presentation only: advances one stage at a time. The result does not depend on this timer.
   useEffect(() => {
@@ -717,6 +821,7 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
   const axisY = surveyY(LATE_MEASUREMENTS.length - 1) + 50
   const planckY = P1_PLANCK_Y
   const p1Height = axisY + 52
+  const p1Total = stage >= 3 ? p1Height + SIGMA_PANEL_H : p1Height
 
   return (
     <div>
@@ -893,7 +998,10 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions about surveys that measured S₈ by lensing, press Run, and then look
-            closer at the survey you choose. Nothing here is graded.
+            closer at the survey you choose. Nothing here is graded. Your predictions never change the real pictures or tables. They are drawn on the
+            pictures in white, in a box marked YOUR GUESS, so you can compare them with what was measured and calculated, and they are listed again
+            beside the results. In Part 2 you can choose which survey to look at closely. That choice is pink: it draws that survey’s curve with a pink glow
+            in Picture 2, fills a drawing in Part 2 and picks the column of the first table, but it never changes your guesses.
           </p>
 
           <p style={paragraph}>
@@ -942,6 +1050,11 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
               : REFERENCE_ENTRIES
           }
         />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: the measurements on one line, why lensing measures a
+          combination, and how the values changed over the years. Nothing here tells you the answers. When the pictures are drawn, your guesses appear on them in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither
             says which answer is right. */}
@@ -1030,8 +1143,8 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
         <div style={{ marginBottom: '1rem' }}>
           <svg
             width={VIEW_WIDTH}
-            height={p1Height}
-            viewBox={`0 0 ${VIEW_WIDTH} ${p1Height}`}
+            height={p1Total}
+            viewBox={`0 0 ${VIEW_WIDTH} ${p1Total}`}
             style={svgStyle}
             role="img"
             aria-label="Number line of S8: the microwave-background prediction and each survey's measurement with its error bar"
@@ -1090,6 +1203,57 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
                   </g>
                 )
               })}
+
+            {/* The "How many sigma?" panel (stage 3): the real sigma of each survey on its own scale, and your guess for Prediction 2 as a white band. */}
+            {stage >= 3 && rangePrediction !== null && (() => {
+              const oy = p1Height
+              const band = sigmaGuessBand(rangePrediction)
+              const endX = sigmaX(band.hi ?? SIGMA_MAX)
+              const startX = sigmaX(band.lo)
+              const mid = (startX + endX) / 2
+              const bandY = oy + 118
+              return (
+                <g>
+                  <line x1={AXIS_LEFT} y1={oy} x2={AXIS_RIGHT} y2={oy} stroke={MUTED_COLOR} strokeDasharray="2 4" />
+                  <text x={AXIS_LEFT} y={oy + 24} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+                    How many sigma? Each survey against the microwave background
+                  </text>
+                  {LATE_MEASUREMENTS.map((m) => {
+                    const sigma = tensionSigma(m, early)
+                    const color = m.name === 'DES Y6 (TATT)' ? PALE_LATE_COLOR : LATE_COLOR
+                    const short = m.name.replace('DES Y6 ', 'DES ')
+                    return (
+                      <g key={m.name}>
+                        <circle cx={sigmaX(sigma)} cy={oy + 86} r={5} fill={color} />
+                        <text x={sigmaX(sigma)} y={oy + (m.name === 'DES Y6 (TATT)' ? 52 : 68)} fill={color} fontSize="11" textAnchor="middle">
+                          {short}: {sigma.toFixed(2)}
+                        </text>
+                        <line x1={sigmaX(sigma)} y1={oy + (m.name === 'DES Y6 (TATT)' ? 56 : 72)} x2={sigmaX(sigma)} y2={oy + 81} stroke={color} strokeWidth={1} strokeOpacity={0.6} />
+                      </g>
+                    )
+                  })}
+                  <line x1={AXIS_LEFT} y1={oy + 100} x2={AXIS_RIGHT} y2={oy + 100} stroke={MUTED_COLOR} strokeWidth={1.5} />
+                  {[0, 0.5, 1, 1.5, 2, 2.5, 3].map((t) => (
+                    <g key={t}>
+                      <line x1={sigmaX(t)} y1={oy + 96} x2={sigmaX(t)} y2={oy + 104} stroke={MUTED_COLOR} />
+                      <text x={sigmaX(t)} y={oy + 134} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
+                        {t}
+                      </text>
+                    </g>
+                  ))}
+                  <rect x={startX} y={bandY - 14} width={Math.max(endX - startX, 0)} height={10} fill={GUESS_COLOR} opacity={0.9} />
+                  {band.hi === null && <polygon points={`${endX},${bandY - 18} ${endX + 12},${bandY - 9} ${endX},${bandY}`} fill={GUESS_COLOR} />}
+                  <line x1={mid + 14} y1={bandY - 4} x2={mid + 14} y2={oy + 148} stroke={GUESS_COLOR} strokeWidth={2} />
+                  <rect x={Math.min(Math.max(mid + 14 - 130, 10), VIEW_WIDTH - 270)} y={oy + 148} width={260} height={28} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+                  <text x={(AXIS_LEFT + AXIS_RIGHT) / 2} y={oy + 194} fill={MUTED_COLOR} fontSize="11" textAnchor="middle">
+                    sigma: how many combined give-or-takes the gap is
+                  </text>
+                  <text x={Math.min(Math.max(mid + 14 - 130, 10), VIEW_WIDTH - 270) + 130} y={oy + 167} fill={GUESS_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle">
+                    YOUR GUESS: {RANGE_SHORT[rangePrediction]}
+                  </text>
+                </g>
+              )
+            })()}
           </svg>
         </div>
 
@@ -1125,7 +1289,7 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
               analysed with two ways of treating one nuisance effect (written “NLA” and “TATT”), and the paler dot is the second way.
             </li>
             <li>
-              <strong>The white brackets and the words “gap … = … sigma”</strong> (they appear at stage 3): the gap between that survey’s value
+              <strong>The pale brackets and the words “gap … = … sigma”</strong> (they appear at stage 3): the gap between that survey’s value
               and the microwave-background value, and what it comes to in sigma. As in Experiment 1, sigma is the gap divided by the combined
               “give or take” of the two values. Because the bars can be unequal, the combined “give or take” uses the length of each bar on the
               side facing the other value. The scientists’ own papers use fuller statistics, so their quoted sigma can differ from this simple one;
@@ -1140,37 +1304,67 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
             {Math.sqrt(kids1000.up ** 2 + early.down ** 2).toFixed(4)} = {tensionSigma(kids1000, early).toFixed(2)} sigma. That is the number the picture
             shows at stage 3.
           </p>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>What to look for, and what it would mean:</p>
-          <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              <strong>How far a survey’s dot is from the sky-blue dot, compared with the length of the bars.</strong> If the gap is small compared
-              with the bars together, the two measurements agree. If it is several bars wide, they do not.
-            </li>
-            <li>
-              <strong>Whether the bars overlap.</strong> Overlapping bars mean the two measurements could both be right. But overlap alone is not
-              the whole story: the sigma puts a number on it.
-            </li>
-            <li>
-              <strong>Which side of the sky-blue dot a survey’s dot is on.</strong> Left means a smoother universe than the microwave background
-              predicts, right a lumpier one.
-            </li>
-          </ul>
+          {stage >= 3 && (
+            <>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What to look for.</strong> Here are four things to look at, what each one means, and why it matters.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Look at</strong> how far a survey’s dot is from the sky-blue dot, compared with the bars. <strong>What it means:</strong>{' '}
+                  {LATE_MEASUREMENTS.map((m) => `${m.name} is ${fixedGap(m)} below it (${tensionSigma(m, early).toFixed(2)} sigma)`).join('; ')}. <strong>Why it matters:</strong> a gap that is
+                  several bars wide is hard to put down to chance. One smaller than the bars is not.
+                </li>
+                <li>
+                  <strong>Look at</strong> whether the bars overlap. <strong>What it means:</strong>{' '}
+                  {LATE_MEASUREMENTS.map((m) => `${m.name}’s bar ${bandRelation(m).barReachesBand ? 'overlaps' : 'does not touch'} the sky-blue bar`).join('; ')}.{' '}
+                  <strong>Why it matters:</strong> overlapping bars mean the two measurements could both be right. But overlap alone is not the whole story: the sigma puts a number on it.
+                </li>
+                <li>
+                  <strong>Look at</strong> which side of the sky-blue dot each survey’s dot is on. <strong>What it means:</strong> all four are on the left. <strong>Why it matters:</strong> left means a smoother
+                  universe than the microwave background predicts, right a lumpier one.
+                </li>
+                <li>
+                  <strong>Look at</strong> the white band and the dots in the “How many sigma?” panel. <strong>What it means:</strong> the dots are the sigma of each survey, and the band is where you
+                  guessed for DES. <strong>Why it matters:</strong> it puts your guess on the same scale as the real numbers.
+                </li>
+              </ul>
+              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The “How many sigma?” panel (it appears at stage 3, below the number line):</strong> its own scale, from 0 to 3 sigma. Each coloured dot is one survey’s sigma (the number
+                  after its name), the same numbers as in the words “gap … = … sigma” above. The white band and the YOUR GUESS box are your guess for Prediction 2. The band covers the range you
+                  chose, and “more than 2.5” ends in an arrow. It is only where you guessed, not a result.
+                </li>
+              </ul>
+              <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the S₈ values and their error bars, by the Planck, KiDS and DES teams named in the table below.{' '}
+                <em>Calculated here:</em> the gaps and every sigma, with the simple rule explained above (the papers use fuller statistics). <em>Imagined for the question:</em> nothing.
+              </p>
+            </>
+          )}
         </div>
 
         {/* Picture 2: why lensing measures a combination (stage 4). Draft wording for the owner's review. */}
         {status !== 'idle' && stage >= 4 && <Picture2 result={result} highlight={status === 'complete' ? focusNames : []} />}
 
         {/* Picture 3: how the values changed (stage 5). Draft wording for the owner's review. */}
-        {status !== 'idle' && stage >= 5 && <Picture3 />}
+        {status !== 'idle' && stage >= 5 && <Picture3 shiftPrediction={shiftPrediction} />}
 
         {/* After the run: the "Look closer at" control, the neutral results, the guide to them and the links kept back until now. Draft wording
             for the owner's review (CLAUDE.md §28.1, §29). The results only report; they do not say why. */}
         {status === 'complete' && (
-          <div style={{ marginTop: '2rem' }}>
+          <div style={{ marginTop: '0.5rem' }}>
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              We are about to choose one survey and look at its numbers more closely. Your choice puts a pink glow on its curve in Picture 2, fills the drawing in this part and picks the
+              column of the first table. It never changes the published numbers, the other curves or your guesses.
+            </PartHeader>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+              Your guesses do not change the drawings or tables. This setting does. The survey you choose is a trial value, not a measurement: it puts a pink glow on its curve in Picture 2,
+              fills the drawing below and picks the column of the first table.
+            </p>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Look closer at</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-              Choose a survey. The first table below shows its numbers, and its curve is drawn bold in Picture 2. Your predictions stay as they are.
-              (DES Year 6 shows both of its versions.)
+              Choose a survey. (DES Year 6 shows both of its versions.)
             </p>
             <div style={{ marginBottom: '1.5rem' }}>
               {FOCUS_PRESETS.map((preset, i) => (
@@ -1186,11 +1380,217 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
               ))}
             </div>
 
+            {/* Drawing A: the survey the learner chose (pink), beside the microwave-background value (sky blue); then its sigma worked out here beside the paper's own. */}
+            {(() => {
+              const n = results.length
+              const axisY2 = 120 + 28 * n + 20
+              const sy = axisY2 + 66
+              const height = sy + 16 + n * 50 + (focusMeasurements.some((m) => paperSigma(m).baseline !== 'Planck alone') ? 26 : 8)
+              return (
+                <svg width={VIEW_WIDTH} height={height} viewBox={`0 0 ${VIEW_WIDTH} ${height}`} style={svgStyle} role="img" aria-label={`The survey you chose, ${FOCUS_PRESETS[focusIndex].label}, beside the microwave-background value, and its sigma worked out here beside the paper's own`}>
+                  <text x={AXIS_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+                    Drawing A: the survey you chose, beside the microwave-background value
+                  </text>
+                  <line x1={xOf(result.early.value)} y1={74} x2={xOf(result.early.value)} y2={axisY2} stroke={EARLY_COLOR} strokeWidth={1} strokeDasharray="4 3" />
+                  <line x1={xOf(result.early.value - result.early.down)} y1={66} x2={xOf(result.early.value + result.early.up)} y2={66} stroke={EARLY_COLOR} strokeWidth={3} />
+                  <circle cx={xOf(result.early.value)} cy={66} r={5} fill={EARLY_COLOR} />
+                  <text x={xOf(result.early.value) - 24} y={52} fill={EARLY_COLOR} fontSize="12" textAnchor="middle">
+                    {result.early.name} (microwave background): {result.early.value} ± {result.early.up}
+                  </text>
+                  {focusMeasurements.map((m, i) => {
+                    const y = 108 + 28 * i
+                    return (
+                      <g key={m.name}>
+                        <line x1={xOf(m.value - m.down)} y1={y} x2={xOf(m.value + m.up)} y2={y} stroke={TRIAL_COLOR} strokeWidth={3} strokeOpacity={i === 0 ? 1 : 0.65} />
+                        <circle cx={xOf(m.value)} cy={y} r={5} fill={TRIAL_COLOR} fillOpacity={i === 0 ? 1 : 0.65} />
+                        <text x={xOf(m.value) - 10} y={y - 10} fill={TRIAL_COLOR} fontSize="11" textAnchor="end">
+                          {m.name}: {m.value} (+{m.up}, −{m.down})
+                        </text>
+                      </g>
+                    )
+                  })}
+                  <line x1={AXIS_LEFT} y1={axisY2} x2={AXIS_RIGHT} y2={axisY2} stroke={MUTED_COLOR} strokeWidth={1.5} />
+                  {TICKS.map((t) => (
+                    <g key={t}>
+                      <line x1={xOf(t)} y1={axisY2 - 4} x2={xOf(t)} y2={axisY2 + 4} stroke={MUTED_COLOR} />
+                      <text x={xOf(t)} y={axisY2 + 18} fill={MUTED_COLOR} fontSize="11" textAnchor="middle">
+                        {t.toFixed(2)}
+                      </text>
+                    </g>
+                  ))}
+                  <text x={(AXIS_LEFT + AXIS_RIGHT) / 2} y={axisY2 + 38} fill={TEXT_COLOR} fontSize="12" textAnchor="middle">
+                    S₈ (a plain number: how lumpy matter is today)
+                  </text>
+                  <line x1={AXIS_LEFT} y1={sy - 22} x2={AXIS_RIGHT} y2={sy - 22} stroke={MUTED_COLOR} strokeDasharray="2 4" />
+                  <text x={AXIS_LEFT} y={sy - 4} fill={TEXT_COLOR} fontSize="12" fontWeight="bold">
+                    Sigma, from 0 to 3
+                  </text>
+                  {results.map((r, i) => {
+                    const base = sy + 16 + i * 50
+                    const paper = paperSigma(r.focus)
+                    return (
+                      <g key={r.focus.name}>
+                        <text x={DA_SIGMA_X0} y={base - 4} fill={TRIAL_COLOR} fontSize="10">
+                          {r.focus.name}
+                        </text>
+                        <text x={AXIS_LEFT} y={base + 11} fill={TEXT_COLOR} fontSize="11">
+                          worked out here
+                        </text>
+                        <rect x={DA_SIGMA_X0} y={base} width={daSigmaX(r.tension) - DA_SIGMA_X0} height={14} fill={TRIAL_COLOR} />
+                        <text x={daSigmaX(r.tension) + 6} y={base + 11} fill={TRIAL_COLOR} fontSize="11">
+                          {r.tension.toFixed(2)}
+                        </text>
+                        <text x={AXIS_LEFT} y={base + 31} fill={TEXT_COLOR} fontSize="11">
+                          the paper’s own
+                        </text>
+                        <rect x={DA_SIGMA_X0} y={base + 20} width={daSigmaX(paper.value) - DA_SIGMA_X0} height={14} fill={MUTED_COLOR} />
+                        <text x={daSigmaX(paper.value) + 6} y={base + 31} fill={MUTED_COLOR} fontSize="11">
+                          {paperText(r.focus)}
+                        </text>
+                      </g>
+                    )
+                  })}
+                  {focusMeasurements.some((m) => paperSigma(m).baseline !== 'Planck alone') && (
+                    <text x={AXIS_LEFT} y={height - 8} fill={MUTED_COLOR} fontSize="10">
+                      DES’s own figure compares with Planck + ACT + SPT, a different comparison.
+                    </text>
+                  )}
+                </svg>
+              )
+            })()}
+
+            <div style={{ marginTop: '1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              <p style={paragraph}>
+                <strong>How to read this drawing.</strong> It shows the survey you chose beside the microwave-background value, on the same S₈ line as Picture 1, and then two bars for its sigma: the one worked out
+                on this page, and the one the scientists published.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The sky-blue dot, bar and dashed line:</strong> the microwave-background value, {result.early.value} ± {result.early.up}. The dashed line is a ruler to hold against the pink dot.
+                </li>
+                <li>
+                  <strong>The pink dot and bar:</strong> the survey you chose ({FOCUS_PRESETS[focusIndex].label}). The bar can be longer on one side, because the surveys publish different upward and downward
+                  uncertainties. For DES Year 6 there are two pink dots, the second a little paler. Pink always means the survey you chose.
+                </li>
+                <li>
+                  <strong>The two bars below:</strong> the pink bar is the sigma worked out here, with the simple rule from Picture 1. The grey bar is the sigma the scientists published, from fuller statistics. Longer
+                  means a larger gap in sigma. For DES the grey bar compares with Planck + ACT + SPT, so it answers a slightly different question.
+                </li>
+              </ul>
+              <p style={paragraph}>
+                <strong>A worked moment, with your numbers.</strong> Take {results[0].focus.name} ({results[0].focus.value}) and the sky-blue dot ({result.early.value}). The gap is {result.early.value} −{' '}
+                {results[0].focus.value} = {results[0].gap.toFixed(3)}. The pink bar reaches {results[0].surveyUncertaintyUsed} on the side facing the sky-blue dot, and the sky-blue bar reaches{' '}
+                {results[0].earlyUncertaintyUsed}, so the combined “give or take” is {results[0].combinedUncertainty.toFixed(4)}. Then {results[0].gap.toFixed(3)} ÷ {results[0].combinedUncertainty.toFixed(4)} ={' '}
+                {results[0].tension.toFixed(2)} sigma, against the paper’s {paperText(results[0].focus)}.
+                {results.length > 1 && ' The second DES version works the same way.'}
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>What to look for.</strong> Here are three things to look at, what each one means, and why it matters.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>Look at</strong> where the pink dot sits against the sky-blue dot. <strong>What it means:</strong> {results[0].focus.name} is {results[0].gap.toFixed(3)} to the left, so a smoother universe than
+                  the microwave background predicts. <strong>Why it matters:</strong> the distance and the bars together set how big the disagreement is.
+                </li>
+                <li>
+                  <strong>Look at</strong> how the two sigma bars compare. <strong>What it means:</strong> {results[0].tension.toFixed(2)} here, against {paperText(results[0].focus)}{' '}
+                  in the paper. <strong>Why it matters:</strong> the papers use fuller statistics, so the two need not match. The simple one is a guide to the size of the gap, not the final word.
+                </li>
+                <li>
+                  <strong>Look at</strong> the pink glow in Picture 2 above. <strong>What it means:</strong> it is on the same survey’s curve. <strong>Why it matters:</strong> it connects the S₈ you see here with the curve of
+                  equal S₈ in Picture 2.
+                </li>
+              </ul>
+              <p style={{ marginTop: 0, marginBottom: 0 }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the S₈ values, their error bars and the papers’ own sigma, by the Planck, KiDS and DES teams. <em>Calculated here:</em> the sigma worked
+                out here. <em>Imagined for the question:</em> nothing. The pink marks are your choice of survey. Your guesses are not drawn here, because they never change a picture.
+              </p>
+            </div>
+
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              We are about to read the numbers: first a check-up against the papers’ own figures, then the tables. A guess never changes them. The survey you chose in Part 2 changes the first table, and the page says
+              which one is on.
+            </PartHeader>
+
             <div style={{ border: '1px solid var(--border-color, #ccc)', borderRadius: '8px', padding: '1rem', fontSize: '0.875rem' }}>
               <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
                 <strong>Results.</strong> These are the numbers behind the three pictures. They only report what was published and what was calculated.
                 They do not say why the numbers are what they are.
               </p>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>The check-up: what the papers give, and what was found here</p>
+              <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '0.75rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-color, #ccc)', textAlign: 'left' }}>
+                    <th style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>What was checked</th>
+                    <th style={{ padding: '0.4rem 0.5rem' }}>What we would expect</th>
+                    <th style={{ padding: '0.4rem 0.5rem' }}>What was found</th>
+                    <th style={{ padding: '0.4rem 0' }}>Reading</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {checkUp.map((row, i) => {
+                    const survey = i === 0 ? null : LATE_MEASUREMENTS[i - 1]
+                    const paper = survey ? paperSigma(survey) : null
+                    const tag = survey ? (survey.name === 'KiDS-1000' || survey.name === 'KiDS-Legacy' ? ' (a number for Prediction 1’s surveys)' : ' (the row for Prediction 2)') : ''
+                    return (
+                      <tr key={row.label} style={{ borderBottom: '1px solid var(--border-color, #ccc)' }}>
+                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                          {row.label}
+                          {survey && survey.side === 'late' && survey.name.startsWith('DES') ? tag : ''}
+                        </td>
+                        <td style={{ padding: '0.4rem 0.5rem' }}>
+                          {i === 0
+                            ? `${row.expected.toFixed(3)} (0.811 × √(0.315 ÷ 0.3))`
+                            : `${paperText(survey!)} (the paper’s own${paper!.baseline === 'Planck alone' ? '' : `, against ${paper!.baseline}`})`}
+                        </td>
+                        <td style={{ padding: '0.4rem 0.5rem' }}>{i === 0 ? `${row.found.toFixed(3)} (as quoted)` : row.found.toFixed(2)}</td>
+                        <td style={{ padding: '0.4rem 0', fontWeight: 'bold' }}>{row.reading}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+                The check-up always covers all four surveys, whichever one you chose in Part 2. It never follows your guesses.
+              </p>
+              <div style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  <strong>What this table tells us.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>Planck’s S₈.</strong> The formula gives {checkUp[0].expected.toFixed(3)} from Planck’s own σ₈ and Ωm. The page uses the quoted {checkUp[0].found}. It matters because every sigma on this page is measured from that
+                    value. The page does not say why the two differ by {(checkUp[0].found - checkUp[0].expected).toFixed(3)}.
+                  </li>
+                  <li>
+                    <strong>KiDS-1000.</strong> Worked out here: {checkUp[1].found.toFixed(2)}, which is {checkUp[1].reading} than the paper’s about 3. The papers use fuller statistics, so the two need not match. It matters because this is the
+                    first tension the experiment is about, so read this page’s number as an approximation.
+                  </li>
+                  <li>
+                    <strong>KiDS-Legacy.</strong> {checkUp[2].found.toFixed(2)} here, which is {checkUp[2].reading} than the paper’s 0.73, for the same reason. It matters because it is the re-analysis the first prediction is about.
+                  </li>
+                  <li>
+                    <strong>DES.</strong> The papers’ {paperText(LATE_MEASUREMENTS[2])} and {paperText(LATE_MEASUREMENTS[3])} compare DES with Planck + ACT + SPT. This page’s {checkUp[3].found.toFixed(2)} and {checkUp[4].found.toFixed(2)} compare it with Planck alone,
+                    so they are not the same comparison and the page gives no reading. It matters because the numbers look close but answer different questions.
+                  </li>
+                </ul>
+              </div>
+
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+              <p style={{ color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
+                Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+              </p>
+              <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem' }}>
+                <li>
+                  <strong>Prediction 1, what the better calibration did to KiDS’s S₈:</strong> {shiftPrediction !== null ? SHIFT_CHOICES.find((c) => c.value === shiftPrediction)?.label.toLowerCase() : ''}. The question was about
+                  the change from KiDS-1000 to KiDS-Legacy. Its numbers are in Table 2 (the S₈ column, the rows for KiDS-1000 and KiDS-Legacy), in the line under it that gives the change, and in Picture 3.
+                </li>
+                <li>
+                  <strong>Prediction 2, how many sigma DES is from the microwave value:</strong> {rangePrediction !== null ? RANGE_CHOICES.find((c) => c.value === rangePrediction)?.label.toLowerCase() : ''}. Its numbers are in
+                  Table 2 (the two DES rows, the sigma columns), in Table 1 when you look closer at DES Year 6, and in the new panel under Picture 1.
+                </li>
+              </ul>
 
               <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 {FOCUS_PRESETS[focusIndex].label}, compared with {result.early.name}
@@ -1216,7 +1616,7 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
                         ['Survey’s give-or-take, side facing the microwave background', (r: LumpinessResult) => r.surveyUncertaintyUsed.toFixed(3)],
                         ['Microwave background’s give-or-take, side facing the survey', (r: LumpinessResult) => r.earlyUncertaintyUsed.toFixed(3)],
                         ['Combined give-or-take', (r: LumpinessResult) => r.combinedUncertainty.toFixed(4)],
-                        ['Sigma, worked out here', (r: LumpinessResult) => r.tension.toFixed(2)],
+                        ['Sigma, worked out here', (r: LumpinessResult) => `${r.tension.toFixed(2)}${r.focus.name.startsWith('DES') ? ' (the number for Prediction 2)' : ''}`],
                         ['The paper’s own comparison (sigma)', (r: LumpinessResult) => r.paperSigma],
                       ] as const
                     ).map(([name, format]) => (
@@ -1231,6 +1631,28 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  <strong>What this table tells us.</strong>
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  <li>
+                    <strong>S₈ and the microwave-background value.</strong> The survey’s best value with its upward and downward give-or-take, and the microwave-background value {result.early.value} ± {result.early.up}. It matters because
+                    everything below is worked out from these two numbers.
+                  </li>
+                  <li>
+                    <strong>The gap and the two give-or-takes.</strong> The gap is the difference of the two best values: {result.gap.toFixed(3)} for {result.focus.name}. The two give-or-takes are the ones on the sides facing each other
+                    ({result.surveyUncertaintyUsed} and {result.earlyUncertaintyUsed}), because the bars are longer on one side. It matters because the side facing the other value is the one that can close the gap.
+                  </li>
+                  <li>
+                    <strong>The combined give-or-take.</strong> {result.combinedUncertainty.toFixed(4)}, the doubt about the gap, worked out as in Experiment 1. It matters because it is the yardstick the gap is measured against.
+                  </li>
+                  <li>
+                    <strong>Sigma, worked out here, and the paper’s own.</strong> {result.tension.toFixed(2)} here, and {paperText(result.focus)} in the paper. The two are different on purpose: the paper’s is from
+                    fuller statistics and, for DES, a comparison with a combination of microwave-background data. It matters because the simple sigma is a guide to the size of the gap, not the final word.
+                  </li>
+                </ul>
               </div>
 
               <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Every measurement</p>
@@ -1248,7 +1670,10 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
                   <tbody>
                     {MEASUREMENTS.map((m) => (
                       <tr key={m.name} style={{ borderBottom: '1px solid var(--border-color, #ccc)', fontWeight: focusNames.includes(m.name) ? 'bold' : 'normal' }}>
-                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>{m.name}</td>
+                        <td style={{ padding: '0.4rem 0.5rem 0.4rem 0' }}>
+                          {m.name}
+                          {m.name.startsWith('KiDS') ? ' (a row for Prediction 1)' : m.name.startsWith('DES') ? ' (a row for Prediction 2)' : ''}
+                        </td>
                         <td style={{ padding: '0.4rem 0.5rem' }}>{m.year}</td>
                         <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right' }}>
                           {m.value.toFixed(3)} (+{m.up.toFixed(3)}, −{m.down.toFixed(3)})
@@ -1261,34 +1686,20 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
                 </table>
               </div>
               <p style={{ marginTop: 0, marginBottom: '1rem' }}>
-                <strong>The change in KiDS’s S₈</strong> from KiDS-1000 to KiDS-Legacy: <strong>{sign3(kidsChange)}</strong>.
+                <strong>The change in KiDS’s S₈</strong> from KiDS-1000 to KiDS-Legacy: <strong>{sign3(kidsChange)}</strong> (the number for Prediction 1).
               </p>
 
-              {/* How to read the results: draft wording (CLAUDE.md §29). It explains each row and the control, and says nothing about why. */}
               <div style={{ color: 'var(--text-muted)' }}>
-                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                  <strong>How to read these results.</strong>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                  <strong>What this table tells us.</strong>
                 </p>
                 <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                   <li>
-                    <strong>The first table</strong> is the sigma worked out step by step for the survey you chose, as in Experiment 1: the gap, the
-                    two “give or takes” that face each other, the combined “give or take”, and the gap divided by it. The survey’s own bar is longer
-                    on one side than the other, so the table says which side is used.
+                    <strong>Every measurement side by side.</strong> Each survey’s sigma worked out here sits beside the paper’s own: {LATE_MEASUREMENTS.map((m) => `${m.name} ${tensionSigma(m, result.early).toFixed(2)}`).join(', ')}. The survey
+                    you chose in Part 2 is in bold. It matters because the surveys do not all disagree by the same amount, and the page does not say which, if any, is wrong.
                   </li>
                   <li>
-                    <strong>The two sigma lines are different on purpose.</strong> “Worked out here” is the simple sigma. “The paper’s own” is the
-                    figure the scientists published, from fuller statistics and (for DES) compared with a combination of microwave-background data,
-                    so the two should not be expected to match exactly. The simple one is a guide to the size of the gap, not the final word.
-                  </li>
-                  <li>
-                    <strong>The second table</strong> lists every measurement side by side. The survey you chose is in bold.
-                  </li>
-                  <li>
-                    <strong>The change in KiDS’s S₈</strong> is the later value minus the earlier one, so a plus sign means higher.
-                  </li>
-                  <li>
-                    <strong>“Look closer at”</strong> changes only the first table, the bold line in Picture 2 and the worked examples in the
-                    “Words and formulas” panel. It does not change the pictures’ numbers or your predictions.
+                    <strong>The change in KiDS’s S₈</strong> is the later value minus the earlier one, so a plus sign means higher: {sign3(kidsChange)}. It matters because it is the number the first prediction is about.
                   </li>
                 </ul>
               </div>
@@ -1336,6 +1747,11 @@ export function LumpinessExperiment({ onComplete, onTutorComplete }: LumpinessEx
 
         {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The summary below the experiment (in
             App) is shown only once the learner reaches the explanation. */}
+        {status === 'complete' && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
+        )}
         {status === 'complete' && shiftPrediction !== null && rangePrediction !== null && (
           <LumpinessTutor
             focus={focusMeasurements[0]}

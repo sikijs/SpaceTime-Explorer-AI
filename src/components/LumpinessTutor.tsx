@@ -81,9 +81,9 @@ export function LumpinessTutor({ focus, shiftPrediction, rangePrediction, onExpl
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Pictures 1 and 3. What do you notice about where the two KiDS results and the Dark Energy Survey results sit compared with the microwave-background value?'}
+              'Look at Pictures 1 and 3. What do you notice about where the two KiDS results and the Dark Energy Survey results sit compared with the microwave-background value? Your guesses are drawn in white, in boxes marked YOUR GUESS: a band in the “How many sigma?” panel under Picture 1, and an arrow beside the KiDS-1000 dot on Picture 3. What do you notice about where they sit?'}
             {tutorStep === 'compare' &&
-              `You predicted that KiDS’s S₈ would come out ${shiftWords[shiftPrediction]} when the team re-analysed its complete data, and that the Dark Energy Survey’s 2026 value would be ${rangeWords[rangePrediction]}. Look at Pictures 1 and 3 again. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
+              `You predicted that KiDS’s S₈ would come out ${shiftWords[shiftPrediction]} when the team re-analysed its complete data, and that the Dark Energy Survey’s 2026 value would be ${rangeWords[rangePrediction]}. Compare the white band in Picture 1’s panel with the two DES dots, and the white arrow on Picture 3 with the arrow between the two KiDS dots. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
             {tutorStep === 'conceptual' &&
               'KiDS’s value changed when the team improved how it worked out the distances of the galaxies, among other things. What would you want to check before deciding that the old value was wrong, or that the new one was?'}
           </p>
