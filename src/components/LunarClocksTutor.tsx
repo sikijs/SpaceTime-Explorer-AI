@@ -109,9 +109,9 @@ export function LunarClocksTutor({ directionPrediction, sizePrediction, onExplai
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Picture 1. Which of the two clocks is slowed more, and which of the three parts of the Moon’s bar is the largest? How do the two bars compare in length?'}
+              'Look at Picture 1. Which of the two clocks is slowed more, and which of the three parts of the Moon’s bar is the largest? How do the two bars compare in length? Then look at Picture 2, where your guesses are drawn in white, in boxes marked YOUR GUESS, under the axis: where do they sit compared with the Moon’s dot?'}
             {tutorStep === 'compare' &&
-              `You predicted that the clock on the Moon would ${directionWords[directionPrediction]} compared with the clock on the Earth, and that after one day the two clocks would be ${sizeWords[sizePrediction]}. Now look at Table 1 and Table 2, and at Pictures 1 and 2. Do the numbers look the way you expected? What surprised you, if anything?`}
+              `You predicted that the clock on the Moon would ${directionWords[directionPrediction]} compared with the clock on the Earth, and that after one day the two clocks would be ${sizeWords[sizePrediction]}. Compare the two white YOUR GUESS boxes under Picture 2’s axis with the Moon’s dot above them. Then look at Table 1 and Table 2, and at Pictures 1 and 2. Do the numbers look the way you expected? What surprised you, if anything?`}
             {tutorStep === 'conceptual' &&
               'The Moon’s clock is slowed by the Moon’s gravity, by the Earth’s pull and by its own motion, and yet it gains on the Earth’s clock. Why? What would have to be different for the Moon’s clock to lose instead?'}
           </p>

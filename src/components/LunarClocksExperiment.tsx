@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  directionGuessSide,
+  DRAWING_SCALES,
+  lunarClocksCheckUp,
+  lunarDrawingReference,
+  lunarDrawingValues,
+  predictionGainMicroseconds,
+  sizeGuessMicroseconds,
   earthEquatorTerms,
   earthOrbitTerms,
   EARTH,
@@ -26,7 +33,7 @@ import { LookForList, ResultsTable } from './WideBinariesExperiment'
 import type { LookFor } from './WideBinariesExperiment'
 
 // Cosmic Horizons, Experiment 10 (docs/experiments/cosmic-horizons/10-does-time-tick-faster-on-the-moon.md).
-// Step 6 builds the controls (the place, the length of an orbit and the duration), shown after the run, which add a white mark to each picture and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stages 1 to 3, Picture 2 at stages 3 and 4 and Picture 3 at stage 5, each with a guide. Step 3 built the two predictions (their answer buttons, Run gated on both, and Start over); Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of the Earth and the Moon with the
+// Step 6 builds the controls (the place, the length of an orbit and the duration), shown after the run, which add a pink mark to each picture and a Table 4. Step 5 built the results (the status label, three tables, the formulas in the "Words and formulas" panel and the links kept back until after the run). Step 4 built the five-stage run: Picture 1 fills in at stages 1 to 3, Picture 2 at stages 3 and 4 and Picture 3 at stage 5, each with a guide. Step 3 built the two predictions (their answer buttons, Run gated on both, and Start over); Step 2 built the status line, the introduction with its new-word list and its "Want to know more?" links, a drawing of the Earth and the Moon with the
 // influences on a clock (an illustration, not data), the collapsed "Words and formulas" panel and the skeleton of Picture 1 (its axes and a guide). Step 7 built the tutor (LunarClocksTutor.tsx) and, in App,
 // the chapter summary. All wording is draft for the owner's
 // line-by-line approval (CLAUDE.md §28.1), written to the standard of §29. The introduction does not say which clock ticks faster, by how much, or the sizes of
@@ -45,10 +52,11 @@ const EARTH_COLOR = '#38bdf8' // sky blue: the Earth and its gravity
 const MOON_COLOR = '#d1d5db' // light grey: the Moon
 const MOON_GRAVITY_COLOR = '#a5b4fc' // lavender: the Moon's own gravity
 const MOTION_COLOR = '#4ade80' // green: motion
-const PULL_COLOR = '#fb7185' // rose: the Earth's pull at the Moon
+const PULL_COLOR = '#ef4444' // red: the Earth's pull at the Moon
 const CLOCK_COLOR = '#fde047' // yellow: a clock
 const FAR_COLOR = '#c084fc' // purple: the clock far from everything
-const YOURS_COLOR = '#ffffff' // white: the learner's own choice
+const YOURS_COLOR = '#f472b6' // pink: the learner's own choice (Part 2)
+const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14, "Predictions and the Real Results")
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -69,6 +77,25 @@ const svgStyle = {
 } as const
 
 const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+
+// The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
+function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
+      <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
+        <strong>What we are about to do.</strong> {children}
+      </p>
+    </div>
+  )
+}
+const PredictionTag = ({ n }: { n: 1 | 2 }) => (
+  <span style={{ marginLeft: '0.5rem', padding: '0.05rem 0.4rem', fontSize: '0.75rem', fontWeight: 'bold', border: `1px solid ${GUESS_COLOR}`, borderRadius: '4px', whiteSpace: 'nowrap' }}>
+    your Prediction {n}
+  </span>
+)
+const DIRECTION_SHORT = { slower: 'slower than the Earth’s clock', same: 'the same as the Earth’s clock', faster: 'faster than the Earth’s clock' } as const
+const SIZE_SHORT = { nanosecond: 'about 56 nanoseconds', microsecond: 'about 56 microseconds', millisecond: 'about 56 milliseconds' } as const
 
 function SvgLines({ x, y, lines, fill, size = 10, bold = false, anchor = 'start' }: { x: number; y: number; lines: string[]; fill: string; size?: number; bold?: boolean; anchor?: 'start' | 'middle' | 'end' }) {
   return (
@@ -166,8 +193,8 @@ const lookForDrawing: LookFor[] = [
     matters: 'in Gravity Experiments 2 and 9 you saw that gravity and motion both change a clock’s rate. To compare two clocks, you have to find out which of these act on each.',
   },
   {
-    look: 'the clock on the Moon’s surface, and the three arrows around it (lavender, rose and green).',
-    means: 'this clock is in the Moon’s gravity, in the Earth’s gravity too (the rose arrow, though the Earth is far away), and it moves with the Moon as the Moon goes round the Earth.',
+    look: 'the clock on the Moon’s surface, and the three arrows around it (lavender, red and green).',
+    means: 'this clock is in the Moon’s gravity, in the Earth’s gravity too (the red arrow, though the Earth is far away), and it moves with the Moon as the Moon goes round the Earth.',
     matters: 'a clock on the Moon is affected by more things than a clock on the Earth. Each one has to be counted, and the experiment’s job is to count them.',
   },
   {
@@ -329,7 +356,7 @@ function PictureOne({ stage, yours }: { stage: number; yours: { terms: Terms; mo
             y={P1_TOP + 148}
             lines={[
               `lavender: the Moon’s gravity ${sciText(moon.gravityOwn)}`,
-              `rose: the Earth’s pull at the Moon ${sciText(moon.gravityOther)}`,
+              `red: the Earth’s pull at the Moon ${sciText(moon.gravityOther)}`,
               `green: the Moon’s motion round the Earth ${sciText(moon.speed)}`,
               `total slowing: ${sciText(moon.total)}`,
             ]}
@@ -364,7 +391,7 @@ function PictureOne({ stage, yours }: { stage: number; yours: { terms: Terms; mo
             y={P1_TOP + 254}
             lines={[
               `${yours.moonBased ? 'lavender: the Moon’s gravity' : 'blue: the Earth’s gravity'} ${part(yours.terms.gravityOwn)}`,
-              `rose: the Earth’s pull at the Moon ${part(yours.terms.gravityOther)}`,
+              `red: the Earth’s pull at the Moon ${part(yours.terms.gravityOther)}`,
               `green: motion ${part(yours.terms.speed)}`,
               `total slowing: ${sciText(yours.terms.total)}`,
             ]}
@@ -397,9 +424,11 @@ const P2_PLACES: { place: Place; altitudeM: number; name: string; color: string;
   { place: 'moonSurface', altitudeM: 0, name: 'the Moon’s surface', color: MOON_COLOR, fromStage: 3 },
 ]
 
-function PictureTwo({ stage, yours }: { stage: number; yours: { gain: number; name: string; gapLabel: string } | null }) {
+function PictureTwo({ stage, yours, directionGuess, sizeGuess }: { stage: number; yours: { gain: number; name: string; gapLabel: string } | null; directionGuess: Direction | null; sizeGuess: TimeScale | null }) {
   const axisY = P2_TOP + 30 + (P2_PLACES.length + (yours !== null ? 1 : 0)) * 44 + 8
-  const P2_HEIGHT = axisY + 70
+  const P2_HEIGHT = axisY + 70 + 190 // room for the two guesses' own lines under the axis
+  const strip1Y = axisY + 92
+  const strip2Y = axisY + 172
   return (
     <svg
       width={VIEW_WIDTH}
@@ -448,6 +477,67 @@ function PictureTwo({ stage, yours }: { stage: number; yours: { gain: number; na
           </g>
         )
       })}
+      {/* The learner's two guesses (from stage 3, when the Moon's row is drawn): each on its own thin line under the axis, on the same scale. */}
+      {stage >= 3 && directionGuess !== null && (() => {
+        const side = directionGuessSide(directionGuess)
+        const x0 = gainToX(0)
+        const tip = x0 + side * 70
+        const mid = side === 0 ? x0 : (x0 + tip) / 2
+        const boxX = Math.min(Math.max(mid - 150, 10), VIEW_WIDTH - 310)
+        return (
+          <g>
+            <text x={20} y={strip1Y - 34} fill={GUESS_COLOR} fontSize="11">
+              Your guess for Prediction 1: which side of the Earth’s clock the Moon’s clock is (same scale as above)
+            </text>
+            <line x1={P2_LEFT} y1={strip1Y} x2={P2_RIGHT} y2={strip1Y} stroke={MUTED_COLOR} strokeWidth={1} />
+            <line x1={x0} y1={strip1Y - 12} x2={x0} y2={strip1Y + 12} stroke={EARTH_COLOR} strokeWidth={2} />
+            <text x={x0} y={strip1Y - 16} fill={EARTH_COLOR} fontSize="9" textAnchor="middle">
+              0 (the Earth’s clock)
+            </text>
+            {side === 0 ? (
+              <circle cx={x0} cy={strip1Y} r={7} fill="none" stroke={GUESS_COLOR} strokeWidth={3} />
+            ) : (
+              <g>
+                <line x1={x0} y1={strip1Y} x2={tip - side * 8} y2={strip1Y} stroke={GUESS_COLOR} strokeWidth={4} />
+                <polygon points={`${tip},${strip1Y} ${tip - side * 14},${strip1Y - 7} ${tip - side * 14},${strip1Y + 7}`} fill={GUESS_COLOR} />
+              </g>
+            )}
+            <line x1={mid} y1={strip1Y + 8} x2={mid} y2={strip1Y + 16} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={strip1Y + 16} width={300} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + 150} y={strip1Y + 33} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {DIRECTION_SHORT[directionGuess]}
+            </text>
+          </g>
+        )
+      })()}
+      {stage >= 3 && sizeGuess !== null && (() => {
+        const micros = sizeGuessMicroseconds(sizeGuess)
+        const off = micros > MAX_GAIN
+        const x = gainToX(Math.min(micros, MAX_GAIN))
+        const boxW = off ? 380 : 300
+        const boxX = Math.min(Math.max(x - boxW / 2, 10), VIEW_WIDTH - boxW - 10)
+        return (
+          <g>
+            <text x={20} y={strip2Y - 18} fill={GUESS_COLOR} fontSize="11">
+              Your guess for Prediction 2: the gap after one day, in microseconds (same scale as above)
+            </text>
+            <line x1={P2_LEFT} y1={strip2Y} x2={P2_RIGHT} y2={strip2Y} stroke={MUTED_COLOR} strokeWidth={1} />
+            {[-30, 0, 30, 60].map((v) => (
+              <line key={v} x1={gainToX(v)} y1={strip2Y - 3} x2={gainToX(v)} y2={strip2Y + 3} stroke={MUTED_COLOR} />
+            ))}
+            {off ? (
+              <polygon points={`${x - 14},${strip2Y - 8} ${x + 4},${strip2Y} ${x - 14},${strip2Y + 8}`} fill={GUESS_COLOR} />
+            ) : (
+              <polygon points={`${x},${strip2Y - 8} ${x + 8},${strip2Y} ${x},${strip2Y + 8} ${x - 8},${strip2Y}`} fill={GUESS_COLOR} />
+            )}
+            <line x1={x} y1={strip2Y + 8} x2={x} y2={strip2Y + 16} stroke={GUESS_COLOR} strokeWidth={2} />
+            <rect x={boxX} y={strip2Y + 16} width={boxW} height={26} rx={4} fill="#0b1020" stroke={GUESS_COLOR} strokeWidth={2} />
+            <text x={boxX + boxW / 2} y={strip2Y + 33} fill={GUESS_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
+              YOUR GUESS: {SIZE_SHORT[sizeGuess]}{off ? ' (beyond the right edge)' : ''}
+            </text>
+          </g>
+        )
+      })()}
       {yours !== null &&
         (() => {
           const y = P2_TOP + 30 + P2_PLACES.length * 44
@@ -537,7 +627,7 @@ function PictureThree({ yourAltitudeM }: { yourAltitudeM: number | null }) {
       {yourAltitudeM !== null && (
         <g>
           <text x={P3_LEFT} y={P3_BOTTOM + 58} fill={YOURS_COLOR} fontSize="11" fontWeight="bold">
-            your orbit (the white ring): {(yourAltitudeM / 1000).toLocaleString('en-US')} km up, {microsText(againstSurface(yourAltitudeM), 2)} a day against the surface clock
+            your orbit (the pink ring): {(yourAltitudeM / 1000).toLocaleString('en-US')} km up, {microsText(againstSurface(yourAltitudeM), 2)} a day against the surface clock
           </text>
           <circle cx={altToX(Math.log10(yourAltitudeM))} cy={yToPx(againstSurface(yourAltitudeM))} r={7} fill="none" stroke={YOURS_COLOR} strokeWidth={2.5} />
         </g>
@@ -579,6 +669,111 @@ const SIZE_CHOICES: ReadonlyArray<{ value: TimeScale; label: string }> = [
   { value: 'microsecond', label: 'About 56 microseconds (millionths of a second)' },
   { value: 'millisecond', label: 'About 56 milliseconds (thousandths of a second)' },
 ]
+
+// ---- Part 2's drawing: your clock beside the real one (the learner's own choice, pink; the reference marks, yellow) ----
+const DA_LEFT = 40
+const DA_RIGHT = 520
+const DA_ROW_TOP = 56
+const DA_ROW_STEP = 82
+const DA_HEIGHT = DA_ROW_TOP + 2 * DA_ROW_STEP
+const REF_COLOR = '#fde047' // yellow: a reference value
+
+function YourClockDrawing({ place, altitudeM, seconds, yourName, durationName }: { place: Place; altitudeM: number; seconds: number; yourName: string; durationName: string }) {
+  const mine = lunarDrawingValues(place, altitudeM, seconds)
+  const ref = lunarDrawingReference()
+  const sc = DRAWING_SCALES
+  const linX = (v: number) => DA_LEFT + ((v - sc.gainPerDay.min) / (sc.gainPerDay.max - sc.gainPerDay.min)) * (DA_RIGHT - DA_LEFT)
+  const logX = (v: number) => (v <= sc.gapMicroseconds.min ? DA_LEFT : DA_LEFT + (Math.log(v / sc.gapMicroseconds.min) / Math.log(sc.gapMicroseconds.max / sc.gapMicroseconds.min)) * (DA_RIGHT - DA_LEFT))
+  const gapText = (v: number) => (v === 0 ? '0' : v < 1000 ? `${v.toFixed(1)} µs` : `${(v / 1000).toFixed(2)} ms`)
+  const rows = [
+    {
+      key: 'gain', title: 'How many microseconds a day your clock gains on the Earth’s equator clock', x: linX, mine: mine.gainMicrosecondsPerDay, ref: ref.gainMicrosecondsPerDay,
+      ticks: [-30, 0, 30, 60], tickLabel: (v: number) => `${v}`, valueText: (v: number) => microsText(v, 2), refName: 'the Moon’s surface',
+    },
+    {
+      key: 'gap', title: `How far apart the clocks are after ${durationName} (the size of the gap, a logarithmic scale)`, x: logX, mine: mine.gapMicroseconds, ref: ref.gapMicroseconds,
+      ticks: [0.1, 1, 10, 100, 1000, 10000, 100000], tickLabel: (v: number) => (v >= 1000 ? `${v / 1000}k` : `${v}`), valueText: gapText, refName: 'the Moon’s surface after a day',
+    },
+  ]
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <svg
+        width={VIEW_WIDTH}
+        height={DA_HEIGHT}
+        viewBox={`0 0 ${VIEW_WIDTH} ${DA_HEIGHT}`}
+        style={svgStyle}
+        role="img"
+        aria-label="Two short scales for your own clock: how many microseconds a day it gains on a clock on the Earth's equator, and the size of the gap between them after your time, each with the Moon's surface marked as a reference and your value marked"
+      >
+        <text x={DA_LEFT} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
+          Drawing A: your clock beside the Moon’s
+        </text>
+        <text x={DA_LEFT} y={40} fill={MUTED_COLOR} fontSize="10">
+          Each scale has a yellow line for the Moon’s surface and a pink dot for your own clock.
+        </text>
+        {rows.map((row, i) => {
+          const y0 = DA_ROW_TOP + i * DA_ROW_STEP
+          return (
+            <g key={row.key}>
+              <text x={DA_LEFT} y={y0} fill={TEXT_COLOR} fontSize="11" fontWeight="bold">
+                {row.title}
+              </text>
+              <rect x={DA_LEFT} y={y0 + 8} width={DA_RIGHT - DA_LEFT} height={14} fill={MUTED_COLOR} opacity={0.3} />
+              <line x1={row.x(row.ref)} y1={y0 + 4} x2={row.x(row.ref)} y2={y0 + 26} stroke={REF_COLOR} strokeWidth={2.5} />
+              <circle cx={row.x(row.mine)} cy={y0 + 15} r={5.5} fill={YOURS_COLOR} />
+              {row.ticks.map((t) => (
+                <g key={t}>
+                  <line x1={row.x(t)} y1={y0 + 24} x2={row.x(t)} y2={y0 + 29} stroke={TEXT_COLOR} />
+                  <text x={row.x(t)} y={y0 + 40} fill={TEXT_COLOR} fontSize="9" textAnchor={row.x(t) <= DA_LEFT + 1 ? 'start' : row.x(t) >= DA_RIGHT - 1 ? 'end' : 'middle'}>
+                    {row.tickLabel(t)}
+                  </text>
+                </g>
+              ))}
+              <text x={DA_LEFT} y={y0 + 56} fill={MUTED_COLOR} fontSize="10">
+                <tspan fill={YOURS_COLOR}>pink: yours, {row.valueText(row.mine)}</tspan>
+                <tspan> · </tspan>
+                <tspan fill={REF_COLOR}>yellow: {row.refName}, {row.valueText(row.ref)}</tspan>
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+        <p style={paragraph}>
+          <strong>How to read Drawing A.</strong> It puts the numbers of your own clock in one place, each on its own short scale, with a yellow line for the Moon’s surface to compare them with. It follows the controls above, so it changes when you change them.
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>The first scale</strong> is how many microseconds a day your clock gains on a clock on the Earth’s equator (a microsecond is a millionth of a second); to the right it gains, to the left it loses. The <span style={{ color: REF_COLOR }}>yellow line</span> is the Moon’s surface.{' '}
+            <strong>The second scale</strong> is the size of the gap between the two clocks after the time you chose, in microseconds, on a logarithmic scale (each step is ten times the one before; “k” means thousand); the yellow line is the Moon’s surface after one day. A dot at
+            the left edge means no gap. The sign (ahead or behind) is the first scale’s.
+          </li>
+          <li>
+            <strong>The pink dot</strong> on each scale is your own clock. <strong>At the starting choice</strong> (the Moon’s surface, one day) both dots sit on their yellow lines; change a control to see them part.
+          </li>
+        </ul>
+        <p style={paragraph}>
+          <strong>A worked moment.</strong> The Moon’s clock gains {ref.gainMicrosecondsPerDay.toFixed(2)} µs a day, so after 30.4 days (a month) the gap is {ref.gainMicrosecondsPerDay.toFixed(2)} × {DAYS_PER_MONTH} = {(ref.gainMicrosecondsPerDay * DAYS_PER_MONTH).toFixed(0)} µs, about 1.7 milliseconds.
+        </p>
+        <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+          <strong>What to look for.</strong>
+        </p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+          <li>
+            <strong>Look at</strong> the pink dot on the first scale, against the yellow line. <strong>What it means:</strong> your clock ({yourName}) {mine.gainMicrosecondsPerDay > 0 ? 'gains' : mine.gainMicrosecondsPerDay < 0 ? 'loses' : 'neither gains nor loses'} {Math.abs(mine.gainMicrosecondsPerDay).toFixed(2)} µs a day on the Earth’s equator clock, against the Moon’s {ref.gainMicrosecondsPerDay.toFixed(2)}.{' '}
+            <strong>Why it matters:</strong> to the right of zero is faster and to the left is slower, so the first scale shows at once which side of the Earth’s clock a place is on.
+          </li>
+          <li>
+            <strong>Look at</strong> the pink dot on the second scale. <strong>What it means:</strong> after {durationName} the gap is {gapText(mine.gapMicroseconds)}, against {gapText(ref.gapMicroseconds)} for the Moon after a day. <strong>Why it matters:</strong> a tiny daily gain adds up with time, which is why a lunar time scale has to be agreed even though each day’s difference is tiny.
+          </li>
+        </ul>
+        <p style={{ marginTop: 0, marginBottom: 0, fontSize: '0.75rem' }}>
+          <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this drawing is a measurement; the Moon’s 55.97 µs a day agrees with NIST’s calculated 56.02. <em>Calculated here:</em> the gain and the gap, from the clock-rate rule. <em>Imagined for the question:</em> your place, your orbit and your time. The pink dots are your own clock; the yellow lines are the Moon’s surface.
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarClocksExperimentProps) {
   const [directionPrediction, setDirectionPrediction] = useState<Direction | null>(null)
@@ -640,6 +835,8 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
   const gapYear = gapSeconds(earth, moon, SECONDS_PER_DAY * DAYS_PER_YEAR)
   const nistAgreement = (Math.abs(gainMoon - NIST_2024.gainMicrosecondsPerDay) / NIST_2024.gainMicrosecondsPerDay) * 100
   const moonOwnMicros = moon.gravityOwn * SECONDS_PER_DAY * 1e6
+  const checkUp = lunarClocksCheckUp()
+  const realGain = predictionGainMicroseconds()
   const secondsText = (value: number) => (value < 1e-3 ? `${(value * 1e6).toFixed(1)} microseconds` : `${(value * 1e3).toFixed(2)} milliseconds`)
   const yourMoonAltKm = Number((10 ** moonAltExp).toPrecision(2))
   const yourAltitudeM = place === 'earthOrbit' ? earthAltKm * 1000 : place === 'moonOrbit' ? yourMoonAltKm * 1000 : 0
@@ -733,7 +930,7 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
               </li>
               <li>
                 <strong>The grey circle</strong> is the Moon, and <strong>the yellow dot</strong> on its near side is a clock on the Moon’s surface. The{' '}
-                <strong>lavender arrow</strong> is the Moon’s own gravity, the <strong>rose arrow</strong> is the Earth’s pull reaching out to the Moon, and the{' '}
+                <strong>lavender arrow</strong> is the Moon’s own gravity, the <strong>red arrow</strong> is the Earth’s pull reaching out to the Moon, and the{' '}
                 <strong>green arrow</strong> below the Moon is its motion round the Earth.
               </li>
               <li>
@@ -788,7 +985,7 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
 
           <p style={paragraph}>
             <strong>What you will do.</strong> You will make two predictions, press Run to watch the pictures build up one stage at a time, and then try other places,
-            other durations and other orbits of your own. Nothing here is graded.
+            other durations and other orbits of your own. Nothing here is graded. Your predictions never change the real pictures or tables. They are drawn on Picture 2 in white, in a box marked YOUR GUESS, so you can compare them with what was calculated, and they are listed again beside the results. In Part 2 you can try other places, durations and orbits. Those choices are pink: they add a pink mark to each picture and fill a drawing in Part 2 and Table 4, but they never change the real marks, the published results or your guesses.
           </p>
 
           <p style={paragraph}>
@@ -828,6 +1025,10 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
         </div>
 
         <ReferencePanel entries={done ? [...REFERENCE_ENTRIES, ...formulaEntries] : REFERENCE_ENTRIES} />
+
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          We are about to make two predictions, then watch three pictures build up, one stage at a time: what slows a clock on the Earth and on the Moon, how much each clock gains in a day, and how a clock orbiting the Moon compares with one on its surface. Nothing here tells you the answers. When Picture 2 shows the Moon’s clock, your guesses appear on it in white.
+        </PartHeader>
 
         {/* The two predictions: draft wording for the owner's review (CLAUDE.md §28.1), from the specification's "Prediction Activity". Neither says
             which answer is right, gives the sign, or gives the sizes of the terms. */}
@@ -917,7 +1118,7 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
             {stage === 1 &&
               `Picture 1 now shows a clock on the Earth’s equator. It is slowed, compared with a clock far from everything, by ${sciText(earth.total)}: almost all of it from the Earth’s gravity (blue), and a very little from the Earth’s spin (green).`}
             {stage === 2 &&
-              `The Moon’s clock is added. It has three influences: the Moon’s gravity (lavender, ${sciText(moon.gravityOwn)}), the Earth’s pull at the Moon (rose, ${sciText(moon.gravityOther)}) and the Moon’s motion round the Earth (green, ${sciText(moon.speed)}). Its total is ${sciText(moon.total)}.`}
+              `The Moon’s clock is added. It has three influences: the Moon’s gravity (lavender, ${sciText(moon.gravityOwn)}), the Earth’s pull at the Moon (red, ${sciText(moon.gravityOther)}) and the Moon’s motion round the Earth (green, ${sciText(moon.speed)}). Its total is ${sciText(moon.total)}.`}
             {stage === 3 &&
               `The two bars differ by ${sciText(difference)}. Picture 2 appears below Picture 1: ${difference > 0 ? 'the clock that is slowed less ticks faster' : 'the clock that is slowed more ticks slower'}, by this fraction. Over one day (${SECONDS_PER_DAY.toLocaleString('en-US')} seconds) that is ${microsText(gainMoon, 2)}.`}
             {stage === 4 &&
@@ -944,7 +1145,7 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
             </li>
             <li>
               <strong>The colours</strong> are the influences that add up to a bar: <strong>blue</strong> is the Earth’s gravity, <strong>lavender</strong> is the
-              Moon’s own gravity, <strong>rose</strong> is the Earth’s pull at the Moon’s distance, and <strong>green</strong> is motion (the Earth’s spin for the Earth
+              Moon’s own gravity, <strong>red</strong> is the Earth’s pull at the Moon’s distance, and <strong>green</strong> is motion (the Earth’s spin for the Earth
               clock, the Moon’s motion round the Earth for the Moon clock). The numbers beside each bar give each part and the total.
             </li>
             {stage === 0 && (
@@ -959,12 +1160,12 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
             )}
             {stage >= 2 && (
               <li>
-                <strong>The lower bar</strong> is the clock on the Moon’s surface, with three parts: lavender, rose and green.
+                <strong>The lower bar</strong> is the clock on the Moon’s surface, with three parts: lavender, red and green.
               </li>
             )}
             {done && (
               <li>
-                <strong>The white-outlined bottom bar</strong> is your own clock, from control 1 below the pictures. It starts as the Moon’s surface, so at first it
+                <strong>The pink-outlined bottom bar</strong> is your own clock, from control 1 below the pictures. It starts as the Moon’s surface, so at first it
                 matches the Moon’s bar above it, and its parts are written beneath it.
               </li>
             )}
@@ -1026,6 +1227,11 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
                     : []),
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> the constants (NASA’s Earth and Moon fact sheets) and nothing else; no clock has yet been run on the Moon. <em>Calculated here:</em> every bar, from the rule that a clock ticks slower by
+                the potential ÷ c² plus the speed² ÷ 2c², added for each body that matters. <em>Imagined for the question:</em> nothing; after the run, your own place. The pink-outlined bar is your own clock. This picture carries no guess mark: neither
+                prediction is about it.
+              </p>
             </>
           )}
         </div>
@@ -1034,7 +1240,7 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
         {stage >= 3 && (
           <>
             <div style={{ marginBottom: '1rem' }}>
-              <PictureTwo stage={stage} yours={done ? { gain: mine.gainMicrosecondsPerDay, name: yourName, gapLabel: `${mine.gapSeconds < 0 ? '−' : ''}${secondsText(Math.abs(mine.gapSeconds))} after ${durationName}` } : null} />
+              <PictureTwo directionGuess={directionPrediction} sizeGuess={sizePrediction} stage={stage} yours={done ? { gain: mine.gainMicrosecondsPerDay, name: yourName, gapLabel: `${mine.gapSeconds < 0 ? '−' : ''}${secondsText(Math.abs(mine.gapSeconds))} after ${durationName}` } : null} />
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               <p style={paragraph}>
@@ -1055,9 +1261,16 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
                     <strong>The first two rows shown</strong> are the Earth’s equator (blue, at 0) and the Moon’s surface (grey).
                   </li>
                 )}
+                {stage >= 3 && (
+                  <li>
+                    <strong>The two thin lines under the axis, with the white arrow, ring or diamond and the YOUR GUESS boxes,</strong> are your two guesses, on the same scale as the rows above. The first, for Prediction 1, shows which side of the Earth’s clock
+                    you guessed for the Moon’s clock: an arrow to the left for slower, a ring on the zero for the same, an arrow to the right for faster. <strong>It is only a marker:</strong> the length of the arrow means nothing. The second, for Prediction 2,
+                    is a diamond at the gap after one day that you guessed, in microseconds; a guess of 56 milliseconds is beyond the right edge, so it is an arrow at the edge. Neither moves when you change anything in Part 2.
+                  </li>
+                )}
                 {done && (
                   <li>
-                    <strong>The white ring on the last row</strong> is your own clock and your own time, from controls 1 and 2 below the pictures. Its label gives
+                    <strong>The pink ring on the last row</strong> is your own clock and your own time, from controls 1 and 2 below the pictures. Its label gives
                     the gain a day and the gap after the time that you chose.
                   </li>
                 )}
@@ -1089,6 +1302,11 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
                     means: `a clock on the Moon’s surface gains ${microsText(gainMoon, 2)} a day on a clock on the Earth’s equator.`,
                     matters: 'this is the size of the effect that lunar navigation and a lunar time scale have to deal with: tiny for a person, but large for clocks that work in billionths of a second.',
                   },
+                  {
+                    look: 'the two white YOUR GUESS boxes, and the Moon’s dot above them.',
+                    means: `the Moon’s dot is at ${microsText(realGain, 2)}, to the right of zero, so the real answer to the direction is a clock that ${realGain > 0 ? 'gains' : 'loses'}, and the gap after a day is ${realGain.toFixed(2)} microseconds; your guesses were ${directionPrediction !== null ? DIRECTION_SHORT[directionPrediction] : ''} and ${sizePrediction !== null ? SIZE_SHORT[sizePrediction] : ''}.`,
+                    matters: 'putting your guesses under the real dot lets you see, on one scale, which side of the Earth’s clock the Moon’s clock is and how far; the three possible sizes are a thousand times apart.',
+                  },
                   ...(stage >= 4
                     ? [
                         {
@@ -1100,6 +1318,10 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
                     : []),
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement; the Moon’s dot agrees with NIST’s calculated {NIST_2024.gainMicrosecondsPerDay} microseconds a day (Ashby and Patla, 2024). <em>Calculated here:</em> every dot, with the
+                same rule as Picture 1. <em>Imagined for the question:</em> the orbits of the satellites and of the 100 km Moon orbit, and, after the run, your own clock. The pink ring is your own clock; the white arrow, ring and diamond are your guesses.
+              </p>
             </div>
           </>
         )}
@@ -1127,7 +1349,7 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
                 </li>
                 {done && (
                   <li>
-                    <strong>The white ring on the curve</strong> (shown when your clock is in an orbit round the Moon) is your own orbit, from control 1 below the
+                    <strong>The pink ring on the curve</strong> (shown when your clock is in an orbit round the Moon) is your own orbit, from control 1 below the
                     pictures.
                   </li>
                 )}
@@ -1159,16 +1381,25 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
                   },
                 ]}
               />
+              <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
+                <strong>Where the real picture comes from.</strong> <em>Measured:</em> nothing in this picture is a measurement. <em>Calculated here:</em> the curve, from the same rule applied to circular orbits round the Moon. <em>Imagined for the question:</em> every orbit on the curve and,
+                after the run, your own. The pink ring is your own orbit. This picture carries no guess mark: neither prediction is about it.
+              </p>
             </div>
           </>
         )}
 
         {/* The controls (after the run): the specification's "Learner Controls". */}
         {done && (
+          <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+            We are about to try a clock of our own: another place, another orbit and another length of time. Your choices add a pink mark to each picture, fill the drawing in this part and Table 4. They never change the real marks, the published results or your guesses.
+          </PartHeader>
+        )}
+        {done && (
           <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', border: '1px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Try your own clock</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '1rem' }}>
-              The controls below add a white mark to each picture and fill in Table 4. Every clock is compared with the clock on the Earth’s equator. The “Start over”
+              <strong>Your guesses do not change the drawings or tables. These settings do.</strong> The place, the orbit and the time below are trial values of your own, not measurements. They add a pink-outlined bar to Picture 1, a pink ring to Picture 2’s last row and, for an orbit round the Moon, a pink ring to Picture 3; they move the pink dots of Drawing A and fill in Table 4. None of them changes the other bars, dots and curves, Tables 1 to 3 or your guesses. Every clock is compared with the clock on the Earth’s equator. The “Start over”
               button puts everything back.
             </p>
 
@@ -1247,11 +1478,19 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
               <strong>{durationName}</strong> the gap is <strong>{secondsText(Math.abs(mine.gapSeconds))}</strong>.{' '}
               <span style={{ color: 'var(--text-muted)' }}>
                 ({sciText(earth.total)} − {sciText(mine.terms.total)}) × {SECONDS_PER_DAY.toLocaleString('en-US')} s = {microsText(mine.gainMicrosecondsPerDay, 2)} a day. Picture 1 shows
-                its parts as a white-outlined bar, Picture 2 shows its gain as a white ring on its last row
-                {place === 'moonOrbit' ? ', and Picture 3 shows your orbit as a white ring on the curve' : ' (Picture 3 shows a mark only for an orbit round the Moon)'}.
+                its parts as a pink-outlined bar, Picture 2 shows its gain as a pink ring on its last row
+                {place === 'moonOrbit' ? ', and Picture 3 shows your orbit as a pink ring on the curve' : ' (Picture 3 shows a mark only for an orbit round the Moon)'}.
               </span>
             </p>
           </div>
+        )}
+
+        {done && <YourClockDrawing place={place} altitudeM={yourAltitudeM} seconds={yourDuration.seconds} yourName={yourName} durationName={durationName} />}
+
+        {done && (
+          <PartHeader color="#0f766e" title="Part 3: The results">
+            We are about to read the numbers: first a check-up of this experiment’s numbers against the published ones, then four tables. A guess never changes them. The choices you made in Part 2 change Table 4, and the page says which.
+          </PartHeader>
         )}
 
         {/* The results (after the run): the status label, three tables, and the link kept back until now (CLAUDE.md §12). The tables only report numbers;
@@ -1270,6 +1509,52 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
               These tables only report numbers, step by step. Table 1 is Picture 1. Table 2 is Picture 2, with the gap over a month and a year. Table 3 lists the published
               results and plans that this experiment uses, as the sources state them. Table 4 follows your own clock below. Your predictions are not marked here.
             </p>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>The check-up: what we would expect beside what was found</p>
+            <ResultsTable
+              minWidth={620}
+              head={['What was checked', 'What we would expect (published)', 'What was found (here)', 'Reading']}
+              rows={checkUp.map((row, i) => [
+                row.label,
+                row.unit === 'fraction' ? sciText(row.expected, 3) : `${row.expected} ${row.unit}`,
+                row.unit === 'fraction' ? sciText(row.found, 3) : `${i === 0 ? row.found.toFixed(2) : row.found} ${row.unit}`,
+                <strong key={i}>{row.reading}</strong>,
+              ])}
+            />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.5rem 0 0.75rem' }}>
+              The check-up does not follow the choices you made in Part 2 or your guesses. The last three rows are compared at the digits that the published number gives (3, 2 and 3 figures), so “the same” means the same to those figures. “More” and “less” compare the found number with the published one; no cut-off is invented.
+            </p>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>NIST 2024.</strong> <em>What it is:</em> the gain of a clock on the Moon, from this experiment’s rule, beside NIST’s published {NIST_2024.gainMicrosecondsPerDay} microseconds a day. <em>What it means:</em> {checkUp[0].found.toFixed(2)} is {(NIST_2024.gainMicrosecondsPerDay - checkUp[0].found).toFixed(2)} below {NIST_2024.gainMicrosecondsPerDay}, {nistAgreement.toFixed(2)} percent.{' '}
+                  <em>Why it matters:</em> a simple rule with mean values reproduces a careful published calculation to better than a tenth of a percent, so the size of the effect is not in doubt. The weak link is that this experiment uses mean values, and the real rate changes over a month.
+                </li>
+                <li>
+                  <strong>The “Lunar Time” paper.</strong> <em>What it is:</em> the Moon’s own gravity term, which the paper gives as 3.14 × 10⁻¹¹ (about 2.7 microseconds a day). <em>What it means:</em> this experiment’s lavender part of Picture 1 is the same to those figures.{' '}
+                  <em>Why it matters:</em> it is the part of the Moon’s clock that changes between two time scales, which is why some sources quote a bigger number.
+                </li>
+                <li>
+                  <strong>The 58.7.</strong> <em>What it is:</em> the figure that some sources quote for the Moon. <em>What it means:</em> the 55.97 of the clocks plus the 2.71 of the Moon’s own gravity is {checkUp[3].found} microseconds a day, the same to three figures. <em>Why it matters:</em> the 56 and the 58.7 are not in conflict: they compare different things, two clocks in one case and two coordinate time scales in the other.
+                </li>
+              </ul>
+            </div>
+
+            <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Your guesses, beside the results</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 0, marginBottom: '0.5rem' }}>
+              Your guesses are shown here as you made them, with the place where each one’s number appears. They are not marked here, and they never change a picture or a table.
+            </p>
+            <ul style={{ marginTop: 0, paddingLeft: '1.25rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              <li>
+                <strong>Prediction 1, the direction:</strong> {directionPrediction !== null ? DIRECTION_CHOICES.find((c) => c.value === directionPrediction)?.label.toLowerCase() : ''}. Its answer is in Picture 2 (the Moon’s dot, to the right or left of zero) and in Table 2 (the row for the Moon’s surface, the sign of the gain).
+              </li>
+              <li>
+                <strong>Prediction 2, how far apart after a day:</strong> {sizePrediction !== null ? SIZE_CHOICES.find((c) => c.value === sizePrediction)?.label.toLowerCase() : ''}. Its number is in Picture 2 (the Moon’s dot) and in Table 2 (the row “The Moon’s surface, after one day”).
+              </li>
+            </ul>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 1: what slows each clock</p>
             <ResultsTable
@@ -1303,6 +1588,23 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
               “Slowing” is the fraction by which a clock ticks slower than a clock far from everything. The Moon is at its average distance and speed.
             </p>
 
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> For the clock on the Earth’s equator and the one on the Moon’s surface, the three things that slow a clock (the body’s own gravity, the other body’s pull and motion), their sum and the working.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The Earth’s clock is slowed by {sciText(earth.total)} and the Moon’s by {sciText(moon.total)}: the Earth’s is slowed more, mostly by its much deeper gravity. A daily-life comparison: it is like two runners, one carrying a heavy pack; the one with the lighter pack finishes sooner.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> A clock that is slowed less ticks faster, so the Moon’s clock gains on the Earth’s. The page does not say why the Earth’s slowing is bigger beyond the sizes shown.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 2: how much each clock gains</p>
             <ResultsTable
               minWidth={640}
@@ -1311,13 +1613,16 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
                 ...P2_PLACES.map((p) => {
                   const r = runLunarClocks(p.place, p.altitudeM, SECONDS_PER_DAY)
                   return [
-                    p.name,
+                    <>
+                      {p.name}
+                      {p.place === 'moonSurface' && <PredictionTag n={1} />}
+                    </>,
                     p.place === 'earthEquator' ? sciText(earth.total) : sciText(r.terms.total),
                     p.place === 'earthEquator' ? '0 (the reference)' : `${microsText(r.gainMicrosecondsPerDay, 2)} a day`,
                     p.place === 'earthEquator' ? 'the clock that the others are compared with' : `(${sciText(earth.total)} − ${sciText(r.terms.total)}) × ${SECONDS_PER_DAY.toLocaleString('en-US')} s`,
                   ]
                 }),
-                ['The Moon’s surface, after one day', '', secondsText(gapDay), `${sciText(difference)} × ${SECONDS_PER_DAY.toLocaleString('en-US')} s`],
+                [<>The Moon’s surface, after one day<PredictionTag n={2} /></>, '', secondsText(gapDay), `${sciText(difference)} × ${SECONDS_PER_DAY.toLocaleString('en-US')} s`],
                 ['The Moon’s surface, after one month', '', secondsText(gapMonth), `${secondsText(gapDay)} × ${DAYS_PER_MONTH} days`],
                 ['The Moon’s surface, after one year', '', secondsText(gapYear), `${secondsText(gapDay)} × ${DAYS_PER_YEAR} days`],
               ]}
@@ -1328,6 +1633,23 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
               {` ${gainMoon.toFixed(0)}`} microseconds a day of the clocks plus {moonOwnMicros.toFixed(1)} microseconds a day, which is the Moon’s own gravity (the lavender part of Picture 1, {sciText(moon.gravityOwn)} ×{' '}
               {SECONDS_PER_DAY.toLocaleString('en-US')} s). This matches the “Lunar Time” paper, which gives about 56 and about 2.7 microseconds a day.
             </p>
+
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> How much each place’s clock gains on the Earth’s equator clock in a day, and the gap on the Moon’s surface after a day, a month and a year.
+                </li>
+                <li>
+                  <strong>What it means.</strong> The Moon’s clock gains {microsText(gainMoon, 2)} a day, so {secondsText(gapDay)} after a day, {secondsText(gapMonth)} after a month and {secondsText(gapYear)} after a year; the International Space Station’s clock loses {Math.abs(gainIss).toFixed(1)} µs a day and a GPS clock gains {gainGps.toFixed(1)}. A daily-life comparison: a clock that gains 56 millionths of a second a day is a watch that gains about 20 milliseconds a year.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> The answer is not always “faster”: it depends on the place. For the Moon it is faster, by an amount that lunar navigation and a lunar time scale have to allow for.
+                </li>
+              </ul>
+            </div>
 
             <p style={{ fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Table 3: the published results and plans</p>
             <ResultsTable
@@ -1381,6 +1703,23 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
               scale, and does not claim that a clock on the Moon has been measured.
             </p>
 
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> What the sources say, as they say it: NIST’s calculated gain for a clock on the Moon, the “Lunar Time” paper, the IAU and the CGPM resolutions and the plans of the United States.
+                </li>
+                <li>
+                  <strong>What it means.</strong> NIST gives an extra {NIST_2024.gainMicrosecondsPerDay} microseconds a day; the 2026 CGPM resolution supports a lunar time scale but gives no rate and no date. No clock has yet been run on the Moon, so every rate here is a calculation.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> It shows that the size is agreed and the definition is not: the question left open is which lunar time scale to use, not whether the Moon’s clock runs faster.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Table 4: your own clock</p>
             <ResultsTable
               minWidth={560}
@@ -1402,6 +1741,23 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
               the Earth’s equator clock and a negative one that it ticks slower.
             </p>
 
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What this table tells us.</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>What it is.</strong> The numbers of your own choice: your place, its gain on the Earth’s equator clock and the gap after your time, with the working.
+                </li>
+                <li>
+                  <strong>What it means.</strong> Your clock ({yourName}) gains {microsText(mine.gainMicrosecondsPerDay, 2)} a day and is {secondsText(Math.abs(mine.gapSeconds))} {mine.gapSeconds < 0 ? 'behind' : 'ahead of'} the Earth’s equator clock after {durationName}.
+                </li>
+                <li>
+                  <strong>Why it matters.</strong> It shows how the same rule gives a gain or a loss depending on the place, so you can see which side of the Earth’s clock a place is on and how fast the gap grows.
+                </li>
+              </ul>
+            </div>
+
             <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               <strong>Want to know more?</strong> The scientific papers behind these numbers are listed here now, because their summaries state what the predictions asked.
               They are written for scientists. Links open in a new tab.
@@ -1418,6 +1774,11 @@ export function LunarClocksExperiment({ onComplete, onTutorComplete }: LunarCloc
 
         {/* The tutor: observe, compare with the predictions, one conceptual question, then the explanation. The chapter summary below the experiment
             (in App) is shown only once the learner reaches the explanation. */}
+        {done && (
+          <PartHeader color="#0066cc" title="Part 4: The tutor">
+            We are about to talk through your two predictions with the tutor, who will compare them with the results. Three short questions, one at a time. Nothing is graded.
+          </PartHeader>
+        )}
         {done && directionPrediction !== null && sizePrediction !== null && (
           <LunarClocksTutor directionPrediction={directionPrediction} sizePrediction={sizePrediction} onExplained={() => onTutorComplete?.()} />
         )}
