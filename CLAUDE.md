@@ -333,6 +333,11 @@ How to apply it: draft the wording the first time (§14), show it for the owner'
 
 **Where it applies.** It applies to every new experiment, from Experiment 17 of Cosmic Horizons onward (Experiment 16 was dropped on 2026-10-25). Experiments 1 to 14 and the other groups still follow the owner's earlier rule: their guesses are shown only as text beside the results, and each says that predictions do not change the pictures or tables. **The owner decided on 2026-10-24 to audit and update them later, one experiment at a time, after the project is complete.** Until then, do not add guess marks to them and do not change that wording, unless the owner asks.
 
+
+## The Page in Four Parts
+
+Set by the owner on 2026-11-02, from the layout that began with Experiment 15. Below the introduction (its links and any "Words and formulas" panel stay above Part 1, with no heading), every experiment's page is split into four Parts. Each starts with a thick coloured line, a coloured heading and a short "What we are about to do" lead: **Part 1 "Predict, then watch"** (amber `#d97706`: the predictions, Run, the stages and the pictures), **Part 2 "Now try it yourself"** (pink `#be185d`: the controls and any drawing that follows them), **Part 3 "The results"** (teal `#0f766e`) and **Part 4 "The tutor"** (blue `#0066cc`). The leads are learner-facing wording (§28.1); Part 1's lead gives no answers (§12). An experiment without controls or a tutor step omits that Part and says so in its specification. Older experiments are brought to this layout by the audit (`docs/AUDIT-PLAN.md`, Rule E), one at a time; Cosmic Horizons 12 is done.
+
 ---
 
 # 15. Accessibility and Clarity
