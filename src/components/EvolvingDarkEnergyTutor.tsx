@@ -90,9 +90,9 @@ export function EvolvingDarkEnergyTutor({ fit, distancePrediction, recalibration
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at Pictures 1 and 2. What do you notice about how far the orange line is from the grey line in Picture 1, and how far it is from the grey line in Picture 2?'}
+              'Look at Pictures 1 and 2. What do you notice about how far the orange line is from the grey line in Picture 1, and how far it is from the grey line in Picture 2? Your guesses are drawn in white, in boxes marked YOUR GUESS: brackets at z = 0.5 on Picture 2’s left chart, and an arrow beside the DES Y5 bar on Picture 3. What do you notice about where they sit?'}
             {tutorStep === 'compare' &&
-              `You predicted that the distance to a galaxy at redshift 0.5 would be ${distanceWords[distancePrediction]} different, and that the recalibration of the Dark Energy Survey’s supernovae would make the preference ${recalibrationWords[recalibrationPrediction]}. Look at Picture 2 and Picture 3 again. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
+              `You predicted that the distance to a galaxy at redshift 0.5 would be ${distanceWords[distancePrediction]} different, and that the recalibration of the Dark Energy Survey’s supernovae would make the preference ${recalibrationWords[recalibrationPrediction]}. Compare the white YOUR GUESS brackets on Picture 2 with where the orange line is at z = 0.5, and the white arrow on Picture 3 with the two DES bars. Is there anything that surprises you? I will say how each prediction compared once you have thought about it.`}
             {tutorStep === 'conceptual' &&
               'Suppose you were a scientist looking at these results. What would you want to see before you called this a discovery that dark energy changes?'}
           </p>
