@@ -3,6 +3,12 @@ import {
   anchoredMagnitudeDifference,
   brightnessPercentChange,
   brightnessSteps,
+  darkEnergyCheckUp,
+  deepestDistanceDip,
+  densityCrossingRedshift,
+  distanceGuessBand,
+  recalibrationGuessDirection,
+  trialTimeValues,
   chanceOfAtLeastOne,
   DES_RECALIBRATION,
   distanceRange,
@@ -309,5 +315,72 @@ describe('the newer result (added when Decision 10 was settled)', () => {
   it('is lower than the DESI + CMB value it updates (3.1)', () => {
     const before = PUBLISHED_SIGMAS.find((p) => p.name === 'DESI + CMB alone')!
     expect(PUBLISHED_SIGMAS.find((p) => p.name === NEWER_RESULT_NAME)!.sigma).toBeLessThan(before.sigma)
+  })
+})
+
+// Audit update: numbers for the guess marks, the check-up and Part 2's drawing. Expected values come from a separate script (Simpson's rule, 4000 steps).
+describe('guess marks, check-up and Part 2 drawing (audit update)', () => {
+  it('gives each Prediction 1 answer its size band, joined end to end, the last open', () => {
+    expect(distanceGuessBand('under05')).toEqual({ lo: 0, hi: 0.5 })
+    expect(distanceGuessBand('between05and2')).toEqual({ lo: 0.5, hi: 2 })
+    expect(distanceGuessBand('between2and5')).toEqual({ lo: 2, hi: 5 })
+    expect(distanceGuessBand('over5')).toEqual({ lo: 5, hi: null })
+    expect(distanceGuessBand('under05').hi).toBe(distanceGuessBand('between05and2').lo)
+    expect(distanceGuessBand('between2and5').hi).toBe(distanceGuessBand('over5').lo)
+  })
+
+  it('every band agrees with distanceRange at its own edges', () => {
+    expect(distanceRange(0.49)).toBe('under05')
+    expect(distanceRange(0.5)).toBe('between05and2')
+    expect(distanceRange(2)).toBe('between05and2')
+    expect(distanceRange(2.01)).toBe('between2and5')
+    expect(distanceRange(5)).toBe('between2and5')
+    expect(distanceRange(5.01)).toBe('over5')
+  })
+
+  it('gives Prediction 2 only a direction: weaker -1, about the same 0, stronger +1', () => {
+    expect(recalibrationGuessDirection('weaker')).toBe(-1)
+    expect(recalibrationGuessDirection('same')).toBe(0)
+    expect(recalibrationGuessDirection('stronger')).toBe(1)
+  })
+
+  it('the trial-time values: DES Y5 at z = 0.5 is 1.1225x dense and -2.236 % in distance; a constant dark energy would be 1, 0', () => {
+    const v = trialTimeValues(byName('DES Y5'), 0.5)
+    expect(v.densityRatio).toBeCloseTo(1.1225, 3)
+    expect(v.distanceDifferencePercent).toBeCloseTo(-2.2362, 3)
+    expect(v.brightnessPercent).toBe(brightnessPercentChange(anchoredMagnitudeDifference(0.5, byName('DES Y5'))))
+  })
+
+  it('the three fits have the deepest distance dip at z = 0.5, of -1.37, -3.08 and -2.24 percent', () => {
+    expect(deepestDistanceDip(byName('Pantheon+')).redshift).toBe(0.5)
+    expect(deepestDistanceDip(byName('Pantheon+')).percent).toBeCloseTo(-1.3728, 3)
+    expect(deepestDistanceDip(byName('Union3')).percent).toBeCloseTo(-3.0768, 3)
+    expect(deepestDistanceDip(byName('DES Y5')).percent).toBeCloseTo(-2.2362, 3)
+  })
+
+  it('the density crosses the grey line at about z = 0.90, 1.18 and 1.06', () => {
+    expect(densityCrossingRedshift(byName('Pantheon+'))).toBeCloseTo(0.9, 1)
+    expect(densityCrossingRedshift(byName('Union3'))).toBeCloseTo(1.18, 1)
+    expect(densityCrossingRedshift(byName('DES Y5'))).toBeCloseTo(1.06, 1)
+    expect(densityCrossingRedshift({ name: 'constant', w0: -1, wa: 0, omegaMatter: 0.3, sigma: 0, source: '' })).toBeNull()
+  })
+
+  it('the check-up has four rows against a constant dark energy and the 5 sigma bar, with readings only of more, less or the same', () => {
+    const rows = darkEnergyCheckUp(byName('DES Y5'), 0.5)
+    expect(rows).toHaveLength(4)
+    expect(rows[0]).toMatchObject({ expected: -1, found: -0.752, reading: 'more' })
+    expect(rows[1].expected).toBe(1)
+    expect(rows[1].found).toBeCloseTo(1.1225, 3)
+    expect(rows[1].reading).toBe('more')
+    expect(rows[2].expected).toBe(0)
+    expect(rows[2].found).toBeCloseTo(-2.2362, 3)
+    expect(rows[2].reading).toBe('less')
+    expect(rows[3]).toMatchObject({ expected: 5, found: 4.2, reading: 'less' })
+  })
+
+  it('a constant dark energy reads "the same" in every row it can (w, density, distance)', () => {
+    const constant = { name: 'constant', w0: -1, wa: 0, omegaMatter: 0.3, sigma: 5, source: '' }
+    const rows = darkEnergyCheckUp(constant, 1)
+    expect(rows.map((r) => r.reading)).toEqual(['the same', 'the same', 'the same', 'the same'])
   })
 })

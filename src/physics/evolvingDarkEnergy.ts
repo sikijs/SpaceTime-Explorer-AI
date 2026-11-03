@@ -282,3 +282,83 @@ export function chanceOfAtLeastOne(chance: number, tries: number): number {
   if (!(Number.isInteger(tries) && tries >= 1)) throw new RangeError('The number of tries must be a whole number of at least 1')
   return 1 - (1 - chance) ** tries
 }
+
+// ---- Audit update (docs/audit/cosmic-horizons/02-draft-wording.md): numbers for the guess marks, the check-up and Part 2's drawing ----
+
+// Prediction 1's band: the size range (in percent) that each answer covers. Sizes only, because the question asks how big the difference is, not its
+// direction. The boundaries match distanceRange: below 0.5, up to 2, up to 5, above 5 (hi is null for "over5").
+export interface SizeBand {
+  lo: number
+  hi: number | null
+}
+export function distanceGuessBand(range: DistanceRange): SizeBand {
+  switch (range) {
+    case 'under05':
+      return { lo: 0, hi: 0.5 }
+    case 'between05and2':
+      return { lo: 0.5, hi: 2 }
+    case 'between2and5':
+      return { lo: 2, hi: 5 }
+    case 'over5':
+      return { lo: 5, hi: null }
+  }
+}
+
+// Prediction 2's marker: only a direction (weaker -1, about the same 0, stronger +1). It has no size of its own.
+export function recalibrationGuessDirection(choice: RecalibrationEffect): -1 | 0 | 1 {
+  return choice === 'weaker' ? -1 : choice === 'stronger' ? 1 : 0
+}
+
+// The values at the time the learner chose, for Part 2's drawing: dark energy's density compared with today, the distance difference (%) and the
+// brightness difference (%). A constant dark energy sits at 1, 0 and 0.
+export function trialTimeValues(fit: DarkEnergyFit, redshift: number): { densityRatio: number; distanceDifferencePercent: number; brightnessPercent: number } {
+  const r = resultAt(fit, redshift)
+  return {
+    densityRatio: r.densityRatio,
+    distanceDifferencePercent: r.distanceDifferencePercent,
+    brightnessPercent: brightnessPercentChange(r.magnitudeDifference),
+  }
+}
+
+// Where the distance difference is deepest (most negative) along the 0 to 2 curve, on the curve's own 0.1 steps, and how deep.
+export function deepestDistanceDip(fit: DarkEnergyFit): { redshift: number; percent: number } {
+  const curve = runEvolvingDarkEnergy(fit, 0.5).curve
+  const deepest = curve.reduce((a, b) => (b.distanceDifferencePercent < a.distanceDifferencePercent ? b : a))
+  return { redshift: deepest.redshift, percent: deepest.distanceDifferencePercent }
+}
+
+// The redshift where the fit's density ratio crosses 1 (the grey line), by straight-line steps between the curve's 0.1 points; null if it never does.
+export function densityCrossingRedshift(fit: DarkEnergyFit): number | null {
+  const curve = runEvolvingDarkEnergy(fit, 0.5).curve
+  for (let i = 1; i < curve.length - 1; i++) {
+    const a = curve[i].densityRatio - 1
+    const b = curve[i + 1].densityRatio - 1
+    if (a * b < 0) return curve[i].redshift + (a / (a - b)) * (curve[i + 1].redshift - curve[i].redshift)
+  }
+  return null
+}
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+export interface DarkEnergyCheckUpRow {
+  label: string
+  expected: number
+  found: number
+  reading: CheckUpReading
+}
+function compareValues(found: number, expected: number): CheckUpReading {
+  if (found === expected) return 'the same'
+  return found > expected ? 'more' : 'less'
+}
+export const FIVE_SIGMA = 5
+
+// The check-up: what a constant dark energy would give (w = -1, density 1x, distance difference 0 %) and the usual 5 sigma bar, beside what the
+// chosen description gives. No cut-off is invented: only "the same", "more" or "less".
+export function darkEnergyCheckUp(fit: DarkEnergyFit, redshift: number): DarkEnergyCheckUpRow[] {
+  const r = resultAt(fit, redshift)
+  return [
+    { label: 'w today', expected: -1, found: fit.w0, reading: compareValues(fit.w0, -1) },
+    { label: 'Dark energy density at the time you chose', expected: 1, found: r.densityRatio, reading: compareValues(r.densityRatio, 1) },
+    { label: 'Distance difference at the time you chose (%)', expected: 0, found: r.distanceDifferencePercent, reading: compareValues(r.distanceDifferencePercent, 0) },
+    { label: 'Sigma of the collection you chose', expected: FIVE_SIGMA, found: fit.sigma, reading: compareValues(fit.sigma, FIVE_SIGMA) },
+  ]
+}
