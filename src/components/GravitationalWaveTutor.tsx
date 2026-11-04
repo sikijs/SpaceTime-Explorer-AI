@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { afterGuessMatches, directionGuessMatches } from '../physics/gravitationalWaveExperiment'
+import type { AfterChoice, DirectionChoice } from '../physics/gravitationalWaveExperiment'
 
-type DirectionChoice = 'same-way' | 'opposite-ways'
-type AfterChoice = 'longer' | 'shorter' | 'back-to-original'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface GravitationalWaveTutorProps {
   directionPrediction: DirectionChoice
   afterPrediction: AfterChoice
+  amplitude: number
+  frequency: number
   onExplained?: () => void
 }
 
@@ -24,6 +26,8 @@ const afterLabels: Record<AfterChoice, string> = {
 export function GravitationalWaveTutor({
   directionPrediction,
   afterPrediction,
+  amplitude,
+  frequency,
   onExplained,
 }: GravitationalWaveTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
@@ -63,11 +67,11 @@ export function GravitationalWaveTutor({
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              'What did you notice about the two arms while the wave was passing — did they do the same thing at the same time, or opposite things?'}
+              'Look at the two lines on the graph and at the arms in Picture 1. What did you notice about how the two arms moved while the wave was passing?'}
             {tutorStep === 'compare' &&
-              `You predicted that ${directionLabels[directionPrediction]}. In fact, the two arms always do opposite things — as one stretches, the other squeezes by exactly the same amount. You also predicted the arms would end up ${afterLabels[afterPrediction]}. In fact, both arms always settle back to their original length once the wave has passed. Comparing what you expected to what's actually true, what do you notice?`}
+              `On the graph, the white boxes marked YOUR GUESS 1 and YOUR GUESS 2 show what you predicted: that ${directionLabels[directionPrediction]}, and that the arms would end up ${afterLabels[afterPrediction]}. Look at the purple and teal lines beside those marks, and at Table 1 in Part 3. What do you notice when you put your guesses next to the real lines?`}
             {tutorStep === 'conceptual' &&
-              'Experiment 4 showed that curvature can make straight-as-possible paths drift together, even with nothing pushing on them. How is what you just saw similar — and how is it different?'}
+              'The Curved Spacetime experiment showed that curvature can make straight-as-possible paths drift together, even with nothing pushing on them. How is what you just saw similar — and how is it different?'}
           </p>
 
           <textarea
@@ -110,6 +114,13 @@ export function GravitationalWaveTutor({
       {tutorStep === 'explained' && (
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>Your guesses, marked.</strong> Guess 1 said {directionLabels[directionPrediction]}. The graph shows the two
+            arms doing opposite things, so your guess{' '}
+            {directionGuessMatches(directionPrediction, amplitude, frequency) ? 'matched' : 'did not match'}. Guess 2 said the
+            arms would end up {afterLabels[afterPrediction]}. Both arms end at 1.000, back to their original length, so your
+            guess {afterGuessMatches(afterPrediction, amplitude, frequency) ? 'matched' : 'did not match'}.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>1. A gravitational wave is a ripple of spacetime curvature that travels</strong>,
             caused by a violently accelerating mass — like two black holes spiraling into each
             other.
@@ -120,15 +131,15 @@ export function GravitationalWaveTutor({
             "polarization" — this kind of curvature ripple takes.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. This is the same underlying idea as Experiment 4's converging
-            travelers</strong> — a changing separation between free-floating objects, caused by
+            <strong>3. This is the same underlying idea as the converging travelers in the
+            Curved Spacetime experiment</strong> — a changing separation between free-floating objects, caused by
             curvature and not a force — except now the curvature itself is moving and oscillating,
             rather than staying fixed in place.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>4. This experiment exaggerates the effect enormously</strong>, because the real
-            effect is astonishingly small — about a thousandth of a proton's width over a real
-            4-kilometer detector arm.
+            effect is astonishingly small — about 10,000 times smaller than the nucleus of an atom,
+            over a real 4-kilometer detector arm.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>5. LIGO actually measured this in 2015</strong>, from two colliding black holes

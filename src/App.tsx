@@ -661,7 +661,7 @@ const chapters: Chapter[] = [
     group: 'Gravitational Waves',
     Component: GravitationalWaveExperiment,
     learned:
-      "A gravitational wave is a ripple of spacetime curvature traveling outward from a violently accelerating mass, like two colliding black holes. As it passes, it stretches space one way while squeezing the perpendicular way, then swaps back and forth — the same kind of curvature effect as Experiment 4's converging travelers, just moving instead of fixed in place. LIGO actually detected one in 2015, using detectors built in exactly this L-shape.",
+      "A gravitational wave is a ripple of spacetime curvature traveling outward from a violently accelerating mass, like two colliding black holes. As it passes, it stretches space one way while squeezing the perpendicular way, then swaps back and forth — the same kind of curvature effect as the converging travelers in the Curved Spacetime experiment, just moving instead of fixed in place. LIGO actually detected one in 2015, using detectors built in exactly this L-shape.",
     next: "Next, we model the wave the way a real inspiral actually produces it: building in both pitch and loudness right up to a final moment, instead of staying steady.",
   },
   {
