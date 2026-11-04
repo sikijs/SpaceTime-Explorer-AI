@@ -54,7 +54,7 @@ Every experiment below has an approved specification, a tested physics model, an
 
 | # | Title | Specification | Status |
 |---|---|---|---|
-| 1 | Ripples in spacetime | `01-gravitational-waves.md` | Complete (wording approved) |
+| 1 | Ripples in spacetime | `01-gravitational-waves.md` | Complete (wording approved). Audit update (2026-11-04, the first experiment of this group in the audit; owner-approved wording; uncommitted when written): brought to §14's guess-mark and four-Parts rules (white YOUR GUESS arrows and diamond on the graph, Part 2 with pink marks and two drawings, Table 1 with notes, tutor prompts name the marks), the introduction no longer gives either answer, "Some new words", "Words and formulas" and "Want to know more?" added, run slowed to 8 seconds, a "Start over" button; 19 new physics tests (29 in the file). Open: no plain official page for "strain"; not checked at narrow widths, in other browsers or with a wrong guess. |
 | 2 | The chirp: a wave that builds | `02-the-chirp.md` | Complete (wording approved) |
 | 3 | Where the energy comes from | `03-orbital-energy-loss.md` | Complete (wording approved 2026-10-13, after review in conversation) |
 | 4 | Comparing two real events | `04-comparing-real-events.md` | Complete (wording approved) |

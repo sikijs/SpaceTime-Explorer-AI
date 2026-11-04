@@ -52,3 +52,29 @@ Component, tutor, physics module (+ tests), spec; possibly a new caption block. 
 
 ## Not checked
 Not run in a browser. Did not read docs/PROJECT.md or AGENTS.md line by line. Sources for the real figures not opened.
+
+## Step 1 re-read and additions (2026-11-04)
+Re-read of the component, tutor, module and specification against Rule E and against the first report. Nothing was run in a browser; nothing was changed in the app.
+
+- **Corrections to the first report.**
+  - O2(a) understated the early reveal. The introduction gives the answer to **both** predictions, not one. "What happens" (:285-289) says "one arm stretch while the other squeezes ... before both settle back to normal", which answers Prediction 1 (opposite) and Prediction 2 (back to normal). The "ripple" paragraph (:264-275) also says space is squeezed one way and stretched the other way, "then swapping". Under §12 this is the biggest wording gap.
+  - The Results "In fact" lines (:500-509) and the tutor's compare step (Tutor:67-68) both give the verdict early. The tutor's compare step is the only place the new rule allows it, and only by naming the marks.
+- **E1 to E3 Not met.** One card holds the introduction, both predictions, the sliders, the presets, Run, the arm picture, the graph and the Results. There are no Parts, coloured lines or leads. The tutor box already has the blue heading colour but no "Part 4" heading.
+- **E4 N/A until built.**
+- **E5, a structural question for the owner.** In this experiment the sliders and presets are used **before** Run, and they set what the run shows (the arm picture and graph are drawn from them). In the Cosmic Horizons audits Part 1 ran the real measurement and Part 2 came afterwards with its own drawing. Here the controls come first. Options: (i) Part 1 runs at the "Typical detected event" setting with no sliders, and Part 2 holds the sliders, the presets and a second run with its own drawing; (ii) keep the sliders in Part 1 and have Part 2 hold only a note; (iii) another arrangement. Claude does not decide this.
+- **C1/C2 added.** The arm picture has no rest-length reference. The learner cannot see how far an arm has moved from rest, only the arm's current length. A dashed rest outline would show the stretch and squeeze directly.
+- **A4 clarified.** The graph is drawn only once a run starts (:421), so its two guess marks can appear only then. Before the run there is no feature for a mark to sit beside.
+- **B0/B1/B2 added.** The Results has no table. Option for the owner: turn "Arm X ranged from ... to ..." into a small table of lowest, highest, stretch and squeeze for each arm, with a "What this table tells us" note. There is no real reference to put in a check-up (the real strain is about 1 part in 10^21; these numbers are 0.08 to 0.4), so the check-up would be left out.
+- **O2(c) cross-references.** The introduction, tutor and chapter summary say "Experiment 4" and "Experiment 5" for experiments in the Gravity and Curved Spacetime group. A learner sees several pages with those numbers. Wording should name the chapter or the title (for example "the Curved Spacetime experiment").
+- **O2(d) sources.** The 2015 detection, the 1.3 billion light-years and the "one-thousandth of a proton" figure have no source on the page. Rule D does not apply outside Cosmic Horizons, so this is a recommendation, not a gap.
+
+### Decisions for the owner before Step 2 (wording)
+1. **Page layout (E5).** Option (i), (ii) or (iii) above.
+2. **Introduction.** Rewrite "What happens" and the "ripple" paragraph so they do not give either answer (§12)? Recommended: yes.
+3. **Guess marks.** One white "YOUR GUESS" marker pair on the graph for Prediction 1 and one marker at the graph's right edge for Prediction 2. Both are choices with no size, so the caption would say they are only markers.
+4. **Results.** Option to add the small table and note (B0/B2), and to drop the "In fact" lines so the guesses are shown only, tagged to the row where the number appears.
+5. **Rest outline** on the arm picture (C1/C2).
+6. **Cross-references** renamed as above (O2(c)); sources for the real figures (O2(d)): yes or no.
+
+## Resolution (2026-11-04)
+Every gap above was fixed at the owner's direction (all defaults, then changes from review); see `01-draft-wording.md` ("Differences between this draft and the built page") and the specification's last Implementation Note. Open: no plain official page for "strain"; a wrong guess, the other presets, the extreme slider settings and narrow widths were not checked.
