@@ -26,7 +26,7 @@ Columns: **Report** = gap report written; **Gaps chosen** = owner has said which
 | Gravity 7 | [What is a black hole?](gravity-and-curved-spacetime/07-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
 | Gravity 8 | [Does gravity bend light?](gravity-and-curved-spacetime/08-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
 | Gravity 9 | [Real clocks in orbit: GPS](gravity-and-curved-spacetime/09-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
-| Grav. Waves 1 | [Ripples in spacetime](gravitational-waves/01-gap-report.md) | M | 2026-11-02 (Rule E added 2026-11-04) | 2026-11-04 ([draft](gravitational-waves/01-draft-wording.md)) | 2026-11-04 | 2026-11-04 | 2026-11-04 | 2026-11-04 (see notes) | 2026-11-04 | not yet committed |
+| Grav. Waves 1 | [Ripples in spacetime](gravitational-waves/01-gap-report.md) | M | 2026-11-02 (Rule E added 2026-11-04) | 2026-11-04 ([draft](gravitational-waves/01-draft-wording.md)) | 2026-11-04 | 2026-11-04 | 2026-11-04 | 2026-11-04 (see notes) | 2026-11-04 | `19954cc`, `17f3395`, `a4c33c0` |
 | Grav. Waves 2 | [The chirp](gravitational-waves/02-gap-report.md) | M-L | 2026-11-02 |  |  |  |  |  |  |  |
 | Grav. Waves 3 | [Where the energy comes from](gravitational-waves/03-gap-report.md) | S-M | 2026-11-02 |  |  |  |  |  |  |  |
 | Grav. Waves 4 | [Comparing two real events](gravitational-waves/04-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
