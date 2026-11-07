@@ -49,3 +49,6 @@ Component, tutor, module (+ tests), spec. **Size: S to M** (one prediction, one 
 
 ## Not checked
 Not run in a browser. PROJECT.md/AGENTS.md not read in detail. The GW150914 figures were not checked against a source.
+
+## Outcome (2026-11-07)
+The owner chose gaps 1 to 6, kept the rescaling and removed the "Change prediction" button; the wording in `03-draft-wording.md` was approved and built (commits `6a89db1`, `26d9b0c`, `634bc2a`). The agent checked the page in a browser and fixed two label overlaps. The owner has not reviewed the finished page. See the specification's "Audit update (2026-11-07)".

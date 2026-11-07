@@ -1,5 +1,5 @@
 # Draft wording: Gravitational Waves Experiment 3 (Where the Energy Comes From)
-Date: 2026-11-07 | Status: DRAFT for the owner's line-by-line approval (Step 2 of `docs/AUDIT-PLAN.md` §5, following the Experiment 1 and 2 pilots, `01-draft-wording.md` and `02-draft-wording.md`). Nothing has been built, changed or committed. The specification, component, tutor and module are untouched.
+Date: 2026-11-07 | Status: APPROVED by the owner on 2026-11-07 ("approved", with the suggested answers to the nine questions) and built; first written as a DRAFT for the owner's line-by-line approval (Step 2 of `docs/AUDIT-PLAN.md` §5, following the Experiment 1 and 2 pilots, `01-draft-wording.md` and `02-draft-wording.md`). Nothing has been built, changed or committed. The specification, component, tutor and module are untouched.
 
 Gaps chosen (the owner, 2026-11-07): fix gaps 1 to 6 of the gap report (the introduction gives the answer; no guess mark; no caption or on-canvas labels; no reading guide; no intro or control note; the four-Part layout). **Keep the rescaling** (each run's energy graph is scaled to that run's own starting energy). **Remove the "Change prediction" button.**
 
