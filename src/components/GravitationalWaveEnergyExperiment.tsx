@@ -259,7 +259,7 @@ export function EnergyGraph({
       {[0, total].map((t) => (
         <g key={t}>
           <line x1={px(t)} y1={bottom} x2={px(t)} y2={bottom + 4} stroke={MUTED_COLOR} />
-          <text x={px(t)} y={bottom + 16} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">{t === 0 ? '0' : `${t.toFixed(3)} (final moment)`}</text>
+          <text x={t === 0 ? px(t) : G.width - 6} y={bottom + 16} fill={MUTED_COLOR} fontSize="10" textAnchor={t === 0 ? 'middle' : 'end'}>{t === 0 ? '0' : `${t.toFixed(3)} (final moment)`}</text>
         </g>
       ))}
       <text x={(G.left + G.right) / 2} y={bottom + 32} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
@@ -287,7 +287,7 @@ export function EnergyGraph({
         <g>
           <circle cx={px(total)} cy={py(endPoint.e)} r={5} fill={pink ? YOURS_COLOR : ENERGY_COLOR} />
           {!pink && (
-            <text x={px(total) - 8} y={py(endPoint.e) - 10} fill={ENERGY_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
+            <text x={px(total) - 8} y={(py(s.startEnergy) + py(endPoint.e)) / 2} fill={ENERGY_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
               final moment: {fixed3(s.finalRemainingEnergy)} left
             </text>
           )}
@@ -317,8 +317,9 @@ export function EnergyGraph({
             YOUR MASS: starts at {fixed3(s.startEnergy)}
           </text>
           {done && endPoint && (
-            <text x={G.right} y={py(endPoint.e) - 12} fill={YOURS_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
-              YOUR MASS: {fixed3(s.finalRemainingEnergy)} left, {fixed3(s.finalRadiatedEnergy)} radiated
+            <text x={px(total) - 8} y={(py(s.startEnergy) + py(endPoint.e)) / 2 - 6} fill={YOURS_COLOR} fontSize="10" fontWeight="bold" textAnchor="end">
+              <tspan x={px(total) - 8}>YOUR MASS: {fixed3(s.finalRemainingEnergy)} left, </tspan>
+              <tspan x={px(total) - 8} dy={12}>{fixed3(s.finalRadiatedEnergy)} radiated</tspan>
             </text>
           )}
           <line x1={px(0)} y1={bottom + 46} x2={px(total)} y2={bottom + 46} stroke={YOURS_COLOR} strokeWidth={2} />

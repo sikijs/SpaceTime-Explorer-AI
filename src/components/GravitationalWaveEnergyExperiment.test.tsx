@@ -51,9 +51,10 @@ describe('the energy page renders', () => {
       const s = energyRunSummary(mass)
       const rest = renderToStaticMarkup(createElement(EnergyGraph, { mass, time: 0, started: false, done: false, pink: true, guess: 'decreases', label: 'x' }))
       expect(rest).toContain(`YOUR MASS: starts at ${s.startEnergy.toFixed(3)}`)
-      expect(rest).not.toContain(' radiated</text>') // the pink end label appears only after the run
+      expect(rest).not.toContain(' radiated</tspan>') // the pink end label appears only after the run
       const done = renderToStaticMarkup(createElement(EnergyGraph, { mass, time: s.cutoffTime, started: true, done: true, pink: true, guess: 'decreases', label: 'x' }))
-      expect(done).toContain(`${s.finalRemainingEnergy.toFixed(3)} left, ${s.finalRadiatedEnergy.toFixed(3)} radiated`)
+      expect(done).toContain(`${s.finalRemainingEnergy.toFixed(3)} left, </tspan>`) // the end label is on two lines
+      expect(done).toContain(`${s.finalRadiatedEnergy.toFixed(3)} radiated</tspan>`)
       expect(done).not.toContain('NaN')
     }
   })
