@@ -41,14 +41,14 @@ type RunStatus = 'idle' | 'running' | 'complete'
 // change the physical result, only how quickly it is shown.
 const ANIMATION_DURATION_MS = 8000
 
-const TEXT_COLOR = '#e2e8f0'
-const MUTED_COLOR = '#94a3b8'
-const ARM_X_COLOR = '#a78bfa' // violet: Arm X (the purple line)
-const ARM_Y_COLOR = '#22d3ee' // cyan: Arm Y (the teal line)
-const YOURS_COLOR = '#f472b6' // pink: the learner's own choice (Part 2)
+export const TEXT_COLOR = '#e2e8f0'
+export const MUTED_COLOR = '#94a3b8'
+export const ARM_X_COLOR = '#a78bfa' // violet: Arm X (the purple line)
+export const ARM_Y_COLOR = '#22d3ee' // cyan: Arm Y (the teal line)
+export const YOURS_COLOR = '#f472b6' // pink: the learner's own choice (Part 2)
 const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing else (CLAUDE.md §14)
 
-const svgStyle = {
+export const svgStyle = {
   display: 'block',
   maxWidth: '100%',
   height: 'auto',
@@ -115,7 +115,7 @@ const PAPER_LINKS = [
 const fixed3 = (value: number) => (Math.abs(value) < 1e-9 ? 0 : value).toFixed(3)
 
 // The four Parts of the page (CLAUDE.md §14, "The Page in Four Parts"): a thick coloured line, a coloured heading and a short lead.
-function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
+export function PartHeader({ color, title, children }: { color: string; title: string; children: ReactNode }) {
   return (
     <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `6px solid ${color}` }}>
       <h3 style={{ margin: '0 0 0.5rem', color }}>{title}</h3>
@@ -145,7 +145,7 @@ const PredictionTag = ({ n }: { n: 1 | 2 }) => (
 )
 
 // Runs one playback: simulated time goes from 0 to the run's total over a fixed real duration.
-function useRunner(onFinish?: () => void) {
+export function useRunner(onFinish?: () => void) {
   const [status, setStatus] = useState<RunStatus>('idle')
   const [time, setTime] = useState(0)
   const [total, setTotal] = useState(0)
@@ -188,7 +188,7 @@ function useRunner(onFinish?: () => void) {
 // ---- Picture 1 / Drawing A (Part 2), the arms ----
 const ARMS_SIZE = { width: 420, height: 320 }
 const CORNER = { x: 130, y: 250 }
-const REST_COLOR = '#fbbf24' // amber: the rest length, a fixed reference
+export const REST_COLOR = '#fbbf24' // amber: the rest length, a fixed reference
 const REST_ARM_PIXELS = 170
 
 function armEnd(axis: 'x' | 'y', armLength: number) {
@@ -196,7 +196,7 @@ function armEnd(axis: 'x' | 'y', armLength: number) {
   return axis === 'x' ? { x: CORNER.x + pixels, y: CORNER.y } : { x: CORNER.x, y: CORNER.y - pixels }
 }
 
-function ArmsPicture({ armXLength, armYLength, label }: { armXLength: number; armYLength: number; label: string }) {
+export function ArmsPicture({ armXLength, armYLength, label }: { armXLength: number; armYLength: number; label: string }) {
   const xEnd = armEnd('x', armXLength)
   const yEnd = armEnd('y', armYLength)
   const xRest = armEnd('x', BASE_ARM_LENGTH)
