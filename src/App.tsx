@@ -685,7 +685,7 @@ const chapters: Chapter[] = [
     group: 'Gravitational Waves',
     Component: GravitationalWaveRealEventsExperiment,
     learned:
-      "The same chirp-and-energy-loss model from the last two experiments applies to any inspiraling pair — only the mass differs. GW150914's two black holes (tens of times the Sun's mass) produced a much louder, faster-rising, shorter chirp than GW170817's two neutron stars (each only a little heavier than the Sun). GW170817 was also seen in light — a gamma-ray burst and a glowing afterglow — because neutron stars have surfaces and material that can radiate light when they collide, while merging black holes do not. Seeing the same event through more than one channel, gravitational waves and light together, is called multi-messenger astronomy, and it let scientists pin down GW170817's location and distance far more precisely than the gravitational-wave signal alone could.",
+      "The same chirp-and-energy-loss model from the last two experiments applies to any inspiraling pair — only the mass differs. In this page's toy model, the larger mass (standing in for GW150914's two black holes) gave a much louder, shorter chirp than the smaller one (standing in for GW170817's two neutron stars). GW170817 was also seen in light — a burst of gamma rays about 1.7 seconds after the wave, then visible light — while merging black holes are not expected to give off light, and GW150914 had no confirmed light. Seeing one event in more than one way, with gravitational waves and light together, is called multi-messenger astronomy; the light let telescopes find GW170817's galaxy within about half a day.",
     next: 'Next, we ask what happens if the source of a gravitational wave is moving away from the detector.',
   },
   {

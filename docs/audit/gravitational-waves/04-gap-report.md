@@ -51,3 +51,21 @@ Component, tutor, module (+ tests), spec. **Size: M** (one new two-event compari
 
 ## Not checked
 Not run in a browser. PROJECT.md/AGENTS.md not read in detail. Real masses and the "billions of tons" figure not checked against a source.
+
+## Step 1 re-read and additions (2026-11-07)
+Re-read of the component (`GravitationalWaveRealEventsExperiment.tsx`, 637 lines), the module (32 lines: a presets table with the two real events, their toy masses 5.5 and 0.3, and `hadLightCounterpart`) and the specification against Rule E and the first report, using the Gravitational Waves 1 to 3 audits as the pattern. Nothing was run in a browser; nothing was changed in the app.
+
+- **E1 to E3 Not met.** One `exp-card` (line 236) holds the introduction, the prediction, the two preset buttons and the mass slider, Run, the drawing, the caption and the Results. There are no Parts, coloured lines or leads, and no "Words and formulas" box.
+- **E4 n/a until built.** Part 1's lead must not give the answer; the prediction question itself currently does (first report, C7).
+- **E5, a structural question for the owner.** The one prediction ("which event is louder") compares two runs, but the page shows one run at a time and the comparison exists only after the learner has pressed both preset buttons. The page has three kinds of control: the two preset buttons, the free mass slider and Run. How they map onto the four Parts is the owner's decision (see question 1 below). Nothing is decided here.
+- **A10 refined.** The "Change prediction" button (:348-369) is the same kind as the one removed from Gravitational Waves 3; there it was replaced by "Start over".
+- **A5 refined.** The module already holds both events' toy masses, so the final amplitude, the run time and the energy for both events can be computed for a side-by-side panel without playing a run. Whether the panel appears before the learner has run both presets, or only after, is for the owner to decide (question 2).
+- **D (links and words box).** The component has no "Want to know more?" list and no links, and none of the real figures (36 and 29 Suns, 1.4 Suns, 1.3 billion and 130 million light-years, the 1.7-second gamma-ray delay) has a source on the page. Rule D covers Cosmic Horizons 1 to 14 only, but Gravitational Waves 1 to 3 were given a links list and a words box at the owner's choice.
+- **New finding O5.** The introduction and the Results use the real masses and distances from the preset text, but nothing in the module or tests checks them against a source; the Gravitational Waves 3 audit checked its real figures against LIGO's pages and the paper (arXiv 1602.03837), and this page would need the same, plus a source for GW170817 (the LIGO/Virgo detection paper and the multi-messenger paper).
+
+### Questions for the owner (before wording is drafted)
+1. **Which gaps to fix?** The first report's gaps: the answer is given away in the question and the introduction (C7); no guess mark and no side-by-side panel (A2 to A5); no source line (A6); no introduction or control note (A7); no caption heading, worked moment or Look at / What it means / Why it matters (C3 to C6); no module comparison function (A8, B5); the tutor and Results state the answer (A9); the "Change prediction" button (A10); and, from this re-read, the four-Part layout (E1 to E4) and the missing links and sources (D, O5). All, or a subset?
+2. **E5: where do the preset buttons and the slider go?** One option is Part 1 = run GW150914, then GW170817, then see the two together; Part 2 = the free mass slider; Part 3 = the results; Part 4 = the tutor. Another is to keep one run at a time in Part 1 and show the side-by-side panel only once both have been run. Which do you prefer?
+3. **Rule B (the reading guide).** A check-up needs a real reference; the toy model does not compute the real masses or distances, so a check-up would only restate them (first report, B1). Leave out the check-up and give "A real detection" as facts, as in Gravitational Waves 3, or something else?
+4. **Links and words box.** Add a "Want to know more?" list and a "Words and formulas" box, as in Gravitational Waves 1 to 3?
+5. **"Change prediction" button.** Replace it with "Start over", as in Gravitational Waves 3?
