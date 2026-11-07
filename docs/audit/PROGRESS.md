@@ -28,7 +28,7 @@ Columns: **Report** = gap report written; **Gaps chosen** = owner has said which
 | Gravity 9 | [Real clocks in orbit: GPS](gravity-and-curved-spacetime/09-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
 | Grav. Waves 1 | [Ripples in spacetime](gravitational-waves/01-gap-report.md) | M | 2026-11-02 (Rule E added 2026-11-04) | 2026-11-04 ([draft](gravitational-waves/01-draft-wording.md)) | 2026-11-04 | 2026-11-04 | 2026-11-04 | 2026-11-04 (see notes) | 2026-11-04 | `19954cc`, `17f3395`, `a4c33c0` |
 | Grav. Waves 2 | [The chirp](gravitational-waves/02-gap-report.md) | M-L | 2026-11-02 (Rule E added 2026-11-04) | 2026-11-04 ([draft](gravitational-waves/02-draft-wording.md)) | 2026-11-06 | 2026-11-06 | 2026-11-06 | 2026-11-06 (owner's review, see notes) | 2026-11-06 | `be019d0`, `1d039b9`, `8df57e1` |
-| Grav. Waves 3 | [Where the energy comes from](gravitational-waves/03-gap-report.md) | S-M | 2026-11-02 |  |  |  |  |  |  |  |
+| Grav. Waves 3 | [Where the energy comes from](gravitational-waves/03-gap-report.md) | S-M | 2026-11-02 | 2026-11-07 ([draft](gravitational-waves/03-draft-wording.md): gaps 1 to 6, keep the rescaling, remove the button) | 2026-11-07 ("approved", with the draft's suggested answers to its 9 questions) | 2026-11-07 | 2026-11-07 (render checks only, no browser) |  |  |  |
 | Grav. Waves 4 | [Comparing two real events](gravitational-waves/04-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Grav. Waves 5 | [Redshift of a receding source](gravitational-waves/05-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Grav. Waves 6 | [Triangulation](gravitational-waves/06-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
