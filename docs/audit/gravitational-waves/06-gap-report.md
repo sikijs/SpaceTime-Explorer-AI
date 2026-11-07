@@ -82,3 +82,15 @@ Re-read of the component (`GravitationalWaveTriangulationExperiment.tsx`, 597 li
 
 ## Not checked (this re-read)
 Not run in a browser. The arrival times and separations quoted are from a script that imports the module, not read off the page. No source page has been searched or fetched yet; the three separations are not checked against any source.
+
+## Outcome (2026-11-07)
+The owner answered "all defaults" to the six questions and "approve with defaults" to the draft in `06-draft-wording.md`, and it was built (commits `d4173bb`, `3edd70c`, `128c1a2`). What was done:
+1. **The four Parts, one Run at Direction A, Start over** (always visible), and the links list and words box above Part 1.
+2. **One picture with two panels:** Panel A (the map, with the learner's first guess as a white ring) and Panel B (a timeline on a fixed scale of 0 to 30 ms, with the second guess as an outline and an equals or "not equal" sign). Part 2 has the three direction buttons, pink rows and the guesses drawn again.
+3. **The module** now holds the arrival summary, the three pair limits, the first-detector and timing outcomes and matches, the marker choice, the "at the limit" word and the learner's-direction comparison (10 new tests).
+4. **Prediction 1 asked before a direction exists:** fixed by making Part 1 one direction, A (Virgo first). **Prediction 2** has the same answer for every preset ("different"); the guess now has a timeline to be read against.
+5. **Check-up:** Hanford to Livingston in Direction A is exactly at its limit (10.01 ms); the other two pairs are below theirs (15.81 of 29.02 ms and 5.80 of 25.02 ms).
+6. **Answers removed** from the introduction (the principle behind Prediction 1, "only a few milliseconds", the worked example), from the Results ("right / off this time") and from the pre-run link descriptions (no GW170814 or LIGO timing figures). The wedges are recoloured violet and green (pink is the learner's own choice) and labelled as an illustration.
+7. **Caption:** one caption per picture; the Part 1 picture's caption has a separate section for Panel A and for Panel B (the owner asked for this after the first build).
+
+Open: no plain official page gives the Virgo distances to Hanford or Livingston (§29 rule 3(c)); the helper's source pages were read through a summariser, not by the agent; the shout and the ear comparison are the agent's own; the owner has not reviewed the finished page. See the specification's "Audit update (2026-11-07)".
