@@ -1,6 +1,17 @@
 import { useState } from 'react'
+import {
+  ENERGY_PART1_MASS,
+  REAL_GW150914_ENERGY,
+  energyGuessMatches,
+  energyRunSummary,
+} from '../physics/gravitationalWaveEnergyExperiment'
+import type { EnergyChoice } from '../physics/gravitationalWaveEnergyExperiment'
 
-type EnergyChoice = 'increases' | 'decreases' | 'stays-the-same'
+// Gravitational Waves, Experiment 3's tutor (Part 4), audited to the newer rules
+// (docs/audit/gravitational-waves/03-draft-wording.md, section 9). The prompts point to the white YOUR GUESS mark by name and
+// give no verdict; the explanation marks the guess, with every number and the "matched" taken from the physics module
+// (CLAUDE.md §9). All wording is draft for the owner's line-by-line approval (CLAUDE.md §28.1).
+
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface GravitationalWaveEnergyTutorProps {
@@ -15,6 +26,10 @@ const energyLabels: Record<EnergyChoice, string> = {
 }
 
 export function GravitationalWaveEnergyTutor({ energyPrediction, onExplained }: GravitationalWaveEnergyTutorProps) {
+  const light = energyRunSummary(ENERGY_PART1_MASS)
+  const heavy = energyRunSummary(3)
+  const f3 = (value: number) => value.toFixed(3)
+  const matched = energyGuessMatches(energyPrediction)
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -52,9 +67,9 @@ export function GravitationalWaveEnergyTutor({ energyPrediction, onExplained }: 
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              'What did you notice about the orbital energy as the wave got faster and louder?'}
+              'Look at the brown line in Picture 3 and at the arm lengths in Picture 2. What did you notice about the orbital energy as the wave got faster and louder?'}
             {tutorStep === 'compare' &&
-              `You predicted the orbital energy ${energyLabels[energyPrediction]}. In fact, it always decreases — the pair starts with a fixed budget of orbital energy and steadily loses it as the run goes on. Comparing what you expected to what's actually true, what do you notice?`}
+              `On Picture 3, the white box marked YOUR GUESS shows that you predicted the orbital energy ${energyLabels[energyPrediction]}. Look at the white mark, at the brown line and at the row "Orbital energy left" in Table 1 in Part 3. If you have run other masses in Part 2, your guess is drawn on Drawing C too. What do you notice when you put your guess next to the real line?`}
             {tutorStep === 'conceptual' &&
               'If the wave is carrying energy away, where does that energy come from?'}
           </p>
@@ -99,29 +114,36 @@ export function GravitationalWaveEnergyTutor({ energyPrediction, onExplained }: 
       {tutorStep === 'explained' && (
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>0. Your guess, marked.</strong> You guessed that the orbital energy {energyLabels[energyPrediction]}. In the run it went from{' '}
+            {f3(light.startEnergy)} to {f3(light.finalRemainingEnergy)}: it decreased. Your guess {matched ? 'matched' : 'did not match'}.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>1. A gravitational wave carries real energy away from the orbiting pair</strong>{' '}
             — producing it is not free. Every bit of energy in the wave came from somewhere, and
             that somewhere is the orbit itself.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>2. Losing that orbital energy is what causes the orbit to shrink</strong>, which
-            is why the pair orbits faster and the wave chirps — this is the cause behind the effect
-            you already saw in the last experiment.
+            is why the pair orbits faster and the wave chirps. A daily-life comparison: a pendulum swinging in air loses a little energy
+            to the air with every swing, and with less energy it swings lower and lower. Nothing pulls it down directly. In the same way, a
+            pair that has lost energy cannot keep its wide path and settles into a smaller one, and a smaller orbit is a faster one. This is
+            the cause behind the effect you saw in &ldquo;The Chirp&rdquo;.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. A bigger mass pair has more orbital energy to lose</strong>, which is part of
-            why it produces a louder wave than a smaller mass pair.
+            <strong>3. A bigger mass pair has more orbital energy to lose</strong>: in this page&rsquo;s formula the energy at the start is
+            the mass, so a pair of mass 3.0 starts with {f3(heavy.startEnergy)}, ten times the {f3(light.startEnergy)} of the pair you
+            watched. That is part of why it produces a louder wave.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>4. The energy scale shown here is a simplified stand-in</strong>, not the real
-            post-Newtonian energy-flux equations that actually govern how a real inspiral radiates
-            energy.
+            <strong>4. The energy scale shown here is a simplified stand-in</strong>, not the real equations that actually govern how a
+            real inspiral radiates energy. Its line is straight; a real inspiral loses energy faster the closer the pair gets.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>5. A real detection shows this on an enormous scale</strong> — LIGO's GW150914
-            detection (2015) converted roughly 3 solar masses' worth of energy into gravitational
-            waves in about two-tenths of a second, releasing, for that brief instant, more power
-            than the combined light of every star in the observable universe.
+            <strong>5. A real detection shows this on an enormous scale</strong> — LIGO&rsquo;s GW150914 detection (2015) came from two
+            black holes of about {REAL_GW150914_ENERGY.initialSolarMasses[0]} and {REAL_GW150914_ENERGY.initialSolarMasses[1]} solar masses,
+            and about {REAL_GW150914_ENERGY.radiatedSolarMasses} solar masses&rsquo; worth of energy left as gravitational waves. At its peak
+            the power in the waves was more than ten times the combined light power of all the stars and galaxies in the observable
+            Universe.
           </p>
         </div>
       )}
