@@ -693,7 +693,7 @@ const chapters: Chapter[] = [
     group: 'Gravitational Waves',
     Component: GravitationalWaveRedshiftExperiment,
     learned:
-      "A source moving away from the detector stretches the wave it sends out to a lower frequency than it was emitted at — the Doppler effect, the same basic effect as a receding ambulance's siren dropping in pitch, now called a redshift. The real amount of stretching is somewhat more than that everyday Doppler effect alone would predict, because relativistic time dilation adds an extra stretch on top of it. This experiment only models that velocity-based piece; for a real, very distant detected event, the much larger contributor to its redshift is the separate cosmological expansion of space itself while the wave travels, not modeled here.",
+      "A source moving away from the detector stretches the wave it sends out to a lower frequency than it was emitted at — the Doppler effect, the same basic effect as a receding ambulance's siren dropping in pitch, now called a redshift. The real amount of stretching is always more than that everyday Doppler effect alone would predict, because relativistic time dilation adds an extra stretch on top of it. The extra is small at low speed (1.36 against 1.30 at 0.3c) and large at high speed (4.36 against 1.90 at 0.9c). This experiment only models that velocity-based piece; for a real, very distant detected event, the much larger contributor to its redshift is the separate cosmological expansion of space itself while the wave travels, not modeled here.",
     next: 'Next, we ask whether a single detector can tell you where a signal came from — or whether you need more than one.',
   },
   {

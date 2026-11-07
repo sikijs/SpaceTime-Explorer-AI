@@ -1,12 +1,15 @@
 import { useState } from 'react'
+import { REDSHIFT_PART1_SPEED, redshiftRunSummary } from '../physics/gravitationalWaveRedshiftExperiment'
+import type { DirectionChoice, MagnitudeChoice } from '../physics/gravitationalWaveRedshiftExperiment'
 
-type DirectionChoice = 'higher' | 'lower' | 'same'
-type MagnitudeChoice = 'exact' | 'more' | 'less'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface GravitationalWaveRedshiftTutorProps {
   predictedDirection: DirectionChoice
   predictedMagnitude: MagnitudeChoice
+  // "Matched" is computed by the physics module (directionGuessMatches, magnitudeGuessMatches), never typed here (CLAUDE.md §9).
+  directionMatched: boolean
+  magnitudeMatched: boolean
   onExplained?: () => void
 }
 
@@ -17,18 +20,29 @@ const directionLabels: Record<DirectionChoice, string> = {
 }
 
 const magnitudeLabels: Record<MagnitudeChoice, string> = {
-  exact: 'exactly what an everyday Doppler effect alone would predict',
-  more: 'more than an everyday Doppler effect alone would predict',
-  less: 'less than an everyday Doppler effect alone would predict',
+  exact: 'exactly the everyday amount of stretch',
+  more: 'more stretch than the everyday amount',
+  less: 'less stretch than the everyday amount',
 }
 
+// Gravitational Waves, Experiment 5's tutor (Part 4), audited to the newer rules
+// (docs/audit/gravitational-waves/05-draft-wording.md, section 7). The prompts point to the white YOUR GUESS marks by name and give no
+// verdict; the explanation marks both guesses, with every number and each "matched" taken from the physics module (CLAUDE.md §9).
+// The wording is the owner's, approved on 2026-11-07 as drafted, "approve with defaults" (CLAUDE.md §28.1).
 export function GravitationalWaveRedshiftTutor({
   predictedDirection,
   predictedMagnitude,
+  directionMatched,
+  magnitudeMatched,
   onExplained,
 }: GravitationalWaveRedshiftTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
+  const run = redshiftRunSummary(REDSHIFT_PART1_SPEED)
+  const slow = redshiftRunSummary(0.3)
+  const fast = redshiftRunSummary(0.9)
+  const f2 = (value: number) => value.toFixed(2)
+  const f3 = (value: number) => value.toFixed(3)
 
   const handleContinue = () => {
     if (responseInput.trim() === '') return
@@ -45,6 +59,7 @@ export function GravitationalWaveRedshiftTutor({
   }
 
   const isResponseEmpty = responseInput.trim() === ''
+  const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
   return (
     <div
@@ -60,15 +75,13 @@ export function GravitationalWaveRedshiftTutor({
         Let's reflect on what you observed
       </h2>
 
-      {(tutorStep === 'observe' || tutorStep === 'compare' || tutorStep === 'conceptual') && (
+      {tutorStep !== 'explained' && (
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
-            {tutorStep === 'observe' &&
-              'What did you notice about how the animation itself behaved as you increased the speed?'}
+            {tutorStep === 'observe' && 'What did you notice about how the two waves behaved during the run?'}
             {tutorStep === 'compare' &&
-              `You predicted the detected frequency would be ${directionLabels[predictedDirection]}, stretched by ${magnitudeLabels[predictedMagnitude]}. Comparing that to what actually happened, what do you notice?`}
-            {tutorStep === 'conceptual' &&
-              'The everyday Doppler effect alone would predict one amount of stretching. Why is the real amount slightly more than that?'}
+              `On the picture, the white box marked YOUR GUESS beside the Detected wave shows that you predicted the detected frequency would be ${directionLabels[predictedDirection]}. Beneath it, the white mark on the amber bar shows that you predicted ${magnitudeLabels[predictedMagnitude]}. Look at the two waves, at Panel B and at the check-up in Part 3. If you have run another speed in Part 2, your guesses are drawn on Drawing A and Drawing B too. What do you notice when you put your guesses next to the real picture?`}
+            {tutorStep === 'conceptual' && 'The everyday Doppler effect alone gives one amount of stretching. Why is the real amount different?'}
           </p>
 
           <textarea
@@ -110,31 +123,39 @@ export function GravitationalWaveRedshiftTutor({
 
       {tutorStep === 'explained' && (
         <div>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>1. This reuses Experiment 2's exact chirp model and the Relativity of Time and
-            Motion chapter's exact time dilation factor</strong> — nothing new was calculated about
-            the chirp itself or about time dilation.
+          <p style={paragraphStyle}>
+            <strong>0. Your guesses, marked.</strong> You guessed {directionLabels[predictedDirection]} and {magnitudeLabels[predictedMagnitude]}. In the run, the detector received {f3(run.finalDetectedFrequency)} against{' '}
+            {f3(run.finalEmittedFrequency)} sent (a lower pitch), and the real stretch was {f2(run.realStretch)} against the everyday {f2(run.classicalStretch)} (more). Your first guess{' '}
+            {directionMatched ? 'matched' : 'did not match'} and your second {magnitudeMatched ? 'matched' : 'did not match'}.
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. A receding source's wave is stretched to a lower frequency</strong> — the
-            Doppler effect, the same basic effect as a receding ambulance's siren dropping in pitch
-            as it drives away.
+          <p style={paragraphStyle}>
+            <strong>1. This reuses the chirp model of &ldquo;The Chirp&rdquo; and the time dilation factor of the Relativity of Time and Motion chapter</strong> — nothing new was calculated about the chirp
+            itself or about time dilation.
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. The real stretching is the classical Doppler factor times the time dilation
-            factor</strong>, so it is always somewhat more than the classical guess alone — the
-            extra stretching comes from time dilation, on top of the everyday Doppler effect.
+          <p style={paragraphStyle}>
+            <strong>2. A receding source&rsquo;s wave is stretched to a lower frequency</strong> — the Doppler effect, the same basic effect as a receding ambulance&rsquo;s siren dropping in pitch as it drives away. At{' '}
+            {f2(run.speed)}c every wave arrives {f2(run.classicalStretch)} times as long as it was sent, from the everyday effect alone.
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>4. This is why a real detected gravitational wave needs a velocity
-            correction</strong>: the source's own motion changes the frequency an instrument
-            measures, beyond what the source's chirp alone would produce.
+          <p style={paragraphStyle}>
+            <strong>3. The real stretch is the everyday Doppler factor times the time dilation factor.</strong> At {f2(run.speed)}c that is {f3(run.classicalFactor)} × {f3(run.timeDilationFactor)} = {f3(run.realFactor)}, so
+            the real stretch is 1 ÷ {f3(run.realFactor)} = {f2(run.realStretch)}. The extra comes from time dilation: a clock on the moving source ticks slower, as in the Relativity of Time and Motion chapter, so the
+            source&rsquo;s whole chirp unfolds more slowly in the detector&rsquo;s time, on top of the everyday stretch. A daily-life comparison: a film played from a slower reel as well as from farther away. The real
+            stretch is always more than the everyday one, and the gap grows with speed: at 0.3c it is {f2(slow.realStretch)} against {f2(slow.classicalStretch)}, almost the same; at 0.9c it is {f2(fast.realStretch)}{' '}
+            against {f2(fast.classicalStretch)}, more than twice the everyday amount.
           </p>
-          <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>5. This experiment isolates only the velocity-based part of redshift.</strong>{' '}
-            A real, very distant source's total redshift is usually dominated by a separate, larger
-            effect — the cosmological expansion of space itself while the wave travels — which this
-            experiment does not model.
+          <p style={paragraphStyle}>
+            <strong>4. This is why a real detected gravitational wave needs a velocity correction</strong>: the source&rsquo;s own motion changes the frequency an instrument measures, beyond what the source&rsquo;s chirp
+            alone would produce.
+          </p>
+          <p style={paragraphStyle}>
+            <strong>5. Why the pitch sent and the pitch received both end lower than in a run with no motion.</strong> The last part of the wave to arrive was sent while the source had only got part-way through its
+            chirp: at {f2(run.speed)}c the source had reached a pitch of {f3(run.finalEmittedFrequency)}, not 3.162. So both the pitch sent and the pitch received are lower than in a run with no motion.
+          </p>
+          <p style={paragraphStyle}>
+            <strong>6. This experiment isolates only the motion-based part of redshift.</strong> For a very distant source the larger part is the expansion of space while the wave travels, which is not modelled here.
+          </p>
+          <p style={{ ...paragraphStyle, marginBottom: 0 }}>
+            <strong>7. This toy model is a simplified stand-in</strong>, not a faithful reconstruction of a real signal, and the speeds up to 0.9c are a toy range.
           </p>
         </div>
       )}
