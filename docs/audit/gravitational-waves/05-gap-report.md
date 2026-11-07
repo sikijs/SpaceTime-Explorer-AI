@@ -79,3 +79,14 @@ Re-read of the component (`GravitationalWaveRedshiftExperiment.tsx`, 627 lines),
 
 ## Not checked (this re-read)
 Not run in a browser. The factors in O2(b) are my arithmetic from the module's formulas (checked by a one-line script, not by the page). No source page has been searched or fetched yet.
+
+## Outcome (2026-11-07)
+The owner answered "all defaults" to the six questions and "approve with defaults" to the draft in `05-draft-wording.md`, and it was built (commits `18d5f0a`, `9567a46`, `cdc52ab`). What was done:
+1. **The four Parts, one Run at 0.5c, Start over** (always visible), and the links list and words box above Part 1.
+2. **One picture with two panels:** Panel A (the arms and the Emitted and Detected waves) and Panel B (the everyday and real stretch as bars, on a fixed scale of 0 to 4.5). Both guesses are white markers only.
+3. **The module** now holds the stretch, the run summary, the two guess outcomes and matches, the marker choices and the comparison for the learner's speed (18 new tests).
+4. **Question 1, "what does emitted mean?" (found while drafting).** Built as option (a): the Emitted wave is drawn at the pitch the readout calls emitted, so the two waves differ by exactly the Doppler factor (0.577 at 0.5c). The old page drew "Emitted" from a no-motion run, which made the gap between the two traces a stretch of 3.8, not the 1.73 it reported.
+5. **Two choices beyond the approved draft** (to be confirmed by the owner): guess 1 is also drawn on Drawing A, labelled "for 0.5c" (the draft left Drawing A without a guess; the rule says to draw it where its answer lives); and "cycles behind" is counted against the Emitted wave, not against a no-motion run.
+6. **Answers removed** from the introduction, the "What to look for" paragraph and the Results; "slightly more" is replaced everywhere, including the chapter summary in `src/App.tsx`, by wording that says the extra stretch is always there and grows with speed.
+
+Open: the helper's source pages were read through a summariser and not by the agent; no plain official page for GW150914's detector-frame masses (§29 rule 3(c)); the owner has not reviewed the finished page. See the specification's "Audit update (2026-11-07)".
