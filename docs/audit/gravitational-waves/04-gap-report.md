@@ -69,3 +69,14 @@ Re-read of the component (`GravitationalWaveRealEventsExperiment.tsx`, 637 lines
 3. **Rule B (the reading guide).** A check-up needs a real reference; the toy model does not compute the real masses or distances, so a check-up would only restate them (first report, B1). Leave out the check-up and give "A real detection" as facts, as in Gravitational Waves 3, or something else?
 4. **Links and words box.** Add a "Want to know more?" list and a "Words and formulas" box, as in Gravitational Waves 1 to 3?
 5. **"Change prediction" button.** Replace it with "Start over", as in Gravitational Waves 3?
+
+## Outcome (2026-11-07)
+The owner approved the draft in `04-draft-wording.md` as written and it was built (commit `983e030`). On the owner's first look at the built page, the same day, five problems were found and fixed, and one design decision was reversed:
+1. **The guess missing from Part 2's picture (an error).** Drawing B was not told which events had run, so it waited for both. Fixed.
+2. **The guess waited for both runs.** It is now drawn as soon as the first event has finished; a marked bar that has not run yet gets a dashed white outline with no length shown.
+3. **The "What comes next" box** in Part 1 was removed (Picture 2 carries its own note).
+4. **No source links under the results tables.** Table 1 has a "Where Table 1's numbers come from" line (the two detection papers and the two LIGO releases); Table 2's sources line is always visible.
+5. **The tutor and "Let's reflect".** The three questions appear after the first run; the explanation was rewritten as eight points (the guess marked with the real numbers and a short note for each possible guess, the mass rule worked through, what stayed the same, multi-messenger astronomy, what the light added, what the pink row showed, what the toy model is and is not, and what was learned).
+6. **Reversal of the draft's layout (option A).** The draft had the learner press Run twice, once for each event. The owner found that this confused the learner, so one Run now plays GW150914 and then GW170817. The two choice buttons are gone. This follows the rule in `CLAUDE.md` §14, "Parts 2, 3 and 4 appear after the first Run".
+
+The wording of items 4 to 6 is the agent's draft and is not yet approved. See the specification's "Audit update (2026-11-07)".
