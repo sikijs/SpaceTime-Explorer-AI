@@ -37,3 +37,30 @@ export function runClockExperiment(durationSeconds: number): ClockExperimentResu
     endEvent,
   }
 }
+
+// --- Audit update (2026-11-08): where a learner's guess sits on the Event Interval strip ---
+// The strip's scale runs from 0 to twice the experiment's duration. It depends only on the
+// duration, never on the guess, so the real picture does not change with a guess.
+
+export interface GuessOnStrip {
+  scaleEnd: number
+  fraction: number
+  offEdge: 'left' | 'right' | null
+  differenceFromReal: number
+}
+
+export function stripScaleEnd(durationSeconds: number): number {
+  return 2 * durationSeconds
+}
+
+export function guessPositionOnStrip(durationSeconds: number, guessSeconds: number): GuessOnStrip {
+  if (!isFinite(guessSeconds)) {
+    throw new Error('The guess must be a finite number of seconds')
+  }
+  const scaleEnd = stripScaleEnd(durationSeconds)
+  const rawFraction = scaleEnd > 0 ? guessSeconds / scaleEnd : 0
+  const offEdge = rawFraction < 0 ? 'left' : rawFraction > 1 ? 'right' : null
+  const fraction = Math.min(1, Math.max(0, rawFraction))
+  const differenceFromReal = guessSeconds - runClockExperiment(durationSeconds).elapsedTime
+  return { scaleEnd, fraction, offEdge, differenceFromReal }
+}

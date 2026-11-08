@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { runClockExperiment } from './clockExperiment'
+import { guessPositionOnStrip, runClockExperiment, stripScaleEnd } from './clockExperiment'
 
 describe('runClockExperiment', () => {
   it('produces zero elapsed clock time for a zero-duration experiment', () => {
@@ -41,5 +41,49 @@ describe('runClockExperiment', () => {
     expect(first.finalClockReading).toBe(30)
     expect(second.initialClockReading).toBe(0)
     expect(second.finalClockReading).toBe(5)
+  })
+})
+
+describe('guessPositionOnStrip', () => {
+  it('ends the strip scale at twice the duration', () => {
+    expect(stripScaleEnd(5)).toBe(10)
+    expect(stripScaleEnd(10)).toBe(20)
+    expect(stripScaleEnd(30)).toBe(60)
+    expect(guessPositionOnStrip(10, 0).scaleEnd).toBe(20)
+  })
+
+  it('places a guess equal to the duration halfway, 0 at the start and twice the duration at the end', () => {
+    expect(guessPositionOnStrip(10, 10).fraction).toBe(0.5)
+    expect(guessPositionOnStrip(10, 0).fraction).toBe(0)
+    expect(guessPositionOnStrip(10, 20).fraction).toBe(1)
+    expect(guessPositionOnStrip(10, 7).fraction).toBeCloseTo(0.35, 10)
+    expect(guessPositionOnStrip(10, 10).offEdge).toBeNull()
+  })
+
+  it('clamps a guess beyond the scale and flags the edge it is off', () => {
+    const high = guessPositionOnStrip(10, 500)
+    expect(high.fraction).toBe(1)
+    expect(high.offEdge).toBe('right')
+    const low = guessPositionOnStrip(10, -4)
+    expect(low.fraction).toBe(0)
+    expect(low.offEdge).toBe('left')
+  })
+
+  it('gives the guess minus the real elapsed time', () => {
+    expect(guessPositionOnStrip(10, 7).differenceFromReal).toBe(-3)
+    expect(guessPositionOnStrip(10, 10).differenceFromReal).toBe(0)
+    expect(guessPositionOnStrip(20, 25).differenceFromReal).toBe(5)
+  })
+
+  it('does not change the real result whatever the guess', () => {
+    const before = runClockExperiment(10)
+    guessPositionOnStrip(10, 7)
+    guessPositionOnStrip(10, 500)
+    expect(runClockExperiment(10)).toEqual(before)
+  })
+
+  it('refuses a guess that is not a finite number', () => {
+    expect(() => guessPositionOnStrip(10, NaN)).toThrow()
+    expect(() => guessPositionOnStrip(10, Infinity)).toThrow()
   })
 })
