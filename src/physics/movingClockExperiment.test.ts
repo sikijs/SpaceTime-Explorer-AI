@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { runMovingClockExperiment, movingClockStateAt } from './movingClockExperiment'
+import {
+  runMovingClockExperiment,
+  movingClockStateAt,
+  movingClockStripScaleEnd,
+  guessPositionOnBars,
+  classifyMovingClockGuess,
+  timeDilationWorkedNumbers,
+} from './movingClockExperiment'
 
 describe('Moving Clock Experiment Physics', () => {
   it('observer elapsed time equals the lab duration', () => {
@@ -137,5 +144,114 @@ describe('Moving Clock State Over Lab Time', () => {
 
   it('is deterministic', () => {
     expect(movingClockStateAt(experiment, 3.3)).toEqual(movingClockStateAt(experiment, 3.3))
+  })
+})
+
+describe('Moving Clock bars: the learner\'s guess (audit update)', () => {
+  it('the scale ends at twice the lab duration', () => {
+    for (const d of [5, 10, 20, 30, 120]) {
+      expect(movingClockStripScaleEnd(runMovingClockExperiment(d, 0.5))).toBe(2 * d)
+    }
+  })
+
+  it('places a guess as a fraction of the scale: 0 at 0, 0.5 at the duration, 1 at twice the duration', () => {
+    const e = runMovingClockExperiment(10, 0.5)
+    expect(guessPositionOnBars(e, 0).fraction).toBe(0)
+    expect(guessPositionOnBars(e, 10).fraction).toBe(0.5)
+    expect(guessPositionOnBars(e, 20).fraction).toBe(1)
+    expect(guessPositionOnBars(e, 20).offEdge).toBeNull()
+  })
+
+  it('clamps a guess beyond the scale and flags the edge', () => {
+    const e = runMovingClockExperiment(10, 0.5)
+    const high = guessPositionOnBars(e, 25)
+    expect(high.fraction).toBe(1)
+    expect(high.offEdge).toBe('right')
+    const low = guessPositionOnBars(e, -3)
+    expect(low.fraction).toBe(0)
+    expect(low.offEdge).toBe('left')
+  })
+
+  it('gives the difference from each clock\'s real elapsed time (10 s at 0.5c, guess 9)', () => {
+    const e = runMovingClockExperiment(10, 0.5)
+    const g = guessPositionOnBars(e, 9)
+    expect(g.differenceFromMoving).toBeCloseTo(9 - 8.660254, 5)
+    expect(g.differenceFromLab).toBe(-1)
+  })
+
+  it('the real result does not depend on the guess', () => {
+    const e = runMovingClockExperiment(10, 0.5)
+    const before = { ...e }
+    guessPositionOnBars(e, 3)
+    guessPositionOnBars(e, 99)
+    expect(e).toEqual(before)
+    expect(runMovingClockExperiment(10, 0.5)).toEqual(before)
+  })
+
+  it('refuses a guess that is not finite', () => {
+    const e = runMovingClockExperiment(10, 0.5)
+    expect(() => guessPositionOnBars(e, NaN)).toThrow()
+    expect(() => guessPositionOnBars(e, Infinity)).toThrow()
+    expect(() => classifyMovingClockGuess(e, NaN)).toThrow()
+  })
+})
+
+describe('Moving Clock guess classification (the tutor\'s reaction lines)', () => {
+  const e = runMovingClockExperiment(10, 0.5)
+
+  it('a guess equal to the moving clock\'s reading is close to the actual', () => {
+    expect(classifyMovingClockGuess(e, e.movingClockElapsedTime)).toBe('close-to-actual')
+  })
+
+  it('a guess equal to the lab clock\'s reading is close to the lab', () => {
+    expect(classifyMovingClockGuess(e, 10)).toBe('close-to-lab')
+  })
+
+  it('a guess far from both is other', () => {
+    expect(classifyMovingClockGuess(e, 3)).toBe('other')
+    expect(classifyMovingClockGuess(e, 15)).toBe('other')
+  })
+
+  it('uses half the size of the effect as the margin', () => {
+    // 0.5c, 10 s: effect 1.340, margin 0.670
+    expect(classifyMovingClockGuess(e, 8.660254 + 0.66)).toBe('close-to-actual')
+    // 9.34 is inside the lab clock's margin instead (the two margins meet at 9.33), so it is close to the lab
+    expect(classifyMovingClockGuess(e, 8.660254 + 0.68)).toBe('close-to-lab')
+    expect(classifyMovingClockGuess(e, 8.660254 - 0.68)).toBe('other')
+  })
+
+  it('at 0c the margin is 0, so only an exact 10 is close to the actual', () => {
+    const rest = runMovingClockExperiment(10, 0)
+    expect(classifyMovingClockGuess(rest, 10)).toBe('close-to-actual')
+    expect(classifyMovingClockGuess(rest, 9.9)).toBe('other')
+  })
+})
+
+describe('Moving Clock worked numbers (the tutor\'s "Your numbers")', () => {
+  it('at 0.5c: v squared 0.25, 1 - v squared 0.75, factor 0.866', () => {
+    const n = timeDilationWorkedNumbers(0.5)
+    expect(n.vSquared).toBeCloseTo(0.25, 12)
+    expect(n.oneMinusVSquared).toBeCloseTo(0.75, 12)
+    expect(n.factor).toBeCloseTo(0.866, 3)
+  })
+
+  it('at 0c: 0, 1, 1', () => {
+    expect(timeDilationWorkedNumbers(0)).toEqual({ vSquared: 0, oneMinusVSquared: 1, factor: 1 })
+  })
+
+  it('at 0.8c: 0.64, 0.36, 0.6', () => {
+    const n = timeDilationWorkedNumbers(0.8)
+    expect(n.vSquared).toBeCloseTo(0.64, 12)
+    expect(n.oneMinusVSquared).toBeCloseTo(0.36, 12)
+    expect(n.factor).toBeCloseTo(0.6, 12)
+  })
+
+  it('the factor agrees with the experiment\'s own factor', () => {
+    expect(timeDilationWorkedNumbers(0.3).factor).toBe(runMovingClockExperiment(10, 0.3).timeDilationFactor)
+  })
+
+  it('rejects speeds outside 0 <= v < c', () => {
+    expect(() => timeDilationWorkedNumbers(1)).toThrow(RangeError)
+    expect(() => timeDilationWorkedNumbers(-0.1)).toThrow(RangeError)
   })
 })

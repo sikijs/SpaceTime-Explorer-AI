@@ -64,3 +64,63 @@ export function movingClockStateAt(
     distanceTravelled: experiment.velocity * SPEED_OF_LIGHT * labTime,
   }
 }
+
+// The bars picture runs from 0 to twice the lab duration, so the lab clock's bar ends halfway and there is room beyond it.
+export function movingClockStripScaleEnd(experiment: MovingClockExperimentResult): number {
+  return 2 * experiment.labTimeDuration
+}
+
+export interface GuessOnBars {
+  scaleEnd: number
+  fraction: number
+  offEdge: 'left' | 'right' | null
+  differenceFromMoving: number
+  differenceFromLab: number
+}
+
+// Where the learner's guess sits on the bars, and how far it is from each clock's real elapsed time. Never changes the result.
+export function guessPositionOnBars(experiment: MovingClockExperimentResult, guess: number): GuessOnBars {
+  if (!isFinite(guess)) {
+    throw new Error('The guess must be a finite number of seconds')
+  }
+  const scaleEnd = movingClockStripScaleEnd(experiment)
+  const raw = scaleEnd > 0 ? guess / scaleEnd : 0
+  return {
+    scaleEnd,
+    fraction: Math.min(1, Math.max(0, raw)),
+    offEdge: raw < 0 ? 'left' : raw > 1 ? 'right' : null,
+    differenceFromMoving: guess - experiment.movingClockElapsedTime,
+    differenceFromLab: guess - experiment.observerElapsedTime,
+  }
+}
+
+export type MovingClockGuessKind = 'close-to-actual' | 'close-to-lab' | 'other'
+
+// Margin: half the size of the effect. This margin is still awaiting the project owner's confirmation (spec, Implementation notes (tutor)).
+export function classifyMovingClockGuess(
+  experiment: MovingClockExperimentResult,
+  guess: number
+): MovingClockGuessKind {
+  if (!isFinite(guess)) {
+    throw new Error('The guess must be a finite number of seconds')
+  }
+  const margin = experiment.timeDifferential / 2
+  if (Math.abs(guess - experiment.movingClockElapsedTime) <= margin) return 'close-to-actual'
+  if (Math.abs(guess - experiment.observerElapsedTime) <= margin) return 'close-to-lab'
+  return 'other'
+}
+
+export interface TimeDilationWorkedNumbers {
+  vSquared: number
+  oneMinusVSquared: number
+  factor: number
+}
+
+// The three steps of the factor sqrt(1 - v^2), for the tutor's "Your numbers" paragraph.
+export function timeDilationWorkedNumbers(velocity: number): TimeDilationWorkedNumbers {
+  if (!(velocity >= 0 && velocity < SPEED_OF_LIGHT)) {
+    throw new RangeError('Velocity must satisfy 0 <= v < c')
+  }
+  const vSquared = (velocity * velocity) / (SPEED_OF_LIGHT * SPEED_OF_LIGHT)
+  return { vSquared, oneMinusVSquared: 1 - vSquared, factor: timeDilationFactorFor(velocity) }
+}
