@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { runTwoClockExperiment } from './twoClockExperiment'
+import { clockReadingsAt, guessPositionsOnStrip, runTwoClockExperiment, twoClockStripScaleEnd } from './twoClockExperiment'
 
 describe('Two Clock Experiment Physics', () => {
   it('both clocks start at zero', () => {
@@ -59,5 +59,77 @@ describe('Two Clock Experiment Physics', () => {
     const duration = 10
     const result = runTwoClockExperiment(duration)
     expect(result.endEvent.simulationTime).toBe(duration)
+  })
+})
+
+describe('clockReadingsAt', () => {
+  it('reads both clocks at 0, halfway and at the duration', () => {
+    expect(clockReadingsAt(10, 0)).toEqual({ clockReadingA: 0, clockReadingB: 0 })
+    expect(clockReadingsAt(10, 5)).toEqual({ clockReadingA: 5, clockReadingB: 5 })
+    expect(clockReadingsAt(10, 10)).toEqual({ clockReadingA: 10, clockReadingB: 10 })
+  })
+
+  it('keeps the two clocks equal at every sampled time, for each duration', () => {
+    for (const duration of [5, 10, 20, 30, 60]) {
+      for (let i = 0; i <= 20; i++) {
+        const readings = clockReadingsAt(duration, (i / 20) * duration)
+        expect(readings.clockReadingA).toBe(readings.clockReadingB)
+        expect(readings.clockReadingA).toBeCloseTo((i / 20) * duration, 10)
+      }
+    }
+  })
+
+  it('stays within 0 and the duration for a time outside the run', () => {
+    expect(clockReadingsAt(10, -3).clockReadingA).toBe(0)
+    expect(clockReadingsAt(10, 99).clockReadingB).toBe(10)
+  })
+})
+
+describe('guessPositionsOnStrip', () => {
+  it('ends the strip scale at twice the duration', () => {
+    expect(twoClockStripScaleEnd(5)).toBe(10)
+    expect(twoClockStripScaleEnd(10)).toBe(20)
+    expect(twoClockStripScaleEnd(30)).toBe(60)
+    expect(guessPositionsOnStrip(10, 0, 0).scaleEnd).toBe(20)
+  })
+
+  it('places each clock\'s guess on its own: the duration halfway, 0 at the start, twice the duration at the end', () => {
+    const middle = guessPositionsOnStrip(10, 10, 10)
+    expect(middle.clockA.fraction).toBe(0.5)
+    expect(middle.clockB.fraction).toBe(0.5)
+    const ends = guessPositionsOnStrip(10, 0, 20)
+    expect(ends.clockA.fraction).toBe(0)
+    expect(ends.clockB.fraction).toBe(1)
+    const mixed = guessPositionsOnStrip(10, 7, 12)
+    expect(mixed.clockA.fraction).toBeCloseTo(0.35, 10)
+    expect(mixed.clockB.fraction).toBeCloseTo(0.6, 10)
+    expect(mixed.clockA.offEdge).toBeNull()
+    expect(mixed.clockB.offEdge).toBeNull()
+  })
+
+  it('clamps a guess beyond the scale and flags the edge, for each clock separately', () => {
+    const result = guessPositionsOnStrip(10, 500, -4)
+    expect(result.clockA.fraction).toBe(1)
+    expect(result.clockA.offEdge).toBe('right')
+    expect(result.clockB.fraction).toBe(0)
+    expect(result.clockB.offEdge).toBe('left')
+  })
+
+  it('gives each guess minus that clock\'s real elapsed time', () => {
+    const result = guessPositionsOnStrip(10, 7, 12)
+    expect(result.clockA.differenceFromReal).toBe(-3)
+    expect(result.clockB.differenceFromReal).toBe(2)
+  })
+
+  it('does not change the real result whatever the guesses', () => {
+    const before = runTwoClockExperiment(10)
+    guessPositionsOnStrip(10, 7, 12)
+    guessPositionsOnStrip(10, 500, -4)
+    expect(runTwoClockExperiment(10)).toEqual(before)
+  })
+
+  it('refuses a guess that is not a finite number', () => {
+    expect(() => guessPositionsOnStrip(10, NaN, 10)).toThrow()
+    expect(() => guessPositionsOnStrip(10, 10, Infinity)).toThrow()
   })
 })
