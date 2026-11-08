@@ -82,3 +82,16 @@ Re-read of the component (`GravitationalWaveStandardSirenExperiment.tsx`, 702 li
 
 ## Not checked (this re-read)
 Not run in a browser. The amplitudes, the 75.4 and the true-amplitude stories are from a script that imports the module, not read off the page. No source page has been searched or fetched yet; the Hubble-constant range and the 40 Mpc and 3,017 km/s figures are not checked against any source.
+
+## Outcome (2026-11-07)
+The owner answered "all defaults" to the eight questions and "approve with defaults" to the draft in `07-draft-wording.md`, and it was built (commits `1420974`, `d25c358`, `32885bf`). What was done:
+1. **The four Parts, one Run at GW170817 at 40 Mpc, Start over** (always visible), and the links list and words box above Part 1.
+2. **One picture with three panels:** Panel A (the source and the arms), Panel B (the detected amplitude at Nearby, at this run's distance and at Far, with guess 1 as a white outline on the bar chosen) and Panel C (three possible sources that give the same detected amplitude, with guess 2 as a marker-only box). Part 2 has the event and distance buttons, a pink bar and a pink row, and the guesses drawn again.
+3. **The module** now holds the run summary, the published Hubble result, the possible sources, the two guess outcomes and matches, the marker choices, the arms' display transform and the learner's-choice comparison (10 new tests).
+4. **Both predictions had fixed answers that no control changes** ("nearby louder" and "no"); each now has a picture to be read against, and the answers are computed by the module (the second from the fact that several different true amplitudes give the same detected amplitude).
+5. **The arms' compression** (a square root, a gain of 125, a cap of 0.65) moved from the component into the module with tests, and the caption now says that a 100 times weaker wave is drawn only about 10 times less stretched.
+6. **The round trip** is kept and labelled: "a check that the method is consistent, not a measurement", in the check-up, Table 1's notes and the tutor.
+7. **The published figures were read from the Hubble-constant paper** (arXiv 1710.05835, through the helper): H0 = 70.0 +12.0/-8.0 km/s/Mpc (68.3% interval, 62 to 82), best distance 43.8 Mpc, velocity 3,017 ± 166 km/s. The page's old "62 to 170 km/s/Mpc (about ±15%)" line is gone. The page keeps the detection paper's rounded 40 Mpc, gets 75.4, and says the paper's own best distance would give 68.9; the check-up reads "inside the published range".
+8. **Answers removed** from the introduction, the Results ("right / off this time") and the pre-run captions. "Standard candle" and "standard siren" are defined only after the run (words box, Results, tutor), because a plain definition answers Prediction 2.
+
+Open: no plain official page explains a standard siren for a beginner or states that strain falls as 1 ÷ distance (§29 rule 3(c)); the helper's source pages were read through a summariser and the paper's numbers from its PDF text; the 100-watt bulb and Panel C's three distances are the agent's own; the owner has not reviewed the finished page. See the specification's "Audit update (2026-11-07)".
