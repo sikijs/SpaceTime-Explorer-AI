@@ -24,7 +24,7 @@ Every experiment below has an approved specification, a tested physics model, an
 
 | # | Title | Specification | Status |
 |---|---|---|---|
-| 1 | One clock | `01-clock.md` | Complete |
+| 1 | One clock | `01-clock.md` | Complete. Audit update (2026-11-08, the first experiment of the Relativity chapter in the audit; draft wording approved by the owner the same day with the defaults, including the tutor's five added points; committed `f0c21c3`, `fe91a2a`, `148debe`): the four Parts with the duration choice moved to Part 2 (Part 1 fixed at 10 seconds), an Event Interval strip with a 0 to twice-the-duration scale and a white YOUR GUESS mark (an edge arrow beyond the scale), a pink Drawing A for the learner's length, a caption and a "Where the real picture comes from" line for each picture, a words box, three NIST links (no real result, so no paper), an always-visible Start over in place of "Run Again", a 900 px page, and a tutor that names the white mark and marks the guess, with five added points; physics module unchanged, with 2 new tested functions and 6 physics tests and 11 render tests. The owner has not reviewed the finished page; not checked: the edge arrow by eye, other browsers, narrow widths, dark mode, a real learner. See "Audit update" in `01-clock.md` §20 |
 | 2 | Two clocks at rest | `02-two-clocks.md` | Implemented |
 | 3 | Moving clock | `03-moving-clock.md` | Complete; review items addressed |
 | 4 | The light clock: why time dilation happens | `04-light-clock.md` | Complete |
