@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest'
 import {
   runInvariantLightSpeedExperiment,
   invariantLightSpeedStateAt,
+  tickBarsScaleEnd,
+  guessPositionOnTickBars,
+  choiceMarker,
+  everydayHalfTripNumbers,
 } from './invariantLightSpeedExperiment'
+import type { RuleChoice } from './invariantLightSpeedExperiment'
 import { lightClockStateAt, runLightClockExperiment } from './lightClockExperiment'
 import { runMovingClockExperiment } from './movingClockExperiment'
 
@@ -212,6 +217,103 @@ describe('Invariant Light Speed over the whole learner range', () => {
       const end = invariantLightSpeedStateAt(r, r.actualRule.movingTickDuration)
       expect(end.everydayRule.phase).toBe(1)
       expect(end.actualRule.phase).toBe(1)
+      expect(end.everydayRule.clockReading).toBeCloseTo(r.restTickDuration, 10)
+      expect(end.actualRule.clockReading).toBeCloseTo(r.restTickDuration, 10)
+    })
+  })
+})
+
+describe('Marks for the learner\'s guesses and numbers for the tutor', () => {
+  const allSpeeds = Array.from({ length: 99 }, (_, i) => (i + 1) / 100)
+
+  it('the scales end at twice the rest tick (Part 1) and twice the actual-rule tick (Drawing A)', () => {
+    const half = runInvariantLightSpeedExperiment(0.5)
+    expect(tickBarsScaleEnd(half, 'rest')).toBe(2)
+    expect(tickBarsScaleEnd(half, 'actual')).toBeCloseTo(2 * 1.1547005383792515, 12)
+    const fast = runInvariantLightSpeedExperiment(0.8)
+    expect(tickBarsScaleEnd(fast, 'rest')).toBe(2)
+    expect(tickBarsScaleEnd(fast, 'actual')).toBeCloseTo(3.3333333333, 9)
+  })
+
+  it('a guess sits on Part 1\'s scale as a fraction: 0 at 0, 0.5 at the rest tick, 1 at 2 s', () => {
+    const r = runInvariantLightSpeedExperiment(0.5)
+    for (const rule of ['everyday', 'actual'] as const) {
+      expect(guessPositionOnTickBars(r, rule, 0).fraction).toBe(0)
+      expect(guessPositionOnTickBars(r, rule, 1).fraction).toBe(0.5)
+      expect(guessPositionOnTickBars(r, rule, 2).fraction).toBe(1)
+      expect(guessPositionOnTickBars(r, rule, 1).offEdge).toBeNull()
+    }
+  })
+
+  it('a guess beyond the scale is clamped to 1 and flagged right; a negative guess is clamped to 0 and flagged left', () => {
+    const r = runInvariantLightSpeedExperiment(0.5)
+    const far = guessPositionOnTickBars(r, 'actual', 5)
+    expect(far.fraction).toBe(1)
+    expect(far.offEdge).toBe('right')
+    const below = guessPositionOnTickBars(r, 'everyday', -1)
+    expect(below.fraction).toBe(0)
+    expect(below.offEdge).toBe('left')
+  })
+
+  it('the differences from the real ticks are exact at 0.5c', () => {
+    const r = runInvariantLightSpeedExperiment(0.5)
+    expect(guessPositionOnTickBars(r, 'everyday', 1.2).differenceFromReal).toBeCloseTo(0.2, 12)
+    expect(guessPositionOnTickBars(r, 'actual', 1.3).differenceFromReal).toBeCloseTo(1.3 - 1.1547005383792515, 12)
+    expect(guessPositionOnTickBars(r, 'everyday', 1).differenceFromReal).toBe(0)
+  })
+
+  it('the real results do not change with a guess', () => {
+    const before = runInvariantLightSpeedExperiment(0.5)
+    guessPositionOnTickBars(before, 'everyday', 9)
+    guessPositionOnTickBars(before, 'actual', -3)
+    choiceMarker(before, 'everyday')
+    expect(runInvariantLightSpeedExperiment(0.5)).toEqual(before)
+  })
+
+  it('a guess that is not finite is refused', () => {
+    const r = runInvariantLightSpeedExperiment(0.5)
+    expect(() => guessPositionOnTickBars(r, 'actual', NaN)).toThrow()
+    expect(() => guessPositionOnTickBars(r, 'everyday', Infinity)).toThrow()
+  })
+
+  it('the choice marker points at the chosen bar (both for "same"), and light\'s actual rule gives the longer tick at every allowed speed', () => {
+    const choices: RuleChoice[] = ['everyday', 'actual', 'same']
+    allSpeeds.forEach((v) => {
+      const r = runInvariantLightSpeedExperiment(v)
+      expect(choiceMarker(r, 'everyday').pointsAt).toBe('everyday')
+      expect(choiceMarker(r, 'actual').pointsAt).toBe('actual')
+      expect(choiceMarker(r, 'same').pointsAt).toBe('both')
+      choices.forEach((c) => expect(choiceMarker(r, c).longerTick).toBe('actual'))
+    })
+  })
+
+  it('at v = 0 the two rules give the same tick', () => {
+    const r = runInvariantLightSpeedExperiment(0)
+    expect(choiceMarker(r, 'actual').longerTick).toBe('same')
+  })
+
+  it('the everyday half-trip numbers at 0.5c are 0.5, 0.25, 0.559 and 1.118', () => {
+    const t = everydayHalfTripNumbers(runInvariantLightSpeedExperiment(0.5))
+    expect(t.rise).toBe(0.5)
+    expect(t.sidewaysHalf).toBeCloseTo(0.25, 12)
+    expect(t.diagonal).toBeCloseTo(0.5590169944, 9)
+    expect(t.roundTrip).toBeCloseTo(1.1180339887, 9)
+  })
+
+  it('the everyday half-trip numbers fit the right-triangle rule and the module\'s own path at every allowed speed', () => {
+    allSpeeds.forEach((v) => {
+      const r = runInvariantLightSpeedExperiment(v)
+      const t = everydayHalfTripNumbers(r)
+      expect(t.rise * t.rise + t.sidewaysHalf * t.sidewaysHalf).toBeCloseTo(t.diagonal * t.diagonal, 12)
+      expect(t.roundTrip).toBe(r.everydayRule.lightPath)
+      expect(t.roundTrip).toBeCloseTo(Math.sqrt(1 + v * v), 12)
+    })
+  })
+
+  it('the clock\'s own tick, which the tutor shows, is the rest tick: both moving clocks read it at the end of their tick', () => {
+    allSpeeds.forEach((v) => {
+      const r = runInvariantLightSpeedExperiment(v)
+      const end = invariantLightSpeedStateAt(r, r.actualRule.movingTickDuration)
       expect(end.everydayRule.clockReading).toBeCloseTo(r.restTickDuration, 10)
       expect(end.actualRule.clockReading).toBeCloseTo(r.restTickDuration, 10)
     })
