@@ -485,14 +485,15 @@ Brought to the newer rules of CLAUDE.md §14, §15 and §28 (`docs/AUDIT-PLAN.md
     | What a reference frame is, in a plain official page | **No plain official page found** (§29 rule 3(c)); the gap recorded for Experiment 2 (`02-two-clocks.md`, sources) still stands | 2026-11-08 |
     | The exact speed of light (299,792,458 m/s), "the fastest speed in the universe" | NIST, "Meter" (updated May 2026). **Considered and not linked:** a 2,500-word history of measurement, harder than a first-time learner's page | 2026-11-08 |
     | A real experimental result to cite | None: the numbers come from the formula this specification gives, not from a measurement, so there is no paper to link. (Real tests of time dilation exist but are not used on this page and are not proposed here.) | 2026-11-08 |
-    | The light clock's 15 cm example (30 cm per tick, about a billionth of a second); 0.5c as 150,000 km every second and about 600,000 times an airliner (taken as 900 km/h) | **No source: the agent's own arithmetic**, not in Experiment 4's specification. Please check | |
+    | The light clock's 15 cm example (30 cm per tick, about a billionth of a second) | Einstein-Online, "From light clocks to time dilation" (Max Planck Institute for Gravitational Physics; vol. 13, 2021): "at a mirror distance of only 15 centimeters... our clock would tick every billionth of a second". Read 2026-11-08 through a helper for Relativity 4 (the agent did not read it itself); added to this table on 2026-11-08 at the owner's request | 2026-11-08 |
+    | 0.5c as 150,000 km every second and about 600,000 times an airliner (taken as 900 km/h) | **No source: the agent's own arithmetic** (0.5 × 300,000 = 150,000 km/s; 150,000 ÷ 0.25 km/s = 600,000). Please check | |
 
 12. **Browser check (agent, 2026-11-08).** Part 1 and two Part 2 runs (20 s at 0.8c, then 10 s at 0c) with no console errors; the edge arrow with a guess of 25; the locked-guess note and Start over; the tutor's three questions and the explanation (the guess marked as 16.340 seconds more and 15.000 seconds more, points 1 to 4, no verdict before it); a 400 px wide frame (no horizontal overflow, the Part 2 buttons wrap). **One bug found by the owner and fixed:** the run timer could compute a slightly negative time (an animation frame's timestamp can be earlier than the moment the run began), the physics module rejected it, and the page went blank; progress is now clamped at 0.
 13. **Not done, and open.**
     - The owner has not reviewed the finished page.
     - **The tutor's margin** for the reaction lines (half the size of the effect) is still awaiting the owner's confirmation. At 10 s and 0.5c the two margins meet, so only a guess outside both gets no reaction line.
     - **No plain official page found for "light-second" or "reference frame"** (see the source table; §29 rule 3(c)).
-    - The 15 cm and airliner figures are unsourced arithmetic.
+    - The airliner comparison is unsourced arithmetic (the 15 cm light-clock figure is now sourced; see the source table).
     - The closing paragraph's last sentence ("The light clock, the next chapter, shows why it happens") and tutor point 4 say nearly the same; kept as approved.
     - At 400 px the text inside the drawings is about 6 to 7 px (the drawings are 580 px wide and scale down), as in Experiment 2.
     - Not checked: other browsers, keyboard use, every guess answer and Part 2 combination, the "Other" boxes, the words box and link by eye, a real learner. The app has no dark-mode styles, so none was checked.
