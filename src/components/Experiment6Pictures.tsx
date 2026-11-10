@@ -515,7 +515,7 @@ function LookFor({ items }: { items: Array<{ look: string; means: string; matter
   )
 }
 
-function CaptionBox({ children }: { children: ReactNode }) {
+export function CaptionBox({ children }: { children: ReactNode }) {
   return (
     <div
       style={{

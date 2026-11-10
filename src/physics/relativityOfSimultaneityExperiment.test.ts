@@ -3,7 +3,15 @@ import {
   runSimultaneityExperiment,
   labViewStateAt,
   rodViewStateAt,
+  actualOrderFor,
+  agreementMarkerTarget,
+  eventStripPositions,
+  markGuesses,
+  orderMarkerTarget,
+  PART1_STRIP_SCALE_END,
+  PART2_STRIP_SCALE_END,
 } from './relativityOfSimultaneityExperiment'
+import type { OrderChoice } from './relativityOfSimultaneityExperiment'
 import { runLengthContractionExperiment, REST_LENGTH } from './lengthContractionExperiment'
 
 const SPEEDS = [0.01, 0.1, 0.3, 0.5, 0.6, 0.8, 0.9]
@@ -152,5 +160,92 @@ describe('Relativity of Simultaneity Experiment Physics', () => {
       expect(() => rodViewStateAt(r, -1)).toThrow()
       expect(() => rodViewStateAt(r, NaN)).toThrow()
     })
+  })
+})
+
+describe('the strip of event times and the guesses (audit update)', () => {
+  const choices: OrderChoice[] = ['same', 'back', 'front']
+
+  it('the strip positions are the module\'s own event times divided by the scale', () => {
+    const r = runSimultaneityExperiment(0.5)
+    const p = eventStripPositions(r, PART1_STRIP_SCALE_END)
+    expect(p.labBack).toBeCloseTo(r.backEventLabTime / 0.5, 12)
+    expect(p.labFront).toBeCloseTo(r.frontEventLabTime / 0.5, 12)
+    expect(p.rod).toBeCloseTo(r.rodFrameEventTime / 0.5, 12)
+    expect(p.labGap).toBeCloseTo(0.28868, 5)
+    // The worked numbers of the caption at 0.5c: 0.144 s, 0.433 s, 0.250 s.
+    expect(r.backEventLabTime).toBeCloseTo(0.14434, 5)
+    expect(r.frontEventLabTime).toBeCloseTo(0.43301, 5)
+    expect(r.rodFrameEventTime).toBeCloseTo(0.25, 12)
+  })
+
+  it('at 0c the two lab dots sit on top of each other and on the rod\'s dot, and the gap is 0', () => {
+    const p = eventStripPositions(runSimultaneityExperiment(0), PART2_STRIP_SCALE_END)
+    expect(p.labBack).toBeCloseTo(p.labFront, 12)
+    expect(p.labBack).toBeCloseTo(p.rod, 12)
+    expect(p.labGap).toBe(0)
+  })
+
+  it('the rod row does not move with the speed, and the lab gap grows with it (the Part 2 values)', () => {
+    const speeds = [0, 0.1, 0.3, 0.5, 0.8, 0.9]
+    const gaps = speeds.map((v) => eventStripPositions(runSimultaneityExperiment(v), PART2_STRIP_SCALE_END))
+    for (const g of gaps) expect(g.rod).toBeCloseTo(0.25 / 1.2, 12)
+    for (let i = 1; i < gaps.length; i++) expect(gaps[i].labGap).toBeGreaterThan(gaps[i - 1].labGap)
+    expect(gaps.map((g) => g.labGap.toFixed(3))).toEqual(['0.000', '0.050', '0.157', '0.289', '0.667', '1.032'])
+  })
+
+  it('every speed up to 0.9c fits the Part 2 scale, and a 0.9c run does not fit Part 1\'s scale', () => {
+    for (let v = 0; v <= 0.9 + 1e-9; v += 0.01) {
+      expect(() => eventStripPositions(runSimultaneityExperiment(v), PART2_STRIP_SCALE_END)).not.toThrow()
+    }
+    expect(() => eventStripPositions(runSimultaneityExperiment(0.9), PART1_STRIP_SCALE_END)).toThrow(RangeError)
+    expect(() => eventStripPositions(runSimultaneityExperiment(0.5), 0)).toThrow(RangeError)
+    expect(() => eventStripPositions(runSimultaneityExperiment(0.5), NaN)).toThrow(RangeError)
+  })
+
+  it('the order marker points at the guessed end, or joins both dots for "at the same time"', () => {
+    const r = runSimultaneityExperiment(0.5)
+    const p = eventStripPositions(r, PART1_STRIP_SCALE_END)
+    expect(orderMarkerTarget(r, 'back', PART1_STRIP_SCALE_END)).toEqual({ pointsAt: 'backDot', fractions: [p.labBack] })
+    expect(orderMarkerTarget(r, 'front', PART1_STRIP_SCALE_END)).toEqual({ pointsAt: 'frontDot', fractions: [p.labFront] })
+    expect(orderMarkerTarget(r, 'same', PART1_STRIP_SCALE_END)).toEqual({ pointsAt: 'bothDots', fractions: [p.labBack, p.labFront] })
+  })
+
+  it('the agreement marker joins both rows and has no size', () => {
+    expect(agreementMarkerTarget('agree')).toEqual({ joins: 'bothRows', choice: 'agree' })
+    expect(agreementMarkerTarget('disagree')).toEqual({ joins: 'bothRows', choice: 'disagree' })
+  })
+
+  it('a guess never changes a real value: the result is identical before and after every marker is built', () => {
+    for (const v of [0, 0.5, 0.9]) {
+      const before = runSimultaneityExperiment(v)
+      const copy = JSON.parse(JSON.stringify(before))
+      for (const c of choices) orderMarkerTarget(before, c, PART2_STRIP_SCALE_END)
+      for (const a of ['agree', 'disagree'] as const) {
+        agreementMarkerTarget(a)
+        markGuesses(before, 'back', a)
+      }
+      expect(before).toEqual(copy)
+      expect(runSimultaneityExperiment(v)).toEqual(copy)
+    }
+  })
+
+  it('the actual order is "at the same time" only at 0c, and the back end first at every speed above 0', () => {
+    expect(actualOrderFor(runSimultaneityExperiment(0))).toBe('same')
+    for (const v of [0.01, 0.1, 0.5, 0.9]) expect(actualOrderFor(runSimultaneityExperiment(v))).toBe('back')
+  })
+
+  it('the marking says which choice was made and what the run showed, with no score', () => {
+    const r = runSimultaneityExperiment(0.5)
+    const m = markGuesses(r, 'same', 'agree')
+    expect(m.orderChoice).toBe('same')
+    expect(m.actualOrder).toBe('back')
+    expect(m.labGap).toBeCloseTo(0.28868, 5)
+    expect(m.rodGap).toBe(0)
+    expect(m.agreementChoice).toBe('agree')
+    expect(m.rowsAgree).toBe(false)
+    expect(Object.keys(m).some((k) => /score|right|wrong|correct/i.test(k))).toBe(false)
+    // At 0c both rows put the two arrivals together.
+    expect(markGuesses(runSimultaneityExperiment(0), 'same', 'agree').rowsAgree).toBe(true)
   })
 })
