@@ -2,6 +2,8 @@
 
 **Status: APPROVED by the project owner. The defaults proposed under "Decisions Needing Human Review" stand unless changed.** The title is a working title (see Decision 7).
 
+**Audit update, 2026-11-09 (approved by the owner; not yet built).** The page is rewritten so that its focus is only on **length**. The physics, the numbers and the tested model do not change. The full approved learner-facing wording is in `docs/audit/relativity-of-time-and-motion/06-length-focus-draft-wording.md`, which builds on `06-draft-wording.md` (page layout, picture marks, links, words box). Where those files and the older text below differ, **they win**; the section "Length-focus rewrite and audit update (2026-11-09)" at the end lists every change. The "Implementation notes" below record the build as of 2026-10-13 and are superseded where that section says so.
+
 **Implementation: built and reviewed.** The implementation notes below record how the specification was realised. Items still awaiting the owner's decision are listed under "Open items after implementation" in "Decisions Needing Human Review".
 
 ## Overview
@@ -11,6 +13,8 @@ Experiment 4 built a light clock with its mirrors **across** the direction of mo
 Experiment 6 builds that missing clock. Its mirrors are in a line along the motion, so, seen from the lab, the pulse has to chase the moving front mirror and then meet the moving back mirror on the way back. Time dilation (Experiments 3 and 4) says this clock must also tick slowly, by the same factor as any other moving clock. With light fixed at `c` in the lab, that is only possible if the clock's length, seen from the lab, is **shorter** than its length at rest. The experiment lets the learner see this: with an unchanged length the tick comes out too long, and with a shorter length it matches.
 
 The effect is named **length contraction** only after the learner has observed it, as was done for time dilation in Experiment 3.
+
+**Focus (owner, 2026-11-09).** The question of this experiment is only: *as seen from the lab, how long is the moving clock compared with the same clock standing still?* The length of the clock is the distance between its mirrors. Time is not the subject; a tick is only the **tool** used to find the length, and the page says so plainly. The tool is explained to the learner: because light goes at `c` in the lab, **the time the pulse takes tells us a length** (distance = speed × time), as an echo tells us how far a cliff is. At this point in the course a moving length cannot be measured directly, because that needs relativity of simultaneity (Experiment 7), so the tick is the only route.
 
 This is a new experiment beyond the progression planned in `01-clock.md` §18, which ends at Experiment 5. It was chosen by the project owner from four proposed directions (simultaneity, length contraction, spacetime diagram, twin journey).
 
@@ -156,7 +160,8 @@ The physics lives in a new module independent of React (working name `src/physic
 
 ## Learner Controls
 
-- **Speed of the moving clock:** presets 0.1c, 0.3c, 0.5c, 0.8c, or Other. Proposed custom range **0.01c to 0.9c** (Experiments 3 to 5 allow up to 0.99c), because the same-length tick grows as `1 / (1 − v²)`, about 50 seconds at 0.99c (see Decision 5). The interface explains what `c` means, as before.
+- **Part 1 has no speed control:** the run is fixed at **0.5c**.
+- **Part 2 (after the first run finishes):** the speed of the moving clock, presets 0.1c, 0.3c, 0.5c, 0.8c, or Other from **0.01c to 0.9c**, and "Run your speed". The cap is 0.9c because the same-length tick grows as `1 / (1 − v²)`, about 50 seconds at 0.99c (Decision 5). The speed changes the clocks and Drawing A (marked in pink); it never changes Part 1's pictures, Part 3 or the guesses.
 - No duration or length control: each run shows one tick of each clock.
 - Animation playback speed is a presentation choice only and must not change any result.
 
@@ -164,13 +169,13 @@ The physics lives in a new module independent of React (working name `src/physic
 
 ## Prediction Activity
 
-Before running, the learner sees the scenario and the assumption:
+Two guesses, both about the **length of the moving clock**, both required. START is disabled until both are entered. The prediction is not scored. It never changes the real pictures, tables or numbers, which come from the physics. The guesses are drawn on Part 1's length strip in white and shown again beside the results (`CLAUDE.md` §14, "Predictions and the Real Results", applied to this experiment in its audit of 2026-11-09).
 
-> The clock standing still has its mirrors 0.5 light-seconds apart, and one tick takes 1 second. Another identical clock moves along its own length at [speed]. Time dilation (Experiments 3 and 4) says one tick of the moving clock takes [time dilation tick] seconds on the lab's clocks. Light always goes at c in the lab. **How far apart, in light-seconds, must the two mirrors of the moving clock be, as seen from the lab, for its tick to take that long?**
+> The clock standing still is 0.5 light-seconds long, and one tick takes 1 second. Another identical clock moves along its own length at 0.5c. Time dilation says one tick of the moving clock takes [1.155] seconds on the lab's clocks. Light always goes at c in the lab. **Guess 1:** for its tick to take that long, the length of the moving clock, as seen from the lab, must be: *the same length as at rest / shorter than at rest / longer than at rest.* **Guess 2:** how long must it be, in light-seconds? Type a number.
 
-The prediction has two parts, both required (owner's decision after implementation, combining the alternatives in Decision 4): **Part 1**, a choice of *as far apart as at rest*, *closer together* or *farther apart*; **Part 2**, a number of light-seconds. START is disabled until both are entered, as in Experiments 1 to 5. The prediction is not scored.
+After START the guess is locked ("Your prediction is locked while you try other speeds. To change it, press Start over."). **Start over** is always visible, greyed out until there is a guess or a run and while a run plays; there is no "Change prediction" button. It clears the guess, the runs, the results and the tutor's progress.
 
-Many learners will predict 0.5, the rest length, which sets up the observation. (See Decision 4 for alternatives.)
+Many learners will predict 0.5, the rest length, which sets up the observation.
 
 ---
 
@@ -178,27 +183,40 @@ Many learners will predict 0.5, the rest length, which sets up the observation. 
 
 ### Introductory text
 
-Before the learner predicts, the interface explains in plain words (wording to be drafted for the owner's approval, `CLAUDE.md` §28.1):
+Above Part 1, with no Part heading: the introduction, "Want to know more?" and a collapsed "Words and formulas" box. The full approved wording is in `06-length-focus-draft-wording.md` section 2. In order:
 
-- The question: in Experiment 4 the mirrors were across the motion; what if they are in a line along the motion?
-- A reminder of the light clock, a tick, and the mirror distance in km and light-seconds, with the same plain wording as Experiments 4 and 5.
-- What "the length of the moving clock, seen from the lab" means, in everyday words, and that the two mirrors move together so this length stays the same during the run.
-- The assumption that time dilation applies to every moving clock, and the time dilation tick for the chosen speed.
-- Why the pulse's trip is different in the lab: it chases the moving front mirror and meets the moving back mirror. This is told as a setup, not as the answer to the prediction.
-- What the learner will see and their job (guesses are not scored), then the simplifying assumptions with the terms reference frame and lab time defined as before.
-- The term **length contraction** is **not** used here. It is named after the observation.
+1. **The question and the car picture:** does a moving thing change length? One light clock, as seen from the lab.
+2. **Step 1, our ruler, a light clock.** The **length of the clock is the distance from the back mirror to the front mirror**; one trip of the pulse back and forth is a tick, used later only as a tool.
+3. **Step 2, the length of the clock standing still:** the light-second, half a light-second (about 150,000 km), a tick of exactly 1 second; real light clocks are much smaller.
+4. **Step 3, how the travel of light measures a length** (added 2026-11-09). Distance = speed × time, with three everyday pictures (an echo off a cliff, a ten-minute walk, a corridor crossed at a steady pace). Light goes at `c` in the lab, so the pulse's crossing time gives the length: 0.5 s across means 0.5 light-seconds, and a light-second is a length measured by light's travel. For the moving clock each possible length gives its own round trip (a table of two possible lengths at 0.5c, 0.500 giving 1.33 s and 0.400 giving 1.07 s, which names no answer). **Reworded 2026-11-10 (owner-approved):** the example is introduced as "Now the moving clock" with the key point that every length gives its own round-trip time; "forward" and "back" are defined; a paragraph explains why forward takes 1.00 s for a 0.500 clock at 0.5c (the pulse gains on the running-away front mirror at only c − 0.5c); it ends with a "What to notice" line.
+5. **Step 4, what moves.** Both mirrors move together, so the length does not change during the run. The pulse is **not carried along by the clock**: it keeps going at `c` in the lab and the clock's motion adds nothing to that speed. So what matters is the distance between the pulse and the mirror it is heading for. Forward trip (the bus pulling away), return trip (the friend walking toward you), the walkway ball picture, and a worked example reframed as *trying one possible length* (0.5c, the same length as at rest: 1 s forward, about 0.33 s back, about 1.33 s in all), stated to be only what that one possible length gives.
+6. **Step 5, the rule we keep:** time dilation applies to every moving clock, however turned, so one tick of the moving clock takes the time that time dilation gives; light always goes at `c` in the lab in both directions.
+7. **Step 6, how we find the length:** we cannot lay a ruler along a clock speeding past, and measuring a moving length directly needs an idea from a later chapter; so we find the length with light, as in Step 3: *what length must the moving clock have, as seen from the lab, for its tick to take exactly the time dilation tick?* Compared with the standing-still length. **Added 2026-11-10 (owner-approved), after Step 6:** "A trap to avoid: the clocks are not built shorter" (the tick is known from Step 5 and the length is the unknown, so the tie shorter-clock-shorter-tick is used backwards, like an echo that gives the cliff's distance; the drawn clocks are trial lengths) and "A small worked example with invented numbers" (an invented tick of 2.0 s at 0.5c: 0.500 gives 1.33 s, not it; 0.750 gives 1.50 + 0.50 = 2.00 s, it; numbers from `lengthForTick`). Neither names the real tick or length.
+8. **What you will see (third clock: "a different trial length (amber)", not "shorter"), your job, the statement about predictions and the controls, "Some new words"** (as in `06-draft-wording.md` 1g to 1j, with length words), and **What we assume** (no gravity, constant speed, clocks start together, the lab as a reference frame).
+
+The introduction does **not** say which length fits, that it is shorter, the factor, or the words "length contraction". Those stay with the tutor (§12).
 
 ### Display
 
-Three panels in the same design language as Experiments 4 and 5, with the mirrors drawn along a horizontal line:
+The page is in **four Parts** below the introduction (`CLAUDE.md` §14): **Part 1** (amber, "Predict, then watch"), **Part 2** (pink, "Now try it yourself", appears when the first run finishes), **Part 3** (teal, "The results", appears when the first run finishes) and **Part 4** (blue, "The tutor", appears when the first run finishes). Each starts with a "What we are about to do" lead, given in `06-length-focus-draft-wording.md` section 4.
 
-1. **Rest clock.**
-2. **Moving clock: mirrors as far apart as at rest** (the "same length" version).
-3. **Moving clock: mirrors closer together** (the "shorter length" version).
+**Names (length-first, 2026-11-09):** *Rest clock* (blue, length 0.500 light-seconds); *Moving clock, same length as at rest* (violet, labelled **IMAGINED**); *Moving clock, shorter* (amber). The prediction choices are *the same length as at rest / shorter than at rest / longer than at rest*. The names replace "mirrors as far apart as at rest" and "mirrors closer together".
 
-The panel names were changed after implementation, at the owner's request, to describe the mirror distance in plain words rather than "length". The words "same length" and "shorter length" remain only in this specification and the code's variable names.
+**Part 1** shows the three clock panels in the Experiment 4 and 5 design language, with the mirrors on a horizontal line and:
 
-Each panel shows the two mirrors, the pulse moving forward and back, the path of the pulse, and the clock's own-time readout in the Experiment 3 to 5 style. The moving clocks also show dashed "start" markers for where the mirrors started, as in Experiments 4 and 5. The forward and return legs are drawn on slightly different heights, only so both legs can be seen; the offset has no physical meaning and the caption must say so (see Decision 8). All panels share one scale so lengths can be compared by eye.
+- every component labelled on the canvas (panel titles, "Back mirror", "Front mirror", "Light pulse", "Path of the light", "Where the mirrors started", "front mirror when the pulse hit it");
+- a **double-headed arrow between the two mirrors, labelled "length"**, on each panel (the number appears when the run ends);
+- the clock readouts and "Lab time";
+- when the run ends, the **length strip**, titled "Length of each clock, seen from the lab": three bars on one scale, 0 to 1 light-second (twice the rest length), blue 0.500, violet 0.500 (imagined) and amber 0.433 at 0.5c, with each bar's number and, **under it, the pulse's trip times** (for example "pulse: 0.866 s forward, 0.289 s back, tick 1.155 s"; the rest clock "0.5 s across, tick 1.000 s");
+- the **white guess marks**: a white dashed line across the two moving bars at the guessed length, a white dot on the amber bar and a prominent box "YOUR GUESS: N light-seconds long" joined to it by a line (an arrow at the edge and "(off the scale)" for a guess beyond the scale), and a white tag for the choice, joined to the bar it names (for "longer", an arrow past the end of the rest bar), the caption saying it is **only a marker**. The marks appear only when the strip appears (§12);
+- a "Where the real picture comes from" line under the panels and under the strip, separating **measured** (nothing), **calculated here** and **imagined for the question**;
+- two captions, "How to read the three light clocks" (from the start) and "How to read the length bars" (with the strip), written as in section 6 of the draft wording, with every "what to look for" item in three parts (**Look at / What it means / Why it matters**) and a bullet "How each bar's length was found" that connects the pulse's trip times to the lengths.
+
+The forward and return legs are drawn at slightly different heights, only so both can be seen; the caption says the offset has no physical meaning (Decision 8). All panels share one scale.
+
+**Part 2** shows the controls, a live set of three panels for the chosen speed and **Drawing A**, "Length of the moving clock at your speed": the same length strip on the same 0 to 1 scale at every speed, the speed written in pink, no white marks, and "Runs so far", one line per run, led by the lengths. Before any run: "Not run yet. Choose a speed and press Run your speed; the drawing for it will appear here." The note beside the controls says the guesses do not change the drawings but the speed does.
+
+The colour code: white only for the learner's guess; pink only for the learner's own speed; violet for the imagined clock.
 
 ### Run
 
@@ -223,19 +241,17 @@ Playback is slowed for viewing and is chosen so that no run lasts more than abou
 
 ## Results Display
 
-After the run, show values only, neutrally (Predict → Experiment → Observe → Explain):
+**Part 3**, length first, values shown neutrally (Predict, Experiment, Observe, Explain). Directly under the lead, "Where these numbers come from": **Measured:** nothing on this page. **Calculated here:** the lengths, tick times and light speeds, from the speed you ran. **Imagined for the question:** the violet clock. Then:
 
-- Rest clock: length, tick duration, light speed.
-- For each moving clock: length seen from the lab (light-seconds and as a fraction of the rest length), forward leg time, return leg time, tick duration on the lab's clocks, light speed on each leg, and the difference between its tick and the time dilation tick.
-- The time dilation tick for this speed, from Experiment 3 and 4.
-- The learner's prediction of the length, next to the two lengths shown.
+- The moving clock speed (0.5c) with the note on `c` and the light-second.
+- **The length we are trying to find:** the rest clock's length, and each moving clock's length seen from the lab, in light-seconds and as a fraction of the rest length.
+- **How we found it: light's travel time** (distance = speed × time; 0.500 s across is 0.500 light-seconds; each possible length gives its own trips and tick; we look for the length whose tick is the time dilation tick).
+- The tick that time dilation gives, from Experiments 3 and 4.
+- One item per clock, headline "Length: …", then the pulse's trips and one tick, the light speed on each leg and the difference from the time dilation tick, each with "What it is / What it means with the real numbers / Why it matters" and one sentence "The pulse's trips took X s forward and Y s back, so this length gives a tick of Z s."
+- A "your guess" tag on each moving clock's length line and the line "Your guesses are drawn on Part 1's strip as a white mark and a white marker."
+- **Light's speed, seen from the lab**, with "Why it matters".
 
-Neutral presentation first; the interpretation comes from the tutor after the learner has responded. Values to three decimal places, as before.
-
-### Implementation notes (results)
-
-- The results panel appears when the run ends and shows values only, with the plain labels used in Experiments 4 and 5: the moving clock speed, a note on `c` and the light-second, the tick that time dilation gives, the rest clock's length, tick and light speed, and for each moving clock the length seen from the lab (in light-seconds and as a fraction of the rest length), the time for the pulse's trip forward and trip back, the tick on the lab's clocks, the light speed on each leg, and the difference from the time dilation tick.
-- A difference below the shown precision reads 0.000 s. The learner's predicted choice and length are shown beside the two mirror distances, and the tutor's comparison step (step 2) quotes both. The panel gives no verdict.
+No check-up and no setting-following table: the page computes each tick from the same geometry a check would use, so a check-up would be circular, and the control only moves marks and numbers (owner's default, 2026-11-09). Values to three decimal places. The interpretation comes from the tutor.
 
 ---
 
@@ -295,11 +311,11 @@ None approved. A natural follow-up, for the owner to decide, is **relativity of 
 
 Follows the pattern of Experiments 3 to 5 and the plain-language style of all chapters. No pre-run step, silent during the run, each step after the run needs a typed answer.
 
-- **After the run:**
-  1. Observation: "Look at the two moving clocks. What is different between them? Think about how long each pulse's trip forward and back took."
-  2. Prediction comparison: the learner's predicted length beside the two lengths shown, and the two ticks beside the time dilation tick. No verdict.
-  3. Conceptual question: "Time dilation says the tick should take [time dilation tick] seconds. Light goes at c in both clocks. What would have to change about the clock to fix the tick?"
-  4. Explanation, a numbered walk-through using the run's numbers: (1) the trip forward is long because the front mirror moves away, the trip back is short because the back mirror moves toward the pulse; (2) with the rest length, the two legs add up to more than time dilation allows; (3) light cannot speed up and the tick must match time dilation, so the distance between the mirrors, seen from the lab, must be shorter, by the factor `√(1 − v²/c²)`, the same number as in Experiment 3; (4) this effect is called **length contraction**; (5) it is only the length along the motion (across it, as in Experiments 4 and 5, nothing changes); (6) two things to remember: the "same length" clock is a "what if", and the argument rests on the assumption that time dilation applies to every clock.
+- **After the run** (wording in `06-length-focus-draft-wording.md` section 9; no pre-run step, silent during the run, each step after the run needs a typed answer):
+  1. **Observe:** look at the three clocks and the length strip; what is different between the two moving clocks, how long each pulse's trips took, and what a trip time tells us about a length.
+  2. **Compare:** the learner's choice (the white marker) and number (the white mark) beside the imagined and the shorter clock's length. No verdict, no score.
+  3. **Conceptual:** time dilation says the tick should take [1.155] seconds; light goes at `c` in both clocks; what would have to change about the *length* of the clock to fix its tick?
+  4. **Explanation**, length first, with the run's numbers: (1) what we found, the moving clock is shorter as seen from the lab (0.433 against 0.500 at 0.5c); (2) **how we found it, light as a tape measure** (distance = speed × time, the echo and the corridor, the two trips with the bus and friend picture, 0.500 giving 1.333 s and 0.433 giving 1.155 s); (3) **what fits**, only 0.433 gives the 1.155 s time dilation needs; (4) by how much, rest length × time dilation factor (0.500 × 0.866 = 0.433); (5) the name **length contraction**, with the note that someone riding along still measures the rest length; (6) only along the motion; (7) two things to remember (the assumption, and that only the length along the motion changes). Then **Your guesses, marked** (no score, no "right" or "wrong": the choice, and the number as more than, less than or the same as the length that fits), and **Try it in Part 2** (0.1c, 0.8c, 0.9c lengths from the module).
 - The tutor must state that the argument depends on that assumption and must not present the result as derived without it.
 - The tutor must not describe how the lab looks to the moving clock, and must not add physics beyond this specification.
 
@@ -326,6 +342,13 @@ Follows the pattern of Experiments 3 to 5 and the plain-language style of all ch
 10. **Evidence and the reverse view.** This draft says nothing about experimental evidence (as in Experiment 5) and does not describe how the lab looks from the moving clock. Confirm.
 11. **Chapter summary and Experiment 5's "What's next".** Done: Experiment 5's "What's next" now leads into Experiment 6, and Experiment 6 has its own summary, which says these are all the experiments for now.
 
+### Decisions revisited on 2026-11-09
+
+- **Decision 3 (hint in the labels):** the names are now length-based ("same length as at rest (imagined)", "shorter"); the owner approved them and that "shorter" is a candidate the learner may choose from, not a verdict.
+- **Decision 4 (prediction form):** the two-part prediction stays, now worded as lengths: *same / shorter / longer* and a number.
+- **Decision 7 (title):** "Does Motion Change Length?" is kept; the page now answers to it.
+- **Decision 9 (plain definition of length):** the length of the clock is the distance from the back mirror to the front mirror; the mirrors move together, so it does not change during the run. Step 6 states that a moving length cannot be measured directly yet and that we find it with light.
+
 ### Open items after implementation
 
 - **The own-time readouts.** Resolved: the tutor's step 2 now explains that the same-length clock's own display shows more than 1 second after one tick, so this version cannot be right (Decision 6).
@@ -334,6 +357,31 @@ Follows the pattern of Experiments 3 to 5 and the plain-language style of all ch
 - **Label hint (Decision 3).** The panel names "mirrors as far apart as at rest" and "mirrors closer together" still hint at the answer. The owner chose these names; kept as chosen (2026-10-13, owner delegated the choice to Claude), since the neutral alternatives in Decision 3 would make the diagram harder to read.
 - **Visual limits.** In narrow windows the drawings shrink to about 213×33 pixels; at high speeds the two "start" labels of the shorter clock nearly touch; at 0.01c the difference between the ticks is too small to show at three decimals.
 - **Zero or negative predictions** are accepted, as in earlier experiments.
+
+---
+
+## Length-focus rewrite and audit update (2026-11-09)
+
+Owner decisions: **Option A**, keep the physics and rewrite the wording so that the focus is only on length; the connection between light's travel and length is explained (Step 3, "how the travel of light measures a length", with three everyday pictures: echo, walk, corridor), then carried through the Part 1 caption (a bullet and a "Look at the trip times" item), the results (a first item, "How we found it: light's travel time") and the tutor (explanation point 2, "light as a tape measure", and point 3, "what fits").
+
+**What changes in the build (later, one step at a time):** text and labels; the length arrow on each panel; the length strip with trip-time text under each bar; the white guess marks; the four Parts; Start over; the links and the words box; the order of the results; the tutor. **No change to the physics model or its numbers.** Choice names `'closer'` and `'farther'` become `'shorter'` and `'longer'` (with `'same'`), with their tests. New module functions (`gapBarsScaleEnd`, `guessPositionOnGapBars`, `choiceMarker`, `markGuess`) and their eight tests are listed in `06-draft-wording.md` section 10; names there may be renamed "length" for "gap". One new test: the strip's three numbers equal `restLength`, `sameLength.lengthInLab` and `shorterLength.lengthInLab`; trip-time labels equal the module's leg durations.
+
+**Links (searched and fetched 2026-11-09; re-checked for the length focus).** Linked from the start (four): NASA Science "How Big is Space?"; NASA Glenn "How 'Fast' is the Speed of Light?"; NASA Space Place "Is Time Travel Possible?"; NASA ISTP "Frames of Reference: The Basics". **Held back until after the tutor** (it says moving things are measured shorter): Einstein Online, "Elementary Tour, part 3: The relativity of space and time".
+
+| Idea | Source | Status |
+|---|---|---|
+| Speed of light, light-second | NASA Science; NASA Glenn | Linked; neither gives the term "light-second" |
+| Time dilation (the rule kept) | NASA Space Place | Linked; about time travel, not clocks and mirrors |
+| Reference frame | NASA ISTP | Linked; old (2004) |
+| Length contraction | Einstein Online | Held back until after the tutor |
+| Length contraction, NASA, ESA or CERN | none found and fetched | **Gap (§29 rule 3(c))**. Not linked: Physics Classroom (HTTP 403, not official), OpenStax 5.4 (college text with a muon example), Wikipedia mirrors and revision sites |
+| A NASA space-station crew letter on shrinking along the motion | `spaceflight.nasa.gov/station/crew/exp7/luletters/lu_letter13.html` | **Not read: HTTP 403, no text came back. Not linked.** If the owner wants it, it must be read another way first; it would be held back like Einstein Online |
+| Einstein's 1905 paper | none | Not linked (the owner's answer); the Wiley page returned HTTP 403 and an archival copy was not found |
+| Real results | none | The length found is calculated, not measured, so there is no paper to link |
+
+**Facts that may change:** none; every number comes from the geometry above. The link pages are as seen on 2026-11-09 and were read through a helper that returned summaries, not raw text, so the quotes should be spot-checked in a browser before the wording is final (owner accepted, flagged here).
+
+**Open:** the length strip's trip-time text may crowd at narrow widths and needs a check in a browser; Experiments 4 and 5 still have their older source note at the bottom of Part 3 (the owner has not decided whether to change them); Experiment 5's "When the run ends" list was rewritten on 2026-11-09 and is not in its specification yet.
 
 ---
 

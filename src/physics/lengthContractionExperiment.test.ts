@@ -2,6 +2,13 @@ import { describe, it, expect } from 'vitest'
 import {
   runLengthContractionExperiment,
   lengthContractionStateAt,
+  lengthBarsScaleEnd,
+  guessPositionOnLengthBars,
+  choiceMarker,
+  markGuess,
+  roundTripForLength,
+  lengthForTick,
+  lengthBarRows,
   REST_LENGTH,
 } from './lengthContractionExperiment'
 import { runLightClockExperiment, REST_TICK_DURATION } from './lightClockExperiment'
@@ -310,5 +317,183 @@ describe('Length Contraction over the speeds the interface allows', () => {
     // Playback is 2 real seconds per lab second, so the slowest run at 0.9c must stay under 15 seconds.
     const r = runLengthContractionExperiment(0.9)
     expect(r.sameLength.tickDuration * 2).toBeLessThan(15)
+  })
+})
+
+describe('The learner\'s guess drawn beside the real result', () => {
+  const at = (v: number) => runLengthContractionExperiment(v)
+
+  it('the gap bars always run to twice the rest gap, 1 light-second, at every speed', () => {
+    for (const v of SPEEDS) {
+      expect(lengthBarsScaleEnd(at(v))).toBeCloseTo(2 * REST_LENGTH, 12)
+      expect(lengthBarsScaleEnd(at(v))).toBeCloseTo(1, 12)
+    }
+  })
+
+  it('no real gap is longer than half the scale, so the real bars always fit', () => {
+    for (const v of SPEEDS) {
+      const e = at(v)
+      expect(e.sameLength.lengthInLab).toBeLessThanOrEqual(lengthBarsScaleEnd(e) / 2 + 1e-12)
+      expect(e.shorterLength.lengthInLab).toBeLessThanOrEqual(lengthBarsScaleEnd(e) / 2 + 1e-12)
+    }
+  })
+
+  it('a guess of 0.5 sits at 0.5 on the scale, 0 at 0 and 1 at 1 light-second', () => {
+    const e = at(0.5)
+    expect(guessPositionOnLengthBars(e, 0.5).fraction).toBeCloseTo(0.5, 12)
+    expect(guessPositionOnLengthBars(e, 0).fraction).toBe(0)
+    expect(guessPositionOnLengthBars(e, 1).fraction).toBe(1)
+    expect(guessPositionOnLengthBars(e, 0.5).offEdge).toBeNull()
+  })
+
+  it('a guess beyond the scale is clamped to 1 and flagged right; a negative guess is clamped to 0 and flagged left', () => {
+    const e = at(0.5)
+    expect(guessPositionOnLengthBars(e, 3)).toMatchObject({ fraction: 1, offEdge: 'right' })
+    expect(guessPositionOnLengthBars(e, -0.2)).toMatchObject({ fraction: 0, offEdge: 'left' })
+  })
+
+  it('the differences from the real gap are exact: at 0.5c, 0.45 gives +0.017 and 0.4 gives -0.033', () => {
+    const e = at(0.5)
+    expect(guessPositionOnLengthBars(e, 0.45).differenceFromReal).toBeCloseTo(0.45 - 0.4330127, 6)
+    expect(guessPositionOnLengthBars(e, 0.4).differenceFromReal).toBeCloseTo(-0.0330127, 6)
+    expect(guessPositionOnLengthBars(e, 0.45).differenceFromReal).toBeCloseTo(0.017, 3)
+    expect(guessPositionOnLengthBars(e, 0.4).differenceFromReal).toBeCloseTo(-0.033, 3)
+  })
+
+  it('the real results are the same for any guess', () => {
+    const before = JSON.stringify(at(0.5))
+    guessPositionOnLengthBars(at(0.5), 0.1)
+    markGuess(at(0.5), 7)
+    choiceMarker(at(0.5), 'longer')
+    expect(JSON.stringify(at(0.5))).toBe(before)
+  })
+
+  it('a guess that is not a finite number is refused', () => {
+    const e = at(0.5)
+    expect(() => guessPositionOnLengthBars(e, NaN)).toThrow()
+    expect(() => guessPositionOnLengthBars(e, Infinity)).toThrow()
+    expect(() => markGuess(e, NaN)).toThrow()
+  })
+
+  it('the marker points at the bar the learner chose; time dilation requires the closer-together clock at every speed', () => {
+    for (const v of SPEEDS) {
+      const e = at(v)
+      expect(choiceMarker(e, 'same')).toEqual({ pointsAt: 'sameBar', requiredChoice: 'shorter' })
+      expect(choiceMarker(e, 'shorter')).toEqual({ pointsAt: 'shorterBar', requiredChoice: 'shorter' })
+      expect(choiceMarker(e, 'longer')).toEqual({ pointsAt: 'pastRestBar', requiredChoice: 'shorter' })
+    }
+  })
+
+  it('markGuess at 0.5c: 0.433 is the same, 0.4 is less, 0.5 is more, with the differences the page shows', () => {
+    const e = at(0.5)
+    expect(markGuess(e, 0.433)).toEqual({ comparison: 'the same', difference: 0 })
+    expect(markGuess(e, 0.4)).toEqual({ comparison: 'less', difference: 0.033 })
+    expect(markGuess(e, 0.5)).toEqual({ comparison: 'more', difference: 0.067 })
+  })
+
+  it('the numbers drafted for the captions and the tutor match the module', () => {
+    const e5 = at(0.5)
+    expect(e5.sameLength.forwardLegDuration).toBeCloseTo(1, 12)
+    expect(e5.sameLength.returnLegDuration).toBeCloseTo(1 / 3, 12)
+    expect(e5.sameLength.tickDuration).toBeCloseTo(1.3333, 4)
+    expect(e5.shorterLength.forwardLegDuration).toBeCloseTo(0.866, 3)
+    expect(e5.shorterLength.returnLegDuration).toBeCloseTo(0.289, 3)
+    expect(e5.timeDilationTick).toBeCloseTo(1.155, 3)
+    expect(e5.sameLength.differenceFromTimeDilationTick).toBeCloseTo(0.179, 3)
+    expect(at(0.8).shorterLength.lengthInLab).toBeCloseTo(0.3, 12)
+    expect(at(0.8).sameLength.tickDuration).toBeCloseTo(2.778, 3)
+    expect(at(0.1).shorterLength.lengthInLab).toBeCloseTo(0.4975, 4)
+    expect(at(0.1).sameLength.tickDuration).toBeCloseTo(1.010, 3)
+    expect(at(0.9).shorterLength.lengthInLab).toBeCloseTo(0.218, 3)
+    expect(at(0.9).sameLength.tickDuration).toBeCloseTo(5.263, 3)
+  })
+})
+
+describe('How the travel of light gives a length (the length-first wording)', () => {
+  const at = (v: number) => runLengthContractionExperiment(v)
+
+  it('a pulse crossing the clock standing still in 0.5 s means a length of 0.5 light-second (distance = speed x time)', () => {
+    const rows = lengthBarRows(at(0.5))
+    expect(rows[0].key).toBe('rest')
+    expect(rows[0].forwardLegDuration * 1).toBeCloseTo(0.5, 12)
+    expect(rows[0].lengthInLab).toBeCloseTo(rows[0].forwardLegDuration * 1, 12)
+    expect(rows[0].tickDuration).toBeCloseTo(1, 12)
+  })
+
+  it('the two possible lengths drafted for the introduction table give the drafted trips at 0.5c', () => {
+    const half = roundTripForLength(0.5, 0.5)
+    expect(half.forwardLegDuration).toBeCloseTo(1, 12)
+    expect(half.returnLegDuration).toBeCloseTo(1 / 3, 12)
+    expect(half.tickDuration).toBeCloseTo(1.333, 3)
+    const four = roundTripForLength(0.4, 0.5)
+    expect(four.forwardLegDuration).toBeCloseTo(0.8, 12)
+    expect(four.returnLegDuration).toBeCloseTo(0.2667, 4)
+    expect(four.tickDuration).toBeCloseTo(1.067, 3)
+  })
+
+  it('each length gives its own tick: a longer clock always has a longer tick at the same speed', () => {
+    for (const v of SPEEDS) {
+      let last = -1
+      for (const length of [0.1, 0.2, 0.3, 0.433, 0.5, 0.7]) {
+        const tick = roundTripForLength(length, v).tickDuration
+        expect(tick).toBeGreaterThan(last)
+        last = tick
+      }
+    }
+  })
+
+  it('reading the tick back gives the length: lengthForTick undoes roundTripForLength at every speed', () => {
+    for (const v of SPEEDS) {
+      for (const length of [0.1, 0.3, 0.5]) {
+        expect(lengthForTick(roundTripForLength(length, v).tickDuration, v)).toBeCloseTo(length, 10)
+      }
+    }
+  })
+
+  it('the length whose tick is the time dilation tick is the shorter clock\'s length, at every speed', () => {
+    for (const v of SPEEDS) {
+      const e = at(v)
+      expect(lengthForTick(e.timeDilationTick, v)).toBeCloseTo(e.shorterLength.lengthInLab, 10)
+    }
+  })
+
+  it('at 0.5c the length that fits is 0.433 and the rest length does not fit', () => {
+    const e = at(0.5)
+    expect(lengthForTick(e.timeDilationTick, 0.5)).toBeCloseTo(0.433, 3)
+    expect(lengthForTick(e.timeDilationTick, 0.5)).toBeLessThan(e.restLength)
+  })
+
+  it('the length strip rows carry exactly the module\'s lengths and trips, and the trips add up to the tick', () => {
+    for (const v of SPEEDS) {
+      const e = at(v)
+      const rows = lengthBarRows(e)
+      expect(rows.map((r) => r.key)).toEqual(['rest', 'same', 'shorter'])
+      expect(rows[0].lengthInLab).toBe(e.restLength)
+      expect(rows[1].lengthInLab).toBe(e.sameLength.lengthInLab)
+      expect(rows[2].lengthInLab).toBe(e.shorterLength.lengthInLab)
+      expect(rows[1].forwardLegDuration).toBe(e.sameLength.forwardLegDuration)
+      expect(rows[2].returnLegDuration).toBe(e.shorterLength.returnLegDuration)
+      for (const r of rows.slice(1)) {
+        expect(r.forwardLegDuration + (r.returnLegDuration ?? 0)).toBeCloseTo(r.tickDuration, 12)
+      }
+    }
+  })
+
+  it('refuses a length or tick that is not finite and non-negative, and a speed outside 0 <= v < c', () => {
+    expect(() => roundTripForLength(NaN, 0.5)).toThrow()
+    expect(() => roundTripForLength(-1, 0.5)).toThrow()
+    expect(() => roundTripForLength(0.5, 1)).toThrow()
+    expect(() => roundTripForLength(0.5, -0.1)).toThrow()
+    expect(() => lengthForTick(Infinity, 0.5)).toThrow()
+    expect(() => lengthForTick(1, 1)).toThrow()
+  })
+
+  it('the choice names are same, shorter and longer, and time dilation requires shorter at every speed above 0', () => {
+    for (const v of SPEEDS) {
+      const e = at(v)
+      expect(choiceMarker(e, 'shorter')).toEqual({ pointsAt: 'shorterBar', requiredChoice: 'shorter' })
+      expect(choiceMarker(e, 'longer').requiredChoice).toBe('shorter')
+    }
+    expect(choiceMarker(at(0), 'same').requiredChoice).toBe('same')
   })
 })
