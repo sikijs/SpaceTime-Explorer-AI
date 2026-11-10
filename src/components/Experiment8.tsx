@@ -4,6 +4,7 @@ import type { SimultaneityResult } from '../physics/relativityOfSimultaneityExpe
 import { spacetimeDiagramFor } from '../physics/spacetimeDiagramView'
 import type { WorldlinePoint } from '../physics/spacetimeDiagramView'
 import { Experiment8Tutor } from './Experiment8Tutor'
+import { BlockToLinesSketch, FlashToLinesSketch } from './Experiment8Sketch'
 
 type VelocityOption = 0 | 0.1 | 0.3 | 0.5 | 0.8 | 'other'
 export type OrderChoice = 'same' | 'back' | 'front'
@@ -12,7 +13,7 @@ const MIN_CUSTOM_SPEED = 0.01
 const MAX_SPEED = 0.9
 
 // The diagram uses one pixel-per-unit scale for both axes (light-seconds and seconds), so that
-// light's worldline is always drawn at the same slope, at every rod speed. Only the drawn size
+// light's worldline is always drawn at the same slope, at every block speed. Only the drawn size
 // shrinks for a larger diagram; the two axes are never scaled differently from each other.
 const BASE_PX_PER_UNIT = 140
 const MAX_DRAWN_SIZE = 520
@@ -20,7 +21,7 @@ const MARGIN = 64
 
 // Playback pacing only, chosen for readability — it does not affect the physics (§11: simulation
 // time is separate from wall-clock playback speed). Every worldline is played over the same
-// wall-clock duration, however far it reaches in lab time, so faster rods do not animate faster.
+// wall-clock duration, however far it reaches in lab time, so faster blocks do not animate faster.
 const ANIMATION_DURATION_MS = 2500
 
 // The worldlines from spacetimeDiagramView are already straight lines between two known points
@@ -137,7 +138,7 @@ function SpacetimeDiagram({ diagram, animTime }: DiagramProps) {
     <svg
       viewBox={`0 0 ${width} ${height}`}
       role="img"
-      aria-label="Spacetime diagram: position left to right, time bottom to top, showing the rod's worldlines and the flash of light"
+      aria-label="Spacetime diagram: position left to right, time bottom to top, showing the block's worldlines and the flash of light"
       style={{ width: '100%', maxWidth: `${width}px`, height: 'auto' }}
     >
       <line x1={MARGIN} y1={height - MARGIN} x2={width - MARGIN} y2={height - MARGIN} stroke="#999" strokeWidth={1} />
@@ -225,7 +226,7 @@ export function Experiment8({ onComplete, onTutorComplete }: Experiment8Props) {
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>The question.</strong> In Experiment 7, you saw two separate numbers: the time
-            the flash reached the back end of the moving rod, and the time it reached the front
+            the flash reached the back end of the moving block, and the time it reached the front
             end. They were different. Is there a single picture that shows why, instead of two
             numbers computed separately?
           </p>
@@ -250,36 +251,38 @@ export function Experiment8({ onComplete, onTutorComplete }: Experiment8Props) {
             worldline is.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>One rod, two worldlines.</strong> This experiment uses the same rigid rod as
+            <strong>One block, two worldlines.</strong> This experiment uses the same rigid block as
             Experiment 7: it doesn't stretch or bend, and both of its ends move together at one
-            steady speed. But the rod still has two ends — a{' '}
+            steady speed. But the block still has two ends — a{' '}
             <strong style={{ color: '#7c3aed' }}>front end</strong> and a{' '}
             <strong style={{ color: '#2563eb' }}>back end</strong> — and they're never at the same
             position. Each end gets traced separately, in its own color below, so the diagram shows
-            two leaning lines, not one. They lean by the same amount and stay the rod's own length
+            two leaning lines, not one. They lean by the same amount and stay the block's own length
             apart, the whole time — just two "cruising cars," side by side, at a fixed distance
-            from each other. (The lean is about motion through time, not the rod bending in space —
-            freeze the diagram at any one moment and the rod is still perfectly straight.)
+            from each other. (The lean is about motion through time, not the block bending in space —
+            freeze the diagram at any one moment and the block is still perfectly straight.)
           </p>
+          <BlockToLinesSketch />
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Light's worldline.</strong> Light always travels at c, the same speed, in the
             lab (Experiment 5). So a flash of light always leans over by the same fixed amount, no
-            matter how fast the rod is moving — only the rod's lines get steeper or shallower as
-            its speed changes. In this experiment, the flash is released from the rod's exact
+            matter how fast the block is moving — only the block's lines get steeper or shallower as
+            its speed changes. In this experiment, the flash is released from the block's exact
             center and spreads both ways at once, so it draws two worldlines from that single
             starting point — one leaning toward the back end, one toward the front — meeting only
             there. (It's two separate rays, not one ray reversing direction, so don't read it as
             dipping down and coming back up.)
           </p>
+          <FlashToLinesSketch />
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What is being done.</strong> Experiment 7 calculated the two times when the
             flash reached each end. Here we draw the whole situation as one picture instead, so
-            you can see those same two events as the points where the rod's worldlines cross the
+            you can see those same two events as the points where the block's worldlines cross the
             light's worldlines.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>Your job.</strong> Before you press START, look ahead to what the diagram will
-            show and predict: which worldline will the light reach first — the rod's back end, its
+            show and predict: which worldline will the light reach first — the block's back end, its
             front end, or will it reach both at exactly the same time? Guesses are not scored.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
@@ -287,22 +290,22 @@ export function Experiment8({ onComplete, onTutorComplete }: Experiment8Props) {
           </p>
           <ul style={{ marginTop: '0.25rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
             <li>
-              Everything here is drawn from the lab's point of view. The rod's own point of view
+              Everything here is drawn from the lab's point of view. The block's own point of view
               is not drawn as a separate set of axes in this experiment.
             </li>
-            <li>There is no gravity, and the rod keeps a steady speed.</li>
+            <li>There is no gravity, and the block keeps a steady speed.</li>
             <li>Light always travels at c in the lab, in both directions (Experiment 5).</li>
             <li>
-              The rod's length, seen from the lab, is shorter than its rest length, by the amount
+              The block's length, seen from the lab, is shorter than its rest length, by the amount
               Experiment 6 found.
             </li>
-            <li>The flash is released from the exact center of the rod, just as in Experiment 7.</li>
+            <li>The flash is released from the exact center of the block, just as in Experiment 7.</li>
           </ul>
         </div>
 
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            Rod speed
+            Block speed
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
             Speeds are given as a fraction of <strong>c</strong>, the speed of light. In this
@@ -349,7 +352,7 @@ export function Experiment8({ onComplete, onTutorComplete }: Experiment8Props) {
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
             Here is a spacetime diagram: position runs left to right, time runs bottom to top. A line that leans
-            over means something moving. A flash of light is released from the middle of the rod
+            over means something moving. A flash of light is released from the middle of the block
             and travels outward in both directions. On the diagram, which worldline will the light
             cross first?
           </p>
@@ -397,9 +400,9 @@ export function Experiment8({ onComplete, onTutorComplete }: Experiment8Props) {
               <SpacetimeDiagram diagram={diagram} animTime={animTime} />
               <p style={{ fontSize: '0.8125rem', color: '#555', margin: '0.25rem 0 0' }}>
                 The dot where the two dashed lines meet marks where the flash was released. The
-                solid lines are the rod's back and front ends, leaning over together because the
-                rod is moving — the two lines stay parallel and the same distance apart, since
-                both ends move at the rod's one steady speed. The dashed lines are the flash of
+                solid lines are the block's back and front ends, leaning over together because the
+                block is moving — the two lines stay parallel and the same distance apart, since
+                both ends move at the block's one steady speed. The dashed lines are the flash of
                 light, growing upward as time passes — one toward each end, forming a "V" from
                 that shared starting point, not one line reversing direction. A dot appears where
                 the light meets each end.
@@ -433,10 +436,10 @@ export function Experiment8({ onComplete, onTutorComplete }: Experiment8Props) {
             <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem' }}>Results</h2>
 
             <p style={resultLineStyle}>
-              <strong>Rod speed:</strong> {result.velocity}c
+              <strong>Block speed:</strong> {result.velocity}c
             </p>
             <p style={resultLineStyle}>
-              <strong>Rod's length, seen from the lab (Experiment 6):</strong>{' '}
+              <strong>Block's length, seen from the lab (Experiment 6):</strong>{' '}
               {result.labLength.toFixed(3)} light-seconds (rest length {result.restLength.toFixed(3)})
             </p>
 

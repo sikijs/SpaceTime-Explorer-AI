@@ -557,8 +557,8 @@ const chapters: Chapter[] = [
     group: 'Relativity of Time and Motion',
     Component: Experiment8,
     learned:
-      "A spacetime diagram plots position and time together: a still object is a vertical line, a moving object is a slanted line (a worldline), and light is always drawn at the same slope. The same two events from Experiment 7 — the flash reaching the back end, then the front end — are just where the rod's worldlines cross the light's. The picture agrees with the numbers.",
-    next: "Next, we draw one more line on the same picture: one that shows what 'the same moment' looks like for someone riding along with the rod.",
+      "A spacetime diagram plots position and time together: a still object is a vertical line, a moving object is a slanted line (a worldline), and light is always drawn at the same slope. The same two events from Experiment 7 — the flash reaching the back end, then the front end — are just where the block's worldlines cross the light's. The picture agrees with the numbers.",
+    next: "Next, we draw one more line on the same picture: one that shows what 'the same moment' looks like for someone riding along with the block.",
   },
   {
     title: 'Same Time, Different Line',

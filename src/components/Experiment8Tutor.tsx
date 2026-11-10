@@ -50,7 +50,7 @@ export function Experiment8Tutor({ result, predictionOrder, onExplained }: Exper
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              "Look carefully at the diagram you just made. It has two solid lines that lean over (the rod's back and front ends) and two dashed lines (the flash of light, spreading out from the middle where it was released). Follow each dashed line upward from where the flash started, and see where it meets a solid line — that meeting point is one of the two events. Which solid line does a dashed line reach first, lower down on the diagram: the back end's, or the front end's? Or do both dashed lines reach their solid lines at exactly the same height?"}
+              "Look carefully at the diagram you just made. It has two solid lines that lean over (the block's back and front ends) and two dashed lines (the flash of light, spreading out from the middle where it was released). Follow each dashed line upward from where the flash started, and see where it meets a solid line — that meeting point is one of the two events. Which solid line does a dashed line reach first, lower down on the diagram: the back end's, or the front end's? Or do both dashed lines reach their solid lines at exactly the same height?"}
             {tutorStep === 'compare' &&
               `You predicted that the light would cross ${orderWording[predictionOrder]}. Here is what the diagram actually shows: the light crosses ${orderWording[actualOrder]}, in the lab's frame. Reading the exact numbers off the diagram: in the lab, the flash reached the back end at ${result.backEventLabTime.toFixed(3)} s and the front end at ${result.frontEventLabTime.toFixed(3)} s — a gap of ${result.labTimeGap.toFixed(3)} s between them. One of the two marked points sits lower on the diagram than the other, meaning it happened earlier. Comparing what you predicted to what the diagram actually drew, what do you notice?`}
             {tutorStep === 'conceptual' &&
@@ -105,7 +105,7 @@ export function Experiment8Tutor({ result, predictionOrder, onExplained }: Exper
             same way. A steeper line means faster. Draw both cars' journeys on one graph, and the
             point where two lines cross tells you exactly when and where they meet. A spacetime
             diagram is the same idea: instead of a car's distance from home, it's an object's
-            position in space, and instead of two cars, it's the rod's two ends and the flash of
+            position in space, and instead of two cars, it's the block's two ends and the flash of
             light, all on one picture, so you can see exactly where and when they meet.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
@@ -120,7 +120,7 @@ export function Experiment8Tutor({ result, predictionOrder, onExplained }: Exper
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>2. Light's slope never changes.</strong> Light always travels at c in the lab
             (Experiment 5), so its worldline always leans over by the same fixed amount on this
-            diagram, at every rod speed — only the rod's own worldlines get steeper as it speeds
+            diagram, at every block speed — only the block's own worldlines get steeper as it speeds
             up. That's exactly why a worldline leaning toward the light reaches it sooner than a
             vertical (motionless) one would: the light's line is fixed, so whichever solid line
             leans to meet it halfway gets there first.
@@ -130,7 +130,7 @@ export function Experiment8Tutor({ result, predictionOrder, onExplained }: Exper
             relativity of simultaneity again, the same idea and the same numbers you saw there: in
             the lab, the flash reached the back end at {result.backEventLabTime.toFixed(3)} s and
             the front end at {result.frontEventLabTime.toFixed(3)} s, even though both ends are
-            reached together in the rod's own frame. Experiment 7 gave you those two numbers from a
+            reached together in the block's own frame. Experiment 7 gave you those two numbers from a
             calculation. Now you've seen the same fact appear directly in a picture: the geometry
             and the arithmetic agree.
           </p>

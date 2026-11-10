@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { spacetimeDiagramFor, sameMomentLineFor, rodTimeAxisFor, rodSpaceAxisFor } from './spacetimeDiagramView'
+import { blockSketchFor, flashSketchFor, spacetimeDiagramFor, sameMomentLineFor, rodTimeAxisFor, rodSpaceAxisFor } from './spacetimeDiagramView'
 import { runSimultaneityExperiment } from './relativityOfSimultaneityExperiment'
 import { SPEED_OF_LIGHT } from './movingClockExperiment'
 
@@ -185,5 +185,80 @@ describe("Rod's Own Axes (Experiment 11)", () => {
       expect(rodTimeAxisFor(diagram)).toEqual(rodTimeAxisFor(diagram))
       expect(rodSpaceAxisFor(diagram)).toEqual(rodSpaceAxisFor(diagram))
     }
+  })
+})
+
+describe('Experiment 8 introduction sketch (block drawn at several moments)', () => {
+  const photos = blockSketchFor(0.5, 4, 0.2)
+
+  it('has the requested number of photos, 0.2 s apart, the first at time 0', () => {
+    expect(photos.map((p) => p.time)).toEqual([0, 0.2, 0.4, 0.6000000000000001])
+  })
+
+  it('the block starts centred on position 0, with the length seen from the lab (Experiment 6 and 7)', () => {
+    const labLength = runSimultaneityExperiment(0.5).labLength
+    expect(photos[0].backPosition).toBeCloseTo(-labLength / 2, 12)
+    expect(photos[0].frontPosition).toBeCloseTo(labLength / 2, 12)
+  })
+
+  it('at 0.5c each end moves 0.1 light-second to the right per 0.2 s photo, both ends by the same amount', () => {
+    for (let i = 1; i < photos.length; i++) {
+      expect(photos[i].backPosition - photos[i - 1].backPosition).toBeCloseTo(0.1, 12)
+      expect(photos[i].frontPosition - photos[i - 1].frontPosition).toBeCloseTo(0.1, 12)
+    }
+  })
+
+  it('the gap between the ends (the length in the lab) is the same in every photo, so the two lines are parallel', () => {
+    const gap0 = photos[0].frontPosition - photos[0].backPosition
+    for (const p of photos) expect(p.frontPosition - p.backPosition).toBeCloseTo(gap0, 12)
+  })
+
+  it('at 0c the ends do not move and the lines are vertical; the block then has its rest length', () => {
+    const rest = blockSketchFor(0, 3, 0.2)
+    for (const p of rest) {
+      expect(p.backPosition).toBeCloseTo(-0.25, 12)
+      expect(p.frontPosition).toBeCloseTo(0.25, 12)
+    }
+  })
+
+  it('rejects a photo count below 1 or a time step that is not positive', () => {
+    expect(() => blockSketchFor(0.5, 0, 0.2)).toThrow(RangeError)
+    expect(() => blockSketchFor(0.5, 2.5, 0.2)).toThrow(RangeError)
+    expect(() => blockSketchFor(0.5, 3, 0)).toThrow(RangeError)
+  })
+})
+
+describe('Experiment 8 introduction sketch (the flash at several moments)', () => {
+  const photos = flashSketchFor(4, 0.2)
+
+  it('starts with both parts at the release point at time 0', () => {
+    expect(photos[0]).toEqual({ time: 0, leftPosition: -0, rightPosition: 0 })
+  })
+
+  it('each part is c times the elapsed time from the release point, one to the left and one to the right', () => {
+    for (const p of photos) {
+      expect(p.rightPosition).toBeCloseTo(SPEED_OF_LIGHT * p.time, 12)
+      expect(p.leftPosition).toBeCloseTo(-SPEED_OF_LIGHT * p.time, 12)
+    }
+  })
+
+  it('at the 0.4 s photo each part is 0.4 light-second away, and the lean is 0.2 light-second per 0.2 s step', () => {
+    expect(photos[2].rightPosition).toBeCloseTo(0.4, 12)
+    expect(photos[2].leftPosition).toBeCloseTo(-0.4, 12)
+    for (let i = 1; i < photos.length; i++) {
+      expect(photos[i].rightPosition - photos[i - 1].rightPosition).toBeCloseTo(0.2, 12)
+    }
+  })
+
+  it('the lean is twice the block sketch lean at 0.5c (1 light-second per second against 0.5), and does not depend on any block', () => {
+    const block = blockSketchFor(0.5, 4, 0.2)
+    const blockStep = block[1].frontPosition - block[0].frontPosition
+    const flashStep = photos[1].rightPosition - photos[0].rightPosition
+    expect(flashStep / blockStep).toBeCloseTo(2, 12)
+  })
+
+  it('rejects a photo count below 1 or a time step that is not positive', () => {
+    expect(() => flashSketchFor(0, 0.2)).toThrow(RangeError)
+    expect(() => flashSketchFor(3, 0)).toThrow(RangeError)
   })
 })
