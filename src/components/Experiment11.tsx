@@ -23,7 +23,7 @@ const timeChoices: Array<{ value: TimeChoice; label: string }> = [
   { value: 'different', label: 'Different times' },
 ]
 
-// The two events are always simultaneous in the rod's frame (Experiment 7's own
+// The two events are always simultaneous in the block's frame (Experiment 7's own
 // rodFrameEventTime, reused here without recomputation), for any velocity.
 export function actualTimeOutcome(): TimeChoice {
   return 'same'
@@ -111,7 +111,7 @@ function SpacetimeDiagram({ diagram }: DiagramProps) {
 
   // Extend a line (given as two known points) to the diagram's horizontal edges — a rendering
   // choice only, no new physics. Used for Experiment 9's same-moment line and this experiment's
-  // rod-space-axis, both of which are anchored inside the diagram rather than at its edges.
+  // block-space-axis, both of which are anchored inside the diagram rather than at its edges.
   const extendToEdges = (a: WorldlinePoint, b: WorldlinePoint): [WorldlinePoint, WorldlinePoint] => {
     const slope = (b.time - a.time) / (b.position - a.position)
     return [
@@ -128,7 +128,7 @@ function SpacetimeDiagram({ diagram }: DiagramProps) {
     <svg
       viewBox={`0 0 ${width} ${height}`}
       role="img"
-      aria-label="Spacetime diagram: position left to right, time bottom to top, showing the rod's worldlines, the flash of light, Experiment 9's same-moment line, and the rod's own time and space axes"
+      aria-label="Spacetime diagram: position left to right, time bottom to top, showing the block's worldlines, the flash of light, Experiment 9's same-moment line, and the block's own time and space axes"
       style={{ width: '100%', maxWidth: `${width}px`, height: 'auto' }}
     >
       <line x1={MARGIN} y1={height - MARGIN} x2={width - MARGIN} y2={height - MARGIN} stroke="#999" strokeWidth={1} />
@@ -136,7 +136,7 @@ function SpacetimeDiagram({ diagram }: DiagramProps) {
       <circle cx={xPix(0)} cy={yPix(0)} r="4" fill="#e6a700" />
 
       {/* Back end (blue) and front end (purple) get one consistent color each, matching
-          Experiments 8 and 9, so the same rod ends read the same way across experiments. */}
+          Experiments 8 and 9, so the same block ends read the same way across experiments. */}
       {line(diagram.backWorldline[0], diagram.backWorldline[1], '#2563eb', false, 'back')}
       {line(diagram.frontWorldline[0], diagram.frontWorldline[1], '#7c3aed', false, 'front')}
       {line(diagram.leftLightWorldline[0], diagram.leftLightWorldline[1], '#2563eb', true, 'left-light')}
@@ -146,8 +146,8 @@ function SpacetimeDiagram({ diagram }: DiagramProps) {
       {eventDot(diagram.frontEvent, 'front-event', 'right', '#7c3aed')}
 
       {line(sameMomentStart, sameMomentEnd, '#8e24aa', false, 'same-moment')}
-      {line(rodSpaceStart, rodSpaceEnd, '#e65100', true, 'rod-space-axis')}
-      {line(rodTimeStart, rodTimeEnd, '#e65100', false, 'rod-time-axis')}
+      {line(rodSpaceStart, rodSpaceEnd, '#e65100', true, 'block-space-axis')}
+      {line(rodTimeStart, rodTimeEnd, '#e65100', false, 'block-time-axis')}
     </svg>
   )
 }
@@ -185,7 +185,7 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Experiment 11 — The Rod's Own Axes</h2>
+      <h2>Experiment 11 — The Block's Own Axes</h2>
 
       <div
         style={{
@@ -198,29 +198,29 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
       >
         <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: '#555' }}>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> Experiment 9 showed you a tilted line — the rod's own
+            <strong>The question.</strong> Experiment 9 showed you a tilted line — the block's own
             idea of "the same moment" — but that line, by itself, doesn't tell you the actual
             numbers. Is there a real mathematical rule for converting the lab's numbers into the
-            rod's own numbers, for any event?
+            block's own numbers, for any event?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>There is: it's called the Lorentz transformation.</strong> It's a rule that
             takes an event's position and time, as measured in the lab, and calculates the
-            position and time that someone moving along with the rod would measure for that exact
+            position and time that someone moving along with the block would measure for that exact
             same event. It doesn't change what happened — it just translates the description from
             one point of view into the other, the way converting kilometers to miles doesn't
             change a distance, only how it's written down.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
             <strong>What you're about to do.</strong> We're going to draw two new lines on the
-            diagram — the rod's own time direction and its own "now" direction, both tilted — and
-            then use the Lorentz transformation to calculate the rod's own numbers for the two
+            diagram — the block's own time direction and its own "now" direction, both tilted — and
+            then use the Lorentz transformation to calculate the block's own numbers for the two
             events from Experiment 7. Before we do, make a prediction: using this real
-            calculation, will the two events come out at the same time in the rod's frame, or
+            calculation, will the two events come out at the same time in the block's frame, or
             different times?
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What we assume.</strong> Everything here is still the same rod-and-flash
+            <strong>What we assume.</strong> Everything here is still the same block-and-flash
             scenario from Experiments 6 through 9 — nothing about the setup changes. We're only
             adding two new lines to the picture and calculating two new numbers.
           </p>
@@ -228,7 +228,7 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
 
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            Rod speed
+            Block speed
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
             Speeds are given as a fraction of <strong>c</strong>, the speed of light.
@@ -275,7 +275,7 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
             Experiment 7 told you the flash reaches the back end and the front end at different
             times, according to the lab. If we calculate the actual time each event happens{' '}
-            <em>in the rod's own frame</em>, using the real math for converting between frames,
+            <em>in the block's own frame</em>, using the real math for converting between frames,
             what do you expect: will the two events come out at the same time, or at different
             times?
           </p>
@@ -321,13 +321,13 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
           <div style={{ marginTop: '2rem' }}>
             <SpacetimeDiagram diagram={diagram} />
             <p style={{ fontSize: '0.8125rem', color: '#555', margin: '0.25rem 0 0' }}>
-              <strong style={{ color: '#2563eb' }}>Blue line</strong>: the rod's back end.{' '}
+              <strong style={{ color: '#2563eb' }}>Blue line</strong>: the block's back end.{' '}
               <strong style={{ color: '#7c3aed' }}>Purple line</strong>: its front end. The
               matching dashed lines: the flash of light travelling toward each one.{' '}
               <strong style={{ color: '#8e24aa' }}>Magenta line</strong>: Experiment 9's
               same-moment line, through the two events.{' '}
               <strong style={{ color: '#e65100' }}>Orange lines</strong> (one dashed, one solid):
-              the rod's own space axis and time axis, through the origin.
+              the block's own space axis and time axis, through the origin.
             </p>
           </div>
         )}
@@ -345,7 +345,7 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
             <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem' }}>Results</h2>
 
             <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-              <strong>Rod speed:</strong> {result.velocity}c
+              <strong>Block speed:</strong> {result.velocity}c
             </p>
 
             <div style={{ paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid #ddd' }}>
@@ -364,7 +364,7 @@ export function Experiment11({ onComplete, onTutorComplete }: Experiment11Props)
 
             <div style={{ paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid #ddd' }}>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                In the rod's own frame (Lorentz transformation)
+                In the block's own frame (Lorentz transformation)
               </p>
               <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
                 Back event: position {transformedBackEvent.position.toFixed(3)} ls, time{' '}

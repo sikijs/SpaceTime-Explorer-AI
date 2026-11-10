@@ -574,14 +574,14 @@ const chapters: Chapter[] = [
     Component: Experiment10,
     learned:
       "It looked like a contradiction at first: motion is relative, so each twin could argue the other one's clock should run slow. But the two twins aren't in the same situation — only the traveling twin turns around. That difference breaks the symmetry, and it's why, when they're back together comparing the same two clocks, they both agree the traveling twin aged less. It's not a matter of opinion. It's the same time dilation from Experiment 3, just added up over the whole trip.",
-    next: "Next, we complete the picture from Experiments 8 and 9: drawing the rod's own two axes on the diagram, and using the actual math that converts the lab's numbers into the rod's own.",
+    next: "Next, we complete the picture from Experiments 8 and 9: drawing the block's own two axes on the diagram, and using the actual math that converts the lab's numbers into the block's own.",
   },
   {
-    title: "The Rod's Own Axes",
+    title: "The Block's Own Axes",
     group: 'Relativity of Time and Motion',
     Component: Experiment11,
     learned:
-      "The rod has its own two tilted axes on the same diagram as the lab's — its own \"straight up\" and \"straight across,\" just like the lab's vertical and horizontal lines, only tilted because it's moving. The Lorentz transformation is the actual mathematical rule for converting an event's lab-frame numbers into the numbers the rod's own frame would assign to it. Applying it to the two flash-arrival events gives the same time for both, in the rod's frame — confirming, by direct calculation, exactly what Experiments 7 and 9 already showed by other means. Nothing physically changed: it's the same rod, the same flash, the same two events, just described using the rod's own ruler-and-clock convention instead of the lab's.",
+      "The block has its own two tilted axes on the same diagram as the lab's — its own \"straight up\" and \"straight across,\" just like the lab's vertical and horizontal lines, only tilted because it's moving. The Lorentz transformation is the actual mathematical rule for converting an event's lab-frame numbers into the numbers the block's own frame would assign to it. Applying it to the two flash-arrival events gives the same time for both, in the block's frame — confirming, by direct calculation, exactly what Experiments 7 and 9 already showed by other means. Nothing physically changed: it's the same block, the same flash, the same two events, just described using the block's own ruler-and-clock convention instead of the lab's.",
     next: 'This completes "Relativity of Time and Motion." Next, a new chapter begins: Gravity and Curved Spacetime, starting from a sealed cabin and a dropped ball.',
   },
   {

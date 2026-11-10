@@ -34,7 +34,7 @@ Every experiment below has an approved specification, a tested physics model, an
 | 8 | Drawing spacetime | `08-spacetime-diagrams.md` | Complete (wording approved 2026-10-13, after being skipped earlier) |
 | 9 | Same time, different line | `09-same-time-different-line.md` | Complete (wording approved) |
 | 10 | The twin paradox | `10-twin-paradox.md` | Complete (wording approved 2026-10-13) |
-| 11 | The rod's own axes | `11-rods-own-axes.md` | Complete (wording approved); closes this chapter |
+| 11 | The block's own axes | `11-rods-own-axes.md` | Complete (wording approved); closes this chapter |
 
 **Gravity and Curved Spacetime** (`docs/experiments/gravity-and-curved-spacetime/`)
 

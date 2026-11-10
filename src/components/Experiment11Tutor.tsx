@@ -69,11 +69,11 @@ export function Experiment11Tutor({
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              'Look at the two calculated times in the rod\'s frame. Are they the same, or different?'}
+              'Look at the two calculated times in the block\'s frame. Are they the same, or different?'}
             {tutorStep === 'compare' &&
               `You predicted the two events would come out at ${timeChoiceLabels[predictionOutcome]}. They actually come out at ${timeChoiceLabels[actual]}. Comparing what you expected to the real result, what do you notice?`}
             {tutorStep === 'conceptual' &&
-              'Why do you think the calculation gives the same time for both events in the rod\'s frame, even though the lab clock said they happened at different times?'}
+              'Why do you think the calculation gives the same time for both events in the block\'s frame, even though the lab clock said they happened at different times?'}
           </p>
 
           <textarea
@@ -120,7 +120,7 @@ export function Experiment11Tutor({
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>1. This confirms what you already knew, from a new direction.</strong> Both
-            events come out at {transformedBackEvent.time.toFixed(3)} seconds in the rod's frame —
+            events come out at {transformedBackEvent.time.toFixed(3)} seconds in the block's frame —
             the same fact Experiment 7 gave you in numbers and Experiment 9 gave you as a picture.
             This calculation isn't a new physical fact. It's a third, independent way of arriving
             at the same one, by actually doing the math instead of reasoning about it or drawing
@@ -147,15 +147,15 @@ export function Experiment11Tutor({
             Experiment 7 already promised.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. The two new tilted lines are the rod's own "straight up" and "straight
+            <strong>2. The two new tilted lines are the block's own "straight up" and "straight
             across."</strong> The lab's vertical line is its own time direction, and the lab's
-            horizontal line is its own "now." The rod has exactly the same kind of pair of lines —
+            horizontal line is its own "now." The block has exactly the same kind of pair of lines —
             just tilted, because it's moving. They're not a trick of the diagram; they're the
-            rod's own natural axes, drawn on the same page as the lab's.
+            block's own natural axes, drawn on the same page as the lab's.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. Nothing physical changed.</strong> It's the same rod, the same flash, the
-            same two events. All that happened is that we described those events using the rod's
+            <strong>3. Nothing physical changed.</strong> It's the same block, the same flash, the
+            same two events. All that happened is that we described those events using the block's
             own ruler-and-clock convention instead of the lab's — the way converting kilometers to
             miles doesn't change a distance, only how it's written down.
           </p>
@@ -163,7 +163,7 @@ export function Experiment11Tutor({
             <strong>4. This ties the whole sequence together.</strong> Experiment 7 gave you two
             numbers. Experiment 8 turned the situation into a picture. Experiment 9 added one more
             line to it. This calculation is the actual mathematical bridge that connects the lab's
-            numbers to the rod's own — the Lorentz transformation.
+            numbers to the block's own — the Lorentz transformation.
           </p>
         </div>
       )}

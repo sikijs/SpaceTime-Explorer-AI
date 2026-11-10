@@ -56,7 +56,7 @@ Counts: L 18, M-L 5, M 45, S-M 1, S 2. Flags: P 19, R 33, W 15.
 | Relativity 7 | [Relativity of simultaneity](relativity-of-time-and-motion/07-gap-report.md) | 2 | M | - | No labels on the two panels; one-paragraph caption |
 | Relativity 8 | [Drawing spacetime](relativity-of-time-and-motion/08-gap-report.md) | 1 | M | - | No axis, line or origin labels; Results and tutor appear while the diagram is still drawing |
 | Relativity 9 | [Same time, different line](relativity-of-time-and-motion/09-gap-report.md) | 1 | M | - | No on-canvas labels; no worked moment (a guess line is easy to draw) |
-| Relativity 11 | [The rod's own axes](relativity-of-time-and-motion/11-gap-report.md) | 1 | M | - | Orange axes and lines unlabelled; no picture of the predicted rod-frame times |
+| Relativity 11 | [The block's own axes](relativity-of-time-and-motion/11-gap-report.md) | 1 | M | - | Orange axes and lines unlabelled; no picture of the predicted rod-frame times |
 | Gravity 1 | [The equivalence principle](gravity-and-curved-spacetime/01-gap-report.md) | 1 | M | - | No guess mark, no "How to read" caption; tutor states the outcome at "compare" |
 | Gravity 2 | [Does gravity change time?](gravity-and-curved-spacetime/02-gap-report.md) | 1 | M | - | No mark, caption or check-up; Results explains the effect before the tutor |
 | Gravity 3 | [Tidal effects](gravity-and-curved-spacetime/03-gap-report.md) | 2 | M | R | No marks or caption; Results names and explains the effect before the tutor |

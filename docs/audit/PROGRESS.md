@@ -18,7 +18,7 @@ Columns: **Report** = gap report written; **Gaps chosen** = owner has said which
 | Relativity 8 | [Drawing spacetime](relativity-of-time-and-motion/08-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Relativity 9 | [Same time, different line](relativity-of-time-and-motion/09-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Relativity 10 | [The twin paradox](relativity-of-time-and-motion/10-gap-report.md) | L | 2026-11-02 |  |  |  |  |  |  |  |
-| Relativity 11 | [The rod's own axes](relativity-of-time-and-motion/11-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
+| Relativity 11 | [The block's own axes](relativity-of-time-and-motion/11-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Gravity 1 | [The equivalence principle](gravity-and-curved-spacetime/01-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Gravity 2 | [Does gravity change time?](gravity-and-curved-spacetime/02-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
 | Gravity 3 | [Tidal effects](gravity-and-curved-spacetime/03-gap-report.md) | M | 2026-11-02 |  |  |  |  |  |  |  |
