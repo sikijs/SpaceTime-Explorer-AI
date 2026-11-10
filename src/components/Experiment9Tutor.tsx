@@ -56,7 +56,7 @@ export function Experiment9Tutor({ result, predictionShape, onExplained }: Exper
                 actualShape === 'tilted' ? ', not flat' : ', matching the lab\'s own line exactly'
               }. Comparing what you expected to what the diagram actually drew, what do you notice?`}
             {tutorStep === 'conceptual' &&
-              'Think back to the two friends in the car. They agreed their two events happened at the same moment; the person on the sidewalk did not. The rod\'s two events work the same way. Just from looking at the picture — not from redoing any arithmetic — why do you think the line through those two events isn\'t flat?'}
+              'Think back to the two friends in the car. They agreed their two events happened at the same moment; the person on the sidewalk did not. The block\'s two events work the same way. Just from looking at the picture — not from redoing any arithmetic — why do you think the line through those two events isn\'t flat?'}
           </p>
 
           <textarea
@@ -108,13 +108,13 @@ export function Experiment9Tutor({ result, predictionShape, onExplained }: Exper
             moment. That's all "the same moment" means here.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. The rod is moving, like the car — so it gets its own line.</strong> Remember
-            why, from Experiment 7: the back end of the rod moves toward the point where the flash
+            <strong>2. The block is moving, like the car — so it gets its own line.</strong> Remember
+            why, from Experiment 7: the back end of the block moves toward the point where the flash
             started, while the front end moves away from it, so the flash reaches the back end
             first, according to the lab. That's the same kind of effect that would make the two
             friends in the car and the sidewalk-watcher disagree about their own two events. The
             two friends riding in the car have their own sense of "the same moment," different from
-            the sidewalk's. The rod works the same way: someone riding along with it has their own
+            the sidewalk's. The block works the same way: someone riding along with it has their own
             line, and you can see it is not the lab's flat line. It's a real, different line on the
             very same page — not a mistake, and not a trick of measurement.
           </p>
@@ -123,7 +123,7 @@ export function Experiment9Tutor({ result, predictionShape, onExplained }: Exper
             Experiment 7 gave you two numbers: the flash reached the back end at{' '}
             {result.backEventLabTime.toFixed(3)} s and the front end at{' '}
             {result.frontEventLabTime.toFixed(3)} s in the lab — but at exactly the same moment for
-            the rod. Experiment 8 drew those two events as two dots. All you did here is draw the
+            the block. Experiment 8 drew those two events as two dots. All you did here is draw the
             line through them, and it showed you the same thing those numbers already said.
           </p>
           <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>

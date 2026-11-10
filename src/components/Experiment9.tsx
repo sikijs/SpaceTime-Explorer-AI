@@ -134,7 +134,7 @@ function SpacetimeDiagram({ diagram, animTime, showSameMomentLine }: DiagramProp
     <svg
       viewBox={`0 0 ${width} ${height}`}
       role="img"
-      aria-label="Spacetime diagram: position left to right, time bottom to top, showing the rod's worldlines, the flash of light, and the same-moment line"
+      aria-label="Spacetime diagram: position left to right, time bottom to top, showing the block's worldlines, the flash of light, and the same-moment line"
       style={{ width: '100%', maxWidth: `${width}px`, height: 'auto' }}
     >
       <line x1={MARGIN} y1={height - MARGIN} x2={width - MARGIN} y2={height - MARGIN} stroke="#999" strokeWidth={1} />
@@ -142,7 +142,7 @@ function SpacetimeDiagram({ diagram, animTime, showSameMomentLine }: DiagramProp
       <circle cx={xPix(0)} cy={yPix(0)} r="4" fill="#e6a700" />
 
       {/* Back end (blue) and front end (purple) get one consistent color each, matching
-          Experiment 8, so the same rod ends read the same way across experiments. */}
+          Experiment 8, so the same block ends read the same way across experiments. */}
       {line(diagram.backWorldline[0], pointAt(diagram.backWorldline[0], diagram.backWorldline[1], animTime), '#2563eb', false, 'back')}
       {line(diagram.frontWorldline[0], pointAt(diagram.frontWorldline[0], diagram.frontWorldline[1], animTime), '#7c3aed', false, 'front')}
       {line(diagram.leftLightWorldline[0], pointAt(diagram.leftLightWorldline[0], diagram.leftLightWorldline[1], animTime), '#2563eb', true, 'left-light')}
@@ -236,10 +236,10 @@ export function Experiment9({ onComplete, onTutorComplete }: Experiment9Props) {
             turns out the answer is no, and you've already seen why.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            Here's why that can happen. You saw it, back in Experiment 7, with the rod: a flash of
-            light was released from the rod's exact center. In the rod's own frame, the flash has
+            Here's why that can happen. You saw it, back in Experiment 7, with the block: a flash of
+            light was released from the block's exact center. In the block's own frame, the flash has
             equally far to travel in each direction, so it reaches both ends at the same moment.
-            But the rod is moving — so, as seen from the lab, the back end moves toward the point
+            But the block is moving — so, as seen from the lab, the back end moves toward the point
             where the flash started, while the front end moves away from it. That means the flash
             reaches the back end first, according to the lab's own clocks. Whenever two events
             happen in different places, and something has to travel between them to connect them,
@@ -247,9 +247,9 @@ export function Experiment9({ onComplete, onTutorComplete }: Experiment9Props) {
             watching.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            Someone riding along with the moving rod says the flash reached both ends at exactly
+            Someone riding along with the moving block says the flash reached both ends at exactly
             the same moment — just like the two friends in the car, comparing notes. Someone
-            standing still in the lab, watching the rod go by, does not agree. This chapter asks:
+            standing still in the lab, watching the block go by, does not agree. This chapter asks:
             can we actually see that disagreement on the diagram, instead of just being told about
             it in numbers?
           </p>
@@ -261,9 +261,9 @@ export function Experiment9({ onComplete, onTutorComplete }: Experiment9Props) {
             someone standing still and watching, like the person on the sidewalk.
           </p>
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>But the rod is moving, like the car.</strong> The rod isn't standing still —
+            <strong>But the block is moving, like the car.</strong> The block isn't standing still —
             it's moving, just like the car with the two friends inside. Someone riding along with
-            the rod has their own sense of "the same moment," the same way the two friends in the
+            the block has their own sense of "the same moment," the same way the two friends in the
             car do. The question this chapter asks is simple: on this same page, what does their
             "same moment" line actually look like?
           </p>
@@ -281,15 +281,15 @@ export function Experiment9({ onComplete, onTutorComplete }: Experiment9Props) {
               we are only adding one new line to a picture you've already seen, nothing else
               changes.
             </li>
-            <li>There is no gravity, and the rod keeps a steady speed.</li>
+            <li>There is no gravity, and the block keeps a steady speed.</li>
             <li>Light always travels at c in the lab, in both directions (Experiment 5).</li>
-            <li>The flash is released from the exact center of the rod, just as in Experiment 7.</li>
+            <li>The flash is released from the exact center of the block, just as in Experiment 7.</li>
           </ul>
         </div>
 
         <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            Rod speed
+            Block speed
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
             Speeds are given as a fraction of <strong>c</strong>, the speed of light. In this
@@ -335,7 +335,7 @@ export function Experiment9({ onComplete, onTutorComplete }: Experiment9Props) {
             Make a prediction
           </label>
           <p style={{ fontSize: '0.875rem', color: '#555', marginBottom: '0.75rem' }}>
-            You already know, from the last chapter, that someone riding along with the rod would
+            You already know, from the last chapter, that someone riding along with the block would
             say both flashes arrived at exactly the same moment. If we draw a single straight line
             through those two dots, what do you expect: will that line come out flat, level across
             the page — or will it come out tilted?
@@ -383,12 +383,12 @@ export function Experiment9({ onComplete, onTutorComplete }: Experiment9Props) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <SpacetimeDiagram diagram={diagram} animTime={animTime} showSameMomentLine={lineRevealed} />
               <p style={{ fontSize: '0.8125rem', color: '#555', margin: '0.25rem 0 0' }}>
-                The <strong style={{ color: '#2563eb' }}>blue line</strong> is the rod's back end
+                The <strong style={{ color: '#2563eb' }}>blue line</strong> is the block's back end
                 and the <strong style={{ color: '#7c3aed' }}>purple line</strong> is its front end;
                 the matching dashed lines are the flash of light travelling toward each one. The{' '}
                 <strong style={{ color: '#8e24aa' }}>magenta line</strong>, once it appears, is the
                 new one: it passes through the same two dots you already saw, and shows what
-                counts as "the same moment" for someone riding along with the rod.
+                counts as "the same moment" for someone riding along with the block.
               </p>
               {lineRevealed && (
                 <button
@@ -419,10 +419,10 @@ export function Experiment9({ onComplete, onTutorComplete }: Experiment9Props) {
             <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem' }}>Results</h2>
 
             <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-              <strong>Rod speed:</strong> {result.velocity}c
+              <strong>Block speed:</strong> {result.velocity}c
             </p>
             <p style={{ margin: '0.5rem 0', fontSize: '0.875rem' }}>
-              <strong>Rod's length, seen from the lab (Experiment 6):</strong>{' '}
+              <strong>Block's length, seen from the lab (Experiment 6):</strong>{' '}
               {result.labLength.toFixed(3)} light-seconds (rest length {result.restLength.toFixed(3)})
             </p>
 
