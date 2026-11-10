@@ -549,8 +549,8 @@ const chapters: Chapter[] = [
     group: 'Relativity of Time and Motion',
     Component: Experiment7,
     learned:
-      "Someone riding along with a moving rod sees a flash from its center reach both ends at the same time. The lab does not: the back end moves toward the flash and the front end moves away, so the lab sees the back end reached first. This is not a delay in either frame's own clocks. It is called relativity of simultaneity: two events that are simultaneous in one reference frame need not be simultaneous in another.",
-    next: 'Next, we look at the same rod and flash a different way: as a single picture, with position and time drawn together.',
+      "Someone riding along with a moving block sees a flash from its center reach both ends at the same time. The lab does not: the back end moves toward the flash and the front end moves away, so the lab sees the back end reached first. This is not a delay in either frame's own clocks. It is called relativity of simultaneity: two events that are simultaneous in one reference frame need not be simultaneous in another.",
+    next: 'Next, we look at the same block and flash a different way: as a single picture, with position and time drawn together.',
   },
   {
     title: 'Drawing Spacetime',
