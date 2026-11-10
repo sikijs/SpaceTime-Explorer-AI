@@ -500,8 +500,24 @@ export function PanelsCaption() {
           lengths.
         </li>
         <li>
-          <strong>When the run ends:</strong> the run lasts until the slower moving clock has made one round trip. The rest clock keeps
-          ticking; each moving clock stops after its one tick.
+          <strong>When the run ends:</strong> every clock has its own job, and the run stops when the last job is done.
+          <ul style={{ marginTop: '0.25rem', paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>The Rest clock</strong> keeps ticking until the run ends.
+            </li>
+            <li>
+              <strong>Each moving clock</strong> makes exactly <strong>one tick</strong>: its pulse goes from the bottom mirror to the
+              top mirror and back down once. Then that clock <strong>freezes</strong> and keeps showing its reading.
+            </li>
+            <li>
+              <strong>The two moving clocks finish at different moments</strong>, because one tick takes a different time under each
+              rule. The clock with the shorter tick freezes first, while the other pulse is still on its way. It is like two runners
+              who each run one lap, one on a shorter track: the one on the shorter track finishes first and waits at the line.
+            </li>
+            <li>
+              <strong>The run ends</strong> when the slower of the two moving clocks has finished its tick.
+            </li>
+          </ul>
         </li>
       </ul>
     </CaptionBox>
