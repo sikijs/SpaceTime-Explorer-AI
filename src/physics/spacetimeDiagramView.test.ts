@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { blockSketchFor, flashSketchFor, spacetimeDiagramFor, sameMomentLineFor, rodTimeAxisFor, rodSpaceAxisFor } from './spacetimeDiagramView'
+import { actualOrderFor, blockSketchFor, diagramTicksFor, flashSketchFor, guessMarkerFor, markOrderGuess, spacetimeDiagramFor, sameMomentLineFor, rodTimeAxisFor, rodSpaceAxisFor } from './spacetimeDiagramView'
 import { runSimultaneityExperiment } from './relativityOfSimultaneityExperiment'
 import { SPEED_OF_LIGHT } from './movingClockExperiment'
 
@@ -260,5 +260,76 @@ describe('Experiment 8 introduction sketch (the flash at several moments)', () =
   it('rejects a photo count below 1 or a time step that is not positive', () => {
     expect(() => flashSketchFor(0, 0.2)).toThrow(RangeError)
     expect(() => flashSketchFor(3, 0)).toThrow(RangeError)
+  })
+})
+
+describe('Experiment 8 audit update: guess marker, tick marks and the tutor marking', () => {
+  const at = (v: number) => runSimultaneityExperiment(v)
+
+  it('the order is back first for every moving block and "same" only at rest', () => {
+    expect(actualOrderFor(at(0))).toBe('same')
+    for (const v of SPEEDS) expect(actualOrderFor(at(v))).toBe('back')
+  })
+
+  it('the guess marker points at the real dots: the back dot, the front dot, or both, and never a joining line', () => {
+    const d = spacetimeDiagramFor(at(0.5))
+    expect(guessMarkerFor(d, 'back')).toEqual({ pointsAt: 'backDot', points: [d.backEvent] })
+    expect(guessMarkerFor(d, 'front')).toEqual({ pointsAt: 'frontDot', points: [d.frontEvent] })
+    expect(guessMarkerFor(d, 'same')).toEqual({ pointsAt: 'bothDots', points: [d.backEvent, d.frontEvent] })
+  })
+
+  it('the marker never changes the diagram: the same diagram comes back whatever is guessed', () => {
+    const d = spacetimeDiagramFor(at(0.5))
+    const copy = JSON.parse(JSON.stringify(d))
+    for (const c of ['same', 'back', 'front'] as const) guessMarkerFor(d, c)
+    expect(d).toEqual(copy)
+  })
+
+  it('ticks at 0.5c run from -0.3 to 0.5 across and 0 to 0.5 up, in steps of 0.1', () => {
+    const t = diagramTicksFor(spacetimeDiagramFor(at(0.5)))
+    expect(t.positionMin).toBeCloseTo(-0.3, 9)
+    expect(t.positionMax).toBeCloseTo(0.5, 9)
+    expect(t.timeMax).toBeCloseTo(0.5, 9)
+    expect(t.positions).toEqual([-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5])
+    expect(t.times).toEqual([0, 0.1, 0.2, 0.3, 0.4, 0.5])
+  })
+
+  it('the ticks cover every point of the diagram at every speed, include the origin, and rise in equal steps', () => {
+    for (const v of [0, ...SPEEDS]) {
+      const d = spacetimeDiagramFor(at(v))
+      const t = diagramTicksFor(d)
+      const points = [...d.backWorldline, ...d.frontWorldline, ...d.leftLightWorldline, ...d.rightLightWorldline]
+      for (const p of points) {
+        expect(p.position).toBeGreaterThanOrEqual(t.positionMin - 1e-9)
+        expect(p.position).toBeLessThanOrEqual(t.positionMax + 1e-9)
+        expect(p.time).toBeLessThanOrEqual(t.timeMax + 1e-9)
+      }
+      expect(t.positions).toContain(0)
+      expect(t.times[0]).toBe(0)
+      for (let i = 1; i < t.positions.length; i++) expect(t.positions[i] - t.positions[i - 1]).toBeCloseTo(0.1, 9)
+    }
+  })
+
+  it('ticks for several diagrams cover all of them: the block at rest (to -0.25) and the fastest run (to 1.09)', () => {
+    const t = diagramTicksFor([spacetimeDiagramFor(at(0)), spacetimeDiagramFor(at(0.9))])
+    expect(t.positionMin).toBeCloseTo(-0.3, 9)
+    expect(t.positionMax).toBeCloseTo(1.1, 9)
+    expect(t.timeMax).toBeCloseTo(1.1, 9)
+  })
+
+  it('ticks reject a step that is not positive', () => {
+    expect(() => diagramTicksFor(spacetimeDiagramFor(at(0.5)), 0)).toThrow(RangeError)
+  })
+
+  it('the tutor marking carries the chosen order, the real order and the module\'s times', () => {
+    const r = at(0.5)
+    const m = markOrderGuess('front', r)
+    expect(m.chosen).toBe('front')
+    expect(m.actual).toBe('back')
+    expect(m.backTime).toBeCloseTo(0.1443, 4)
+    expect(m.frontTime).toBeCloseTo(0.4330, 4)
+    expect(m.gap).toBeCloseTo(0.2887, 4)
+    expect(markOrderGuess('same', at(0)).actual).toBe('same')
+    expect(markOrderGuess('same', at(0)).gap).toBe(0)
   })
 })

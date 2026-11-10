@@ -137,3 +137,89 @@ export function flashSketchFor(photoCount: number, timeStep: number): FlashPhoto
     return { time, leftPosition: -SPEED_OF_LIGHT * time, rightPosition: SPEED_OF_LIGHT * time }
   })
 }
+
+// ---- Experiment 8, audit update (docs/audit/relativity-of-time-and-motion/08-draft-wording.md) ----
+// Everything below only reads the already-computed diagram or result; no relativistic quantity is recalculated.
+
+export type OrderChoice = 'same' | 'back' | 'front'
+
+export const orderWording: Record<OrderChoice, string> = {
+  same: 'both at the same time',
+  back: "the back end's worldline first",
+  front: "the front end's worldline first",
+}
+
+// The back event is never later than the front event; they coincide only at v = 0 (Experiment 7, Required Physics Test 2, reused here
+// without recomputation).
+export function actualOrderFor(result: SimultaneityResult): OrderChoice {
+  return result.velocity === 0 ? 'same' : 'back'
+}
+
+// Where the learner's guess is drawn: a ring round the back dot, a ring round the front dot, or a ring round both. The guess has no
+// size or position of its own, so this only says which real dot or dots the white marker points at. (A line joining the two dots is
+// deliberately not offered: it would be the "same moment" line that Experiment 9 asks the learner to predict.)
+export interface GuessMarkerTarget {
+  pointsAt: 'backDot' | 'frontDot' | 'bothDots'
+  points: WorldlinePoint[]
+}
+
+export function guessMarkerFor(diagram: SpacetimeDiagramData, choice: OrderChoice): GuessMarkerTarget {
+  if (choice === 'back') return { pointsAt: 'backDot', points: [diagram.backEvent] }
+  if (choice === 'front') return { pointsAt: 'frontDot', points: [diagram.frontEvent] }
+  return { pointsAt: 'bothDots', points: [diagram.backEvent, diagram.frontEvent] }
+}
+
+// Tick marks for the two axes: multiples of `step` that cover every point of the diagram, from the first multiple below the leftmost
+// point to the first multiple above the rightmost one (position), and from 0 up to the first multiple above the latest time (time).
+export interface DiagramTicks {
+  positions: number[]
+  times: number[]
+  positionMin: number
+  positionMax: number
+  timeMax: number
+}
+
+// Given several diagrams (Part 2 draws every run at one scale), the ticks cover all of them.
+export function diagramTicksFor(diagram: SpacetimeDiagramData | SpacetimeDiagramData[], step = 0.1): DiagramTicks {
+  if (!(step > 0) || !isFinite(step)) {
+    throw new RangeError('The tick step must be a finite number > 0')
+  }
+  const diagrams = Array.isArray(diagram) ? diagram : [diagram]
+  const points = diagrams.flatMap((d) => [...d.backWorldline, ...d.frontWorldline, ...d.leftLightWorldline, ...d.rightLightWorldline])
+  const minPosition = Math.min(0, ...points.map((p) => p.position))
+  const maxPosition = Math.max(0, ...points.map((p) => p.position))
+  const maxTime = Math.max(...points.map((p) => p.time))
+  const eps = 1e-9
+  const lowIndex = Math.floor(minPosition / step + eps)
+  const highIndex = Math.ceil(maxPosition / step - eps)
+  const timeIndex = Math.max(1, Math.ceil(maxTime / step - eps))
+  const at = (index: number) => parseFloat((index * step).toFixed(6))
+  const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => at(from + i))
+  return {
+    positions: range(lowIndex, highIndex),
+    times: range(0, timeIndex),
+    positionMin: at(lowIndex),
+    positionMax: at(highIndex),
+    timeMax: at(timeIndex),
+  }
+}
+
+// The tutor's marking of the one guess: what was chosen, what the diagram shows, and the numbers behind it. No score, no "right" or
+// "wrong" (CLAUDE.md §12, §13): the tutor words it.
+export interface OrderGuessMarking {
+  chosen: OrderChoice
+  actual: OrderChoice
+  backTime: number
+  frontTime: number
+  gap: number
+}
+
+export function markOrderGuess(choice: OrderChoice, result: SimultaneityResult): OrderGuessMarking {
+  return {
+    chosen: choice,
+    actual: actualOrderFor(result),
+    backTime: result.backEventLabTime,
+    frontTime: result.frontEventLabTime,
+    gap: result.labTimeGap,
+  }
+}
