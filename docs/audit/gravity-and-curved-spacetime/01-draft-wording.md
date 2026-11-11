@@ -46,7 +46,16 @@ Gaps chosen (the owner, 2026-11-11, "all defaults" to the eight questions of the
 
 ## 2. "Want to know more?" (opens in a new tab; fetched and read before approval)
 
-*Pending: the source search is being run and read now. The entries, with the exact page titles and a one-line description for each, will be added here before this draft is shown for approval. Nothing is linked that has not been read (§29 rule 3(c)).*
+**Linked from the start (one):**
+1. **NASA Glenn: Free Fall without Air Resistance** (NASA Glenn Research Center, Beginner's Guide to Aeronautics; page dated 18 July 2024). "A plain explanation of g: with no air, every object falls with the same acceleration, 9.8 metres per second every second at Earth's surface."
+
+**Held back until after the tutor** (they say what the experiment is about, and what real experiments found; §12). They appear under the tutor's explanation, under a heading "More to read, now that you have the explanation":
+2. **Einstein Online: The elevator, the rocket, and gravity: the equivalence principle** (Max Planck Institute for Gravitational Physics, by Markus Pössel; no date shown). "The cabin-and-rocket idea explained with an elevator and a rocket, and why nothing inside a closed room can tell the two apart. It ends with tidal effects, which this page leaves out."
+3. **MICROSCOPE mission: final results of the test of the Equivalence Principle** (Touboul and colleagues, Physical Review Letters 129, 121102, 2022; the arXiv abstract page, submitted 30 September 2022). "The real test: a satellite compared how two different metals fall in orbit for two and a half years, and found no difference at the level of about one part in a thousand million million (1 in 10^15). This is the paper's abstract page; the full paper is a technical one."
+4. **Imperial College London: Satellite mission confirms cornerstone of general relativity is unshakeable** (news page, 20 September 2022). "A plain account of the same MICROSCOPE result, for a reader with no physics background." (Not an official space-agency page: no CNES, ESA or ONERA page was fetched; see the source status below.)
+5. **NASA: Apollo 15 Hammer-Feather Drop** (NASA Space Science Data Coordinated Archive, page updated 31 March 2023). "The short account of a hammer and a feather dropped together on the Moon in 1971, where there is no air, and landing at the same moment."
+
+**Source status (checked 2026-11-11, for the specification's source table).** All five pages were fetched. Their content was reported by a helper's summary, not read by me line by line, so the quoted numbers should be spot-checked in a browser before the wording is final. The MICROSCOPE paper was read only as an abstract page; its PDF was not opened. The NIST constants page for the standard value of g (9.80665 m/s², exact) was read but is **not linked**: the page uses the rounded 9.8, and the difference goes under "Facts that may change". **No plain page from ESA or CNES was found:** an ESA "What is gravity?" page and a NASA "What is gravity?" page both returned HTTP 404, and no CNES or ESA MICROSCOPE page was tried. A Lumen Learning page (reusing the OpenStax astronomy text) on a falling person who feels no weight was read but is not from an official body and is **not linked**. No official plain page naming Einstein's "happiest thought" was found (§29 rule 3(c)): the idea is explained in the tutor, and nothing is suggested that was not read.
 
 ---
 
@@ -160,7 +169,7 @@ Three questions then the explanation. Changes:
 **Points 1 to 3** stay as built (the recipe example, the equivalence principle, where Einstein started), with one change to point 1: after "...down to the last decimal place," add the worked number: "At 1g, √(2 × 2 ÷ 9.8) = 0.64 seconds, and the same formula gives the same 0.64 seconds for both cabins."
 
 **New point 4: "A word of care."**
-"What you saw is a calculation. We used one formula for both cabins, so it was certain that they would agree: the agreement was built in, and nothing here tested it. Whether a real ball in a real rocket and a real ball on a real planet move the same way is a question for real experiments. The "Want to know more?" links at the top point to some. *(Wording of the last sentence depends on the links found; see section 2.)*"
+"What you saw is a calculation. We used one formula for both cabins, so it was certain that they would agree: the agreement was built in, and nothing here tested it. Whether a real ball in a real rocket and a real ball on a real planet move the same way is a question for real experiments. Real experiments have tested it for real objects. One of them, the MICROSCOPE satellite, compared how two different metals fall in orbit and reported no difference at the level of about one part in a thousand million million. The links below this explanation lead to the paper and to plain accounts of it."
 
 **Closing line (replaces nothing; the old explanation ended after point 3):** "Try other accelerations in Part 2 to see the same thing: whatever you choose, the two lines lie on top of each other."
 
@@ -187,7 +196,7 @@ In `equivalencePrincipleExperiment.ts`:
 
 1. **Introduction 1a, 1b, 1c:** the car picture without the answer-giving claim; Part 1 at 1g; the changed "Your job"? [yes]
 2. **Introduction 1d to 1g:** the "Your guess" paragraph, the new "What 1g means" paragraph, the "Some new words" line and the two added assumptions? [yes]
-3. **Links** (section 2): to be filled in from the pages that were read. [pending]
+3. **Links** (section 2): one link from the start and four held back until after the tutor, with the descriptions above? [yes]
 4. **Words box:** the entries, the two formulas and the worked examples? [yes]
 5. **Part leads and the note beside the acceleration buttons:** approve? [yes]
 6. **The marker:** a white ring at the end of the lines, the same for either guess, with the box texts? [yes]
@@ -195,4 +204,4 @@ In `equivalencePrincipleExperiment.ts`:
 8. **Results:** the tag, the removed pair, the closing sentence moved to the tutor, the "Where this comes from" line? [yes]
 9. **Tutor:** the three prompts (the compare step no longer states the outcome), the opening block that marks the guess, point 4 "A word of care", the closing line? [yes]
 10. **Point 1's old sentence** "...because the calculation itself never had a way to know which cabin it was supposed to be describing" stays, now followed by point 4? [yes]
-11. **Source reading:** the link pages were read through a helper that reported their content; I did not read them myself unless noted in section 2. Accept, or open them first? [accept, flagged in the specification]
+11. **Source reading:** the five link pages were read through a helper that reported their content; I did not read them myself. The MICROSCOPE paper was read as an abstract page only. Accept, or open them first? [accept, flagged in the specification]
