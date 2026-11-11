@@ -320,4 +320,4 @@ The experiment has no real result of its own, so no paper is linked.
 - The after-tutor link block mentioned in that check was removed when the Einstein Online link moved to the start (draft, "Link" decision); the check was not repeated since.
 - The Einstein Online summary was not compared with the page by the agent.
 - Relativity 3's source table still needs updating to cite the 15 cm example (draft question 12 approved; not verified as done).
-- The wording added after the draft (the "Why" section and the clocks-and-bars box) has no separately recorded line-by-line approval.
+- The wording added after the draft (the "Why" section and the clocks-and-bars box) was approved by the owner on 2026-11-11 ("wordings approved", a blanket approval in chat, with no line-by-line re-read recorded).
