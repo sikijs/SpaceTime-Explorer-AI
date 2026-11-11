@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { EXAMPLE_LEAN, actualShapeFor, levelLineSketchFor, levelReferenceLineFor, markShapeGuess, sameMomentLeanFor, sameMomentLineExtended, shapeMarkerFor, actualOrderFor, blockSketchFor, diagramTicksFor, flashSketchFor, guessMarkerFor, markOrderGuess, spacetimeDiagramFor, sameMomentLineFor, rodTimeAxisFor, rodSpaceAxisFor } from './spacetimeDiagramView'
+import { EXAMPLE_LEAN, actualShapeFor, levelLineSketchFor, levelReferenceLineFor, markShapeGuess, sameMomentLeanFor, sameMomentLineExtended, shapeMarkerFor, actualOrderFor, blockSketchFor, diagramTicksFor, flashSketchFor, guessMarkerFor, markOrderGuess, spacetimeDiagramFor, sameMomentLineFor, rodTimeAxisFor, rodSpaceAxisFor, rodSpaceAxisExtended } from './spacetimeDiagramView'
 import { runSimultaneityExperiment } from './relativityOfSimultaneityExperiment'
 import { SPEED_OF_LIGHT } from './movingClockExperiment'
 
@@ -412,5 +412,28 @@ describe('Experiment 9 audit update: lean, extended line, level line, marker and
     expect(s.leaning.lean).toBeCloseTo(0.25, 12)
     expect(s.level.points[0].position).toBe(s.leaning.points[0].position)
     expect(s.level.points[1].position).toBe(s.leaning.points[1].position)
+  })
+})
+
+describe("Block's own space axis, extended to the picture's edge (Experiment 11, audit update)", () => {
+  it('starts at the origin, keeps the slope of rodSpaceAxisFor exactly, and stays inside the drawn area', () => {
+    ;[0, ...SPEEDS].forEach((v) => {
+      const diagram = spacetimeDiagramFor(runSimultaneityExperiment(v))
+      const timeMax = diagram.frontEvent.time
+      const [from, to] = rodSpaceAxisExtended(diagram, 0.6, timeMax)
+      expect(from).toEqual({ position: 0, time: 0 })
+      expect(to.time).toBeLessThanOrEqual(timeMax + 1e-12)
+      expect(to.position).toBeLessThanOrEqual(0.6 + 1e-12)
+      if (to.position > 0) expect(to.time / to.position).toBeCloseTo(v, 10)
+    })
+  })
+
+  it('is level along the lab\'s own "now" line at rest, and clipped by the top of the picture when steep', () => {
+    const rest = spacetimeDiagramFor(runSimultaneityExperiment(0))
+    const [, restEnd] = rodSpaceAxisExtended(rest, 0.6, 1)
+    expect(restEnd).toEqual({ position: 0.6, time: 0 })
+    const fast = spacetimeDiagramFor(runSimultaneityExperiment(0.9))
+    const [, fastEnd] = rodSpaceAxisExtended(fast, 10, 0.5)
+    expect(fastEnd.time).toBeCloseTo(0.5, 10)
   })
 })

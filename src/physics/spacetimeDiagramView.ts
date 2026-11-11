@@ -320,3 +320,22 @@ export function levelLineSketchFor(): { level: LineSketch; leaning: LineSketch }
     leaning: make({ position: -0.2, time: 0.2 }, { position: 0.2, time: 0.3 }),
   }
 }
+
+// ---- Experiment 11, audit update (docs/audit/relativity-of-time-and-motion/11-draft-wording.md) ----
+
+// The block's own space axis (through the origin) extended to the right edge of the picture and clipped to the drawn area (times from
+// 0 up to timeMax): a rendering choice only. It uses the slope of rodSpaceAxisFor exactly; at v = 0 it is level along the lab's own
+// "now" line. The part left of the origin would lie below time 0, outside the drawn area, so it is not drawn.
+export function rodSpaceAxisExtended(
+  diagram: SpacetimeDiagramData,
+  positionMax: number,
+  timeMax: number,
+): [WorldlinePoint, WorldlinePoint] {
+  const [from, to] = rodSpaceAxisFor(diagram)
+  const lean = (to.time - from.time) / (to.position - from.position)
+  const end = lean > 0 ? Math.min(positionMax, timeMax / lean) : positionMax
+  return [
+    { position: 0, time: 0 },
+    { position: end, time: lean * end },
+  ]
+}
