@@ -65,7 +65,7 @@ function Panel({ title, scale, state, backEventTime, frontEventTime }: PanelProp
         </p>
       </div>
       <div style={{ flex: '1 1 320px', minWidth: 0, backgroundColor: '#d9ecff', borderRadius: '6px', padding: '0.25rem 0.5rem' }}>
-        <svg
+        <svg className="narrow-scroll"
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           role="img"
           aria-label={`${title}: a flash of light travelling from the block's centre to both ends`}
@@ -260,7 +260,7 @@ export function EventStrip({
   }
 
   return (
-    <svg width={S.width} height={S.height} viewBox={`0 0 ${S.width} ${S.height}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={S.width} height={S.height} viewBox={`0 0 ${S.width} ${S.height}`} style={svgStyle} role="img" aria-label={label}>
       <text x={14} y={TITLE_Y} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         When was each end reached?
       </text>

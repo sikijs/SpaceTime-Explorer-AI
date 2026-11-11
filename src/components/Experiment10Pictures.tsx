@@ -101,7 +101,7 @@ export function TwinBars({
   }
 
   return (
-    <svg width={B.width} height={B.height} viewBox={`0 0 ${B.width} ${B.height}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={B.width} height={B.height} viewBox={`0 0 ${B.width} ${B.height}`} style={svgStyle} role="img" aria-label={label}>
       <text x={14} y={24} fill={pink ? YOURS_COLOR : TEXT_COLOR} fontSize="13" fontWeight="bold">
         {title}
       </text>

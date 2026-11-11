@@ -231,7 +231,7 @@ export function MovingClockTrack({
   const text = `Moving clock: ${distanceTravelled.toFixed(2)} light-seconds from the lab clock`
   const labelX = Math.min(Math.max(movingX, T.left + 120), T.right - 60)
   return (
-    <svg width={T.width} height={T.height} viewBox={`0 0 ${T.width} ${T.height}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={T.width} height={T.height} viewBox={`0 0 ${T.width} ${T.height}`} style={svgStyle} role="img" aria-label={label}>
       <line x1={T.left} y1={T.y} x2={T.right} y2={T.y} stroke={MUTED_COLOR} strokeWidth={3} />
       <line x1={T.left} y1={T.y - 8} x2={T.left} y2={T.y + 8} stroke={MUTED_COLOR} strokeWidth={2} />
       <line x1={T.right} y1={T.y - 8} x2={T.right} y2={T.y + 8} stroke={MUTED_COLOR} strokeWidth={2} />
@@ -319,7 +319,7 @@ export function MovingClockBars({
   }
 
   return (
-    <svg width={B.width} height={B.height} viewBox={`0 0 ${B.width} ${B.height}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={B.width} height={B.height} viewBox={`0 0 ${B.width} ${B.height}`} style={svgStyle} role="img" aria-label={label}>
       {/* a dashed line joins the two bars where both clocks start together */}
       <line x1={px(0)} y1={LAB_BAR_Y} x2={px(0)} y2={MOVING_BAR_Y + BAR_H} stroke={MUTED_COLOR} strokeWidth={1.5} strokeDasharray="4 4" />
 

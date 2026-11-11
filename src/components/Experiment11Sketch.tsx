@@ -48,7 +48,7 @@ export function AxesSketch() {
   return (
     <div style={{ margin: '0.75rem 0 1rem' }}>
       <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold' }}>What a frame’s own axes are (a sketch, not the real diagram)</p>
-      <svg
+      <svg className="narrow-scroll"
         width={W}
         height={H}
         viewBox={`0 0 ${W} ${H}`}

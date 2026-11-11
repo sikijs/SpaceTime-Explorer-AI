@@ -47,7 +47,7 @@ export function BlockToLinesSketch() {
     <div style={{ margin: '0.75rem 0 1rem' }}>
       <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold' }}>From a block to two leaning lines (a sketch, not the real diagram)</p>
       <div style={{ backgroundColor: '#d9ecff', borderRadius: '6px', padding: '0.25rem 0.5rem' }}>
-        <svg
+        <svg className="narrow-scroll"
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           role="img"
           aria-label="A sketch. On the left, a flat block at one moment, with a blue back end and a purple front end. On the right, the same block drawn at four moments, one above the other and a little further right each time, with a blue line joining the back ends and a purple line joining the front ends."
@@ -200,7 +200,7 @@ export function FlashToLinesSketch() {
     <div style={{ margin: '0.75rem 0 1rem' }}>
       <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold' }}>From a flash to two leaning lines (a sketch, not the real diagram)</p>
       <div style={{ backgroundColor: '#d9ecff', borderRadius: '6px', padding: '0.25rem 0.5rem' }}>
-        <svg
+        <svg className="narrow-scroll"
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           role="img"
           aria-label="A sketch. An amber dot at the bottom marks where a flash of light is released. Above it, at 0.2, 0.4 and 0.6 seconds, two dots for each time, one further left and one further right. A blue dashed line joins the dots on the left and a purple dashed line joins the dots on the right, like the two sides of the letter V."

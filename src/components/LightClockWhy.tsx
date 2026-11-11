@@ -35,7 +35,7 @@ export function RightTriangleFigure({ label }: { label: string }) {
   const stroke = { stroke: '#0b1020', strokeWidth: 4, paintOrder: 'stroke' } as const
 
   return (
-    <svg width={W.width} height={W.height} viewBox={`0 0 ${W.width} ${W.height}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={W.width} height={W.height} viewBox={`0 0 ${W.width} ${W.height}`} style={svgStyle} role="img" aria-label={label}>
       <text x={14} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         One trip up in a light clock moving at {WORKED_VELOCITY}c, seen from the lab (units: light-seconds)
       </text>

@@ -160,7 +160,7 @@ function LightClockPanel({
         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>{readingNote}</p>
       </div>
       <div style={{ flex: '1 1 320px', minWidth: 0, backgroundColor: '#d9ecff', borderRadius: '6px', padding: '0.25rem 0.5rem' }}>
-        <svg
+        <svg className="narrow-scroll"
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           role="img"
           aria-label={`${titleLines.join(' ')}: light pulse travelling between two mirrors along the direction of motion`}
@@ -428,7 +428,7 @@ export function GapBars({
   }
 
   return (
-    <svg width={B.width} height={B.height} viewBox={`0 0 ${B.width} ${B.height}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={B.width} height={B.height} viewBox={`0 0 ${B.width} ${B.height}`} style={svgStyle} role="img" aria-label={label}>
       {pinkSpeed !== null && (
         <text x={4} y={16} fill={YOURS_COLOR} fontSize="13" fontWeight="bold">
           your speed: {pinkSpeed}c
@@ -447,12 +447,6 @@ export function GapBars({
         length of the clock
       </text>
       <rect x={px(0)} y={REST_BAR_Y} width={restEnd - px(0)} height={BAR_H} fill={REST_COLOR} />
-      <text x={restEnd} y={REST_BAR_Y + BAR_H + 15} fill={TEXT_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle" {...stroke}>
-        length: {experiment.restLength.toFixed(3)} light-seconds
-      </text>
-      <text x={restEnd} y={REST_BAR_Y + BAR_H + 29} fill={MUTED_COLOR} fontSize="11" textAnchor="middle" {...stroke}>
-        {tripText(rows[0])}
-      </text>
 
       <text x={16} y={SAME_BAR_Y + 2} fill={IMAGINED_COLOR} fontSize="11" fontWeight="bold">
         IMAGINED:
@@ -464,12 +458,6 @@ export function GapBars({
         as at rest
       </text>
       <rect x={px(0)} y={SAME_BAR_Y} width={sameEnd - px(0)} height={BAR_H} fill={IMAGINED_COLOR} />
-      <text x={sameEnd} y={SAME_BAR_Y + BAR_H + 15} fill={IMAGINED_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle" {...stroke}>
-        length: {experiment.sameLength.lengthInLab.toFixed(3)} light-seconds
-      </text>
-      <text x={sameEnd} y={SAME_BAR_Y + BAR_H + 29} fill={MUTED_COLOR} fontSize="11" textAnchor="middle" {...stroke}>
-        {tripText(rows[1])}
-      </text>
 
       <text x={16} y={CLOSER_BAR_Y + 10} fill={CLOSER_COLOR} fontSize="12" fontWeight="bold">
         Moving clock,
@@ -478,12 +466,6 @@ export function GapBars({
         shorter
       </text>
       <rect x={px(0)} y={CLOSER_BAR_Y} width={closerEnd - px(0)} height={BAR_H} fill={CLOSER_COLOR} />
-      <text x={closerEnd} y={CLOSER_BAR_Y + BAR_H + 16} fill={CLOSER_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle" {...stroke}>
-        length: {experiment.shorterLength.lengthInLab.toFixed(3)} light-seconds
-      </text>
-      <text x={closerEnd} y={CLOSER_BAR_Y + BAR_H + 30} fill={MUTED_COLOR} fontSize="11" textAnchor="middle" {...stroke}>
-        {tripText(rows[2])}
-      </text>
 
       <line x1={B.left} y1={AXIS_BAR_Y} x2={B.right} y2={AXIS_BAR_Y} stroke={MUTED_COLOR} strokeWidth={2} />
       {[0, scaleEnd / 2, scaleEnd].map((t, i) => (
@@ -499,6 +481,25 @@ export function GapBars({
       </text>
       {/* white: the learner's guesses, placed on the same scale */}
       {guesses && guessMark(guesses.gap)}
+      {/* the length and trip-time labels are drawn after the guess line, so their dark outline keeps the line from running through the words */}
+      <text x={restEnd} y={REST_BAR_Y + BAR_H + 15} fill={TEXT_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle" {...stroke}>
+        length: {experiment.restLength.toFixed(3)} light-seconds
+      </text>
+      <text x={restEnd} y={REST_BAR_Y + BAR_H + 29} fill={MUTED_COLOR} fontSize="11" textAnchor="middle" {...stroke}>
+        {tripText(rows[0])}
+      </text>
+      <text x={sameEnd} y={SAME_BAR_Y + BAR_H + 15} fill={IMAGINED_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle" {...stroke}>
+        length: {experiment.sameLength.lengthInLab.toFixed(3)} light-seconds
+      </text>
+      <text x={sameEnd} y={SAME_BAR_Y + BAR_H + 29} fill={MUTED_COLOR} fontSize="11" textAnchor="middle" {...stroke}>
+        {tripText(rows[1])}
+      </text>
+      <text x={closerEnd} y={CLOSER_BAR_Y + BAR_H + 16} fill={CLOSER_COLOR} fontSize="12" fontWeight="bold" textAnchor="middle" {...stroke}>
+        length: {experiment.shorterLength.lengthInLab.toFixed(3)} light-seconds
+      </text>
+      <text x={closerEnd} y={CLOSER_BAR_Y + BAR_H + 30} fill={MUTED_COLOR} fontSize="11" textAnchor="middle" {...stroke}>
+        {tripText(rows[2])}
+      </text>
       {guesses && choiceMark(guesses.choice)}
     </svg>
   )

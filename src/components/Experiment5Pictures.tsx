@@ -134,7 +134,7 @@ function LightClockPanel({
       </div>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 0.5rem' }}>{readingNote}</p>
       <div style={{ backgroundColor: '#d9ecff', borderRadius: '6px', padding: '0.5rem' }}>
-        <svg
+        <svg className="narrow-scroll"
           viewBox={`0 0 ${viewWidth} ${VIEW_HEIGHT}`}
           role="img"
           aria-label={`${titleLines.join(' ')}: light pulse travelling between two mirrors`}
@@ -378,7 +378,7 @@ export function TickBars({
   }
 
   return (
-    <svg width={B.width} height={B.height} viewBox={`0 0 ${B.width} ${B.height}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={B.width} height={B.height} viewBox={`0 0 ${B.width} ${B.height}`} style={svgStyle} role="img" aria-label={label}>
       {/* the lab time when the run stopped: the end of the actual-rule bar */}
       <line x1={actualEnd} y1={REST_BAR_Y - 8} x2={actualEnd} y2={ACTUAL_BAR_Y + BAR_H + 6} stroke={TEXT_COLOR} strokeWidth={1.5} strokeDasharray="3 3" />
       <text x={actualEnd} y={20} fill={TEXT_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle" {...stroke}>

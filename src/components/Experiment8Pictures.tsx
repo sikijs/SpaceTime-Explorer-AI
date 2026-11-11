@@ -275,7 +275,7 @@ export function SpacetimeDiagram({
   )
 
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={svgStyle} role="img" aria-label={label}>
       <text x={14} y={20} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         {title}
       </text>

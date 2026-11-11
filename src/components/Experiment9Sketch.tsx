@@ -87,7 +87,7 @@ export function LevelLineSketch() {
   return (
     <div style={{ margin: '0.75rem 0 1rem' }}>
       <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold' }}>What a level line means (a sketch, not the real diagram)</p>
-      <svg
+      <svg className="narrow-scroll"
         width={VIEW_WIDTH}
         height={VIEW_HEIGHT}
         viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}

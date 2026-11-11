@@ -394,3 +394,53 @@ textarea {
     padding: 0.75rem !important;
   }
 }
+
+/* Narrow windows, Relativity 3 to 11: the drawings are scaled to the width of the page, which made their
+   labels only 5 to 6 pixels tall at 420px. At 600px and below each drawing keeps a minimum width, so its
+   labels stay readable, and its box scrolls sideways with a hint. A check-up table stacks its rows. */
+@media (max-width: 600px) {
+  svg.narrow-scroll {
+    min-width: 520px;
+  }
+
+  :has(> svg.narrow-scroll) {
+    overflow-x: auto;
+  }
+
+  :has(> svg.narrow-scroll)::before {
+    content: 'Swipe sideways to see the whole drawing';
+    display: block;
+    position: sticky;
+    left: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 0.125rem 0.25rem;
+  }
+
+  table.stack-on-narrow,
+  table.stack-on-narrow tbody,
+  table.stack-on-narrow tr,
+  table.stack-on-narrow td {
+    display: block;
+    width: 100%;
+  }
+
+  table.stack-on-narrow thead {
+    display: none;
+  }
+
+  table.stack-on-narrow tr {
+    border-bottom: 2px solid var(--border);
+    padding: 0.25rem 0;
+  }
+
+  table.stack-on-narrow td {
+    border-bottom: none !important;
+    box-sizing: border-box;
+  }
+
+  table.stack-on-narrow td::before {
+    content: attr(data-label) ': ';
+    font-weight: bold;
+  }
+}

@@ -99,7 +99,7 @@ export function ClocksPanel({
   }
 
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={svgStyle} role="img" aria-label={label}>
+    <svg className="narrow-scroll" width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={svgStyle} role="img" aria-label={label}>
       <text x={14} y={22} fill={TEXT_COLOR} fontSize="13" fontWeight="bold">
         THE TWO EVENTS ON TWO SETS OF CLOCKS
       </text>
@@ -327,7 +327,7 @@ export function CheckUpTable({ result }: { result: SimultaneityResult }) {
   const cell = { padding: '0.35rem 0.6rem', borderBottom: '1px solid var(--border)', textAlign: 'left', verticalAlign: 'top' } as const
   return (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ borderCollapse: 'collapse', fontSize: '0.8125rem', width: '100%' }}>
+      <table className="stack-on-narrow" style={{ borderCollapse: 'collapse', fontSize: '0.8125rem', width: '100%' }}>
         <thead>
           <tr>
             <th style={cell}>What we checked</th>
@@ -339,14 +339,14 @@ export function CheckUpTable({ result }: { result: SimultaneityResult }) {
         <tbody>
           {rows.map((row, i) => (
             <tr key={row.label}>
-              <td style={cell}>{row.label.replace("block's", 'block’s')}</td>
-              <td style={cell}>
+              <td style={cell} data-label="What we checked">{row.label.replace("block's", 'block’s')}</td>
+              <td style={cell} data-label="Expected (and where it comes from)">
                 {f3(row.expected)} {unit(i)} ({source(i)})
               </td>
-              <td style={cell}>
+              <td style={cell} data-label="Found (by the transformation)">
                 {f3(row.found)} {unit(i)}
               </td>
-              <td style={cell}>
+              <td style={cell} data-label="How they compare">
                 <strong>{row.reading === 'the same' ? 'The same' : row.reading === 'more' ? 'More' : 'Less'}</strong>
               </td>
             </tr>
