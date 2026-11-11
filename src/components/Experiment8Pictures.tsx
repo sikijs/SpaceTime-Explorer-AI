@@ -1,6 +1,13 @@
 import type { ReactNode } from 'react'
-import { diagramTicksFor, guessMarkerFor, orderWording } from '../physics/spacetimeDiagramView'
-import type { OrderChoice, SpacetimeDiagramData, WorldlinePoint } from '../physics/spacetimeDiagramView'
+import {
+  diagramTicksFor,
+  guessMarkerFor,
+  levelReferenceLineFor,
+  orderWording,
+  sameMomentLineExtended,
+  shapeMarkerFor,
+} from '../physics/spacetimeDiagramView'
+import type { OrderChoice, ShapeChoice, SpacetimeDiagramData, WorldlinePoint } from '../physics/spacetimeDiagramView'
 import { runSimultaneityExperiment } from '../physics/relativityOfSimultaneityExperiment'
 import type { SimultaneityResult } from '../physics/relativityOfSimultaneityExperiment'
 import { MUTED_COLOR, TEXT_COLOR, YOURS_COLOR, svgStyle } from './GravitationalWaveExperiment'
@@ -16,6 +23,8 @@ export const GUESS_COLOR = '#ffffff' // white: the learner's guess, and nothing 
 const BACK_LIGHT = '#60a5fa' // blue: the back end, lighter for the dark ground
 const FRONT_LIGHT = '#a78bfa' // purple: the front end, lighter for the dark ground
 const ORIGIN_COLOR = '#e6a700' // amber: the flash released (a fixed reference)
+const SAME_MOMENT_COLOR = '#34d399' // green: the block's own "same moment" line (Experiment 9)
+const LEVEL_COLOR = '#cbd5e1' // pale grey: the lab's level "same moment" line (Experiment 9)
 const INK = '#0b1020'
 const GRID = '#1e293b'
 
@@ -48,16 +57,29 @@ export interface DiagramProps {
   scaleDiagrams?: SpacetimeDiagramData[] // Part 2: the widest runs (at rest and the fastest), so every run is drawn at one scale
   guess?: OrderChoice | null // Part 1: the learner's guess, in white (never moves a dot)
   pinkSpeed?: number | null // Part 2: the learner's own speed, written in pink
+  // Experiment 9: undefined for "Drawing Spacetime" (no extra lines); a boolean says whether the green and grey lines are drawn yet.
+  showSameMomentLines?: boolean
+  shapeGuess?: ShapeChoice | null // Experiment 9, Part 1: the learner's guess, a white example bar (never moves a line)
 }
 
 // Draws what the physics view layer reports; no physics is calculated here.
-export function SpacetimeDiagram({ diagram, animTime, title, label, scaleDiagrams, guess = null, pinkSpeed = null }: DiagramProps) {
+export function SpacetimeDiagram({
+  diagram,
+  animTime,
+  title,
+  label,
+  scaleDiagrams,
+  guess = null,
+  pinkSpeed = null,
+  showSameMomentLines,
+  shapeGuess = null,
+}: DiagramProps) {
   const ticks = diagramTicksFor(scaleDiagrams ?? diagram)
   const positionRange = ticks.positionMax - ticks.positionMin
   const scale = Math.min(PLOT_MAX_WIDTH / positionRange, PLOT_MAX_HEIGHT / ticks.timeMax)
   const plotW = positionRange * scale
   const plotH = ticks.timeMax * scale
-  const top = guess !== null ? TOP_WITH_MARKER : TOP_PLAIN
+  const top = guess !== null || shapeGuess !== null ? TOP_WITH_MARKER : TOP_PLAIN
   const H = top + plotH + BOTTOM_MARGIN
   const x = (position: number) => PLOT_LEFT + (position - ticks.positionMin) * scale
   const y = (time: number) => top + plotH - time * scale
@@ -129,6 +151,72 @@ export function SpacetimeDiagram({ diagram, animTime, title, label, scaleDiagram
             </g>
           )
         })}
+        <rect x={boxX} y={boxY} width={boxWidth} height={30} fill={INK} stroke={GUESS_COLOR} strokeWidth={3} rx={4} />
+        <text x={boxX + 10} y={boxY + 20} fill={GUESS_COLOR} fontSize="14" fontWeight="bold">
+          {text}
+        </text>
+      </g>
+    )
+  }
+
+  // Experiment 9: the block's own "same moment" line (green) and the lab's level line (pale grey), drawn once the dots are drawn.
+  const sameMomentLines = () => {
+    if (showSameMomentLines !== true) return null
+    const [gFrom, gTo] = sameMomentLineExtended(diagram, ticks.positionMin, ticks.positionMax, ticks.timeMax)
+    const [lFrom, lTo] = levelReferenceLineFor(diagram, ticks.positionMin, ticks.positionMax)
+    const labelX = (x(diagram.backEvent.position) + x(diagram.frontEvent.position)) / 2
+    const labelY = (y(diagram.backEvent.time) + y(diagram.frontEvent.time)) / 2
+    // the picture's y runs downward, so a line that rises to the right turns the text anticlockwise
+    const labelAngle = (-Math.atan2(y(diagram.backEvent.time) - y(diagram.frontEvent.time), x(diagram.frontEvent.position) - x(diagram.backEvent.position)) * 180) / Math.PI
+    return (
+      <g>
+        <line x1={x(lFrom.position)} y1={y(lFrom.time)} x2={x(lTo.position)} y2={y(lTo.time)} stroke={LEVEL_COLOR} strokeWidth={2} strokeDasharray="10 6" />
+        <line x1={x(gFrom.position)} y1={y(gFrom.time)} x2={x(gTo.position)} y2={y(gTo.time)} stroke={SAME_MOMENT_COLOR} strokeWidth={4} />
+        <text x={x(lTo.position) - 6} y={y(lTo.time) + 15} fill={LEVEL_COLOR} fontSize="11" fontWeight="bold" textAnchor="end" {...stroke}>
+          A level line: the lab’s “same moment”
+        </text>
+        {/* named along the line, above it, halfway between the two dots (the clearest stretch of the picture) */}
+        <text
+          transform={`translate(${labelX} ${labelY}) rotate(${labelAngle})`}
+          y={-10}
+          fill={SAME_MOMENT_COLOR}
+          fontSize="11"
+          fontWeight="bold"
+          textAnchor="middle"
+          {...stroke}
+        >
+          The block’s own “same moment” line
+        </text>
+      </g>
+    )
+  }
+
+  // Experiment 9: the guess is only "flat" or "tilted", so it is a white example bar (level, or leaning at a fixed example lean that is
+  // never the real lean), in a box labelled YOUR GUESS above the picture and joined to the bar by a dashed line. It appears with the
+  // real line, and it never moves a line.
+  const shapeMarker = () => {
+    if (shapeGuess === null || showSameMomentLines !== true) return null
+    const marker = shapeMarkerFor(shapeGuess)
+    const text = `YOUR GUESS (a marker only): the line will be ${shapeGuess === 'flat' ? 'flat' : 'tilted'}`
+    const boxWidth = text.length * 8 + 20
+    const boxX = Math.min(Math.max(PLOT_LEFT, 6), W - boxWidth - 6)
+    const boxY = 30
+    const cx = x(ticks.positionMin + 0.13)
+    const cy = y(ticks.timeMax - 0.1)
+    const half = 46
+    const dx = half
+    const dy = -marker.lean * half // equal pixel scale on both axes
+    const arrow = (px: number, py: number, ux: number, uy: number) => {
+      const norm = Math.hypot(ux, uy)
+      const [ax, ay] = [ux / norm, uy / norm]
+      return `${px},${py} ${px - ax * 12 - ay * 6},${py - ay * 12 + ax * 6} ${px - ax * 12 + ay * 6},${py - ay * 12 - ax * 6}`
+    }
+    return (
+      <g>
+        <line x1={boxX + 40} y1={boxY + 30} x2={cx} y2={cy - 14} stroke={GUESS_COLOR} strokeWidth={2} strokeDasharray="6 4" />
+        <line x1={cx - dx} y1={cy - dy} x2={cx + dx} y2={cy + dy} stroke={GUESS_COLOR} strokeWidth={5} strokeLinecap="round" />
+        <polygon points={arrow(cx + dx + 4, cy + dy, dx, dy)} fill={GUESS_COLOR} />
+        <polygon points={arrow(cx - dx - 4, cy - dy, -dx, -dy)} fill={GUESS_COLOR} />
         <rect x={boxX} y={boxY} width={boxWidth} height={30} fill={INK} stroke={GUESS_COLOR} strokeWidth={3} rx={4} />
         <text x={boxX + 10} y={boxY + 20} fill={GUESS_COLOR} fontSize="14" fontWeight="bold">
           {text}
@@ -221,7 +309,9 @@ export function SpacetimeDiagram({ diagram, animTime, title, label, scaleDiagram
           both ends reached
         </text>
       )}
+      {sameMomentLines()}
       {marker()}
+      {shapeMarker()}
 
       {/* the key: every drawn thing is named here */}
       <text x={keyX} y={top - 4} fill={TEXT_COLOR} fontSize="12" fontWeight="bold">
@@ -233,6 +323,8 @@ export function SpacetimeDiagram({ diagram, animTime, title, label, scaleDiagram
       {keyEntry(3, sampleLine(3, FRONT_LIGHT, true), 'Light going to the front end')}
       {keyEntry(4, <circle cx={keyX + 11} cy={top + 24 + 4 * 24} r={6} fill={ORIGIN_COLOR} stroke={INK} strokeWidth={1.5} />, 'Flash released here')}
       {keyEntry(5, <circle cx={keyX + 11} cy={top + 24 + 5 * 24} r={6} fill={BACK_LIGHT} stroke={INK} strokeWidth={1.5} />, 'Event: light reaches an end')}
+      {showSameMomentLines !== undefined && keyEntry(6, sampleLine(6, SAME_MOMENT_COLOR, false), 'Block’s own “same moment”')}
+      {showSameMomentLines !== undefined && keyEntry(7, sampleLine(7, LEVEL_COLOR, true), 'Lab’s level “same moment”')}
     </svg>
   )
 }

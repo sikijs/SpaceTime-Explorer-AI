@@ -49,7 +49,7 @@ function describeGuess(choice: OrderChoice): string {
 }
 
 // The playback: only presentation. The diagram comes from the physics module and never depends on this.
-function useDrawing(onFinish?: () => void) {
+export function useDrawing(onFinish?: () => void) {
   const [status, setStatus] = useState<RunStatus>('idle')
   const [time, setTime] = useState(0)
   const [total, setTotal] = useState(0)
@@ -89,10 +89,11 @@ function useDrawing(onFinish?: () => void) {
   return { status, time, total, start, reset }
 }
 
+// Shared with Experiment 9, which draws the same diagram.
 // The drawing lasts until the later of the two events (the front event).
-const drawingLength = (diagram: SpacetimeDiagramData) => diagram.backWorldline[1].time
+export const drawingLength = (diagram: SpacetimeDiagramData) => diagram.backWorldline[1].time
 
-function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+export function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer">
       {children}
@@ -153,16 +154,16 @@ const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
   { term: 'Formula, time = distance ÷ speed', meaning: 'light goes at c, which is 1 light-second every second, so to cover 0.2 light-second it needs 0.2 ÷ 1 = 0.2 second. That is why the light’s line in the second sketch leans 0.2 light-second for every 0.2 s it rises. (The sums for the moving block are not given here, because they would give away what you are asked to predict.)' },
 ]
 
-const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
-const smallNote = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' } as const
-const resultLine = { margin: '0.5rem 0', fontSize: '0.875rem' } as const
-const resultBlock = { marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' } as const
+export const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+export const smallNote = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' } as const
+export const resultLine = { margin: '0.5rem 0', fontSize: '0.875rem' } as const
+export const resultBlock = { marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' } as const
 
-function Block({ children }: { children: ReactNode }) {
+export function Block({ children }: { children: ReactNode }) {
   return <div style={{ marginTop: '1rem' }}>{children}</div>
 }
 
-function WhereFrom({ children }: { children: ReactNode }) {
+export function WhereFrom({ children }: { children: ReactNode }) {
   return (
     <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
       <strong>Where the real picture comes from.</strong> {children}
@@ -170,7 +171,7 @@ function WhereFrom({ children }: { children: ReactNode }) {
   )
 }
 
-function GuessTag() {
+export function GuessTag() {
   return (
     <span
       style={{
@@ -190,7 +191,7 @@ function GuessTag() {
   )
 }
 
-function NoteList({ title, children }: { title: string; children: ReactNode }) {
+export function NoteList({ title, children }: { title: string; children: ReactNode }) {
   return (
     <p style={{ ...smallNote, fontSize: '0.8125rem', marginTop: '0.5rem' }}>
       <strong>{title}</strong> {children}

@@ -1,9 +1,13 @@
 import { useState } from 'react'
+import { runSimultaneityExperiment } from '../physics/relativityOfSimultaneityExperiment'
 import type { SimultaneityResult } from '../physics/relativityOfSimultaneityExperiment'
-import { actualShapeFor } from './Experiment9'
-import type { ShapeChoice } from './Experiment9'
+import { markShapeGuess, sameMomentLeanFor, spacetimeDiagramFor } from '../physics/spacetimeDiagramView'
+import type { ShapeChoice } from '../physics/spacetimeDiagramView'
 
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
+
+// The lean of the block's own line at a speed, from the module (the tutor's numbers for Part 2).
+const leanAt = (v: number) => sameMomentLeanFor(spacetimeDiagramFor(runSimultaneityExperiment(v)))
 
 interface Experiment9TutorProps {
   result: SimultaneityResult
@@ -30,7 +34,7 @@ export function Experiment9Tutor({ result, predictionShape, onExplained }: Exper
   }
 
   const isResponseEmpty = responseInput.trim() === ''
-  const actualShape = actualShapeFor(result)
+  const marking = markShapeGuess(predictionShape, result)
 
   return (
     <div
@@ -50,11 +54,9 @@ export function Experiment9Tutor({ result, predictionShape, onExplained }: Exper
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              'Look at the new magenta line. Does it run flat and level, straight across the page — like the sidewalk-watcher\'s own idea of "the same moment"? Or does it lean over?'}
+              'Look at the green line. Does it run flat and level, straight across the diagram, like the pale grey dashed line, the sidewalk-watcher\'s own idea of "the same moment"? Or does it lean over?'}
             {tutorStep === 'compare' &&
-              `You predicted the line would be ${predictionShape}. It is actually ${actualShape}${
-                actualShape === 'tilted' ? ', not flat' : ', matching the lab\'s own line exactly'
-              }. Comparing what you expected to what the diagram actually drew, what do you notice?`}
+              `You guessed the line would be ${marking.chosen === 'flat' ? 'flat' : 'tilted'}. That is the white marker. The green line leans ${marking.lean.toFixed(3)} s for every light-second; the grey line, the lab's "same moment" line, leans 0. What do you notice when you compare your white marker with the green line?`}
             {tutorStep === 'conceptual' &&
               'Think back to the two friends in the car. They agreed their two events happened at the same moment; the person on the sidewalk did not. The block\'s two events work the same way. Just from looking at the picture — not from redoing any arithmetic — why do you think the line through those two events isn\'t flat?'}
           </p>
@@ -109,7 +111,7 @@ export function Experiment9Tutor({ result, predictionShape, onExplained }: Exper
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>2. The block is moving, like the car — so it gets its own line.</strong> Remember
-            why, from Experiment 7: the back end of the block moves toward the point where the flash
+            why, from “At the same time... for whom?”: the back end of the block moves toward the point where the flash
             started, while the front end moves away from it, so the flash reaches the back end
             first, according to the lab. That's the same kind of effect that would make the two
             friends in the car and the sidewalk-watcher disagree about their own two events. The
@@ -119,17 +121,26 @@ export function Experiment9Tutor({ result, predictionShape, onExplained }: Exper
             very same page — not a mistake, and not a trick of measurement.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. This is the same fact as Experiment 7, just drawn as a line.</strong>{' '}
-            Experiment 7 gave you two numbers: the flash reached the back end at{' '}
+            <strong>3. This is the same fact as “At the same time... for whom?”, just drawn as a line.</strong>{' '}
+            That chapter gave you two numbers: the flash reached the back end at{' '}
             {result.backEventLabTime.toFixed(3)} s and the front end at{' '}
             {result.frontEventLabTime.toFixed(3)} s in the lab — but at exactly the same moment for
-            the block. Experiment 8 drew those two events as two dots. All you did here is draw the
+            the block. “Drawing Spacetime” drew those two events as two dots. All you did here is draw the
             line through them, and it showed you the same thing those numbers already said.
           </p>
-          <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>4. Nothing new happened — you just connected two dots.</strong> The two events
             are exactly the ones you already saw. No new calculation was needed to draw this line;
-            it was already there in the numbers Experiment 7 gave you.
+            it was already there in the numbers “At the same time... for whom?” gave you.
+          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>5. Your guess, marked.</strong> You guessed the line would be {marking.chosen === 'flat' ? 'flat' : 'tilted'}. The
+            green line leans {marking.lean.toFixed(3)} s for every light-second, and the grey line leans 0.
+          </p>
+          <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>6. Try it in Part 2.</strong> Try 0c: the green line lies on the grey line and the lean is{' '}
+            {leanAt(0).toFixed(3)}, because nothing is moving. Then 0.1c (lean {leanAt(0.1).toFixed(3)}), 0.8c (lean {leanAt(0.8).toFixed(3)}) and
+            0.9c (lean {leanAt(0.9).toFixed(3)}).
           </p>
         </div>
       )}

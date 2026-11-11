@@ -565,7 +565,7 @@ const chapters: Chapter[] = [
     group: 'Relativity of Time and Motion',
     Component: Experiment9,
     learned:
-      "A flat line straight across the diagram shows what the lab calls \"the same moment.\" But the two events that Experiment 7 said were simultaneous for the block are not on a flat line at all — they're on a tilted one. \"The same moment\" really does depend on who is watching: it isn't a trick of measurement, it's a different, real line on the same page.",
+      "A flat line straight across the diagram shows what the lab calls \"the same moment.\" But the two events that \"At the same time... for whom?\" said were simultaneous for the block are not on a flat line at all — they're on a tilted one. \"The same moment\" really does depend on who is watching: it isn't a trick of measurement, it's a different, real line on the same page.",
     next: 'Next, we apply time dilation to a whole round trip: two twins, one who travels and one who stays home, and a famous puzzle about which one is older when they reunite.',
   },
   {
