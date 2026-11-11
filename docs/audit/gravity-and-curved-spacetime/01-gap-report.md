@@ -51,3 +51,56 @@ EquivalencePrincipleExperiment.tsx (graph mark, caption, intro, control note, re
 
 ## Not checked
 Not run in a browser; spec not compared line by line; no sources/links list exists (Rule D applies only to Cosmic Horizons).
+
+---
+
+# Re-read, 2026-11-11: Rule E and the owner's rules of 2026-11-02 to 2026-11-07
+Read-only. Re-read of `EquivalencePrincipleExperiment.tsx` (454 lines), `EquivalencePrincipleTutor.tsx` (128), `equivalencePrincipleExperiment.ts` (48) and the specification `01-equivalence-principle.md`. Nothing changed. Rules A to C above stand as written; this section adds what they did not cover and settles what the Relativity audit has since decided.
+
+## Rule E: the page in four Parts
+| Item | Result | Evidence | Gap and what would be needed |
+|---|---|---|---|
+| E1 | Not met | One card holds everything in a single column: introduction, acceleration buttons, prediction, the two cabins, the graph, the run button, then Results and the tutor (`:237-452`) | Part 1 (prediction, "Drop the ball", the cabins and the graph), Part 2 (acceleration choice and a drawing that follows it), Part 3 (results), Part 4 (tutor). |
+| E2 | Not met | No Part headings, coloured lines or leads | Four leads in the shared colours, drafted for approval. |
+| E3 | Partly met | The introduction is above the controls (`:240-275`); there is no links list and no words box | See "Links and Words" below. |
+| E4 | Not met | No leads exist | Drafted with the leads; Part 1's lead must not give the answer (§12). |
+| E5 | N/A | One experiment, one group of four Parts | |
+
+## Parts 2 to 4 appear after the first Run (2026-11-07 rule)
+**Partly met.** The Results and the tutor render only once the ball has landed (`isComplete`, `:413, :448`). The acceleration control is visible from the start, above the prediction (`:277-344`). Under the Parts layout it moves into Part 2 and appears after the first run, with a visible note saying what to do next. Part 1 would be fixed at 1g (the preset the page opens on).
+
+## Links and Words (2026-11-07 rule)
+- **"Want to know more?" list: Not met.** None exists (the Rule D note above is out of date: the 2026-11-07 rule applies to every group). **Not searched or read yet.** The search and the fetch belong to the draft step, and nothing is linked until it has been read (§29 rule 3(c)). The page uses no measured result (both curves are calculated), so there is no paper to cite for the page itself. A real test of the idea exists (for example the MICROSCOPE satellite and the earlier torsion-balance tests); it is a candidate for a "Want to know more?" link and a "Where the real picture comes from" line only if an official page is found and read. **I have not looked it up, and no number is quoted here.**
+- **"Words and formulas" box: Not met.** None exists. Terms on the page: sealed cabin, acceleration, g, metres per second squared, height above the floor, elapsed time, graph (curve). Two formulas the module uses, with the page's own worked example: height at time t = start height − ½ × acceleration × t², and time to the floor = √(2 × height ÷ acceleration), for example √(2 × 2 m ÷ 9.8 m/s²) = 0.64 s at 1g. "Equivalence principle" is the chapter's title, so it is listed, with a one-line plain meaning that does not say what the experiment shows.
+
+## Start over, not Change prediction (2026-11-07 rule)
+**Not met.** The only reset is "Run Again", which is the same button as "Drop the ball" after a run (`:405-411`), so no reset exists on the first screen and it is not greyed out. There is no "Change prediction" button. Needed: an always-visible "Start over", greyed until a guess or a run exists and while the ball is falling; a line saying the guess is locked once the ball is dropped; and "Run Again" removed.
+
+## Rule A to C: items the re-read changes or sharpens
+- **The control is both the setup and the control** (as in Relativity 1 to 11). The learner picks the acceleration before guessing. Under the Parts layout Part 1 is fixed at 1g with the guess and one drop; Part 2 offers 0.5g, 1g, 2g and "Other" (0.1g to 5g) and runs it.
+- **A2 to A5, the guess has no size.** "Differently" or "The same way" is a yes or no, so the mark is a marker only, and the caption says so. The two curves lie where the real answer lives. Suggested mark: a white ring around the end of the curves, joined by a line to a white box "YOUR GUESS (a marker only): the same way" (or "differently"), drawn once the dashed curve has been drawn (A4). The ring sits in the same place for either guess, so it does not reveal the answer.
+- **Where is the contrast (§14, drawings, item 2)?** Here the point is that there is **no** contrast: the two curves coincide. The solid and dashed curves are visibly different styles, so the learner can see two lines were drawn and that they lie on top of each other. That is already in the page and stays. Nothing more is needed unless the owner wants a version of the picture where a difference would be visible if there were one (not suggested: it would be a second calculation that the specification does not define).
+- **C1, labelling.** The specification deliberately leaves the cabins as only "Cabin A" and "Cabin B" so that the picture does not give away that they are the same (`:38-40`). The introduction already says which is which. Needed on the canvas: "ball", "floor", a legend for the solid and dashed curves, axis titles in words ("height above the floor, m", "time since release, s"). **The rocket and the planet are not drawn at all; the cabins are plain boxes.** Whether to draw them is the owner's decision (below).
+- **A9, the verdict before the explanation (O1 in the first report, still open).** The tutor's compare step states the outcome (`EquivalencePrincipleTutor.tsx:53-54`) before the explanation. The 2026-10-24 rule says the tutor marks each guess in its explanation and nowhere earlier. Suggested: the observe step points to the graph and the white marker by name, the compare step asks the learner to say what they see without stating it, and the explanation marks the guess.
+- **Observe prompt:** "Look at the two graphs" is wrong (there is one graph with two curves). Reword.
+- **§12 and the introduction's car picture.** The "daily-life picture" says the push "would feel exactly like a weak sideways gravity". That is the idea the experiment tests, and a learner can answer the prediction from it. Suggested: keep the car, drop the last claim, and let the tutor say it.
+- **The result is built in, and the page should say so (scientific honesty, §8).** Both curves come from one formula (`ballHeightAboveFloorAt`), so they agree by construction. The tutor's explanation point 1 already says "the exact same math", but the Results do not. The "Where the real picture comes from" line must say: **calculated here**, from one formula; **not measured**; the agreement is built into the model, and whether real objects behave this way is a question for experiments, which the "Want to know more?" list can point to once a page has been read. Nothing is added about real experiments from memory.
+- **A8, the outcome in the interface.** `actualOutcome()` is hard-coded in the component (`:25-27`). It moves into the module with a test. The module also needs: the marker's position (end of the curves) and the tutor's marking of the guess.
+- **B1 to B3, recommendation.** No outside number exists for a check-up. A check-up row "time to the floor, Cabin A against Cabin B: the same" would compare a number with itself, because both come from one call. Recommend **no check-up table and no setting-following table**; keep the plain results lines, drop the "You predicted / What actually happened" pair (the older text-beside-results, which puts guess and verdict side by side before the tutor), and show the guess only as a tag beside the "time to the floor" line.
+- **Page width:** already 900 px (`:237`). **Tutor colours:** fixed light colours (`#f0f7ff`, `#d9e8f5`, `#333`) as in the earlier tutors; not checked in dark mode. Reported, not changed.
+
+## Updated size
+**Medium** (unchanged). The Parts layout, the words box, the links list (search and fetch needed), Start over, a marker on the graph with its caption and "Where the real picture comes from" line, leads, tutor wording, the specification update, and tested module functions (the outcome, the marker, the marking). Files: `EquivalencePrincipleExperiment.tsx`, `EquivalencePrincipleTutor.tsx`, `equivalencePrincipleExperiment.ts` and its test, the specification, `DEVELOPMENT-STATE.md`, and the tracker.
+
+## Questions for the owner before drafting
+1. **Gaps:** fix all of the above (the Parts layout, links, words box, Start over, the marker, caption, "Where the real picture comes from", tutor marking)? Suggested default: yes, all.
+2. **Acceleration:** Part 1 fixed at 1g, with the choice (0.5g, 1g, 2g, Other) in Part 2? Suggested default: yes.
+3. **The marker:** a white ring around the end of the two curves for either guess, joined to a white "YOUR GUESS (a marker only)" box? Suggested default: yes.
+4. **Cabins:** keep them as plain "Cabin A" and "Cabin B" boxes with the introduction saying which is which, and add only "ball", "floor", the curve legend and axis titles? Or draw a planet under Cabin A and a rocket under Cabin B? Suggested default: add the labels only; do not draw the planet or rocket (the specification keeps the cabins unlabelled so that nothing is given away).
+5. **Tutor marking:** the observe step points at the graph and the white marker, the compare step asks without stating, and the explanation marks the guess? Suggested default: yes (and the specification's tutor section updated to say so).
+6. **Introduction:** keep the car picture but drop "would feel exactly like a weak sideways gravity"? Suggested default: yes.
+7. **Reading guide:** no check-up or setting-following table; only the guess tag on the time-to-the-floor line, and the "You predicted / What actually happened" pair removed from the Results? Suggested default: yes.
+8. **Honesty line:** the "Where the real picture comes from" line says the agreement is built into one formula and is not a measurement? Suggested default: yes.
+
+## Not checked (re-read)
+The page was not run in a browser; dark mode and narrow widths were not looked at; no source page was searched or fetched for the links list, and nothing about a real equivalence-principle test was looked up.
