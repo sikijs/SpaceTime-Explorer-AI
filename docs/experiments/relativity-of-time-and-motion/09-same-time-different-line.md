@@ -19,7 +19,7 @@ This was named as a candidate direction in Experiment 8's own specification (`08
 After this experiment, the learner should understand:
 
 1. "The same moment" is not automatically the same for everyone. It depends on who is doing the watching.
-2. On the Experiment 8 diagram, "the same moment for the lab" is any flat, level line (a line straight across the page).
+2. On the Experiment 8 diagram, "the same moment for the lab" is any flat, level line (a line straight across the diagram).
 3. "The same moment for someone riding with the block" is a *different* line on that same page — tilted, not flat.
 4. The two events from Experiment 7 (the flash reaching the back end, then the front end) sit on that tilted line. That is the picture of why the block's own passenger calls them simultaneous, while the lab does not.
 5. This is the same fact as Experiment 7, seen a third way: first as two numbers (Experiment 7), then as two points reached by light (Experiment 8), now as one line connecting them (Experiment 9).
@@ -73,9 +73,9 @@ This line is a line of *simultaneity*, not the path of a moving object, so its n
 
 Before the new line is revealed, the learner is shown the plain, already-familiar Experiment 8 diagram for their chosen speed (the two block worldlines, the two light lines, and the two dots), then asked:
 
-> You already know, from the last chapter, that someone riding along with the block would say both flashes arrived at exactly the same moment. If we draw a single straight line through those two dots, what do you expect: will that line come out flat, level across the page — or will it come out tilted?
+> You already know, from the last chapter, that someone riding along with the block would say both flashes arrived at exactly the same moment. If we draw a single straight line through those two dots, what do you expect: will that line come out flat, level across the diagram — or will it come out tilted?
 
-Choices: "Flat, level across the page" / "Tilted". Not scored. START (or the equivalent reveal control) is disabled until a prediction is entered, matching Experiments 1–8.
+Choices: "Flat, level across the diagram" / "Tilted". Not scored. START (or the equivalent reveal control) is disabled until a prediction is entered, matching Experiments 1–8.
 
 (No second prediction part is needed — unlike Experiment 7's two-part prediction, there is only one new thing to predict here: the shape of one line.)
 
@@ -95,9 +95,11 @@ Drafted at a true-layman reading level: short sentences, one idea per sentence, 
 >
 > Someone riding along with the moving block says the flash reached both ends at exactly the same moment — just like the two friends in the car, comparing notes. Someone standing still in the lab, watching the block go by, does not agree. This chapter asks: can we actually see that disagreement on the diagram, instead of just being told about it in numbers?
 >
-> **A line for "the same moment."** Look at the diagram again — the one you built in the last chapter. Any flat, level line drawn straight across it, the kind that doesn't lean up or down at all, connects points that all happen at the same moment, according to the lab. That's what "the same moment" means on this page, for someone standing still and watching, like the person on the sidewalk.
+> **A line for "the same moment."** Look at the diagram again — the one you built in the last chapter. Any flat, level line drawn straight across it, the kind that doesn't lean up or down at all, connects points that all happen at the same moment, according to the lab. That's what "the same moment" means on this diagram, for someone standing still and watching, like the person on the sidewalk.
 >
-> **But the block is moving, like the car.** The block isn't standing still — it's moving, just like the car with the two friends inside. Someone riding along with the block has their own sense of "the same moment," the same way the two friends in the car do. The question this chapter asks is simple: on this same page, what does their "same moment" line actually look like?
+> **But the block is moving, like the car.** The flat line above is the *lab's* way of saying "the same moment." But the block is moving, just like the car with the two friends inside, so someone riding on the block has a way of their own. Remember what they said about the flash: it reached the back end and the front end at exactly the same moment. On the diagram, those two arrivals are the two dots, one at each end of the block. So, for the rider, those two dots *do* belong together, as one "same moment."
+>
+> Here is a way to picture it. On the flat line, the lab says "every point on this line happens at the same moment." The rider says the same kind of thing about a line of their own: "every point on my line happens at the same moment." The two dots sit on that line. So the question this chapter asks is: **the lab's "same moment" line is drawn on this diagram as a flat line. If we draw the rider's "same moment" line on the same diagram, through the two dots, what does it look like?** Is it flat like the lab's line, or does it look different? You will make a guess before you see it.
 >
 > **What you're about to do.** We're going to draw one new line — a single straight line through the two dots you already saw. Before we do, make a prediction: will that line be flat, like the lab's "same moment" line? Or will it lean over?
 >
@@ -173,7 +175,7 @@ None approved. A fuller version that labels the block's own axes formally (its o
 Follows the pattern of Experiments 3–8: no pre-run step beyond helping with the prediction, silent during the (static) reveal, each step after needs a typed answer, plain language throughout.
 
 - **After the line is revealed** (approved wording, `CLAUDE.md` §28.1 — car example, matching the introduction):
-  1. Observation: "Look at the new purple line. Does it run flat and level, straight across the page — like the sidewalk-watcher's own idea of 'the same moment'? Or does it lean over?"
+  1. Observation: "Look at the new purple line. Does it run flat and level, straight across the diagram — like the sidewalk-watcher's own idea of 'the same moment'? Or does it lean over?"
   2. Prediction comparison: the learner's predicted shape beside the actual one.
   3. Conceptual question: "Think back to the two friends in the car. They agreed their two events happened at the same moment; the person on the sidewalk did not. The block's two events work the same way. Just from looking at the picture — not from redoing any arithmetic — why do you think the line through those two events isn't flat?"
   4. Explanation, tied to what's on screen and to the car example: (1) a flat line is the sidewalk-watcher's (the lab's) own idea of "the same moment"; (2) the block, like the car, is moving, so it gets its own line — recapping Experiment 7's own reason why (the back end moves toward the point where the flash started, the front end moves away, so the flash reaches the back first in the lab), which is the same kind of effect that could make the two friends in the car and the sidewalk-watcher disagree — genuinely a different line, not a mistake or a trick of measurement; (3) this is the same fact Experiment 7 already gave as numbers, now just drawn as a line; (4) nothing new happened — the same two events were already there, just connected.
@@ -203,3 +205,19 @@ Resolved by the project owner during Stage 1/2 of this proposal (see `CLAUDE.md`
 4. Results are shown neutrally, then explained by the tutor after the learner responds.
 5. The learner can describe, in their own words, why a flat line and a tilted line can both correctly mean "the same moment" — just for different observers.
 6. No formal coordinate notation, no Lorentz transformation, and no new named term is introduced.
+
+## Audit Update (2026-11-10)
+
+Built to `docs/audit/relativity-of-time-and-motion/09-draft-wording.md` (approved by the owner on 2026-11-10, "all defaults" to the seventeen questions in `09-gap-report.md`). This section records what the page now does; where it differs from the text above, this section wins.
+
+- **The page in four Parts.** Part 1 (amber): the one guess, START and the diagram, fixed at 0.5c. Part 2 (pink): the speed (0c baseline, 0.1c, 0.3c, 0.5c, 0.8c, "Other" 0.01c to 0.9c, opening at 0.8c) and a diagram that follows it, with "Runs so far" (each run's lean). Part 3 (teal): the results, with a note under each block. Part 4 (blue): the tutor. The introduction, the new sketch, a collapsed "Words and formulas" box and the "Want to know more?" list sit above Part 1.
+- **Parts 2, 3 and 4 appear when the Part 1 line has been drawn**, and `onComplete` fires then (before, it fired at START).
+- **The diagram** is the one of Experiment 8 (`SpacetimeDiagram` in `Experiment8Pictures.tsx`, extended): a dark ground, axis names and arrows, tick marks every 0.1, a key, and, when the drawing ends, **the block's own "same moment" line in green** (through the two events, extended across the picture and clipped to it) and **the lab's level line in pale grey dashes** (through the lower event). The block's own line was magenta; it is green so that pink stays the learner's speed and white the learner's guess.
+- **The guess marker (Predictions and the Real Results).** The guess is only "flat" or "tilted", so it is a white **example bar** with arrowheads (level for "flat", leaning at a fixed example lean of 0.25 for "tilted") in a YOUR GUESS box above the picture, joined to the bar by a dashed line. The caption says its lean is only an example and never the real lean. It appears with the green line, never moves a line, and is shown again beside the results. Part 2 has no marker; the learner's speed is written in pink. The marker is not drawn on the real line, because for "tilted" it would lie on the real answer at every speed.
+- **A new sketch, "What a level line means"**, in the introduction after "A line for the same moment": two pictures at one scale, a level line through two events at the same time (0.3 s) and a leaning line through two events at 0.2 s and 0.3 s (lean 0.25), with a full caption. It shows no block and no flash.
+- **Start over, not Change prediction.** "Start over" is always visible and greyed until there is something to clear and while a diagram is drawing; the guess is locked after START. "Replay" redraws Part 1's diagram without touching the results or the tutor.
+- **Results.** Speed; the block's length seen from the lab; the two events (times and positions); the line through them (how much it rises, how far across, and **how much it leans**, with a "your guess" tag); the guess. The old "It is actually flat/tilted" line is gone. No check-up table and no setting-following table.
+- **Tutor.** Observe (names the green line and the grey line), compare (names the white marker and gives the lean), conceptual, then the explanation (the car paragraphs, steps 1 to 4, then "Your guess, marked" with no score and "Try it in Part 2" with the leans from the module). Part 1 is fixed at 0.5c, so the tutor never meets the 0c case.
+- **Chapter titles replace chapter numbers** in the learner-facing text, and "frame", "event", "worldline" and "light-second" are explained where first needed.
+- **Physics module** (`src/physics/spacetimeDiagramView.ts`, tested): `actualShapeFor` (moved from the component), `sameMomentLeanFor`, `sameMomentLineExtended`, `levelReferenceLineFor`, `shapeMarkerFor` (with `EXAMPLE_LEAN`), `markShapeGuess` and `levelLineSketchFor`. Components: `Experiment9.tsx`, `Experiment9Pictures.tsx` (captions), `Experiment9Sketch.tsx`, `Experiment9Tutor.tsx`; `Experiment9.test.tsx` has 15 render tests. The page reuses `useDrawing`, `WhereFrom` and the other small pieces exported from `Experiment8.tsx`.
+- **Links.** Three from the start (Einstein Online, "The definition of 'now'", "Elementary Tour, part 3" and "part 4") and one after the tutor's explanation (Einstein Online, "Elementary Tour, part 5: Spacetime", held back because its diagrams may show slanted lines of simultaneity). Gaps recorded in the draft wording (section 10): no plain official page on the relativity of simultaneity from NASA, ESA, CERN, Fermilab or LIGO; none on a graph of position against time; none for the light-second; Minkowski's 1908 lecture and Einstein's 1905 paper not linked. The helpers who fetched the pages returned summaries, not raw text.
