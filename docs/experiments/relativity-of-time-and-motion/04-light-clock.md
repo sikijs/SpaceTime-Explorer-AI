@@ -2,6 +2,8 @@
 
 **Status: APPROVED by the project owner. The defaults proposed under "Decisions Needing Human Review" stand unless changed.**
 
+**Audit update, 2026-11-08 (recorded here 2026-11-11).** The page was rebuilt to the newer rules. The section "Audit Update (2026-11-08)" at the end records what it now does, and **it wins** where the text below differs. In particular it supersedes: the Learner Controls (the speed is chosen in Part 2, Part 1 is fixed at 0.5c), the Display and the single-page layout (now four Parts), the results as a plain list, the guess shown as text only, the tutor sections and Decision 6 (layout). The physics is unchanged. The approved wording is in `docs/audit/relativity-of-time-and-motion/04-draft-wording.md`.
+
 ## Overview
 
 Experiment 3 showed that a moving clock measures less elapsed time than the lab observer: the moving clock reads `lab time × √(1 − v²/c²)`. It did not explain *why*.
@@ -278,3 +280,44 @@ The explanation (step 4) is shown in this order, in plain words, so the learner 
 3. The display makes the longer diagonal path clearly visible.
 4. Results are shown neutrally, then explained by the tutor after the learner responds.
 5. All physics tests pass.
+
+---
+
+## Audit Update (2026-11-08)
+
+Built to `docs/audit/relativity-of-time-and-motion/04-draft-wording.md`. `docs/audit/PROGRESS.md` records the owner's "all defaults" to the eleven questions of the gap report (2026-11-08) and "all defaults" to the twelve questions of the draft. It also records that the seven-step "Why does time dilation happen?" section and the "Reading the clocks and the bars together" box were added at the owner's request. This section records what the page now does; where it differs from the text above, this section wins. Built in `a4be7c7` and the commits before it. The owner has not reviewed the page in a browser (the PROGRESS row records only the agent's Chrome check).
+
+**What the page now does**
+- **The page in four Parts.** Above Part 1 (no heading): the introduction, a collapsed "Words and formulas" box and the "Want to know more?" list. Part 1 (amber), "Predict, then watch": the one guess (seconds for one moving tick), **START**, **Start over**, the two light-clock panels and the two tick bars. Part 2 (pink), "Now try it yourself": speed buttons 0.1c, 0.3c, 0.5c, 0.8c or "other" (0.01c to 0.99c; opens on 0.8c; no 0c), **Run your speed**, a live pair of panels, a pink Drawing A and "Runs so far". Part 3 (teal): the results. Part 4 (blue): the tutor. Parts 2, 3 and 4 appear when the Part 1 run has finished (`onComplete` fires then).
+- **Part 1 is fixed at 0.5c** (`PART1_VELOCITY`); the speed moved to Part 2.
+- **Labels and captions.** Every drawn part is labelled on the canvas, and each picture has a "How to read" caption with three-part look-for items.
+- **The two tick bars.** Under the panels, one bar for the rest clock's tick and one for the moving clock's tick, on one scale from 0 to twice the rest tick. Drawing A uses a scale of 0 to twice the moving tick, with the moving bar in pink.
+- **The guess marker.** A white mark in a YOUR GUESS box on the moving bar, placed on the scale (with an edge arrow if off the scale). It appears only once the bars have stopped, never moves a bar, and is shown again beside the results. There is **no** white "guessed V" on the panels. Part 2 has no guess mark.
+- **Where the real picture comes from** is written under the pictures: nothing measured; calculated here from the speed; the giant light clock is imagined.
+- **Start over, not Change prediction.** "Start over" is always visible, greyed until there is something to clear and while a run plays. The guess is locked after START, and the page says so.
+- **Introduction.** The two "light clock" paragraphs are merged, and a seven-step "Why does time dilation happen?" section (`LightClockWhy.tsx`) has a 0.6c worked triangle (3-4-5). A "Reading the clocks and the bars together" box explains why the clocks and the bars give different numbers. Each clock readout has a "reading ..." note, the bars' end numbers read "one tick: ... s", and the bars carry a dashed "run stopped" line. Lab time is shown to 3 decimals. The sentence on the constancy of light's speed stays and is sourced by the Einstein Online page below.
+- **Results (Part 3).** The speed, the guess (with a tag), the real tick of each clock, and "What these results tell us" notes under the rest clock, the moving clock and light's speed seen from the lab. No check-up table and no setting-following table (the only reference is the same physics, so a comparison would be circular, gap report B1).
+- **Tutor (Part 4).** Observe ("Look at the two light paths and at the two bars..."), compare (names the white mark and gives both real ticks), conceptual (unchanged), then the explanation: the clock itself, a ball tossed in a train, the lab's and the clock's own view, working out the diagonal (half-trip numbers, now from the module), the formula, "your numbers", what it means for a traveller, **your guess, marked (no score)**, then 1 why the guess did not change the clocks (two kitchen timers), 2 what the bars show, 3 try it in Part 2 (0.1c, 0.8c, 0.99c from the module), 4 what comes next (the next chapter, "Why can't light go faster?").
+- **Words and formulas** (collapsed): light clock, tick, mirror, light pulse, light-second, lab seconds, lab time and the other terms in `REFERENCE_ENTRIES`. It holds terms only; the algebra stays in the introduction and tutor.
+- **Physics module** (`src/physics/lightClockExperiment.ts`, tested). The model is unchanged. Added `tickBarsScaleEnd`, `guessPositionOnTickBars`, `halfTripNumbers`, `triangleSquares`, `trialTickCheck` and `restClockAtRunEnd`. `lightClockExperiment.test.ts` has 43 tests (the gap report counted 23 before the audit). `Experiment4.test.tsx` has 21 render tests. The components are `Experiment4.tsx`, `Experiment4Tutor.tsx` (with the exported `Experiment4Explanation`) and `LightClockWhy.tsx`.
+
+**Where the approved wording lives.** `docs/audit/relativity-of-time-and-motion/04-draft-wording.md` (with the gap report `04-gap-report.md`). Wording added afterwards at the owner's request (the "Why" section, the clocks-and-bars box) is in the components; its line-by-line approval is not separately recorded in `PROGRESS.md`.
+
+**Links** (checked 2026-11-08; the Einstein Online page was read through a helper, not by the agent)
+
+| Source | Used for | Status |
+|---|---|---|
+| NASA Science, "Our Milky Way Galaxy: How Big is Space?" (updated April 2024) | the speed of light and how far light goes | fetched and read; linked from the start |
+| Einstein Online, "From light clocks to time dilation" (Markus Pössel, Max Planck Institute for Gravitational Physics, 2021) | the light clock, light's constant speed as a postulate (299,792,458 m/s), the 15 cm and 150,000 km clock examples | read through a helper; linked from the start, because the introduction now explains the whole reason, so the page gives nothing away |
+| (none) | light-second, reference frame, time dilation, the light clock | no plain official page found (§29 rule 3(c)); the introduction defines them |
+
+The experiment has no real result of its own, so no paper is linked.
+
+**Facts that may change.** The two link pages (their wording and addresses). Nothing else on the page depends on the date: the speed of light is exact by definition.
+
+**Open / not checked**
+- The owner has not reviewed the page. The agent's Chrome check covered Part 1 and Part 2 runs, the 0.99c stacked layout, the tutor flow with the after-tutor link, Start over and a 400 px width; two layout bugs were found and fixed. Dark mode, other browsers, keyboard use and a real learner were not checked.
+- The after-tutor link block mentioned in that check was removed when the Einstein Online link moved to the start (draft, "Link" decision); the check was not repeated since.
+- The Einstein Online summary was not compared with the page by the agent.
+- Relativity 3's source table still needs updating to cite the 15 cm example (draft question 12 approved; not verified as done).
+- The wording added after the draft (the "Why" section and the clocks-and-bars box) has no separately recorded line-by-line approval.
