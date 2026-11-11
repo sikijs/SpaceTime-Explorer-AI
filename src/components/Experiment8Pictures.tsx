@@ -4,6 +4,8 @@ import {
   guessMarkerFor,
   levelReferenceLineFor,
   orderWording,
+  rodSpaceAxisExtended,
+  rodTimeAxisFor,
   sameMomentLineExtended,
   shapeMarkerFor,
 } from '../physics/spacetimeDiagramView'
@@ -25,6 +27,7 @@ const FRONT_LIGHT = '#a78bfa' // purple: the front end, lighter for the dark gro
 const ORIGIN_COLOR = '#e6a700' // amber: the flash released (a fixed reference)
 const SAME_MOMENT_COLOR = '#34d399' // green: the block's own "same moment" line (Experiment 9)
 const LEVEL_COLOR = '#cbd5e1' // pale grey: the lab's level "same moment" line (Experiment 9)
+export const AXES_COLOR = '#fb923c' // orange: the block's own time and space axes (Experiment 11)
 const INK = '#0b1020'
 const GRID = '#1e293b'
 
@@ -60,6 +63,8 @@ export interface DiagramProps {
   // Experiment 9: undefined for "Drawing Spacetime" (no extra lines); a boolean says whether the green and grey lines are drawn yet.
   showSameMomentLines?: boolean
   shapeGuess?: ShapeChoice | null // Experiment 9, Part 1: the learner's guess, a white example bar (never moves a line)
+  // Experiment 11: the block's own two axes in orange, drawn with the green line once the drawing ends; the lab's level line is not drawn.
+  blockAxes?: boolean
 }
 
 // Draws what the physics view layer reports; no physics is calculated here.
@@ -73,6 +78,7 @@ export function SpacetimeDiagram({
   pinkSpeed = null,
   showSameMomentLines,
   shapeGuess = null,
+  blockAxes,
 }: DiagramProps) {
   const ticks = diagramTicksFor(scaleDiagrams ?? diagram)
   const positionRange = ticks.positionMax - ticks.positionMin
@@ -164,17 +170,24 @@ export function SpacetimeDiagram({
     if (showSameMomentLines !== true) return null
     const [gFrom, gTo] = sameMomentLineExtended(diagram, ticks.positionMin, ticks.positionMax, ticks.timeMax)
     const [lFrom, lTo] = levelReferenceLineFor(diagram, ticks.positionMin, ticks.positionMax)
-    const labelX = (x(diagram.backEvent.position) + x(diagram.frontEvent.position)) / 2
-    const labelY = (y(diagram.backEvent.time) + y(diagram.frontEvent.time)) / 2
+    // with the block's own axes drawn (Experiment 11) the middle of the line is crowded, so its name sits nearer the back dot
+    const labelAt = blockAxes !== undefined ? 0.22 : 0.5
+    const labelX = x(diagram.backEvent.position) + labelAt * (x(diagram.frontEvent.position) - x(diagram.backEvent.position))
+    const labelY = y(diagram.backEvent.time) + labelAt * (y(diagram.frontEvent.time) - y(diagram.backEvent.time))
     // the picture's y runs downward, so a line that rises to the right turns the text anticlockwise
     const labelAngle = (-Math.atan2(y(diagram.backEvent.time) - y(diagram.frontEvent.time), x(diagram.frontEvent.position) - x(diagram.backEvent.position)) * 180) / Math.PI
+    const forAxes = blockAxes !== undefined
     return (
       <g>
-        <line x1={x(lFrom.position)} y1={y(lFrom.time)} x2={x(lTo.position)} y2={y(lTo.time)} stroke={LEVEL_COLOR} strokeWidth={2} strokeDasharray="10 6" />
+        {!forAxes && (
+          <line x1={x(lFrom.position)} y1={y(lFrom.time)} x2={x(lTo.position)} y2={y(lTo.time)} stroke={LEVEL_COLOR} strokeWidth={2} strokeDasharray="10 6" />
+        )}
         <line x1={x(gFrom.position)} y1={y(gFrom.time)} x2={x(gTo.position)} y2={y(gTo.time)} stroke={SAME_MOMENT_COLOR} strokeWidth={4} />
-        <text x={x(lTo.position) - 6} y={y(lTo.time) + 15} fill={LEVEL_COLOR} fontSize="11" fontWeight="bold" textAnchor="end" {...stroke}>
-          A level line: the lab’s “same moment”
-        </text>
+        {!forAxes && (
+          <text x={x(lTo.position) - 6} y={y(lTo.time) + 15} fill={LEVEL_COLOR} fontSize="11" fontWeight="bold" textAnchor="end" {...stroke}>
+            A level line: the lab’s “same moment”
+          </text>
+        )}
         {/* named along the line, above it, halfway between the two dots (the clearest stretch of the picture) */}
         <text
           transform={`translate(${labelX} ${labelY}) rotate(${labelAngle})`}
@@ -185,7 +198,30 @@ export function SpacetimeDiagram({
           textAnchor="middle"
           {...stroke}
         >
-          The block’s own “same moment” line
+          {forAxes ? 'Same-moment line' : 'The block’s own “same moment” line'}
+        </text>
+      </g>
+    )
+  }
+
+  // Experiment 11: the block's own time axis (solid) and space axis (dashed), both through the origin, drawn with the green line.
+  const axes = () => {
+    if (blockAxes !== true) return null
+    const [tFrom, tTo] = rodTimeAxisFor(diagram)
+    const [sFrom, sTo] = rodSpaceAxisExtended(diagram, ticks.positionMax, ticks.timeMax)
+    const angle = (a: WorldlinePoint, b: WorldlinePoint) => (Math.atan2(y(b.time) - y(a.time), x(b.position) - x(a.position)) * 180) / Math.PI
+    const along = (a: WorldlinePoint, b: WorldlinePoint, f: number) => ({ px: x(a.position) + f * (x(b.position) - x(a.position)), py: y(a.time) + f * (y(b.time) - y(a.time)) })
+    const tMid = along(tFrom, tTo, 0.3)
+    const sMid = along(sFrom, sTo, 0.45)
+    return (
+      <g>
+        <line x1={x(sFrom.position)} y1={y(sFrom.time)} x2={x(sTo.position)} y2={y(sTo.time)} stroke={AXES_COLOR} strokeWidth={3} strokeDasharray="9 6" />
+        <line x1={x(tFrom.position)} y1={y(tFrom.time)} x2={x(tTo.position)} y2={y(tTo.time)} stroke={AXES_COLOR} strokeWidth={3} />
+        <text transform={`translate(${tMid.px} ${tMid.py}) rotate(${angle(tFrom, tTo)})`} y={-8} fill={AXES_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle" {...stroke}>
+          The block’s own time axis
+        </text>
+        <text transform={`translate(${sMid.px} ${sMid.py}) rotate(${angle(sFrom, sTo)})`} y={-8} fill={AXES_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle" {...stroke}>
+          The block’s own space axis
         </text>
       </g>
     )
@@ -310,6 +346,7 @@ export function SpacetimeDiagram({
         </text>
       )}
       {sameMomentLines()}
+      {axes()}
       {marker()}
       {shapeMarker()}
 
@@ -324,7 +361,9 @@ export function SpacetimeDiagram({
       {keyEntry(4, <circle cx={keyX + 11} cy={top + 24 + 4 * 24} r={6} fill={ORIGIN_COLOR} stroke={INK} strokeWidth={1.5} />, 'Flash released here')}
       {keyEntry(5, <circle cx={keyX + 11} cy={top + 24 + 5 * 24} r={6} fill={BACK_LIGHT} stroke={INK} strokeWidth={1.5} />, 'Event: light reaches an end')}
       {showSameMomentLines !== undefined && keyEntry(6, sampleLine(6, SAME_MOMENT_COLOR, false), 'Block’s own “same moment”')}
-      {showSameMomentLines !== undefined && keyEntry(7, sampleLine(7, LEVEL_COLOR, true), 'Lab’s level “same moment”')}
+      {showSameMomentLines !== undefined && blockAxes === undefined && keyEntry(7, sampleLine(7, LEVEL_COLOR, true), 'Lab’s level “same moment”')}
+      {blockAxes !== undefined && keyEntry(7, sampleLine(7, AXES_COLOR, false), 'Block’s own time axis')}
+      {blockAxes !== undefined && keyEntry(8, sampleLine(8, AXES_COLOR, true), 'Block’s own space axis')}
     </svg>
   )
 }
