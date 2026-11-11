@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { actualOrderFor, blockSketchFor, diagramTicksFor, flashSketchFor, guessMarkerFor, markOrderGuess, spacetimeDiagramFor, sameMomentLineFor, rodTimeAxisFor, rodSpaceAxisFor } from './spacetimeDiagramView'
+import { EXAMPLE_LEAN, actualShapeFor, levelLineSketchFor, levelReferenceLineFor, markShapeGuess, sameMomentLeanFor, sameMomentLineExtended, shapeMarkerFor, actualOrderFor, blockSketchFor, diagramTicksFor, flashSketchFor, guessMarkerFor, markOrderGuess, spacetimeDiagramFor, sameMomentLineFor, rodTimeAxisFor, rodSpaceAxisFor } from './spacetimeDiagramView'
 import { runSimultaneityExperiment } from './relativityOfSimultaneityExperiment'
 import { SPEED_OF_LIGHT } from './movingClockExperiment'
 
@@ -331,5 +331,86 @@ describe('Experiment 8 audit update: guess marker, tick marks and the tutor mark
     expect(m.gap).toBeCloseTo(0.2887, 4)
     expect(markOrderGuess('same', at(0)).actual).toBe('same')
     expect(markOrderGuess('same', at(0)).gap).toBe(0)
+  })
+})
+
+describe('Experiment 9 audit update: lean, extended line, level line, marker and sketch', () => {
+  const at = (v: number) => runSimultaneityExperiment(v)
+  const PRESETS = [0.1, 0.3, 0.5, 0.8, 0.9]
+
+  it('the lean of the line through the two events equals the block\'s speed, and is 0 at rest', () => {
+    for (const v of PRESETS) expect(sameMomentLeanFor(spacetimeDiagramFor(at(v)))).toBeCloseTo(v, 9)
+    expect(sameMomentLeanFor(spacetimeDiagramFor(at(0)))).toBe(0)
+  })
+
+  it('at 0.5c the line rises 0.289 s over 0.577 light-second across, a lean of 0.500', () => {
+    const d = spacetimeDiagramFor(at(0.5))
+    const [a, b] = sameMomentLineFor(d)
+    expect(b.time - a.time).toBeCloseTo(0.2887, 4)
+    expect(b.position - a.position).toBeCloseTo(0.5774, 4)
+    expect(sameMomentLeanFor(d)).toBeCloseTo(0.5, 9)
+  })
+
+  it('the shape is flat only at rest', () => {
+    expect(actualShapeFor(at(0))).toBe('flat')
+    for (const v of PRESETS) expect(actualShapeFor(at(v))).toBe('tilted')
+  })
+
+  it('the extended line passes through both real events and stays inside the drawn area at every speed', () => {
+    for (const v of [0, 0.01, ...PRESETS]) {
+      const d = spacetimeDiagramFor(at(v))
+      const ticks = diagramTicksFor([spacetimeDiagramFor(at(0)), spacetimeDiagramFor(at(0.9))])
+      const [from, to] = sameMomentLineExtended(d, ticks.positionMin, ticks.positionMax, ticks.timeMax)
+      const lean = sameMomentLeanFor(d)
+      for (const e of [d.backEvent, d.frontEvent]) {
+        expect(from.time + lean * (e.position - from.position)).toBeCloseTo(e.time, 9)
+        expect(e.position).toBeGreaterThanOrEqual(from.position - 1e-9)
+        expect(e.position).toBeLessThanOrEqual(to.position + 1e-9)
+      }
+      for (const p of [from, to]) {
+        expect(p.position).toBeGreaterThanOrEqual(ticks.positionMin - 1e-9)
+        expect(p.position).toBeLessThanOrEqual(ticks.positionMax + 1e-9)
+        expect(p.time).toBeGreaterThanOrEqual(-1e-9)
+        expect(p.time).toBeLessThanOrEqual(ticks.timeMax + 1e-9)
+      }
+    }
+  })
+
+  it('the lab\'s level line is level, passes through the lower event and spans the picture', () => {
+    const d = spacetimeDiagramFor(at(0.5))
+    const [a, b] = levelReferenceLineFor(d, -0.3, 0.5)
+    expect(a.time).toBe(b.time)
+    expect(a.time).toBeCloseTo(d.backEvent.time, 12)
+    expect(a.position).toBe(-0.3)
+    expect(b.position).toBe(0.5)
+  })
+
+  it('at rest the extended line lies on the level line', () => {
+    const d = spacetimeDiagramFor(at(0))
+    const [from, to] = sameMomentLineExtended(d, -0.3, 0.3, 0.3)
+    const [la, lb] = levelReferenceLineFor(d, -0.3, 0.3)
+    expect(from.time).toBeCloseTo(la.time, 12)
+    expect(to.time).toBeCloseTo(lb.time, 12)
+  })
+
+  it('the guess marker is a level bar for "flat" and a bar at the example lean for "tilted", and the example is never a real lean', () => {
+    expect(shapeMarkerFor('flat')).toEqual({ kind: 'level', lean: 0 })
+    expect(shapeMarkerFor('tilted')).toEqual({ kind: 'leaning', lean: EXAMPLE_LEAN })
+    for (const v of [0, ...PRESETS]) expect(Math.abs(sameMomentLeanFor(spacetimeDiagramFor(at(v))) - EXAMPLE_LEAN)).toBeGreaterThan(0.01)
+  })
+
+  it('the tutor marking carries the chosen shape, the real shape and the module\'s lean', () => {
+    const m = markShapeGuess('flat', at(0.5))
+    expect(m).toEqual({ chosen: 'flat', actual: 'tilted', lean: expect.closeTo(0.5, 9) })
+    expect(markShapeGuess('flat', at(0)).actual).toBe('flat')
+    expect(markShapeGuess('flat', at(0)).lean).toBe(0)
+  })
+
+  it('the sketch has a level line (lean 0) and a leaning line (lean 0.25) between the same two positions', () => {
+    const s = levelLineSketchFor()
+    expect(s.level.lean).toBe(0)
+    expect(s.leaning.lean).toBeCloseTo(0.25, 12)
+    expect(s.level.points[0].position).toBe(s.leaning.points[0].position)
+    expect(s.level.points[1].position).toBe(s.leaning.points[1].position)
   })
 })

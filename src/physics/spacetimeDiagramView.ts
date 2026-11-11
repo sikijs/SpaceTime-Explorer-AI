@@ -223,3 +223,100 @@ export function markOrderGuess(choice: OrderChoice, result: SimultaneityResult):
     gap: result.labTimeGap,
   }
 }
+
+// ---- Experiment 9, audit update (docs/audit/relativity-of-time-and-motion/09-draft-wording.md) ----
+// Everything below only reads the already-computed diagram or result; no relativistic quantity is recalculated.
+
+export type ShapeChoice = 'flat' | 'tilted'
+
+// The same-moment line is flat only when both events share a lab time, i.e. only at v = 0 (Experiment 7, Required Physics Test 2,
+// reused here without recomputation).
+export function actualShapeFor(result: SimultaneityResult): ShapeChoice {
+  return result.velocity === 0 ? 'flat' : 'tilted'
+}
+
+// How much the line through the two events leans: time over position, in seconds per light-second. It is 0 when both events share
+// a time, and it equals the block's velocity otherwise (see sameMomentLineFor and the tests).
+export function sameMomentLeanFor(diagram: SpacetimeDiagramData): number {
+  const [start, end] = sameMomentLineFor(diagram)
+  return (end.time - start.time) / (end.position - start.position)
+}
+
+// The line through the two events, extended across the picture and clipped to the drawn area (positions from positionMin to
+// positionMax, times from 0 up to timeMax): a rendering choice only, using the two real points exactly as sameMomentLineFor returns them.
+export function sameMomentLineExtended(
+  diagram: SpacetimeDiagramData,
+  positionMin: number,
+  positionMax: number,
+  timeMax: number,
+): [WorldlinePoint, WorldlinePoint] {
+  const [start] = sameMomentLineFor(diagram)
+  const lean = sameMomentLeanFor(diagram)
+  const timeAt = (position: number) => start.time + lean * (position - start.position)
+  let from = positionMin
+  let to = positionMax
+  if (lean > 0) {
+    from = Math.max(from, start.position + (0 - start.time) / lean)
+    to = Math.min(to, start.position + (timeMax - start.time) / lean)
+  } else if (lean < 0) {
+    from = Math.max(from, start.position + (timeMax - start.time) / lean)
+    to = Math.min(to, start.position + (0 - start.time) / lean)
+  }
+  return [
+    { position: from, time: timeAt(from) },
+    { position: to, time: timeAt(to) },
+  ]
+}
+
+// The lab's own "same moment" line for comparison: a level line through the lower of the two events, across the whole picture.
+export function levelReferenceLineFor(
+  diagram: SpacetimeDiagramData,
+  positionMin: number,
+  positionMax: number,
+): [WorldlinePoint, WorldlinePoint] {
+  const time = Math.min(diagram.backEvent.time, diagram.frontEvent.time)
+  return [
+    { position: positionMin, time },
+    { position: positionMax, time },
+  ]
+}
+
+// The learner's guess is only "flat" or "tilted", so it is drawn as a white example bar: level, or leaning at this fixed lean. The
+// example lean is never the real lean (the real leans at the preset speeds are 0, 0.1, 0.3, 0.5, 0.8 and 0.9).
+export const EXAMPLE_LEAN = 0.25
+
+export interface ShapeMarker {
+  kind: 'level' | 'leaning'
+  lean: number
+}
+
+export function shapeMarkerFor(choice: ShapeChoice): ShapeMarker {
+  return choice === 'flat' ? { kind: 'level', lean: 0 } : { kind: 'leaning', lean: EXAMPLE_LEAN }
+}
+
+// The tutor's marking of the one guess: what was chosen, what the diagram shows, and the numbers behind it. No score, no "right" or
+// "wrong" (CLAUDE.md §12, §13): the tutor words it.
+export interface ShapeGuessMarking {
+  chosen: ShapeChoice
+  actual: ShapeChoice
+  lean: number
+}
+
+export function markShapeGuess(choice: ShapeChoice, result: SimultaneityResult): ShapeGuessMarking {
+  return { chosen: choice, actual: actualShapeFor(result), lean: sameMomentLeanFor(spacetimeDiagramFor(result)) }
+}
+
+// The introduction sketch "What a level line means": two events at the same time (a level line) and two at different times (a
+// leaning line), at the same two positions. Made-up numbers for illustration.
+export interface LineSketch {
+  points: [WorldlinePoint, WorldlinePoint]
+  lean: number
+}
+
+export function levelLineSketchFor(): { level: LineSketch; leaning: LineSketch } {
+  const make = (a: WorldlinePoint, b: WorldlinePoint): LineSketch => ({ points: [a, b], lean: (b.time - a.time) / (b.position - a.position) })
+  return {
+    level: make({ position: -0.2, time: 0.3 }, { position: 0.2, time: 0.3 }),
+    leaning: make({ position: -0.2, time: 0.2 }, { position: 0.2, time: 0.3 }),
+  }
+}
