@@ -4,6 +4,8 @@
 
 **Implementation: built, complete-flow tested, and reviewed against this specification (`CLAUDE.md` §21 Steps 9–10).** Physics model, tests, interface, prediction, results panel, and AI tutor are built and wired into the guided journey (`src/physics/equivalencePrincipleExperiment.ts`, `src/physics/equivalencePrincipleExperiment.test.ts`, `src/components/EquivalencePrincipleExperiment.tsx`, `src/components/EquivalencePrincipleTutor.tsx`, `src/App.tsx`). The tutor follows the predict → observe → explain pattern used throughout the app. See "Implementation Notes" below for what the review found and fixed. The owner's line-by-line wording approval (`CLAUDE.md` §28.1) and all six "Decisions Needing Human Review" items further down are now complete (2026-09-25).
 
+**Audit update, 2026-11-11 (built; see "Audit Update (2026-11-11)" at the end).** The page is rebuilt to the newer rules: four Parts, Part 1 fixed at 1g with the acceleration choice in Part 2, a white ring marker, Start over, a words box, links and a tutor that marks the guess. Where the Audit Update and the older sections (Learner Controls, Prediction Activity, Display, Results Display, AI Tutor Behavior) differ, **the Audit Update wins**. The physics model is unchanged.
+
 ## Implementation Notes
 
 The final review against this specification (§21 Step 10) found and fixed three gaps:
@@ -221,3 +223,40 @@ All six items below have been confirmed by the owner (2026-09-25).
 3. The results make visible, numerically and visually, that both scenes produce identical motion.
 4. The learner can state the equivalence principle in their own words after the tutor conversation.
 5. No curved spacetime, geodesics, gravitational time dilation, or general relativity content appears — this experiment only establishes the puzzle.
+
+---
+
+## Audit Update (2026-11-11)
+
+Built to `docs/audit/gravity-and-curved-spacetime/01-draft-wording.md` ("all defaults" from the owner on 2026-11-11 to the eight questions of `01-gap-report.md`, and "approve defaults" to the draft's eleven questions). The physics model and its approved numbers do not change.
+
+**What changed.**
+- **Layout.** Introduction, a "Want to know more?" list, a collapsed "Words and formulas" box; then Part 1 "Predict, then watch" (amber), Part 2 "Now try it yourself" (pink), Part 3 "The results" (teal) and Part 4 "The tutor" (blue), each with a "What we are about to do" lead. Parts 2 to 4 appear after Part 1's drop has finished.
+- **Part 1** is fixed at 1g (9.80 m/s², the preset the page opened on). The acceleration choice (0.5g, 1g, 2g, Other 0.1g to 5g) moved to Part 2, which opens on 2g so that it differs from Part 1.
+- **Labels on the pictures.** Each cabin shows "ball" and "floor"; the graph has a legend (Cabin A: solid indigo line; Cabin B: dashed amber line), axis titles and a dark ground. Which cabin is gravity and which is the rocket is still stated only in the introduction. No planet or rocket is drawn.
+- **The guess mark.** After the ball has landed, a white ring at the end of the two lines, joined to a white "YOUR GUESS (a marker only): ..." box above the plot; the ring is in the same place for either guess, since a yes or no has no size. The caption says it is only a marker.
+- **Drawing A (Part 2)** is a graph on a fixed 0 to 2.1 s time scale (so different accelerations look different), with the learner's acceleration in pink and Part 1's 1g line in grey, a "Runs so far" list, and its own caption.
+- **Captions** for the Part 1 graph and Drawing A each have a worked moment and "what to look for" items in three parts (Look at, What it means, Why it matters), and a "Where the real picture comes from" line. That line says the agreement of the two cabins is built into one formula and is not a measurement.
+- **Results (Part 3)** keep the acceleration and time-to-the-floor lines, with a tag on the time line. The "You predicted / What actually happened" pair and the closing sentence ("there is no experiment here that would tell you which cabin you were in") are removed; the closing sentence's content is now the tutor's third question. No check-up or setting-following table (both cabins' numbers come from one call, so a table would compare a number with itself).
+- **Start over** is always visible, greyed out until there is a guess or a drop and while the ball falls. It replaces "Run Again". Once the ball is dropped, the page says the guess is locked.
+- **Tutor.** The observe step points to the graph and the white marker; the compare step no longer states the outcome; the explanation opens with "Your guess, marked." (no score), keeps points 1 to 3 (point 1 gains the worked number), and adds a point 4, "A word of care", saying the result is a calculation with the agreement built in and that real experiments, including the MICROSCOPE satellite, have tested it.
+- **Introduction.** The car picture no longer says that the push "would feel exactly like a weak sideways gravity" (it gave the answer). A "What 1g means" paragraph, a "Your guess and the real pictures" paragraph, a "Some new words" line and two further assumptions (uniform gravity over a small cabin; the ball starts at rest 2 m up) were added.
+- **Narrow widths.** The two graphs use the shared `narrow-scroll` class (a 520 px minimum inside a sideways-scrolling box below 600 px).
+
+**Physics module (new, with tests; `equivalencePrincipleExperiment.ts`).** `actualOutcome()` (moved in from the component), `guessMarkerFor`, `markGuess`, `fixedTimeScaleEndSeconds` (2.1 s), `heightOnFixedScaleAt` and `fallTimeWorkedNumbers`: 10 new tests (26 in the file). The page also has 13 render tests (`EquivalencePrincipleExperiment.test.tsx`).
+
+**Links (read 2026-11-11 through a helper's summaries, not line by line; spot-check the quoted numbers in a browser).** Linked from the start: NASA Glenn, "Free Fall without Air Resistance". Held back until after the tutor's explanation (they say what the experiment is about and what real experiments found): Einstein Online, "The elevator, the rocket, and gravity: the equivalence principle"; the MICROSCOPE paper (arXiv 2209.15487, Physical Review Letters 129, 121102, 2022; read as an abstract page only); Imperial College London's plain account of MICROSCOPE; NASA's "Apollo 15 Hammer-Feather Drop".
+
+| Idea | Source | Status |
+|---|---|---|
+| Real test of the equivalence principle | arXiv 2209.15487 (MICROSCOPE) | Linked after the tutor; abstract page only |
+| Cabin-and-rocket idea | Einstein Online | Linked after the tutor |
+| g | NASA Glenn | Linked from the start |
+| Standard value of g | NIST CODATA constants page (9.80665 m/s², exact) | Read, **not linked** (the page uses the rounded 9.8) |
+| A plain page from ESA or CNES | none found | **Gap (§29 rule 3(c)).** An ESA and a NASA "What is gravity?" page returned HTTP 404; no CNES or ESA MICROSCOPE page was tried |
+| A falling person feels no weight | Lumen Learning (reuses OpenStax) | Read, **not linked** (not an official body) |
+| Einstein's "happiest thought" | none | No official plain page found; not linked |
+
+**Facts that may change.** The page uses g = 9.8 m/s², the rounded value; the standard value is 9.80665 m/s². The MICROSCOPE result is reported as of the 2022 paper.
+
+**Open / not checked.** The owner has not reviewed the finished page. Not checked: other browsers, dark mode, keyboard use, a real learner, and widths between 420 and 600 px. The link pages were read through summaries, and the MICROSCOPE PDF was not opened. The tutor's later steps were clicked through by script, not read by eye. Part 2's cabins show the learner's acceleration only after a first Part 2 drop.

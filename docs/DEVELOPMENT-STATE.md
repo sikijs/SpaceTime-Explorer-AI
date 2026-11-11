@@ -40,7 +40,7 @@ Every experiment below has an approved specification, a tested physics model, an
 
 | # | Title | Specification | Status |
 |---|---|---|---|
-| 1 | The equivalence principle | `01-equivalence-principle.md` | Complete (wording approved) |
+| 1 | The equivalence principle | `01-equivalence-principle.md` | Complete (wording approved). Audit update (2026-11-11; wording approved with defaults; see "Audit Update" in `01-equivalence-principle.md`): the page in four Parts, labelled cabins, a dark graph with a white ring marker, Drawing A on a fixed scale, links (four held back until after the tutor), a words box, Start over and a tutor that marks the guess; 6 new module functions with 10 tests and 13 render tests. Not reviewed by the owner; not checked: other browsers, dark mode, widths between 420 and 600 px, a real learner. |
 | 2 | Does gravity change time? | `02-gravitational-time-dilation.md` | Complete (wording approved) |
 | 3 | Why gravity isn't just acceleration (tidal effects) | `03-tidal-effects.md` | Complete (wording approved) |
 | 4 | Curved spacetime: why parallel paths don't stay parallel | `04-curved-spacetime-geodesics.md` | Complete (wording approved) |
