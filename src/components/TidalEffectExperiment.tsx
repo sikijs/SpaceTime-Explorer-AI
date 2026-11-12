@@ -276,7 +276,7 @@ function useRun(onFinish?: (result: TidalEffectExperimentResult) => void) {
   return { status, elapsed, result, start, reset }
 }
 
-function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+export function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer">
       {children}
@@ -340,14 +340,14 @@ function referenceEntries(): { term: string; meaning: string }[] {
   ]
 }
 
-const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
-const smallNote = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' } as const
+export const paragraph = { marginTop: 0, marginBottom: '0.75rem' } as const
+export const smallNote = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' } as const
 
-function Block({ children }: { children: ReactNode }) {
+export function Block({ children }: { children: ReactNode }) {
   return <div style={{ marginTop: '1rem' }}>{children}</div>
 }
 
-function WhereFrom({ children }: { children: ReactNode }) {
+export function WhereFrom({ children }: { children: ReactNode }) {
   return (
     <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.75rem' }}>
       <strong>Where the real picture comes from.</strong> {children}
@@ -355,7 +355,7 @@ function WhereFrom({ children }: { children: ReactNode }) {
   )
 }
 
-function GuessTag() {
+export function GuessTag() {
   return (
     <span
       style={{
@@ -376,7 +376,7 @@ function GuessTag() {
 }
 
 // ---- the graphs ----
-type Geo = { width: number; height: number; left: number; right: number; top: number; bottom: number }
+export type Geo = { width: number; height: number; left: number; right: number; top: number; bottom: number }
 
 // Part 1's graph has a wide right margin for the two YOUR GUESS boxes, which sit beside the line ends and never cover a line.
 const G1: Geo = { width: 840, height: 340, left: 64, right: 330, top: 40, bottom: 54 }
@@ -384,7 +384,7 @@ const G1: Geo = { width: 840, height: 340, left: 64, right: 330, top: 40, bottom
 const GA: Geo = { width: 760, height: 360, left: 64, right: 170, top: 88, bottom: 54 }
 const SAMPLE_COUNT = 30
 
-function Legend({
+export function Legend({
   items,
   rowHeight = 20,
 }: {
@@ -462,7 +462,7 @@ function Axes({ g, timeEnd, timeTicks }: { g: Geo; timeEnd: number; timeTicks: n
 
 // A short white arrow beside a ring: down for "together", up for "apart", a flat bar for "the same". The guess has no size, so the
 // arrow has no length of its own.
-function GuessArrow({ x, y, arrow }: { x: number; y: number; arrow: 'down' | 'none' | 'up' }) {
+export function GuessArrow({ x, y, arrow }: { x: number; y: number; arrow: 'down' | 'none' | 'up' }) {
   if (arrow === 'none') return <line x1={x - 9} y1={y} x2={x + 9} y2={y} stroke={GUESS_COLOR} strokeWidth={3} strokeLinecap="round" />
   const dir = arrow === 'down' ? 1 : -1
   return (
@@ -575,7 +575,7 @@ export function Part1Graph({
 }
 
 // Spreads two labels written beside line ends so that they do not overprint.
-function nudge(ys: number[], minGap: number): number[] {
+export function nudge(ys: number[], minGap: number): number[] {
   const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y)
   for (let k = 1; k < order.length; k++) {
     if (order[k].y - order[k - 1].y < minGap) order[k].y = order[k - 1].y + minGap
@@ -645,7 +645,7 @@ export function DrawingA({ result, settingsLabel }: { result: TidalEffectExperim
 }
 
 // ---- captions ----
-function CaptionBox({ children }: { children: ReactNode }) {
+export function CaptionBox({ children }: { children: ReactNode }) {
   return (
     <div
       style={{
@@ -662,7 +662,7 @@ function CaptionBox({ children }: { children: ReactNode }) {
   )
 }
 
-function LookFor({ items }: { items: Array<{ look: string; means: string; matters: string }> }) {
+export function LookFor({ items }: { items: Array<{ look: string; means: string; matters: string }> }) {
   return (
     <>
       <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
@@ -673,7 +673,7 @@ function LookFor({ items }: { items: Array<{ look: string; means: string; matter
   )
 }
 
-const listStyle = { marginTop: 0, marginBottom: '0.5rem', paddingLeft: '1.25rem' } as const
+export const listStyle = { marginTop: 0, marginBottom: '0.5rem', paddingLeft: '1.25rem' } as const
 
 export function Part1Caption() {
   const w = workedNumbers()
