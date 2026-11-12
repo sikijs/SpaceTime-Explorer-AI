@@ -1,6 +1,8 @@
 # Gravity and Curved Spacetime — Experiment 3: Why Gravity Isn't Just Acceleration
 
 **Status: built, complete-flow tested in a browser, and reviewed against this specification (`CLAUDE.md` §21 Steps 9–10).** Physics model, tests, interface, prediction, results panel, and AI tutor are built and wired into the guided journey (`src/physics/tidalEffectExperiment.ts`, `src/physics/tidalEffectExperiment.test.ts`, `src/components/TidalEffectExperiment.tsx`, `src/components/TidalEffectTutor.tsx`, `src/App.tsx`). See "Implementation Notes" below for what the review found and fixed. The owner's line-by-line wording approval (`CLAUDE.md` §28.1) is complete (2026-09-26), approved as written with no changes requested.
+**Audit update, 2026-11-12 (built; see "Audit Update (2026-11-12)" at the end).** The page is rebuilt to the newer rules: four Parts, Part 1 fixed at 1g and strength 0.3 with both controls in Part 2, two white guess marks with arrows, Start over, a words box, links and a tutor that marks both guesses. Where the Audit Update and the older sections (Learner Controls, Prediction Activity, Experiment Behavior, Results Display, AI Tutor Behavior, Decision 7) differ, **the Audit Update wins**. The physics model is unchanged.
+
 
 The direction (tidal effects, as the next step after gravitational time dilation) and the terminology decision (hold back "curvature"/"curved spacetime," name only "tidal effect" here) were confirmed by the owner during the Stage 1/2 proposal conversation on 2026-09-26, and the full draft specification was approved as-is on the same day.
 
@@ -240,3 +242,36 @@ All eight items below have been confirmed by the owner (2026-09-26).
 4. The learner can state, in their own words, that the equivalence principle only holds for a small enough cabin, and name the tidal effect as the reason.
 5. The introduction and tutor state plainly that `convergenceStrength` is an exaggerated stand-in, not a realistic ratio.
 6. No mention of "curvature," "curved spacetime," geodesics, or general relativity's field equations — this experiment only shows the equivalence principle's limit.
+
+---
+
+## Audit Update (2026-11-12)
+
+Built to `docs/audit/gravity-and-curved-spacetime/03-draft-wording.md` ("all defaults" from the owner on 2026-11-12 to the eleven questions of `03-gap-report.md`, and "all approved" to the draft's eleven questions). The physics model and its approved numbers do not change.
+
+**What changed.**
+- **Layout.** Introduction, "Want to know more?", a collapsed "Words and formulas" box; then Part 1 "Predict, then watch" (amber), Part 2 "Now try it yourself" (pink), Part 3 "The results" (teal) and Part 4 "The tutor" (blue), each with a "What we are about to do" lead. Parts 2 to 4 appear after Part 1's run has finished.
+- **Part 1** is fixed at 1g and strength 0.3. Both controls (acceleration 0.5g, 1g, 2g, Other 0.1g to 5g; strength 0.1, 0.3, 0.6, Other 0.02 to 0.9) moved to Part 2. On the page the control is called "strength", not "convergence strength" (the old name says what the balls do); the module keeps `convergenceStrength`.
+- **Cabins.** Each cabin is labelled ("left ball", "right ball", "floor") and carries the Gravity 1 arrow (green down for the planet, red up for the rocket, length following g). Nothing slanted or inward is drawn. A note says the cabins are drawn as someone inside would see them.
+- **Graph.** A legend (planet cabin: solid indigo; rocket cabin: dashed amber), axis titles, end labels, and a vertical axis from 0 to 1.2 m with a dotted line at the 1 m start (a change of scale only).
+- **The guess marks.** After both lines are drawn, a white ring at the end of each line, each joined to its own white "YOUR GUESS, planet cabin (or rocket cabin) (a marker only)" box, with a short direction arrow (down for "together", a flat bar for "the same distance", up for "apart"). The ring is in the same place for any guess and the arrow has no length of its own; the caption says so.
+- **Drawing A (Part 2).** The graph on a fixed 0 to 2.1 s time scale (the longest fall is 2.02 s at 0.1g): the learner's planet line pink, the rocket line light pink and dashed, Part 1's planet line thin grey; "Runs so far"; its own caption and "Where the real picture comes from" line.
+- **Captions** for the Part 1 graph and Drawing A each have the formulas, a worked moment (0.925 m halfway and 0.700 m at the end at 1g and 0.3; 0.400 m at 2g and 0.6), "what to look for" items in three parts (Look at, What it means, Why it matters) and a "Where the real picture comes from" line (measured: nothing; calculated here; imagined for the question).
+- **Results (Part 3)** show both final separations (0.700 m and 1.000 m) with a "your guess" tag on each. Removed: the "You predicted / What actually happened" pairs and the two paragraphs that named the tidal effect (the tutor now says it). No check-up table and no setting-following table (the planet row would be compared with its own formula, and the rocket row with its start value).
+- **Start over** is always visible, greyed out until there is a guess or a run and while the balls fall. It replaces "Run Again", clears both guesses, and the page says the guesses are locked once the run starts.
+- **Introduction.** The question is reworded, "Why even ask this" no longer says the earlier experiment was "quietly doing a lot of work", and there are new paragraphs: how the page is laid out, what "strength" means (exaggerated, no unit, 0 to 1), and "Your guesses and the real pictures"; plus a "Some new words" line and an added assumption (both balls start at rest, 1 m apart, 2 m up).
+- **Tutor.** The observe step points to the graph and the white marks; the compare step no longer states the outcomes; the explanation opens with "Your guesses, marked." for both cabins, adds the lamp-post picture and the worked 1 × (1 − 0.3) = 0.700 m to point 1, names the tidal effect in point 4, and ends with a line pointing to Part 2. **Added at the owner's request on 2026-11-12:** points 5 to 7 (see "AI Tutor Behavior" item 5, which replaces Decision 7's bare-naming limit for the tutor's explanation).
+
+**Physics module (new, with tests; `tidalEffectExperiment.ts`).** `actualOutcomeFor`, `separationAt`, `finalSeparationMeters` (moved in from the components), `guessMarkerFor`, `markGuess`, `SEPARATION_AXIS_TOP_METERS`, `workedNumbers`, and, for tutor point 6, `moonTidalNumbers` (near side 378,029 km, far side 390,771 km, pull ratio 1.069). The file now has 26 tests (16 before) and the page has 15 render tests (`TidalEffectExperiment.test.tsx`). The full suite is 2,814 tests.
+
+**Gravity 5** re-uses this module's `Cabin` and constants, and `Arrow` is now exported from `EquivalencePrincipleExperiment.tsx` for the cabins here. The type check, the full suite and the build pass; Gravity 5 was **not** looked at in a browser after the change.
+
+**Links (read 2026-11-12 through helpers' summaries, not line by line; spot-check them in a browser).** Linked from the start (neutral): NASA Glenn, "Free Fall without Air Resistance" (page dated 18 July 2024; read for Gravity 1 on 2026-11-11). Held back until after the tutor's explanation (they name tides, which the tutor names first, §12): NOAA NESDIS, "What Causes Tides?" (2 September 2025; for grades 5 to 8).
+
+| Idea | Source | Status |
+|---|---|---|
+| Free fall: every object falls at the same rate with no air | NASA Glenn, "Free Fall without Air Resistance" | Linked from the start |
+| Tides as a difference in the Moon's pull from place to place | NOAA NESDIS, "What Causes Tides?" | Linked after the tutor |
+| The sideways squeeze (the balls drifting together) | **No plain official page found.** Both tides pages describe ocean bulges along the line to the Moon, not the squeeze | Open (§29 rule 3(c)): the tutor's "the same kind of effect" rests on the NOAA page's "stretching and squashing" wording only |
+| Moon distance 384,400 km and Earth radius 6,371 km (tutor point 6) | Standard values, **no page fetched or linked for them** | Open: add a source if the owner wants one |
+| Other candidates | NASA Science, "Tides" (updated 12 February 2026): read, not linked (it calls the solid Earth "football-shaped, elongated at the equator and shortened at the poles", an odd simplification, and says nothing plain about the squeeze) | Not linked |
