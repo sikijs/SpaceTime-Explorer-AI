@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest'
-import { runTidalEffectExperiment, ballPositionsAt, EARTH_GRAVITY } from './tidalEffectExperiment'
+import {
+  runTidalEffectExperiment,
+  ballPositionsAt,
+  EARTH_GRAVITY,
+  actualOutcomeFor,
+  separationAt,
+  finalSeparationMeters,
+  guessMarkerFor,
+  markGuess,
+  workedNumbers,
+  moonTidalNumbers,
+  fixedTimeScaleEndSeconds,
+  SEPARATION_AXIS_TOP_METERS,
+} from './tidalEffectExperiment'
+import type { PredictionChoice, TidalEffectScene } from './tidalEffectExperiment'
 
 describe('Tidal Effect Experiment Physics', () => {
   it('reports the acceleration in both units', () => {
@@ -113,5 +127,127 @@ describe('Ball Positions Over Time', () => {
 
   it('is deterministic', () => {
     expect(ballPositionsAt(experiment, 0.1, 'planet')).toEqual(ballPositionsAt(experiment, 0.1, 'planet'))
+  })
+})
+
+describe('Audit update: outcome, guess markers, marking, axis and worked numbers', () => {
+  const CHOICES: PredictionChoice[] = ['converge', 'same', 'apart']
+  const SCENES: TidalEffectScene[] = ['planet', 'rocket']
+  const SETTINGS: Array<[number, number]> = [
+    [0.5, 0.1],
+    [1, 0.3],
+    [2, 0.6],
+    [5, 0.9],
+    [0.1, 0.02],
+  ]
+  const run = (g: number, s: number) => runTidalEffectExperiment(g * EARTH_GRAVITY, 2, 1, s)
+
+  it('the real outcome: the planet converges and the rocket stays the same, for every setting', () => {
+    expect(actualOutcomeFor('planet')).toBe('converge')
+    expect(actualOutcomeFor('rocket')).toBe('same')
+    for (const [g, s] of SETTINGS) {
+      const r = run(g, s)
+      expect(finalSeparationMeters(r, 'planet')).toBeLessThan(r.initialSeparationMeters)
+      expect(finalSeparationMeters(r, 'rocket')).toBe(r.initialSeparationMeters)
+    }
+  })
+
+  it('separationAt equals the right ball offset minus the left ball offset from ballPositionsAt', () => {
+    const r = run(1, 0.3)
+    for (const scene of SCENES) {
+      for (let i = 0; i <= 10; i++) {
+        const t = (i / 10) * r.timeToFloorSeconds
+        const p = ballPositionsAt(r, t, scene)
+        expect(separationAt(r, t, scene)).toBeCloseTo(p.rightBallOffset - p.leftBallOffset, 12)
+      }
+    }
+  })
+
+  it('at 1g and 0.3 the planet separation is 0.925 m halfway through the fall and 0.700 m at the end; the rocket stays at 1.000 m', () => {
+    const r = run(1, 0.3)
+    expect(separationAt(r, r.timeToFloorSeconds / 2, 'planet')).toBeCloseTo(0.925, 12)
+    expect(finalSeparationMeters(r, 'planet')).toBeCloseTo(0.7, 12)
+    expect(finalSeparationMeters(r, 'rocket')).toBe(1)
+  })
+
+  it('the end separation depends on the strength only, not on the acceleration', () => {
+    expect(finalSeparationMeters(run(0.5, 0.3), 'planet')).toBeCloseTo(finalSeparationMeters(run(2, 0.3), 'planet'), 12)
+    expect(finalSeparationMeters(run(1, 0.6), 'planet')).toBeCloseTo(0.4, 12)
+  })
+
+  it('the guess marker sits at the end of the scene\'s line, the same for every choice, with only the arrow and the text changing', () => {
+    const r = run(1, 0.3)
+    for (const scene of SCENES) {
+      const markers = CHOICES.map((c) => guessMarkerFor(r, scene, c))
+      for (const m of markers) {
+        expect(m.timeSeconds).toBe(r.timeToFloorSeconds)
+        expect(m.separationMeters).toBeCloseTo(finalSeparationMeters(r, scene), 12)
+        expect(m.boxText).toContain('a marker only')
+        expect(m.boxText).toContain(scene === 'planet' ? 'planet cabin' : 'rocket cabin')
+      }
+      expect(markers.map((m) => m.arrow)).toEqual(['down', 'none', 'up'])
+    }
+    expect(guessMarkerFor(r, 'planet', 'converge').boxText).toContain('the balls drift together')
+    expect(guessMarkerFor(r, 'rocket', 'same').boxText).toContain('the balls stay the same distance apart')
+    expect(guessMarkerFor(r, 'rocket', 'apart').boxText).toContain('the balls drift apart')
+  })
+
+  it('markGuess: the planet matches only "converge", the rocket only "same", with the real numbers in the text', () => {
+    const r = run(1, 0.3)
+    expect(CHOICES.map((c) => markGuess(r, 'planet', c).matched)).toEqual([true, false, false])
+    expect(CHOICES.map((c) => markGuess(r, 'rocket', c).matched)).toEqual([false, true, false])
+    expect(markGuess(r, 'planet', 'converge').text).toContain('0.700 m')
+    expect(markGuess(r, 'planet', 'converge').text).toContain('0.300 m closer')
+    expect(markGuess(r, 'planet', 'converge').text).toContain('matched')
+    expect(markGuess(r, 'planet', 'apart').text).toContain('something different from your guess')
+    expect(markGuess(r, 'rocket', 'same').text).toContain('1.000 m')
+    expect(markGuess(r, 'rocket', 'converge').text).toContain('something different from your guess')
+  })
+
+  it('marking and markers never change the result or the outcome', () => {
+    const r = run(1, 0.3)
+    const before = JSON.stringify(r)
+    for (const scene of SCENES) {
+      for (const c of CHOICES) {
+        guessMarkerFor(r, scene, c)
+        markGuess(r, scene, c)
+      }
+    }
+    expect(JSON.stringify(r)).toBe(before)
+    expect(actualOutcomeFor('planet')).toBe('converge')
+  })
+
+  it('the vertical axis runs to 1.2 m and the fixed time scale to 2.1 s, so every allowed setting fits', () => {
+    expect(SEPARATION_AXIS_TOP_METERS).toBe(1.2)
+    expect(fixedTimeScaleEndSeconds()).toBe(2.1)
+    for (const [g, s] of SETTINGS) {
+      const r = run(g, s)
+      expect(r.timeToFloorSeconds).toBeLessThanOrEqual(fixedTimeScaleEndSeconds())
+      for (const scene of SCENES) {
+        expect(finalSeparationMeters(r, scene)).toBeLessThanOrEqual(SEPARATION_AXIS_TOP_METERS)
+        expect(finalSeparationMeters(r, scene)).toBeGreaterThanOrEqual(0)
+      }
+    }
+    expect(run(0.1, 0.3).timeToFloorSeconds).toBeCloseTo(2.02, 2)
+  })
+
+  it('workedNumbers match the page wording', () => {
+    const w = workedNumbers()
+    expect(w.oneGFallSeconds.toFixed(2)).toBe('0.64')
+    expect(w.twoGFallSeconds.toFixed(2)).toBe('0.45')
+    expect(w.halfGFallSeconds.toFixed(2)).toBe('0.90')
+    expect(w.halfwayTimeSeconds.toFixed(2)).toBe('0.32')
+    expect(w.halfwaySeparationMeters.toFixed(3)).toBe('0.925')
+    expect(w.endSeparationAt0p3.toFixed(3)).toBe('0.700')
+    expect(w.endSeparationAt0p1.toFixed(3)).toBe('0.900')
+    expect(w.endSeparationAt0p6.toFixed(3)).toBe('0.400')
+    expect(w.rocketEndSeparation.toFixed(3)).toBe('1.000')
+  })
+
+  it('the Moon pulls the near side of the Earth about 7% harder than the far side', () => {
+    const m = moonTidalNumbers()
+    expect(m.nearSideDistanceKm).toBe(378029)
+    expect(m.farSideDistanceKm).toBe(390771)
+    expect(m.nearToFarPullRatio.toFixed(3)).toBe('1.069')
   })
 })
