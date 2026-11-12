@@ -1,7 +1,21 @@
 import { useState } from 'react'
-import { actualOutcome, labelFor } from './GravitationalTimeDilationExperiment'
-import type { PredictionChoice } from './GravitationalTimeDilationExperiment'
-import type { GravitationalTimeDilationExperimentResult } from '../physics/gravitationalTimeDilationExperiment'
+import { markGuess, ceilingTicksPerFloorTick, worked1g10mStrength } from '../physics/gravitationalTimeDilationExperiment'
+import type { GravitationalTimeDilationExperimentResult, PredictionChoice } from '../physics/gravitationalTimeDilationExperiment'
+
+// Gravity and Curved Spacetime, Experiment 2's tutor (Part 4), audited to the newer rules (docs/audit/gravity-and-curved-spacetime/
+// 02-draft-wording.md, section 9, approved by the owner on 2026-11-12 "all approved"). The prompts point to the white marker on the
+// graph by name and give no verdict; the explanation marks the guess. Every number comes from the physics module (CLAUDE.md §9).
+
+// 1.0904e-15 -> "1.09×10⁻¹⁵" (the tutor's worked example: g × h ÷ c² for 1g and 10 m)
+function scientific(n: number): string {
+  const exponent = Math.floor(Math.log10(n))
+  const mantissa = (n / 10 ** exponent).toFixed(2)
+  const sup = String(Math.abs(exponent))
+    .split('')
+    .map((d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)])
+    .join('')
+  return `${mantissa}×10${exponent < 0 ? '⁻' : ''}${sup}`
+}
 
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
@@ -11,94 +25,20 @@ interface GravitationalTimeDilationTutorProps {
   onExplained?: () => void
 }
 
-export function GravitationalTimeDilationTutor({
+export function GravitationalTimeDilationExplanation({
   predictionChoice,
   result,
-  onExplained,
-}: GravitationalTimeDilationTutorProps) {
-  const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
-  const [responseInput, setResponseInput] = useState('')
-
-  const handleContinue = () => {
-    if (responseInput.trim() === '') return
-
-    if (tutorStep === 'observe') {
-      setTutorStep('compare')
-    } else if (tutorStep === 'compare') {
-      setTutorStep('conceptual')
-    } else if (tutorStep === 'conceptual') {
-      setTutorStep('explained')
-      onExplained?.()
-    }
-    setResponseInput('')
-  }
-
-  const isResponseEmpty = responseInput.trim() === ''
-  const actual = actualOutcome()
-
+}: {
+  predictionChoice: PredictionChoice
+  result: GravitationalTimeDilationExperimentResult
+}) {
+  const marking = markGuess(result, predictionChoice)
+  const perFloorTick = ceilingTicksPerFloorTick(result).toFixed(2)
   return (
-    <div
-      style={{
-        marginTop: '2rem',
-        padding: '1.5rem',
-        border: '1px solid #d9e8f5',
-        borderRadius: '8px',
-        backgroundColor: '#f0f7ff',
-      }}
-    >
-      <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>
-        Let's reflect on what you observed
-      </h2>
-
-      {(tutorStep === 'observe' || tutorStep === 'compare' || tutorStep === 'conceptual') && (
-        <div>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
-            {tutorStep === 'observe' && 'Look at the two tick counts. Are they the same, or different?'}
-            {tutorStep === 'compare' &&
-              `You predicted the clocks would tick at ${labelFor(predictionChoice)}. They actually ticked at ${labelFor(actual)}. Comparing what you expected to what happened, what do you notice?`}
-            {tutorStep === 'conceptual' &&
-              'Why do you think the ceiling clock ran faster than the floor clock, if both clocks are identical and experience the same acceleration?'}
+    <div>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            <strong>Your guess, marked.</strong> {marking.text}
           </p>
-
-          <textarea
-            value={responseInput}
-            onChange={(e) => setResponseInput(e.target.value)}
-            placeholder="Type your thoughts here..."
-            style={{
-              width: '100%',
-              minHeight: '100px',
-              padding: '0.75rem',
-              fontSize: '0.875rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontFamily: 'inherit',
-              resize: 'vertical',
-            }}
-          />
-
-          <button
-            onClick={handleContinue}
-            disabled={isResponseEmpty}
-            style={{
-              marginTop: '0.75rem',
-              padding: '0.5rem 1.5rem',
-              fontSize: '0.875rem',
-              fontWeight: 'bold',
-              backgroundColor: isResponseEmpty ? '#ccc' : '#0066cc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isResponseEmpty ? 'not-allowed' : 'pointer',
-              opacity: isResponseEmpty ? 0.6 : 1,
-            }}
-          >
-            Continue
-          </button>
-        </div>
-      )}
-
-      {tutorStep === 'explained' && (
-        <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>1. A signal sent upward arrives redshifted.</strong> A light "tick" sent from
             the floor takes time to reach the ceiling — and the whole cabin keeps speeding up
@@ -109,10 +49,11 @@ export function GravitationalTimeDilationTutor({
             a light wave out shifts its color toward the red end of the rainbow, but the same word
             is used for any wave — including these clock "ticks" — that arrives stretched out like
             this. That's why, over your run, the ceiling clock counted{' '}
-            <strong>{(1 / result.frequencyRatio).toFixed(2)}</strong> ticks for every{' '}
-            <strong>1</strong> the floor clock counted — not roughly that ratio but exactly that
-            ratio, because the calculation itself is just <code>1 / (1 - strength)</code>, with
-            your chosen strength of {result.strength}.
+            <strong>{perFloorTick}</strong> ticks for every{' '}
+            <strong>1</strong> the floor clock counted. In this simplified model it is exactly
+            that ratio, because the model's calculation is just <code>1 / (1 − strength)</code>,
+            with your chosen strength of {result.strength}. (A real rocket would show a ratio
+            extremely close to 1.)
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>Why does the acceleration cause this stretching?</strong> The key fact: light's
@@ -168,15 +109,12 @@ export function GravitationalTimeDilationTutor({
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>A worked example.</strong> Picture a rocket accelerating at 1g, with the two
-            clocks 10 meters apart. Say the floor sends a light tick, then another exactly 1
-            second later. When the first tick was sent, the cabin's speed was, say, zero; a second
-            later, when the next tick is sent, the cabin has sped up by about 9.8 m/s. That means
-            the ceiling is moving a little faster when it receives the second tick's journey than
-            it was for the first — so the second tick takes very slightly longer to arrive.
-            Working through the numbers, the two ticks arrive about{' '}
-            <strong>1.09×10⁻¹⁵ seconds</strong> (roughly a millionth of a billionth of a second)
-            further apart than they were sent — an almost immeasurably small stretch, but the same
-            effect the experiment shows you exaggerated.
+            clocks 10 meters apart. The strength is then about g × h ÷ c² = 9.8 × 10 ÷ c², where
+            c is the speed of light. That comes to about{' '}
+            <strong>{scientific(worked1g10mStrength())}</strong>. So if the floor sends one tick a
+            second, the ticks arrive at the ceiling about {scientific(worked1g10mStrength())}{' '}
+            seconds further apart than they were sent: an almost immeasurably small stretch, but
+            the same effect the experiment shows you, exaggerated.
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>2. This is gravitational time dilation.</strong> In Experiment 1, you found
@@ -188,7 +126,7 @@ export function GravitationalTimeDilationTutor({
           </p>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>A note on "time dilation."</strong> This is a different effect from the time
-            dilation you saw in Experiment 4. There, a clock ran slow because it was moving
+            dilation you saw in Relativity Experiment 3, the moving clock. There, a clock ran slow because it was moving
             relative to another clock — and that worked both ways: each clock looked slow from the
             other one's point of view. Neither clock was really "the slow one."
           </p>
@@ -198,19 +136,115 @@ export function GravitationalTimeDilationTutor({
             lower, one higher. And this time, it only goes one way: the floor clock really does run
             slower, no matter who's watching — someone on the floor, someone on the ceiling, or
             someone outside. That's because acceleration (and gravity) has a direction — "up"
-            toward the ceiling, "down" toward the floor — that both clocks share, unlike Experiment
-            4's effect, which came from relative motion instead. Motion causes a "looks slow from
+            toward the ceiling, "down" toward the floor — that both clocks share, unlike the moving
+            clock's effect, which came from relative motion instead. Motion causes a "looks slow from
             over there" kind of effect; being lower in gravity (or acceleration) causes a real,
             one-way slowdown that everyone agrees on.
           </p>
-          <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
             <strong>3. This is real.</strong> The effect here is exaggerated so you could see it —
             a real building or rocket would show a change far too small to notice. But it's
             genuinely there: GPS satellites, high above the ground, have their clocks correct for
             exactly this effect, or their signals would drift out of sync with clocks on the
             ground.
           </p>
+          <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
+            Try other strengths in Part 2 to see the same thing: the bigger the strength, the
+            bigger the gap between the two lines.
+          </p>
         </div>
+  )
+}
+
+export function GravitationalTimeDilationTutor({
+  predictionChoice,
+  result,
+  onExplained,
+}: GravitationalTimeDilationTutorProps) {
+  const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
+  const [responseInput, setResponseInput] = useState('')
+
+  const handleContinue = () => {
+    if (responseInput.trim() === '') return
+
+    if (tutorStep === 'observe') {
+      setTutorStep('compare')
+    } else if (tutorStep === 'compare') {
+      setTutorStep('conceptual')
+    } else if (tutorStep === 'conceptual') {
+      setTutorStep('explained')
+      onExplained?.()
+    }
+    setResponseInput('')
+  }
+
+  const isResponseEmpty = responseInput.trim() === ''
+  const choicePhrase = predictionChoice === 'sameRate' ? 'the same rate' : 'different rates'
+
+  return (
+    <div
+      style={{
+        marginTop: '2rem',
+        padding: '1.5rem',
+        border: '1px solid #d9e8f5',
+        borderRadius: '8px',
+        backgroundColor: '#f0f7ff',
+      }}
+    >
+      <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>
+        Let's reflect on what you observed
+      </h2>
+
+      {(tutorStep === 'observe' || tutorStep === 'compare' || tutorStep === 'conceptual') && (
+        <div>
+          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
+            {tutorStep === 'observe' &&
+              'Look at the graph. It has two lines, a solid indigo one for the floor clock and a dashed amber one for the ceiling clock. Do they climb together, or do they pull apart? Your guess is the white marker at the end of the lines.'}
+            {tutorStep === 'compare' &&
+              `You guessed that the clocks would tick at ${choicePhrase}. That is the white marker. Look at the graph again: what do you notice when you compare what you expected with what was drawn?`}
+            {tutorStep === 'conceptual' &&
+              'Why do you think the ceiling clock ran faster than the floor clock, if both clocks are identical and experience the same acceleration?'}
+          </p>
+
+          <textarea
+            value={responseInput}
+            onChange={(e) => setResponseInput(e.target.value)}
+            placeholder="Type your thoughts here..."
+            style={{
+              width: '100%',
+              minHeight: '100px',
+              padding: '0.75rem',
+              fontSize: '0.875rem',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              fontFamily: 'inherit',
+              resize: 'vertical',
+            }}
+          />
+
+          <button
+            onClick={handleContinue}
+            disabled={isResponseEmpty}
+            style={{
+              marginTop: '0.75rem',
+              padding: '0.5rem 1.5rem',
+              fontSize: '0.875rem',
+              fontWeight: 'bold',
+              backgroundColor: isResponseEmpty ? '#ccc' : '#0066cc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: isResponseEmpty ? 'not-allowed' : 'pointer',
+              opacity: isResponseEmpty ? 0.6 : 1,
+            }}
+          >
+            Continue
+          </button>
+        </div>
+      )}
+
+      {tutorStep === 'explained' && (
+        <GravitationalTimeDilationExplanation predictionChoice={predictionChoice} result={result} />
       )}
     </div>
   )
