@@ -51,3 +51,57 @@ GravitationalTimeDilationExperiment.tsx (graph marker, caption, intro, control n
 
 ## Not checked
 No browser view; spec not compared line by line; no sources list (Rule D does not apply).
+
+---
+
+# Re-read, 2026-11-12: Rule E and the owner's rules of 2026-11-02 to 2026-11-07
+Read-only. Re-read of `GravitationalTimeDilationExperiment.tsx` (431 lines), `GravitationalTimeDilationTutor.tsx` (217), `gravitationalTimeDilationExperiment.ts` (38) and the specification `02-gravitational-time-dilation.md`. Nothing changed. Rules A to C above stand as written; this section adds what they did not cover and carries over what the Gravity 1 audit settled.
+
+## Rule E: the page in four Parts
+| Item | Result | Evidence | Gap and what would be needed |
+|---|---|---|---|
+| E1 | Not met | One card holds everything in one column: introduction, strength buttons, prediction, the two clocks, the graph, the run button, then Results and the tutor (`:214-430`) | Part 1 (prediction, "Start the clocks", the clocks and the graph), Part 2 (strength choice and a drawing that follows it), Part 3 (results), Part 4 (tutor). |
+| E2, E4 | Not met | No Part headings, lines or leads | Four leads in the shared colours, drafted for approval. Part 1's lead gives no answer (§12). |
+| E3 | Not met | No links list, no words box | See "Links and Words" below. |
+
+## Parts 2 to 4 appear after the first Run
+**Partly met.** Results and tutor appear when the run completes (`isComplete`, `:360, :412`). The strength control is visible from the start (`:255-319`). Under the Parts layout it moves into Part 2 and appears after the first run, with a note saying what to do next. Part 1 would be fixed at strength 0.3 (the preset the page opens on).
+
+## Links and Words
+- **"Want to know more?" list: Not met. Not searched or read yet.** The page uses no measured result (both lines are calculated from `1 / (1 − strength)`), so no paper is needed for the page itself. The tutor says GPS satellites correct for this effect; that claim has no source in the specification. A plain official page on GPS and relativity (for example from NASA or the GPS programme) is a candidate for the list and for that claim, **only once fetched and read** (§29 rule 3(c)). I have looked up nothing and quote no number from outside.
+- **"Words and formulas" box: Not met.** Terms on the page: tick, strength, frequency ratio, rocket cabin, floor clock, ceiling clock, ticks per floor tick, redshift (defined in the tutor), gravitational time dilation (tutor, after the run), first-order. Formulas the module uses, with the page's own numbers: ceiling ticks = floor ticks ÷ (1 − strength), for example 10 ÷ (1 − 0.3) = 14.29 at strength 0.3; ratio = 1 − strength = 0.70.
+
+## Start over, not Change prediction
+**Not met.** The only reset is "Run Again", the same button as "Start the clocks" after a run (`:355-357`). There is no reset on the first screen. Needed: an always-visible "Start over", greyed until a guess or run exists and while running; a line saying the guess is locked after Run; "Run Again" removed. (The older code also clears the guess on Run, `:170`, which the locked-guess rule replaces.)
+
+## Items the re-read changes or sharpens
+- **A2 to A5, the guess has no size.** "The same rate" / "Different rates" is a yes or no, so the mark is a marker only and the caption says so. Suggested: a white ring around the two line ends at 10 s, joined to a white box "YOUR GUESS (a marker only): the same rate" (or "different rates"). The ring sits in the same place for either guess, so it does not reveal the answer. Drawn only once both lines are drawn (A4).
+- **Contrast (§14).** The point of this experiment is a contrast, and the graph already shows it (solid indigo floor line, dashed amber ceiling line, rising at different rates). The strength control changes the gap, so the contrast follows the control. Needed: on-canvas labels "Floor clock" and "Ceiling clock" at the line ends, axis titles ("ticks counted", "time on the floor clock, s"), and a legend. The two clocks panel (`RocketCabinClocks`) is two text boxes, with no cabin drawn.
+- **Shared component.** `RocketCabinClocks`, `RUN_DURATION_FLOOR_SECONDS` and the module are used by `SpacetimeCurvatureSourceExperiment.tsx` (Gravity 5). Any change to them must keep Gravity 5 working; the audit would change them only by adding optional props, or leave them as they are and add the labels around them.
+- **A8, outcome in the interface.** `actualOutcome()` is hard-coded in the component (`:33-35`). It moves into the module with a test. The module also needs: the marker's position (the two line ends), the "ticks per floor tick" value now computed in the tutor (`Tutor.tsx:112`), and the tutor's marking of the guess.
+- **§12, results and tutor give the verdict early.** The Results block says "You predicted / What actually happened" side by side, then states gravitational time dilation and GPS (`:393-417`). The tutor's compare step also states the outcome (`Tutor.tsx:57-58`). The 2026-10-24 rule says the tutor marks each guess in its explanation and nowhere earlier. Suggested: Results keep the plain numbers (strength, ticks, ratio) with a small guess tag, and drop the "What actually happened" line and the two explanation sentences, which the tutor's explanation already covers. The observe step points to the graph and the white marker, the compare step asks what the learner sees without stating it, and the explanation marks the guess.
+- **Introduction.** "Why even ask this" frames height as normally irrelevant, a mild lead-in to the answer. Suggested: keep the kitchen-counter-and-shelf picture but drop "height seems completely irrelevant to timekeeping", and add: what a "tick" is, the Parts explained first, and the A7 sentences (guesses never change the pictures or tables; they are drawn on the graph in white; the strength choice does change the drawings). "Experiment 1" is named in the intro and the tutor; Gravity 1 is "Experiment 1" in the same group, so this is fine, but the tutor's "Experiment 4" (`:191`) is ambiguous. Suggested: "the time dilation of Relativity Experiment 3 or 4", checked against the learner numbering.
+- **Honesty line (§8).** Both lines come from one formula, so the difference is built in. The "Where the real picture comes from" line says: **calculated here**, from `1 / (1 − strength)`, with a strength exaggerated far beyond anything real; **not measured**. The tutor's "exactly that ratio" (`:113-115`) sits beside the intro's "first-order version", so the wording would be "that ratio in this simplified model".
+- **Worked example in the tutor.** The 1.09×10⁻¹⁵ s is g·h/c² = 9.8 × 10 ÷ c² worked by hand (it checks out arithmetically, but the "cabin speed is zero" step is loose and the number is not from the module). Suggested: compute it in the module with a test, and say "about" in the wording. Not changed unless you choose.
+- **"Everyone agrees" in the tutor** (`:198-204`) is a physics claim that the specification supports (point 2 of its explanation) but does not cover in the words used. Reported, not changed.
+- **B1 to B3, recommendation.** No outside number exists for a check-up (the ratio is compared with its own formula), and the control only moves the lines. Recommend **no check-up table and no setting-following table**; plain results lines and a guess tag only.
+- **Page width:** already 900 px. **Tutor colours:** fixed light colours as in earlier tutors; dark mode not checked. Reported, not changed.
+
+## Updated size
+**Medium** (unchanged). Files: the component, the tutor, the module and its test, the specification, `DEVELOPMENT-STATE.md`, the tracker. Gravity 5 re-checked.
+
+## Questions for the owner before drafting
+1. **Gaps:** fix all of the above (Parts layout, links, words box, Start over, marker, caption, "Where the real picture comes from", tutor marking)? Suggested default: yes, all.
+2. **Strength:** Part 1 fixed at 0.3, with the choice (0.1, 0.3, 0.6, Other) in Part 2? Suggested default: yes.
+3. **The marker:** a white ring around the two line ends for either guess, joined to a white "YOUR GUESS (a marker only)" box? Suggested default: yes.
+4. **Clock panel:** keep the two text boxes (add only on-canvas labels, axis titles and a legend to the graph), or draw a small rocket cabin with the two clocks inside? Suggested default: labels only; the shared panel stays untouched for Gravity 5.
+5. **Tutor marking:** observe points at the graph and the white marker, compare asks without stating, the explanation marks the guess? Suggested default: yes.
+6. **Results:** drop "What actually happened" and the two explanation sentences (GPS, "gravitational time dilation") from Results, leaving plain numbers and a guess tag? Suggested default: yes.
+7. **Introduction:** drop "height seems completely irrelevant" and add the Parts and the A7 sentences? Suggested default: yes.
+8. **Reading guide:** no check-up or setting-following table? Suggested default: yes.
+9. **Honesty line and tutor wording:** "calculated here, not measured, built into one formula", and "in this simplified model" for the ratio? Suggested default: yes.
+10. **GPS claim:** search for and read a plain official page on GPS and relativity for the links list, and link it only if found and read? Suggested default: yes; otherwise §29 rule 3(c) applies.
+11. **Worked example:** compute the 1.09×10⁻¹⁵ s in the module with a test, keeping the wording? Suggested default: yes.
+
+## Not checked (re-read)
+Not run in a browser; dark mode and narrow widths not looked at; no source page searched or fetched; Gravity 5's use of the shared pieces not yet run.
