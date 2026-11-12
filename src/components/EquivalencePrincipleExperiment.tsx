@@ -208,7 +208,7 @@ function GuessTag() {
 }
 
 // A straight arrow with a head, drawn as a small picture. Its length follows the strength (g), so a stronger setting gives a longer arrow.
-function Arrow({ direction, color, length }: { direction: 'up' | 'down'; color: string; length: number }) {
+export function Arrow({ direction, color, length }: { direction: 'up' | 'down'; color: string; length: number }) {
   const head = 9
   const tip = direction === 'down' ? length : 0
   const base = direction === 'down' ? length - head : head
