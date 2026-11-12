@@ -31,6 +31,8 @@ const CABIN_A_COLOR = '#818cf8' // indigo: Cabin A (solid)
 const CABIN_B_COLOR = '#f59e0b' // amber: Cabin B (dashed)
 const YOURS_LIGHT_COLOR = '#f9a8d4' // light pink: Cabin B in Part 2's own acceleration (dashed)
 const REFERENCE_COLOR = '#9ca3af' // grey: the 1g curve from Part 1, for comparison
+const GRAVITY_COLOR = '#16a34a' // green: gravity's pull on the ball in Cabin A
+const ROCKET_COLOR = '#dc2626' // red: the rocket's push on the cabin in Cabin B
 
 // Part 1 uses 1g, the preset the page has always opened on; Part 2 lets the learner choose another.
 const PART1_RESULT = runEquivalencePrincipleExperiment(1 * EARTH_GRAVITY, INITIAL_HEIGHT_METERS)
@@ -205,23 +207,62 @@ function GuessTag() {
   )
 }
 
-// Each cabin is labelled on the picture: the ball and the floor. Which cabin is which is explained only in the introduction, so
-// that the picture does not give away that the two are the same (the specification's reason).
-export function Cabin({ label, height, pinkNote }: { label: string; height: number; pinkNote?: string }) {
+// A straight arrow with a head, drawn as a small picture. Its length follows the strength (g), so a stronger setting gives a longer arrow.
+function Arrow({ direction, color, length }: { direction: 'up' | 'down'; color: string; length: number }) {
+  const head = 9
+  const tip = direction === 'down' ? length : 0
+  const base = direction === 'down' ? length - head : head
+  const tailEnd = direction === 'down' ? 0 : length
+  return (
+    <svg width={16} height={length} viewBox={`0 0 16 ${length}`} aria-hidden="true" style={{ display: 'block' }}>
+      <line x1={8} y1={tailEnd} x2={8} y2={base} stroke={color} strokeWidth={3} />
+      <polygon points={`8,${tip} 2,${base} 14,${base}`} fill={color} />
+    </svg>
+  )
+}
+
+export function arrowLengthPx(strengthG: number): number {
+  return Math.min(70, Math.round(20 + 14 * strengthG))
+}
+
+// Each cabin is labelled on the picture: the ball and the floor, and an arrow for what acts (the specification's earlier reason for
+// leaving this off, that the picture should not give away that the two are the same, is set aside by the owner's decision of
+// 2026-11-11: the learner already knows which cabin is which, and the puzzle is about the person sealed inside).
+// Cabin A: gravity pulls the ball down (green arrow beside the ball, moving with it). Cabin B: the rocket pushes the whole cabin, floor
+// included, up (red arrow at the floor). The rocket does not touch the ball.
+export function Cabin({
+  label,
+  height,
+  push,
+  strengthG,
+  pinkNote,
+}: {
+  label: string
+  height: number
+  push: 'gravity' | 'rocket'
+  strengthG: number
+  pinkNote?: string
+}) {
   const fraction = height / INITIAL_HEIGHT_METERS
   const ballTopPx = (1 - fraction) * (CABIN_HEIGHT_PX - BALL_SIZE_PX)
+  const length = arrowLengthPx(strengthG)
+  const isGravity = push === 'gravity'
+  const color = isGravity ? GRAVITY_COLOR : ROCKET_COLOR
 
   return (
     <div style={{ flex: '1 1 220px', textAlign: 'center' }}>
-      <p style={{ fontWeight: 'bold', marginBottom: pinkNote ? '0.1rem' : '0.5rem' }}>{label}</p>
-      {pinkNote && <p style={{ margin: '0 0 0.4rem', fontSize: '0.8rem', fontWeight: 'bold', color: YOURS_COLOR }}>{pinkNote}</p>}
+      <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>{label}</p>
+      <p style={{ margin: '0 0 0.35rem', fontSize: '0.8rem', fontWeight: 'bold', color }}>
+        {isGravity ? 'Gravity pulls the ball down' : 'A rocket pushes the cabin up'}
+      </p>
+      {pinkNote && <p style={{ margin: '0 0 0.35rem', fontSize: '0.8rem', fontWeight: 'bold', color: YOURS_COLOR }}>{pinkNote}</p>}
       <div
         className="exp-card"
         style={{
           position: 'relative',
           height: `${CABIN_HEIGHT_PX}px`,
-          width: '160px',
-          margin: '0 auto',
+          width: '190px',
+          margin: '0.4rem auto 0',
           overflow: 'hidden',
         }}
       >
@@ -248,6 +289,17 @@ export function Cabin({ label, height, pinkNote }: { label: string; height: numb
         >
           ball
         </span>
+        {isGravity ? (
+          <div style={{ position: 'absolute', right: `calc(50% + ${BALL_SIZE_PX / 2 + 6}px)`, top: `${Math.min(ballTopPx, CABIN_HEIGHT_PX - 24 - length)}px`, display: 'flex', alignItems: 'flex-start', gap: '2px' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color, marginTop: '3px' }}>gravity</span>
+            <Arrow direction="down" color={color} length={length} />
+          </div>
+        ) : (
+          <div style={{ position: 'absolute', right: '10px', bottom: '22px', display: 'flex', alignItems: 'flex-end', gap: '2px' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color, marginBottom: '3px' }}>rocket push</span>
+            <Arrow direction="up" color={color} length={length} />
+          </div>
+        )}
         <div
           style={{
             position: 'absolute',
@@ -514,7 +566,13 @@ export function Part1Caption() {
         </li>
         <li>
           <strong>Cabin A and Cabin B</strong> are the two situations described in the introduction. The ball&rsquo;s height is drawn
-          the same way in both, so you can compare them directly.
+          the same way in both, so you can compare them directly. Both are drawn as someone inside would see them, so each floor stays
+          still on the screen; in Cabin B the floor is really rising to meet the ball.
+        </li>
+        <li>
+          <strong>The green arrow in Cabin A</strong> shows gravity pulling the ball down, toward the floor. It moves with the ball.{' '}
+          <strong>The red arrow in Cabin B</strong> shows the rocket pushing the whole cabin, floor included, up. The rocket does not
+          touch the ball. A longer arrow means a stronger pull or push (a bigger g).
         </li>
         <li>
           <strong>The graph</strong> draws itself as the ball falls. Up the side is the ball&rsquo;s height above the floor, from 2 m
@@ -574,6 +632,10 @@ export function DrawingACaption() {
         <li>
           <strong>The graph</strong> works as in Part 1, but the bottom scale is fixed at {fixedTimeScaleEndSeconds()} seconds, so you
           can compare runs. In Part 1 the scale stretched to fit the fall.
+        </li>
+        <li>
+          <strong>The arrows on the cabins</strong> above work as in Part 1: green for gravity&rsquo;s pull in Cabin A, red for the
+          rocket&rsquo;s push in Cabin B. Their length follows the acceleration you choose, so a stronger setting gives longer arrows.
         </li>
         <li>
           <strong>Pink</strong> marks your own acceleration. <strong>The grey line</strong> is the 1g fall from Part 1, for comparison.
@@ -673,21 +735,27 @@ export function EquivalencePrincipleExperiment({ onComplete, onTutorComplete }: 
             dropped ball, inside two sealed cabins side by side.
           </p>
           <p style={paragraph}>
+            <strong>How this page is laid out.</strong> Below this introduction the page is in four sections, called Parts, each with a
+            coloured heading. In Part 1 you make a guess and watch the experiment. In Part 2 you try it with a setting of your own.
+            Part 3 shows the results, and Part 4 is the tutor, who talks it over with you.
+          </p>
+          <p style={paragraph}>
             <strong>What happens.</strong> Cabin A sits on the ground, where gravity pulls the ball down. Cabin B is in deep space,
-            far from any planet — nothing is pulling on it — but a rocket engine is pushing the cabin (and its floor) forward at a
-            steady rate. In both cabins, someone drops a ball and we watch how it moves relative to the floor. In Part 1 both cabins
-            use the pull of Earth&rsquo;s gravity at the ground, called 1g (explained below). In Part 2 you choose a different value
-            and drop the ball again.
+            far from any planet — nothing is pulling on it — but a rocket engine is pushing the cabin (and its floor) upward, toward the ceiling, at a
+            steady rate. In both cabins, someone drops a ball and we watch how it moves relative to the floor. In Part 1 the strength
+            is called 1g (explained just below): in Cabin A it is the pull of Earth&rsquo;s gravity at the ground, and in Cabin B it
+            is a rocket push of exactly the same strength. In Part 2 you choose a different strength for both cabins, such as half as
+            strong or twice as strong, and drop the ball again.
           </p>
           <p style={paragraph}>
             <strong>What 1g means.</strong> g is the size of Earth&rsquo;s gravity at the ground. A ball dropped near the ground speeds
-            up by 9.8 metres per second (about 22 miles per hour) in every second it falls. So after 1 second it moves at 9.8 m/s, and
+            up by 9.8 metres per second (about 22 miles per hour) in every second it falls. This rate of speeding up is called <strong>acceleration</strong>. So after 1 second it moves at 9.8 m/s, and
             after 2 seconds at 19.6 m/s. We write this 9.8 m/s² and call it <strong>1g</strong>. 2g is twice as much, and 0.5g is half
             as much. In Cabin B the rocket makes the floor speed up at the same rate, so the same number is used for both cabins.
           </p>
           <p style={paragraph}>
             <strong>Your job.</strong> Before you press the button, predict whether the ball will move differently in the two cabins
-            or the same way. Then watch both cabins and compare how the ball moves in each one, try other values in Part 2, and talk
+            or the same way. Then watch both cabins and compare how the ball moves in each one, try other strengths in Part 2, and talk
             it over with the tutor.
           </p>
           <p style={paragraph}>
@@ -744,8 +812,10 @@ export function EquivalencePrincipleExperiment({ onComplete, onTutorComplete }: 
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-            Both cabins start with the ball 2 metres above the floor, and both use 1g. If you were sealed inside each cabin and
-            dropped a ball, do you think the ball would move differently in the two cabins, or exactly the same way?
+            Cabin A is on the ground of a planet (Earth), where gravity pulls the ball down. Cabin B is in empty space, far from any
+            planet, where a rocket pushes the cabin upward, toward its ceiling, at the same strength. The rocket does not touch the ball. In both, the strength is 1g, and the ball starts 2
+            metres above the floor. If you were sealed inside each cabin and dropped a ball, do you think the ball would move
+            differently in the two cabins, or exactly the same way?
           </p>
           <div style={{ marginBottom: '0.5rem' }}>
             {predictionChoices.map((choice) => (
@@ -803,11 +873,13 @@ export function EquivalencePrincipleExperiment({ onComplete, onTutorComplete }: 
 
         <Block>
           <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Cabin label="Cabin A" height={height1} />
-            <Cabin label="Cabin B" height={height1} />
+            <Cabin label="Cabin A" height={height1} push="gravity" strengthG={1} />
+            <Cabin label="Cabin B" height={height1} push="rocket" strengthG={1} />
           </div>
           <p style={{ ...smallNote, textAlign: 'center' }}>
             Each cabin shows its ball and its floor. The number under a cabin is the ball&rsquo;s height above its floor right now.
+            Both cabins are drawn as someone inside would see them, so each floor stays still on the screen. In Cabin B the floor is
+            really rising to meet the ball.
           </p>
         </Block>
 
@@ -910,14 +982,22 @@ export function EquivalencePrincipleExperiment({ onComplete, onTutorComplete }: 
                 <Cabin
                   label="Cabin A"
                   height={height2}
+                  push="gravity"
+                  strengthG={part2.result ? part2.result.accelerationInG : isValidG ? selectedG : 1}
                   pinkNote={part2.result ? `your acceleration: ${part2.result.accelerationInG}g` : undefined}
                 />
                 <Cabin
                   label="Cabin B"
                   height={height2}
+                  push="rocket"
+                  strengthG={part2.result ? part2.result.accelerationInG : isValidG ? selectedG : 1}
                   pinkNote={part2.result ? `your acceleration: ${part2.result.accelerationInG}g` : undefined}
                 />
               </div>
+            <p style={{ ...smallNote, textAlign: 'center' }}>
+                Both cabins are drawn as someone inside would see them, so each floor stays still on the screen. In Cabin B the floor is
+                really rising to meet the ball.
+              </p>
             </Block>
 
             {lastPart2 && !part2Running ? (

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { EARTH_GRAVITY, runEquivalencePrincipleExperiment } from '../physics/equivalencePrincipleExperiment'
 import {
   Cabin,
+  arrowLengthPx,
   DrawingA,
   DrawingACaption,
   EquivalencePrincipleExperiment,
@@ -35,6 +36,20 @@ describe('Gravity 1 renders', () => {
     expect(html).not.toContain('NaN')
   })
 
+  it('the introduction says what the Parts are before it first mentions one', () => {
+    const html = renderToStaticMarkup(createElement(EquivalencePrincipleExperiment, {}))
+    const layout = html.indexOf('How this page is laid out.')
+    expect(layout).toBeGreaterThan(-1)
+    expect(html.indexOf('Part 1')).toBeGreaterThan(layout)
+  })
+
+  it('the page says the cabins are drawn as seen from inside, and that in Cabin B the floor is really rising', () => {
+    const html = renderToStaticMarkup(createElement(EquivalencePrincipleExperiment, {}))
+    expect(html).toContain('drawn as someone inside would see them')
+    expect(html).toContain('In Cabin B the floor is really rising to meet the ball.')
+    expect(renderToStaticMarkup(createElement(Part1Caption))).toContain('in Cabin B the floor is really rising to meet the ball')
+  })
+
   it('Start over is greyed out at rest', () => {
     const html = renderToStaticMarkup(createElement(EquivalencePrincipleExperiment, {}))
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Start over<\/button>/)
@@ -54,11 +69,36 @@ describe('Gravity 1 renders', () => {
     expect(html).not.toContain('there is no experiment here')
   })
 
-  it('the cabins are labelled with the ball and the floor', () => {
-    const html = renderToStaticMarkup(createElement(Cabin, { label: 'Cabin A', height: 1.5 }))
-    expect(html).toContain('ball')
-    expect(html).toContain('floor')
-    expect(html).toContain('1.50 m')
+  it('the cabins are labelled with the ball and the floor, and with an arrow for what acts', () => {
+    const a = renderToStaticMarkup(createElement(Cabin, { label: 'Cabin A', height: 1.5, push: 'gravity', strengthG: 1 }))
+    expect(a).toContain('ball')
+    expect(a).toContain('floor')
+    expect(a).toContain('1.50 m')
+    expect(a).toContain('Gravity pulls the ball down')
+    expect(a).toContain('#16a34a')
+    const b = renderToStaticMarkup(createElement(Cabin, { label: 'Cabin B', height: 1.5, push: 'rocket', strengthG: 1 }))
+    expect(b).toContain('A rocket pushes the cabin up')
+    expect(b).toContain('rocket push')
+    expect(b).toContain('#dc2626')
+    expect(a).not.toContain('#ffffff')
+    expect(b).not.toContain('#ffffff')
+  })
+
+  it('the arrow is longer for a stronger setting, and capped', () => {
+    expect(arrowLengthPx(0.5)).toBeLessThan(arrowLengthPx(1))
+    expect(arrowLengthPx(1)).toBeLessThan(arrowLengthPx(2))
+    expect(arrowLengthPx(5)).toBe(70)
+    const weak = renderToStaticMarkup(createElement(Cabin, { label: 'Cabin B', height: 2, push: 'rocket', strengthG: 0.5 }))
+    const strong = renderToStaticMarkup(createElement(Cabin, { label: 'Cabin B', height: 2, push: 'rocket', strengthG: 2 }))
+    expect(weak).not.toBe(strong)
+  })
+
+  it('the rocket is said to push the cabin upward, never forward, and not to touch the ball', () => {
+    const html = renderToStaticMarkup(createElement(EquivalencePrincipleExperiment, {}))
+    expect(html).not.toContain('cabin forward')
+    expect(html).not.toContain('floor) forward')
+    expect(html).toContain('upward, toward the ceiling')
+    expect(html).toContain('The rocket does not touch the ball')
   })
 
   it('Part 1 graph: legend, axis titles and the end time are drawn for every acceleration', () => {
