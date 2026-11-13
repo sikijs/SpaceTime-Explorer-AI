@@ -1,35 +1,125 @@
 import { useState } from 'react'
-import type { RadialLaunchResult } from '../physics/blackHoleExperiment'
+import {
+  evaluateBlackHole,
+  LAUNCH_DISTANCE,
+  partOneOutcomes,
+  SPEED_OF_LIGHT,
+  tutorMarking,
+} from '../physics/blackHoleExperiment'
+import type { SpeedCompareChoice, YesNo } from '../physics/blackHoleExperiment'
+
+// Gravity and Curved Spacetime, Experiment 7's tutor (Part 4), audited to the newer rules (docs/audit/gravity-and-curved-spacetime/
+// 07-draft-wording.md, section 9, approved by the owner on 2026-11-13). The three questions point to the white marks and the amber curve
+// by name and give no verdict; the explanation marks all three guesses. Every number comes from the physics module (CLAUDE.md §9).
 
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
-type SpeedCompareChoice = 'much-slower' | 'faster' | 'cannot-escape'
-type YesNoChoice = 'yes' | 'no'
 
 interface BlackHoleTutorProps {
-  smallMassPrediction: SpeedCompareChoice
-  largeMassPrediction: SpeedCompareChoice
-  inBetweenPrediction: YesNoChoice
-  result: RadialLaunchResult
+  lightGuess: SpeedCompareChoice
+  heavyGuess: SpeedCompareChoice
+  inBetweenGuess: YesNo
   onExplained?: () => void
 }
 
-function speedCompareText(choice: SpeedCompareChoice): string {
-  if (choice === 'much-slower') return 'much slower than light'
-  if (choice === 'faster') return 'faster than light'
-  return 'that nothing can escape at all'
+const GUESS_TEXT: Record<SpeedCompareChoice, string> = {
+  'much-slower': 'much slower than light',
+  faster: 'faster than light',
+  'cannot-escape': 'nothing can escape at all',
 }
 
-function outcomeText(outcome: RadialLaunchResult['outcome']): string {
-  return outcome === 'escapes' ? 'escaped' : 'fell back'
+const pointStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
+const percent = (fraction: number) => Math.round(fraction * 100)
+
+export function BlackHoleExplanation({ lightGuess, heavyGuess, inBetweenGuess }: Omit<BlackHoleTutorProps, 'onExplained'>) {
+  const marking = tutorMarking(lightGuess, heavyGuess, inBetweenGuess)
+  const real = partOneOutcomes()
+  const lightPct = percent(marking.light.fractionOfC)
+  const heavyPct = percent(marking.heavy.fractionOfC)
+  const special = marking.inBetween.specialMass
+  const half = evaluateBlackHole(0.5, LAUNCH_DISTANCE).escapeSpeedFractionOfC
+  const twoPct = evaluateBlackHole(special, LAUNCH_DISTANCE).escapeSpeedFractionOfC
+
+  const lightMarked =
+    lightGuess === 'much-slower'
+      ? `That matches what you guessed.`
+      : `That is different from what you guessed.`
+  const heavyMarked =
+    heavyGuess === 'cannot-escape'
+      ? 'That matches what you guessed.'
+      : heavyGuess === 'faster'
+        ? 'Faster than light is the number the formula gives, but a launch cannot actually be that fast, because nothing can go faster than light. So the real result is not a faster launch: it is that the probe cannot get away. That is different from what you guessed, although the number you had in mind was the right one.'
+        : 'That is different from what you guessed.'
+  const inBetweenMarked = marking.inBetween.matches ? 'That matches what you guessed.' : 'That is different from what you guessed.'
+
+  return (
+    <div>
+      <p style={pointStyle}>
+        <strong>Your guesses, marked.</strong> For a very small mass you guessed &ldquo;{GUESS_TEXT[lightGuess]}&rdquo;. For the mass of{' '}
+        {real.light.mass.toFixed(1)} the speed needed to escape is {lightPct} percent of the speed of light, which is much slower, and the
+        probe gets away. {lightMarked} For a very large mass you guessed &ldquo;{GUESS_TEXT[heavyGuess]}&rdquo;. For the mass of{' '}
+        {real.heavy.mass.toFixed(1)} the formula asks for {heavyPct} percent of the speed of light, and the probe falls back. {heavyMarked} You
+        guessed {inBetweenGuess === 'yes' ? 'yes' : 'no'}, that {inBetweenGuess === 'yes' ? 'something special happens' : 'nothing special happens'}{' '}
+        in between. In fact the answer is yes: at mass {special.toFixed(1)} the escape speed is exactly the speed of light, and the horizon
+        reaches the launch point. {inBetweenMarked}
+      </p>
+
+      <p style={pointStyle}>
+        <strong>1. Escape speed grows with mass</strong>, the same escape speed as in Experiment 6. With the launch point held at the same
+        distance, a heavier mass takes more speed to get away from. It grows like a square root: take mass 0.5, which needs {percent(half)} percent
+        of the speed of light. Four times the mass, {special.toFixed(1)}, needs {percent(twoPct)} percent: twice as much, not four times. At
+        mass {real.light.mass.toFixed(1)} it is {lightPct} percent and at mass {real.heavy.mass.toFixed(1)} it is {heavyPct} percent.
+      </p>
+      <p style={pointStyle}>
+        <strong>2. Past mass {special.toFixed(1)}, the formula would ask for more than the speed of light.</strong> At mass{' '}
+        {real.heavy.mass.toFixed(1)} it asks for {heavyPct} percent. But nothing can go faster than light, which Experiment 5 of
+        &ldquo;Relativity of Time and Motion&rdquo; showed. The probe is launched at the very top speed there is, and for these masses that
+        is still short of what it needs.
+      </p>
+      <p style={pointStyle}>
+        <strong>3. So, from inside a certain distance, nothing can escape, not even light.</strong> That distance is the radius of the
+        dashed circle in the drawing: the <strong>event horizon</strong>, the place of no return. It is drawn exactly where the escape
+        speed would be the speed of light: at the light mass it is a tiny circle of radius {real.light.eventHorizonRadius.toFixed(2)}, and at the
+        heavy mass it is a big circle of radius {real.heavy.eventHorizonRadius.toFixed(2)}. The launch point, at distance {LAUNCH_DISTANCE}, is
+        outside the first and inside the second. An object squeezed so tightly that it has an event horizon is a <strong>black hole</strong>.
+      </p>
+      <p style={pointStyle}>
+        <strong>4. A real horizon is a little different from this model, and the difference is worth a moment.</strong> In this experiment
+        the probe fell back because it did not have enough speed. A real horizon is not about speed at all. Think of water draining from a
+        sink. Above the drain, you can flick a droplet sideways and it might skim away across the surface. But once a droplet is close
+        enough to the drain, every direction along the surface curves down into it: there is no direction left, however fast the droplet
+        moves, that leads back away from the drain. A real black hole&rsquo;s horizon works the same way. Farther from the mass than the
+        horizon, &ldquo;moving away&rdquo; is still a direction you can travel in, so something fast enough, even light, can use it to
+        escape. Closer than the horizon, that direction no longer exists: every direction left, even straight away from the mass, leads
+        closer to it. (The sink is only a way of picturing this. It is an analogy, not a real drain.)
+      </p>
+      <p style={pointStyle}>
+        <strong>5. This is not new physics.</strong> It is Experiment 6&rsquo;s escape speed taken to its limit. In this model the
+        horizon&rsquo;s radius comes out as 2 × mass ÷ (speed of light)², which here, at mass {special.toFixed(1)}, is 2 × {special.toFixed(1)} ÷ {SPEED_OF_LIGHT}² ={' '}
+        {((2 * special) / (SPEED_OF_LIGHT * SPEED_OF_LIGHT)).toFixed(2)}, the launch distance. That has the
+        same form as the radius of a real, non-spinning black hole, but that is a curious match of form between a simple model and the full
+        theory, not a proof that the model is right.
+      </p>
+      <p style={pointStyle}>
+        <strong>6. The idea is old.</strong> John Michell imagined &ldquo;dark stars&rdquo;, bodies so massive that even light could not escape,
+        in a letter printed in 1784, by this same escape-speed reasoning. Laplace came to the same idea in the 1790s. The exact description,
+        which does not rest on this simple argument, came within about a month of Einstein&rsquo;s general theory of relativity (published
+        1915): Karl Schwarzschild found it.
+      </p>
+      <p style={pointStyle}>
+        <strong>7. This used ordinary gravity</strong>, the same simplification Experiments 2, 3, 5 and 6 of this chapter use, not the
+        exact general-relativistic treatment a real black hole needs. The mass, the distance and the speed of light here are relative,
+        made-up amounts, not real numbers.
+      </p>
+      <p style={{ ...pointStyle, marginBottom: 0 }}>
+        <strong>8. There is more to a real black hole than this simple picture.</strong> Real horizons are described exactly by general
+        relativity, and a real black hole very slowly loses energy by a tiny effect called Hawking radiation. Those ideas are met in later
+        chapters, in the group called &ldquo;Black Holes and Strong Gravity&rdquo;.
+      </p>
+    </div>
+  )
 }
 
-export function BlackHoleTutor({
-  smallMassPrediction,
-  largeMassPrediction,
-  inBetweenPrediction,
-  result,
-  onExplained,
-}: BlackHoleTutorProps) {
+export function BlackHoleTutor({ lightGuess, heavyGuess, inBetweenGuess, onExplained }: BlackHoleTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -67,11 +157,11 @@ export function BlackHoleTutor({
         <div>
           <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
             {tutorStep === 'observe' &&
-              `What happened to the probe this time — did it escape, or fall back? (It ${outcomeText(result.outcome)}.)`}
+              'Look at your three launches in Part 1: the drawing, the graph and the table in Part 3. In the very light case, what did the probe do? And in the very heavy case? Say what you saw.'}
             {tutorStep === 'compare' &&
-              `You predicted a small mass would give an escape speed ${speedCompareText(smallMassPrediction)}, and a large mass would give ${speedCompareText(largeMassPrediction)}. In fact, a small mass gives an escape speed well below the speed of light, and as mass grows, escape speed rises toward the speed of light — until, past a specific mass, escape speed would need to exceed light speed, which is impossible, so the light-speed launch falls back instead. You also predicted ${inBetweenPrediction === 'yes' ? 'that there is' : 'that there is not'} a mass in between where something special happens — in fact, yes: there is a specific mass where escape speed exactly reaches the speed of light. Comparing what you expected to what's actually true, what do you notice?`}
+              `Your guesses are the white marks on the graph in Part 1, each in a box labelled YOUR GUESS: one for the very light mass, one for the very heavy mass and one for the in-between question. You guessed ${GUESS_TEXT[lightGuess]} for the light mass and ${GUESS_TEXT[heavyGuess]} for the heavy mass, and you guessed ${inBetweenGuess === 'yes' ? 'yes' : 'no'} to the question about a mass in between. Now look at the amber curve. Where does it cross the dashed speed-of-light line, and where did you put your in-between mark? What do you notice? (A white mark for “faster”, “nothing can escape” or “no” is only a marker, so its height means nothing.)`}
             {tutorStep === 'conceptual' &&
-              "The escape-speed formula says a big enough mass would need an escape speed faster than light. But nothing can go faster than light. So what actually happens instead?"}
+              'If you have not already, try a few masses of your own in Part 2 and watch the pink dot move along the curve. The formula, pushed far enough, asks for an escape speed faster than light. But nothing can go faster than light. So what must really happen near a mass that heavy?'}
           </p>
 
           <textarea
@@ -112,51 +202,7 @@ export function BlackHoleTutor({
       )}
 
       {tutorStep === 'explained' && (
-        <div>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>1. Escape speed grows with mass</strong>, exactly as in Experiment 6 — a more
-            concentrated mass takes more speed to get away from.
-          </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. Past some mass, the formula would require exceeding the speed of light</strong>,
-            which "Relativity of Time and Motion" Experiment 5 already showed is impossible — nothing
-            can travel faster than light.
-          </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. So instead, nothing — not even light — can escape from within the
-            corresponding distance.</strong> That boundary is the event horizon, and the object
-            inside it is a black hole.
-          </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>4. This is not new physics</strong> — it's Experiment 6's escape speed, taken to
-            its limit.
-          </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>5. A historical note:</strong> this reasoning is genuinely how an 18th-century
-            astronomer, John Michell, first imagined such objects in 1783, long before general
-            relativity gave the correct full picture.
-          </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>6. This used ordinary, first-order gravity</strong> — the same simplification
-            Experiments 2, 3, 5, and 6 use — not the exact general-relativistic treatment a real
-            black hole requires.
-          </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>7. Real black holes are real</strong> — astronomers have directly imaged the
-            glowing region around two of them: the black hole at the center of the galaxy M87
-            (2019), and Sagittarius A*, the black hole at the center of our own Milky Way (2022),
-            both using a global network of radio telescopes called the Event Horizon Telescope.
-          </p>
-          <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>8. This simple model stops well short of the real thing.</strong> Real event
-            horizons are described exactly by general relativity, and physicists also study a black
-            hole's <strong>singularity</strong> (its very center) and a real but astronomically tiny
-            effect called <strong>Hawking radiation</strong>, where a black hole very slowly leaks
-            energy over immense timescales. None of that is part of this experiment's simple
-            escape-speed picture — those are ideas for a much later chapter, if this project ever
-            gets there.
-          </p>
-        </div>
+        <BlackHoleExplanation lightGuess={lightGuess} heavyGuess={heavyGuess} inBetweenGuess={inBetweenGuess} />
       )}
     </div>
   )
