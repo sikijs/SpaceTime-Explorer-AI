@@ -205,7 +205,7 @@ Implemented in October 2026 (physics model and tests, interface, prediction, run
 
 ## Audit Update (2026-11-14)
 
-Built to `docs/audit/cosmology/01-draft-wording.md` ("all defaults" from the owner on 2026-11-14 to the ten questions of `docs/audit/cosmology/01-gap-report.md`, "approved, all defaults" to the draft, "link" for Hubble's 1929 paper), plus the owner's requests during the review, listed below. **Not yet committed.** The physics (`z = H0 × d ÷ c`, H0 = 70 km/s per Mpc, c = 299,792.458 km/s, no use of the Doppler formula) does not change.
+Built to `docs/audit/cosmology/01-draft-wording.md` ("all defaults" from the owner on 2026-11-14 to the ten questions of `docs/audit/cosmology/01-gap-report.md`, "approved, all defaults" to the draft, "link" for Hubble's 1929 paper), plus the owner's requests during the review, listed below. Commits: `5fc216d` (physics), `8aa4981` (interface) and `58f6486` (documents). The physics (`z = H0 × d ÷ c`, H0 = 70 km/s per Mpc, c = 299,792.458 km/s, no use of the Doppler formula) does not change.
 
 **What changed.**
 - **Layout.** A neutral introduction, a collapsed "Words and formulas" box, and a "Want to know more?" list of seven links, all above Part 1 with no Part heading; then Part 1 "Predict, then watch" (amber), Part 2 "Now try it yourself" (pink), Part 3 "The results" (teal), Part 4 "The tutor" (blue). Parts 2 to 4 appear after the first Run and stay (changing a setting no longer hides the results or restarts the tutor).
