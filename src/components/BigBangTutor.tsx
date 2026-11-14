@@ -1,28 +1,28 @@
 import { useState } from 'react'
+import { ageGuessMatches, relativeGapToMeasuredAge, hubbleTimeYears, timeGuessMatches } from '../physics/bigBangExperiment'
+import type { AgeGuess, GalaxyTimeRow, TimeGuess } from '../physics/bigBangExperiment'
+import { fmtBillions } from './BigBangPictures'
 
-type TimeComparisonChoice = 'longer' | 'shorter' | 'same'
-type AgeComparisonChoice = 'muchLonger' | 'muchShorter' | 'close'
+// Cosmology, Experiment 2, Part 4: the tutor (docs/audit/cosmology/02-draft-wording.md, section 7, approved by the owner on 2026-11-14).
+// The observe and compare steps state no outcome and no verdict (CLAUDE.md §12, §13); the explanation marks each guess, and nowhere
+// earlier. Every number and every "matches" comes from the physics module.
+
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface BigBangTutorProps {
-  predictedTimeComparison: TimeComparisonChoice
-  predictedAgeComparison: AgeComparisonChoice
+  timeGuess: TimeGuess
+  ageGuess: AgeGuess
+  // The presets' rows: the ones the white marks are drawn against.
+  rows: GalaxyTimeRow[]
   onExplained?: () => void
 }
 
-const timeComparisonLabels: Record<TimeComparisonChoice, string> = {
-  longer: 'longer',
-  shorter: 'shorter',
-  same: 'the same',
-}
+const timeLabels: Record<TimeGuess, string> = { longer: 'longer', shorter: 'shorter', same: 'the same' }
+const ageLabels: Record<AgeGuess, string> = { muchLonger: 'much longer', muchShorter: 'much shorter', close: 'close, but not exact' }
 
-const ageComparisonLabels: Record<AgeComparisonChoice, string> = {
-  muchLonger: 'much longer than the real universe age',
-  muchShorter: 'much shorter than the real universe age',
-  close: 'close to, but not exactly, the real universe age',
-}
+const paragraph = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-export function BigBangTutor({ predictedTimeComparison, predictedAgeComparison, onExplained }: BigBangTutorProps) {
+export function BigBangTutor({ timeGuess, ageGuess, rows, onExplained }: BigBangTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -41,30 +41,30 @@ export function BigBangTutor({ predictedTimeComparison, predictedAgeComparison, 
   }
 
   const isResponseEmpty = responseInput.trim() === ''
+  const timeMatches = timeGuessMatches(timeGuess, rows)
+  const ageMatches = ageGuessMatches(ageGuess)
+  const gapPercent = (relativeGapToMeasuredAge() * 100).toFixed(1)
+
 
   return (
     <div
       style={{
-        marginTop: '2rem',
+        marginTop: '1rem',
         padding: '1.5rem',
         border: '1px solid #d9e8f5',
         borderRadius: '8px',
         backgroundColor: '#f0f7ff',
       }}
     >
-      <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>
-        Let's reflect on what you observed
-      </h2>
+      <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>Let&rsquo;s reflect on what you observed</h2>
 
       {(tutorStep === 'observe' || tutorStep === 'compare' || tutorStep === 'conceptual') && (
         <div>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
-            {tutorStep === 'observe' &&
-              'What did you notice about where the galaxies\' markers ended up, and when, as the animation played?'}
+          <p style={paragraph}>
+            {tutorStep === 'observe' && 'Look at the three galaxies, the ruler and the three bars. What do you notice about where the galaxies ended up, and when?'}
             {tutorStep === 'compare' &&
-              `You predicted the implied time would be ${timeComparisonLabels[predictedTimeComparison]} for a farther galaxy, and that it would come out ${ageComparisonLabels[predictedAgeComparison]}. Comparing that to what actually happened, what do you notice?`}
-            {tutorStep === 'conceptual' &&
-              "If every galaxy, no matter how far away, points back to the same moment, what might that suggest about the universe's whole history?"}
+              `You guessed that a farther galaxy's time would be ${timeLabels[timeGuess]}, and that this page's answer would come out ${ageLabels[ageGuess]}. Look at your white markers beside the real bars and the zoom strip. What do you notice?`}
+            {tutorStep === 'conceptual' && 'If every galaxy, no matter how far away, points back to the same moment, what might that suggest about the universe’s whole history?'}
           </p>
 
           <textarea
@@ -106,42 +106,29 @@ export function BigBangTutor({ predictedTimeComparison, predictedAgeComparison, 
 
       {tutorStep === 'explained' && (
         <div>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>1. Running Hubble's Law backward</strong>, the time for any galaxy to reach
-            zero distance from us is <code>1 / H0</code> — the same number no matter how far away
-            it is. This is called the <strong>Hubble time</strong>.
+          <p style={paragraph}>
+            <strong>1. Running Hubble&rsquo;s Law backward.</strong> The time for any galaxy to reach zero distance from us is 1 divided by the Hubble constant, the same number whatever its distance: the <strong>Hubble time</strong>. Here that is {fmtBillions(hubbleTimeYears())} billion
+            years for every galaxy. <strong>Your first guess</strong> was {timeLabels[timeGuess]}. {timeMatches ? 'That matches the real bars.' : 'That does not match the real bars.'}
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. This naive, constant-speed number comes out close to the real,
-            independently measured age of the universe</strong> (about 13.8 billion years) —
-            informative, but not the real derivation. The universe's actual expansion rate has
-            sped up and slowed down across its history (matter, radiation, and dark energy each
-            played a part), so simply running today's rate backward does not perfectly retrace the
-            real history.
+          <p style={paragraph}>
+            Here is why it comes out the same: a galaxy twice as far moves twice as fast, so it covers twice the distance in the same time, and the time back to zero cancels. Picture dots on a balloon being let down: every dot gets closer to every other dot, and they all meet at the
+            same moment.
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. This shared moment is popularly called "the Big Bang"</strong> — but it is
-            not an explosion happening at one special point in a pre-existing space, and
-            specifically not centered on Earth or the Milky Way. An observer on any other galaxy
-            would see exactly the same pattern, with every other galaxy (including ours) pointing
-            back to the same moment.
+          <p style={paragraph}>
+            <strong>2. Close to the measured age, but not the real derivation.</strong> This page&rsquo;s answer is {fmtBillions(hubbleTimeYears())} billion years, about {gapPercent} percent more than the age of about 13.8 billion years measured by others.{' '}
+            <strong>Your second guess</strong> was {ageLabels[ageGuess]}. {ageMatches ? 'That matches the real gap.' : 'That does not match the real gap.'} This is informative, but it is not how the age is found: the real expansion has changed over time (matter slowed it; dark
+            energy has been speeding it up), so today&rsquo;s rate run backward does not retrace the real history.
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>4. Not covered here:</strong> the real expanding-universe model (general
-            relativity's cosmology), how the expansion rate has actually changed over time, and
-            dark energy — later topics.
+          <p style={paragraph}>
+            <strong>3. This shared moment is popularly called &ldquo;the Big Bang&rdquo;.</strong> It was not an explosion in one place with a centre, and it was not centred on Earth or the Milky Way. NASA&rsquo;s John Mather says the universe has no centre and the Big Bang happened
+            everywhere at once, &ldquo;a process happening in time, not a point in time&rdquo; (see the links). An observer on any other galaxy would see the same pattern.
           </p>
-          <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>5. One puzzle this simple picture does raise:</strong> the universe looks
-            almost the same temperature and brightness in every direction, yet tracing opposite
-            patches of sky back to the Hubble time shows they were never close enough for light to
-            travel between them. This is the <strong>horizon problem</strong>. The leading
-            explanation, <strong>cosmic inflation</strong>, says space itself stretched
-            extraordinarily fast in the first tiny fraction of a second, blowing up one small,
-            already-even patch into our whole visible universe — like stretching one smooth square
-            of a wrinkled bedsheet until it covers an entire football field. Inflation is still an
-            actively debated theory, not a settled fact; it explains the horizon problem well, but
-            there isn't yet a definitive, falsifiable test confirming it happened.
+          <p style={paragraph}>
+            <strong>4. Not covered here:</strong> the real expanding-universe model (general relativity&rsquo;s cosmology), how the expansion rate has actually changed, and dark energy: later topics.
+          </p>
+          <p style={{ ...paragraph, marginBottom: 0 }}>
+            <strong>5. The puzzle from the introduction.</strong> Remember the matching sky? That is the <strong>horizon problem</strong>, and <strong>cosmic inflation</strong> is one proposed answer. It is a current theory, not a settled fact: NASA&rsquo;s pages say we do not know what
+            triggered it, and that scientists are still looking for signs of it.
           </p>
         </div>
       )}
