@@ -3,35 +3,40 @@ import {
   CMB_TEMPERATURE_TODAY_KELVIN,
   RECOMBINATION_REDSHIFT,
   RECOMBINATION_YEARS_AFTER_BIG_BANG,
-  cmbTemperatureKelvin,
+  dipoleOneInParts,
+  skyMarking,
+  temperatureMarking,
 } from '../physics/cosmicMicrowaveBackgroundExperiment'
+import type { SkyGuess, TemperatureGuess } from '../physics/cosmicMicrowaveBackgroundExperiment'
+import { fmtKelvin } from './CosmicMicrowaveBackgroundPictures'
 
-type TemperatureChoice = 'higher' | 'lower' | 'same'
-type SkyChoice = 'uniform' | 'varies'
+// Cosmology, Experiment 3, Part 4: the tutor (docs/audit/cosmology/03-draft-wording.md, section 8).
+// The observe and compare steps state no outcome and no verdict (CLAUDE.md §12, §13); the explanation marks each guess, and nowhere
+// earlier. Every number and every "matches" comes from the physics module.
+
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface CosmicMicrowaveBackgroundTutorProps {
-  predictedTemperature: TemperatureChoice
-  predictedSky: SkyChoice
+  predictedTemperature: TemperatureGuess
+  predictedSky: SkyGuess
   onExplained?: () => void
 }
 
-const temperatureLabels: Record<TemperatureChoice, string> = {
-  higher: 'higher at recombination than today',
-  lower: 'lower at recombination than today',
-  same: 'the same at recombination as today',
+const temperatureLabels: Record<TemperatureGuess, string> = { higher: 'hotter', lower: 'cooler', same: 'the same' }
+const temperatureMarks: Record<TemperatureGuess, string> = {
+  higher: 'white arrow pointing right',
+  lower: 'white arrow pointing left',
+  same: 'white tick',
+}
+const skyLabels: Record<SkyGuess, string> = { uniform: 'about the same', varies: 'varying a lot' }
+const skyMarks: Record<SkyGuess, string> = {
+  uniform: 'white box at the small-difference end of the strip',
+  varies: 'white box at the big-difference end of the strip',
 }
 
-const skyLabels: Record<SkyChoice, string> = {
-  uniform: 'about the same in every direction',
-  varies: 'varying a lot from direction to direction',
-}
+const paragraph = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-export function CosmicMicrowaveBackgroundTutor({
-  predictedTemperature,
-  predictedSky,
-  onExplained,
-}: CosmicMicrowaveBackgroundTutorProps) {
+export function CosmicMicrowaveBackgroundTutor({ predictedTemperature, predictedSky, onExplained }: CosmicMicrowaveBackgroundTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -50,28 +55,37 @@ export function CosmicMicrowaveBackgroundTutor({
   }
 
   const isResponseEmpty = responseInput.trim() === ''
+  const t = temperatureMarking(predictedTemperature)
+  const s = skyMarking(predictedSky)
+
+  const temperatureVerdict = t.matches
+    ? 'That matches the real marks: your arrow points toward the amber mark.'
+    : predictedTemperature === 'same'
+      ? 'That does not match the real marks: your tick sits on today’s mark, and the amber mark is far to its right.'
+      : 'That does not match the real marks: your arrow points the other way from the amber mark.'
+  const skyVerdict = s.matches
+    ? 'That matches the real mark: your box is at the small-difference end, on the same side as the green mark.'
+    : 'That does not match the real mark: your box is at the big-difference end, far from the green mark.'
 
   return (
     <div
       style={{
-        marginTop: '2rem',
+        marginTop: '1rem',
         padding: '1.5rem',
         border: '1px solid #d9e8f5',
         borderRadius: '8px',
         backgroundColor: '#f0f7ff',
       }}
     >
-      <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>
-        Let's reflect on what you observed
-      </h2>
+      <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>Let&rsquo;s reflect on what you observed</h2>
 
       {(tutorStep === 'observe' || tutorStep === 'compare' || tutorStep === 'conceptual') && (
         <div>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333' }}>
+          <p style={paragraph}>
             {tutorStep === 'observe' &&
-              "What did you notice about the marker's color, and the temperature in the readout, as you moved between recombination and today?"}
+              'Look at the temperature panel. What do you notice about the amber mark at Recombination and the green mark at Today, and about how far apart they are on the tenfold scale?'}
             {tutorStep === 'compare' &&
-              `You predicted the background was ${temperatureLabels[predictedTemperature]}, and ${skyLabels[predictedSky]}. Comparing that to what actually happened, what do you notice?`}
+              `You guessed the temperature was ${temperatureLabels[predictedTemperature]} at recombination: that is your ${temperatureMarks[predictedTemperature]} beside Today's mark. And you guessed the sky was ${skyLabels[predictedSky]} in every direction: that is your ${skyMarks[predictedSky]}. Compare each with the real marks. What do you notice?`}
             {tutorStep === 'conceptual' &&
               'If this light has been traveling almost since the very beginning of the universe, what does that make it, compared to any other light we could ever observe?'}
           </p>
@@ -115,37 +129,29 @@ export function CosmicMicrowaveBackgroundTutor({
 
       {tutorStep === 'explained' && (
         <div>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>1. Recombination</strong>, roughly {RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString()}{' '}
-            years after the Big Bang, is when the universe first became transparent to light. Before that,
-            light kept scattering off free electrons, like a headlight in fog. Afterward, it could travel
-            freely, and that first light is what we now call the Cosmic Microwave Background.
+          <p style={paragraph}>
+            <strong>1. Recombination</strong>, roughly {RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')} years after the Big Bang, is when the universe first became transparent to light. Before that, light kept scattering off free electrons, like a headlight in fog.
+            Afterward, it could travel freely, and that first light is what we now call the Cosmic Microwave Background.
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>2. That light has been stretched by the expanding universe ever since</strong>, the same
-            stretching you saw in Experiment 1, now applied to the oldest light there is. Its temperature
-            follows the exact rule <code>T = T0 × (1 + z)</code>. With{' '}
-            <code>T0 = {CMB_TEMPERATURE_TODAY_KELVIN} K</code> and <code>z ≈ {RECOMBINATION_REDSHIFT}</code>,
-            that is {CMB_TEMPERATURE_TODAY_KELVIN} × {(1 + RECOMBINATION_REDSHIFT).toFixed(1)} ≈{' '}
-            {cmbTemperatureKelvin(RECOMBINATION_REDSHIFT).toFixed(0)} K at release, cooling to{' '}
-            {CMB_TEMPERATURE_TODAY_KELVIN} K today. Unlike Experiment 1's formula for nearby galaxies, this
-            rule is exact at any redshift.
+          <p style={paragraph}>
+            <strong>2. Stretched ever since, so cooler now.</strong> <strong>Your first guess</strong> was {temperatureLabels[predictedTemperature]}. In fact it was hotter: about {fmtKelvin(t.releaseKelvin)} K at recombination against {CMB_TEMPERATURE_TODAY_KELVIN} K today, found by the exact
+            rule <code>T = T0 × (1 + z)</code>, {CMB_TEMPERATURE_TODAY_KELVIN} × {(1 + RECOMBINATION_REDSHIFT).toFixed(1)}. {temperatureVerdict}
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>3. The CMB looks almost exactly the same temperature in every direction.</strong> That is
-            the real observation behind the horizon problem from Experiment 2: opposite patches of sky could
-            never have exchanged heat, yet they match. It is also the reason cosmic inflation was proposed.
-            Inflation is still debated, and this experiment does not settle it.
+          <p style={paragraph}>
+            Here is why. A hotter glow gives light of a shorter wavelength. Stretching the wavelength of light by a factor of {(1 + RECOMBINATION_REDSHIFT).toFixed(1)} therefore cools the glow by the same factor. A daily-life comparison: playing a recording slower stretches its sound waves, and the
+            pitch goes down by the same factor. It is the same stretching you saw in Cosmology 1, now applied to the oldest light there is. Unlike Cosmology 1&rsquo;s formula for nearby galaxies, this rule is exact at any redshift.
           </p>
-          <p style={{ marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>4. This is real, measured evidence.</strong> Arno Penzias and Robert Wilson found it by
-            accident in 1965, while trying to track down unexplained noise in a radio antenna. Later missions,
-            COBE, WMAP and Planck, measured it with great precision.
+          <p style={paragraph}>
+            <strong>3. Nearly the same in every direction.</strong> <strong>Your second guess</strong> was {skyLabels[predictedSky]}. The real sky differs by only about 1 part in {s.oneInParts.toLocaleString('en-US')}, about {s.spreadKelvin.toFixed(6)} K in {CMB_TEMPERATURE_TODAY_KELVIN} K.{' '}
+            {skyVerdict} That is the observation behind the <strong>horizon problem</strong> named in Cosmology 2: patches of sky on opposite sides could never have exchanged heat, yet they match. <strong>Inflation</strong>, described in Cosmology 2, is one idea proposed to explain it, and it is
+            still being tested; this page does not settle it.
           </p>
-          <p style={{ marginBottom: '0', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' }}>
-            <strong>5. Not covered here:</strong> the physics of recombination itself, the CMB's real tiny
-            temperature ripples and what they say about how galaxies formed, and its polarization. Those are
-            later topics.
+          <p style={paragraph}>
+            <strong>4. This is real, measured evidence.</strong> Two radio engineers, Arno Penzias and Robert Wilson, found it by accident in 1964 to 1965, while trying to track down unexplained noise in a radio antenna. Later satellites, COBE, WMAP and Planck, measured it with great care.
+          </p>
+          <p style={{ ...paragraph, marginBottom: 0 }}>
+            <strong>5. Not covered here:</strong> the physics of recombination itself, what the tiny differences between directions mean for how galaxies formed, and the polarization of the light. Also not covered: our own motion makes one side of the sky a little warmer and the opposite side a
+            little cooler, by about 1 part in {Math.round(dipoleOneInParts())}, which is why &ldquo;about the same&rdquo; is not &ldquo;exactly the same&rdquo;. That is taught in the chapter &ldquo;Is the microwave sky equally warm in every direction?&rdquo;, in the Evidence and Imagination group.
           </p>
         </div>
       )}
