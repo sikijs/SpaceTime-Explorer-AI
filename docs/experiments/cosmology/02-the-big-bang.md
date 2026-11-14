@@ -205,7 +205,7 @@ Fully implemented (October 2026; rebuilt 2026-11-14, see "Audit Update (2026-11-
 
 ## Audit Update (2026-11-14)
 
-Built to `docs/audit/cosmology/02-draft-wording.md` ("all defaults" from the owner on 2026-11-14 to the ten questions of `docs/audit/cosmology/02-gap-report.md`, "approved" to the draft wording, "go" for the build, and "all defaults, apply it" to the reinstated introduction), plus the owner's request during the review, listed below. Commits are recorded at the end of this section. The physics (`1 / H0` at H0 = 70 km/s per Mpc, the standard unit conversions, the constant-speed backward run) does not change.
+Built to `docs/audit/cosmology/02-draft-wording.md` ("all defaults" from the owner on 2026-11-14 to the ten questions of `docs/audit/cosmology/02-gap-report.md`, "approved" to the draft wording, "go" for the build, and "all defaults, apply it" to the reinstated introduction), plus the owner's request during the review, listed below. Commits: `d23f761` (physics), `8f81273` (interface) and `9cc9dcc` (documents). The physics (`1 / H0` at H0 = 70 km/s per Mpc, the standard unit conversions, the constant-speed backward run) does not change.
 
 **What changed.**
 - **Layout.** A neutral introduction, a collapsed "Words and formulas" box, and a "Want to know more?" list of nine links, all above Part 1 with no Part heading; then Part 1 "Predict, then watch" (amber), Part 2 "Now try it yourself" (pink), Part 3 "The results" (teal), Part 4 "The tutor" (blue). Parts 2 to 4 appear after the first Run and stay (changing a setting no longer hides the results or restarts the tutor).
