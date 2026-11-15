@@ -286,6 +286,12 @@ textarea {
   flex: 0 0 220px;
   position: sticky;
   top: 2rem;
+  /* The list is longer than most windows, so the sidebar scrolls on its own: it stays in view
+     while the page moves, and its own scrollbar reaches every chapter wherever the learner is. */
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.5rem;
 }
 
 .chapter-group-heading {
@@ -360,6 +366,9 @@ textarea {
     flex: none;
     position: static;
     width: 100%;
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
   }
 
   .chapter-list {
