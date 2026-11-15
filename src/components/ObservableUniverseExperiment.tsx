@@ -1,18 +1,36 @@
-import { useEffect, useState } from 'react'
-import { ObservableUniverseTutor } from './ObservableUniverseTutor'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   CMB_REDSHIFT,
+  GALAXY_A_REDSHIFT,
   MAX_REDSHIFT,
   MIN_REDSHIFT,
-  REAL_CMB_SOURCE_DISTANCE_TODAY_LIGHT_YEARS,
-  REAL_OBSERVABLE_UNIVERSE_RADIUS_LIGHT_YEARS,
+  PLANCK_AGE_YEARS,
   SOURCE_PRESETS,
-  lightTravelYears,
   runObservableUniverseExperiment,
-  timeAfterBigBangYears,
+  workedExamples,
 } from '../physics/observableUniverseExperiment'
-import { BEST_FIT_DARK_ENERGY_FRACTION } from '../physics/darkEnergyExperiment'
-import { RECOMBINATION_YEARS_AFTER_BIG_BANG } from '../physics/cosmicMicrowaveBackgroundExperiment'
+import type { LeftGuess, TodayGuess } from '../physics/observableUniverseExperiment'
+import { ObservableUniverseResults } from './ObservableUniverseResults'
+import { ObservableUniverseTutor } from './ObservableUniverseTutor'
+import {
+  DistanceGraph,
+  DistancePicture,
+  OwnSourcePicture,
+  Part1DistanceCaption,
+  Part1GraphCaption,
+  Part2Caption,
+  YOUR_SOURCE_COLOR,
+  distanceLabel,
+  redshiftLabel,
+} from './ObservableUniversePictures'
+import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PartHeader } from './GravitationalWaveExperiment'
+import { Block, ExternalLink, WhereFrom, listStyle, smallNote } from './TidalEffectExperiment'
+
+// Cosmology, Experiment 8, audited to the newer rules (docs/audit/cosmology/08-draft-wording.md, approved by the owner on 2026-11-15).
+// Every number comes from the physics module; this file only draws and words it (CLAUDE.md §9). The learner's guesses never change a real
+// picture or table; they are drawn in white once the run has finished (§14, "Predictions and the Real Results").
 
 interface ObservableUniverseExperimentProps {
   onComplete?: () => void
@@ -21,810 +39,521 @@ interface ObservableUniverseExperimentProps {
 
 type SourceMode = 'preset' | 'custom'
 
-// Fixed real-world playback duration (CLAUDE.md §11): playback speed never changes the result.
+// One run is a fixed real duration, whatever the source (CLAUDE.md §11): playback speed never changes the result.
 const ANIMATION_DURATION_MS = 8000
 
-const TRAVEL_COLOR = '#38bdf8'
-const TODAY_COLOR = '#fbbf24'
-const LEFT_COLOR = '#4ade80'
-
-// This experiment's two prediction questions, per its specification's "Prediction Activity". Choices are
-// not scored.
-type TodayChoice = 'less' | 'about' | 'more'
-const todayChoices: Array<{ value: TodayChoice; label: string }> = [
+// The two guess questions are kept exactly as the owner approved them on 2026-10-08.
+const todayChoices: Array<{ value: TodayGuess; label: string }> = [
   { value: 'less', label: 'Less than 10 billion light-years' },
   { value: 'about', label: 'About 10 billion light-years' },
   { value: 'more', label: 'More than 10 billion light-years' },
 ]
-
-type LeftChoice = 'thirteen' | 'few' | 'closer'
-const leftChoices: Array<{ value: LeftChoice; label: string }> = [
+const leftChoices: Array<{ value: LeftGuess; label: string }> = [
   { value: 'thirteen', label: 'About 13 billion light-years' },
   { value: 'few', label: 'A few billion light-years' },
   { value: 'closer', label: 'Far closer than that, under 100 million light-years' },
 ]
+const optionText = (options: Array<{ value: string; label: string }>, value: string | null) => options.find((o) => o.value === value)?.label ?? null
 
-// What the model gives for each prediction question (not scored; used only to say whether the learner's
-// answer matched).
-const ACTUAL_TODAY: TodayChoice = 'more'
-const ACTUAL_LEFT: LeftChoice = 'closer'
-
-// Fixed distance axis for both pictures (billions of light-years), so nothing jumps when the learner
-// changes the source. It covers the largest distance the experiment can give (about 44.6).
-const AXIS_MAX_BILLION_LY = 50
-
-// Distance diagram geometry. The bars are drawn to a true linear scale.
-const DIAGRAM_WIDTH = 560
-const DIAGRAM_HEIGHT = 285
-const EARTH_X = 60
-const AXIS_RIGHT = 535
-const PIXELS_PER_BILLION_LY = (AXIS_RIGHT - EARTH_X) / AXIS_MAX_BILLION_LY
-const BAR_HEIGHT = 16
-const ROW_TRAVEL_Y = 100
-const ROW_TODAY_Y = 152
-const ROW_LEFT_Y = 204
-const AXIS_Y = 240
-const MIN_VISIBLE_BAR_PX = 3
-
-// Graph geometry: distances against redshift, with redshift on a logarithmic axis.
-const GRAPH_WIDTH = 480
-const GRAPH_HEIGHT = 310
-const GRAPH_LEFT = 60
-const GRAPH_RIGHT = GRAPH_WIDTH - 20
-const GRAPH_TOP = 44
-const GRAPH_BOTTOM = GRAPH_HEIGHT - 52
-const LOG_RANGE = Math.log10(MAX_REDSHIFT / MIN_REDSHIFT)
-
-function graphX(redshift: number): number {
-  return GRAPH_LEFT + (Math.log10(redshift / MIN_REDSHIFT) / LOG_RANGE) * (GRAPH_RIGHT - GRAPH_LEFT)
-}
-
-function graphY(billionLy: number): number {
-  return GRAPH_BOTTOM - (billionLy / AXIS_MAX_BILLION_LY) * (GRAPH_BOTTOM - GRAPH_TOP)
-}
-
-// The custom slider moves along a logarithmic scale, so low and high redshifts are both easy to pick.
+// The custom slider moves along a scale where each step multiplies, so low and high redshifts are both easy to pick.
 const SLIDER_STEPS = 1000
-function sliderToRedshift(position: number): number {
-  return MIN_REDSHIFT * (MAX_REDSHIFT / MIN_REDSHIFT) ** (position / SLIDER_STEPS)
-}
-function redshiftToSlider(redshift: number): number {
-  return Math.round((Math.log(redshift / MIN_REDSHIFT) / Math.log(MAX_REDSHIFT / MIN_REDSHIFT)) * SLIDER_STEPS)
+const sliderToRedshift = (position: number) => MIN_REDSHIFT * (MAX_REDSHIFT / MIN_REDSHIFT) ** (position / SLIDER_STEPS)
+const redshiftToSlider = (redshift: number) => Math.round((Math.log(redshift / MIN_REDSHIFT) / Math.log(MAX_REDSHIFT / MIN_REDSHIFT)) * SLIDER_STEPS)
+
+// ---- the introduction (the owner's approved wording, 2026-11-15; no answers given: §12) ----
+function Intro() {
+  const p = { marginTop: 0, marginBottom: '0.75rem' } as const
+  const list = { marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' } as const
+  return (
+    <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+      <p style={p}>
+        <strong>The question.</strong> The universe is about 13.8 billion years old (Planck 2018: {(PLANCK_AGE_YEARS / 1e9).toFixed(3)} billion), so the oldest light we can see has been travelling for about that long. Light covers one light-year in a year. So you might expect that the farthest we could possibly see is about 13.8 billion light-years. How far away are the things we see, and how big is the part of the universe we can see?
+      </p>
+      <p style={p}>
+        <strong>What happens.</strong> You will look at the light of two very distant sources. For each one you will see <strong>three distances</strong>: how far its light travelled, how far away the source is <strong>today</strong>, and how far away it was <strong>when the light left</strong> it. First you make two guesses. Then you press <strong>Run</strong>, the light is sent from each source to Earth, and two pictures show the distances. Your guesses are drawn on the pictures in white. In <strong>Part 2</strong> you choose any source you like and see its three distances. The results and a tutor follow.
+      </p>
+      <p style={p}>
+        <strong>Step 1: what &ldquo;far&rdquo; means for light.</strong> A <strong>light-year</strong> is the distance light travels in one year, about 9.5 million million kilometres. Because light takes time to travel, every picture of the sky shows the past. A firework burst a kilometre away reaches your eyes a moment after it happened. A star ten light-years away shows you the star as it was ten years ago. The farther the source, the older the light we receive from it. (This is an everyday comparison, not a measurement.)
+      </p>
+      <p style={p}>
+        <strong>Step 2: the oldest light.</strong> In Cosmology 3 you met the <strong>cosmic microwave background</strong>: the oldest light we can see, which left its source when the universe was very young, about 380,000 years after the Big Bang (ESA and NASA/JPL give 380,000 and 370,000 years for the same release). It has been travelling toward us ever since. In this experiment it is called <strong>Source B</strong>.
+      </p>
+      <p style={p}>
+        <strong>Step 3: redshift, a reminder.</strong> In Cosmology 1 you met <strong>redshift</strong>: a number that tells how much the light&rsquo;s colour was shifted toward red on its way to us. A bigger redshift means light that left earlier. A galaxy at redshift 2 (<strong>Galaxy A</strong>) sent its light about ten billion years ago. The oldest light has a redshift of about 1090.
+      </p>
+      <p style={{ ...p, marginBottom: '0.5rem' }}>
+        <strong>Step 4: three distances for one source.</strong> For any source there are three different questions you can ask about distance, and this experiment is about how they compare:
+      </p>
+      <ul style={list}>
+        <li>
+          <strong>How far the light travelled:</strong> the length of the light&rsquo;s own journey, found from how long it has been on its way, multiplied by the speed of light.
+        </li>
+        <li>
+          <strong>How far away the source is today:</strong> if you could freeze everything at this exact moment and stretch a measuring tape from Earth to the source, how long would the tape be? (This is a way of <em>defining</em> a distance across the whole universe at one moment. No signal could measure it.)
+        </li>
+        <li>
+          <strong>How far away it was when the light left:</strong> the length that same tape would have had at the moment the light set off.
+        </li>
+      </ul>
+      <p style={p}>
+        <strong>Step 5: the units.</strong> These distances are so large that they are given in <strong>billions of light-years</strong>; one billion is a thousand million. One <strong>megaparsec (Mpc)</strong> is about 3.3 million light-years; Hubble&rsquo;s Law in Cosmology 1 used it.
+      </p>
+      <p style={p}>
+        <strong>Step 6: why ask this at all.</strong> Every picture of the sky is made of light that has had time to reach us, so the limit on how far we can see is a limit on what we can ever study. Astronomers give a number for how far away the edge of the observable universe is. How is that number found, and is it set only by how old the universe is? The three distances for your two sources are the way into that question.
+      </p>
+      <p style={p}>
+        <strong>Your job.</strong> First, make two guesses about distances to the two sources. Then press Run. Afterwards, in Part 2, pick a source of your own.
+      </p>
+      <p style={p}>
+        <strong>What to look for.</strong> <strong>Look at:</strong> the three bars for each source. <strong>What it means:</strong> they are three different distances for one source. <strong>Why it matters:</strong> how they compare is the whole question of this experiment. In Part 2, look at how the bars change as you choose sources whose light left earlier.
+      </p>
+      <p style={p}>
+        <strong>How this page is laid out.</strong> Below this introduction the page has four parts. <strong>Part 1</strong> is where you guess and watch. <strong>Part 2</strong> is where you try your own source. <strong>Part 3</strong> shows the results and what they mean. <strong>Part 4</strong> is the tutor. Parts 2, 3 and 4 appear when your first run has finished.
+      </p>
+      <p style={p}>
+        <strong>Your guesses and the real pictures.</strong> Your guesses never change the real pictures or tables. They are drawn on the real picture in <strong>white</strong>, in a box labelled YOUR GUESS, after the run, and shown again beside the results. The real pictures come from the physics. The source you choose in Part 2 does change Picture 3, the pink line on the graph and the pink row of the table, but never the Part 1 pictures. If you change a guess, press Run and see nothing change, that is not a fault: a guess is only a guess.
+      </p>
+      <p style={{ ...p, marginBottom: '0.25rem' }}>
+        <strong>What we assume.</strong>
+      </p>
+      <ul style={list}>
+        <li>
+          The same simplified universe as Cosmology 5 and 6: &ldquo;flat&rdquo; (space on the very largest scales is not curved, so straight parallel paths stay parallel), with matter and a constant dark energy (70 percent), and an illustrative Hubble constant of 70 km/s per megaparsec. Published values range from about 67 to 73: the &ldquo;Hubble tension&rdquo;. In this model the universe is <strong>13.47 billion years old</strong>; the real age is about 13.8 billion.
+        </li>
+        <li>
+          <strong>Radiation</strong> (the light and other very fast particles of the early universe) is left out, as in Cosmology 5 and 6. This matters most for the earliest times, and the results will show how much difference it makes.
+        </li>
+        <li>The source stays at a fixed spot in the stretching space, with no motion of its own through space.</li>
+        <li>The light travels along a straight line to Earth, and nothing blocks or bends it.</li>
+        <li>&ldquo;Distance today&rdquo; is a way of defining a distance across all of space at one moment, not something a signal could measure.</li>
+        <li>The cosmic microwave background stands in for &ldquo;the farthest we can see with light.&rdquo; The true edge of the observable universe is slightly farther, and is not computed here.</li>
+        <li>Real reference values are given for comparison and are not worked out here.</li>
+        <li>Nothing here says how large the whole universe is. The observable universe is only the part we can see. The universe may be much larger, and this experiment does not say (NASA and ESA say so too).</li>
+      </ul>
+      <p style={{ ...p, marginBottom: 0 }}>
+        <strong>Some new words:</strong> observable universe, light-year, redshift, cosmic microwave background, distance today, distance when the light left, megaparsec. All are in the Words and formulas box below.
+      </p>
+    </div>
+  )
 }
 
-// Distances in light-years, written in billions, or in millions where that reads more clearly.
-function distanceLabel(lightYears: number): string {
-  if (lightYears >= 1e9) return `${(lightYears / 1e9).toFixed(2)} billion light-years`
-  return `${Math.round(lightYears / 1e6)} million light-years`
+// ---- the words box (the formulas that give guess 2's answer appear only after the first run: §12) ----
+function referenceEntries(afterRun: boolean) {
+  const w = workedExamples()
+  const entries = [
+    { term: 'Observable universe', meaning: 'the part of the universe whose light has had time to reach us. It is not an edge of space, only a limit on what we can see.' },
+    { term: 'Light-year', meaning: 'the distance light travels in one year, about 9.5 million million kilometres.' },
+    { term: 'Billion', meaning: 'a thousand million.' },
+    { term: 'Redshift', meaning: 'a number that tells how much the light’s colour was shifted toward red on its way to us. A bigger redshift means light that left earlier (Cosmology 1).' },
+    { term: 'Cosmic microwave background', meaning: 'the oldest light we can see, which left its source when the universe was very young, about 370,000 to 380,000 years after the Big Bang (Cosmology 3). Source B here.' },
+    { term: 'Light-travel time (look-back time)', meaning: 'how long the light has been on its way to us.' },
+    { term: 'Distance today', meaning: 'the length of a measuring tape stretched from Earth to the source at this exact moment. A way of defining a distance, not something a signal could measure.' },
+    { term: 'Distance when the light left', meaning: 'the length the same tape had at the moment the light set off.' },
+    { term: 'Megaparsec (Mpc)', meaning: 'a unit of distance: about 3.3 million light-years.' },
+    { term: 'Hubble constant', meaning: 'how fast the distance to a galaxy grows for each megaparsec it is away: 70 km/s per Mpc in this model (Cosmology 1).' },
+    { term: 'Flat universe', meaning: 'space on the very largest scales is not curved, so straight parallel paths stay parallel.' },
+    { term: 'Dark energy', meaning: 'the cause of the speeding up of the expansion; 70 percent of the model’s universe (Cosmology 5).' },
+    { term: 'Radiation (left out here)', meaning: 'the light and other very fast particles of the early universe. The model leaves it out, which matters most at the earliest times.' },
+    { term: 'Particle horizon', meaning: 'the edge of the observable universe: the farthest from which any signal could have reached us by now. Not computed here.' },
+    { term: 'Hubble tension', meaning: 'the small disagreement between two ways of measuring the expansion rate: about 67 to 73 (Cosmology 1 and 6).' },
+    { term: 'Formula: distance the light travelled', meaning: `travel time × the speed of light. For the oldest light: ${(w.travelYears / 1e9).toFixed(2)} billion years × 1 light-year per year = ${(w.travelLightYears / 1e9).toFixed(2)} billion light-years.` },
+  ]
+  if (afterRun) {
+    entries.push(
+      {
+        term: 'Formula: the distance when the light left, with a worked example',
+        meaning: `distance today ÷ (1 + z). For the oldest light: ${(w.todayLightYears / 1e9).toFixed(2)} billion ÷ ${w.stretchingFactor.toFixed(1)} = ${Math.round(w.leftLightYears / 1e6)} million light-years.`,
+      },
+      {
+        term: 'Formula: recession speed, with a worked example',
+        meaning: `H0 × distance today. For the oldest light: ${w.hubbleConstant} km/s per Mpc × about ${Math.round(w.distanceTodayMpc).toLocaleString('en-US')} Mpc ≈ ${(Math.round(w.recessionSpeedKmPerS / 1000) * 1000).toLocaleString('en-US')} km/s, about ${w.recessionSpeedOverC.toFixed(1)} times the speed of light.`,
+      },
+    )
+  } else {
+    entries.push({ term: 'More words', meaning: 'two more formulas appear here after your first run, because they show how the three distances are linked, which is what you are about to guess.' })
+  }
+  return entries
 }
 
-function redshiftLabel(redshift: number): string {
-  return redshift >= 10 ? redshift.toFixed(1) : redshift.toFixed(2)
+// ---- links (read on 2026-11-15 through a helper's fetch tool, which returns model summaries; see the draft's source table). The page that
+// says expansion is of space appears after the first Run (§12), because it says what the tutor asks about. ----
+const LINKS_BEFORE: Array<{ href: string; label: string; what: ReactNode }> = [
+  {
+    href: 'https://arxiv.org/abs/1807.06209',
+    label: 'Planck Collaboration (2018): cosmological parameters',
+    what: 'the paper behind the universe’s age (13.787 billion years) and the oldest light’s redshift (1089.8). A technical paper; the abstract is the readable part. (Abstract and an HTML copy read.)',
+  },
+  {
+    href: 'https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_and_the_cosmic_microwave_background',
+    label: 'ESA: Planck and the cosmic microwave background (2013)',
+    what: 'ESA’s plain page on the oldest light and when it was released, about 380,000 years after the Big Bang. (Read.)',
+  },
+  {
+    href: 'https://imagine.gsfc.nasa.gov/observatories/satellite/wmap/shape.html',
+    label: 'NASA: The Shape of the Universe',
+    what: 'NASA’s page on how the WMAP satellite found that space is flat, the word the assumptions use. (Read.)',
+  },
+  {
+    href: 'https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-constant-and-tension/',
+    label: 'NASA: the Hubble constant and the tension',
+    what: 'NASA’s plain page behind the range 67 to 73 quoted in the assumptions. (Read for Cosmology 6; to be re-read.)',
+  },
+  {
+    href: 'https://esa.int/Science_Exploration/Space_Science/Is_the_Universe_finite_or_infinite_An_interview_with_Joseph_Silk',
+    label: 'ESA: Is the Universe finite or infinite? An interview with Joseph Silk (2003)',
+    what: 'an old ESA interview on whether the whole universe is bigger than the part we can see. (Read; dated 2003.)',
+  },
+]
+const LINKS_AFTER: Array<{ href: string; label: string; what: ReactNode }> = [
+  {
+    href: 'https://imagine.gsfc.nasa.gov/ask_astro/cosmology.html',
+    label: 'NASA: Ask an Astrophysicist, cosmology',
+    what: 'NASA’s question-and-answer page: expansion is of space itself, and it does not break relativity’s speed limit. Entries from 2003 to 2010; its 1997 answer about the size of the observable universe is out of date and should be skipped. (Read.)',
+  },
+]
+
+function ChoiceButtons<T extends string>({ options, selected, disabled, onSelect }: { options: Array<{ value: T; label: string }>; selected: T | null; disabled: boolean; onSelect: (value: T) => void }) {
+  return (
+    <div style={{ marginBottom: '0.5rem' }}>
+      {options.map((choice) => (
+        <button
+          key={choice.value}
+          type="button"
+          onClick={() => onSelect(choice.value)}
+          disabled={disabled}
+          className={`toggle-button${selected === choice.value ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '0.875rem', opacity: disabled ? 0.6 : 1 }}
+        >
+          {choice.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
-const graphTicksX = [0.1, 1, 10, 100, 1000]
-const graphTicksY = [0, 10, 20, 30, 40, 50]
-const axisTicks = [0, 10, 20, 30, 40, 50]
+function Question({ prompt, guessText, children }: { prompt: string; guessText: string | null; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>{prompt}</p>
+      {children}
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{guessText ? `Your guess: ${guessText}` : 'Choose an option to continue'}</p>
+    </div>
+  )
+}
 
 export function ObservableUniverseExperiment({ onComplete, onTutorComplete }: ObservableUniverseExperimentProps) {
+  const [todayGuess, setTodayGuess] = useState<TodayGuess | null>(null)
+  const [leftGuess, setLeftGuess] = useState<LeftGuess | null>(null)
+  const [submitted, setSubmitted] = useState<{ today: TodayGuess; left: LeftGuess } | null>(null)
+
+  const [part1Done, setPart1Done] = useState(false)
+  const [part1Running, setPart1Running] = useState(false)
+  const [part1Progress, setPart1Progress] = useState(0)
+  const [explained, setExplained] = useState(false)
+
+  // Part 2's source. The first preset is neither of Part 1's two sources, so the first look at Part 2 shows something new.
   const [mode, setMode] = useState<SourceMode>('preset')
-  const [presetId, setPresetId] = useState(SOURCE_PRESETS[SOURCE_PRESETS.length - 1].id)
+  const [presetId, setPresetId] = useState(SOURCE_PRESETS[0].id)
   const [customRedshift, setCustomRedshift] = useState(5)
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
-  const [progress, setProgress] = useState(0)
-  // Remounts the tutor on each new run so its conversation starts over.
-  const [runCount, setRunCount] = useState(0)
+  // Part 2's bars are drawn when its own Run is pressed; at rest they show the whole picture.
+  const [part2Running, setPart2Running] = useState(false)
+  const [part2Progress, setPart2Progress] = useState(1)
 
-  const [todayPrediction, setTodayPrediction] = useState<TodayChoice | null>(null)
-  const [leftPrediction, setLeftPrediction] = useState<LeftChoice | null>(null)
-  const [submittedTodayPrediction, setSubmittedTodayPrediction] = useState<TodayChoice | null>(null)
-  const [submittedLeftPrediction, setSubmittedLeftPrediction] = useState<LeftChoice | null>(null)
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
 
-  const hasPrediction = todayPrediction !== null && leftPrediction !== null
-  const hasSubmittedPrediction = submittedTodayPrediction !== null && submittedLeftPrediction !== null
-
+  const hasAllGuesses = todayGuess !== null && leftGuess !== null
+  const locked = submitted !== null
+  const shownToday = submitted?.today ?? todayGuess
+  const shownLeft = submitted?.left ?? leftGuess
   const preset = SOURCE_PRESETS.find((p) => p.id === presetId)!
   const redshift = mode === 'preset' ? preset.redshift : customRedshift
-  const result = runObservableUniverseExperiment(redshift)
-  const isActive = status === 'running' || status === 'complete'
 
-  // The prediction questions are about a galaxy whose light travelled about 10 billion years and about the
-  // oldest light, whichever source the learner chose, so their answers are checked against these.
-  const tenBillionYearExample = runObservableUniverseExperiment(2)
-  const oldestLight = runObservableUniverseExperiment(CMB_REDSHIFT)
-  const modelEmissionYears = timeAfterBigBangYears(1 / (1 + CMB_REDSHIFT), BEST_FIT_DARK_ENERGY_FRACTION)
-  const modelBelowRealPercent =
-    (1 - oldestLight.distanceTodayLightYears / REAL_CMB_SOURCE_DISTANCE_TODAY_LIGHT_YEARS) * 100
+  // Part 1's animation: one run, a fixed real duration (CLAUDE.md §11).
+  useEffect(() => {
+    if (!part1Running) return
+    const startTime = performance.now()
+    let frameId = 0
+    const animate = (now: number) => {
+      const p = Math.min(Math.max((now - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setPart1Progress(p)
+      if (p >= 1) {
+        setPart1Running(false)
+        setPart1Done(true)
+        onCompleteRef.current?.()
+        return
+      }
+      frameId = requestAnimationFrame(animate)
+    }
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [part1Running])
 
+  // Part 2's animation: the bars grow over the same fixed duration.
+  useEffect(() => {
+    if (!part2Running) return
+    const startTime = performance.now()
+    let frameId = 0
+    const animate = (now: number) => {
+      const p = Math.min(Math.max((now - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setPart2Progress(p)
+      if (p >= 1) {
+        setPart2Running(false)
+        return
+      }
+      frameId = requestAnimationFrame(animate)
+    }
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [part2Running])
+
+  const handleRun = () => {
+    if (!hasAllGuesses || part1Running || part1Done) return
+    if (!submitted) setSubmitted({ today: todayGuess!, left: leftGuess! })
+    setPart1Progress(0)
+    setPart1Running(true)
+  }
+
+  // Changing the source changes only Part 2's drawings: it never hides Parts 3 and 4 or restarts the tutor.
   const handlePresetChange = (id: string) => {
     setMode('preset')
     setPresetId(id)
-    if (status === 'complete') setStatus('idle')
+    if (!part2Running) setPart2Progress(1)
   }
-
   const handleCustom = () => {
     setMode('custom')
-    if (status === 'complete') setStatus('idle')
+    if (!part2Running) setPart2Progress(1)
+  }
+  const handlePart2Run = () => {
+    if (part2Running) return
+    setPart2Progress(0)
+    setPart2Running(true)
   }
 
-  const handleRun = () => {
-    if (!hasPrediction || status === 'running') return
-    if (!hasSubmittedPrediction) {
-      setSubmittedTodayPrediction(todayPrediction)
-      setSubmittedLeftPrediction(leftPrediction)
-    }
-    setStatus('running')
-    setProgress(0)
-    setRunCount((count) => count + 1)
+  // Start over: clears the guesses, the runs, the results and the tutor, and returns the page to its first state.
+  const handleStartOver = () => {
+    setTodayGuess(null)
+    setLeftGuess(null)
+    setSubmitted(null)
+    setPart1Done(false)
+    setPart1Running(false)
+    setPart1Progress(0)
+    setExplained(false)
+    setMode('preset')
+    setPresetId(SOURCE_PRESETS[0].id)
+    setCustomRedshift(5)
+    setPart2Running(false)
+    setPart2Progress(1)
   }
 
-  // Matches the rest of the project's precedent: re-opens both questions for editing without resetting
-  // the chosen source.
-  const handleChangePrediction = () => {
-    setSubmittedTodayPrediction(null)
-    setSubmittedLeftPrediction(null)
-    setStatus('idle')
-  }
+  const hasAnythingToClear = todayGuess !== null || leftGuess !== null || locked || part1Done
+  const startOverDisabled = !hasAnythingToClear || part1Running
 
-  useEffect(() => {
-    if (status !== 'running') return
-
-    const startTime = performance.now()
-    let frameId: number
-
-    const animate = (currentTime: number) => {
-      const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
-      setProgress(fraction)
-
-      if (fraction >= 1) {
-        setStatus('complete')
-        onComplete?.()
-        return
-      }
-
-      frameId = requestAnimationFrame(animate)
-    }
-
-    frameId = requestAnimationFrame(animate)
-
-    return () => cancelAnimationFrame(frameId)
-  }, [status, onComplete])
-
-  // At rest the diagram shows the finished result, so a new source visibly changes it at once. During
-  // a run the light travels outward while the source is carried from where it was to where it is now.
-  const displayedProgress = status === 'running' ? progress : 1
-
-  const travelledBillionLy = result.lightTravelYears / 1e9
-  const todayBillionLy = result.distanceTodayLightYears / 1e9
-  const leftBillionLy = result.distanceWhenLightLeftLightYears / 1e9
-
-  const travelledShown = travelledBillionLy * displayedProgress
-  const sourceShown = leftBillionLy + (todayBillionLy - leftBillionLy) * displayedProgress
-
-  const barWidth = (billionLy: number) => Math.max(billionLy * PIXELS_PER_BILLION_LY, MIN_VISIBLE_BAR_PX)
-  const diagramX = (billionLy: number) => EARTH_X + billionLy * PIXELS_PER_BILLION_LY
-
-  const curveOf = (pick: (point: (typeof result.curve)[number]) => number) =>
-    result.curve.map((point) => `${graphX(point.redshift)},${graphY(pick(point) / 1e9)}`).join(' ')
+  const started = part1Running || part1Done
+  const shownProgress1 = part1Done ? 1 : part1Progress
+  const own = runObservableUniverseExperiment(redshift)
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Experiment 8 — How Far Can We See? The Observable Universe</h2>
+      <h2>Cosmology 8: How Far Can We See? The Observable Universe</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> The universe is about 13.5 billion years old in this model, and
-            light travels one light-year in a year. So how far away can the things we see be, and how large is
-            the part of the universe that we can see?
+        <Intro />
+        <ReferencePanel entries={referenceEntries(part1Done)} />
+
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Want to know more?</p>
+          <p style={{ ...smallNote, marginTop: 0 }}>
+            Each link opens in a new tab. They were read on 15 November 2026 through a helper&rsquo;s fetch tool, which returns summaries, so a quotation or figure on this page should be checked against the live page. No plain official page was found that gives the observable universe&rsquo;s radius (about 46 billion light-years) or explains why it is larger than the universe&rsquo;s age in years, and none prints the oldest light&rsquo;s distance today, so this page shows the two published figures it found and says where each comes from. The firework and rubber-band pictures are everyday comparisons and have no source.
           </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> A <strong>light-year</strong> is the distance light travels in one
-            year. The <strong>observable universe</strong> is the part of the universe whose light has had
-            time to reach us. You choose a source of light: a galaxy, or the oldest light of all, the cosmic
-            microwave background from Experiment 3. Its light travels to Earth, and you see three distances
-            for that one source: how far the light travelled, how far away the source is{' '}
-            <strong>today</strong> (at this moment, measured across all of space at once), and how far away it
-            was <strong>when the light left</strong> it. Each source is described by its{' '}
-            <strong>redshift</strong>, as in Experiment 1: how much the light's wavelength was stretched on the
-            way, so a larger redshift means light that left earlier.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>A daily-life picture.</strong> When you watch a firework burst far away, you see it a
-            moment after it happened, because its light needed time to reach you. What you see is the past, and
-            the farther away the firework, the older the light. The night sky works the same way, except that
-            the delays are millions or billions of years.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Why even ask this.</strong> Every picture of the sky is made of light that has had time to
-            reach us, so the limit on what we can see is a limit on what we can ever study. How big is that
-            limit, and is it set only by the universe's age?
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> First, make two predictions about the three distances. Then pick a
-            source and run it.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What to look for.</strong> Compare the three distances for the source you choose, and see
-            how they change as you choose sources whose light left earlier. We reuse the expanding universe
-            from Experiments 1 and 2, the oldest light from Experiment 3, and the dark energy and age of
-            Experiments 5 and 6.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
-            <strong>What we assume.</strong>
-          </p>
-          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              The same simplified universe as Experiments 5 and 6: "flat" (space on the very largest scales is not
-              curved, so straight parallel paths stay parallel), with matter and a constant dark energy (70%), and an illustrative Hubble constant of 70 km/s per megaparsec (a megaparsec, Mpc, is about
-              3.3 million light-years), with the same real caveat: published values range from about 67 to 73,
-              the "Hubble tension." <strong>Radiation</strong> (the light and other very fast particles of the
-              early universe) is left out, as in those experiments. This matters most for the earliest times,
-              and the results will show how much difference it makes.
-            </li>
-            <li>The source stays at a fixed spot in the stretching space, with no motion of its own through space.</li>
-            <li>The light travels along a straight line to Earth, and nothing blocks or bends it.</li>
-            <li>
-              "Distance today" means the distance at the present moment, as if rulers were laid end to end
-              across all of space at once. It is a way of defining a distance in an expanding universe, not
-              something a signal could measure.
-            </li>
-            <li>
-              The cosmic microwave background stands in for "the farthest we can see with light." The true edge
-              of the observable universe is slightly farther, and is not computed here.
-            </li>
-            <li>
-              Real reference values for the oldest light's source and for the edge of the observable universe
-              are given for comparison, not worked out here.
-            </li>
-            <li>
-              Nothing here says how large the whole universe is. The observable universe is only the part we
-              can see. The universe may be much larger, and this experiment does not say.
-            </li>
+          <ul style={listStyle}>
+            {LINKS_BEFORE.map((l) => (
+              <li key={l.href} style={{ marginBottom: '0.5rem' }}>
+                <ExternalLink href={l.href}>{l.label}</ExternalLink>: {l.what}
+              </li>
+            ))}
           </ul>
-        </div>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            A galaxy's light has been travelling toward us for 10 billion years. How far away is that galaxy
-            today?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {todayChoices.map((choice) => (
-              <button
-                key={choice.value}
-                onClick={() => setTodayPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${todayPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            The oldest light we can see left its source when the universe was very young. How far away was that
-            source when the light left it?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {leftChoices.map((choice) => (
-              <button
-                key={choice.value}
-                onClick={() => setLeftPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${leftPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {hasPrediction || hasSubmittedPrediction
-              ? `Your predictions: ${
-                  todayChoices.find((c) => c.value === (todayPrediction ?? submittedTodayPrediction))!.label
-                }; ${leftChoices.find((c) => c.value === (leftPrediction ?? submittedLeftPrediction))!.label}`
-              : 'Answer both questions to continue'}
-          </p>
-        </div>
-
-        {hasSubmittedPrediction && (
-          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Your predictions are locked in above. You can still try as many sources as you like below. Or,
-              change your predictions and start over:
-            </p>
-            <button
-              type="button"
-              onClick={handleChangePrediction}
-              className="secondary-button"
-              style={{
-                padding: '0.5rem 1.25rem',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(124, 58, 237, 0.22)',
-              }}
-            >
-              Change predictions
-            </button>
-          </div>
-        )}
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-            The source whose light travels to Earth (a larger redshift means light that left earlier):
-          </p>
-          {SOURCE_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => handlePresetChange(p.id)}
-              disabled={!hasPrediction || status === 'running'}
-              className={`toggle-button${mode === 'preset' && presetId === p.id ? ' is-selected' : ''}`}
-              style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-            >
-              {p.label} (redshift {p.redshift === CMB_REDSHIFT ? '1089.8' : p.redshift})
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={handleCustom}
-            disabled={!hasPrediction || status === 'running'}
-            className={`toggle-button${mode === 'custom' ? ' is-selected' : ''}`}
-            style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-          >
-            Custom
-          </button>
-          {mode === 'custom' && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <label htmlFor="observable-redshift" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                Source redshift: {redshiftLabel(customRedshift)}
-              </label>
-              <input
-                id="observable-redshift"
-                type="range"
-                min={0}
-                max={SLIDER_STEPS}
-                step={1}
-                value={redshiftToSlider(customRedshift)}
-                disabled={!hasPrediction || status === 'running'}
-                onChange={(event) => {
-                  setCustomRedshift(sliderToRedshift(Number(event.target.value)))
-                  if (status === 'complete') setStatus('idle')
-                }}
-                style={{ width: '100%' }}
-              />
-            </div>
+          {part1Done ? (
+            <>
+              <p style={{ ...smallNote, marginBottom: '0.25rem' }}>One more link, now that you have run it:</p>
+              <ul style={listStyle}>
+                {LINKS_AFTER.map((l) => (
+                  <li key={l.href} style={{ marginBottom: '0.5rem' }}>
+                    <ExternalLink href={l.href}>{l.label}</ExternalLink>: {l.what}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p style={smallNote}>One more link, on how expansion is the stretching of space, appears here after your first Run, because its wording would give away what the tutor asks about.</p>
           )}
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
-            Chosen redshift: {redshiftLabel(redshift)}
-          </p>
         </div>
 
+        {/* ===== Part 1 ===== */}
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          You will make two guesses about distances to two faraway sources. Then you will press Run and watch light travel from each of them to Earth, with two pictures to show the three distances for each. Your guesses are drawn on the pictures in white. Nothing you guess changes the real pictures.
+        </PartHeader>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.75rem' }}>Make your predictions</p>
+          <Question prompt="A galaxy's light has been travelling toward us for 10 billion years. How far away is that galaxy today?" guessText={optionText(todayChoices, shownToday)}>
+            <ChoiceButtons options={todayChoices} selected={shownToday} disabled={locked || part1Running} onSelect={setTodayGuess} />
+          </Question>
+          <Question prompt="The oldest light we can see left its source when the universe was very young. How far away was that source when the light left it?" guessText={optionText(leftChoices, shownLeft)}>
+            <ChoiceButtons options={leftChoices} selected={shownLeft} disabled={locked || part1Running} onSelect={setLeftGuess} />
+          </Question>
+          {locked && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              Your guesses are locked while you try other sources. To change them, press Start over. Start over clears your guesses, the runs, the results and the tutor.
+            </p>
+          )}
+        </div>
+
+        <button type="button" className="action-button" onClick={handleRun} disabled={!hasAllGuesses || part1Running || part1Done} style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}>
+          {part1Running ? 'Running...' : part1Done ? 'Run (done)' : 'Run'}
+        </button>
         <button
           type="button"
-          onClick={handleRun}
-          disabled={!hasPrediction || status === 'running'}
-          className="action-button"
-          style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{ marginLeft: '0.75rem', padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: startOverDisabled ? 'not-allowed' : 'pointer', opacity: startOverDisabled ? 0.5 : 1 }}
         >
-          {status === 'running' ? 'Running...' : 'Run'}
+          Start over
         </button>
+        {!hasAllGuesses && !locked && <p style={smallNote}>Answer both questions above to run.</p>}
 
-        {!hasPrediction && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Answer the predictions above to try the controls.
-          </p>
-        )}
-
-        {isActive && (
-          <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Redshift: <strong>{redshiftLabel(redshift)}</strong> &nbsp;|&nbsp; Every distance has grown by a
-            factor of {result.stretchingFactor.toFixed(2)} since the light left
-            <br />
-            Light travelled: {distanceLabel(result.lightTravelYears)}
-            <br />
-            Source today: {distanceLabel(result.distanceTodayLightYears)}
-            <br />
-            Source when the light left: {distanceLabel(result.distanceWhenLightLeftLightYears)}
-          </p>
-        )}
-
-        {hasSubmittedPrediction && (
+        {started && (
           <>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
-          <svg
-            width={DIAGRAM_WIDTH}
-            height={DIAGRAM_HEIGHT}
-            viewBox={`0 0 ${DIAGRAM_WIDTH} ${DIAGRAM_HEIGHT}`}
-            style={{
-              display: 'block',
-              border: '1px solid var(--border-color, #ccc)',
-              borderRadius: '8px',
-              backgroundColor: '#0b1020',
-              maxWidth: '100%',
-              height: 'auto',
-            }}
-          >
-            <text x={DIAGRAM_WIDTH / 2} y={20} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-              Three distances for the same source (drawn to a true scale)
-            </text>
-
-            {/* Earth, and the line every distance is measured from */}
-            <circle cx={EARTH_X} cy={52} r={9} fill="#38bdf8" />
-            <text x={EARTH_X + 14} y={56} fill="#e2e8f0" fontSize="11" fontWeight="600">
-              Earth
-            </text>
-            <line x1={EARTH_X} y1={64} x2={EARTH_X} y2={AXIS_Y} stroke="#64748b" strokeDasharray="3 4" />
-
-            {/* Row 1: how far the light travelled */}
-            <text x={EARTH_X + 6} y={ROW_TRAVEL_Y - 8} fill={TRAVEL_COLOR} fontSize="11" fontWeight="600">
-              How far the light travelled: {distanceLabel(result.lightTravelYears)}
-            </text>
-            <rect x={EARTH_X} y={ROW_TRAVEL_Y} width={barWidth(travelledShown)} height={BAR_HEIGHT} fill={TRAVEL_COLOR} opacity={0.85} />
-
-            {/* Row 2: how far away the source is (today, at the end of the run) */}
-            <text x={EARTH_X + 6} y={ROW_TODAY_Y - 8} fill={TODAY_COLOR} fontSize="11" fontWeight="600">
-              How far away the source is today: {distanceLabel(result.distanceTodayLightYears)}
-            </text>
-            <rect x={EARTH_X} y={ROW_TODAY_Y} width={barWidth(sourceShown)} height={BAR_HEIGHT} fill={TODAY_COLOR} opacity={0.85} />
-            <circle cx={diagramX(sourceShown)} cy={ROW_TODAY_Y + BAR_HEIGHT / 2} r={7} fill="#fde68a" stroke="#0b1020" strokeWidth={2} />
-            <text
-              x={diagramX(sourceShown) + 12}
-              y={ROW_TODAY_Y + BAR_HEIGHT / 2 + 4}
-              fill="#fde68a"
-              fontSize="10"
-              fontWeight="600"
-            >
-              The source
-            </text>
-
-            {/* Row 3: how far away it was when the light left */}
-            <text x={EARTH_X + 6} y={ROW_LEFT_Y - 8} fill={LEFT_COLOR} fontSize="11" fontWeight="600">
-              How far away it was when the light left: {distanceLabel(result.distanceWhenLightLeftLightYears)}
-            </text>
-            <rect x={EARTH_X} y={ROW_LEFT_Y} width={barWidth(leftBillionLy)} height={BAR_HEIGHT} fill={LEFT_COLOR} opacity={0.9} />
-
-            {/* The shared distance axis */}
-            <line x1={EARTH_X} y1={AXIS_Y} x2={AXIS_RIGHT} y2={AXIS_Y} stroke="#64748b" />
-            {axisTicks.map((t) => (
-              <g key={t}>
-                <line x1={diagramX(t)} y1={AXIS_Y} x2={diagramX(t)} y2={AXIS_Y + 4} stroke="#64748b" />
-                <text x={diagramX(t)} y={AXIS_Y + 16} fill="#cbd5e1" fontSize="10" textAnchor="middle">
-                  {t}
-                </text>
-              </g>
-            ))}
-            <text x={(EARTH_X + AXIS_RIGHT) / 2} y={DIAGRAM_HEIGHT - 10} fill="#cbd5e1" fontSize="11" textAnchor="middle">
-              Distance from Earth (billions of light-years)
-            </text>
-          </svg>
-
-          <svg
-            width={GRAPH_WIDTH}
-            height={GRAPH_HEIGHT}
-            viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-            style={{
-              display: 'block',
-              border: '1px solid var(--border-color, #ccc)',
-              borderRadius: '8px',
-              backgroundColor: '#0b1020',
-              maxWidth: '100%',
-              height: 'auto',
-            }}
-          >
-            <text x={GRAPH_WIDTH / 2} y={18} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-              The three distances for every source
-            </text>
-            <line x1={GRAPH_LEFT} y1={GRAPH_TOP} x2={GRAPH_LEFT} y2={GRAPH_BOTTOM} stroke="#64748b" />
-            <line x1={GRAPH_LEFT} y1={GRAPH_BOTTOM} x2={GRAPH_RIGHT} y2={GRAPH_BOTTOM} stroke="#64748b" />
-            {graphTicksX.map((z) => (
-              <g key={z}>
-                <line x1={graphX(z)} y1={GRAPH_BOTTOM} x2={graphX(z)} y2={GRAPH_BOTTOM + 4} stroke="#64748b" />
-                <text x={graphX(z)} y={GRAPH_BOTTOM + 16} fill="#cbd5e1" fontSize="10" textAnchor="middle">
-                  {z}
-                </text>
-              </g>
-            ))}
-            {graphTicksY.map((d) => (
-              <g key={d}>
-                <line x1={GRAPH_LEFT - 4} y1={graphY(d)} x2={GRAPH_LEFT} y2={graphY(d)} stroke="#64748b" />
-                <text x={GRAPH_LEFT - 8} y={graphY(d) + 4} fill="#cbd5e1" fontSize="10" textAnchor="end">
-                  {d}
-                </text>
-              </g>
-            ))}
-            <text x={(GRAPH_LEFT + GRAPH_RIGHT) / 2} y={GRAPH_HEIGHT - 8} fill="#cbd5e1" fontSize="11" textAnchor="middle">
-              Source redshift (each tick is ten times the one before)
-            </text>
-            <text
-              x={14}
-              y={(GRAPH_TOP + GRAPH_BOTTOM) / 2}
-              fill="#cbd5e1"
-              fontSize="11"
-              textAnchor="middle"
-              transform={`rotate(-90 14 ${(GRAPH_TOP + GRAPH_BOTTOM) / 2})`}
-            >
-              Distance (billions of light-years)
-            </text>
-
-            <polyline points={curveOf((p) => p.distanceTodayLightYears)} fill="none" stroke={TODAY_COLOR} strokeWidth={2.5} />
-            <polyline points={curveOf((p) => p.lightTravelYears)} fill="none" stroke={TRAVEL_COLOR} strokeWidth={2.5} />
-            <polyline points={curveOf((p) => p.distanceWhenLightLeftLightYears)} fill="none" stroke={LEFT_COLOR} strokeWidth={2.5} />
-
-            <text x={GRAPH_RIGHT} y={graphY(result.curve[result.curve.length - 1].distanceTodayLightYears / 1e9) - 8} fill={TODAY_COLOR} fontSize="10" fontWeight="600" textAnchor="end">
-              Source today
-            </text>
-            <text x={GRAPH_RIGHT} y={graphY(result.curve[result.curve.length - 1].lightTravelYears / 1e9) - 8} fill={TRAVEL_COLOR} fontSize="10" fontWeight="600" textAnchor="end">
-              Light travelled
-            </text>
-            <text x={graphX(60)} y={graphY(8)} fill={LEFT_COLOR} fontSize="10" fontWeight="600" textAnchor="middle">
-              When the light left
-            </text>
-
-            {/* The chosen source */}
-            <line x1={graphX(redshift)} y1={GRAPH_TOP} x2={graphX(redshift)} y2={GRAPH_BOTTOM} stroke="#e2e8f0" strokeDasharray="3 4" opacity={0.7} />
-            <circle cx={graphX(redshift)} cy={graphY(todayBillionLy)} r={5} fill={TODAY_COLOR} stroke="#0b1020" strokeWidth={2} />
-            <circle cx={graphX(redshift)} cy={graphY(travelledBillionLy)} r={5} fill={TRAVEL_COLOR} stroke="#0b1020" strokeWidth={2} />
-            <circle cx={graphX(redshift)} cy={graphY(leftBillionLy)} r={5} fill={LEFT_COLOR} stroke="#0b1020" strokeWidth={2} />
-            <text
-              x={graphX(redshift)}
-              y={GRAPH_TOP - 8}
-              fill="#e2e8f0"
-              fontSize="10"
-              fontWeight="600"
-              textAnchor={graphX(redshift) > GRAPH_RIGHT - 60 ? 'end' : graphX(redshift) < GRAPH_LEFT + 40 ? 'start' : 'middle'}
-            >
-              Your chosen source
-            </text>
-          </svg>
-        </div>
-
-        <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>How to read these diagrams.</strong> Long ago, a distant galaxy (or the oldest light of
-            all) sent light toward Earth. That light has been travelling ever since, and we have only just
-            received it. The two pictures above show <strong>three different distances</strong> for that one
-            source. Your job is to see how much those three distances differ, and how the differences change
-            when you choose a source whose light left earlier.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>Two units first.</strong> A <strong>light-year</strong> is the distance light travels in
-            one year (about 9.5 million million kilometers). The distances here are so large that they are
-            given in <strong>billions of light-years</strong>; one billion is a thousand million. And the{' '}
-            <strong>redshift</strong>, which you choose, is a number that tells you how long ago the light
-            left. A bigger redshift means older light. For example, light with a redshift of 0.5 left about{' '}
-            {(lightTravelYears(0.5, BEST_FIT_DARK_ENERGY_FRACTION) / 1e9).toFixed(1)} billion years ago, a
-            redshift of 2 about {(lightTravelYears(2, BEST_FIT_DARK_ENERGY_FRACTION) / 1e9).toFixed(1)}, a
-            redshift of 10 about {(lightTravelYears(10, BEST_FIT_DARK_ENERGY_FRACTION) / 1e9).toFixed(1)}, and
-            the oldest light we can see (redshift 1089.8) about{' '}
-            {(lightTravelYears(CMB_REDSHIFT, BEST_FIT_DARK_ENERGY_FRACTION) / 1e9).toFixed(1)} billion years
-            ago.
-          </p>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 1, the three distances, drawn to a true scale.</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>Earth</strong> is the blue dot at the top left. Every bar starts at the dashed line
-              below it and reaches to the right. The axis along the bottom tells you how far each bar
-              reaches, in billions of light-years. Each tick is 10 billion more. The scale is true, so a bar
-              twice as long really means twice the distance.
-            </li>
-            <li>
-              The <strong style={{ color: TRAVEL_COLOR }}>blue bar</strong> is{' '}
-              <strong>how far the light travelled</strong>. Light moves at a fixed speed, so this is simply
-              how long the light has been on its way, multiplied by that speed. For example, light that has
-              been travelling for 5 billion years has covered 5 billion light-years. The bar is drawn
-              starting from Earth only so that its length can be compared with the other two. The light
-              itself travelled the other way, from the source toward Earth.
-            </li>
-            <li>
-              The <strong style={{ color: TODAY_COLOR }}>gold bar</strong> is{' '}
-              <strong>how far away the source is today</strong>. Picture freezing everything at this exact
-              moment and stretching a very long measuring tape from Earth to the source. The gold bar is the
-              length of that tape. The pale gold dot, labeled "The source," sits at its end.
-            </li>
-            <li>
-              The <strong style={{ color: LEFT_COLOR }}>green bar</strong> is{' '}
-              <strong>how far away the source was at the moment it let the light go</strong>. It is the
-              length the same measuring tape would have had back then. For the oldest sources this bar is so
-              short at this scale that you can hardly see it, so read its label to get the number.
-            </li>
-            <li>
-              When you press <strong>Run</strong>, watch for about 8 seconds. The blue bar grows as the light
-              travels, and the gold bar and the dot grow as the source goes from where it was when the light
-              left to where it is today. The motion is drawn to help you notice the change. It is not a movie
-              of real history, but the lengths at the end are exact.
-            </li>
-            <li>
-              <strong>Try it with the source on the screen now</strong> (redshift {redshiftLabel(redshift)}):
-              the light travelled {distanceLabel(result.lightTravelYears)}, the source is{' '}
-              {distanceLabel(result.distanceTodayLightYears)} away today, and it was{' '}
-              {distanceLabel(result.distanceWhenLightLeftLightYears)} away when the light left. Compare the
-              three bar lengths with those numbers. What do you notice about which bar is longest and which
-              is shortest?
-            </li>
-          </ul>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 2, the graph: the same three distances for every source at once.</strong>
-          </p>
-          <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
-            <li>
-              Picture 1 shows one source. The graph shows <strong>every</strong> source, so you can see how
-              the three distances change as the light left earlier and earlier. Each point on a curve is one
-              possible source.
-            </li>
-            <li>
-              Across the bottom is the redshift (the older the light, the farther to the right). The ticks
-              are 0.1, 1, 10, 100 and 1000, so each tick is <strong>ten times</strong> the one before. That
-              is how a very nearby source and the oldest light can share one graph, rather like a ruler
-              where each step multiplies instead of adds. Up the side is distance, in billions of
-              light-years.
-            </li>
-            <li>
-              The three curves are colored to match the bars in Picture 1:{' '}
-              <strong style={{ color: TRAVEL_COLOR }}>blue</strong> for how far the light travelled,{' '}
-              <strong style={{ color: TODAY_COLOR }}>gold</strong> for how far away the source is today, and{' '}
-              <strong style={{ color: LEFT_COLOR }}>green</strong> for how far away it was when the light
-              left.
-            </li>
-            <li>
-              The dashed vertical line and the three dots mark the source you chose. How high each dot sits
-              is the length of the matching bar in Picture 1. Choose a different source and the dots slide
-              along the curves. The graph does not move while the playback runs, because it shows the
-              result for all sources at once.
-            </li>
-            <li>
-              Follow each curve from left to right, and ask: where are the three curves close together, and
-              where do they spread apart? Which curve levels off? Which keeps climbing? Which one rises and
-              then falls?
-            </li>
-          </ul>
-          <p style={{ marginTop: '0.6rem', marginBottom: 0 }}>
-            The numbers in the live readout are exact. The colors and the moving source are drawn to help you
-            compare.
-          </p>
-        </div>
-
-        {status === 'complete' && (
-          <div
-            style={{
-              marginTop: '1.5rem',
-              paddingTop: '1rem',
-              borderTop: '1px solid var(--border-color, #ccc)',
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Results</h3>
-            <p>
-              You chose a source with a redshift of <strong>{redshiftLabel(redshift)}</strong>. For that one
-              source:
-            </p>
-            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                <tbody>
-                  {[
-                    ['How far the light travelled', distanceLabel(result.lightTravelYears)],
-                    ['How far away the source is today', distanceLabel(result.distanceTodayLightYears)],
-                    ['How far away it was when the light left', distanceLabel(result.distanceWhenLightLeftLightYears)],
-                  ].map(([label, value]) => (
-                    <tr key={label}>
-                      <td style={{ padding: '0.25rem 1rem 0.25rem 0' }}>{label}</td>
-                      <td style={{ textAlign: 'right', padding: '0.25rem 0', whiteSpace: 'nowrap' }}>{value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p style={{ marginBottom: '0.5rem' }}>
-              The source is <strong>{result.todayOverTravelled.toFixed(2)} times</strong> as far away today as
-              the distance its light travelled.
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Checking your first prediction:</strong> asked how far away a galaxy is today if its
-              light has travelled for 10 billion years, you answered "
-              {todayChoices.find((c) => c.value === submittedTodayPrediction)!.label}". For every source, the
-              distance today is more than the distance the light travelled. For example, the light from the
-              redshift 2 galaxy travelled {distanceLabel(tenBillionYearExample.lightTravelYears)}, and that
-              galaxy is {distanceLabel(tenBillionYearExample.distanceTodayLightYears)} away today —{' '}
-              {submittedTodayPrediction === ACTUAL_TODAY
-                ? 'so your prediction was right.'
-                : 'so your prediction was off this time.'}
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Checking your second prediction:</strong> asked how far away the source of the oldest
-              light was when the light left it, you answered "
-              {leftChoices.find((c) => c.value === submittedLeftPrediction)!.label}". The model gives{' '}
-              {distanceLabel(oldestLight.distanceWhenLightLeftLightYears)}, which is far closer than{' '}
-              {distanceLabel(oldestLight.lightTravelYears)} —{' '}
-              {submittedLeftPrediction === ACTUAL_LEFT
-                ? 'so your prediction was right.'
-                : 'so your prediction was off this time.'}
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Why the distances differ.</strong> While the light was travelling, the space it crossed
-              kept stretching, and every distance between faraway objects grew with it. A comparison: an ant
-              starts at one end of a rubber band and walks toward the other end at a steady pace, while the
-              band is stretched. When the ant arrives, the two ends of the band are much farther apart than
-              the total length of the ant's steps. The light is the ant, your source is the end of the band the ant
-              started from, and Earth is the end it walks toward. Like any comparison, it is not exact, but it shows the idea.
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>A simple calculation.</strong> Every distance has grown by the same factor as the
-              universe's size, which is 1 + the redshift. For your source that factor is{' '}
-              {result.stretchingFactor.toFixed(2)}, so {distanceLabel(result.distanceWhenLightLeftLightYears)} ×{' '}
-              {result.stretchingFactor.toFixed(2)} ≈ {distanceLabel(result.distanceTodayLightYears)}. For the
-              oldest light the factor is {oldestLight.stretchingFactor.toFixed(1)}, so{' '}
-              {distanceLabel(oldestLight.distanceWhenLightLeftLightYears)} ×{' '}
-              {oldestLight.stretchingFactor.toFixed(1)} ≈ {distanceLabel(oldestLight.distanceTodayLightYears)}.
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Nothing travelled faster than light.</strong> The light always moved at the speed of
-              light through the space around it. The extra distance comes from the space between us and the
-              source stretching, not from anything moving faster than light.
-            </p>
-            <div
-              style={{
-                margin: '0.75rem 0',
-                padding: '0.75rem 1rem',
-                border: '2px solid #f59e0b',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(245, 158, 11, 0.12)',
-              }}
-            >
-              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                <strong>How close is this model to the real values?</strong> For the oldest light, this model
-                gives a source {distanceLabel(oldestLight.distanceTodayLightYears)} away today. Real
-                astronomers find about 45 to 46 billion light-years for it, and
-                about {(REAL_OBSERVABLE_UNIVERSE_RADIUS_LIGHT_YEARS / 1e9).toFixed(1)} billion light-years for the edge of the
-                observable universe, the farthest from which any signal could have reached us by now, which is
-                a little farther still. The model is about {modelBelowRealPercent.toFixed(1)}% below the real
-                figure for the oldest light.
-              </p>
-              <p style={{ marginTop: 0, marginBottom: 0 }}>
-                The cause is the one stated at the start: this model leaves out radiation, which matters most
-                at the earliest times. The same cause makes this model put the oldest light's departure at
-                about {(Math.round(modelEmissionYears / 1e3) * 1e3).toLocaleString('en-US')} years after the Big
-                Bang, where Experiment 3 gives about{' '}
-                {RECOMBINATION_YEARS_AFTER_BIG_BANG.toLocaleString('en-US')}. The real values are given for
-                comparison and are not worked out here.
-              </p>
-            </div>
-            <p style={{ marginBottom: '0.25rem' }}>
-              <strong>What this model simplifies.</strong>
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.5rem' }}>
-              <li>
-                It is the same simplified universe as Experiments 5 and 6: flat, with matter and a constant
-                dark energy, an illustrative Hubble constant of 70, and no radiation.
-              </li>
-              <li>
-                The source has no motion of its own, the light travels in a straight line, and "distance
-                today" is a way of defining a distance across all of space at once.
-              </li>
-              <li>
-                The cosmic microwave background stands in for the farthest we can see with light, and the
-                observable universe is only the part we can see, not the whole universe.
-              </li>
-            </ul>
-          </div>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 1: the three distances for Galaxy A and Source B</p>
+              <DistancePicture progress={shownProgress1} finished={part1Done} guesses={part1Done ? submitted : null} />
+              <Part1DistanceCaption started={started} arrived={part1Done} />
+            </Block>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 2: the graph, the three distances for every source</p>
+              <DistanceGraph
+                marks={[
+                  { redshift: GALAXY_A_REDSHIFT, label: 'Galaxy A', color: '#e2e8f0' },
+                  { redshift: CMB_REDSHIFT, label: 'Source B', color: '#e2e8f0' },
+                ]}
+              />
+              <Part1GraphCaption arrived={part1Done} />
+            </Block>
+          </>
         )}
+
+        {part1Done && (
+          <Block>
+            <WhereFrom>
+              <strong>Calculated here:</strong> every bar, curve and distance, for a flat universe with 70 percent dark energy and a Hubble constant of 70, without radiation (the model of Cosmology 1, 2, 5 and 6), by the formulas in the Words and formulas box. <strong>Measured by others, given here, not worked out:</strong> the redshift of the oldest light, 1089.8, the universe&rsquo;s age of {(PLANCK_AGE_YEARS / 1e9).toFixed(3)} billion years (Planck 2018) and the real distances used for comparison in the results (about 45.2 to 45.7 billion light-years for the oldest light&rsquo;s source and about 46.1 to 46.5 for the edge of the observable universe; Table 1 says where each figure comes from). <strong>Your guess:</strong> the white marks only. Nothing on this page is imagined.
+            </WhereFrom>
+          </Block>
+        )}
+        {!started && <p style={smallNote}>After you press Run, the blue, gold and green bars for Galaxy A and Source B are drawn, with a graph and a caption under each picture. When the run ends your white guess marks and a &ldquo;Where the real picture comes from&rdquo; note appear, and Parts 2, 3 and 4 appear below.</p>}
+        {started && !part1Done && <p style={smallNote}>Your white guess marks and Parts 2, 3 and 4 appear when the run ends.</p>}
+
+        {part1Done && (
+          <>
+            {/* ===== Part 2 ===== */}
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              Now you choose the source. Press Run and its three distances are drawn, in the same colours as before, beside Part 1&rsquo;s. Your guesses do not change anything in this part; your source does.
+            </PartHeader>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>The source whose light travels to Earth (a larger redshift means light that left earlier):</p>
+              {SOURCE_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handlePresetChange(p.id)}
+                  className={`toggle-button${mode === 'preset' && presetId === p.id ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                >
+                  {p.label} (redshift {p.redshift === CMB_REDSHIFT ? '1089.8' : p.redshift})
+                </button>
+              ))}
+              <button type="button" onClick={handleCustom} className={`toggle-button${mode === 'custom' ? ' is-selected' : ''}`} style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}>
+                Custom
+              </button>
+              {mode === 'custom' && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label htmlFor="observable-redshift" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                    Source redshift: {redshiftLabel(customRedshift)}
+                  </label>
+                  <input
+                    id="observable-redshift"
+                    type="range"
+                    min={0}
+                    max={SLIDER_STEPS}
+                    step={1}
+                    value={redshiftToSlider(customRedshift)}
+                    onChange={(event) => {
+                      setCustomRedshift(sliderToRedshift(Number(event.target.value)))
+                      if (!part2Running) setPart2Progress(1)
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              )}
+              <div style={{ marginTop: '0.75rem' }}>
+                <button type="button" className="action-button" onClick={handlePart2Run} disabled={part2Running} style={{ padding: '0.5rem 1.5rem' }}>
+                  {part2Running ? 'Running...' : 'Run: draw the bars for your source'}
+                </button>
+              </div>
+              <p style={smallNote}>
+                Your guesses are locked while you try other sources. Your guesses do not change the drawings or tables, but this source does: it changes Picture 3, the pink line on the graph and the pink row in Part 3. Redshift 2 and the oldest light are also in Part 1, so choose another to see something new. These sources are <strong>trial values</strong>: they show what the model gives for a source with that redshift, and they do not say that a real galaxy is like that.
+              </p>
+              <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem', marginBottom: 0 }}>
+                Chosen redshift: <strong style={{ color: YOUR_SOURCE_COLOR }}>{redshiftLabel(redshift)}</strong> &nbsp;|&nbsp; Every distance has grown by a factor of {own.stretchingFactor.toFixed(2)} since the light left
+                <br />
+                Light travelled: {distanceLabel(own.lightTravelYears)}
+                <br />
+                Source today: {distanceLabel(own.distanceTodayLightYears)}
+                <br />
+                Source when the light left: {distanceLabel(own.distanceWhenLightLeftLightYears)}
+              </p>
+            </div>
+
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 3: the three distances for your source</p>
+              <OwnSourcePicture redshift={redshift} progress={part2Progress} />
+            </Block>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>The graph again, with your source marked in pink</p>
+              <DistanceGraph marks={[{ redshift, label: 'Your source', color: YOUR_SOURCE_COLOR }]} />
+              <Part2Caption redshift={redshift} />
+            </Block>
+            <Block>
+              <WhereFrom>
+                <strong>Calculated here</strong> from the source you chose: the bars, the pink line and dots and the numbers in the pink row of Part 3. The Part 1 pictures are the same as before. <strong>Your choice:</strong> the source (a trial value). Nothing here is imagined.
+              </WhereFrom>
+            </Block>
+
+            {/* ===== Part 3 ===== */}
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              These are the results of your first run, with what each table means. The numbers come from the physics and do not change with your guesses; only the pink row follows your source in Part 2.
+            </PartHeader>
+            <ObservableUniverseResults guesses={submitted} redshift={redshift} />
+
+            {/* ===== Part 4 ===== */}
+            <PartHeader color="#0066cc" title="Part 4: The tutor">
+              The tutor asks you three questions about what you saw, then explains it and goes through your two guesses.
+            </PartHeader>
+            {submitted && (
+              <ObservableUniverseTutor
+                predictedToday={submitted.today}
+                predictedLeft={submitted.left}
+                onExplained={() => {
+                  setExplained(true)
+                  onTutorComplete?.()
+                }}
+              />
+            )}
+            {explained && <p style={{ ...smallNote, marginTop: '1rem' }}>You have reached the tutor&rsquo;s explanation. You can still try another source in Part 2; the tutor does not restart.</p>}
           </>
         )}
       </div>
-
-      {status === 'complete' && submittedTodayPrediction && submittedLeftPrediction && (
-        <ObservableUniverseTutor
-          key={runCount}
-          predictedToday={submittedTodayPrediction}
-          predictedLeft={submittedLeftPrediction}
-          onExplained={onTutorComplete}
-        />
-      )}
     </div>
   )
 }
