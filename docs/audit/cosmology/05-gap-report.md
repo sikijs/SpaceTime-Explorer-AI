@@ -52,3 +52,94 @@ DarkEnergyExperiment.tsx, DarkEnergyTutor.tsx, src/physics/darkEnergyExperiment.
 
 ## Not checked
 Browser rendering; the tutor's explanation text; the table's exact markup; whether the amber line appears only on Run (read from the caption, not the code).
+
+---
+
+# Re-read, 2026-11-15 (against Rule E and the 2026-11-07 rules)
+Status: read-only. Nothing in the app, the specification or the tests was changed. The numbers below were worked by hand with node (nothing left in the repo) and are not yet in a test.
+
+## What the module returns (hand-checked)
+Luminosity distance in Mpc and brightness compared with matter-only, at redshifts 0.2, 0.5, 0.8 and 1, and today's deceleration number q0:
+
+| Dark energy share | z = 0.2 | z = 0.5 | z = 0.8 | z = 1 | q0 |
+|---|---|---|---|---|---|
+| 0 (matter only) | 896 / 1.000 | 2358 / 1.000 | 3926 / 1.000 | 5018 / 1.000 | +0.50 |
+| 0.3 | 928 / 0.931 | 2522 / 0.874 | 4277 / 0.842 | 5512 / 0.829 | +0.05 |
+| 0.5 | 953 / 0.884 | 2660 / 0.786 | 4591 / 0.731 | 5967 / 0.707 | -0.25 |
+| 0.7 (best fit) | 980 / 0.835 | 2833 / 0.693 | 5018 / 0.612 | 6608 / 0.577 | -0.55 |
+| 0.9 | 1011 / 0.785 | 3063 / 0.593 | 5665 / 0.480 | 7655 / 0.430 | -0.85 |
+
+1. **The best fit makes a supernova at redshift 0.5 look 69 percent as bright as matter-only predicts** (0.693), which is 0.40 magnitudes dimmer. This matches the specification's table (0.83, 0.69, 0.61).
+2. **The expansion switches from slowing to speeding up at a share of exactly 1/3** (q0 = 0.5 - 1.5 x share = 0 at 0.333). The page says "about one third"; the module gives exactly 1/3 for this model.
+3. **The "within 5 percent at every redshift" test passes for shares from about 0.66 to 0.74**, not only at 0.70. The Results sentence "this universe would look like the one we observe" is true over that band. The 5 percent is a code value, not a published one.
+4. **The line "Today the expansion is speeding up" stays true for every share above 1/3**, so it is true at the best fit that the page starts on.
+5. **At redshift 0.01 the best fit and matter-only differ by 0.5 percent in distance** (1.0052), so "essentially the same" in the Results is right.
+
+## Corrections to the 2026-11-02 report
+- **A10 / Results verdicts:** the Results gives "so your prediction was right / off this time" for both guesses (`DarkEnergyExperiment.tsx:810-812, :821-823`), before the tutor. CLAUDE.md §14 leaves marking to the tutor.
+- **C7 is Not met in more places than the report said.** Besides the caption (`:660-661` "If they look dimmer ... that is how we can tell the expansion has been speeding up", `:682-683` "A disk smaller than its ring means ... dimmer"), the **introduction** gives Prediction 2's answer before the guess: "A daily-life picture" ends "If they look dimmer than you expected, the car is farther away" (`:224-225`) and "Why even ask this" says a dimmer supernova is a test of the expansion (`:228-230`). Both lead straight to "dimmer".
+- **Prediction 1 is also hinted.** The introduction calls dark energy "energy that would push space to expand faster **instead of slower**" (`:205-206`), which tells the learner that the normal behaviour is slowing. This is a §12 risk for Prediction 1 that the 2026-11-02 report did not list.
+- **The amber line, the disks and the best-fit line are not hidden by the amount control, but the share defaults to "best fit" (`:88`) and the buttons are disabled until both guesses are made (`:355`).** The first Run therefore shows the best-fit result (disks inside their rings, amber on green). That is Part 1's real result and is fine after the guesses are made, but see question 1.
+- **The dashed rings and legend appear only after the guesses are locked (`:480`, `:512`), and the graph only after that (`:534`).** The caption, however, is shown from the moment of locking, before Run, and already describes the amber line "when you run" and the disks. See Rule A4.
+
+## Rule E: the page in four Parts
+| Item | Result | Evidence | Gap and what would be needed |
+|---|---|---|---|
+| E1 | Not met | One card holds the introduction, both guesses, the share buttons, Run, the readout, both pictures, the caption and Results (`:190-855`); the tutor is a second card | Part 1 (guesses, Run, pictures), Part 2 (the share control and the drawing that follows it), Part 3 (results), Part 4 (tutor) |
+| E2, E4 | Not met | No Part headings or leads | Four leads, drafted for approval; Part 1's lead gives no answers (§12) |
+| E3 | Not met | No links list, no words box | See "Links and Words" |
+
+## Parts 2 to 4 appear after the first Run
+**Partly met, with the same defect as Cosmology 1, 2 and 4.** Results and tutor appear when the status is `complete` (`:750`, `:857`). **Changing the share after a run calls `setStatus('idle')` (`:111`, `:395`), which hides the Results and unmounts the tutor, and Run remounts the tutor from its first question (`key={runCount}`, `:859`).** Suggested fix: after the first Run, Parts 2 to 4 stay; a changed share changes only Part 2's drawing and the "your universe" column until its own Run; the tutor is not remounted.
+
+## "Start over, not Change prediction" (2026-11-07 rule)
+**Not met.** "Change predictions" appears only after the guesses are locked (`:327-347`) and re-opens both questions without clearing the share or the results (`handleChangePrediction`, `:127`). It becomes an always-visible "Start over", greyed out until a guess is chosen or a run exists and while a run plays, which clears the guesses, runs, results and tutor progress. Replaced, and said so in the specification.
+
+## Predictions and where their answers live (A5, sharpened)
+- **Prediction 1 (in a matter-only universe, does gravity slow, speed up or not change the expansion):** there is no picture of this. The module has `decelerationParameter` (q0). Suggested: add a **second panel to the graph's picture**, on its own scale, titled "Is the expansion slowing or speeding up today?", plotting q0 against the dark energy share (0 to 0.9). It crosses zero at 1/3. A white **marker** at share 0: an up arrow for "slow it down" (q0 above zero), a down arrow for "speed it up" (below zero), a dot on the zero line for "not change it". **Marker only** (three answers carry no size); the caption says so. Drawn after Run.
+- **Prediction 2 (would a faraway supernova look brighter, the same or dimmer):** the answer lives in both pictures: the disk against its ring at redshift 0.5, and the amber line against the blue line at 0.5 on the graph. Suggested: a white guess ring around the redshift-0.5 supernova (larger than the dashed ring for "brighter", the same size for "the same", smaller for "dimmer") and a matching white marker on the graph at 0.5 (above, on or below the blue line), each with a YOUR GUESS box. **Marker only** (the sizes are fixed, not the learner's number); the caption says so.
+- **Where the real picture comes from.** *Measured:* the best-fit share of about 70 percent is a rounded value astronomers fitted to real supernova data (source not read here). *Calculated here:* the distances and brightnesses, the q0 curve, the blue, amber and green lines (the green line is the module's curve at 70 percent, not data points). *Imagined for the question:* the "all supernovae exactly equally bright" assumption, the three supernova positions and the share chosen in Part 2. The Hubble constant 70 is the project's illustrative value.
+
+## Links and Words (2026-11-07 rules)
+- **Words and formulas box (new).** Entries: supernova, Type Ia supernova, white dwarf, standard candle, brightness, redshift, Mpc, light-year, expansion, matter, dark energy, flat universe, Hubble constant, deceleration (q0), luminosity distance, magnitude (if used). Formulas with worked examples from the page's own numbers: brightness falls as 1 / distance squared (a supernova at 2358 Mpc matter-only and 2833 Mpc at 70 percent: (2358 / 2833)^2 = 0.693); q0 = 0.5 - 1.5 x share (at 70 percent: 0.5 - 1.05 = -0.55). **Held back until after the Run (§12):** that distant supernovae are dimmer in the best fit and that matter slows the expansion.
+- **"Want to know more?" links (new).** None exists. Candidates to search and read (none read): a plain NASA or ESA page on dark energy; a plain page on Type Ia supernovae and standard candles; Riess et al. 1998 (Astronomical Journal 116, 1009) and Perlmutter et al. 1999 (Astrophysical Journal 517, 565); the 2011 Nobel Prize page; a source for "about 70, 25 and 5 percent"; the Planck 2018 or DESI value for the dark energy share; Hubble tension page (already used by earlier experiments). Per §29 rule 3(c), link only what is read and record any gap.
+
+## Wording and claims to check (new and restated)
+- **Unsourced and unchanged since the first build:** "shines as brightly as billions of Suns" and the white dwarf description (`:209-216`); "1998 and 1999 two independent teams, 2011 Nobel Prize" (`:842-844`, tutor point 3); "about 70% dark energy, dark matter about 25%, ordinary matter about 5%" (tutor point 4); "a slightly brighter one tends to fade more slowly" (`:217-219`).
+- **"Best fit ... about 70%" (rounded)** (`:271`, `:368`). A published value (Planck 2018 gives about 68.5 percent) is **not read**, so the page cannot say how the rounded 70 compares with a published number. Owner to rule (question 7).
+- **"Hypothetical energy"** (`:205`) against "Astronomers estimate it makes up about 70%" (tutor): the page calls dark energy hypothetical and then gives its share. Current status (§29 rule 1, "up to date") needs a date and, for "constant", a pointer to Cosmic Horizons' dark-energy experiment (recent DESI results hint it may change with time). Owner to rule (question 8).
+- **Heading "Experiment 5 — Dark Energy"** (`:188`) has no group name; it would read **Cosmology 5: Dark Energy** (the pattern of Cosmology 1 to 4).
+- **Cross-references say "Hubble's Law (Experiment 1)", "the Big Bang experiment (Experiment 2)", "Gravity and Curved Spacetime Experiment 4", "dark matter (Experiment 4)"** (`:197-198`, `:249`, tutor point 5). They would be checked against the sidebar names.
+- **"Dimmer" is stated three times as the finding in the tutor's explanation** (points 1 and 3) after the learner has seen it; fine there (tutor, after the run).
+- **A mismatch to resolve:** the tutor's point 1 says "a supernova that looks one quarter as bright is twice as far away"; the page's own example (0.693) uses a ratio of 1.2. Both are right; the first is the rule, the second is the case.
+- `onComplete` fires on every Run; not harmful.
+
+## B1 to B3, recommendation
+Real references exist for few rows, and all the sources are unread. Suggested **check-up table** (amount-independent rows only):
+- (a) **Expansion today, matter only against the best fit:** q0 +0.50 (slowing down) and -0.55 (speeding up). The reference is the observed result that the expansion is speeding up (1998, 1999). Reading: "the best fit speeds up, as observed; matter only does not", with no cut-off.
+- (b) **Brightness at redshift 0.5, best fit against matter only:** 0.693 against 1.000, which is 0.40 magnitudes dimmer. Reading: "less". A published figure for this size of dimming needs reading before it is shown as a reference.
+- (c) **The share at which the speed-up begins:** exactly 1/3 in this model (calculated here, not a measurement), against the best fit at about 70 percent. Reading: "the best fit is well above it".
+- (d) **How close the 70 percent is to a published share** (about 68.5 percent from Planck 2018, **not read**): shown only if read; otherwise "calculated here, no published value read".
+"What this table tells us" under each, with the car-headlight picture as the daily-life anchor.
+**Setting-following table (item 3):** the "your universe" columns already follow the share control. Suggested: keep the existing speeds-and-brightness table with a "Published value / How yours compares" column **only if** a source is read; otherwise drop it as Experiment 14 dropped its Table 4, because the amber line and the disks already show the control. Owner to rule (question 6).
+**The learner's guesses** shown beside the results, with a tag on the row where the number appears (guess 1 at the q0 row, guess 2 at the redshift-0.5 row), guess only. All need module functions and tests.
+
+## Updated size
+**Medium to Large** (was Medium). Two guess marks on the supernova picture and the graph and a new q0 panel are the new drawing. The page rebuilt around four Parts, the share control and its drawing moved to Part 2, a check-up with a reading column, the Part 3 notes, a words box, links to be searched and read, a rewritten introduction and caption with the §12 fixes, and a tutor that marks both guesses make up the bulk. The module needs guess-marker positions, the q0 curve, the 5 percent verdict (moved out of the component), tutor marking, check-up rows and worked examples, with tests. **No change to approved physics.**
+
+## Questions for the owner before drafting
+1. **What does Part 1 show, and what does Part 2 change?** Suggested default: Part 1 is fixed at the best fit (70 percent): the supernova picture, the brightness graph (blue, amber and green) and the q0 panel, one Run, no share control. Part 2 holds the share control (none, best fit, custom 0 to 90 percent) and the amber line, the disks and the q0 marker for the learner's own share. Parts 2 to 4 appear after the first Run.
+2. **Guess marks.** Suggested default: Prediction 1 as a white marker (up arrow, down arrow or dot) on the new q0 panel at share 0; Prediction 2 as a white ring on the redshift-0.5 supernova and a white marker at 0.5 on the graph; each with a YOUR GUESS box; drawn after Run; the caption says they are markers only.
+3. **Introduction.** Suggested default: shorter and neutral. Remove "instead of slower" and the "dimmer means farther" ending of the car-headlight picture and "Why even ask this" from above Part 1 (they hint at both answers); hold them for the caption after Run and the tutor. Keep the question, the standard candle and the terms. Add the Parts paragraph, the guess paragraph (the guesses never change the pictures or tables; they are drawn in white and shown again beside the results; the share control does change the amber line, the disks and the q0 marker) and "Some new words".
+4. **Results.** Suggested default: move "so your prediction was right / off" to the tutor; keep the worked example; show both guesses beside the results with a tag on the row.
+5. **Check-up table.** Suggested default: rows (a), (b) and (c); (d) only if a published share is read; "less", "the same" and "calculated here only" as the readings; no "close enough".
+6. **A setting-following table.** Suggested default: **drop it** (the amber line and the disks already show the control), keeping "Distance, your universe" in the speeds table as it is.
+7. **The rounded 70 percent.** Suggested default: read Planck 2018 (or NASA's page), say the page's 70 is a rounded value close to the published fit, and show the published number only if read.
+8. **Dark energy's status.** Suggested default: reword "hypothetical energy" to "the name for whatever makes the expansion speed up", add "as of November 2026", and point to the Cosmic Horizons dark-energy experiment for the question whether it changes with time.
+9. **Links and words.** Suggested default: search and read a plain NASA or ESA dark-energy page, a Type Ia supernova page, Riess 1998, Perlmutter 1999 and the 2011 Nobel page; link only what is read and record any gap.
+10. **"Change predictions" replaced** by an always-visible "Start over" (the standing rule). Listed so you can see it. Suggested default: yes.
+11. **Heading and cross-references:** "Cosmology 5: Dark Energy" and the sidebar's names for the other experiments. Suggested default: yes.
+12. **The unsourced facts** (billions of Suns, 1998 and 1999 teams, 2011 Nobel, 70 / 25 / 5 percent, brighter supernovae fade more slowly). Suggested default: search and read sources before drafting; keep a fact only if it is read, and soften or drop the rest, as in Cosmology 2 and 4.
+
+## Not checked (re-read)
+Not run in a browser; narrow widths and dark mode not looked at; no source page searched or fetched, so the 70 percent, the 1998 and 1999 papers, the 2011 Nobel claim, the 70 / 25 / 5 split, and the "billions of Suns" and fade-rate statements are **not verified**; the tutor's wording was read in full and the specification's table of numbers matched, but the specification was not compared line by line; the module's tests were counted (9 cases) and not re-run; line numbers are from the files as read today; the numbers above were made by hand with node and are not yet in a test.
