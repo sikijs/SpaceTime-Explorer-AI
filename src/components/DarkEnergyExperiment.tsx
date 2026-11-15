@@ -1,867 +1,698 @@
-import { useEffect, useState } from 'react'
-import { DarkEnergyTutor } from './DarkEnergyTutor'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   BEST_FIT_DARK_ENERGY_FRACTION,
+  GUESS_REDSHIFT,
+  KM_PER_MPC,
+  LIGHT_YEARS_PER_MPC,
+  MATCH_TOLERANCE,
   MAX_DARK_ENERGY_FRACTION,
-  MAX_REDSHIFT,
+  PUBLISHED_KEY_PROJECT,
+  PUBLISHED_UNIVERSE_SHARES_PERCENT,
+  brightnessExample,
   decelerationParameter,
-  luminosityDistanceMpc,
-  runDarkEnergyExperiment,
+  expansionDirection,
+  expansionRateRatio,
+  inverseSquareBrightness,
+  matchingShareBand,
+  shareVerdict,
+  zeroCrossingShare,
 } from '../physics/darkEnergyExperiment'
+import type { GravityGuess, LooksGuess } from '../physics/darkEnergyExperiment'
+import { DarkEnergyResults } from './DarkEnergyResults'
+import { DarkEnergyTutor } from './DarkEnergyTutor'
+import { BrightnessGraph, ExpansionPanel, Part1GraphCaption, Part1PanelCaption, Part1SupernovaCaption, Part2Caption, SupernovaPicture } from './DarkEnergyPictures'
+import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PartHeader } from './GravitationalWaveExperiment'
+import { Block, ExternalLink, WhereFrom, listStyle, smallNote } from './TidalEffectExperiment'
+
+// Cosmology, Experiment 5, audited to the newer rules (docs/audit/cosmology/05-draft-wording.md, approved by the owner on 2026-11-15).
+// Every number comes from the physics module; this file only draws and words it (CLAUDE.md §9). The learner's guesses never change a
+// real picture or table; they are drawn in white once the run has finished (§14, "Predictions and the Real Results").
 
 interface DarkEnergyExperimentProps {
   onComplete?: () => void
   onTutorComplete?: () => void
 }
 
-type ShareMode = 'none' | 'bestFit' | 'custom'
+// One run is a fixed real duration, whatever the share (CLAUDE.md §11).
+const ANIMATION_DURATION_MS = 4000
 
-// This experiment's two prediction questions, per its specification's "Prediction Activity".
-// Choices are not scored.
-type GravityEffectChoice = 'slow' | 'speed' | 'none'
-const gravityEffectChoices: Array<{ value: GravityEffectChoice; label: string }> = [
+const gravityChoices: Array<{ value: GravityGuess; label: string }> = [
   { value: 'slow', label: 'Slow it down' },
   { value: 'speed', label: 'Speed it up' },
   { value: 'none', label: 'Not change it' },
 ]
-
-type LooksChoice = 'brighter' | 'same' | 'dimmer'
-const looksChoices: Array<{ value: LooksChoice; label: string }> = [
+const looksChoices: Array<{ value: LooksGuess; label: string }> = [
   { value: 'brighter', label: 'Brighter' },
   { value: 'same', label: 'The same' },
   { value: 'dimmer', label: 'Dimmer' },
 ]
+const optionText = (options: Array<{ value: string; label: string }>, value: string | null) => options.find((o) => o.value === value)?.label ?? null
 
-// Guaranteed by the model itself (see darkEnergyExperiment.test.ts): matter alone slows the
-// expansion, and any dark energy makes distant supernovae look dimmer than matter-only predicts -
-// not dependent on the learner's chosen share.
-const ACTUAL_GRAVITY_EFFECT: GravityEffectChoice = 'slow'
-const ACTUAL_LOOKS: LooksChoice = 'dimmer'
+type ShareMode = 'none' | 'bestFit' | 'custom'
+const BEST_PERCENT = Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)
 
-// How close to the best-fit curve (as a fraction of its brightness, at every redshift) counts as
-// "matching", per the specification's "Results".
-const MATCH_TOLERANCE = 0.05
-
-// A redshift small enough that every model should agree, to show the link back to Experiment 1.
-const NEARBY_REDSHIFT = 0.01
-
-// Fixed real-world playback duration (CLAUDE.md §11): playback speed never changes the result.
-const ANIMATION_DURATION_MS = 4000
-
-// Supernova view geometry. Earth is on the left; each supernova is placed by its redshift.
-const SN_WIDTH = 520
-const SN_HEIGHT = 250
-const EARTH_X = 40
-const SN_Y = 120
-const SN_BASE_RADIUS = 32
-function snX(redshift: number): number {
-  return 90 + redshift * 470
-}
-
-// Graph geometry.
-const GRAPH_WIDTH = 460
-const GRAPH_HEIGHT = 300
-const GRAPH_LEFT = 55
-const GRAPH_RIGHT = GRAPH_WIDTH - 20
-const GRAPH_TOP = 25
-const GRAPH_BOTTOM = GRAPH_HEIGHT - 50
-const GRAPH_MIN_BRIGHTNESS = 0.3
-const GRAPH_MAX_BRIGHTNESS = 1.05
-
-const MATTER_ONLY_COLOR = '#38bdf8'
-const CHOSEN_COLOR = '#fbbf24'
-const BEST_FIT_COLOR = '#4ade80'
-
-function graphX(redshift: number): number {
-  return GRAPH_LEFT + (redshift / MAX_REDSHIFT) * (GRAPH_RIGHT - GRAPH_LEFT)
-}
-
-function graphY(brightness: number): number {
+// ---- the introduction (no answers given: §12; longer and more explanatory at the owner's request, 2026-11-15) ----
+function Intro() {
+  const twice = inverseSquareBrightness(2)
+  const ten = inverseSquareBrightness(10)
+  const shares = PUBLISHED_UNIVERSE_SHARES_PERCENT
+  const p = { marginTop: 0, marginBottom: '0.75rem' } as const
+  const cellStyle = { border: '1px solid var(--border-color, #ccc)', padding: '0.35rem 0.5rem', verticalAlign: 'top', fontSize: '0.8125rem' } as const
   return (
-    GRAPH_BOTTOM -
-    ((brightness - GRAPH_MIN_BRIGHTNESS) / (GRAPH_MAX_BRIGHTNESS - GRAPH_MIN_BRIGHTNESS)) *
-      (GRAPH_BOTTOM - GRAPH_TOP)
+    <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+      <p style={p}>
+        <strong>The question.</strong> Is the expansion of the universe speeding up, slowing down, or staying steady, and how could anyone possibly tell?
+      </p>
+      <p style={p}>
+        <strong>What happens.</strong> In Cosmology 1 (Hubble&rsquo;s Law) you saw that faraway galaxies move away from us faster than nearby ones, and that this is because space itself is stretching. In Cosmology 2 (the Big Bang) you read that the stretching has not always happened at the same pace. This
+        experiment asks how astronomers found that out.
+      </p>
+      <p style={p}>
+        <em>Think of the stretching the way you would think of a car&rsquo;s speed.</em> A car can be speeding up, slowing down or holding steady, and you can tell which by watching the speedometer for a minute or two. The universe&rsquo;s &ldquo;speedometer&rdquo; is the rate at which space stretches, and we cannot watch it for
+        a minute: the change we are asking about takes billions of years. So astronomers use a trick: <strong>light is a record of the past.</strong> Light from a faraway galaxy set off long ago, and on its way to us it crossed space that was stretching the whole time. How far the light had to go depends on how the stretching
+        went. So if we can measure how far away something really is, we have measured part of the history of the stretching.
+      </p>
+      <p style={p}>
+        <em>But how do you measure how far away something is?</em> You need something whose true brightness you already know. A 100-watt bulb at the far end of a street looks dimmer than a 100-watt bulb next to you, and from how dim it looks you can work out how far away it is. An object like that is called a <strong>standard candle</strong>; more on what that means just below.
+      </p>
+      <p style={p}>
+        <strong>A daily-life picture, with numbers.</strong> Look at a car&rsquo;s headlights at night. Light spreads out as it travels, so it gets thinner the farther it goes. A car <strong>twice</strong> as far away looks <strong>one quarter</strong> as bright: 1 ÷ (2 × 2) = 1 ÷ 4 = {twice}. A car <strong>ten</strong>{' '}
+        times as far away looks <strong>one hundred</strong> times dimmer: 1 ÷ (10 × 10) = 1 ÷ 100 = {ten}. This is called the <strong>inverse-square rule</strong>: brightness falls as one over the distance multiplied by itself. If you know the headlights&rsquo; true brightness, then how bright they look tells you how far away
+        the car is.
+      </p>
+      <p style={p}>
+        <strong>Why &ldquo;squared&rdquo;?</strong> The light spreads out over the surface of a ball that keeps growing as the light travels. Twice as far, and the ball&rsquo;s surface is 2 × 2 = 4 times as big, so each patch of it, including the patch that is your eye, gets one quarter of the light.
+      </p>
+      <p style={p}>
+        <strong>What is a standard candle?</strong> A standard candle is a <em>kind</em> of object, or a <em>kind</em> of event, that gives out a known amount of light. Every single one of that kind gives out the same amount, so if you know that amount, then how bright one looks from Earth tells you how far away it is (the
+        inverse-square rule above). Astronomers do not rely on one kind of candle. They use different ones for different distances.
+      </p>
+      <p style={p}>
+        <strong>Two kinds of candle.</strong> <strong>Cepheid variables</strong> are stars that slowly brighten and dim in a steady pulse; the pulse rate is tied to how bright the star really is, so timing the pulse tells astronomers its true brightness. Cepheids work for nearer galaxies: NASA&rsquo;s Hubble Key Project
+        measured almost {PUBLISHED_KEY_PROJECT.cepheids} of them in {PUBLISHED_KEY_PROJECT.galaxies} galaxies out to {PUBLISHED_KEY_PROJECT.reachLightYears / 1e6} million light-years. <strong>Type Ia supernovae</strong> are far brighter than any Cepheid, so they can be used much farther away. That is why this experiment uses them.
+      </p>
+      <p style={p}>
+        <strong>How is a candle&rsquo;s true brightness found?</strong> From the ladder below it. A geometric method called <strong>parallax</strong> (the shift in a star&rsquo;s position when seen from two points, like your thumb jumping against the wall when you blink one eye, then the other) measures the distance to
+        nearby Cepheids. Cepheids in galaxies that have hosted a supernova then fix the supernova&rsquo;s true brightness. NASA: &ldquo;each rung or measurement technique relies upon the previous step for calibration.&rdquo; This chain is called the <strong>cosmic distance ladder</strong>. Think of pacing out a short stretch of
+        road, using it to mark a measuring wheel, then using the wheel to measure a long road.
+      </p>
+      <p style={p}>
+        <strong>In this experiment</strong> all three supernovae are treated as exactly equally bright, and every brightness is compared with a matter-only universe, so the true brightness cancels out. In reality no candle is perfect, and astronomers correct for small differences.
+      </p>
+      <p style={p}>
+        <strong>The standard candle used here.</strong> A <strong>Type Ia supernova</strong> is a special kind of exploding star. It begins as a <strong>white dwarf</strong>: the small, dense, glowing core left behind when a star like our Sun runs out of fuel. If a white dwarf has a companion star close by, it can pull gas off it.
+        As the gas piles on, the white dwarf gets heavier, until it passes a limit of about 1.4 times the mass of our Sun and can no longer hold itself together. It then explodes. (&ldquo;Type Ia&rdquo; is just astronomers&rsquo; label for this kind, based on what its light looks like.) Because every one of these explosions starts from nearly
+        the same situation, they give out <strong>about the same amount of light</strong> each time. That is what makes them useful as standard candles. They are not perfectly identical, but the differences can be allowed for: a slightly brighter one fades more slowly over its first two weeks or so, so watching how fast a supernova
+        fades lets astronomers correct for small differences. In this experiment we simplify and treat every Type Ia supernova as exactly the same.
+      </p>
+      <p style={p}>
+        <strong>The two ideas put together.</strong> If a supernova&rsquo;s true brightness is known, how bright it looks tells us how far away it is (the inverse-square rule). And how far away it is depends on how space stretched while its light was travelling to us. So the brightness of faraway supernovae can be used to read the history of the
+        stretching. This experiment compares what we would see in two different kinds of universe. You will make guesses about both before you see them.
+      </p>
+      <p style={p}>
+        <strong>Two kinds of universe.</strong> A <strong>universe with only matter</strong> is one where everything in space is stars, gas, dust and anything else that has mass. A <strong>universe with dark energy</strong> also contains an extra ingredient that astronomers call <strong>dark energy</strong>: the name for whatever could make the
+        stretching of space speed up. Whether our real universe has it, and how much, is the question you will explore. The page measures the amount as a <strong>share</strong> of all the energy in the universe: 0 percent means none, 70 percent means seven tenths of everything. Matter makes up the rest.
+      </p>
+      <p style={{ ...p, marginBottom: '0.5rem' }}>
+        <strong>Dark energy and dark matter: two different things.</strong> You may have met another &ldquo;dark&rdquo; thing in <strong>Cosmology 4: dark matter</strong>. The two names sound alike, but astronomers treat them as <strong>two different things</strong>. NASA puts it this way: &ldquo;dark energy is not the same as dark matter.
+        Their main similarity is that we don&rsquo;t yet know what they are!&rdquo; Here is how they differ:
+      </p>
+      <div style={{ overflowX: 'auto', marginBottom: '0.75rem' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+          <thead>
+            <tr>
+              <th style={cellStyle} />
+              <th style={{ ...cellStyle, textAlign: 'left' }}>Dark matter</th>
+              <th style={{ ...cellStyle, textAlign: 'left' }}>Dark energy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={cellStyle}><strong>What does it do?</strong></td>
+              <td style={cellStyle}>It has mass, so it has gravity. It is the invisible &ldquo;glue&rdquo; that helps hold galaxies and clusters of galaxies together.</td>
+              <td style={cellStyle}>It is the name for whatever could make the stretching of <strong>space itself</strong> speed up.</td>
+            </tr>
+            <tr>
+              <td style={cellStyle}><strong>Where does it act?</strong></td>
+              <td style={cellStyle}>Inside and around galaxies and clusters, where there is matter to pull on.</td>
+              <td style={cellStyle}>Across the whole of space, on the largest scales.</td>
+            </tr>
+            <tr>
+              <td style={cellStyle}><strong>How was it found?</strong></td>
+              <td style={cellStyle}>From how fast stars orbit inside galaxies (Cosmology 4), from how clusters of galaxies move, and from how gravity bends the light of galaxies behind them.</td>
+              <td style={cellStyle}>From how bright very distant supernovae look (this experiment).</td>
+            </tr>
+            <tr>
+              <td style={cellStyle}><strong>How much of the universe?</strong></td>
+              <td style={cellStyle}>About {shares.darkMatter} percent (NASA).</td>
+              <td style={cellStyle}>About {shares.darkEnergy} percent (NASA); the page&rsquo;s model uses a rounded {BEST_PERCENT}.</td>
+            </tr>
+            <tr>
+              <td style={cellStyle}><strong>Do we know what it is?</strong></td>
+              <td style={cellStyle}>No.</td>
+              <td style={cellStyle}>No.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style={p}>
+        <strong>An everyday way to keep them apart.</strong> Think of a balloon with coins glued to its rubber, being blown up. The coins stay the same size and are held in place by their own glue: that is like <strong>matter</strong>, and dark matter is the part of it we cannot see. The rubber stretching between the coins is like{' '}
+        <strong>space expanding</strong>. Dark energy is not another coin. It is the name for whatever could change <em>how fast the rubber stretches</em>. Dark matter is something <strong>in</strong> space; dark energy is something about <strong>space itself</strong>.
+      </p>
+      <p style={p}>
+        <strong>Do they come from the same source?</strong> Nobody knows of a link. The pages this experiment draws on describe them as separate, found in different ways and doing different jobs, and none of them says that they share a source (or that they do not). What each one is made of is unknown, and this experiment does not claim a
+        connection between them. When this page says &ldquo;matter&rdquo;, it means <strong>all</strong> the matter together, dark matter and ordinary matter. It has no separate &ldquo;dark matter&rdquo; dial: the only dial is the share of dark energy.
+      </p>
+      <p style={p}>
+        <strong>Distance and redshift, a reminder.</strong> Distances here are in <strong>megaparsecs (Mpc)</strong>. One megaparsec is about {(LIGHT_YEARS_PER_MPC / 1e6).toFixed(2)} million light-years, which is about {(KM_PER_MPC / 1e18).toFixed(0)} million million million kilometres. <strong>Redshift</strong> is a number that says how much the
+        light of a faraway object has been stretched on its way to us, as space stretched. A bigger redshift means the object is farther away and its light set off longer ago. The three supernovae here are at redshifts 0.2, 0.5 and 0.8.
+      </p>
+      <p style={p}>
+        <strong>What you will do.</strong> The page below has four parts. <strong>Part 1</strong> asks for two guesses; then you press <strong>Run</strong> and watch three supernovae, one graph and one small panel, all for the universe astronomers&rsquo; best measurements point to. <strong>Part 2</strong> lets you choose your own share of dark
+        energy and see what changes. <strong>Part 3</strong> gives the results, with a short guide to reading them. <strong>Part 4</strong> is a tutor who talks it over with you.
+      </p>
+      <p style={p}>
+        <strong>Your guesses never change the real pictures or tables.</strong> After you press Run, they are drawn on the pictures in <strong>white</strong>, and shown again beside the results. The only things that change the drawings are the share you choose in Part 2. If you change a guess, press Run and see nothing change, that is
+        not a fault: a guess is only a guess.
+      </p>
+      <p style={{ ...p, marginBottom: '0.25rem' }}>
+        <strong>What we assume.</strong>
+      </p>
+      <ul style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+        <li>
+          <strong>Flat.</strong> Space on the very largest scales is treated as not curved, the way a flat sheet is not curved, so straight parallel paths stay parallel. (In Gravity and Curved Spacetime you met a curved surface, the sphere.) This is a simplification, and a good one for the redshifts used here.
+        </li>
+        <li>
+          <strong>Only matter and dark energy.</strong> Light and other radiation, which matter only very early on, are left out. Matter&rsquo;s share is 100 percent minus dark energy&rsquo;s share. In the real universe about {shares.darkMatter} percent is dark matter and about {shares.ordinaryMatter} percent is ordinary matter (NASA); the page adds them together
+          as &ldquo;matter&rdquo;.
+        </li>
+        <li>
+          <strong>Dark energy is treated as constant:</strong> the same in every bit of space at all times. This is the simplest model. As of November 2026 astronomers are testing whether it is exactly constant: in 2025 the DESI survey reported that dark energy that changes with time fits its data better than a constant one, by 2.8 to 4.2
+          &ldquo;sigma&rdquo; (a measure of how unlikely the pattern is to be chance; bigger means less likely) depending on which supernova list is used, and described this as a possible solution to tensions in the standard model. That question is explored in the Cosmic Horizons experiment on evolving dark energy. It is{' '}
+          <strong>not</strong> tested here.
+        </li>
+        <li>
+          <strong>The Hubble constant</strong> is the same illustrative 70 km/s per megaparsec as in Cosmology 1; published values run from about 67 to 73, a disagreement known as the &ldquo;Hubble tension&rdquo;.
+        </li>
+        <li>
+          <strong>Every supernova is treated as exactly equally bright.</strong> In reality astronomers correct for small differences.
+        </li>
+        <li>
+          <strong>The &ldquo;best fit&rdquo; is a model, not data.</strong> It is a dark energy share of <strong>{BEST_PERCENT} percent</strong> (a rounded value; NASA gives &ldquo;approximately 68.3 to 70%&rdquo;) that makes the model&rsquo;s supernova brightness match what astronomers have measured. The green line is calculated here from that share; it is{' '}
+          <strong>not</strong> a plot of individual supernovae.
+        </li>
+        <li>Only redshifts up to 1 are shown.</li>
+        <li>Nothing here claims to say what dark energy is.</li>
+      </ul>
+      <p style={{ marginTop: 0, marginBottom: 0 }}>
+        <strong>Some new words.</strong> dark matter (a reminder from Cosmology 4), supernova, Type Ia supernova, white dwarf, standard candle, Cepheid variable, parallax, cosmic distance ladder, brightness, inverse-square rule, redshift, megaparsec, expansion, matter, dark energy, flat universe, Hubble constant, deceleration number, sigma. The &ldquo;Words and formulas&rdquo; box below has each one with a short
+        meaning.
+      </p>
+    </div>
+  )
+}
+
+// ---- the words box: the formulas' worked examples (they give the results) wait until after the first Run ----
+function referenceEntries(afterRun: boolean): { term: string; meaning: string }[] {
+  const e = brightnessExample(BEST_FIT_DARK_ENERGY_FRACTION)
+  const crossing = zeroCrossingShare()
+  const entries = [
+    { term: 'Supernova', meaning: 'an exploding star.' },
+    { term: 'Type Ia supernova', meaning: 'the kind used here: a white dwarf that explodes after pulling gas from a companion star.' },
+    { term: 'White dwarf', meaning: 'the small, dense, glowing core left when a star like our Sun runs out of fuel.' },
+    { term: 'Standard candle', meaning: 'a kind of object or event that gives out a known amount of light, such as a 100-watt bulb. How bright one looks then tells us how far away it is. Cepheid variables and Type Ia supernovae are two kinds used by astronomers.' },
+    { term: 'Cepheid variable', meaning: 'a star that slowly brightens and dims in a steady pulse. The pulse rate is tied to how bright the star really is, so it works as a standard candle for nearer galaxies.' },
+    { term: 'Parallax', meaning: 'the apparent shift of an object’s position when you look at it from two different points, like your thumb jumping against the wall when you blink one eye, then the other. It gives distances to nearby stars by geometry alone.' },
+    { term: 'Cosmic distance ladder', meaning: 'the chain of distance methods, each calibrated by the one before: parallax, then Cepheids, then Type Ia supernovae.' },
+    { term: 'Brightness', meaning: 'how much light from an object reaches us.' },
+    { term: 'Inverse-square rule', meaning: 'brightness = true brightness ÷ (distance × distance), up to a constant. Light spreads over a ball whose surface grows as distance squared. Twice as far means one quarter as bright; ten times as far means one hundredth.' },
+    { term: 'Redshift', meaning: 'a number that says how much light has been stretched on its way to us as space stretched. Bigger means farther away and set off longer ago.' },
+    { term: 'Megaparsec (Mpc)', meaning: `a unit of distance: about ${(LIGHT_YEARS_PER_MPC / 1e6).toFixed(2)} million light-years.` },
+    { term: 'Expansion', meaning: 'the stretching of space itself, which carries faraway galaxies away from us.' },
+    { term: 'Matter', meaning: 'everything with mass: stars, gas, dust and dark matter. On this page, all of it together.' },
+    { term: 'Dark energy', meaning: 'the name for whatever could make the expansion speed up. It is not the same as dark matter.' },
+    { term: 'Dark matter', meaning: 'invisible matter that has gravity and helps hold galaxies together (Cosmology 4).' },
+    { term: 'Flat universe', meaning: 'a universe where space on the largest scales is not curved, so straight parallel paths stay parallel.' },
+    { term: 'Hubble constant', meaning: 'how fast space stretches per megaparsec today: 70 km/s per Mpc here.' },
+    { term: 'Deceleration number', meaning: 'one number for “slowing down or speeding up today”: above zero means slowing down, below zero means speeding up, zero means steady.' },
+    { term: 'Sigma', meaning: 'a measure of how unlikely a pattern is to be chance. Bigger means less likely.' },
+    { term: 'Four ideas for dark energy (NASA)', meaning: 'a built-in energy of empty space (a cosmological constant); a new, changing energy called quintessence; odd “defects” in space; or a flaw in the theory of gravity (general relativity).' },
+  ]
+  if (afterRun) {
+    entries.push({
+      term: 'Formula 1: brightness against distance, with a worked example',
+      meaning: `brightness compared with matter-only = (distance matter-only ÷ distance in your universe)². At redshift ${e.redshift} and ${BEST_PERCENT} percent: (${e.matterOnlyDistanceMpc.toFixed(0)} ÷ ${e.distanceMpc.toFixed(0)})² = ${e.brightness.toFixed(2)}.`,
+    })
+    entries.push({
+      term: 'Formula 2: the deceleration number, with a worked example',
+      meaning: `q = 0.5 − 1.5 × (dark energy share). At ${BEST_PERCENT} percent: 0.5 − ${(1.5 * BEST_FIT_DARK_ENERGY_FRACTION).toFixed(2)} = ${decelerationParameter(BEST_FIT_DARK_ENERGY_FRACTION).toFixed(2)}. With none: +${decelerationParameter(0).toFixed(2)}. It is zero at one third: 0.5 − 1.5 × (1/3) = 0 (${(crossing * 100).toFixed(0)} percent).`,
+    })
+    entries.push({
+      term: 'Formula 3: the expansion rate, with a worked example',
+      meaning: `E(z) = √[(1 − share) × (1 + z)³ + share]. At redshift 0.5 and ${BEST_PERCENT} percent: √[0.3 × 3.375 + 0.7] = √1.7125 = ${expansionRateRatio(0.5, BEST_FIT_DARK_ENERGY_FRACTION).toFixed(3)}. The distance itself needs a sum over many small steps; the page does it by computer (Simpson’s rule).`,
+    })
+  } else {
+    entries.push({ term: 'More words', meaning: 'the formulas and their worked examples appear here after your first run, because the numbers in them would give away what you are about to guess.' })
+  }
+  return entries
+}
+
+// ---- links (pages read 2026-11-15 through helper summaries; see the draft's source table). The pages that say supernovae looked dimmer or
+// that the expansion speeds up would give away the guesses, so they appear after the first Run (§12). ----
+const LINKS_BEFORE: Array<{ href: string; label: string; what: ReactNode }> = [
+  {
+    href: 'https://science.nasa.gov/universe/overview/building-blocks/',
+    label: 'NASA: Building Blocks of the universe',
+    what: 'NASA’s short page on how much of the universe is ordinary matter, dark matter and dark energy (5, 27 and 68 percent). (Read; no year or data set is stated on the page.)',
+  },
+  {
+    href: 'https://science.nasa.gov/dark-matter/',
+    label: 'NASA: Dark Matter',
+    what: 'NASA’s page on dark matter, the other “dark” ingredient: how it holds galaxies together and how it was found. Read it beside this experiment to see the difference. (Read; no date or data set on the 27 percent.)',
+  },
+  {
+    href: 'https://chandra.harvard.edu/xray_sources/supernovas.html',
+    label: 'Chandra: Supernovas and supernova remnants',
+    what: 'a plain page from NASA’s Chandra X-ray Center on how a white dwarf becomes a Type Ia supernova and why these explosions work as standard candles. (Read.)',
+  },
+  {
+    href: 'https://esahubble.org/images/heic1611a/',
+    label: 'ESA/Hubble: Cosmic distance ladder',
+    what: 'a short ESA/Hubble page on how parallax, Cepheid variables and Type Ia supernovae are linked into a distance ladder. (Read.)',
+  },
+  {
+    href: 'https://science.nasa.gov/missions/hubble/nasas-webb-hubble-telescopes-affirm-universes-expansion-rate-puzzle-persists/',
+    label: 'NASA: Webb and Hubble affirm the universe’s expansion-rate puzzle',
+    what: 'NASA’s plain account of the distance ladder, in which “each rung or measurement technique relies upon the previous step for calibration”. (Read.)',
+  },
+  {
+    href: 'https://science.nasa.gov/missions/hubble/hubble-completes-eight-year-effort-to-measure-expanding-universe/',
+    label: 'NASA: Hubble completes eight-year effort to measure the expanding universe',
+    what: 'NASA’s page on the Hubble Key Project, which measured almost 800 Cepheid variables in 18 galaxies. The source of the Cepheid figures on this page. (Read.)',
+  },
+  {
+    href: 'https://svs.gsfc.nasa.gov/vis/a010000/a013800/a013852/13852_Roman_Standard_Candle_Supernovae_transP.html',
+    label: 'NASA SVS: Standard candle supernovae',
+    what: 'a transcript of a short NASA video that explains what a standard candle is and how Type Ia supernovae are used to measure distance. (Read; a transcript.)',
+  },
+  {
+    href: 'https://imagine.gsfc.nasa.gov/educators/programs/cosmictimes/online_edition/1993/foolproof.html',
+    label: 'NASA Cosmic Times: Fool-proofing galactic candles (1993)',
+    what: 'a short NASA article, written as 1993 news, on how astronomers learned that brighter Type Ia supernovae fade more slowly and used that to correct their distances. (Read; written in 1993.)',
+  },
+  {
+    href: 'https://arxiv.org/abs/1807.06209',
+    label: 'Planck Collaboration (2018): cosmological parameters',
+    what: 'the paper behind the most precise measure of how much of the universe is matter (about 31.5 percent). A technical paper; the abstract is the readable part. (Abstract read, partly.)',
+  },
+  {
+    href: 'https://arxiv.org/abs/2503.14738',
+    label: 'DESI Collaboration (2025): baryon acoustic oscillation results',
+    what: 'the 2025 survey result that hints dark energy may change over time. A technical paper; the abstract is the readable part. (Abstract read.)',
+  },
+]
+const LINKS_AFTER: Array<{ href: string; label: string; what: ReactNode }> = [
+  {
+    href: 'https://science.nasa.gov/universe/the-universe-is-expanding-faster-these-days-and-dark-energy-is-responsible-so-what-is-dark-energy',
+    label: 'NASA: What is dark energy?',
+    what: 'NASA’s plain explainer on what dark energy is, how distant supernovae that looked dimmer than expected led to its discovery in 1998, and four ideas for what it could be. (Read.)',
+  },
+  {
+    href: 'https://science.nasa.gov/mission/roman-space-telescope/dark-energy',
+    label: 'NASA Roman Space Telescope: dark energy',
+    what: 'how a coming NASA telescope will use thousands of supernovae to test dark energy, including whether it changes over time. (Read.)',
+  },
+  {
+    href: 'https://sci.esa.int/web/euclid/-/what-is-dark-energy-',
+    label: 'ESA Euclid: What is dark energy?',
+    what: 'the European Space Agency’s plain explainer on dark energy, including the idea that it is a constant property of empty space and how the Euclid telescope will test that. (Read.)',
+  },
+  {
+    href: 'https://www.esa.int/Science_Exploration/Space_Science/Euclid/The_dark_Universe',
+    label: 'ESA: The dark Universe',
+    what: 'a short ESA page that sets dark matter and dark energy side by side. (Read.)',
+  },
+  {
+    href: 'https://www.kva.se/en/news/nobelpriset-i-fysik-2011-2/',
+    label: 'Royal Swedish Academy of Sciences: the 2011 Nobel Prize in Physics',
+    what: 'the announcement from the academy that awards the prize: who won, and why, for finding that the expansion of the universe is speeding up. (Read; nobelprize.org itself could not be opened. The page quotes a 2011 figure of “roughly 75 percent” for dark energy, which is older than NASA’s 68 percent; this page does not use it.)',
+  },
+  {
+    href: 'https://arxiv.org/abs/astro-ph/9805201',
+    label: 'Riess and others (1998): supernova evidence for an accelerating universe',
+    what: 'the first team’s paper. A technical paper; the abstract (the summary) is the readable part. (Abstract read only.)',
+  },
+  {
+    href: 'https://arxiv.org/abs/astro-ph/9812133',
+    label: 'Perlmutter and others (1999): 42 high-redshift supernovae',
+    what: 'the second team’s paper. A technical paper; the abstract is the readable part. (Abstract read only.)',
+  },
+]
+
+function ChoiceButtons<T extends string>({ options, selected, disabled, onSelect }: { options: Array<{ value: T; label: string }>; selected: T | null; disabled: boolean; onSelect: (value: T) => void }) {
+  return (
+    <div style={{ marginBottom: '0.5rem' }}>
+      {options.map((choice) => (
+        <button
+          key={choice.value}
+          type="button"
+          onClick={() => onSelect(choice.value)}
+          disabled={disabled}
+          className={`toggle-button${selected === choice.value ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '0.875rem', opacity: disabled ? 0.6 : 1 }}
+        >
+          {choice.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function Question({ prompt, guessText, children }: { prompt: string; guessText: string | null; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>{prompt}</p>
+      {children}
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{guessText ? `Your guess: ${guessText}` : 'Choose an option to continue'}</p>
+    </div>
   )
 }
 
 export function DarkEnergyExperiment({ onComplete, onTutorComplete }: DarkEnergyExperimentProps) {
+  const [gravityGuess, setGravityGuess] = useState<GravityGuess | null>(null)
+  const [looksGuess, setLooksGuess] = useState<LooksGuess | null>(null)
+  const [submitted, setSubmitted] = useState<{ gravity: GravityGuess; looks: LooksGuess } | null>(null)
+
+  const [part1Done, setPart1Done] = useState(false)
+  const [part1Running, setPart1Running] = useState(false)
+  const [part1Progress, setPart1Progress] = useState(0)
+  const [explained, setExplained] = useState(false)
+
   const [mode, setMode] = useState<ShareMode>('bestFit')
   const [customShare, setCustomShare] = useState(0.4)
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
-  const [progress, setProgress] = useState(0)
-  const [runCount, setRunCount] = useState(0)
+  // Part 2's disks ease from the ring size to their final size when its own Run is pressed; at rest they show the final state.
+  const [part2Running, setPart2Running] = useState(false)
+  const [part2Progress, setPart2Progress] = useState(1)
 
-  const [gravityPrediction, setGravityPrediction] = useState<GravityEffectChoice | null>(null)
-  const [looksPrediction, setLooksPrediction] = useState<LooksChoice | null>(null)
-  const [submittedGravityPrediction, setSubmittedGravityPrediction] = useState<GravityEffectChoice | null>(
-    null,
-  )
-  const [submittedLooksPrediction, setSubmittedLooksPrediction] = useState<LooksChoice | null>(null)
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
 
-  const hasPrediction = gravityPrediction !== null && looksPrediction !== null
-  const hasSubmittedPrediction = submittedGravityPrediction !== null && submittedLooksPrediction !== null
-
+  const hasAllGuesses = gravityGuess !== null && looksGuess !== null
+  const locked = submitted !== null
+  const shownGravity = submitted?.gravity ?? gravityGuess
+  const shownLooks = submitted?.looks ?? looksGuess
   const share = mode === 'none' ? 0 : mode === 'bestFit' ? BEST_FIT_DARK_ENERGY_FRACTION : customShare
-  const result = runDarkEnergyExperiment(share)
-  const bestFit = runDarkEnergyExperiment(BEST_FIT_DARK_ENERGY_FRACTION)
-  const isActive = status === 'running' || status === 'complete'
 
-  const handleModeChange = (next: ShareMode) => {
-    setMode(next)
-    if (status === 'complete') setStatus('idle')
-  }
-
-  const handleRun = () => {
-    if (!hasPrediction || status === 'running') return
-    if (!hasSubmittedPrediction) {
-      setSubmittedGravityPrediction(gravityPrediction)
-      setSubmittedLooksPrediction(looksPrediction)
-    }
-    setStatus('running')
-    setProgress(0)
-    setRunCount((count) => count + 1)
-  }
-
-  // Matches the rest of the project's precedent: re-opens both questions for editing without
-  // resetting the chosen share.
-  const handleChangePrediction = () => {
-    setSubmittedGravityPrediction(null)
-    setSubmittedLooksPrediction(null)
-    setStatus('idle')
-  }
-
+  // Part 1's animation: one run, a fixed real duration (CLAUDE.md §11).
   useEffect(() => {
-    if (status !== 'running') return
-
+    if (!part1Running) return
     const startTime = performance.now()
-    let frameId: number
-
-    const animate = (currentTime: number) => {
-      const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
-      setProgress(fraction)
-
-      if (fraction >= 1) {
-        setStatus('complete')
-        onComplete?.()
+    let frameId = 0
+    const animate = (now: number) => {
+      const p = Math.min(Math.max((now - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setPart1Progress(p)
+      if (p >= 1) {
+        setPart1Running(false)
+        setPart1Done(true)
+        onCompleteRef.current?.()
         return
       }
-
       frameId = requestAnimationFrame(animate)
     }
-
     frameId = requestAnimationFrame(animate)
-
     return () => cancelAnimationFrame(frameId)
-  }, [status, onComplete])
+  }, [part1Running])
 
-  // Whether the chosen share reproduces the best-fit curve (within MATCH_TOLERANCE) at every redshift.
-  const signedDeviations = result.curve.map((p, i) => {
-    const reference = bestFit.curve[i].brightnessRelativeToMatterOnly
-    return (p.brightnessRelativeToMatterOnly - reference) / reference
-  })
-  const shareVerdict: 'match' | 'too-little' | 'too-much' = signedDeviations.every(
-    (d) => Math.abs(d) <= MATCH_TOLERANCE,
-  )
-    ? 'match'
-    : Math.max(...signedDeviations) > MATCH_TOLERANCE
-      ? 'too-little'
-      : 'too-much'
-  const middleSupernova = result.supernovae.find((sn) => sn.redshift === 0.5)!
-  const bestFitMiddleSupernova = bestFit.supernovae.find((sn) => sn.redshift === 0.5)!
+  // Part 2's animation: the disks at the brightness of the chosen share, over the same fixed duration.
+  useEffect(() => {
+    if (!part2Running) return
+    const startTime = performance.now()
+    let frameId = 0
+    const animate = (now: number) => {
+      const p = Math.min(Math.max((now - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setPart2Progress(p)
+      if (p >= 1) {
+        setPart2Running(false)
+        return
+      }
+      frameId = requestAnimationFrame(animate)
+    }
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [part2Running])
 
-  // While running, each supernova's brightness eases from the matter-only value (1) to the chosen
-  // model's value; the chosen line is drawn out to the redshift reached so far.
-  const displayedProgress = status === 'idle' ? 0 : progress
-  const reachedRedshift = displayedProgress * MAX_REDSHIFT
+  const handleRun = () => {
+    if (!hasAllGuesses || part1Running || part1Done) return
+    if (!submitted) setSubmitted({ gravity: gravityGuess!, looks: looksGuess! })
+    setPart1Progress(0)
+    setPart1Running(true)
+  }
 
-  const toLine = (points: Array<{ redshift: number; brightnessRelativeToMatterOnly: number }>) =>
-    points
-      .map((p) => `${graphX(p.redshift).toFixed(1)},${graphY(p.brightnessRelativeToMatterOnly).toFixed(1)}`)
-      .join(' ')
+  // Changing the share changes only Part 2's drawing: it never hides Parts 3 and 4 or restarts the tutor.
+  const handleModeChange = (next: ShareMode) => {
+    setMode(next)
+    if (!part2Running) setPart2Progress(1)
+  }
 
-  const chosenLine = toLine(result.curve.filter((p) => p.redshift <= reachedRedshift + 1e-9))
-  const bestFitLine = toLine(bestFit.curve)
-  const matterOnlyLine = `${graphX(0)},${graphY(1)} ${graphX(MAX_REDSHIFT)},${graphY(1)}`
+  const handlePart2Run = () => {
+    if (part2Running) return
+    setPart2Progress(0)
+    setPart2Running(true)
+  }
+
+  // Start over: clears the guesses, the runs, the results and the tutor, and returns the page to its first state.
+  const handleStartOver = () => {
+    setGravityGuess(null)
+    setLooksGuess(null)
+    setSubmitted(null)
+    setPart1Done(false)
+    setPart1Running(false)
+    setPart1Progress(0)
+    setExplained(false)
+    setMode('bestFit')
+    setCustomShare(0.4)
+    setPart2Running(false)
+    setPart2Progress(1)
+  }
+
+  const hasAnythingToClear = gravityGuess !== null || looksGuess !== null || locked || part1Done
+  const startOverDisabled = !hasAnythingToClear || part1Running
+
+  const started = part1Running || part1Done
+  const shownProgress1 = part1Done ? 1 : part1Progress
+
+  const verdict = shareVerdict(share)
+  const band = matchingShareBand()
+  const direction = expansionDirection(share)
+  const q = decelerationParameter(share)
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Experiment 5 — Dark Energy</h2>
+      <h2>Cosmology 5: Dark Energy</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> Has the universe's expansion been speeding up or slowing down, and
-            how could we possibly tell?
+        <Intro />
+        <ReferencePanel entries={referenceEntries(part1Done)} />
+
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Want to know more?</p>
+          <p style={{ ...smallNote, marginTop: 0 }}>
+            Each link opens in a new tab. They were read on 15 November 2026 through helper summaries, so a quotation or figure on this page should be checked against the live page. No official page was found that says whether dark matter and dark energy might share a source, so this page does not say, and
+            no official page was found for the idea that a Type Ia supernova is &ldquo;as bright as billions of Suns&rdquo;, so this page does not say that either.
           </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> In Hubble's Law (Experiment 1) you saw that farther galaxies recede
-            faster, using a formula that only works for nearby galaxies. In the Big Bang experiment
-            (Experiment 2) you read that the real expansion rate has changed over cosmic history. To find out
-            how, astronomers look at very distant objects, whose light left them long ago. A special kind of
-            exploding star, a <strong>Type Ia supernova</strong>, is useful for this, because its true
-            brightness is very nearly the same each time, or can be corrected to be. An object of known
-            brightness is called a <strong>standard candle</strong>: how dim it looks tells us how far away it
-            is. Here you compare how bright such supernovae would look in two kinds of universe.{' '}
-            <strong>Dark energy</strong> is the name for a hypothetical energy that would push space to expand
-            faster instead of slower. Whether it exists, and how much, is what this experiment explores.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>More about Type Ia supernovae.</strong> Many stars like our Sun end their lives as a{' '}
-            <strong>white dwarf</strong>: a dense, glowing leftover core, about the size of the Earth but with
-            roughly the mass of the Sun. A white dwarf that is circling close to another star, and pulling gas
-            from it, can eventually grow too heavy to hold itself together. It then blows apart in a huge
-            explosion, which is a Type Ia supernova ("Type Ia" is just astronomers' label for this particular
-            kind, based on what its light looks like). For a few weeks the explosion shines as brightly as
-            billions of Suns, so it can be seen across
-            billions of light-years. Because these explosions start from very similar conditions, they reach
-            very nearly the same true peak brightness. Astronomers can also fine-tune the estimate: a slightly
-            brighter one tends to fade more slowly, so watching how fast a supernova fades lets them correct
-            for small differences.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>A daily-life picture.</strong> Look at the headlights of a car at night. A car twice as
-            far away looks one quarter as bright, because light spreads out as it travels. So if you know how
-            bright the headlights really are, how dim they look tells you how far away the car is. If they
-            look dimmer than you expected, the car is farther away than you thought.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Why even ask this.</strong> The distance to a faraway object depends on what the
-            universe's expansion did while its light was traveling to us. So a supernova's dimness is a test
-            of how the expansion has behaved, not only of how far away the supernova is.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> First, predict how gravity alone, in a universe containing only matter,
-            would affect the expansion. Then predict how a faraway supernova would look if the expansion were
-            speeding up instead.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What to look for.</strong> After answering, pick a share of dark energy below and run it.
-            Compare the supernovae's brightness, and the lines on the graph, with what a matter-only universe
-            predicts. We reuse <strong>redshift</strong> and <strong>Mpc</strong> from earlier experiments,
-            with the same meaning.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
-            <strong>What we assume.</strong>
-          </p>
-          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              The universe is treated as "flat", meaning space on the very largest scales is not curved the
-              way the sphere's surface was in Gravity and Curved Spacetime Experiment 4, so straight parallel
-              paths stay parallel. It is also treated as containing only matter and dark energy. Matter's
-              share is 100% minus dark energy's share. Light and other radiation, which only matters very
-              early on, are left out. For the redshifts used here (up to 1), that is a good approximation, but
-              still an approximation.
-            </li>
-            <li>
-              Dark energy is treated as a constant: the same energy in every bit of space at all times, never
-              thinning out as space expands. This is the simplest model. Whether it is exactly constant is an
-              open research question and is not tested here.
-            </li>
-            <li>
-              The Hubble constant is the same illustrative value as in Experiment 1 (70 km/s per megaparsec),
-              with the same real caveat: published values range from about 67 to 73, a disagreement known as
-              the "Hubble tension."
-            </li>
-            <li>
-              Supernovae are treated as perfect standard candles. In reality astronomers calibrate and correct
-              for small differences between them.
-            </li>
-            <li>
-              The "best fit" line is not raw data. It is the model astronomers have found to match real
-              supernova observations, with dark energy at about 70% of the total (a rounded value). It stands
-              for what is measured; it is not a plot of individual supernovae.
-            </li>
-            <li>Only redshifts up to 1 are shown.</li>
-            <li>Nothing here claims to say what dark energy is.</li>
+          <ul style={listStyle}>
+            {LINKS_BEFORE.map((l) => (
+              <li key={l.href} style={{ marginBottom: '0.5rem' }}>
+                <ExternalLink href={l.href}>{l.label}</ExternalLink>: {l.what}
+              </li>
+            ))}
           </ul>
-        </div>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            If the universe contained only matter, how would gravity affect the expansion?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {gravityEffectChoices.map((choice) => (
-              <button
-                key={choice.value}
-                onClick={() => setGravityPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${gravityPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            Now suppose the expansion were speeding up instead. A faraway supernova's light would travel
-            through space that has been stretching faster and faster. Compared with a universe that is slowing
-            down, would that supernova look brighter, the same, or dimmer?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {looksChoices.map((choice) => (
-              <button
-                key={choice.value}
-                onClick={() => setLooksPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${looksPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {hasPrediction || hasSubmittedPrediction
-              ? `Your predictions: ${
-                  gravityEffectChoices.find(
-                    (c) => c.value === (gravityPrediction ?? submittedGravityPrediction),
-                  )!.label
-                }, ${looksChoices.find((c) => c.value === (looksPrediction ?? submittedLooksPrediction))!.label}`
-              : 'Answer both questions to continue'}
-          </p>
-        </div>
-
-        {hasSubmittedPrediction && (
-          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Your predictions are locked in above. You can still try as many shares as you like below. Or,
-              change your predictions and start over:
-            </p>
-            <button
-              type="button"
-              onClick={handleChangePrediction}
-              className="secondary-button"
-              style={{
-                padding: '0.5rem 1.25rem',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(124, 58, 237, 0.22)',
-              }}
-            >
-              Change predictions
-            </button>
-          </div>
-        )}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-            Share of the universe's energy that is dark energy:
-          </p>
-          <button
-            type="button"
-            onClick={() => handleModeChange('none')}
-            disabled={!hasPrediction || status === 'running'}
-            className={`toggle-button${mode === 'none' ? ' is-selected' : ''}`}
-            style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-          >
-            None (matter only)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleModeChange('bestFit')}
-            disabled={!hasPrediction || status === 'running'}
-            className={`toggle-button${mode === 'bestFit' ? ' is-selected' : ''}`}
-            style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-          >
-            The best fit to observations (about {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}%)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleModeChange('custom')}
-            disabled={!hasPrediction || status === 'running'}
-            className={`toggle-button${mode === 'custom' ? ' is-selected' : ''}`}
-            style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-          >
-            Custom
-          </button>
-          {mode === 'custom' && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <label htmlFor="dark-energy-share" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                Dark energy: {Math.round(customShare * 100)}% of the total (matter makes up the other{' '}
-                {100 - Math.round(customShare * 100)}%)
-              </label>
-              <input
-                id="dark-energy-share"
-                type="range"
-                min={0}
-                max={MAX_DARK_ENERGY_FRACTION}
-                step={0.01}
-                value={customShare}
-                disabled={!hasPrediction || status === 'running'}
-                onChange={(event) => {
-                  setCustomShare(Number(event.target.value))
-                  if (status === 'complete') setStatus('idle')
-                }}
-                style={{ width: '100%' }}
-              />
-            </div>
+          {part1Done ? (
+            <>
+              <p style={{ ...smallNote, marginBottom: '0.25rem' }}>More links, now that you have run it:</p>
+              <ul style={listStyle}>
+                {LINKS_AFTER.map((l) => (
+                  <li key={l.href} style={{ marginBottom: '0.5rem' }}>
+                    <ExternalLink href={l.href}>{l.label}</ExternalLink>: {l.what}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p style={smallNote}>Seven more links, on how dark energy was found, the two teams&rsquo; papers and the Nobel Prize, appear here after your first Run, because their wording would give away what you are guessing.</p>
           )}
         </div>
 
+        {/* ===== Part 1 ===== */}
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          You will make two guesses. Then you will press Run and watch three exploding stars at three distances, one graph and one small panel, all drawn for the universe astronomers&rsquo; measurements point to. Your guesses are drawn on the pictures in white. Nothing you guess changes the real pictures.
+        </PartHeader>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.75rem' }}>Make your predictions</p>
+          <Question prompt="If the universe contained only matter, how would gravity affect the expansion?" guessText={optionText(gravityChoices, shownGravity)}>
+            <ChoiceButtons options={gravityChoices} selected={shownGravity} disabled={locked || part1Running} onSelect={setGravityGuess} />
+          </Question>
+          <Question
+            prompt="Now suppose the expansion were speeding up instead. A faraway supernova's light would travel through space that has been stretching faster and faster. Compared with a universe that is slowing down, would that supernova look brighter, the same, or dimmer?"
+            guessText={optionText(looksChoices, shownLooks)}
+          >
+            <ChoiceButtons options={looksChoices} selected={shownLooks} disabled={locked || part1Running} onSelect={setLooksGuess} />
+          </Question>
+          {locked && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              Your predictions are locked while you try other settings. To change them, press Start over. Start over clears your guesses, the runs, the results and the tutor.
+            </p>
+          )}
+        </div>
+
+        <button type="button" className="action-button" onClick={handleRun} disabled={!hasAllGuesses || part1Running || part1Done} style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}>
+          {part1Running ? 'Running...' : part1Done ? 'Run (done)' : 'Run'}
+        </button>
         <button
           type="button"
-          className="action-button"
-          onClick={handleRun}
-          disabled={!hasPrediction || status === 'running'}
-          style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{ marginLeft: '0.75rem', padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: startOverDisabled ? 'not-allowed' : 'pointer', opacity: startOverDisabled ? 0.5 : 1 }}
         >
-          {status === 'running' ? 'Running...' : 'Run'}
+          Start over
         </button>
+        {!hasAllGuesses && !locked && <p style={smallNote}>Answer both questions above to run.</p>}
 
-        {!hasPrediction && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Answer the predictions above to try the controls.
-          </p>
+        <Block>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 1: three exploding stars</p>
+          <SupernovaPicture kind="best" share={BEST_FIT_DARK_ENERGY_FRACTION} progress={shownProgress1} started={started} guess={part1Done ? submitted!.looks : null} />
+          <Part1SupernovaCaption started={started} arrived={part1Done} />
+        </Block>
+        <Block>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 2: brightness against redshift</p>
+          <BrightnessGraph drawn={started ? shownProgress1 : null} share={null} guess={part1Done ? submitted!.looks : null} />
+          {started ? <Part1GraphCaption started={started} arrived={part1Done} /> : null}
+        </Block>
+        <Block>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 3: is the expansion speeding up or slowing down today?</p>
+          <ExpansionPanel drawn={started ? shownProgress1 : null} share={null} guess={part1Done ? submitted!.gravity : null} />
+          {started ? <Part1PanelCaption started={started} arrived={part1Done} /> : null}
+        </Block>
+
+        {part1Done && (
+          <Block>
+            <WhereFrom>
+              <strong>Measured:</strong> the astronomers&rsquo; best fit of about <strong>{BEST_PERCENT} percent</strong> dark energy is a rounded value. NASA gives &ldquo;approximately 68.3 to 70%&rdquo;. It comes from real supernova measurements, first reported in 1998 by two teams, and many measurements since. It is given here, not worked out.{' '}
+              <strong>Calculated here:</strong> every distance, every brightness, the blue line, the green dashed line, the panel&rsquo;s curve and the redshift-{GUESS_REDSHIFT} numbers, from the formulas in the Words and formulas box, using the page&rsquo;s 70 km/s per megaparsec. <strong>The green line is a calculation at {BEST_PERCENT} percent, not a plot of
+              supernovae.</strong> <strong>Imagined for the question:</strong> the three supernovae at redshifts 0.2, 0.5 and 0.8; the assumption that all three are exactly equally bright; the &ldquo;matter-only universe&rdquo; (we cannot visit one); and, in Part 2, your own share of dark energy. White is only ever your guess.
+            </WhereFrom>
+          </Block>
         )}
+        {!started && <p style={smallNote}>After you press Run, the dashed rings and the blue line appear, the green disks and the green dashed line are drawn, and a caption appears for each picture. When the run ends your white guess marks and a &ldquo;Where the real picture comes from&rdquo; note appear, and Parts 2, 3 and 4 appear below.</p>}
+        {started && !part1Done && <p style={smallNote}>Your white guess marks and Parts 2, 3 and 4 appear when the run ends.</p>}
 
-        {isActive && (
-          <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {result.supernovae.map((sn, index) => (
-              <span key={sn.redshift}>
-                {index > 0 && <br />}
-                Supernova at redshift {sn.redshift}: appears {sn.distanceMpc.toFixed(0)} Mpc away (matter-only
-                universe: {sn.matterOnlyDistanceMpc.toFixed(0)} Mpc) &nbsp;|&nbsp; brightness{' '}
-                {(sn.brightnessRelativeToMatterOnly * 100).toFixed(0)}% of the matter-only prediction
-              </span>
-            ))}
-            <br />
-            Today, in this universe, the expansion is{' '}
-            <strong>{result.isExpansionAccelerating ? 'speeding up' : 'slowing down'}</strong>.
-          </p>
-        )}
+        {part1Done && (
+          <>
+            {/* ===== Part 2 ===== */}
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              Now choose your own share of dark energy and see what changes. The amber line, the amber disks and the amber dot show your universe next to the best fit. Your guesses do not change anything here; the share does.
+            </PartHeader>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
-          <svg
-            width={SN_WIDTH}
-            height={SN_HEIGHT}
-            viewBox={`0 0 ${SN_WIDTH} ${SN_HEIGHT}`}
-            style={{
-              display: 'block',
-              border: '1px solid var(--border-color, #ccc)',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              backgroundColor: '#0b1020',
-              maxWidth: '100%',
-            }}
-          >
-            <defs>
-              <radialGradient id="supernova-glow">
-                <stop offset="0%" stopColor="#fffbeb" stopOpacity={1} />
-                <stop offset="100%" stopColor={CHOSEN_COLOR} stopOpacity={0.6} />
-              </radialGradient>
-            </defs>
-
-            <text x={SN_WIDTH / 2} y={20} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-              Exploding stars (Type Ia supernovae) at three distances
-            </text>
-
-            {/* Earth, the observer */}
-            <circle cx={EARTH_X} cy={SN_Y} r={12} fill="#38bdf8" />
-            <text x={EARTH_X} y={SN_Y + 30} fill="#e2e8f0" fontSize="11" textAnchor="middle">
-              Earth
-            </text>
-            <line
-              x1={EARTH_X + 14}
-              y1={SN_Y}
-              x2={SN_WIDTH - 10}
-              y2={SN_Y}
-              stroke="#334155"
-              strokeDasharray="4 4"
-            />
-
-            {result.supernovae.map((sn) => {
-              // Brightness eases from 1 (matter-only) to the chosen value as the run plays.
-              const shownBrightness = 1 - displayedProgress * (1 - sn.brightnessRelativeToMatterOnly)
-              const x = snX(sn.redshift)
-              return (
-                <g key={sn.redshift}>
-                  {hasSubmittedPrediction && (
-                    <>
-                      {/* What a matter-only universe predicts: hidden until predictions are locked in (CLAUDE.md §12) */}
-                      <circle
-                        cx={x}
-                        cy={SN_Y}
-                        r={SN_BASE_RADIUS}
-                        fill="none"
-                        stroke={MATTER_ONLY_COLOR}
-                        strokeWidth={1.5}
-                        strokeDasharray="4 3"
-                      />
-                    </>
-                  )}
-                  {/* What the chosen universe gives */}
-                  <circle
-                    cx={x}
-                    cy={SN_Y}
-                    r={SN_BASE_RADIUS * Math.sqrt(shownBrightness)}
-                    fill="url(#supernova-glow)"
-                    opacity={0.25 + 0.75 * shownBrightness}
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Share of the universe&rsquo;s energy that is dark energy:</p>
+              <button type="button" onClick={() => handleModeChange('none')} className={`toggle-button${mode === 'none' ? ' is-selected' : ''}`} style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}>
+                None (matter only)
+              </button>
+              <button type="button" onClick={() => handleModeChange('bestFit')} className={`toggle-button${mode === 'bestFit' ? ' is-selected' : ''}`} style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}>
+                The best fit to observations (about {BEST_PERCENT}%)
+              </button>
+              <button type="button" onClick={() => handleModeChange('custom')} className={`toggle-button${mode === 'custom' ? ' is-selected' : ''}`} style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}>
+                Custom
+              </button>
+              {mode === 'custom' && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label htmlFor="dark-energy-share" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                    Dark energy: {Math.round(customShare * 100)}% of the total (matter makes up the other {100 - Math.round(customShare * 100)}%)
+                  </label>
+                  <input
+                    id="dark-energy-share"
+                    type="range"
+                    min={0}
+                    max={MAX_DARK_ENERGY_FRACTION}
+                    step={0.01}
+                    value={customShare}
+                    onChange={(event) => {
+                      setCustomShare(Number(event.target.value))
+                      if (!part2Running) setPart2Progress(1)
+                    }}
+                    style={{ width: '100%' }}
                   />
-                  <text x={x} y={SN_Y - SN_BASE_RADIUS - 8} fill="#e2e8f0" fontSize="11" textAnchor="middle">
-                    redshift {sn.redshift}
-                  </text>
-                  <text x={x} y={SN_Y + SN_BASE_RADIUS + 18} fill="#fde68a" fontSize="10" textAnchor="middle">
-                    {isActive ? `${(shownBrightness * 100).toFixed(0)}% as bright` : ' '}
-                  </text>
-                </g>
-              )
-            })}
-
-            {hasSubmittedPrediction && (
-              <g transform={`translate(20, ${SN_HEIGHT - 42})`}>
-                <circle
-                  cx={6}
-                  cy={0}
-                  r={6}
-                  fill="none"
-                  stroke={MATTER_ONLY_COLOR}
-                  strokeWidth={1.5}
-                  strokeDasharray="4 3"
-                />
-                <text x={18} y={3} fill="#e2e8f0" fontSize="10">
-                  dashed ring = how bright it would look in a matter-only universe
-                </text>
-                <circle cx={6} cy={18} r={6} fill="url(#supernova-glow)" />
-                <text x={18} y={21} fill="#e2e8f0" fontSize="10">
-                  glowing disk = how bright it looks with your chosen dark energy
-                </text>
-              </g>
-            )}
-          </svg>
-
-          {hasSubmittedPrediction && (
-            <svg
-              width={GRAPH_WIDTH}
-              height={GRAPH_HEIGHT}
-              viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-              style={{
-                display: 'block',
-                border: '1px solid var(--border-color, #ccc)',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                backgroundColor: '#0b1020',
-                maxWidth: '100%',
-              }}
-            >
-              <text
-                x={GRAPH_WIDTH / 2}
-                y={14}
-                fill="#e2e8f0"
-                fontSize="12"
-                fontWeight="600"
-                textAnchor="middle"
-              >
-                Brightness of a supernova versus its redshift
-              </text>
-
-              {/* Axes and ticks */}
-              <line x1={GRAPH_LEFT} y1={GRAPH_TOP} x2={GRAPH_LEFT} y2={GRAPH_BOTTOM} stroke="#94a3b8" />
-              <line x1={GRAPH_LEFT} y1={GRAPH_BOTTOM} x2={GRAPH_RIGHT} y2={GRAPH_BOTTOM} stroke="#94a3b8" />
-              {[0.4, 0.6, 0.8, 1].map((b) => (
-                <g key={b}>
-                  <line x1={GRAPH_LEFT - 4} y1={graphY(b)} x2={GRAPH_LEFT} y2={graphY(b)} stroke="#94a3b8" />
-                  <text x={GRAPH_LEFT - 8} y={graphY(b) + 3} fill="#94a3b8" fontSize="10" textAnchor="end">
-                    {b.toFixed(1)}
-                  </text>
-                </g>
-              ))}
-              {[0, 0.2, 0.4, 0.6, 0.8, 1].map((z) => (
-                <g key={z}>
-                  <line
-                    x1={graphX(z)}
-                    y1={GRAPH_BOTTOM}
-                    x2={graphX(z)}
-                    y2={GRAPH_BOTTOM + 4}
-                    stroke="#94a3b8"
-                  />
-                  <text x={graphX(z)} y={GRAPH_BOTTOM + 16} fill="#94a3b8" fontSize="10" textAnchor="middle">
-                    {z}
-                  </text>
-                </g>
-              ))}
-              <text
-                x={(GRAPH_LEFT + GRAPH_RIGHT) / 2}
-                y={GRAPH_BOTTOM + 32}
-                fill="#e2e8f0"
-                fontSize="11"
-                textAnchor="middle"
-              >
-                redshift (how far away the supernova is)
-              </text>
-              <text
-                x={14}
-                y={(GRAPH_TOP + GRAPH_BOTTOM) / 2}
-                fill="#e2e8f0"
-                fontSize="11"
-                textAnchor="middle"
-                transform={`rotate(-90 14 ${(GRAPH_TOP + GRAPH_BOTTOM) / 2})`}
-              >
-                brightness, compared with matter-only
-              </text>
-
-              {/* Matter-only prediction (the reference: 1) */}
-              <polyline points={matterOnlyLine} fill="none" stroke={MATTER_ONLY_COLOR} strokeWidth={2.5} />
-
-              {/* Prediction with the chosen dark energy */}
-              {isActive && chosenLine && (
-                <polyline points={chosenLine} fill="none" stroke={CHOSEN_COLOR} strokeWidth={2.5} />
+                </div>
               )}
-
-              {/* Astronomers' best fit (a given reference curve), drawn on top so it stays visible when it coincides with your line */}
-              <polyline
-                points={bestFitLine}
-                fill="none"
-                stroke={BEST_FIT_COLOR}
-                strokeWidth={2}
-                strokeDasharray="6 4"
-              />
-
-              {/* Legend */}
-              <g transform={`translate(${GRAPH_LEFT + 10}, ${GRAPH_BOTTOM - 62})`}>
-                <line x1={0} y1={0} x2={22} y2={0} stroke={MATTER_ONLY_COLOR} strokeWidth={2.5} />
-                <text x={28} y={3} fill="#e2e8f0" fontSize="10">
-                  matter-only prediction
-                </text>
-                <line
-                  x1={0}
-                  y1={14}
-                  x2={22}
-                  y2={14}
-                  stroke={BEST_FIT_COLOR}
-                  strokeWidth={2}
-                  strokeDasharray="6 4"
-                />
-                <text x={28} y={17} fill="#e2e8f0" fontSize="10">
-                  astronomers' best fit (about {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}% dark energy)
-                </text>
-                <line x1={0} y1={28} x2={22} y2={28} stroke={CHOSEN_COLOR} strokeWidth={2.5} />
-                <text x={28} y={31} fill="#e2e8f0" fontSize="10">
-                  prediction with your chosen dark energy
-                </text>
-              </g>
-            </svg>
-          )}
-        </div>
-
-        {hasSubmittedPrediction && (
-          <div
-            style={{
-              fontSize: '0.8125rem',
-              color: 'var(--text-muted)',
-              marginTop: '0.75rem',
-              lineHeight: 1.55,
-            }}
-          >
-            <p style={{ marginTop: 0, marginBottom: '0.6rem' }}>
-              <strong>How to read this diagram.</strong> Both pictures answer one question: how bright do
-              faraway exploding stars look, compared with what a universe made of only matter would predict?
-              If they look dimmer than that, they are farther away than that universe says, and that is how we
-              can tell the expansion has been speeding up.
-            </p>
-
-            <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-              <strong>The left picture: three supernovae.</strong>
-            </p>
-            <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-              <li>
-                <strong>Earth</strong> is on the left, where we are looking from. The three exploding stars
-                sit at redshifts 0.2, 0.5 and 0.8. A bigger redshift means the star is farther away and its
-                light left it longer ago. All three stars have exactly the same true brightness, so any
-                difference in how bright they look comes from distance alone.
-              </li>
-              <li>
-                The <strong style={{ color: MATTER_ONLY_COLOR }}>dashed blue ring</strong> shows how bright
-                that star would look in a universe containing only matter. Think of it as the "expected"
-                brightness.
-              </li>
-              <li>
-                The <strong style={{ color: CHOSEN_COLOR }}>glowing disk</strong> shows how bright it looks
-                with the dark energy you chose. The disk's area is drawn in proportion to brightness, and the
-                percentage under it says how bright it is compared with the ring. A disk smaller than its ring
-                means the star looks <em>dimmer</em> than expected.
-              </li>
-              <li>
-                <strong>Why dimmer means farther.</strong> Light spreads out as it travels, so brightness
-                falls with the square of the distance. Like car headlights: a car twice as far away looks one
-                quarter as bright. So a star that looks one quarter as bright as expected must be twice as far
-                as expected. The same logic applies here, just with smaller changes.
-              </li>
-            </ul>
-
-            <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-              <strong>The right picture: the same comparison at every distance.</strong>
-            </p>
-            <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-              <li>
-                Across the bottom is <strong>redshift</strong> (how far away the star is). Up the side is{' '}
-                <strong>brightness compared with matter-only</strong>, where 1.0 means "exactly as bright as a
-                matter-only universe predicts" and 0.7 means "70% as bright".
-              </li>
-              <li>
-                The <strong style={{ color: MATTER_ONLY_COLOR }}>blue line</strong> is the matter-only
-                prediction. It is flat at 1.0 because we are measuring everything against it.
-              </li>
-              <li>
-                The <strong style={{ color: CHOSEN_COLOR }}>amber line</strong> is the prediction for the dark
-                energy you chose. It appears when you run, and it moves when you change the amount. Where it
-                sits <em>below</em> the blue line, the stars look dimmer than expected.
-              </li>
-              <li>
-                The <strong style={{ color: BEST_FIT_COLOR }}>green dashed line</strong> is the best fit
-                astronomers have found to real supernova observations. It is a model curve, not individual
-                measurements. If your amber line lies on top of the green line, your universe looks like the
-                one we observe.
-              </li>
-              <li>
-                Notice that all three lines meet at the left, and spread apart toward the right. That means
-                nearby objects look the same in every universe, and only very distant ones show the
-                difference. This is why Hubble's Law (Experiment 1) worked for nearby galaxies.
-              </li>
-            </ul>
-
-            <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-              <strong>Things to try.</strong>
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
-              <li>
-                <strong>None (matter only):</strong> the amber line lies right on the blue line, and every
-                disk fills its ring. Nothing looks dimmer than expected.
-              </li>
-              <li>
-                <strong>The best fit (about {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}%):</strong> the
-                amber line lies on the green line, and the disks shrink inside their rings, more so for the
-                farther stars.
-              </li>
-              <li>
-                <strong>Custom:</strong> drag the slider and run again. A small share dims the stars a little,
-                and a large share dims them a lot. The line above the pictures also tells you whether the
-                expansion today is speeding up or slowing down. In this model it speeds up once dark energy is
-                more than about one third of the total.
-              </li>
-            </ul>
-            <p style={{ marginTop: '0.6rem', marginBottom: 0 }}>
-              The numbers above the pictures are exact. The colors and disk sizes are drawn to help you see
-              the comparison.
-            </p>
-          </div>
-        )}
-        {status === 'complete' && submittedGravityPrediction && submittedLooksPrediction && (
-          <div
-            style={{
-              marginTop: '1.5rem',
-              paddingTop: '1rem',
-              borderTop: '1px solid var(--border-color, #ccc)',
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Results</h3>
-            <p>
-              You chose <strong>{Math.round(share * 100)}% dark energy</strong>. In this universe the
-              expansion today is{' '}
-              <strong>{result.isExpansionAccelerating ? 'speeding up' : 'slowing down'}</strong>. How far away
-              each supernova appears, and how bright it looks compared with a matter-only universe:
-            </p>
-            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign: 'left', padding: '0.25rem 1rem 0.25rem 0' }}>Redshift</th>
-                    <th style={{ textAlign: 'right', padding: '0.25rem 1rem' }}>
-                      Distance, matter only (Mpc)
-                    </th>
-                    <th style={{ textAlign: 'right', padding: '0.25rem 1rem' }}>
-                      Distance, your universe (Mpc)
-                    </th>
-                    <th style={{ textAlign: 'right', padding: '0.25rem 0 0.25rem 1rem' }}>Brightness</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.supernovae.map((sn) => (
-                    <tr key={sn.redshift}>
-                      <td style={{ padding: '0.25rem 1rem 0.25rem 0' }}>{sn.redshift}</td>
-                      <td style={{ textAlign: 'right', padding: '0.25rem 1rem' }}>
-                        {sn.matterOnlyDistanceMpc.toFixed(0)}
-                      </td>
-                      <td style={{ textAlign: 'right', padding: '0.25rem 1rem' }}>
-                        {sn.distanceMpc.toFixed(0)}
-                      </td>
-                      <td style={{ textAlign: 'right', padding: '0.25rem 0 0.25rem 1rem' }}>
-                        {(sn.brightnessRelativeToMatterOnly * 100).toFixed(0)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div style={{ marginTop: '0.75rem' }}>
+                <button type="button" className="action-button" onClick={handlePart2Run} disabled={part2Running} style={{ padding: '0.5rem 1.5rem' }}>
+                  {part2Running ? 'Running...' : 'Run: watch the disks with your share'}
+                </button>
+              </div>
+              <p style={smallNote}>
+                Your predictions are locked while you try other settings. Your guesses do not change the drawings or tables, but this share does: it changes the amber disks, the amber line and the amber dot, and the &ldquo;your universe&rdquo; columns in Part 3. Every other number stays the same. These shares are{' '}
+                <strong>trial values</strong>: they show what would happen in a universe with that much dark energy, and they do not say the real universe is like that. While the share is on the best fit ({BEST_PERCENT} percent), your amber drawings lie exactly on the green ones, so change the share to see something move.
+              </p>
+              <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem', marginBottom: 0 }}>
+                At {Math.round(share * 100)} percent dark energy, today the expansion is <strong>{direction}</strong> (deceleration number {q > 0 ? '+' : q < 0 ? '−' : ''}
+                {Math.abs(q).toFixed(2)}).{' '}
+                {verdict === 'match'
+                  ? `The brightness stays within ${Math.round(MATCH_TOLERANCE * 100)} percent of the best fit's at every redshift.`
+                  : verdict === 'too-little'
+                    ? `Distant supernovae still look more than ${Math.round(MATCH_TOLERANCE * 100)} percent brighter than the best fit says at some redshifts.`
+                    : `Distant supernovae look more than ${Math.round(MATCH_TOLERANCE * 100)} percent less bright than the best fit says at some redshifts.`}{' '}
+                The &ldquo;within {Math.round(MATCH_TOLERANCE * 100)} percent&rdquo; rule is this page&rsquo;s own, not a published cut-off. Shares from about {Math.round(band.low * 100)} to {Math.round(band.high * 100)} percent meet it.
+              </p>
             </div>
-            <p>
-              {shareVerdict === 'match'
-                ? "With this share, the predicted brightness stays within 5% of the astronomers' best fit at every redshift, so this universe would look like the one we observe."
-                : shareVerdict === 'too-little'
-                  ? 'With this share, distant supernovae still look brighter than the best fit says they do: this is not yet enough dark energy to explain what is observed.'
-                  : 'With this share, distant supernovae look dimmer than the best fit says they do: this is more dark energy than the observations call for.'}
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Checking your first prediction:</strong> asked how gravity would affect the expansion in
-              a matter-only universe, you answered "
-              {gravityEffectChoices.find((c) => c.value === submittedGravityPrediction)!.label}". Matter pulls
-              on other matter, so it works against the expansion: in this model a matter-only universe is{' '}
-              {decelerationParameter(0) > 0 ? 'slowing down' : 'speeding up'} today —{' '}
-              {submittedGravityPrediction === ACTUAL_GRAVITY_EFFECT
-                ? 'so your prediction was right.'
-                : 'so your prediction was off this time.'}
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Checking your second prediction:</strong> you guessed a faraway supernova would look{' '}
-              {looksChoices.find((c) => c.value === submittedLooksPrediction)!.label.toLowerCase()} if the
-              expansion were speeding up. With the best-fit {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}%
-              dark energy, a supernova at redshift 0.5 looks only{' '}
-              {(bestFitMiddleSupernova.brightnessRelativeToMatterOnly * 100).toFixed(0)}% as bright as in a
-              matter-only universe, because the extra stretching of space has carried it farther away —{' '}
-              {submittedLooksPrediction === ACTUAL_LOOKS
-                ? 'so your prediction was right.'
-                : 'so your prediction was off this time.'}
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>A worked example.</strong> At redshift 0.5, a matter-only universe puts the supernova at
-              about {middleSupernova.matterOnlyDistanceMpc.toFixed(0)} Mpc, and your universe puts it at about{' '}
-              {middleSupernova.distanceMpc.toFixed(0)} Mpc. Brightness falls with the square of the distance,
-              so its brightness compared with matter-only is (
-              {middleSupernova.matterOnlyDistanceMpc.toFixed(0)} ÷ {middleSupernova.distanceMpc.toFixed(0)})²
-              ≈ {middleSupernova.brightnessRelativeToMatterOnly.toFixed(2)}, about{' '}
-              {((1 - middleSupernova.brightnessRelativeToMatterOnly) * 100).toFixed(0)}% dimmer.
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Nearby objects agree.</strong> At a tiny redshift of {NEARBY_REDSHIFT}, a matter-only
-              universe puts a supernova at about {luminosityDistanceMpc(NEARBY_REDSHIFT, 0).toFixed(1)} Mpc
-              and yours puts it at about {luminosityDistanceMpc(NEARBY_REDSHIFT, share).toFixed(1)} Mpc:
-              essentially the same. That is why Hubble's Law (Experiment 1) worked so well for nearby
-              galaxies: the different versions of the universe only disagree at large distances.
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              This kind of measurement is real: in 1998 and 1999 two independent research teams found that
-              distant Type Ia supernovae look dimmer than a slowing universe predicts, and that discovery
-              shared the 2011 Nobel Prize in Physics.
-            </p>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Remember:</strong> this model treats the universe as flat, with only matter and a
-              constant dark energy, and treats supernovae as perfect standard candles. The "best fit" line is
-              the model astronomers found to match real supernovae, not raw data. It uses the same
-              illustrative Hubble constant as Experiment 1 (70 km/s/Mpc), and the real value is still debated
-              (about 67 to 73).
-            </p>
-          </div>
+
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 4: the three stars with your share ({Math.round(share * 100)}% dark energy)</p>
+              <SupernovaPicture kind="yours" share={share} progress={part2Progress} started guess={null} />
+            </Block>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 5: brightness against redshift, with your share</p>
+              <BrightnessGraph drawn={1} share={share} guess={null} />
+            </Block>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 6: slowing down or speeding up today, with your share</p>
+              <ExpansionPanel drawn={1} share={share} guess={null} />
+              <Part2Caption share={share} />
+            </Block>
+            <Block>
+              <WhereFrom>
+                <strong>Calculated here</strong> from the share you chose: the amber disks, the amber line, the amber dot and the numbers in the &ldquo;your universe&rdquo; columns. The blue and green lines and the dashed rings are the same as in Part 1. <strong>Imagined for the question:</strong> your trial share of dark energy.
+              </WhereFrom>
+            </Block>
+
+            {/* ===== Part 3 ===== */}
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              Here are the numbers behind the pictures. Table 1 sets the page&rsquo;s numbers beside what astronomers report. Table 2 gives how far and how bright each supernova is. Your guesses are shown beside the tables, and nothing you guess changes a number in either table. Only the &ldquo;your universe&rdquo; columns in Table 2 follow
+              the share you chose in Part 2.
+            </PartHeader>
+            <DarkEnergyResults guesses={submitted} share={share} explained={explained} />
+
+            {/* ===== Part 4 ===== */}
+            <PartHeader color="#0066cc" title="Part 4: The tutor">
+              You will talk over what you saw. The tutor will ask three questions, then explain, and will say how each of your guesses compares.
+            </PartHeader>
+            {submitted && (
+              <DarkEnergyTutor
+                predictedGravity={submitted.gravity}
+                predictedLooks={submitted.looks}
+                onExplained={() => {
+                  setExplained(true)
+                  onTutorComplete?.()
+                }}
+              />
+            )}
+            {explained && <p style={{ ...smallNote, marginTop: '1rem' }}>You have reached the tutor&rsquo;s explanation. You can still try another share in Part 2; the tutor does not restart.</p>}
+          </>
         )}
       </div>
-
-      {status === 'complete' && submittedGravityPrediction && submittedLooksPrediction && (
-        <DarkEnergyTutor
-          key={runCount}
-          predictedGravity={submittedGravityPrediction}
-          predictedLooks={submittedLooksPrediction}
-          onExplained={onTutorComplete}
-        />
-      )}
     </div>
   )
 }
