@@ -1,18 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   BEST_FIT_DARK_ENERGY_FRACTION,
   FUTURE_GRAPH_MAX_YEARS,
   MAX_DARK_ENERGY_FRACTION,
-  PAST_GRAPH_YEARS,
   expansionRateAtSize,
   futureRelativeSize,
-  longTermExpansionRate,
+  ruleOfSeventy,
   runFateOfTheUniverseExperiment,
-  yearsToGrow,
+  steadyDoublingEstimate,
+  galaxySpeedKmPerS,
 } from '../physics/fateOfTheUniverseExperiment'
-import { universeAgeYears } from '../physics/universeAgeExperiment'
+import type { FarFutureGuess, NextDoublingGuess } from '../physics/fateOfTheUniverseExperiment'
+import { FateOfTheUniverseResults } from './FateOfTheUniverseResults'
 import { FateOfTheUniverseTutor } from './FateOfTheUniverseTutor'
 import { CosmologySynthesis } from './CosmologySynthesis'
+import {
+  BarsCaption,
+  DoublingBars,
+  GalaxyStrip,
+  GraphCaption,
+  REAL_COLOR,
+  SizeGraph,
+  StripCaption,
+  YOUR_COLOR,
+  YourBarsCaption,
+  YourGraphCaption,
+  formatSize,
+  nextDoublingYearsAt,
+} from './FateOfTheUniversePictures'
+import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PartHeader } from './GravitationalWaveExperiment'
+import { Block, ExternalLink, WhereFrom, listStyle, smallNote } from './TidalEffectExperiment'
+import { universeAgeYears } from '../physics/universeAgeExperiment'
+
+// Cosmology, Experiment 10, audited to the newer rules (docs/audit/cosmology/10-draft-wording.md, approved by the owner on 2026-11-16).
+// Every number comes from the physics module; this file only draws and words it (CLAUDE.md §9). The learner's guesses never change a real
+// picture or table; they are drawn in white once their feature is drawn (§14, "Predictions and the Real Results").
 
 interface FateOfTheUniverseExperimentProps {
   onComplete?: () => void
@@ -28,1172 +52,566 @@ const PRESET_SHARES: Record<Exclude<ShareMode, 'custom'>, number> = {
   stronger: MAX_DARK_ENERGY_FRACTION,
 }
 
-// This experiment's two prediction questions, per its specification's "Prediction Activity", both about
-// the real (best-fit) universe. Choices are not scored here.
-type FarFutureChoice = 'stops' | 'slower' | 'faster'
-const farFutureChoices: Array<{ value: FarFutureChoice; label: string }> = [
+// The two guess questions are kept exactly as the owner approved them (2026-10-09), both about the real (best-fit) universe.
+const farFutureChoices: Array<{ value: FarFutureGuess; label: string }> = [
   { value: 'stops', label: 'The expansion slows down and stops' },
   { value: 'slower', label: 'The expansion keeps going, but ever more slowly' },
   { value: 'faster', label: 'The expansion keeps speeding up and never stops' },
 ]
-
-type NextDoublingChoice = 'shorter' | 'same' | 'longer'
-const nextDoublingChoices: Array<{ value: NextDoublingChoice; label: string }> = [
+const nextDoublingChoices: Array<{ value: NextDoublingGuess; label: string }> = [
   { value: 'shorter', label: 'Shorter, about 5 billion years' },
   { value: 'same', label: 'About the same, about 11 billion years' },
   { value: 'longer', label: 'Much longer, about 30 billion years' },
 ]
+const optionText = (options: Array<{ value: string; label: string }>, value: string | null) => options.find((o) => o.value === value)?.label ?? null
 
 // Fixed real-world playback duration (CLAUDE.md §11): playback speed never changes the result.
 const ANIMATION_DURATION_MS = 10000
-
-const CHOSEN_COLOR = '#fbbf24'
-const REFERENCE_COLOR = '#38bdf8'
-const CLUSTER_COLOR = '#60a5fa'
-const MUTED_COLOR = '#94a3b8'
-
-// Size-versus-time graph: relative size on a logarithmic vertical axis, time from now horizontally.
-const GRAPH_WIDTH = 560
-const GRAPH_HEIGHT = 340
-const GRAPH_LEFT = 64
-const GRAPH_RIGHT = GRAPH_WIDTH - 20
-const GRAPH_TOP = 54
-const GRAPH_BOTTOM = GRAPH_HEIGHT - 50
-const GRAPH_MIN_SIZE = 0.1
-const GRAPH_MAX_SIZE = 1000
-const CURVE_POINTS = 220
-const TIME_TICKS_BILLIONS = [-10, 0, 20, 40, 60, 80, 100]
-const SIZE_TICKS = [0.1, 1, 10, 100, 1000]
-
-const GRAPH_TIME_SPAN = FUTURE_GRAPH_MAX_YEARS + PAST_GRAPH_YEARS
-const LOG_SPAN = Math.log10(GRAPH_MAX_SIZE) - Math.log10(GRAPH_MIN_SIZE)
-
-function graphX(yearsFromNow: number): number {
-  return GRAPH_LEFT + ((yearsFromNow + PAST_GRAPH_YEARS) / GRAPH_TIME_SPAN) * (GRAPH_RIGHT - GRAPH_LEFT)
-}
-
-function graphY(size: number): number {
-  const fraction = (Math.log10(size) - Math.log10(GRAPH_MIN_SIZE)) / LOG_SPAN
-  return GRAPH_BOTTOM - fraction * (GRAPH_BOTTOM - GRAPH_TOP)
-}
-
-// Doubling-time bars: a fixed, labeled scale, so bars are comparable between runs. A bar longer than the
-// scale is cut off with a break mark and labeled with its real length.
-const BARS_WIDTH = 560
-const BARS_HEIGHT = 230
-const BARS_LEFT = 110
-const BARS_SCALE_WIDTH = 380
-const BARS_SCALE_MAX_YEARS = 80e9
-const BARS_TOP = 56
-const BARS_ROW_HEIGHT = 34
-const BARS_TICKS_BILLIONS = [0, 20, 40, 60, 80]
-
-function barX(years: number): number {
-  return BARS_LEFT + (Math.min(years, BARS_SCALE_MAX_YEARS) / BARS_SCALE_MAX_YEARS) * BARS_SCALE_WIDTH
-}
-
-// "Galaxies spreading out" strip. Schematic: the spacing shown adds the same step for every doubling of
-// the size, so that the strip fits on screen at every size the run reaches.
-const STRIP_WIDTH = 560
-const STRIP_HEIGHT = 190
-const STRIP_CLUSTER_X = 70
-const STRIP_Y = 100
-const STRIP_GALAXIES = 3
-
-function stripSpacing(size: number): number {
-  return 40 + 11 * Math.log2(Math.max(size, 1))
-}
+const DEFAULT_SHARE_MODE: ShareMode = 'weaker'
+const DEFAULT_CUSTOM_SHARE = 0.5
 
 const billions = (years: number, digits = 1) => (years / 1e9).toFixed(digits)
+const WORDS_FOR_NUMBERS: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten' }
 
-function formatSize(size: number): string {
-  if (size >= 100) return Math.round(size).toString()
-  if (size >= 10) return size.toFixed(1)
-  return size.toFixed(2)
+// ---- the introduction (the owner's approved wording, 2026-11-16; no answers given: §12) ----
+function Intro() {
+  const p = { marginTop: 0, marginBottom: '0.75rem' } as const
+  const list = { marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' } as const
+  return (
+    <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+      <p style={p}>
+        <strong>The question.</strong> Since Cosmology 1 and 2 you have known that the universe is expanding: faraway galaxies are moving apart. In Cosmology 5 you met dark energy, which changes how that expansion behaves, and in Cosmology 6 you used it to work out the universe&rsquo;s age. All of that looked at the past and the present. So what happens next? Does the expansion ever stop? Does it slow down, or turn around, or does it go on forever?
+      </p>
+      <p style={p}>
+        <strong>What happens.</strong> Every earlier experiment in this chapter looked at the universe as it was, or as it is today: how it began, how fast it is stretching, what it is made of, how old it is. This one looks the other way, at what happens <em>next</em>. That is a bigger question than it first sounds. In the model you will use, the universe is {billions(universeAgeYears(BEST_FIT_DARK_ENERGY_FRACTION))} billion years old today, and the graph you will see runs {billions(FUTURE_GRAPH_MAX_YEARS, 0)} billion years into the future: more than {WORDS_FOR_NUMBERS[Math.floor(FUTURE_GRAPH_MAX_YEARS / universeAgeYears(BEST_FIT_DARK_ENERGY_FRACTION))]} times as long as everything that has happened since the Big Bang. So we are asking about a future far longer than the whole past.
+      </p>
+      <p style={p}>
+        Nobody can watch that future. What astronomers do instead is what a weather forecaster does: take what is known today and the rules that have worked so far, and run them forward. A forecast is only as good as its ingredients, and here there are just a few: how fast space is stretching today, how much of the universe&rsquo;s energy is matter (whose gravity pulls everything together), and how much is dark energy (which works in a different way, as you saw in Cosmology 5). Run the same rules forward with different amounts of each, and you get different futures. This experiment lets you see how different they can be.
+      </p>
+      <p style={p}>
+        It is also a real test, not just a story. A model that gets the past right ought to say something sensible about what comes next, and where it cannot, because the answer depends on something nobody knows yet, that shows what is still missing. One of the model&rsquo;s key assumptions is being tested by new measurements right now (see &ldquo;As of November 2026&rdquo; below), so the answer you will see is what the model gives, not a settled fact about the real future.
+      </p>
+      <p style={p}>
+        <strong>Your guesses.</strong> First you will look at the real universe. You will make two guesses about its future. Then you press <strong>Run</strong>, and the experiment takes the simple model you used in Cosmology 5 and 6 and runs it forward in time, from today to 100 billion years from now. Two pictures draw themselves: a <strong>graph</strong> of how big the universe becomes compared with today, and four <strong>bars</strong> showing how long the universe takes to double in size, once, twice, three times and four times. Your guesses are drawn on them in white. Then, in <strong>Part 2</strong>, you choose how much of the universe&rsquo;s energy is dark energy, and watch your own universe grow in the same two pictures, plus a drawing of galaxies spreading apart. You can try as many choices as you like and compare.
+      </p>
+      <p style={p}>
+        <strong>Your guesses and the real pictures.</strong> Your guesses never change the real pictures or tables. They are drawn on the real graph and the real bars in <strong>white</strong>, in a box labelled YOUR GUESS, after the run, and shown again beside the results. The dark energy share you choose in Part 2 does change Pictures 3 to 5 and the pink column of the results table, but never the real pictures in Part 1. If you change a guess, press Run and see nothing change, that is not a fault: a guess is only a guess.
+      </p>
+      <p style={p}>
+        <strong>Step 1: the size of the universe.</strong> The universe&rsquo;s <strong>size</strong> here means the distances between faraway galaxies, compared with what they are today (as in Cosmology 6). Today is 1×, and 2× means every such distance has doubled. For example, two galaxies that are 100 million light-years apart today would be 200 million light-years apart when the universe is 2× its size today. It is not the size of any one object: your own body, the Earth and our galaxy do not grow.
+      </p>
+      <p style={p}>
+        <strong>Step 2: the doubling time.</strong> The <strong>doubling time</strong> is how long the universe takes to double in size. If it doubles in 10 billion years, then in 10 billion years every distance between faraway galaxies will be twice what it is today, and 10 billion years after that, four times. Comparing doubling times is a fair way to compare growth, because doubling from 1× to 2× and doubling from 100× to 200× are the same kind of step, even though the second adds far more distance.
+      </p>
+      <p style={p}>
+        <strong>Step 3: the expansion rate.</strong> The <strong>expansion rate</strong> is how fast distances are growing, for each unit of distance. It is the number from Hubble&rsquo;s Law (Cosmology 1): at 70 kilometers per second per <strong>megaparsec</strong> (a megaparsec is about 3.3 million light-years), a galaxy one megaparsec away moves away from us at 70 kilometers per second, and one 100 megaparsecs away at 70 × 100 = 7,000 kilometers per second. The word &ldquo;constant&rdquo; in &ldquo;Hubble constant&rdquo; means the same everywhere in space at one moment. It does not mean the same for all time: in this experiment the expansion rate can change as the universe ages.
+      </p>
+      <p style={p}>
+        <strong>Step 4: what sets the rate.</strong> What sets the expansion rate is what the universe contains. The matter and the dark energy each add a part to it. We call each one&rsquo;s part its <strong>contribution</strong>. The two contributions add up to 1 today. For the real universe, matter&rsquo;s is 0.30 and dark energy&rsquo;s is 0.70 (rounded; Planck&rsquo;s 2018 measurement of the matter share is 0.315 ± 0.007). You will see how the two contributions change as the universe grows.
+      </p>
+      <p style={p}>
+        <strong>Step 5: what &ldquo;flat&rdquo; means here.</strong> When we say the universe is <strong>flat</strong>, we mean the shape of space itself, averaged over very large distances. In flat space, the geometry you learned at school works: two straight lines that start out parallel stay parallel forever, and the angles of a triangle add up to 180°. Space could instead be curved on the largest scales, like the sphere in Curved Spacetime where two travelers who set out side by side met at the pole. This is a different idea from the curved spacetime around a star, which bends the paths of things passing close by. &ldquo;Flat&rdquo; here is only about the overall shape of space once you zoom out so far that galaxies blur into a smooth background. A comparison: the Earth is curved, but a tabletop is flat for everyday purposes, because you are looking at a tiny piece of it.
+      </p>
+      <p style={p}>
+        Measurements of the oldest light (Cosmology 3), combined with other measurements, are consistent with a flat universe: Planck&rsquo;s 2018 results give the curvature&rsquo;s contribution as 0.001 ± 0.002 (with BAO, a map of galaxies used with it). This experiment assumes space is exactly flat. That has a simple consequence: the contributions of matter and dark energy add up to exactly 1, with no third contribution from curvature.
+      </p>
+      <p style={p}>
+        <strong>Step 6: why ask this at all.</strong> So far, this chapter has described the universe as it was, or as it is. This is the first time we use the model to ask where the universe is heading. That is also a test of how well we understand it: a model that gets the past right should be able to say what comes next, and the places where it cannot, because the answer depends on something we do not know, show what is still missing. You will see that the future depends on one thing above all: how much dark energy there is.
+      </p>
+      <p style={p}>
+        <strong>Your job.</strong> First, make two guesses about the real universe. Then press Run. Afterwards, in Part 2, choose a dark energy share of your own and compare.
+      </p>
+      <p style={p}>
+        <strong>What to look for.</strong> <strong>Look at:</strong> the bars, from one doubling to the next, and the gold line against the blue dashed line. <strong>What it means:</strong> the bars show how long each doubling takes, and the blue dashed line is the same universe with no dark energy at all. <strong>Why it matters:</strong> how the bars change (or do not) is the whole question. In Part 2, look at what happens to the bars and the line when you change the dark energy.
+      </p>
+      <p style={p}>
+        <strong>How this page is laid out.</strong> Below this introduction the page has four parts. <strong>Part 1</strong> is where you guess and watch the real universe. <strong>Part 2</strong> is where you try your own dark energy share. <strong>Part 3</strong> shows the results and what they mean. <strong>Part 4</strong> is the tutor. Parts 2, 3 and 4 appear when your first run has finished. Below Part 4 comes the chapter&rsquo;s closing section, &ldquo;Putting It All Together&rdquo;.
+      </p>
+      <p style={{ ...p, marginBottom: '0.25rem' }}>
+        <strong>What we assume.</strong>
+      </p>
+      <ul style={list}>
+        <li>
+          The same simple universe as Cosmology 5, 6, 8 and 9: &ldquo;flat&rdquo; (explained above), containing matter and dark energy, with an illustrative Hubble constant of 70 kilometers per second per megaparsec, with the same real caveat: published values differ by how they are measured (about 70 to 76 from space telescopes and about 67 to 68 from the oldest light, NASA 2025), the &ldquo;Hubble tension&rdquo;. Light and other very fast particles are left out. They mattered only in the very early universe, so they make no practical difference to the future.
+        </li>
+        <li>
+          <strong>The dark energy is assumed to be a constant that never changes.</strong> That is the simplest possibility, and many measurements fit it. But it is being tested: in 2025 results from the DESI survey, combined with the oldest light, favoured a dark energy that changes over time, and in 2026 other results were mixed (see &ldquo;As of November 2026&rdquo; below). Nobody yet knows what dark energy is, and if it changed with time, the future could be very different. This is the biggest uncertainty in this experiment.
+        </li>
+        <li>The universe is assumed to be exactly flat, as in the earlier experiments, and not worked out here. A universe that was not flat would add a third contribution to the expansion, and could behave differently in the far future. This experiment does not cover that.</li>
+        <li>Only the expansion is modeled. The experiment says how the size of the universe changes. It does not say anything about stars running out of fuel, black holes, or the universe becoming cold and dark, though many people think of those as &ldquo;the end of the universe.&rdquo;</li>
+        <li>
+          Things held together by their own gravity do not expand: a galaxy, our Milky Way and its neighbors, the Solar System, you. Only the space between such groups stretches. This is stated here, not modeled. (No plain official page was found that says it, so the page gives it as the model&rsquo;s own assumption.)
+        </li>
+        <li>
+          Every universe you try is matched to the real one today: the same expansion rate and the same size. A universe with no dark energy would then be younger today ({billions(universeAgeYears(0))} billion years) than one with dark energy ({billions(universeAgeYears(BEST_FIT_DARK_ENERGY_FRACTION))} billion years), as in Cosmology 6.
+        </li>
+      </ul>
+      <p style={{ ...p, marginBottom: '0.75rem' }}>
+        <strong>Some new words:</strong> size (of the universe), doubling time, expansion rate, contribution, megaparsec, flat, Hubble tension. All are in the Words and formulas box below.
+      </p>
+      <p style={p}>
+        <strong>One more thing.</strong> This is the last experiment in this chapter. Once you have reached the tutor&rsquo;s explanation, scroll down to &ldquo;Putting It All Together&rdquo;. It steps back and shows how all ten experiments fit into one story, and which parts of that story are still open.
+      </p>
+      <p style={{ ...p, marginBottom: 0 }}>
+        <strong>As of November 2026.</strong> Dark energy is assumed constant here, but astronomers are testing that. In March 2025 the DESI collaboration reported that its first three years of data, combined with measurements of the oldest light, favoured a dark energy that changes over time, at a strength of 3.1σ (σ, &ldquo;sigma&rdquo;, is a measure of how strong a statistical hint is: the larger, the stronger). In January 2026 the Dark Energy Survey reported that its data also fit an evolving dark energy &ldquo;but no better than they fit the standard model&rdquo;. On 30 July 2026 DESI&rsquo;s new Lyman-alpha measurements agreed with the standard model, which &ldquo;could indicate that the current hints of evolving dark energy may fade away&rdquo;; the collaboration also notes that a more complex model may be needed. As of November 2026 the question is still open.
+      </p>
+    </div>
+  )
 }
 
-const svgStyle = {
-  display: 'block',
-  marginTop: '1rem',
-  border: '1px solid var(--border-color, #ccc)',
-  borderRadius: '8px',
-  backgroundColor: '#0b1020',
-  maxWidth: '100%',
-  height: 'auto',
-} as const
+// ---- the words box (the formulas that give guess 2 away appear only after the first run: §12) ----
+function referenceEntries(afterRun: boolean) {
+  const real = runFateOfTheUniverseExperiment(BEST_FIT_DARK_ENERGY_FRACTION)
+  const rule = ruleOfSeventy(BEST_FIT_DARK_ENERGY_FRACTION)
+  const steady = steadyDoublingEstimate(BEST_FIT_DARK_ENERGY_FRACTION, 50e9)
+  const entries = [
+    { term: 'Size (of the universe)', meaning: 'the distances between faraway galaxies, compared with today. 1× is today, 2× means every such distance has doubled. It is not the size of any one object.' },
+    { term: 'Doubling time', meaning: 'how long the universe takes to double in size. If it is 10 billion years, then two galaxies 100 million light-years apart today are 200 million apart 10 billion years from now.' },
+    { term: 'Expansion rate', meaning: 'how fast distances are growing, for each unit of distance, in kilometers per second per megaparsec. 70 means a galaxy 1 megaparsec away moves away at 70 km/s.' },
+    { term: 'Hubble constant and Hubble tension', meaning: '70 km/s per megaparsec in this model; published values differ by how they are measured (about 70 to 76 from space telescopes and about 67 to 68 from the oldest light, NASA 2025): the “Hubble tension”.' },
+    { term: 'Megaparsec', meaning: 'a unit of distance: about 3.3 million light-years.' },
+    { term: 'Contribution (matter’s, dark energy’s)', meaning: 'the part each adds to the expansion rate. Today they add up to 1 (0.30 and 0.70 for the real universe).' },
+    { term: 'Flat', meaning: 'space on the very largest scales is not curved, so straight parallel paths stay parallel. Planck 2018 is consistent with flat (0.001 ± 0.002).' },
+    { term: 'Dark energy', meaning: 'the cause of the speeding up of the expansion (Cosmology 5). In this model it is a constant that never changes.' },
+    { term: 'Matter', meaning: 'the stars, planets and us, and dark matter (Cosmology 4). Its density thins out as the universe grows.' },
+    { term: 'Radiation (left out)', meaning: 'the light and other very fast particles of the early universe. The model leaves it out; it makes no practical difference to the future.' },
+    { term: 'Speeding up', meaning: 'the speed at which faraway galaxies move apart gets larger and larger. This is not the same as the expansion rate rising: the rate can fall while the speeds still grow.' },
+    { term: 'Settle', meaning: 'a number that stops changing much, such as the doubling time with dark energy or the expansion rate at late times.' },
+    { term: 'Big Crunch and Big Rip', meaning: 'two other endings: a collapse back together, and a runaway stretching that tears even galaxies apart. This model cannot say anything about them.' },
+    { term: 'Escape speed', meaning: 'the speed a thrown ball needs to climb away from a planet for ever without falling back (the Gravity chapter).' },
+    { term: 'DESI and the Dark Energy Survey', meaning: 'two projects that map galaxies and supernovae to test whether dark energy changes.' },
+    { term: 'σ (sigma)', meaning: 'a measure of how strong a statistical hint is: the larger, the stronger.' },
+    { term: 'The oldest light', meaning: 'the cosmic microwave background (Cosmology 3).' },
+    { term: 'Formula: a galaxy’s speed', meaning: `the expansion rate × its distance. For a galaxy 100 megaparsecs away today: ${real.expansionRateToday.toFixed(0)} × 100 = ${galaxySpeedKmPerS(100, 1, BEST_FIT_DARK_ENERGY_FRACTION).toLocaleString('en-US')} km/s.` },
+    { term: 'Formula: the expansion rate', meaning: `today’s rate × √(matter’s contribution + dark energy’s contribution). Today: ${real.expansionRateToday.toFixed(0)} × √1.00 = ${real.expansionRateToday.toFixed(0)}.` },
+  ]
+  if (afterRun) {
+    entries.push(
+      { term: 'Formula: size after a time, if the size doubles every T years', meaning: `2^(time ÷ T). With T = ${billions(real.longTermDoublingTimeYears)}: 2^(50 ÷ ${billions(real.longTermDoublingTimeYears)}) ≈ ${steady.estimate.toFixed(0)}, about ${steady.gapPercent.toFixed(0)}% below the model’s ${steady.modelSize.toFixed(1)} (the early doublings are shorter).` },
+      { term: 'Formula: the settled doubling time', meaning: `ln 2 ÷ (today’s rate × √(dark energy’s share)), in time units. For 70%: about ${billions(real.longTermDoublingTimeYears)} billion years.` },
+      { term: 'Formula: the rule of thumb', meaning: `doubling time ≈ 70 ÷ the percent growth per billion years. With about ${rule.percentGrowthPerBillionYears.toFixed(1)} percent: 70 ÷ ${rule.percentGrowthPerBillionYears.toFixed(1)} ≈ ${billions(rule.doublingTimeYears)} billion years.` },
+      { term: 'Formula: the size when the speed-up starts', meaning: `((1 − share) ÷ (2 × share))^(1/3). For 70%: ${real.speedUpSize.toFixed(3)}.` },
+    )
+  } else {
+    entries.push({ term: 'More words', meaning: 'four more formulas appear here after your first run, because they give the size of the doublings, which is what you are about to guess.' })
+  }
+  return entries
+}
+
+// ---- links (read on 2026-11-16 through a helper's fetch tool, which returns model summaries; see the draft's source table). The pages that say
+// the expansion speeds up, and what the alternatives are, appear after the first Run (§12), because they say what the tutor asks about. ----
+const LINKS_BEFORE: Array<{ href: string; label: string; what: ReactNode }> = [
+  {
+    href: 'https://arxiv.org/abs/1807.06209',
+    label: 'Planck 2018 results VI: cosmological parameters (arXiv:1807.06209)',
+    what: 'the paper behind the matter share (0.315 ± 0.007), the curvature (0.001 ± 0.002) and the Hubble constant (67.4 ± 0.5). A technical paper; the abstract is the readable part. (Abstract read through an HTML copy.)',
+  },
+  {
+    href: 'https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-constant-and-tension/',
+    label: 'NASA: the Hubble constant and the tension (updated 4 August 2025)',
+    what: 'NASA’s plain page: about 70 to 76 from space telescopes and about 67 to 68 from the oldest light. (Read.)',
+  },
+  {
+    href: 'https://imagine.gsfc.nasa.gov/observatories/satellite/wmap/shape.html',
+    label: 'NASA: The Shape of the Universe',
+    what: 'the page behind the word “flat”. (Read for Cosmology 8; to be re-read.)',
+  },
+  {
+    href: 'https://www.desi.lbl.gov/2025/03/19/more-than-a-hint-of-evolving-dark-energy-new-results-and-data-from-desi/',
+    label: 'DESI collaboration: DR2 results, March 2025',
+    what: 'the collaboration’s page on the first three years of data: “strengthen hints that dark energy is evolving”. (Read.)',
+  },
+  {
+    href: 'https://arxiv.org/abs/2503.14738',
+    label: 'DESI Data Release 2 results, paper II (arXiv:2503.14738)',
+    what: 'the paper behind the 3.1σ figure. A technical paper; the abstract is the readable part. (Read.)',
+  },
+  {
+    href: 'https://www.desi.lbl.gov/2026/07/30/new-desi-dr2-lyman-alpha-results-shed-light-on-dark-energy/',
+    label: 'DESI collaboration: new Lyman-alpha results, 30 July 2026',
+    what: 'the newest official page found: the new measurements “agree with the standard model”. (Read.)',
+  },
+  {
+    href: 'https://www.ifae.es/news/2026/01/22/dark-energy-survey-scientists-release-new-analysis-of-how-the-universe-expands/',
+    label: 'Dark Energy Survey final analysis, via IFAE, 22 January 2026',
+    what: 'the Dark Energy Survey’s final supernova and galaxy-map analysis: its data fit the evolving model “but no better than they fit the standard model”. (Read.)',
+  },
+]
+const LINKS_AFTER: Array<{ href: string; label: string; what: ReactNode }> = [
+  {
+    href: 'https://science.nasa.gov/dark-energy/',
+    label: 'NASA: Dark Energy (updated 12 August 2026)',
+    what: 'NASA’s current page: “Nine billion years after the universe began, its expansion started to speed up”. (Read.)',
+  },
+  {
+    href: 'https://science.nasa.gov/missions/hubble/dark-energy-changes-the-universe',
+    label: 'NASA Hubble: Dark energy changes the universe (updated 17 April 2023)',
+    what: 'the speed-up “about 7.5 billion years ago”, and what a “big rip” or a “big crunch” would be, if dark energy were not constant. (Read.)',
+  },
+  {
+    href: 'https://science.nasa.gov/universe/overview/',
+    label: 'NASA: Cosmic History (updated 12 August 2026)',
+    what: '“it’s likely the universe will continue to expand forever”. (Read.)',
+  },
+  {
+    href: 'https://science.nasa.gov/missions/hubble/hubble-finds-evidence-for-dark-energy-in-the-young-universe/',
+    label: 'NASA Hubble: Hubble finds evidence for dark energy in the young universe (16 November 2006)',
+    what: 'the older figure: the expansion “began speeding up about five to six billion years ago”. (Read.)',
+  },
+]
+
+function ChoiceButtons<T extends string>({ options, selected, disabled, onSelect }: { options: Array<{ value: T; label: string }>; selected: T | null; disabled: boolean; onSelect: (value: T) => void }) {
+  return (
+    <div style={{ marginBottom: '0.5rem' }}>
+      {options.map((choice) => (
+        <button
+          key={choice.value}
+          type="button"
+          onClick={() => onSelect(choice.value)}
+          disabled={disabled}
+          className={`toggle-button${selected === choice.value ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '0.875rem', opacity: disabled ? 0.6 : 1 }}
+        >
+          {choice.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function Question({ prompt, guessText, children }: { prompt: string; guessText: string | null; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>{prompt}</p>
+      {children}
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{guessText ? `Your guess: ${guessText}` : 'Choose an option to continue'}</p>
+    </div>
+  )
+}
 
 export function FateOfTheUniverseExperiment({ onComplete, onTutorComplete }: FateOfTheUniverseExperimentProps) {
-  const [mode, setMode] = useState<ShareMode>('bestFit')
-  const [customShare, setCustomShare] = useState(0.5)
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
-  const [progress, setProgress] = useState(0)
-  const [runCount, setRunCount] = useState(0)
-  // The closing synthesis appears once the tutor's explanation is reached, and goes with the tutor.
-  const [explanationReached, setExplanationReached] = useState(false)
+  const [farFutureGuess, setFarFutureGuess] = useState<FarFutureGuess | null>(null)
+  const [nextDoublingGuess, setNextDoublingGuess] = useState<NextDoublingGuess | null>(null)
+  const [submitted, setSubmitted] = useState<{ farFuture: FarFutureGuess; nextDoubling: NextDoublingGuess } | null>(null)
 
-  const [farFuturePrediction, setFarFuturePrediction] = useState<FarFutureChoice | null>(null)
-  const [nextDoublingPrediction, setNextDoublingPrediction] = useState<NextDoublingChoice | null>(null)
-  const [submittedFarFuturePrediction, setSubmittedFarFuturePrediction] = useState<FarFutureChoice | null>(null)
-  const [submittedNextDoublingPrediction, setSubmittedNextDoublingPrediction] =
-    useState<NextDoublingChoice | null>(null)
+  const [part1Done, setPart1Done] = useState(false)
+  const [part1Running, setPart1Running] = useState(false)
+  const [part1Progress, setPart1Progress] = useState(0)
+  const [explained, setExplained] = useState(false)
 
-  const hasPrediction = farFuturePrediction !== null && nextDoublingPrediction !== null
-  const hasSubmittedPrediction =
-    submittedFarFuturePrediction !== null && submittedNextDoublingPrediction !== null
+  // Part 2's setting. The default is the 30% case: the real universe is already in Part 1, and 30% shows a speed-up still to come.
+  const [mode, setMode] = useState<ShareMode>(DEFAULT_SHARE_MODE)
+  const [customShare, setCustomShare] = useState(DEFAULT_CUSTOM_SHARE)
+  // Part 2's pictures are drawn when its own Run is pressed; at rest they show the whole picture.
+  const [part2Running, setPart2Running] = useState(false)
+  const [part2Progress, setPart2Progress] = useState(1)
 
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
+
+  const hasAllGuesses = farFutureGuess !== null && nextDoublingGuess !== null
+  const locked = submitted !== null
+  const shownFarFuture = submitted?.farFuture ?? farFutureGuess
+  const shownNextDoubling = submitted?.nextDoubling ?? nextDoublingGuess
   const share = mode === 'custom' ? customShare : PRESET_SHARES[mode]
-  const result = runFateOfTheUniverseExperiment(share)
-  const isActive = status === 'running' || status === 'complete'
+  const L = BEST_FIT_DARK_ENERGY_FRACTION
 
-  const handleModeChange = (next: ShareMode) => {
-    setMode(next)
-    if (status === 'complete') setStatus('idle')
-  }
-
-  const handleRun = () => {
-    if (!hasPrediction || status === 'running') return
-    if (!hasSubmittedPrediction) {
-      setSubmittedFarFuturePrediction(farFuturePrediction)
-      setSubmittedNextDoublingPrediction(nextDoublingPrediction)
-    }
-    setStatus('running')
-    setProgress(0)
-    setRunCount((count) => count + 1)
-    setExplanationReached(false)
-  }
-
-  // Matches the rest of the project's precedent: re-opens both questions for editing without resetting
-  // the chosen share.
-  const handleChangePrediction = () => {
-    setSubmittedFarFuturePrediction(null)
-    setSubmittedNextDoublingPrediction(null)
-    setStatus('idle')
-  }
-
+  // Part 1's animation: one run, a fixed real duration (CLAUDE.md §11).
   useEffect(() => {
-    if (status !== 'running') return
-
+    if (!part1Running) return
     const startTime = performance.now()
-    let frameId: number
-
-    const animate = (currentTime: number) => {
-      const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
-      setProgress(fraction)
-
-      if (fraction >= 1) {
-        setStatus('complete')
-        onComplete?.()
+    let frameId = 0
+    const animate = (now: number) => {
+      const p = Math.min(Math.max((now - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setPart1Progress(p)
+      if (p >= 1) {
+        setPart1Running(false)
+        setPart1Done(true)
+        onCompleteRef.current?.()
         return
       }
-
       frameId = requestAnimationFrame(animate)
     }
-
     frameId = requestAnimationFrame(animate)
-
     return () => cancelAnimationFrame(frameId)
-  }, [status, onComplete])
+  }, [part1Running])
 
-  // Simulated time and playback are separate (CLAUDE.md §11): the run sweeps linearly from now to the
-  // end of the time axis, and every number shown comes from the physics model at that moment.
-  const displayedProgress = status === 'idle' ? 0 : progress
-  const yearsFromNow = displayedProgress * FUTURE_GRAPH_MAX_YEARS
-  const currentSize = futureRelativeSize(yearsFromNow, share)
-
-  // The past (left of today) is always drawn; the future is drawn up to the current moment.
-  const lineFor = (darkEnergyFraction: number) => {
-    const points: string[] = []
-    for (let i = 0; i <= CURVE_POINTS; i++) {
-      const t = -PAST_GRAPH_YEARS + (i / CURVE_POINTS) * (yearsFromNow + PAST_GRAPH_YEARS)
-      const size = futureRelativeSize(t, darkEnergyFraction)
-      // Points below the axis (the earliest moments of a universe with little dark energy) are skipped.
-      if (size >= GRAPH_MIN_SIZE) points.push(`${graphX(t).toFixed(1)},${graphY(size).toFixed(1)}`)
+  // Part 2's animation: the learner's universe from today to 100 billion years from now, over the same fixed duration.
+  useEffect(() => {
+    if (!part2Running) return
+    const startTime = performance.now()
+    let frameId = 0
+    const animate = (now: number) => {
+      const p = Math.min(Math.max((now - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setPart2Progress(p)
+      if (p >= 1) {
+        setPart2Running(false)
+        return
+      }
+      frameId = requestAnimationFrame(animate)
     }
-    return points.join(' ')
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [part2Running])
+
+  const handleRun = () => {
+    if (!hasAllGuesses || part1Running || part1Done) return
+    if (!submitted) setSubmitted({ farFuture: farFutureGuess!, nextDoubling: nextDoublingGuess! })
+    setPart1Progress(0)
+    setPart1Running(true)
   }
-  const chosenLine = lineFor(share)
-  const referenceLine = share > 0 ? lineFor(0) : ''
 
-  const speedUpVisible =
-    result.speedUpYearsFromNow !== null &&
-    result.speedUpYearsFromNow >= -PAST_GRAPH_YEARS &&
-    result.speedUpYearsFromNow <= yearsFromNow
+  // Changing the share changes only Part 2's drawings: it never hides Parts 3 and 4 or restarts the tutor.
+  const settle = () => {
+    if (!part2Running) setPart2Progress(1)
+  }
+  const handleModeChange = (next: ShareMode) => {
+    setMode(next)
+    settle()
+  }
+  const handlePart2Run = () => {
+    if (part2Running) return
+    setPart2Progress(0)
+    setPart2Running(true)
+  }
 
-  // The doubling underway at this moment (none once the universe is past the last one drawn).
-  const currentDoublingIndex = isActive
-    ? result.doublings.findIndex((d) => currentSize >= d.fromSize && currentSize < d.toSize)
-    : -1
+  // Start over: clears the guesses, the runs, the results and the tutor, and returns the page to its first state.
+  const handleStartOver = () => {
+    setFarFutureGuess(null)
+    setNextDoublingGuess(null)
+    setSubmitted(null)
+    setPart1Done(false)
+    setPart1Running(false)
+    setPart1Progress(0)
+    setExplained(false)
+    setMode(DEFAULT_SHARE_MODE)
+    setCustomShare(DEFAULT_CUSTOM_SHARE)
+    setPart2Running(false)
+    setPart2Progress(1)
+  }
 
-  // Values for the Results panel. The predictions are marked against the real (best-fit) universe, and
-  // the no-dark-energy run is used as the contrast, whatever share the learner is trying.
-  const realResult = runFateOfTheUniverseExperiment(BEST_FIT_DARK_ENERGY_FRACTION)
-  const noDarkEnergyResult = runFateOfTheUniverseExperiment(0)
-  const sizeIn50 = futureRelativeSize(50e9, share)
-  const settledDoublingYears = result.longTermDoublingTimeYears
-  const doublingsIn50 = 50e9 / settledDoublingYears
-  // The doublings have "settled" if the fourth is within 5% of the settled value.
-  const hasSettled =
-    settledDoublingYears !== Infinity &&
-    result.doublings[result.doublings.length - 1].years >= 0.95 * settledDoublingYears
-  // The steady-doubling rule is a fair estimate only if even the first doubling is already close to the
-  // settled time (at least 70% of it).
-  const ruleApplies =
-    settledDoublingYears !== Infinity && result.doublings[0].years >= 0.7 * settledDoublingYears
-  const settledEstimate = Math.pow(2, doublingsIn50)
-  const estimateGapPercent = Math.abs(sizeIn50 - settledEstimate) / sizeIn50 * 100
-  // A galaxy 100 megaparsecs away today: how fast it moves away now, and after 50 billion years.
-  const EXAMPLE_DISTANCE_MPC = 100
-  const exampleSpeedToday = expansionRateAtSize(1, share) * EXAMPLE_DISTANCE_MPC
-  const exampleSpeedIn50 = expansionRateAtSize(sizeIn50, share) * EXAMPLE_DISTANCE_MPC * sizeIn50
-  const withCommas = (n: number) => Math.round(n).toLocaleString('en-US')
+  const hasAnythingToClear = farFutureGuess !== null || nextDoublingGuess !== null || locked || part1Done
+  const startOverDisabled = !hasAnythingToClear || part1Running
 
-  // Labels near the right edge of the bars picture are drawn inside the bar or to the left of the marker
-  // so that they are never cut off.
-  const nearRightEdge = barX(settledDoublingYears) > BARS_LEFT + 200
-
-  const stepNow = stripSpacing(currentSize)
-  const nextDoublingYears = yearsToGrow(currentSize, 2 * currentSize, share)
+  const started = part1Running || part1Done
+  const shownProgress1 = part1Done ? 1 : part1Progress
+  const yearsFromNow1 = shownProgress1 * FUTURE_GRAPH_MAX_YEARS
+  const size1 = futureRelativeSize(yearsFromNow1, L)
+  const yearsFromNow2 = part2Progress * FUTURE_GRAPH_MAX_YEARS
+  const size2 = futureRelativeSize(yearsFromNow2, share)
+  const pct = Math.round(share * 100)
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Experiment 10 — The Fate of the Universe: Does the Expansion Ever Stop?</h2>
+      <h2>Cosmology 10: The Fate of the Universe: Does the Expansion Ever Stop?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> The universe is expanding (Experiments 1 and 2), and Experiments 5
-            and 6 showed that dark energy has been speeding that expansion up. So what happens next? Does the
-            expansion ever stop? Does it slow down, or turn around, or does it go on forever?
+        <Intro />
+        <ReferencePanel entries={referenceEntries(part1Done)} />
+
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Want to know more?</p>
+          <p style={{ ...smallNote, marginTop: 0 }}>
+            Each link opens in a new tab. They were read on 16 November 2026 through a helper&rsquo;s fetch tool, which returns summaries, so a quotation or figure on this page should be checked against the live page. No plain official page was found for flatness, for galaxies not expanding or for how strong a hint must be to count as a discovery, so this page gives the first two as the model&rsquo;s own assumptions and does not discuss the third. The savings-account, ball and bath comparisons have no source.
           </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> You choose how much of the universe's energy is dark energy, and
-            the experiment runs the same simple model as Experiments 5 and 6 forward in time, up to 100
-            billion years from now. Three pictures show the result: a graph of how big the universe becomes
-            compared with today, a set of bars showing how long the universe takes to double in size, and a
-            drawing of galaxies spreading apart.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Some words we will use.</strong> The universe's <strong>size</strong> here means the
-            distances between faraway galaxies, compared with what they are today (as in Experiment 6). Today
-            is 1×, and 2× means every such distance has doubled. The <strong>doubling time</strong> is how
-            long the universe takes to double in size. If it doubles in 10 billion years, then two galaxies
-            that are 100 million light-years apart today will be 200 million light-years apart after 10
-            billion years. The <strong>expansion rate</strong> is how fast distances are growing, for each
-            unit of distance. It is the number from Hubble's Law (Experiment 1): at 70 kilometers per second
-            per <strong>megaparsec</strong> (a megaparsec is about 3.3 million light-years), a galaxy one
-            megaparsec away moves away at 70 kilometers per second. The word "constant" in "Hubble constant"
-            means the same everywhere in space at one moment. It does not mean the same for all time, and in
-            this experiment the expansion rate can change as the universe ages. What sets the rate is what the
-            universe contains: the matter and the dark energy each add a part to it. We call each one's part
-            its <strong>contribution</strong>. The two contributions add up to 1 today (for the real universe,
-            matter's is 0.30 and dark energy's is 0.70), and you will see how they change.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What "flat" means here.</strong> When we say the universe is <strong>flat</strong>, we mean
-            the shape of space itself, averaged over very large distances. In flat space, the geometry you
-            learned at school works: two straight lines that start out parallel stay parallel forever, and the
-            angles of a triangle add up to 180°.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            Space could instead be curved on the largest scales. You met curved space in Gravity and Curved
-            Spacetime, Experiment 4: two travelers walking as straight as they could across a sphere started
-            side by side and ended up meeting at the pole. A universe whose space was curved like a sphere
-            would do something similar on the grandest scale.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            This is a different idea from the curved spacetime around a star or a planet, which bends the
-            paths of things passing close by. "Flat" here is only about the overall shape of space at one
-            moment, once you zoom out so far that galaxies blur into a smooth background. A flat universe can
-            still be expanding. A comparison: the Earth is curved, but a tabletop is flat for everyday
-            purposes, because you are looking at a tiny piece of it.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            Measurements of the oldest light (Experiment 3), combined with other measurements, find space to
-            be flat to within less than half a percent. This experiment assumes it is exactly flat. That has a
-            simple consequence: the contributions of matter and dark energy to the expansion add up to exactly
-            1 (the 0.30 and 0.70 used later), with no third contribution from curvature.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Why even ask this.</strong> So far, this chapter has described the universe as it was, or
-            as it is. This is the first time we use the model to ask where the universe is heading. That is
-            also a test of how well we understand it: a model that gets the past right should be able to say
-            what comes next, and the places where it cannot, because the answer depends on something we do
-            not know, show what is still missing. You will see that the future depends on one thing above all:
-            how much dark energy there is.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> First, make two predictions. Then choose a share of dark energy and run
-            it. Try the other choices too, and compare.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What to look for.</strong> How the bars change from one doubling to the next, how the gold
-            line compares with the blue dashed line (the universe with no dark energy), and what happens to
-            the expansion rate in the readout. We reuse the expansion from Experiments 1 and 2, and dark
-            energy and the universe's age from Experiments 5 and 6, with the same meaning.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
-            <strong>What we assume.</strong>
-          </p>
-          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              The same simple universe as Experiments 5, 6, 8 and 9: "flat" (explained above), containing
-              matter and dark energy, with an illustrative Hubble constant of 70
-              kilometers per second per megaparsec, with the same real caveat: published values range from
-              about 67 to 73, the "Hubble tension." Light and other very fast particles are left out. They
-              mattered only in the very early universe, so they make no practical difference to the future.
-            </li>
-            <li>
-              <strong>The dark energy is assumed to be a constant that never changes.</strong> That is the
-              simplest possibility, and many measurements fit it. But it is being tested, and some recent
-              results hint that dark energy may be weakening over time. Nobody yet knows what dark energy is,
-              and if it changed with time, the future could be very different. This is the biggest uncertainty
-              in this experiment.
-            </li>
-            <li>
-              The universe is assumed to be exactly flat, as in the earlier experiments, and not worked out
-              here. A universe that was not flat would add a third contribution to the expansion, and could
-              behave differently in the far future. This experiment does not cover that.
-            </li>
-            <li>
-              Only the expansion is modeled. The experiment says how the size of the universe changes. It
-              does not say anything about stars running out of fuel, black holes, or the universe becoming cold
-              and dark, though many people think of those as "the end of the universe."
-            </li>
-            <li>
-              Things held together by their own gravity do not expand: a galaxy, our Milky Way and its
-              neighbors, the Solar System, you. Only the space between such groups stretches. This is stated
-              here, not modeled.
-            </li>
-            <li>
-              Every universe you try is matched to the real one today: the same expansion rate and the same
-              size. A universe with no dark energy would then be younger today than one with dark energy, as
-              in Experiment 6.
-            </li>
+          <ul style={listStyle}>
+            {LINKS_BEFORE.map((l) => (
+              <li key={l.href} style={{ marginBottom: '0.5rem' }}>
+                <ExternalLink href={l.href}>{l.label}</ExternalLink>: {l.what}
+              </li>
+            ))}
           </ul>
-          <p style={{ marginTop: '0.75rem', marginBottom: 0 }}>
-            <strong>One more thing.</strong> This is the last experiment in this chapter. Once you have run it,
-            scroll down to "Putting It All Together" below. It steps back and shows how all ten experiments fit
-            into one story, and which parts of that story are still open.
-          </p>
-        </div>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            The universe is expanding today. What do you think the far future looks like?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {farFutureChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setFarFuturePrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${farFuturePrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            Suppose the universe takes about 11 billion years to double in size from today. How long will the
-            next doubling take, from twice today's size to four times?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {nextDoublingChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setNextDoublingPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${nextDoublingPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {hasPrediction || hasSubmittedPrediction
-              ? `Your predictions: ${
-                  farFutureChoices.find((c) => c.value === (farFuturePrediction ?? submittedFarFuturePrediction))!
-                    .label
-                }; ${
-                  nextDoublingChoices.find(
-                    (c) => c.value === (nextDoublingPrediction ?? submittedNextDoublingPrediction),
-                  )!.label
-                }`
-              : 'Answer both questions to continue'}
-          </p>
-        </div>
-
-        {hasSubmittedPrediction && (
-          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Your predictions are locked in above. You can still try as many dark energy shares as you like
-              below. Or, change your predictions and start over:
-            </p>
-            <button
-              type="button"
-              onClick={handleChangePrediction}
-              className="secondary-button"
-              style={{
-                padding: '0.5rem 1.25rem',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(124, 58, 237, 0.22)',
-              }}
-            >
-              Change predictions
-            </button>
-          </div>
-        )}
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-            Share of the universe's energy that is dark energy:
-          </p>
-          {(
-            [
-              ['none', 'None (0%)'],
-              ['weaker', 'Weaker (30%)'],
-              ['bestFit', `The best fit to observations (about ${Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}%)`],
-              ['stronger', `Stronger (${Math.round(MAX_DARK_ENERGY_FRACTION * 100)}%)`],
-              ['custom', 'Custom'],
-            ] as Array<[ShareMode, string]>
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => handleModeChange(value)}
-              disabled={!hasPrediction || status === 'running'}
-              className={`toggle-button${mode === value ? ' is-selected' : ''}`}
-              style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-            >
-              {label}
-            </button>
-          ))}
-          {mode === 'custom' && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <label htmlFor="fate-share" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                Dark energy: {Math.round(customShare * 100)}% of the total (matter makes up the other{' '}
-                {100 - Math.round(customShare * 100)}%)
-              </label>
-              <input
-                id="fate-share"
-                type="range"
-                min={0}
-                max={MAX_DARK_ENERGY_FRACTION}
-                step={0.01}
-                value={customShare}
-                disabled={!hasPrediction || status === 'running'}
-                onChange={(event) => {
-                  setCustomShare(Number(event.target.value))
-                  if (status === 'complete') setStatus('idle')
-                }}
-                style={{ width: '100%' }}
-              />
-            </div>
+          {part1Done ? (
+            <>
+              <p style={{ ...smallNote, marginBottom: '0.25rem' }}>Four more links, now that you have run it:</p>
+              <ul style={listStyle}>
+                {LINKS_AFTER.map((l) => (
+                  <li key={l.href} style={{ marginBottom: '0.5rem' }}>
+                    <ExternalLink href={l.href}>{l.label}</ExternalLink>: {l.what}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p style={smallNote}>Four more links, on the speed-up and the far future, appear here after your first Run, because their wording would give away what you are asked about.</p>
           )}
         </div>
 
+        {/* ===== Part 1 ===== */}
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          You will make two guesses about the <strong>real</strong> universe: the best fit to the measurements, in which about 70 percent of the energy is dark energy. Then you will press Run and watch two pictures draw themselves: a graph of how big the universe becomes, and four bars showing how long each doubling of its size takes. Your guesses are drawn on them in white. Nothing you guess changes the real pictures.
+        </PartHeader>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.75rem' }}>Make your predictions</p>
+          <p style={{ ...smallNote, marginTop: 0, marginBottom: '0.75rem' }}>Both guesses are about the real universe, whatever you try later in Part 2.</p>
+          <Question prompt="The universe is expanding today. What do you think the far future looks like?" guessText={optionText(farFutureChoices, shownFarFuture)}>
+            <ChoiceButtons options={farFutureChoices} selected={shownFarFuture} disabled={locked || part1Running} onSelect={setFarFutureGuess} />
+          </Question>
+          <Question prompt="Suppose the universe takes about 11 billion years to double in size from today. How long will the next doubling take, from twice today's size to four times?" guessText={optionText(nextDoublingChoices, shownNextDoubling)}>
+            <ChoiceButtons options={nextDoublingChoices} selected={shownNextDoubling} disabled={locked || part1Running} onSelect={setNextDoublingGuess} />
+          </Question>
+          {locked && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              Your guesses are locked while you try other settings. To change them, press Start over. Start over clears your guesses, the runs, the results and the tutor.
+            </p>
+          )}
+        </div>
+
+        <button type="button" className="action-button" onClick={handleRun} disabled={!hasAllGuesses || part1Running || part1Done} style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}>
+          {part1Running ? 'Running...' : part1Done ? 'Run (done)' : 'Run'}
+        </button>
         <button
           type="button"
-          className="action-button"
-          onClick={handleRun}
-          disabled={!hasPrediction || status === 'running'}
-          style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{ marginLeft: '0.75rem', padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: startOverDisabled ? 'not-allowed' : 'pointer', opacity: startOverDisabled ? 0.5 : 1 }}
         >
-          {status === 'running' ? 'Running...' : 'Run'}
+          Start over
         </button>
+        {!hasAllGuesses && !locked && <p style={smallNote}>Answer both questions above to run.</p>}
 
-        {!hasPrediction && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Answer the predictions above to try the controls.
-          </p>
-        )}
-
-        {isActive && (
-          <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Dark energy share: {Math.round(share * 100)}% &nbsp;|&nbsp; Years from now:{' '}
-            <strong>{billions(yearsFromNow)} billion</strong> &nbsp;|&nbsp; Size: <strong>{formatSize(currentSize)}×</strong>{' '}
-            today's
+        {started && (
+          <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.8125rem' }}>
+            Real universe (about 70% dark energy) &nbsp;|&nbsp; Years from now: <strong>{billions(yearsFromNow1)} billion</strong> &nbsp;|&nbsp; Size: <strong>{formatSize(size1)}×</strong> today&rsquo;s
             <br />
-            Expansion rate: {expansionRateAtSize(currentSize, share).toFixed(1)} km/s per megaparsec &nbsp;|&nbsp;
-            Time for the next doubling: <strong>{billions(nextDoublingYears)} billion years</strong>
+            Expansion rate: {expansionRateAtSize(size1, L).toFixed(1)} km/s per megaparsec &nbsp;|&nbsp; Time for the next doubling: <strong>{billions(nextDoublingYearsAt(shownProgress1, L))} billion years</strong>
           </p>
         )}
 
-        {hasSubmittedPrediction && (
+        {started && (
+          <Block>
+            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 1: the graph, how big the universe gets (the real universe)</p>
+            <SizeGraph share={L} progress={shownProgress1} color={REAL_COLOR} legend="The real universe (about 70% dark energy)" finished={part1Done} guess={part1Done && submitted ? submitted.farFuture : null} />
+            <GraphCaption arrived={part1Done} />
+          </Block>
+        )}
+        {started && (
+          <Block>
+            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 2: the bars, how long each doubling takes (the real universe)</p>
+            <DoublingBars share={L} progress={shownProgress1} color={REAL_COLOR} staged guess={submitted ? submitted.nextDoubling : null} />
+            <BarsCaption arrived={part1Done} />
+          </Block>
+        )}
+        {part1Done && (
+          <Block>
+            <WhereFrom>
+              <strong>Calculated here:</strong> both lines, all four bars, the green dot and the dashed marker, and every number, for a flat universe with a constant dark energy and a Hubble constant of 70, without radiation (the model of Cosmology 5, 6 and 8, run forward). Today&rsquo;s split of matter 0.30 and dark energy 0.70 is this page&rsquo;s own rounded best-fit value; Planck 2018 gives 0.315 ± 0.007 for matter (see Table 1). <strong>Assumed, not known:</strong> that dark energy is a constant that never changes. <strong>An axis choice, not an event:</strong> the graph stops at 100 billion years because that is the range of its axis, not because anything is predicted to happen then. <strong>Your guess:</strong> the white marks only. Nothing on this page is imagined.
+            </WhereFrom>
+          </Block>
+        )}
+        {!started && <p style={smallNote}>After you press Run, the two pictures draw themselves, each with a caption. When the run ends your white guess marks and a &ldquo;Where the real picture comes from&rdquo; note appear, and so do Parts 2, 3 and 4.</p>}
+        {started && !part1Done && <p style={smallNote}>The white curve, the white bar and Parts 2, 3 and 4 appear as the run goes on and when it ends.</p>}
+
+        {part1Done && (
           <>
-        <svg
-          width={GRAPH_WIDTH}
-          height={GRAPH_HEIGHT}
-          viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-          style={svgStyle}
-        >
-          <text x={GRAPH_WIDTH / 2} y={20} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-            How big the universe is, from the past into the future
-          </text>
+            {/* ===== Part 2 ===== */}
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              Now you choose how much of the universe&rsquo;s energy is dark energy and watch your own universe grow. Press Run to see its graph, its four doubling bars and a drawing of galaxies spreading apart. Your guesses do not change anything in this part; your choice does.
+            </PartHeader>
 
-          {/* Legend */}
-          <g fontSize="10" fill="#e2e8f0">
-            <line x1={GRAPH_LEFT + 10} y1={36} x2={GRAPH_LEFT + 34} y2={36} stroke={CHOSEN_COLOR} strokeWidth={3.5} />
-            <text x={GRAPH_LEFT + 40} y={39}>With your dark energy</text>
-            <line x1={GRAPH_LEFT + 200} y1={36} x2={GRAPH_LEFT + 224} y2={36} stroke={REFERENCE_COLOR} strokeWidth={2} strokeDasharray="6 4" />
-            <text x={GRAPH_LEFT + 230} y={39}>
-              {share > 0 ? 'No dark energy (for comparison)' : 'No dark energy (the same as your choice)'}
-            </text>
-          </g>
-
-          {/* Axes and tick labels */}
-          <line x1={GRAPH_LEFT} y1={GRAPH_TOP} x2={GRAPH_LEFT} y2={GRAPH_BOTTOM} stroke="#64748b" />
-          <line x1={GRAPH_LEFT} y1={GRAPH_BOTTOM} x2={GRAPH_RIGHT} y2={GRAPH_BOTTOM} stroke="#64748b" />
-          {TIME_TICKS_BILLIONS.map((t) => (
-            <g key={t}>
-              <line x1={graphX(t * 1e9)} y1={GRAPH_BOTTOM} x2={graphX(t * 1e9)} y2={GRAPH_BOTTOM + 4} stroke="#64748b" />
-              <text x={graphX(t * 1e9)} y={GRAPH_BOTTOM + 16} fill="#cbd5e1" fontSize="10" textAnchor="middle">
-                {t}
-              </text>
-            </g>
-          ))}
-          {SIZE_TICKS.map((s) => (
-            <g key={s}>
-              <line x1={GRAPH_LEFT - 4} y1={graphY(s)} x2={GRAPH_LEFT} y2={graphY(s)} stroke="#64748b" />
-              <line x1={GRAPH_LEFT} y1={graphY(s)} x2={GRAPH_RIGHT} y2={graphY(s)} stroke="#1e293b" />
-              <text x={GRAPH_LEFT - 8} y={graphY(s) + 4} fill="#cbd5e1" fontSize="10" textAnchor="end">
-                {s}×
-              </text>
-            </g>
-          ))}
-          <text x={(GRAPH_LEFT + GRAPH_RIGHT) / 2} y={GRAPH_HEIGHT - 8} fill="#cbd5e1" fontSize="11" textAnchor="middle">
-            Years from now (billions). Left of 0 is the past.
-          </text>
-          <text
-            x={14}
-            y={(GRAPH_TOP + GRAPH_BOTTOM) / 2}
-            fill="#cbd5e1"
-            fontSize="11"
-            textAnchor="middle"
-            transform={`rotate(-90 14 ${(GRAPH_TOP + GRAPH_BOTTOM) / 2})`}
-          >
-            Size compared with today (log scale)
-          </text>
-
-          {/* Today */}
-          <line x1={graphX(0)} y1={GRAPH_TOP} x2={graphX(0)} y2={GRAPH_BOTTOM} stroke="#475569" strokeDasharray="4 4" />
-          <text x={graphX(0) + 5} y={GRAPH_TOP + 12} fill={MUTED_COLOR} fontSize="10">
-            today
-          </text>
-
-          {referenceLine && (
-            <polyline points={referenceLine} fill="none" stroke={REFERENCE_COLOR} strokeWidth={2} strokeDasharray="6 4" />
-          )}
-          {chosenLine && <polyline points={chosenLine} fill="none" stroke={CHOSEN_COLOR} strokeWidth={3.5} />}
-
-          {/* Where the expansion started to speed up, once the line has reached it */}
-          {speedUpVisible && result.speedUpYearsFromNow !== null && (
-            <g>
-              <circle cx={graphX(result.speedUpYearsFromNow)} cy={graphY(result.speedUpSize)} r={5} fill="#f472b6" stroke="#0b1020" strokeWidth={1.5} />
-              <text
-                x={graphX(result.speedUpYearsFromNow) + 9}
-                y={graphY(result.speedUpSize) + 18}
-                fill="#f472b6"
-                stroke="#0b1020"
-                strokeWidth={3}
-                paintOrder="stroke"
-                fontSize="10"
-                fontWeight="600"
-              >
-                <tspan x={graphX(result.speedUpYearsFromNow) + 9}>Expansion starts</tspan>
-                <tspan x={graphX(result.speedUpYearsFromNow) + 9} dy="12">speeding up</tspan>
-              </text>
-            </g>
-          )}
-
-          {/* The moving point: where the universe is right now in the run */}
-          {isActive && (
-            <circle cx={graphX(yearsFromNow)} cy={graphY(currentSize)} r={5} fill="#ffffff" stroke={CHOSEN_COLOR} strokeWidth={2} />
-          )}
-        </svg>
-
-        <svg
-          width={BARS_WIDTH}
-          height={BARS_HEIGHT}
-          viewBox={`0 0 ${BARS_WIDTH} ${BARS_HEIGHT}`}
-          style={svgStyle}
-        >
-          <text x={BARS_WIDTH / 2} y={20} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-            How long each doubling of the universe's size takes
-          </text>
-
-          {result.longTermDoublingTimeYears !== Infinity && (
-            <g>
-              <line
-                x1={barX(result.longTermDoublingTimeYears)}
-                y1={BARS_TOP - 12}
-                x2={barX(result.longTermDoublingTimeYears)}
-                y2={BARS_TOP + BARS_ROW_HEIGHT * result.doublings.length - 6}
-                stroke="#f472b6"
-                strokeWidth={1.5}
-                strokeDasharray="4 3"
-              />
-              <text
-                x={barX(result.longTermDoublingTimeYears) + (nearRightEdge ? -4 : 4)}
-                y={BARS_TOP - 16}
-                fill="#f472b6"
-                fontSize="10"
-                fontWeight="600"
-                textAnchor={nearRightEdge ? 'end' : 'start'}
-              >
-                Settles to {billions(result.longTermDoublingTimeYears)} billion years
-                {result.longTermDoublingTimeYears > BARS_SCALE_MAX_YEARS ? ' (off the scale)' : ''}
-              </text>
-            </g>
-          )}
-          {result.longTermDoublingTimeYears === Infinity && (
-            <text x={BARS_LEFT} y={BARS_TOP - 16} fill="#f472b6" fontSize="10" fontWeight="600">
-              No dark energy: it never settles, each doubling takes longer
-            </text>
-          )}
-
-          {result.doublings.map((d, i) => {
-            const y = BARS_TOP + i * BARS_ROW_HEIGHT
-            const clipped = d.years > BARS_SCALE_MAX_YEARS
-            const endX = barX(d.years)
-            const labelInside = clipped || endX - BARS_LEFT > 230
-            return (
-              <g key={d.fromSize}>
-                <text x={BARS_LEFT - 8} y={y + 16} fill="#cbd5e1" fontSize="11" textAnchor="end">
-                  {d.fromSize}× → {d.toSize}×
-                </text>
-                <rect
-                  x={BARS_LEFT}
-                  y={y + 4}
-                  width={endX - BARS_LEFT}
-                  height={20}
-                  fill={CHOSEN_COLOR}
-                  stroke={currentDoublingIndex === i ? '#ffffff' : 'none'}
-                  strokeWidth={2.5}
-                  rx={2}
-                />
-                {clipped && (
-                  <path
-                    d={`M ${endX - 8} ${y + 2} l 6 8 l -6 4 l 6 8 l -6 4`}
-                    fill="none"
-                    stroke="#0b1020"
-                    strokeWidth={3}
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Share of the universe&rsquo;s energy that is dark energy:</p>
+              {(
+                [
+                  ['none', 'None (0%)'],
+                  ['weaker', 'Weaker (30%)'],
+                  ['bestFit', `The best fit to observations (about ${Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}%)`],
+                  ['stronger', `Stronger (${Math.round(MAX_DARK_ENERGY_FRACTION * 100)}%)`],
+                  ['custom', 'Custom'],
+                ] as Array<[ShareMode, string]>
+              ).map(([value, label]) => (
+                <button key={value} type="button" onClick={() => handleModeChange(value)} className={`toggle-button${mode === value ? ' is-selected' : ''}`} style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}>
+                  {label}
+                </button>
+              ))}
+              {mode === 'custom' && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label htmlFor="fate-share" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                    Dark energy: {Math.round(customShare * 100)}% of the total (matter makes up the other {100 - Math.round(customShare * 100)}%)
+                  </label>
+                  <input
+                    id="fate-share"
+                    type="range"
+                    min={0}
+                    max={MAX_DARK_ENERGY_FRACTION}
+                    step={0.01}
+                    value={customShare}
+                    onChange={(event) => {
+                      setCustomShare(Number(event.target.value))
+                      settle()
+                    }}
+                    style={{ width: '100%' }}
                   />
-                )}
-                {labelInside ? (
-                  <text x={BARS_LEFT + 10} y={y + 18} fill="#0b1020" fontSize="11" fontWeight="700">
-                    {billions(d.years)} billion years{clipped ? ' (off the scale)' : ''}
-                  </text>
-                ) : (
-                  <text
-                    x={endX + 8}
-                    y={y + 18}
-                    fill="#e2e8f0"
-                    stroke="#0b1020"
-                    strokeWidth={3}
-                    paintOrder="stroke"
-                    fontSize="11"
-                    fontWeight="600"
-                  >
-                    {billions(d.years)} billion years
-                  </text>
-                )}
-              </g>
-            )
-          })}
-
-          {/* Time scale */}
-          <line x1={BARS_LEFT} y1={BARS_TOP + BARS_ROW_HEIGHT * result.doublings.length} x2={BARS_LEFT + BARS_SCALE_WIDTH} y2={BARS_TOP + BARS_ROW_HEIGHT * result.doublings.length} stroke="#64748b" />
-          {BARS_TICKS_BILLIONS.map((t) => (
-            <g key={t}>
-              <line x1={barX(t * 1e9)} y1={BARS_TOP + BARS_ROW_HEIGHT * result.doublings.length} x2={barX(t * 1e9)} y2={BARS_TOP + BARS_ROW_HEIGHT * result.doublings.length + 4} stroke="#64748b" />
-              <text x={barX(t * 1e9)} y={BARS_TOP + BARS_ROW_HEIGHT * result.doublings.length + 16} fill="#cbd5e1" fontSize="10" textAnchor="middle">
-                {t}
-              </text>
-            </g>
-          ))}
-          <text x={BARS_LEFT + BARS_SCALE_WIDTH / 2} y={BARS_HEIGHT - 8} fill="#cbd5e1" fontSize="11" textAnchor="middle">
-            Time for the doubling (billions of years)
-          </text>
-        </svg>
-
-        <svg
-          width={STRIP_WIDTH}
-          height={STRIP_HEIGHT}
-          viewBox={`0 0 ${STRIP_WIDTH} ${STRIP_HEIGHT}`}
-          style={svgStyle}
-        >
-          <text x={STRIP_WIDTH / 2} y={20} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-            Our cluster stays the same size while the space between groups stretches (schematic)
-          </text>
-          <text x={STRIP_WIDTH / 2} y={40} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
-            Spacing between groups now: {formatSize(currentSize)}× today's. The drawing is not to scale.
-          </text>
-
-          {/* Our cluster: bound by its own gravity, so it does not expand */}
-          <circle cx={STRIP_CLUSTER_X} cy={STRIP_Y} r={24} fill="none" stroke={CLUSTER_COLOR} strokeDasharray="3 3" />
-          {[
-            [-9, 2],
-            [2, -8],
-            [8, 7],
-          ].map(([dx, dy]) => (
-            <circle key={`${dx}${dy}`} cx={STRIP_CLUSTER_X + dx} cy={STRIP_Y + dy} r={4.5} fill={CLUSTER_COLOR} />
-          ))}
-          <text x={STRIP_CLUSTER_X} y={STRIP_Y + 44} fill={CLUSTER_COLOR} fontSize="10" textAnchor="middle">
-            <tspan x={STRIP_CLUSTER_X}>Our cluster</tspan>
-            <tspan x={STRIP_CLUSTER_X} dy="12">(held together by gravity)</tspan>
-          </text>
-
-          {/* Distant galaxies, whose spacing follows the size of the universe */}
-          {Array.from({ length: STRIP_GALAXIES }, (_, k) => {
-            const x = STRIP_CLUSTER_X + (k + 1) * stepNow
-            return (
-              <g key={k}>
-                <ellipse cx={x} cy={STRIP_Y} rx={9} ry={5} fill={CHOSEN_COLOR} />
-                <text x={x} y={STRIP_Y + 24} fill={CHOSEN_COLOR} fontSize="10" textAnchor="middle">
-                  Galaxy {String.fromCharCode(65 + k)}
-                </text>
-              </g>
-            )
-          })}
-          <line x1={STRIP_CLUSTER_X + 30} y1={STRIP_Y - 20} x2={STRIP_CLUSTER_X + STRIP_GALAXIES * stepNow} y2={STRIP_Y - 20} stroke={MUTED_COLOR} strokeWidth={1} />
-          <text x={STRIP_CLUSTER_X + (30 + STRIP_GALAXIES * stepNow) / 2} y={STRIP_Y - 26} fill={MUTED_COLOR} fontSize="10" textAnchor="middle">
-            space between them stretches
-          </text>
-        </svg>
-
-        <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>How to read this diagram.</strong> The three pictures show the same run in three different
-            ways: how big the universe gets, how long each doubling takes, and what happens to the galaxies.
-            When you press <strong>Run</strong>, they play together for about 10 seconds, covering the next
-            100 billion years. In every picture, the <span style={{ color: CHOSEN_COLOR }}>gold</span> color
-            is the universe with the dark energy share you chose. The{' '}
-            <span style={{ color: REFERENCE_COLOR }}>blue</span> dashed line is a universe with no dark
-            energy, drawn only in the graph, as something to compare with.
-          </p>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 1, the graph: how big the universe gets.</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>The bottom axis is time, counted from now.</strong> The number is in billions of years.
-              0 is today. To the right is the future, up to 100 billion years from now. To the left of 0 is
-              the past, back to 10 billion years ago, as this model works it out.
-            </li>
-            <li>
-              <strong>The side axis is the universe's size, compared with today.</strong> It is the
-              distances between faraway galaxies. 1× means the same as today, 2× means every such distance
-              has doubled, and 0.5× would mean they were half as far apart. It is not the size of any one
-              object. The dashed vertical line marked "today" is where the size is 1×.
-            </li>
-            <li>
-              <strong>Why the side axis jumps by 10 each step.</strong> The marks go 0.1×, 1×, 10×, 100×,
-              1000×. On an ordinary scale, going from 1× to 2× would be a tiny step beside going from 1× to
-              1000×, and you could not see both. On this scale, every doubling is the same height, whether it
-              is from 1× to 2× or from 100× to 200×. That gives you a simple way to read the line: a
-              <strong> straight</strong> line means each doubling takes the same time as the one before; a line
-              that <strong>bends toward flat</strong> means each doubling takes longer than the one before; a
-              line that <strong>bends upward</strong> means each takes less time.
-            </li>
-            <li>
-              <strong>The two lines.</strong> The <span style={{ color: CHOSEN_COLOR }}>gold line</span> is the
-              universe with your dark energy share. The{' '}
-              <span style={{ color: REFERENCE_COLOR }}>blue dashed line</span> is the same universe with no
-              dark energy at all. If you choose 0%, the two are the same, so the gold line is drawn on top of
-              the blue one and the legend says so. Both lines pass through 1× at "today", because every
-              universe here is set up to match the real one today.
-            </li>
-            <li>
-              <strong>The white dot</strong> is where the universe is right now during the run. It moves
-              along the gold line from today toward 100 billion years from now.
-            </li>
-            <li>
-              <strong>The <span style={{ color: '#f472b6' }}>pink dot</span></strong>, when it appears, marks the
-              moment the expansion changes from slowing down to speeding up. "Speeding up" here means the
-              speed at which faraway galaxies move apart gets larger and larger. The Results explain why that
-              is not the same as the expansion rate rising. Move the dark energy control and run again: the
-              pink dot moves, and with no dark energy it never appears, because that moment never comes.
-            </li>
-          </ul>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 2, the bars: how long each doubling takes.</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>What each bar is.</strong> There are four bars, one for each doubling of the universe's
-              size: first from today's size to twice that (1× → 2×), then 2× → 4×, then 4× → 8×, then 8× →
-              16×. The <strong>length of a bar is the time that doubling takes</strong>. For example, if the
-              first bar is 10 billion years long, then 10 billion years from now every distance between
-              faraway galaxies will be twice what it is today.
-            </li>
-            <li>
-              <strong>Why doublings.</strong> A doubling is a fair unit for comparing growth. Doubling from
-              1× to 2× and doubling from 100× to 200× are the same kind of step, even though the second
-              adds far more distance. Comparing the bars with each other tells you whether the growth is
-              speeding up, slowing down, or staying steady.
-            </li>
-            <li>
-              <strong>The scale at the bottom</strong> is time in billions of years, and it is the same every
-              time, from 0 to 80, so bars from different runs can be compared. If a doubling takes longer than
-              80 billion years, its bar is cut at the edge with a zigzag break mark, and its real length is
-              written inside the bar, as "(off the scale)".
-            </li>
-            <li>
-              <strong>Comparing bar to bar.</strong> A longer bar means a slower doubling. Look down the four
-              bars. Are they getting longer, staying about the same, or getting shorter? Then change the dark
-              energy share and look again.
-            </li>
-            <li>
-              <strong>The pink dashed line</strong>, when it appears, marks the value the doubling time settles
-              toward once the universe is very large. With no dark energy there is no such value, and the
-              picture says so instead.
-            </li>
-            <li>
-              <strong>The white outline</strong> on one bar marks the doubling the universe is in at this
-              moment of the run.
-            </li>
-          </ul>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 3, the strip: what happens to the galaxies.</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>What is drawn.</strong> A row of galaxies. The{' '}
-              <span style={{ color: CLUSTER_COLOR }}>blue dots</span> on the left are our own home cluster:
-              the Milky Way and its neighbors. The <span style={{ color: CHOSEN_COLOR }}>gold ovals</span> are
-              three faraway galaxies, A, B and C.
-            </li>
-            <li>
-              <strong>What it shows.</strong> As the run plays, the faraway galaxies move farther from our
-              cluster and from each other, as the space between them stretches. But our cluster stays the same
-              size. It is held together by its own gravity, which is far stronger than the stretching at that
-              scale, so it does not expand. Think of dots drawn on a rubber sheet that is being stretched: the
-              dots stay the same size, but the distances between them grow. (Like any comparison, this is not
-              exact: in the real universe, the stretching is not a sheet being pulled from outside.)
-            </li>
-            <li>
-              <strong>This drawing is not to scale.</strong> The line of text under the title gives the real
-              number: how many times larger the spacing between groups is than today. That number is exact.
-              The drawing shows it in a squeezed way, adding the same step for each doubling, so that it
-              still fits on the screen. At 100 billion years in the real case, the true spacing would be
-              hundreds of times today's, far too wide to draw.
-            </li>
-          </ul>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>The line of numbers above the pictures.</strong>
-          </p>
-          <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>Years from now</strong> and <strong>Size</strong> are where the run is right now, the same
-              as the white dot in Picture 1.
-            </li>
-            <li>
-              <strong>Expansion rate</strong> is how fast distances are growing for each unit of distance, in
-              kilometers per second for each megaparsec (about 3.3 million light-years) of distance.
-            </li>
-            <li>
-              <strong>Time for the next doubling</strong> is how long the universe would take to double from
-              the size it has right now. The motion is there only to help you see what is happening, and the
-              numbers are exact.
-            </li>
-          </ul>
-        </div>
-
-            {status === 'complete' && submittedFarFuturePrediction && submittedNextDoublingPrediction && (
-              <div
-                style={{
-                  marginTop: '1.5rem',
-                  paddingTop: '1rem',
-                  borderTop: '1px solid var(--border-color, #ccc)',
-                }}
-              >
-                <h3 style={{ marginTop: 0 }}>Results</h3>
-                <p>
-                  You chose <strong>{Math.round(share * 100)}% dark energy</strong>. For that choice:
-                </p>
-                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                    <tbody>
-                      {[
-                        ["The universe's size in 50 billion years", `${formatSize(sizeIn50)}× today's`],
-                        ["The universe's size in 100 billion years", `${formatSize(result.sizeAtEnd)}× today's`],
-                        [
-                          'The first four doublings take',
-                          result.doublings.map((d) => billions(d.years)).join(', ') + ' billion years',
-                        ],
-                        [
-                          'Do the doublings settle?',
-                          settledDoublingYears === Infinity
-                            ? 'No, each one takes longer'
-                            : hasSettled
-                              ? `Yes, toward ${billions(settledDoublingYears)} billion years`
-                              : `Heading toward ${billions(settledDoublingYears)} billion years, but not there yet`,
-                        ],
-                        [
-                          'Is the expansion speeding up today?',
-                          result.accelerationToday ? 'Yes' : 'No, it is still slowing down',
-                        ],
-                        [
-                          'When the expansion starts speeding up',
-                          result.speedUpYearsFromNow === null
-                            ? 'Never'
-                            : result.speedUpYearsFromNow < 0
-                              ? `It started about ${billions(-result.speedUpYearsFromNow)} billion years ago`
-                              : `It will start about ${billions(result.speedUpYearsFromNow)} billion years from now`,
-                        ],
-                        [
-                          'The expansion rate today, and after 100 billion years',
-                          `${result.expansionRateToday.toFixed(1)} and ${result.expansionRateAtEnd.toFixed(1)} km/s per megaparsec`,
-                        ],
-                        [
-                          'The value it settles toward',
-                          result.longTermExpansionRate === 0
-                            ? 'Zero (it keeps falling, but never reaches it)'
-                            : `${result.longTermExpansionRate.toFixed(1)} km/s per megaparsec`,
-                        ],
-                      ].map(([label, value]) => (
-                        <tr key={label}>
-                          <td style={{ padding: '0.25rem 1rem 0.25rem 0' }}>{label}</td>
-                          <td style={{ textAlign: 'right', padding: '0.25rem 0' }}>{value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
-
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>A simple calculation.</strong>{' '}
-                  {settledDoublingYears === Infinity ? (
-                    <>
-                      With no dark energy, each doubling takes about 2.83 times as long as the one before
-                      (that number is 2 × the square root of 2). So the first doubling takes{' '}
-                      {billions(result.doublings[0].years)} billion years, the next takes about{' '}
-                      {billions(result.doublings[0].years)} × 2.83 ≈ {billions(result.doublings[0].years * 2.83, 0)}
-                      , and the one after that about {billions(result.doublings[0].years * 2.83 * 2.83, 0)}. The
-                      universe keeps growing, but more and more slowly.
-                    </>
-                  ) : ruleApplies ? (
-                    <>
-                      The first doubling takes {billions(result.doublings[0].years)} billion years, the next
-                      takes {billions(result.doublings[1].years)}, and by the fourth the time is{' '}
-                      {billions(result.doublings[3].years)}, close to the settled{' '}
-                      {billions(settledDoublingYears)}. If every doubling took the settled{' '}
-                      {billions(settledDoublingYears)} billion years, then 50 billion years would be 50 ÷{' '}
-                      {billions(settledDoublingYears)} ≈ {doublingsIn50.toFixed(1)} doublings, and the size would
-                      grow by 2 multiplied by itself {doublingsIn50.toFixed(1)} times, which is about{' '}
-                      {formatSize(settledEstimate)}. The model's own value is {formatSize(sizeIn50)}, about{' '}
-                      {estimateGapPercent.toFixed(0)}% {sizeIn50 > settledEstimate ? 'higher' : 'lower'}, because the
-                      earliest doublings are shorter than the settled time: matter's pull has not yet faded.
-                    </>
-                  ) : (
-                    <>
-                      With so little dark energy, matter's pull is still strong for a long time. The doublings
-                      take {result.doublings.map((d) => billions(d.years)).join(', ')} billion years: still
-                      getting longer, and heading toward the settled {billions(settledDoublingYears)}. So the
-                      simple rule of a steady doubling time does not describe the early part of the run. For a
-                      long while, this universe behaves much like the one with no dark energy, and the steady
-                      growth only takes over later.
-                    </>
-                  )}
-                </p>
-
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>What the expansion rate means for a galaxy's speed.</strong> Take a galaxy 100
-                  megaparsecs away today. It moves away at {expansionRateAtSize(1, share).toFixed(0)} × 100 ={' '}
-                  {withCommas(exampleSpeedToday)} kilometers per second. After 50 billion years the expansion rate
-                  is {expansionRateAtSize(sizeIn50, share).toFixed(1)}, and that galaxy is {formatSize(sizeIn50)}{' '}
-                  times farther away, so it moves away at about {withCommas(exampleSpeedIn50)} kilometers per
-                  second. A galaxy's speed is the expansion rate times its distance.{' '}
-                  {exampleSpeedIn50 > exampleSpeedToday
-                    ? 'The rate has fallen, but it acts on a much larger distance, so the speed has still gone up: the expansion is speeding up even though the rate has dropped.'
-                    : 'Here the rate falls by more than the distance grows, so the speed goes down: the expansion is slowing down.'}{' '}
-                  (Far enough away, such speeds can be larger than the speed of light without breaking
-                  relativity, because it is space stretching, not motion through space, as in Experiment 8.)
-                </p>
-
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Why the expansion rate is what it is.</strong> The expansion rate depends on what the
-                  universe contains. In this model, you take two contributions, add them, and then take a square
-                  root: <strong>expansion rate = today's rate × the square root of (matter's contribution +
-                  dark energy's contribution)</strong>. (The square root is just how this model combines the
-                  two. All you need is that the rate goes up when either contribution goes up, and down when
-                  either goes down.)
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  Today, matter's contribution is {(1 - share).toFixed(2)} and dark energy's is {share.toFixed(2)},
-                  and together they make 1.00. The square root of 1.00 is 1, so the rate is{' '}
-                  {result.expansionRateToday.toFixed(0)} × 1 = <strong>{result.expansionRateToday.toFixed(0)}</strong>.
-                  The two contributions behave differently as the universe grows. Matter thins out as the universe
-                  grows, so its contribution shrinks. In this model, dark energy does not thin out, so its
-                  contribution stays at {share.toFixed(2)}. After 50 billion years, the universe is{' '}
-                  {formatSize(sizeIn50)} times bigger, and matter's contribution has shrunk to about{' '}
-                  {((1 - share) / Math.pow(sizeIn50, 3)).toFixed(5)}. The total is about{' '}
-                  {((1 - share) / Math.pow(sizeIn50, 3) + share).toFixed(share === 0 ? 4 : 2)}, and the rate is{' '}
-                  {result.expansionRateToday.toFixed(0)} × √{((1 - share) / Math.pow(sizeIn50, 3) + share).toFixed(share === 0 ? 4 : 2)} ≈{' '}
-                  <strong>{expansionRateAtSize(sizeIn50, share).toFixed(1)}</strong>.{' '}
-                  {share > 0
-                    ? `After that, almost nothing is left of matter's contribution, so the rate stops falling. It settles at today's rate × √(dark energy's share) = ${result.expansionRateToday.toFixed(0)} × √${share.toFixed(2)} ≈ ${result.longTermExpansionRate.toFixed(1)}.`
-                    : "With no dark energy, there is nothing to hold the rate up. Matter's contribution keeps shrinking, so the rate keeps falling toward zero, and never quite reaches it."}
-                </p>
-                <p style={{ marginBottom: '0.25rem' }}>
-                  The share sets the floor, so changing the dark energy changes where the rate settles:
-                </p>
-                <ul style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.5rem' }}>
-                  {[0.9, BEST_FIT_DARK_ENERGY_FRACTION, 0.33].map((x) => (
-                    <li key={x}>
-                      {Math.round(x * 100)}% dark energy: {result.expansionRateToday.toFixed(0)} × √{x.toFixed(2)} ≈{' '}
-                      <strong>{longTermExpansionRate(x).toFixed(1)}</strong>
-                      {x === 0.9 ? ' (a high floor, so the rate barely drops)' : ''}
-                    </li>
-                  ))}
-                  <li>
-                    No dark energy: there is no floor. The rate keeps falling toward zero (
-                    {noDarkEnergyResult.expansionRateAtEnd.toFixed(1)} after 100 billion years), and never quite
-                    reaches it.
-                  </li>
-                </ul>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Does dark energy change?</strong> In this model it does not: its contribution is assumed
-                  to stay constant. That is an assumption, not a certainty, and astronomers are testing it right
-                  now. Many measurements fit a constant dark energy. But in 2025, results from the DESI survey
-                  (a map of millions of galaxies), combined with other measurements, hinted that dark energy may
-                  be weakening over time. The hint was not strong enough to count as a discovery, and some
-                  astronomers think errors in the supernova measurements could explain it. Newer results in 2026
-                  have been mixed, and one of them moved back toward a constant dark energy. At the time of
-                  writing (October 2026), the question is still open. If dark energy did change, the rate would
-                  settle somewhere else and the future would be different (see the box below).
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>A comparison from daily life.</strong> Picture a bath fed by two taps. One tap slowly
-                  turns itself down as time passes (matter). The other keeps running at the same rate (dark
-                  energy, in this model). The total flow falls at first, then levels off at what the steady tap
-                  supplies. A bigger steady tap means a higher level, and with no steady tap the flow dwindles
-                  toward nothing. Like any comparison, it is not exact: the model combines the two
-                  contributions with the square root above, not by simply adding two flows.
-                </p>
-
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Checking your first prediction:</strong> asked what the far future looks like, you
-                  answered "{farFutureChoices.find((c) => c.value === submittedFarFuturePrediction)!.label}". For
-                  the real universe (about {Math.round(BEST_FIT_DARK_ENERGY_FRACTION * 100)}% dark energy), the
-                  model gives a universe that grows to about {formatSize(futureRelativeSize(50e9, BEST_FIT_DARK_ENERGY_FRACTION))}{' '}
-                  times today's size in 50 billion years and about {formatSize(realResult.sizeAtEnd)} times in
-                  100 billion years, and the expansion keeps speeding up and never stops.{' '}
-                  {submittedFarFuturePrediction === 'faster'
-                    ? 'So your prediction was right.'
-                    : submittedFarFuturePrediction === 'slower'
-                      ? 'So your prediction was off this time. "Going on, but ever more slowly" is what the model gives with no dark energy: try the None preset and compare.'
-                      : 'So your prediction was off this time. In this model the expansion does not stop, even with no dark energy: with only matter, it slows down forever without quite stopping.'}
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Checking your second prediction:</strong> asked how long the next doubling takes, you
-                  answered "{nextDoublingChoices.find((c) => c.value === submittedNextDoublingPrediction)!.label}". For
-                  the real universe, the first doubling takes {billions(realResult.doublings[0].years)} billion
-                  years and the next takes {billions(realResult.doublings[1].years)}, about the same, and the
-                  doublings settle toward {billions(realResult.longTermDoublingTimeYears)} billion years. With no
-                  dark energy the next doubling would take {billions(noDarkEnergyResult.doublings[1].years, 0)} billion
-                  years instead.{' '}
-                  {submittedNextDoublingPrediction === 'same'
-                    ? 'So your prediction was right.'
-                    : 'So your prediction was off this time.'}
-                </p>
-
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>A comparison from daily life.</strong> Think of a savings account that earns a fixed
-                  interest rate. It takes the same number of years to double from 100 dollars to 200 as from
-                  1,000 to 2,000, however large the balance gets, because the interest is always the same
-                  fraction of what is there. With dark energy, the universe behaves like that: its growth
-                  becomes a fixed percentage over each stretch of time, so each doubling takes the same time.
-                  Like any comparison, it is not exact: the universe's early doublings are not quite equal.
-                </p>
-                {share === 0 && (
-                  <p style={{ marginBottom: '0.5rem' }}>
-                    <strong>A comparison for no dark energy.</strong> Throw a ball upward slowly, and gravity
-                    pulls it back. Throw it fast enough (the escape speed, from the Orbits experiment in the
-                    Gravity chapter) and it keeps slowing down as it climbs but never stops and never falls
-                    back. A flat universe with only matter is exactly that borderline case: gravity slows the
-                    expansion forever, but never quite stops it. This is an analogy, not the same calculation.
-                  </p>
-                )}
-
-                <div
-                  style={{
-                    margin: '0.75rem 0',
-                    padding: '0.75rem 1rem',
-                    border: '2px solid #f59e0b',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                  }}
-                >
-                  <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                    <strong>What this model can and cannot tell you.</strong> Everything above depends on one
-                    assumption: that dark energy is a constant that never changes. That is the simplest
-                    possibility and many measurements fit it, but it is being tested, and some recent results
-                    hint that dark energy may be weakening. Nobody yet knows what dark energy actually is. If it
-                    changed with time, the future could be very different. So this is what
-                    the model gives for a constant dark energy, not a prediction of how the real universe will
-                    end.
-                  </p>
-                  <p style={{ marginTop: 0, marginBottom: 0 }}>
-                    The model covers only how the size of the universe changes. It does not say anything about
-                    stars, black holes, or the universe becoming cold and dark. It also assumes the universe is
-                    flat. Other endings are possible if the dark energy changed over time, or the universe were
-                    not flat: a collapse back together (a "Big Crunch"), or a runaway stretching that tears
-                    even galaxies apart (a "Big Rip"). This model cannot say anything about them. The 100
-                    billion years on the graph is only the range of the axis, not a prediction of any event.
-                  </p>
-                </div>
-                <p style={{ marginBottom: '0.25rem' }}>
-                  <strong>What this model simplifies.</strong>
-                </p>
-                <ul style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.5rem' }}>
-                  <li>
-                    It is the same simplified universe as Experiments 5, 6, 8 and 9: flat, with matter and a
-                    constant dark energy, an illustrative Hubble constant of 70, and no light or other very fast
-                    particles.
-                  </li>
-                  <li>
-                    Every universe is matched to the real one today (same expansion rate and size), so a universe
-                    with no dark energy is only {billions(universeAgeYears(0))}{' '}
-                    billion years old today in this comparison, as in Experiment 6.
-                  </li>
-                  <li>
-                    Things held together by their own gravity, such as our galaxy and its neighbors, do not
-                    expand. In the drawing, only the space between groups stretches. The drawing is a schematic
-                    illustration and not to scale.
-                  </li>
-                </ul>
+              )}
+              <p style={{ ...smallNote, marginTop: '0.5rem' }}>
+                Dark energy at 0% has no push at all, so only matter&rsquo;s pull slows the expansion. At 30% the expansion is still slowing down today, and a speed-up comes later. These are <strong>trial values</strong>: they show what a universe with that much dark energy would do, and they do not say the real universe has that much.
+              </p>
+              <div style={{ marginTop: '0.75rem' }}>
+                <button type="button" className="action-button" onClick={handlePart2Run} disabled={part2Running} style={{ padding: '0.5rem 1.5rem' }}>
+                  {part2Running ? 'Running...' : 'Run: watch your universe grow'}
+                </button>
               </div>
+              <p style={smallNote}>
+                Your guesses are locked while you try other settings. Your guesses do not change the drawings or tables, but this setting does: it changes Pictures 3 to 5 and the pink column in Part 3. While the share is on the real best fit (70%), your pink picture and the Part 1 picture are the same, so change the share to see something move.
+              </p>
+              <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem', marginBottom: 0 }}>
+                Dark energy share: <strong style={{ color: YOUR_COLOR }}>{pct}%</strong> &nbsp;|&nbsp; Years from now: <strong>{billions(yearsFromNow2)} billion</strong> &nbsp;|&nbsp; Size: <strong>{formatSize(size2)}×</strong> today&rsquo;s
+                <br />
+                Expansion rate: {expansionRateAtSize(size2, share).toFixed(1)} km/s per megaparsec &nbsp;|&nbsp; Time for the next doubling: <strong>{billions(nextDoublingYearsAt(part2Progress, share))} billion years</strong>
+              </p>
+            </div>
+
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 3: your universe&rsquo;s graph</p>
+              <SizeGraph share={share} progress={part2Progress} color={YOUR_COLOR} legend={`Your universe (${pct}% dark energy)`} finished={false} guess={null} />
+              <YourGraphCaption share={share} />
+            </Block>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 4: your universe&rsquo;s bars</p>
+              <DoublingBars share={share} progress={part2Progress} color={YOUR_COLOR} staged={false} guess={null} />
+              <YourBarsCaption share={share} />
+            </Block>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 5: the galaxies, spreading apart (schematic)</p>
+              <GalaxyStrip share={share} progress={part2Progress} />
+              <StripCaption />
+            </Block>
+            <Block>
+              <WhereFrom>
+                <strong>Calculated here:</strong> every line, bar and number, from the model (as in Part 1). <strong>Your choice:</strong> the dark energy share (a trial value). <strong>An illustration, not to scale:</strong> the galaxy strip. Nothing here is imagined.
+              </WhereFrom>
+            </Block>
+
+            {/* ===== Part 3 ===== */}
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              These are the results of your first run, with what each table means. The numbers come from the physics and do not change with your guesses; only the pink column follows your choice in Part 2.
+            </PartHeader>
+            <FateOfTheUniverseResults guesses={submitted} share={share} />
+
+            {/* ===== Part 4 ===== */}
+            <PartHeader color="#0066cc" title="Part 4: The tutor">
+              The tutor asks you three questions about what you saw, then explains it and goes through your two guesses.
+            </PartHeader>
+            {submitted && (
+              <FateOfTheUniverseTutor
+                predictedFarFuture={submitted.farFuture}
+                predictedNextDoubling={submitted.nextDoubling}
+                onExplained={() => {
+                  setExplained(true)
+                  onTutorComplete?.()
+                }}
+              />
             )}
+            {explained && <p style={{ ...smallNote, marginTop: '1rem' }}>You have reached the tutor&rsquo;s explanation. You can still try other settings in Part 2; the tutor does not restart.</p>}
           </>
         )}
       </div>
 
-      {status === 'complete' && submittedFarFuturePrediction && submittedNextDoublingPrediction && (
-        <FateOfTheUniverseTutor
-          key={runCount}
-          predictedFarFuture={submittedFarFuturePrediction}
-          predictedNextDoubling={submittedNextDoublingPrediction}
-          onExplained={() => {
-            setExplanationReached(true)
-            onTutorComplete?.()
-          }}
-        />
-      )}
-
-      {status === 'complete' && explanationReached && <CosmologySynthesis />}
+      {explained && <CosmologySynthesis />}
     </div>
   )
 }
+
