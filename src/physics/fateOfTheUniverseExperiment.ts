@@ -132,3 +132,206 @@ export function runFateOfTheUniverseExperiment(darkEnergyFraction: number): Fate
     fate: L <= 0 ? 'slows-forever' : 'steady-growth',
   }
 }
+
+// ---- Audit update (2026-11-16): the guess marks, their marking and the check-up numbers. Everything below
+// is new. No function above is changed. The interface only draws and words these results (CLAUDE.md §9). ----
+
+// The two fixed universes of Part 1: the real best fit, and the no-dark-energy contrast.
+export function realUniverse(): FateResult {
+  return runFateOfTheUniverseExperiment(BEST_FIT_DARK_ENERGY_FRACTION)
+}
+export function noDarkEnergyUniverse(): FateResult {
+  return runFateOfTheUniverseExperiment(0)
+}
+
+// ---- Guess 1: what the far future looks like ----
+export type FarFutureGuess = 'stops' | 'slower' | 'faster'
+
+// What the model gives for a share: with no dark energy the expansion slows forever but never stops; with
+// any dark energy the size grows steadily, ever faster. No share in the model stops the expansion.
+export function modelAnswerForShare(darkEnergyFraction: number): FarFutureGuess {
+  return darkEnergyFraction <= 0 ? 'slower' : 'faster'
+}
+export function farFutureAnswer(): FarFutureGuess {
+  return modelAnswerForShare(BEST_FIT_DARK_ENERGY_FRACTION)
+}
+export function farFutureMatches(guess: FarFutureGuess): boolean {
+  return guess === farFutureAnswer()
+}
+
+export interface SketchPoint {
+  x: number
+  y: number
+}
+
+// A fixed sketch of each shape, from "today" at (0, 0) to the right edge at x = 1, both in 0 to 1. The
+// heights mean nothing as sizes: only the shape does (the caption says so).
+const SKETCH_STEPS = 40
+export function farFutureSketch(guess: FarFutureGuess): SketchPoint[] {
+  const points: SketchPoint[] = []
+  for (let i = 0; i <= SKETCH_STEPS; i++) {
+    const x = i / SKETCH_STEPS
+    // stops: rises a little, then runs level; slower: bends toward flat but keeps rising; faster: bends upward.
+    const y = guess === 'stops' ? 0.25 * Math.min(1, x / 0.3) : guess === 'slower' ? 0.6 * Math.sqrt(x) : 0.9 * x * x
+    points.push({ x, y })
+  }
+  return points
+}
+
+// ---- Guess 2: how long the next doubling takes ----
+export type NextDoublingGuess = 'shorter' | 'same' | 'longer'
+
+export const NEXT_DOUBLING_GUESS_YEARS: Record<NextDoublingGuess, number> = {
+  shorter: 5e9,
+  same: 11e9,
+  longer: 30e9,
+}
+
+// How far each choice is from the real second doubling, in decades (powers of ten) on a log scale.
+export function nextDoublingDistancesInDecades(): Record<NextDoublingGuess, number> {
+  const real = realUniverse().doublings[1].years
+  return {
+    shorter: Math.abs(Math.log10(NEXT_DOUBLING_GUESS_YEARS.shorter / real)),
+    same: Math.abs(Math.log10(NEXT_DOUBLING_GUESS_YEARS.same / real)),
+    longer: Math.abs(Math.log10(NEXT_DOUBLING_GUESS_YEARS.longer / real)),
+  }
+}
+export function nextDoublingAnswer(): NextDoublingGuess {
+  const d = nextDoublingDistancesInDecades()
+  return (Object.keys(d) as NextDoublingGuess[]).reduce((best, k) => (d[k] < d[best] ? k : best), 'shorter')
+}
+export function nextDoublingMatches(guess: NextDoublingGuess): boolean {
+  return guess === nextDoublingAnswer()
+}
+
+// ---- The steady-doubling arithmetic the components used to do themselves ----
+export interface RuleOfSeventy {
+  percentGrowthPerBillionYears: number
+  doublingTimeYears: number
+  exactDoublingTimeYears: number
+  gapPercent: number | null
+}
+
+// The settled expansion rate as a percentage growth of the size per billion years, and the common rule of
+// thumb "doubling time = 70 / percent growth", beside the exact settled doubling time.
+export function ruleOfSeventy(darkEnergyFraction: number): RuleOfSeventy {
+  const exact = longTermDoublingTimeYears(darkEnergyFraction)
+  if (darkEnergyFraction <= 0) {
+    return { percentGrowthPerBillionYears: 0, doublingTimeYears: Infinity, exactDoublingTimeYears: exact, gapPercent: null }
+  }
+  const percent =
+    (longTermExpansionRate(darkEnergyFraction) /
+      expansionRateAtSize(1, darkEnergyFraction) /
+      (hubbleTimeYears() / 1e9)) *
+    100
+  const rule = (70 / percent) * 1e9
+  return {
+    percentGrowthPerBillionYears: percent,
+    doublingTimeYears: rule,
+    exactDoublingTimeYears: exact,
+    gapPercent: (Math.abs(rule - exact) / exact) * 100,
+  }
+}
+
+export interface SteadyDoublingEstimate {
+  doublings: number
+  estimate: number
+  modelSize: number
+  gapPercent: number
+  modelIsHigher: boolean
+  hasSettled: boolean
+  ruleApplies: boolean
+}
+
+// If every doubling took the settled time, the size after `years` would be 2^(years / settled time). The
+// doublings have "settled" if the fourth is within 5% of the settled time; the rule is a fair estimate only
+// if even the first is at least 70% of it. With no dark energy there is no settled time (doublings 0).
+export function steadyDoublingEstimate(darkEnergyFraction: number, years: number): SteadyDoublingEstimate {
+  const settled = longTermDoublingTimeYears(darkEnergyFraction)
+  const run = runFateOfTheUniverseExperiment(darkEnergyFraction)
+  const doublings = settled === Infinity ? 0 : years / settled
+  const estimate = 2 ** doublings
+  const modelSize = futureRelativeSize(years, darkEnergyFraction)
+  return {
+    doublings,
+    estimate,
+    modelSize,
+    gapPercent: (Math.abs(modelSize - estimate) / modelSize) * 100,
+    modelIsHigher: modelSize > estimate,
+    hasSettled: settled !== Infinity && run.doublings[run.doublings.length - 1].years >= 0.95 * settled,
+    ruleApplies: settled !== Infinity && run.doublings[0].years >= 0.7 * settled,
+  }
+}
+
+// Matter's contribution to the squared expansion rate when the universe has the given size (1 today).
+// Dark energy's contribution stays at its share.
+export function matterContributionAtSize(relativeSize: number, darkEnergyFraction: number): number {
+  return (1 - darkEnergyFraction) / relativeSize ** 3
+}
+
+// A galaxy's speed away from us: the expansion rate when the universe has the given size, times its
+// distance then (its distance today times that size). In km/s for a distance today in megaparsecs.
+export function galaxySpeedKmPerS(distanceTodayMpc: number, relativeSize: number, darkEnergyFraction: number): number {
+  return expansionRateAtSize(relativeSize, darkEnergyFraction) * distanceTodayMpc * relativeSize
+}
+
+// ---- The check-up against published values (Part 3, Table 1) ----
+// Planck 2018 VI (arXiv:1807.06209), abstract, read 2026-11-16 through an HTML copy (a model summary).
+export const PLANCK_MATTER_SHARE = 0.315
+export const PLANCK_MATTER_SHARE_UNCERTAINTY = 0.007
+
+// How far a matter share is from Planck's, in Planck's stated uncertainties (negative: below it).
+export function matterShareGapInPlanckUncertainties(matterShare: number): number {
+  return (matterShare - PLANCK_MATTER_SHARE) / PLANCK_MATTER_SHARE_UNCERTAINTY
+}
+
+// NASA's statements of when the expansion began to speed up (read 2026-11-16 through a model summary). The
+// 2026 page gives a time after the universe began, which is turned into "years ago" with an age of 13.8
+// billion years: that age is our arithmetic, not a figure printed on the page.
+export const ASSUMED_AGE_FOR_NASA_2026_ARITHMETIC_YEARS = 13.8e9
+export const NASA_SPEED_UP_YEARS_AGO: Array<{
+  year: number
+  yearsAgoRange?: [number, number]
+  yearsAfterBigBang?: number
+}> = [
+  { year: 2006, yearsAgoRange: [5e9, 6e9] },
+  { year: 2023, yearsAgoRange: [7.5e9, 7.5e9] },
+  { year: 2026, yearsAfterBigBang: 9e9 },
+]
+
+export function publishedSpeedUpRangeYearsAgo(): { minYears: number; maxYears: number } {
+  const values = NASA_SPEED_UP_YEARS_AGO.flatMap((n) =>
+    n.yearsAgoRange ? n.yearsAgoRange : [ASSUMED_AGE_FOR_NASA_2026_ARITHMETIC_YEARS - (n.yearsAfterBigBang ?? 0)],
+  )
+  return { minYears: Math.min(...values), maxYears: Math.max(...values) }
+}
+
+// The model's speed-up as years after the Big Bang (null where it never happens).
+export function speedUpYearsAfterBigBang(darkEnergyFraction: number): number | null {
+  const run = runFateOfTheUniverseExperiment(darkEnergyFraction)
+  return run.speedUpYearsFromNow === null ? null : universeAgeYears(darkEnergyFraction) + run.speedUpYearsFromNow
+}
+
+// Does the model's speed-up (years ago) fall within the spread of NASA's figures?
+export function speedUpWithinPublishedRange(darkEnergyFraction: number): boolean {
+  const run = runFateOfTheUniverseExperiment(darkEnergyFraction)
+  if (run.speedUpYearsFromNow === null) return false
+  const yearsAgo = -run.speedUpYearsFromNow
+  const { minYears, maxYears } = publishedSpeedUpRangeYearsAgo()
+  return yearsAgo >= minYears && yearsAgo <= maxYears
+}
+
+// NASA, "The Hubble constant and the tension" (updated 4 August 2025), read 2026-11-16 (a model summary).
+export const HUBBLE_RANGE_SPACE_TELESCOPES: [number, number] = [70, 76]
+export const HUBBLE_RANGE_OLDEST_LIGHT: [number, number] = [67, 68]
+
+export function hubbleRateWithinPublishedValues(kmPerSPerMpc: number): {
+  spaceTelescopes: boolean
+  oldestLight: boolean
+  any: boolean
+} {
+  const inside = (r: [number, number]) => kmPerSPerMpc >= r[0] && kmPerSPerMpc <= r[1]
+  const spaceTelescopes = inside(HUBBLE_RANGE_SPACE_TELESCOPES)
+  const oldestLight = inside(HUBBLE_RANGE_OLDEST_LIGHT)
+  return { spaceTelescopes, oldestLight, any: spaceTelescopes || oldestLight }
+}
