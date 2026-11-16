@@ -1,6 +1,33 @@
 import { describe, expect, it } from 'vitest'
 import {
   CLUMP_THRESHOLD,
+  GROWTH_AXIS_MAX,
+  GROWTH_GUESS_VALUES,
+  HEAD_START_ARROW_DECADES,
+  HEAD_START_EXAMPLE_DELTA,
+  PLANCK_Z_DRAG,
+  PLANCK_Z_EQ_RANGE,
+  PLANCK_Z_STAR_RANGE,
+  TEXTBOOK_LINEAR_COLLAPSE_THRESHOLD,
+  actualGrowthGuess,
+  captionNumbers,
+  checkUp,
+  dragRedshiftNote,
+  growthApproximationSinceStart,
+  growthCurve,
+  growthDistanceInDecades,
+  growthGuessMark,
+  growthGuessMatches,
+  growthSuppressionApproximation,
+  headStartDecades,
+  headStartExample,
+  headStartFactor,
+  headStartGuessMarker,
+  markGrowthGuess,
+  markHeadStartGuess,
+  startFacts,
+  workedExamples,
+  yourRegion,
   MATTER_RADIATION_EQUALITY_REDSHIFT,
   MAX_START_DELTA,
   MIN_START_DELTA,
@@ -160,6 +187,224 @@ describe('experiment result', () => {
     const result = runStructureFormationExperiment('ordinary', 1e-3)
     expect(relativeError(result.growthWithoutDarkEnergy, 1 + RECOMBINATION_REDSHIFT)).toBeLessThan(1e-9)
     expect(result.growthSinceStart).toBeLessThan(result.growthWithoutDarkEnergy)
+  })
+})
+
+describe('the two fixed starts of Part 1', () => {
+  it('gives the growth for each kind of matter, with no starting size', () => {
+    const o = startFacts('ordinary')
+    const d = startFacts('ordinary-plus-dark')
+    expect(o.startRedshift).toBe(RECOMBINATION_REDSHIFT)
+    expect(d.startRedshift).toBe(MATTER_RADIATION_EQUALITY_REDSHIFT)
+    expect(relativeError(o.growthSinceStart, 849.7)).toBeLessThan(0.001)
+    expect(relativeError(d.growthSinceStart, 2649.3)).toBeLessThan(0.001)
+    expect(relativeError(o.growthWithoutDarkEnergy, 1090.8)).toBeLessThan(1e-9)
+    expect(relativeError(d.growthWithoutDarkEnergy, 3401)).toBeLessThan(1e-9)
+    expect(relativeError(o.requiredStartDelta, 1 / 849.7)).toBeLessThan(0.001)
+  })
+
+  it('puts the starts at about 472 and 86 thousand years after the Big Bang in this model', () => {
+    expect(Math.abs(startFacts('ordinary').startYearsAfterBigBang - 471_931)).toBeLessThan(5)
+    expect(Math.abs(startFacts('ordinary-plus-dark').startYearsAfterBigBang - 85_721)).toBeLessThan(5)
+    const n = captionNumbers()
+    expect(n.ordinaryStartThousandYears).toBe(472)
+    expect(n.darkStartThousandYears).toBe(86)
+  })
+
+  it('gives a growth curve that does not depend on the starting size, ends at today and rises', () => {
+    for (const kind of ['ordinary', 'ordinary-plus-dark'] as const) {
+      const curve = growthCurve(kind)
+      const last = curve[curve.length - 1]
+      expect(last.redshift).toBe(0)
+      expect(relativeError(last.growth, startFacts(kind).growthSinceStart)).toBeLessThan(1e-12)
+      expect(relativeError(last.growthWithoutDarkEnergy, startFacts(kind).growthWithoutDarkEnergy)).toBeLessThan(1e-9)
+      for (let i = 1; i < curve.length; i++) {
+        expect(curve[i].growth).toBeGreaterThanOrEqual(curve[i - 1].growth)
+        expect(curve[i].growthWithoutDarkEnergy).toBeGreaterThanOrEqual(curve[i].growth * 0.999999)
+      }
+      for (const delta of [MIN_START_DELTA, 1e-3, MAX_START_DELTA]) {
+        expect(runStructureFormationExperiment(kind, delta).curve.map((p) => p.growth)).toEqual(curve.map((p) => p.growth))
+      }
+    }
+  })
+})
+
+describe('what the model gives for each guess', () => {
+  it('the growth answer nearest to about 850 on a log scale is "about 1,000 times"', () => {
+    expect(actualGrowthGuess()).toBe('thousand')
+    expect(growthGuessMatches('thousand')).toBe(true)
+    expect(growthGuessMatches('ten')).toBe(false)
+    expect(growthGuessMatches('million')).toBe(false)
+    expect(Math.abs(growthDistanceInDecades('thousand') - 0.07)).toBeLessThan(0.005)
+    expect(Math.abs(growthDistanceInDecades('ten') - 1.93)).toBeLessThan(0.005)
+    expect(Math.abs(growthDistanceInDecades('million') - 3.07)).toBeLessThan(0.005)
+  })
+
+  it('the head start is a factor of about 3.1, 0.49 of a decade, and decides the 1-part-in-1,000 example', () => {
+    expect(Math.abs(headStartFactor() - 3.118)).toBeLessThan(0.005)
+    expect(Math.abs(headStartDecades() - 0.494)).toBeLessThan(0.005)
+    const e = headStartExample()
+    expect(e.startDelta).toBe(HEAD_START_EXAMPLE_DELTA)
+    expect(relativeError(e.ordinaryExcessToday, 0.85)).toBeLessThan(0.01)
+    expect(relativeError(e.darkExcessToday, 2.65)).toBeLessThan(0.01)
+    expect(e.ordinaryBecameClump).toBe(false)
+    expect(e.darkBecameClump).toBe(true)
+    expect(e.decides).toBe(true)
+  })
+})
+
+describe('the white guess marks', () => {
+  it('guess 1: a tick at 10 and at 1,000 times on the growth axis; an edge arrow with no position for a million', () => {
+    expect(growthGuessMark('ten')).toEqual({ kind: 'tick', atTimesGrown: 10 })
+    expect(growthGuessMark('thousand')).toEqual({ kind: 'tick', atTimesGrown: 1000 })
+    const million = growthGuessMark('million')
+    expect(million).toEqual({ kind: 'edge-arrow', direction: 'up', hasPosition: false })
+    expect(Object.keys(million)).not.toContain('atTimesGrown')
+    expect(GROWTH_GUESS_VALUES.million).toBeGreaterThan(GROWTH_AXIS_MAX)
+    expect(GROWTH_GUESS_VALUES.thousand).toBeLessThan(GROWTH_AXIS_MAX)
+  })
+
+  it('guess 1 answers give three different marks', () => {
+    expect(new Set((['ten', 'thousand', 'million'] as const).map((g) => JSON.stringify(growthGuessMark(g)))).size).toBe(3)
+  })
+
+  it('guess 2: a ring for no difference, a short arrow for a small difference, a longer arrow for it would decide', () => {
+    expect(headStartGuessMarker('none')).toEqual({ kind: 'ring', lengthDecades: 0 })
+    expect(headStartGuessMarker('small').kind).toBe('short-arrow')
+    expect(headStartGuessMarker('decides').kind).toBe('long-arrow')
+    expect(HEAD_START_ARROW_DECADES.small).toBeGreaterThan(0)
+    expect(HEAD_START_ARROW_DECADES.decides).toBeGreaterThan(HEAD_START_ARROW_DECADES.small)
+    expect(new Set((['none', 'small', 'decides'] as const).map((g) => JSON.stringify(headStartGuessMarker(g)))).size).toBe(3)
+  })
+})
+
+describe('what the tutor says about each guess', () => {
+  it('marks guess 1 with the growth numbers', () => {
+    const right = markGrowthGuess('thousand')
+    expect(right.matches).toBe(true)
+    expect(right.guessedTimes).toBe(1000)
+    expect(relativeError(right.ordinaryGrowth, 849.7)).toBeLessThan(0.001)
+    expect(markGrowthGuess('ten').matches).toBe(false)
+    expect(markGrowthGuess('million').matches).toBe(false)
+    expect(markGrowthGuess('ten').actual).toBe('thousand')
+  })
+
+  it('marks guess 2 as the owner approved: only "no difference" is marked off, the other two are partly', () => {
+    expect(markHeadStartGuess('none').marking).toBe('not')
+    expect(markHeadStartGuess('small').marking).toBe('partly')
+    expect(markHeadStartGuess('decides').marking).toBe('partly')
+    const m = markHeadStartGuess('small')
+    expect(Math.abs(m.headStartFactor - 3.118)).toBeLessThan(0.005)
+    expect(relativeError(m.ordinaryGrowth, 849.7)).toBeLessThan(0.001)
+    expect(relativeError(m.darkGrowth, 2649.3)).toBeLessThan(0.001)
+    expect(m.example.decides).toBe(true)
+  })
+})
+
+describe('the Carroll, Press and Turner (1992) approximation', () => {
+  it('gives g = 0.778 for 0.3 and 0.7, and exactly 1 with no dark energy', () => {
+    expect(Math.abs(growthSuppressionApproximation(0.7) - 0.7779)).toBeLessThan(5e-4)
+    expect(growthSuppressionApproximation(0)).toBeCloseTo(1, 12)
+  })
+
+  it('gives 848.6 since the oldest light, within 0.2 percent of the exact integral, and 1 + z with no dark energy', () => {
+    const approx = growthApproximationSinceStart(RECOMBINATION_REDSHIFT)
+    expect(Math.abs(approx - 848.6)).toBeLessThan(0.2)
+    expect(relativeError(growthBetween(RECOMBINATION_REDSHIFT, 0, L), approx)).toBeLessThan(0.002)
+    expect(growthApproximationSinceStart(RECOMBINATION_REDSHIFT, 0)).toBeCloseTo(1 + RECOMBINATION_REDSHIFT, 9)
+  })
+})
+
+describe('the check-up (Table 1)', () => {
+  const rows = checkUp()
+  const row = (id: string) => rows.find((r) => r.id === id)!
+
+  it('has the five rows a to e', () => {
+    expect(rows.map((r) => r.id)).toEqual(['a', 'b', 'c', 'd', 'e'])
+  })
+
+  it('(a) the exact growth is a little more than the approximation, by about 1.1 (0.13 percent)', () => {
+    expect(row('a').reading).toBe('more')
+    expect(Math.abs(row('a').difference! - 1.1)).toBeLessThan(0.15)
+    expect(Math.abs(row('a').percent! - 0.13)).toBeLessThan(0.02)
+  })
+
+  it('(b) the growth with dark energy is 22.1 percent less than without', () => {
+    expect(row('b').reading).toBe('less')
+    expect(Math.abs(row('b').percent! + 22.1)).toBeLessThan(0.1)
+    expect(relativeError(row('b').comparedWith!, 1090.8)).toBeLessThan(1e-9)
+  })
+
+  it('(c) the head start is calculated here only, with its factor', () => {
+    expect(row('c').reading).toBe('calculated here only')
+    expect(row('c').factor).toBeCloseTo(headStartFactor(), 12)
+    expect(row('c').percent).toBeNull()
+  })
+
+  it("(d) and (e) the model's two redshifts lie within Planck 2018's ranges", () => {
+    expect(row('d').reading).toBe('within the published range')
+    expect(row('d').model).toBe(RECOMBINATION_REDSHIFT)
+    expect(row('d').publishedLow).toBe(PLANCK_Z_STAR_RANGE.low)
+    expect(row('e').reading).toBe('within the published range')
+    expect(row('e').model).toBe(MATTER_RADIATION_EQUALITY_REDSHIFT)
+    expect(row('e').publishedLow).toBe(PLANCK_Z_EQ_RANGE.low)
+    expect(PLANCK_Z_EQ_RANGE.low).toBeLessThan(MATTER_RADIATION_EQUALITY_REDSHIFT)
+    expect(PLANCK_Z_EQ_RANGE.high).toBeGreaterThan(MATTER_RADIATION_EQUALITY_REDSHIFT)
+  })
+})
+
+describe("Table 2 and the learner's own region", () => {
+  it('compares the starting size with the size needed', () => {
+    const o = startFacts('ordinary')
+    expect(yourRegion('ordinary', 1e-3).againstRequired).toBe('smaller')
+    expect(yourRegion('ordinary', 2e-3).againstRequired).toBe('bigger')
+    expect(yourRegion('ordinary-plus-dark', 1e-3).againstRequired).toBe('bigger')
+    expect(yourRegion('ordinary', o.requiredStartDelta).againstRequired).toBe('the same')
+  })
+
+  it('takes every number from the model and follows the learner\'s two settings', () => {
+    const a = yourRegion('ordinary-plus-dark', 1e-3)
+    const direct = runStructureFormationExperiment('ordinary-plus-dark', 1e-3)
+    expect(a.densityExcessToday).toBe(direct.densityExcessToday)
+    expect(a.becameClump).toBe(true)
+    expect(Math.abs(a.redshiftOfClump! - 2.36)).toBeLessThan(0.02)
+    expect(yourRegion('ordinary', 1e-5).becameClump).toBe(false)
+    expect(yourRegion('ordinary', 1e-5)).not.toEqual(yourRegion('ordinary-plus-dark', 1e-5))
+  })
+})
+
+describe("the pictures' own numbers and the worked examples", () => {
+  const n = captionNumbers()
+  const w = workedExamples()
+
+  it('gives the end values, the head start and the share dark energy takes away', () => {
+    expect(relativeError(n.ordinaryGrowth, 849.7)).toBeLessThan(0.001)
+    expect(relativeError(n.darkGrowth, 2649.3)).toBeLessThan(0.001)
+    expect(Math.abs(n.lostToDarkEnergyPercent - 22.1)).toBeLessThan(0.1)
+    expect(Math.abs(n.hundredThousandOrdinaryPartsIn - 118)).toBeLessThan(0.5)
+    expect(Math.abs(n.hundredThousandDarkPartsIn - 38)).toBeLessThan(0.5)
+  })
+
+  it('works the examples: 110 grains, 1 part in 10, 0.85 and 1 part in 850', () => {
+    expect(w.grainsInRegion).toBeCloseTo(110, 9)
+    expect(w.smallEndDelta).toBeCloseTo(0.1, 12)
+    expect(relativeError(w.exampleOrdinaryExcess, 0.85)).toBeLessThan(0.01)
+    expect(Math.abs(w.requiredPartsIn - 849.7)).toBeLessThan(0.5)
+    expect(relativeError(w.ordinaryWithoutDarkEnergy, 1090.8)).toBeLessThan(1e-9)
+    expect(relativeError(w.darkWithoutDarkEnergy, 3401)).toBeLessThan(1e-9)
+  })
+
+  it('works out the effect of starting at the baryon drag redshift: 826.5, 2.7 percent less', () => {
+    const d = dragRedshiftNote()
+    expect(d.dragRedshift).toBe(PLANCK_Z_DRAG)
+    expect(Math.abs(d.growthFromDrag - 826.5)).toBeLessThan(0.3)
+    expect(Math.abs(d.percentLess - 2.73)).toBeLessThan(0.05)
+    expect(d.growthFromDrag).toBeLessThan(d.growthFromOldestLight)
+  })
+
+  it('keeps the model\'s clump line at 1 and the textbook value for comparison only', () => {
+    expect(CLUMP_THRESHOLD).toBe(1)
+    expect(TEXTBOOK_LINEAR_COLLAPSE_THRESHOLD).toBe(1.686)
   })
 })
 

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { StructureFormationTutor } from './StructureFormationTutor'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   CLUMP_THRESHOLD,
   MATTER_RADIATION_EQUALITY_REDSHIFT,
@@ -7,11 +7,35 @@ import {
   MIN_START_DELTA,
   RECOMBINATION_REDSHIFT,
   START_SIZE_PRESETS,
-  growthBetween,
   runStructureFormationExperiment,
-  type KindOfMatter,
-  type StructureFormationResult,
+  workedExamples,
 } from '../physics/structureFormationExperiment'
+import type { GrowthGuess, HeadStartGuess, KindOfMatter } from '../physics/structureFormationExperiment'
+import { StructureFormationResults } from './StructureFormationResults'
+import { StructureFormationTutor } from './StructureFormationTutor'
+import {
+  ExcessCaption,
+  ExcessGraph,
+  GrowthGraph,
+  NeededSizeCaption,
+  NeededSizePicture,
+  Part1GrowthCaption,
+  StripCaption,
+  StripPicture,
+  YOUR_COLOR,
+  curveAt,
+  kindLabels,
+  partsInLabel,
+  redshiftLabel,
+  yearsLabel,
+} from './StructureFormationPictures'
+import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PartHeader } from './GravitationalWaveExperiment'
+import { Block, ExternalLink, WhereFrom, listStyle, smallNote } from './TidalEffectExperiment'
+
+// Cosmology, Experiment 9, audited to the newer rules (docs/audit/cosmology/09-draft-wording.md, approved by the owner on 2026-11-15).
+// Every number comes from the physics module; this file only draws and words it (CLAUDE.md §9). The learner's guesses never change a real
+// picture or table; they are drawn in white once the run has finished (§14, "Predictions and the Real Results").
 
 interface StructureFormationExperimentProps {
   onComplete?: () => void
@@ -20,1141 +44,562 @@ interface StructureFormationExperimentProps {
 
 type StartMode = 'preset' | 'custom'
 
-// Fixed real-world playback duration (CLAUDE.md §11): playback speed never changes the result.
+// One run is a fixed real duration, whatever the settings (CLAUDE.md §11): playback speed never changes the result.
 const ANIMATION_DURATION_MS = 9000
 
-const ORDINARY_COLOR = '#fbbf24'
-const DARK_COLOR = '#a78bfa'
-const NO_DARK_ENERGY_COLOR = '#cbd5e1'
-const CLUMP_COLOR = '#4ade80'
-
-// This experiment's two prediction questions, per its specification's "Prediction Activity". Choices are
-// not scored.
-type GrowthChoice = 'ten' | 'thousand' | 'million'
-const growthChoices: Array<{ value: GrowthChoice; label: string }> = [
+// The two guess questions are kept exactly as the owner approved them on 2026-10-09.
+const growthChoices: Array<{ value: GrowthGuess; label: string }> = [
   { value: 'ten', label: 'About 10 times' },
   { value: 'thousand', label: 'About 1,000 times' },
   { value: 'million', label: 'About a million times' },
 ]
-
-type HeadStartChoice = 'none' | 'small' | 'decides'
-const headStartChoices: Array<{ value: HeadStartChoice; label: string }> = [
+const headStartChoices: Array<{ value: HeadStartGuess; label: string }> = [
   { value: 'none', label: 'No difference' },
   { value: 'small', label: 'A small difference' },
   { value: 'decides', label: 'It would decide the outcome' },
 ]
+const optionText = (options: Array<{ value: string; label: string }>, value: string | null) => options.find((o) => o.value === value)?.label ?? null
 
-// The starting size used in the Results to show that a head start can decide the outcome (one of the presets).
-const HEAD_START_EXAMPLE_DELTA = 1e-3
-
-const kindLabels: Record<KindOfMatter, string> = {
-  ordinary: 'Ordinary matter only',
-  'ordinary-plus-dark': 'Ordinary plus dark matter',
-}
-
-// The custom slider moves along a logarithmic scale, so small and large ripples are both easy to pick.
+// The custom slider moves along a scale where each step multiplies, so small and large ripples are both easy to pick.
 const SLIDER_STEPS = 1000
-function sliderToDelta(position: number): number {
-  return MIN_START_DELTA * (MAX_START_DELTA / MIN_START_DELTA) ** (position / SLIDER_STEPS)
-}
-function deltaToSlider(delta: number): number {
-  return Math.round((Math.log(delta / MIN_START_DELTA) / Math.log(MAX_START_DELTA / MIN_START_DELTA)) * SLIDER_STEPS)
-}
+const sliderToDelta = (position: number) => MIN_START_DELTA * (MAX_START_DELTA / MIN_START_DELTA) ** (position / SLIDER_STEPS)
+const deltaToSlider = (delta: number) => Math.round((Math.log(delta / MIN_START_DELTA) / Math.log(MAX_START_DELTA / MIN_START_DELTA)) * SLIDER_STEPS)
 
-// "1 part in 850", rounded sensibly.
-function partsInLabel(delta: number): string {
-  const parts = 1 / delta
-  const rounded = parts >= 1000 ? Math.round(parts / 10) * 10 : Math.round(parts)
-  return `1 part in ${rounded.toLocaleString('en-US')}`
-}
-
-function yearsLabel(years: number): string {
-  if (years >= 1e9) return `${(years / 1e9).toFixed(2)} billion years`
-  if (years >= 1e6) return `${(years / 1e6).toFixed(1)} million years`
-  return `${Math.round(years / 1000).toLocaleString('en-US')} thousand years`
-}
-
-function redshiftLabel(redshift: number): string {
-  if (redshift >= 100) return Math.round(redshift).toLocaleString('en-US')
-  return redshift >= 10 ? redshift.toFixed(1) : redshift.toFixed(2)
-}
-
-// Shared geometry for the two graphs: time since the Big Bang on a logarithmic axis.
-const GRAPH_WIDTH = 520
-const GRAPH_HEIGHT = 310
-const GRAPH_LEFT = 62
-const GRAPH_RIGHT = GRAPH_WIDTH - 20
-const GRAPH_TOP = 44
-const GRAPH_BOTTOM = GRAPH_HEIGHT - 56
-const TIME_MIN_YEARS = 1e4
-const TIME_MAX_YEARS = 2e10
-const timeTicks = [1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10]
-const timeTickLabels = ['10 thousand', '100 thousand', '1 million', '10 million', '100 million', '1 billion', '10 billion']
-
-function timeX(years: number): number {
-  const fraction = Math.log10(years / TIME_MIN_YEARS) / Math.log10(TIME_MAX_YEARS / TIME_MIN_YEARS)
-  return GRAPH_LEFT + fraction * (GRAPH_RIGHT - GRAPH_LEFT)
-}
-
-function logY(value: number, min: number, max: number): number {
-  const fraction = Math.log10(value / min) / Math.log10(max / min)
-  return GRAPH_BOTTOM - fraction * (GRAPH_BOTTOM - GRAPH_TOP)
-}
-
-const GROWTH_Y_MIN = 1
-const GROWTH_Y_MAX = 5000
-const growthTicks = [1, 10, 100, 1000]
-const EXCESS_Y_MIN = 1e-5
-const EXCESS_Y_MAX = 10
-const excessTicks = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
-const excessTickLabels = ['0.00001', '0.0001', '0.001', '0.01', '0.1', '1']
-
-// The strip picture: a fixed patch of matter followed as space stretches (so the matter keeps the same
-// spot in the picture while the real distances between particles grow). Drawn to the model's true density
-// excess, with no exaggeration, so a very small ripple really looks almost smooth.
-const STRIP_WIDTH = 560
-const STRIP_HEIGHT = 250
-const STRIP_LEFT = 40
-const STRIP_RIGHT = STRIP_WIDTH - 40
-const STRIP_TOP = 86
-const STRIP_BOTTOM = 166
-const PARTICLE_COUNT = 150
-
-// A fixed, repeatable scatter of heights, so the picture does not change between renders.
-const particleHeights = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
-  const value = Math.sin(i * 12.9898 + 78.233) * 43758.5453
-  return value - Math.floor(value)
-})
-
-// Position of each particle: those near the center are pulled in as the density excess grows. A
-// one-dimensional shift chosen so the center's density is exactly (1 + density excess) times the average.
-function particleX(index: number, densityExcess: number): number {
-  const q = (index + 0.5) / PARTICLE_COUNT - 0.5
-  const shift = densityExcess / (1 + densityExcess)
-  const x = q - (shift * Math.sin(2 * Math.PI * q)) / (2 * Math.PI)
-  return STRIP_LEFT + (x + 0.5) * (STRIP_RIGHT - STRIP_LEFT)
+// ---- the introduction (the owner's approved wording, 2026-11-15; no answers given: §12) ----
+function Intro() {
+  const p = { marginTop: 0, marginBottom: '0.75rem' } as const
+  const list = { marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' } as const
+  return (
+    <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+      <p style={p}>
+        <strong>The question.</strong> The oldest light we can see (the cosmic microwave background, from Cosmology 3) shows an early universe that was almost perfectly smooth: its temperature differs by only about 1 part in 100,000 from place to place. Yet today the universe is full of galaxies, with huge empty spaces between them. How did a nearly smooth universe turn into a lumpy one?
+      </p>
+      <p style={p}>
+        <strong>What happens.</strong> You will look at one small region of the early universe. Picture a patch of space, and the matter inside it. Most patches hold about the same amount of matter, the average. But this patch is a tiny bit different: it holds just slightly <em>more</em> matter than average, so it is just slightly denser. Think of a big hall where people are spread almost evenly, except for one spot that is a little more crowded than the rest. That patch is the &ldquo;region&rdquo; in this experiment.
+      </p>
+      <p style={p}>
+        We then follow that one region through time, from the moment the oldest light was released (the very earliest time this model looks at for ordinary matter) all the way to today. During all those billions of years two things are going on. The region&rsquo;s extra gravity pulls in more matter, which would make the extra density grow. At the same time space is expanding, which spreads matter out and works against that growth. At every moment we can ask one question: <em>by what factor has the extra density grown since the start?</em> For example, if a region began 1 part in 1,000 denser than average and its extra density has grown 10 times, it is now 10 parts in 1,000 (1 part in 100) denser than average. That factor is the <strong>growth</strong> (Step 4 below). The experiment shows you how big that growth can get between the oldest light and today, and how the answer depends on the kind of matter that is gathering.
+      </p>
+      <p style={p}>
+        <strong>Your guesses.</strong> First you make two guesses. Then you press <strong>Run</strong>, and a graph shows how many times such a region grows. Your guesses are drawn on the graph in white. In <strong>Part 2</strong> you choose what kind of matter is gathering and how much denser than average your region starts, and you watch your own region. The results and a tutor follow.
+      </p>
+      <p style={p}>
+        <strong>Step 1: the oldest light, a reminder.</strong> In Cosmology 3 you met the oldest light we can see. NASA&rsquo;s COBE page says its temperature ripples are &ldquo;only one part in 100,000 compared to the 2.73 degree Kelvin average&rdquo;. ESA says these tiny temperature differences &ldquo;correspond to regions of slightly different densities at very early times, representing the seeds of all future structure: the stars and galaxies of today&rdquo;. So the story of every galaxy begins with a region that was a tiny bit denser than its surroundings.
+      </p>
+      <p style={p}>
+        <strong>Step 2: a new word, density excess.</strong> The <strong>density excess</strong> is how much denser than average a region is. A density excess of 0.1 means 10 percent denser: if an average patch of space holds 100 grains of matter, this one holds 110. A density excess of 1 means twice the average. (This is an everyday picture, not a measurement.)
+      </p>
+      <p style={p}>
+        <strong>Step 3: the tug-of-war.</strong> A region that is slightly denser has slightly more gravity, so it pulls in a little extra matter from around it. With that extra matter it is denser still, so it pulls harder. But space is also expanding (Cosmology 1 and 2), and the expansion keeps spreading everything out. The two effects work against each other. This experiment is about how that contest comes out.
+      </p>
+      <p style={p}>
+        <strong>Step 4: growth.</strong> The <strong>growth</strong> is how many times bigger the density excess has become since the region started. If a region starts 1 part in 1,000 denser and its density excess grows 100 times, it ends up 1 part in 10 denser.
+      </p>
+      <p style={p}>
+        <strong>Step 5: a clump.</strong> A <strong>clump</strong> is a region that has become dense enough (a density excess of 1, twice the average) that it would pull itself together into a lump held together by its own gravity, such as a galaxy. This experiment says <em>when</em> a region would become a clump. It does not say what the clump looks like.
+      </p>
+      <p style={p}>
+        <strong>Step 6: redshift, a reminder.</strong> In Cosmology 1 and 8 you met <strong>redshift</strong>: a number that tells how long ago something was. A bigger redshift means an earlier time.
+      </p>
+      <p style={p}>
+        <strong>Step 7: why ask this at all.</strong> Every galaxy, and every cluster of galaxies, started as a tiny difference in density. Working out how fast those differences could grow tells us what the early universe must have been like, and it brings together the oldest light (Cosmology 3), dark matter (Cosmology 4) and dark energy (Cosmology 5).
+      </p>
+      <p style={p}>
+        <strong>Your job.</strong> First, make two guesses. Then press Run. Afterwards, in Part 2, choose a kind of matter and a starting size of your own.
+      </p>
+      <p style={p}>
+        <strong>What to look for.</strong> <strong>Look at:</strong> the two lines on the graph. <strong>What it means:</strong> one line is for ordinary matter and the other is for dark matter, and each shows how many times a region of that kind of matter has grown. <strong>Why it matters:</strong> how high they climb is the whole question. In Part 2, look at whether your own region becomes a clump.
+      </p>
+      <p style={p}>
+        <strong>How this page is laid out.</strong> Below this introduction the page has four parts. <strong>Part 1</strong> is where you guess and watch. <strong>Part 2</strong> is where you try your own settings. <strong>Part 3</strong> shows the results and what they mean. <strong>Part 4</strong> is the tutor. Parts 2, 3 and 4 appear when your first run has finished.
+      </p>
+      <p style={p}>
+        <strong>Your guesses and the real pictures.</strong> Your guesses never change the real pictures or tables. They are drawn on the real graph in <strong>white</strong>, in a box labelled YOUR GUESS, after the run, and shown again beside the results. The real pictures come from the physics. The kind of matter and the starting size you choose in Part 2 do change the strip, your ripple&rsquo;s graph and the pink row of the table, but never the Part 1 graph. If you change a guess, press Run and see nothing change, that is not a fault: a guess is only a guess.
+      </p>
+      <p style={{ ...p, marginBottom: '0.25rem' }}>
+        <strong>What we assume.</strong>
+      </p>
+      <ul style={list}>
+        <li>
+          The same simplified universe as Cosmology 5, 6 and 8: &ldquo;flat&rdquo; (space on the very largest scales is not curved, so straight parallel paths stay parallel), with matter and a constant dark energy (70 percent), and an illustrative Hubble constant of 70 km/s per megaparsec (a megaparsec is about 3.3 million light-years). Published values range from about 67 to 73: the &ldquo;Hubble tension&rdquo;. <strong>Radiation</strong> (the light and other very fast particles of the early universe) is left out, so the model cannot describe the time before matter outweighed radiation.
+        </li>
+        <li>Only the first, simple stage of growth is modelled: a region that is still only slightly denser than average. Real structure formation also involves pressure, gas cooling, the birth of stars and mergers of clumps, and none of these are modelled.</li>
+        <li>
+          The starting size of the region is your own illustrative choice, not a measurement. The oldest light&rsquo;s 1 part in 100,000 is a difference in <em>temperature</em>, which is not the same as how much denser a region of matter is, and how the two are related depends on the size of the region. This model does not capture that. (No official page was found that says how they differ.)
+        </li>
+        <li>A single region is treated on its own. Real galaxies form where many ripples of many sizes overlap.</li>
+        <li>The model says <em>when</em> a region would become a clump. It does not say what the clump looks like.</li>
+        <li>The ripples of the oldest light are the seeds. For ordinary matter the model lets a region start growing when the oldest light was released.</li>
+      </ul>
+      <p style={{ ...p, marginBottom: '0.75rem' }}>
+        <strong>Some new words:</strong> density excess, growth, clump, redshift, ripple, megaparsec. All are in the Words and formulas box below.
+      </p>
+      <p style={{ ...p, marginBottom: 0 }}>
+        <strong>As of November 2026.</strong> The best measurements of the oldest light come from ESA&rsquo;s Planck satellite. Its final results (the 2018 paper, revised in 2021) give the redshift of the oldest light as 1089.8 and the redshift when matter began to outweigh radiation as about 3,400 (3,387 to 3,407, depending on which data are combined). This experiment uses both as given values.
+      </p>
+    </div>
+  )
 }
 
-// The point on a result's curve at a fraction (0 = the start, 1 = today), interpolated between samples.
-function curveAt(result: StructureFormationResult, fraction: number) {
-  const position = Math.min(Math.max(fraction, 0), 1) * (result.curve.length - 1)
-  const low = Math.floor(position)
-  const high = Math.min(low + 1, result.curve.length - 1)
-  const t = position - low
-  const a = result.curve[low]
-  const b = result.curve[high]
-  return {
-    redshift: a.redshift + (b.redshift - a.redshift) * t,
-    yearsAfterBigBang: a.yearsAfterBigBang + (b.yearsAfterBigBang - a.yearsAfterBigBang) * t,
-    growth: a.growth + (b.growth - a.growth) * t,
-    densityExcess: a.densityExcess + (b.densityExcess - a.densityExcess) * t,
+// ---- the words box (the formulas that give guess 1 away appear only after the first run: §12) ----
+function referenceEntries(afterRun: boolean) {
+  const w = workedExamples()
+  const entries = [
+    { term: 'Density excess', meaning: `how much denser than average a region is. 0.1 means 10 percent denser: an average patch of ${w.grainsAverage} grains, this one ${w.grainsInRegion}. 1 means twice the average.` },
+    { term: 'Growth', meaning: `how many times bigger the density excess has become since the region started. A region that starts ${partsInLabel(w.smallStartDelta)} denser and grows ${w.smallGrowth} times ends ${partsInLabel(w.smallEndDelta)} denser.` },
+    { term: 'Clump', meaning: 'a region dense enough (a density excess of 1, twice the average) that it would pull itself together into a lump held together by its own gravity, such as a galaxy.' },
+    { term: 'Ripple', meaning: 'a region that is slightly denser (or less dense) than average.' },
+    { term: 'Redshift', meaning: 'a number that tells how long ago something was: a bigger redshift means an earlier time (Cosmology 1 and 8).' },
+    { term: 'Ordinary matter', meaning: 'the matter that makes stars, planets and us, and that interacts with light.' },
+    { term: 'Dark matter', meaning: 'matter we cannot see but whose gravity we can feel (Cosmology 4).' },
+    { term: 'Dark energy', meaning: 'the cause of the speeding up of the expansion; 70 percent of the model’s universe (Cosmology 5).' },
+    { term: 'The cosmic microwave background', meaning: 'the oldest light we can see, with temperature ripples of about 1 part in 100,000 (Cosmology 3; NASA’s COBE page).' },
+    { term: 'Radiation (left out here)', meaning: 'the light and other very fast particles of the early universe. The model leaves it out, so the earliest times are rough.' },
+    { term: 'Matter-radiation equality', meaning: 'the time when matter began to outweigh radiation; redshift about 3,400 (Planck 2018 gives 3,387 to 3,407). The model starts dark matter’s growth here.' },
+    { term: 'Linear growth', meaning: 'the simple first stage of growth, while a region is still only slightly denser than average. This model only follows that stage.' },
+    { term: 'Flat universe', meaning: 'space on the very largest scales is not curved, so straight parallel paths stay parallel.' },
+    { term: 'Hubble constant and Hubble tension', meaning: '70 km/s per megaparsec in this model; published values range from about 67 to 73, the “Hubble tension”.' },
+    { term: 'Megaparsec', meaning: 'a unit of distance: about 3.3 million light-years.' },
+    { term: '“1 part in 100,000”', meaning: 'a difference of 1 in every 100,000, that is 0.00001, or 0.001 percent.' },
+  ]
+  if (afterRun) {
+    entries.push(
+      { term: 'Formula: density excess today, with a worked example', meaning: `starting size × growth. For a start of ${partsInLabel(w.exampleStartDelta)} and ordinary matter: ${w.exampleStartDelta} × ${w.exampleOrdinaryGrowth.toFixed(1)} ≈ ${w.exampleOrdinaryExcess.toFixed(2)}.` },
+      { term: 'Formula: the starting size needed to be a clump', meaning: `1 ÷ growth. For ordinary matter: 1 ÷ ${w.exampleOrdinaryGrowth.toFixed(1)} = ${partsInLabel(1 / w.exampleOrdinaryGrowth)}.` },
+      { term: 'Formula: growth with no dark energy', meaning: `1 + the start redshift. For ordinary matter: 1 + ${RECOMBINATION_REDSHIFT} = ${w.ordinaryWithoutDarkEnergy.toFixed(1)}; for the earlier start: 1 + ${MATTER_RADIATION_EQUALITY_REDSHIFT.toLocaleString('en-US')} = ${w.darkWithoutDarkEnergy.toLocaleString('en-US')}.` },
+    )
+  } else {
+    entries.push({ term: 'More words', meaning: 'three more formulas appear here after your first run, because they give the size of the growth, which is what you are about to guess.' })
   }
+  return entries
+}
+
+// ---- links (read on 2026-11-15 through a helper's fetch tool, which returns model summaries; see the draft's source table). The pages
+// that say dark matter clumped first, and the two technical papers that give the growth formula and the 1.686, appear after the first Run
+// (§12), because they say what the tutor asks about. ----
+const LINKS_BEFORE: Array<{ href: string; label: string; what: ReactNode }> = [
+  {
+    href: 'https://asd.gsfc.nasa.gov/archive/mather/cobe/science.html',
+    label: 'NASA GSFC: COBE science results',
+    what: 'John Mather’s page on COBE, the first satellite to measure the oldest light’s ripples: “only one part in 100,000”. (Read; last updated 11 April 2013.)',
+  },
+  {
+    href: 'https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_reveals_an_almost_perfect_Universe',
+    label: 'ESA: Planck reveals an almost perfect Universe (2013)',
+    what: 'ESA’s plain page: the oldest light’s tiny temperature differences “correspond to regions of slightly different densities ... the seeds of all future structure”. (Read.)',
+  },
+  {
+    href: 'https://www.jpl.nasa.gov/news/planck-mission-explores-the-history-of-our-universe/',
+    label: 'NASA/JPL: Planck mission explores the history of our universe (2015)',
+    what: 'Planck’s maps “show where matter had just begun to clump together into the seeds of the galaxies we see around us today”. (Read.)',
+  },
+  {
+    href: 'https://arxiv.org/abs/1807.06209',
+    label: 'Planck Collaboration (2018): cosmological parameters',
+    what: 'the paper behind the oldest light’s redshift (1089.8) and the redshift when matter began to outweigh radiation (about 3,400). A technical paper; the abstract is the readable part. (Abstract and an HTML copy of Table 2 read.)',
+  },
+  {
+    href: 'https://imagine.gsfc.nasa.gov/observatories/satellite/wmap/shape.html',
+    label: 'NASA: The Shape of the Universe',
+    what: 'the page behind the word “flat” in the assumptions. (Read for Cosmology 8.)',
+  },
+  {
+    href: 'https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-constant-and-tension/',
+    label: 'NASA: the Hubble constant and the tension',
+    what: 'NASA’s plain page behind the range 67 to 73. (Read for Cosmology 6 and 8; to be re-read.)',
+  },
+]
+const LINKS_AFTER: Array<{ href: string; label: string; what: ReactNode }> = [
+  {
+    href: 'https://www.jpl.nasa.gov/news/nasa-reveals-new-details-about-dark-matters-influence-on-universe/',
+    label: 'NASA/JPL: NASA reveals new details about dark matter’s influence on the universe (26 January 2026)',
+    what: '“Scientists think dark matter began to clump together first and that those dark matter clumps then pulled together regular matter.” (Read.)',
+  },
+  {
+    href: 'https://science.nasa.gov/missions/hubble/nasa-hubble-maps-the-cosmic-web-of-clumpy-dark-matter-in-3-d/',
+    label: 'NASA: Hubble maps the cosmic web of clumpy dark matter in 3-D (2007)',
+    what: '“normal matter, including all stars and galaxies, collect within the densest concentrations of dark matter”. (Read.)',
+  },
+  {
+    href: 'https://arxiv.org/abs/astro-ph/0006089',
+    label: 'The growth approximation, printed in arXiv:astro-ph/0006089',
+    what: 'a technical paper that quotes the Carroll, Press and Turner (1992) formula for how much a ripple grows; this page checks its own number against it. The 1992 paper itself was not read. (Read.)',
+  },
+  {
+    href: 'https://arxiv.org/abs/1005.0233',
+    label: 'Spherical collapse model in dark energy cosmologies (arXiv:1005.0233)',
+    what: 'a technical paper that gives 1.686 as the linear density excess at which a region collapses, for a universe with matter only; this page’s clump line is a simpler 1. (Read.)',
+  },
+]
+
+function ChoiceButtons<T extends string>({ options, selected, disabled, onSelect }: { options: Array<{ value: T; label: string }>; selected: T | null; disabled: boolean; onSelect: (value: T) => void }) {
+  return (
+    <div style={{ marginBottom: '0.5rem' }}>
+      {options.map((choice) => (
+        <button
+          key={choice.value}
+          type="button"
+          onClick={() => onSelect(choice.value)}
+          disabled={disabled}
+          className={`toggle-button${selected === choice.value ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '0.875rem', opacity: disabled ? 0.6 : 1 }}
+        >
+          {choice.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function Question({ prompt, guessText, children }: { prompt: string; guessText: string | null; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>{prompt}</p>
+      {children}
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{guessText ? `Your guess: ${guessText}` : 'Choose an option to continue'}</p>
+    </div>
+  )
 }
 
 export function StructureFormationExperiment({ onComplete, onTutorComplete }: StructureFormationExperimentProps) {
+  const [growthGuess, setGrowthGuess] = useState<GrowthGuess | null>(null)
+  const [headStartGuess, setHeadStartGuess] = useState<HeadStartGuess | null>(null)
+  const [submitted, setSubmitted] = useState<{ growth: GrowthGuess; headStart: HeadStartGuess } | null>(null)
+
+  const [part1Done, setPart1Done] = useState(false)
+  const [part1Running, setPart1Running] = useState(false)
+  const [part1Progress, setPart1Progress] = useState(0)
+  const [explained, setExplained] = useState(false)
+
+  // Part 2's two settings. The defaults are the preset where the earlier start decides whether a clump forms.
   const [kind, setKind] = useState<KindOfMatter>('ordinary-plus-dark')
   const [mode, setMode] = useState<StartMode>('preset')
   const [presetId, setPresetId] = useState('one-in-1000')
   const [customDelta, setCustomDelta] = useState(5e-4)
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
-  const [progress, setProgress] = useState(0)
-  // Remounts the tutor on each new run so its conversation starts over.
-  const [runCount, setRunCount] = useState(0)
+  // Part 2's pictures are drawn when its own Run is pressed; at rest they show the whole picture.
+  const [part2Running, setPart2Running] = useState(false)
+  const [part2Progress, setPart2Progress] = useState(1)
 
-  const [growthPrediction, setGrowthPrediction] = useState<GrowthChoice | null>(null)
-  const [headStartPrediction, setHeadStartPrediction] = useState<HeadStartChoice | null>(null)
-  const [submittedGrowthPrediction, setSubmittedGrowthPrediction] = useState<GrowthChoice | null>(null)
-  const [submittedHeadStartPrediction, setSubmittedHeadStartPrediction] = useState<HeadStartChoice | null>(null)
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
 
-  const hasPrediction = growthPrediction !== null && headStartPrediction !== null
-  const hasSubmittedPrediction = submittedGrowthPrediction !== null && submittedHeadStartPrediction !== null
-
+  const hasAllGuesses = growthGuess !== null && headStartGuess !== null
+  const locked = submitted !== null
+  const shownGrowth = submitted?.growth ?? growthGuess
+  const shownHeadStart = submitted?.headStart ?? headStartGuess
   const preset = START_SIZE_PRESETS.find((p) => p.id === presetId)!
   const startDelta = mode === 'preset' ? preset.startDelta : customDelta
-  const result = runStructureFormationExperiment(kind, startDelta)
-  const isActive = status === 'running' || status === 'complete'
 
-  // Both kinds of matter, for the growth graph, which needs no starting size.
-  const ordinaryResult = useMemo(() => runStructureFormationExperiment('ordinary', startDelta), [startDelta])
-  const darkResult = useMemo(() => runStructureFormationExperiment('ordinary-plus-dark', startDelta), [startDelta])
-  const exampleOrdinary = useMemo(() => runStructureFormationExperiment('ordinary', HEAD_START_EXAMPLE_DELTA), [])
-  const exampleDark = useMemo(() => runStructureFormationExperiment('ordinary-plus-dark', HEAD_START_EXAMPLE_DELTA), [])
-  // Growth with no dark energy, from the physics module, for the chosen kind (the thin reference line).
-  const withoutDarkEnergy = useMemo(
-    () => result.curve.map((point) => growthBetween(result.startRedshift, point.redshift, 0)),
-    [result.curve, result.startRedshift],
-  )
+  // Part 1's animation: one run, a fixed real duration (CLAUDE.md §11).
+  useEffect(() => {
+    if (!part1Running) return
+    const startTime = performance.now()
+    let frameId = 0
+    const animate = (now: number) => {
+      const p = Math.min(Math.max((now - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setPart1Progress(p)
+      if (p >= 1) {
+        setPart1Running(false)
+        setPart1Done(true)
+        onCompleteRef.current?.()
+        return
+      }
+      frameId = requestAnimationFrame(animate)
+    }
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [part1Running])
 
+  // Part 2's animation: the region grows from its start to today, over the same fixed duration.
+  useEffect(() => {
+    if (!part2Running) return
+    const startTime = performance.now()
+    let frameId = 0
+    const animate = (now: number) => {
+      const p = Math.min(Math.max((now - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setPart2Progress(p)
+      if (p >= 1) {
+        setPart2Running(false)
+        return
+      }
+      frameId = requestAnimationFrame(animate)
+    }
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [part2Running])
+
+  const handleRun = () => {
+    if (!hasAllGuesses || part1Running || part1Done) return
+    if (!submitted) setSubmitted({ growth: growthGuess!, headStart: headStartGuess! })
+    setPart1Progress(0)
+    setPart1Running(true)
+  }
+
+  // Changing a setting changes only Part 2's drawings: it never hides Parts 3 and 4 or restarts the tutor.
+  const settle = () => {
+    if (!part2Running) setPart2Progress(1)
+  }
   const handleKindChange = (next: KindOfMatter) => {
     setKind(next)
-    if (status === 'complete') setStatus('idle')
+    settle()
   }
   const handlePresetChange = (id: string) => {
     setMode('preset')
     setPresetId(id)
-    if (status === 'complete') setStatus('idle')
+    settle()
   }
   const handleCustom = () => {
     setMode('custom')
-    if (status === 'complete') setStatus('idle')
+    settle()
   }
-  const handleRun = () => {
-    if (!hasPrediction || status === 'running') return
-    if (!hasSubmittedPrediction) {
-      setSubmittedGrowthPrediction(growthPrediction)
-      setSubmittedHeadStartPrediction(headStartPrediction)
-    }
-    setStatus('running')
-    setProgress(0)
-    setRunCount((count) => count + 1)
+  const handlePart2Run = () => {
+    if (part2Running) return
+    setPart2Progress(0)
+    setPart2Running(true)
   }
 
-  // Matches the rest of the project's precedent: re-opens both questions for editing without resetting
-  // the chosen kind of matter or starting size.
-  const handleChangePrediction = () => {
-    setSubmittedGrowthPrediction(null)
-    setSubmittedHeadStartPrediction(null)
-    setStatus('idle')
+  // Start over: clears the guesses, the runs, the results and the tutor, and returns the page to its first state.
+  const handleStartOver = () => {
+    setGrowthGuess(null)
+    setHeadStartGuess(null)
+    setSubmitted(null)
+    setPart1Done(false)
+    setPart1Running(false)
+    setPart1Progress(0)
+    setExplained(false)
+    setKind('ordinary-plus-dark')
+    setMode('preset')
+    setPresetId('one-in-1000')
+    setCustomDelta(5e-4)
+    setPart2Running(false)
+    setPart2Progress(1)
   }
 
-  useEffect(() => {
-    if (status !== 'running') return
+  const hasAnythingToClear = growthGuess !== null || headStartGuess !== null || locked || part1Done
+  const startOverDisabled = !hasAnythingToClear || part1Running
 
-    const startTime = performance.now()
-    let frameId: number
-
-    const animate = (currentTime: number) => {
-      const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
-      setProgress(fraction)
-
-      if (fraction >= 1) {
-        setStatus('complete')
-        onComplete?.()
-        return
-      }
-
-      frameId = requestAnimationFrame(animate)
-    }
-
-    frameId = requestAnimationFrame(animate)
-
-    return () => cancelAnimationFrame(frameId)
-  }, [status, onComplete])
-
-  // At rest the picture shows the finished result; during a run it plays from the start to today.
-  const displayedProgress = status === 'running' ? progress : 1
-  const now = curveAt(result, displayedProgress)
+  const started = part1Running || part1Done
+  const shownProgress1 = part1Done ? 1 : part1Progress
+  const result = runStructureFormationExperiment(kind, startDelta)
+  const now = curveAt(result, part2Progress)
   const hasClumped = now.densityExcess >= CLUMP_THRESHOLD
-  // The picture follows the ripple only until it becomes a clump; the linear model stops being valid there.
-  const shownExcess = Math.min(now.densityExcess, CLUMP_THRESHOLD)
   const sizeFactor = (1 + result.startRedshift) / (1 + now.redshift)
-
-  const polyline = (
-    points: Array<{ yearsAfterBigBang: number }>,
-    yOf: (index: number) => number,
-    upTo = points.length,
-  ) =>
-    points
-      .slice(0, upTo)
-      .map((point, index) => `${timeX(Math.max(point.yearsAfterBigBang, TIME_MIN_YEARS))},${yOf(index)}`)
-      .join(' ')
-
-  // Where the chosen ripple's curve first reaches the clump line (the curve is cut there).
-  const firstClumpIndex = result.curve.findIndex((point) => point.densityExcess >= CLUMP_THRESHOLD)
-  const excessPointCount = firstClumpIndex === -1 ? result.curve.length : firstClumpIndex + 1
-  const excessY = (index: number) =>
-    logY(Math.min(result.curve[index].densityExcess, CLUMP_THRESHOLD), EXCESS_Y_MIN, EXCESS_Y_MAX)
-
-  // The "needed starting size" panel: a logarithmic axis of density excess.
-  const NEED_WIDTH = 560
-  const NEED_HEIGHT = 250
-  const NEED_LEFT = 50
-  const NEED_RIGHT = NEED_WIDTH - 30
-  const needX = (delta: number) =>
-    NEED_LEFT + (Math.log10(delta / 1e-5) / Math.log10(1e-2 / 1e-5)) * (NEED_RIGHT - NEED_LEFT)
-  const needRows = [
-    { label: "The oldest light's temperature ripple (not a density excess)", delta: 1e-5, color: '#cbd5e1', y: 70 },
-    { label: 'Needed to become a clump: ordinary matter', delta: ordinaryResult.requiredStartDelta, color: ORDINARY_COLOR, y: 112 },
-    { label: 'Needed to become a clump: with dark matter', delta: darkResult.requiredStartDelta, color: DARK_COLOR, y: 154 },
-    { label: 'Your starting size', delta: startDelta, color: CLUMP_COLOR, y: 196 },
-  ]
-
-  const patchColor = kind === 'ordinary' ? ORDINARY_COLOR : DARK_COLOR
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Experiment 9 — How Did Galaxies Form? Growing Structure from Tiny Ripples</h2>
+      <h2>Cosmology 9: How Did Galaxies Form? Growing Structure from Tiny Ripples</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> The oldest light we can see (the cosmic microwave background, from
-            Experiment 3) shows an early universe that was almost perfectly smooth: its temperature differs by
-            only about 1 part in 100,000 from place to place. Yet today the universe is full of galaxies, with
-            huge empty spaces between them. How did a nearly smooth universe turn into a lumpy one?
+        <Intro />
+        <ReferencePanel entries={referenceEntries(part1Done)} />
+
+        <div style={{ marginBottom: '2rem', fontSize: '0.875rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Want to know more?</p>
+          <p style={{ ...smallNote, marginTop: 0 }}>
+            Each link opens in a new tab. They were read on 15 November 2026 through a helper&rsquo;s fetch tool, which returns summaries, so a quotation or figure on this page should be checked against the live page. No single official page says all of &ldquo;ripples of about 1 part in 100,000, dark matter clumped first, ordinary matter followed&rdquo;, so this page uses three. No official page was found that says how the oldest light&rsquo;s temperature ripples differ from the matter ripples, or a plain one that says ordinary matter is held smooth by light until the universe becomes transparent, so this page states both as the model&rsquo;s own assumptions. The savings-account picture has no source.
           </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> Picture a region of the early universe that is just a tiny bit
-            denser than average. Its extra gravity pulls in a little more matter, which makes it denser still.
-            But the universe is also expanding (Experiments 1 and 2), which keeps spreading everything out.
-            You choose what kind of matter is gathering, and how much denser than average the region starts.
-            You then run it, and watch how that region changes from the early universe until today.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Some words we will use.</strong> The <strong>density excess</strong> is how much denser
-            than average a region is. A density excess of 0.1 means 10% denser: if an average patch of space
-            holds 100 grains of matter, this one holds 110. The <strong>growth</strong> is how many times
-            larger that density excess has become since the start. A <strong>clump</strong> is a region that
-            has become dense enough (a density excess of 1, which is twice the average) that it would pull
-            itself together into a lump held together by its own gravity, such as a galaxy. The <strong>redshift</strong>, as in Experiments 1
-            and 8, is a number that tells you how long ago something was: a bigger redshift means an earlier
-            time.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Why even ask this.</strong> Every galaxy, and every cluster of galaxies, started as a tiny
-            difference in density. Working out how fast those differences could grow tells us what the early
-            universe must have been like, and it brings together the oldest light (Experiment 3), dark matter
-            (Experiment 4) and dark energy (Experiment 5) from earlier in this chapter.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> First, make two predictions. Then choose a kind of matter and a
-            starting size, and run it. Try different choices and see how the result changes.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What to look for.</strong> How many times the region's density excess grows, whether the
-            region ends up as a clump, and how big the region would have to start for that to happen. We reuse
-            the expanding universe from Experiments 1 and 2, the oldest light from Experiment 3, dark matter
-            from Experiment 4, and dark energy and the universe's age from Experiments 5 and 6.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
-            <strong>What we assume.</strong>
-          </p>
-          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              The same simplified universe as Experiments 5, 6 and 8: "flat" (space on the very largest scales
-              is not curved, so straight parallel paths stay parallel), with matter and a constant dark energy
-              (70%), and an illustrative Hubble constant of 70 km/s per megaparsec (a megaparsec is about 3.3 million light-years), with the same real caveat:
-              published values range from about 67 to 73, the "Hubble tension." <strong>Radiation</strong> (the
-              light and other very fast particles of the early universe) is left out, so the model cannot
-              describe the time before matter outweighed radiation. The redshift where that happened (about
-              3,400) is a given real value, not something we compute.
-            </li>
-            <li>
-              Only the first, simple stage of growth is modelled: a region that is still only slightly denser
-              than average. Real structure formation also involves pressure, gas cooling, the birth of stars,
-              and mergers of clumps, and none of these are modelled.
-            </li>
-            <li>
-              The starting size of the region is your own illustrative choice, not a measurement. The oldest
-              light's 1 part in 100,000 is a difference in <em>temperature</em>, which is not the same as how
-              much denser a region of matter is, and how the two are related depends on the size of the
-              region. This model does not capture that.
-            </li>
-            <li>
-              A single region is treated on its own. Real galaxies form where many ripples of many sizes
-              overlap.
-            </li>
-            <li>
-              Dark matter is assumed to be able to start gathering at a given earlier time, and what it is
-              made of is not specified, as in Experiment 4.
-            </li>
-            <li>
-              The model says <em>when</em> a region would become a clump. It does not say what the clump looks
-              like.
-            </li>
+          <ul style={listStyle}>
+            {LINKS_BEFORE.map((l) => (
+              <li key={l.href} style={{ marginBottom: '0.5rem' }}>
+                <ExternalLink href={l.href}>{l.label}</ExternalLink>: {l.what}
+              </li>
+            ))}
           </ul>
-        </div>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            Gravity pulls extra matter into a slightly denser region. Starting when the oldest light was
-            released and acting until today, about how many times denser than average (relative to its start)
-            will that region become?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {growthChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setGrowthPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${growthPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            Suppose the region could start gathering matter earlier, before the oldest light was released.
-            Would that change the answer?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {headStartChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setHeadStartPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${headStartPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {hasPrediction || hasSubmittedPrediction
-              ? `Your predictions: ${
-                  growthChoices.find((c) => c.value === (growthPrediction ?? submittedGrowthPrediction))!.label
-                }; ${
-                  headStartChoices.find((c) => c.value === (headStartPrediction ?? submittedHeadStartPrediction))!
-                    .label
-                }`
-              : 'Answer both questions to continue'}
-          </p>
-        </div>
-
-        {hasSubmittedPrediction && (
-          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Your predictions are locked in above. You can still try as many settings as you like below. Or,
-              change your predictions and start over:
-            </p>
-            <button
-              type="button"
-              onClick={handleChangePrediction}
-              className="secondary-button"
-              style={{
-                padding: '0.5rem 1.25rem',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(124, 58, 237, 0.22)',
-              }}
-            >
-              Change predictions
-            </button>
-          </div>
-        )}
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>What matter is gathering:</p>
-          {(['ordinary', 'ordinary-plus-dark'] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => handleKindChange(option)}
-              disabled={!hasPrediction || status === 'running'}
-              className={`toggle-button${kind === option ? ' is-selected' : ''}`}
-              style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-            >
-              {kindLabels[option]}
-              {option === 'ordinary'
-                ? ` (starts at redshift ${RECOMBINATION_REDSHIFT})`
-                : ` (starts at redshift ${MATTER_RADIATION_EQUALITY_REDSHIFT.toLocaleString('en-US')})`}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-            How much denser than average the early region starts (its starting density excess):
-          </p>
-          {START_SIZE_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => handlePresetChange(p.id)}
-              disabled={!hasPrediction || status === 'running'}
-              className={`toggle-button${mode === 'preset' && presetId === p.id ? ' is-selected' : ''}`}
-              style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-            >
-              {p.label}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={handleCustom}
-            disabled={!hasPrediction || status === 'running'}
-            className={`toggle-button${mode === 'custom' ? ' is-selected' : ''}`}
-            style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-          >
-            Custom
-          </button>
-          {mode === 'custom' && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <label htmlFor="structure-start-delta" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                Starting density excess: {partsInLabel(customDelta)}
-              </label>
-              <input
-                id="structure-start-delta"
-                type="range"
-                min={0}
-                max={SLIDER_STEPS}
-                step={1}
-                value={deltaToSlider(customDelta)}
-                disabled={!hasPrediction || status === 'running'}
-                onChange={(event) => {
-                  setCustomDelta(sliderToDelta(Number(event.target.value)))
-                  if (status === 'complete') setStatus('idle')
-                }}
-                style={{ width: '100%' }}
-              />
-            </div>
+          {part1Done ? (
+            <>
+              <p style={{ ...smallNote, marginBottom: '0.25rem' }}>Four more links, now that you have run it:</p>
+              <ul style={listStyle}>
+                {LINKS_AFTER.map((l) => (
+                  <li key={l.href} style={{ marginBottom: '0.5rem' }}>
+                    <ExternalLink href={l.href}>{l.label}</ExternalLink>: {l.what}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p style={smallNote}>Four more links, on dark matter clumping first and on the numbers behind the growth, appear here after your first Run, because their wording would give away what you are asked about.</p>
           )}
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
-            Chosen starting size: {partsInLabel(startDelta)}
-          </p>
         </div>
 
+        {/* ===== Part 1 ===== */}
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          You will make two guesses about how a slightly denser region of the early universe grows. Then you will press Run and watch a graph draw itself. It has two lines, one for <strong>ordinary matter</strong> (the matter in stars, planets and us) and one for <strong>dark matter</strong> (matter we cannot see, but whose gravity we can feel). Each line shows how many times the region&rsquo;s extra density grows. Your guesses are drawn on the graph in white. Nothing you guess changes the real graph.
+        </PartHeader>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.75rem' }}>Make your predictions</p>
+          <Question
+            prompt="Guess 1: how much will the extra density grow? A region starts only slightly denser than average. Gravity pulls extra matter into it, which makes it denser still, while the expansion of space works against that. We follow it from the moment the oldest light was released until today. By today, how many times bigger will its extra density be than it was at the start? (For example, a region that starts 1 part in 1,000 denser and grows 10 times ends 1 part in 100 denser.) Choose the size you think is closest."
+            guessText={optionText(growthChoices, shownGrowth)}
+          >
+            <ChoiceButtons options={growthChoices} selected={shownGrowth} disabled={locked || part1Running} onSelect={setGrowthGuess} />
+          </Question>
+          <Question prompt="Guess 2: what would a head start do? In this model, a region starts gathering matter at the moment the oldest light was released. Now imagine it could start earlier, before that moment, so it had more time to grow. Would that change the growth you guessed in Guess 1? Choose how big a difference you think it would make." guessText={optionText(headStartChoices, shownHeadStart)}>
+            <ChoiceButtons options={headStartChoices} selected={shownHeadStart} disabled={locked || part1Running} onSelect={setHeadStartGuess} />
+          </Question>
+          {locked && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 0 }}>
+              Your guesses are locked while you try other settings. To change them, press Start over. Start over clears your guesses, the runs, the results and the tutor.
+            </p>
+          )}
+        </div>
+
+        <button type="button" className="action-button" onClick={handleRun} disabled={!hasAllGuesses || part1Running || part1Done} style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}>
+          {part1Running ? 'Running...' : part1Done ? 'Run (done)' : 'Run'}
+        </button>
         <button
           type="button"
-          onClick={handleRun}
-          disabled={!hasPrediction || status === 'running'}
-          className="action-button"
-          style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{ marginLeft: '0.75rem', padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: startOverDisabled ? 'not-allowed' : 'pointer', opacity: startOverDisabled ? 0.5 : 1 }}
         >
-          {status === 'running' ? 'Running...' : 'Run'}
+          Start over
         </button>
+        {!hasAllGuesses && !locked && <p style={smallNote}>Answer both questions above to run.</p>}
 
-        {!hasPrediction && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Answer the predictions above to try the controls.
-          </p>
+        {started && (
+          <Block>
+            <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 1: the growth graph, how many times a ripple grows</p>
+            <GrowthGraph progress={shownProgress1} finished={part1Done} guesses={part1Done ? submitted : null} />
+            <Part1GrowthCaption arrived={part1Done} />
+          </Block>
         )}
 
-        {isActive && (
-          <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Time since the Big Bang: <strong>{yearsLabel(now.yearsAfterBigBang)}</strong> &nbsp;|&nbsp; Redshift:{' '}
-            {redshiftLabel(now.redshift)}
-            <br />
-            The ripple has grown <strong>{now.growth.toFixed(1)}</strong> times &nbsp;|&nbsp; Space has stretched{' '}
-            {sizeFactor.toFixed(1)} times since the start
-            <br />
-            Density excess: {hasClumped ? `${CLUMP_THRESHOLD} or more (a clump has formed)` : now.densityExcess.toPrecision(2)}
-          </p>
+        {part1Done && (
+          <Block>
+            <WhereFrom>
+              <strong>Calculated here:</strong> both lines, the dashed lines and every number, for a flat universe with 70 percent dark energy and a Hubble constant of 70, without radiation (the model of Cosmology 1, 2, 5 and 8), by the growth formula in the Words and formulas box. <strong>Given by others, not worked out here:</strong> the oldest light&rsquo;s redshift, {RECOMBINATION_REDSHIFT}, and the redshift when matter began to outweigh radiation, about {MATTER_RADIATION_EQUALITY_REDSHIFT.toLocaleString('en-US')} (Planck 2018; see Table 1). <strong>Your guess:</strong> the white marks only. Nothing on this page is imagined.
+            </WhereFrom>
+          </Block>
         )}
+        {!started && <p style={smallNote}>After you press Run, the two lines draw themselves, with a caption under the graph. When the run ends the numbers at the end of each line, your white guess marks and a &ldquo;Where the real picture comes from&rdquo; note appear, and Parts 2, 3 and 4 appear below.</p>}
+        {started && !part1Done && <p style={smallNote}>The numbers at the end of each line, your white guess marks and Parts 2, 3 and 4 appear when the run ends.</p>}
 
-        {hasSubmittedPrediction && (
+        {part1Done && (
           <>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
-          {/* Picture 1: the growing ripple */}
-          <svg
-            width={STRIP_WIDTH}
-            height={STRIP_HEIGHT}
-            viewBox={`0 0 ${STRIP_WIDTH} ${STRIP_HEIGHT}`}
-            style={{
-              display: 'block',
-              border: '1px solid var(--border-color, #ccc)',
-              borderRadius: '8px',
-              backgroundColor: '#0b1020',
-              maxWidth: '100%',
-              height: 'auto',
-            }}
-          >
-            <text x={STRIP_WIDTH / 2} y={20} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-              A slightly denser region, growing (drawn to the model's true density excess)
-            </text>
+            {/* ===== Part 2 ===== */}
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              Now you choose what kind of matter is gathering and how much denser than average your region starts. Press Run and watch your own region grow, in a strip, on a graph and against the sizes needed to become a clump. Your guesses do not change anything in this part; your choices do.
+            </PartHeader>
 
-            {hasClumped && (
-              <ellipse
-                cx={(STRIP_LEFT + STRIP_RIGHT) / 2}
-                cy={(STRIP_TOP + STRIP_BOTTOM) / 2}
-                rx={60}
-                ry={46}
-                fill={CLUMP_COLOR}
-                opacity={0.22}
-              />
-            )}
-            <rect
-              x={STRIP_LEFT}
-              y={STRIP_TOP}
-              width={STRIP_RIGHT - STRIP_LEFT}
-              height={STRIP_BOTTOM - STRIP_TOP}
-              fill="none"
-              stroke="#334155"
-            />
-            {particleHeights.map((h, index) => (
-              <circle
-                key={index}
-                cx={particleX(index, shownExcess)}
-                cy={STRIP_TOP + 6 + h * (STRIP_BOTTOM - STRIP_TOP - 12)}
-                r={2.2}
-                fill={kind === 'ordinary-plus-dark' && index % 2 === 0 ? DARK_COLOR : ORDINARY_COLOR}
-                opacity={0.9}
-              />
-            ))}
-
-            {/* The ripple's center, labeled */}
-            <line
-              x1={(STRIP_LEFT + STRIP_RIGHT) / 2}
-              y1={STRIP_BOTTOM + 4}
-              x2={(STRIP_LEFT + STRIP_RIGHT) / 2}
-              y2={STRIP_BOTTOM + 22}
-              stroke={patchColor}
-            />
-            <text
-              x={(STRIP_LEFT + STRIP_RIGHT) / 2}
-              y={STRIP_BOTTOM + 36}
-              fill={patchColor}
-              fontSize="11"
-              fontWeight="600"
-              textAnchor="middle"
-            >
-              The slightly denser region (the center)
-            </text>
-            <text x={STRIP_LEFT} y={STRIP_TOP - 10} fill="#cbd5e1" fontSize="10">
-              A strip of the early universe: each dot is a bit of matter
-            </text>
-            {hasClumped && (
-              <text
-                x={(STRIP_LEFT + STRIP_RIGHT) / 2}
-                y={STRIP_TOP - 28}
-                fill={CLUMP_COLOR}
-                fontSize="10"
-                fontWeight="600"
-                textAnchor="middle"
-              >
-                A clump has formed. A galaxy would grow here in the real universe (the glow is schematic; not computed)
-              </text>
-            )}
-
-            {/* Legend */}
-            <circle cx={STRIP_LEFT + 6} cy={STRIP_HEIGHT - 22} r={3} fill={ORDINARY_COLOR} />
-            <text x={STRIP_LEFT + 14} y={STRIP_HEIGHT - 18} fill="#cbd5e1" fontSize="10">
-              Ordinary matter
-            </text>
-            {kind === 'ordinary-plus-dark' && (
-              <>
-                <circle cx={STRIP_LEFT + 120} cy={STRIP_HEIGHT - 22} r={3} fill={DARK_COLOR} />
-                <text x={STRIP_LEFT + 128} y={STRIP_HEIGHT - 18} fill="#cbd5e1" fontSize="10">
-                  Dark matter
-                </text>
-              </>
-            )}
-            <text x={STRIP_RIGHT} y={STRIP_HEIGHT - 18} fill="#cbd5e1" fontSize="10" textAnchor="end">
-              Space has stretched {sizeFactor.toFixed(1)} times since the start
-            </text>
-          </svg>
-
-          {/* Picture 2: growth against time, which needs no starting size */}
-          <svg
-            width={GRAPH_WIDTH}
-            height={GRAPH_HEIGHT}
-            viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-            style={{
-              display: 'block',
-              border: '1px solid var(--border-color, #ccc)',
-              borderRadius: '8px',
-              backgroundColor: '#0b1020',
-              maxWidth: '100%',
-              height: 'auto',
-            }}
-          >
-            <text x={GRAPH_WIDTH / 2} y={18} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-              How many times a ripple grows
-            </text>
-            <line x1={GRAPH_LEFT} y1={GRAPH_TOP} x2={GRAPH_LEFT} y2={GRAPH_BOTTOM} stroke="#64748b" />
-            <line x1={GRAPH_LEFT} y1={GRAPH_BOTTOM} x2={GRAPH_RIGHT} y2={GRAPH_BOTTOM} stroke="#64748b" />
-            {timeTicks.map((t, i) => (
-              <g key={t}>
-                <line x1={timeX(t)} y1={GRAPH_BOTTOM} x2={timeX(t)} y2={GRAPH_BOTTOM + 4} stroke="#64748b" />
-                <text x={timeX(t)} y={GRAPH_BOTTOM + 16} fill="#cbd5e1" fontSize="9" textAnchor="middle">
-                  {timeTickLabels[i]}
-                </text>
-              </g>
-            ))}
-            {growthTicks.map((g) => (
-              <g key={g}>
-                <line x1={GRAPH_LEFT - 4} y1={logY(g, GROWTH_Y_MIN, GROWTH_Y_MAX)} x2={GRAPH_LEFT} y2={logY(g, GROWTH_Y_MIN, GROWTH_Y_MAX)} stroke="#64748b" />
-                <text x={GRAPH_LEFT - 8} y={logY(g, GROWTH_Y_MIN, GROWTH_Y_MAX) + 4} fill="#cbd5e1" fontSize="10" textAnchor="end">
-                  {g.toLocaleString('en-US')}
-                </text>
-              </g>
-            ))}
-            <text x={(GRAPH_LEFT + GRAPH_RIGHT) / 2} y={GRAPH_HEIGHT - 28} fill="#cbd5e1" fontSize="11" textAnchor="middle">
-              Time since the Big Bang (years; each tick is ten times the one before)
-            </text>
-            <text x={(GRAPH_LEFT + GRAPH_RIGHT) / 2} y={GRAPH_HEIGHT - 12} fill="#94a3b8" fontSize="10" textAnchor="middle">
-              (the model leaves out light, so the earliest times are approximate)
-            </text>
-            <text
-              x={14}
-              y={(GRAPH_TOP + GRAPH_BOTTOM) / 2}
-              fill="#cbd5e1"
-              fontSize="11"
-              textAnchor="middle"
-              transform={`rotate(-90 14 ${(GRAPH_TOP + GRAPH_BOTTOM) / 2})`}
-            >
-              Times grown since its start
-            </text>
-
-            <polyline
-              points={polyline(result.curve, (i) => logY(withoutDarkEnergy[i], GROWTH_Y_MIN, GROWTH_Y_MAX))}
-              fill="none"
-              stroke={NO_DARK_ENERGY_COLOR}
-              strokeWidth={2}
-              strokeDasharray="4 4"
-            />
-            <polyline
-              points={polyline(ordinaryResult.curve, (i) => logY(ordinaryResult.curve[i].growth, GROWTH_Y_MIN, GROWTH_Y_MAX))}
-              fill="none"
-              stroke={ORDINARY_COLOR}
-              strokeWidth={2.5}
-            />
-            <polyline
-              points={polyline(darkResult.curve, (i) => logY(darkResult.curve[i].growth, GROWTH_Y_MIN, GROWTH_Y_MAX))}
-              fill="none"
-              stroke={DARK_COLOR}
-              strokeWidth={2.5}
-            />
-            <text x={GRAPH_RIGHT} y={GRAPH_BOTTOM - 28} fill={DARK_COLOR} fontSize="10" fontWeight="600" textAnchor="end">
-              With dark matter: about {Math.round(darkResult.growthSinceStart).toLocaleString('en-US')} times
-            </text>
-            <text x={GRAPH_RIGHT} y={GRAPH_BOTTOM - 12} fill={ORDINARY_COLOR} fontSize="10" fontWeight="600" textAnchor="end">
-              Ordinary matter: about {Math.round(ordinaryResult.growthSinceStart).toLocaleString('en-US')} times
-            </text>
-            <text x={GRAPH_RIGHT} y={GRAPH_TOP + 8} fill={NO_DARK_ENERGY_COLOR} fontSize="10" fontWeight="600" textAnchor="end">
-              Dashed, without dark energy: about {Math.round(withoutDarkEnergy[withoutDarkEnergy.length - 1]).toLocaleString('en-US')} times
-            </text>
-
-            {isActive && (
-              <circle
-                cx={timeX(Math.max(now.yearsAfterBigBang, TIME_MIN_YEARS))}
-                cy={logY(Math.max(now.growth, 1), GROWTH_Y_MIN, GROWTH_Y_MAX)}
-                r={5}
-                fill={patchColor}
-                stroke="#0b1020"
-                strokeWidth={2}
-              />
-            )}
-          </svg>
-
-          {/* Picture 3: the density excess of the chosen ripple */}
-          <svg
-            width={GRAPH_WIDTH}
-            height={GRAPH_HEIGHT}
-            viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-            style={{
-              display: 'block',
-              border: '1px solid var(--border-color, #ccc)',
-              borderRadius: '8px',
-              backgroundColor: '#0b1020',
-              maxWidth: '100%',
-              height: 'auto',
-            }}
-          >
-            <text x={GRAPH_WIDTH / 2} y={18} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-              Your ripple: how much denser than average
-            </text>
-            <line x1={GRAPH_LEFT} y1={GRAPH_TOP} x2={GRAPH_LEFT} y2={GRAPH_BOTTOM} stroke="#64748b" />
-            <line x1={GRAPH_LEFT} y1={GRAPH_BOTTOM} x2={GRAPH_RIGHT} y2={GRAPH_BOTTOM} stroke="#64748b" />
-            {timeTicks.map((t, i) => (
-              <g key={t}>
-                <line x1={timeX(t)} y1={GRAPH_BOTTOM} x2={timeX(t)} y2={GRAPH_BOTTOM + 4} stroke="#64748b" />
-                <text x={timeX(t)} y={GRAPH_BOTTOM + 16} fill="#cbd5e1" fontSize="9" textAnchor="middle">
-                  {timeTickLabels[i]}
-                </text>
-              </g>
-            ))}
-            {excessTicks.map((d, i) => (
-              <g key={d}>
-                <line x1={GRAPH_LEFT - 4} y1={logY(d, EXCESS_Y_MIN, EXCESS_Y_MAX)} x2={GRAPH_LEFT} y2={logY(d, EXCESS_Y_MIN, EXCESS_Y_MAX)} stroke="#64748b" />
-                <text x={GRAPH_LEFT - 8} y={logY(d, EXCESS_Y_MIN, EXCESS_Y_MAX) + 4} fill="#cbd5e1" fontSize="10" textAnchor="end">
-                  {excessTickLabels[i]}
-                </text>
-              </g>
-            ))}
-            <text x={(GRAPH_LEFT + GRAPH_RIGHT) / 2} y={GRAPH_HEIGHT - 28} fill="#cbd5e1" fontSize="11" textAnchor="middle">
-              Time since the Big Bang (years; each tick is ten times the one before)
-            </text>
-            <text
-              x={14}
-              y={(GRAPH_TOP + GRAPH_BOTTOM) / 2}
-              fill="#cbd5e1"
-              fontSize="11"
-              textAnchor="middle"
-              transform={`rotate(-90 14 ${(GRAPH_TOP + GRAPH_BOTTOM) / 2})`}
-            >
-              Density excess (0.1 = 10% denser)
-            </text>
-
-            <line
-              x1={GRAPH_LEFT}
-              y1={logY(CLUMP_THRESHOLD, EXCESS_Y_MIN, EXCESS_Y_MAX)}
-              x2={GRAPH_RIGHT}
-              y2={logY(CLUMP_THRESHOLD, EXCESS_Y_MIN, EXCESS_Y_MAX)}
-              stroke={CLUMP_COLOR}
-              strokeDasharray="5 4"
-            />
-            <text x={GRAPH_LEFT + 8} y={logY(CLUMP_THRESHOLD, EXCESS_Y_MIN, EXCESS_Y_MAX) - 6} fill={CLUMP_COLOR} fontSize="10" fontWeight="600">
-              Becomes a clump (the model stops following it here)
-            </text>
-            <polyline
-              points={polyline(result.curve, excessY, excessPointCount)}
-              fill="none"
-              stroke={patchColor}
-              strokeWidth={2.5}
-            />
-            <text x={GRAPH_RIGHT} y={GRAPH_BOTTOM - 8} fill={patchColor} fontSize="10" fontWeight="600" textAnchor="end">
-              {kindLabels[kind]}
-            </text>
-            {isActive && (
-              <circle
-                cx={timeX(Math.max(now.yearsAfterBigBang, TIME_MIN_YEARS))}
-                cy={logY(Math.max(Math.min(now.densityExcess, CLUMP_THRESHOLD), EXCESS_Y_MIN), EXCESS_Y_MIN, EXCESS_Y_MAX)}
-                r={5}
-                fill={patchColor}
-                stroke="#0b1020"
-                strokeWidth={2}
-              />
-            )}
-          </svg>
-
-          {/* Picture 4: the starting size needed for a clump */}
-          <svg
-            width={NEED_WIDTH}
-            height={NEED_HEIGHT}
-            viewBox={`0 0 ${NEED_WIDTH} ${NEED_HEIGHT}`}
-            style={{
-              display: 'block',
-              border: '1px solid var(--border-color, #ccc)',
-              borderRadius: '8px',
-              backgroundColor: '#0b1020',
-              maxWidth: '100%',
-              height: 'auto',
-            }}
-          >
-            <text x={NEED_WIDTH / 2} y={20} fill="#e2e8f0" fontSize="12" fontWeight="600" textAnchor="middle">
-              How big must a ripple start to become a clump by today?
-            </text>
-            {needRows.map((row) => (
-              <g key={row.label}>
-                <text x={NEED_LEFT} y={row.y - 14} fill={row.color} fontSize="10" fontWeight="600">
-                  {row.label}: {partsInLabel(row.delta)}
-                </text>
-                <line x1={NEED_LEFT} y1={row.y} x2={NEED_RIGHT} y2={row.y} stroke="#334155" />
-                <circle cx={needX(row.delta)} cy={row.y} r={6} fill={row.color} stroke="#0b1020" strokeWidth={2} />
-              </g>
-            ))}
-            {[1e-5, 1e-4, 1e-3, 1e-2].map((d) => (
-              <g key={d}>
-                <line x1={needX(d)} y1={216} x2={needX(d)} y2={220} stroke="#64748b" />
-                <text x={needX(d)} y={232} fill="#cbd5e1" fontSize="10" textAnchor="middle">
-                  {d}
-                </text>
-              </g>
-            ))}
-            <line x1={NEED_LEFT} y1={216} x2={NEED_RIGHT} y2={216} stroke="#64748b" />
-            <text x={NEED_WIDTH - 10} y={NEED_HEIGHT - 4} fill="#94a3b8" fontSize="9" textAnchor="end">
-              Density excess (each tick is ten times the one before)
-            </text>
-          </svg>
-        </div>
-
-        <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>How to read these diagrams.</strong> Imagine a region of the very early universe that is
-            only <em>slightly</em> denser than the average. Gravity pulls a little extra matter into it, which
-            makes it a little denser still. At the same time, the stretching of space keeps spreading
-            everything out. The four pictures above show how that tug-of-war plays out over time, and how big
-            the starting difference has to be for the region to end up as a clump (the seed of a galaxy).
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>Two words first.</strong> The <strong>density excess</strong> is how much denser than
-            average the region is. A density excess of 0.1 means 10% denser: if an average patch holds 100
-            grains of sand, this one holds 110. A density excess of 1 means twice the average. The{' '}
-            <strong>growth</strong> is how many times bigger the density excess has become since the start. If
-            a region starts 1 part in 1,000 denser and grows 100 times, it ends up 1 part in 10 denser.
-          </p>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 1, the strip.</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>What is drawn.</strong> A long, thin slice of the early universe. Each dot is a small
-              bit of matter. <span style={{ color: ORDINARY_COLOR }}>Amber dots</span> are ordinary matter, and{' '}
-              <span style={{ color: DARK_COLOR }}>violet dots</span> are dark matter (shown only when you
-              choose "ordinary plus dark matter"). The middle of the strip is the slightly denser region.
-            </li>
-            <li>
-              <strong>What it shows.</strong> At the start, the dots are spread almost evenly. As the ripple
-              grows, dots drift toward the middle and crowd together. The crowding is drawn at the model's
-              true density excess, with nothing exaggerated. So a tiny ripple, such as 1 part in 100,000,
-              really does look almost perfectly smooth even after it has grown thousands of times. That is
-              not a mistake in the picture: it is how small the ripple still is.
-            </li>
-            <li>
-              <strong>Space stretching.</strong> The picture follows one fixed patch of matter, so the dots
-              keep their place on the screen while the space between them stretches. The label under the
-              strip says by how much: when it says "stretched 3,401 times," every distance in the real
-              universe has grown 3,401 times since the start.
-            </li>
-            <li>
-              <strong>The green glow.</strong> If the ripple reaches a density excess of 1, a green glow
-              appears around the middle. That is the moment the region has become a clump, and a galaxy would
-              grow there in the real universe. The glow is only an illustration. The model does not compute
-              what the clump looks like. It only tells you <em>when</em> the region would become one.
-            </li>
-          </ul>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 2, how many times a ripple grows.</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>What the axes mean.</strong> Along the bottom is time since the Big Bang, from 10
-              thousand years to 10 billion years. Each tick is ten times the one before, so early times are
-              not squashed into the corner. Up the side is how many times the ripple has grown since it
-              started. Each tick is again ten times the one before (1, 10, 100, 1,000).
-            </li>
-            <li>
-              <strong>The two lines.</strong> The{' '}
-              <span style={{ color: DARK_COLOR }}>violet line</span> is ordinary plus dark matter. It starts
-              earlier (at about 50 thousand years in this model), because dark matter does not interact with light and so
-              can begin to gather before ordinary matter can. The{' '}
-              <span style={{ color: ORDINARY_COLOR }}>amber line</span> is ordinary matter alone. It starts
-              later (at about 470 thousand years in this model, which leaves out light, so the real figure is
-              about 380 thousand), when the oldest light (Experiment 3) was released and ordinary matter
-              stopped being held smooth by light. This picture does not depend on how big
-              you choose the starting ripple.
-            </li>
-            <li>
-              <strong>What to look for.</strong> Both lines climb steadily. By today, the amber line has
-              grown about {Math.round(ordinaryResult.growthSinceStart).toLocaleString('en-US')} times and the
-              violet line about {Math.round(darkResult.growthSinceStart).toLocaleString('en-US')} times, so
-              the head start is worth a factor of about{' '}
-              {(darkResult.growthSinceStart / ordinaryResult.growthSinceStart).toFixed(1)}. While matter
-              dominates, a ripple grows in step with the size of the universe: if the universe doubles in size, the ripple
-              doubles.
-            </li>
-            <li>
-              <strong>The dashed line.</strong> It shows the growth with no dark energy at all (for the kind
-              of matter you chose): about{' '}
-              {Math.round(withoutDarkEnergy[withoutDarkEnergy.length - 1]).toLocaleString('en-US')} times,
-              against about {Math.round(result.growthSinceStart).toLocaleString('en-US')} times with it. The
-              two lines separate only near the end, because dark energy only became important in the last few
-              billion years. From then on the expansion speeds up, which makes it harder for gravity to pull
-              matter together, so the growth slows down.
-            </li>
-            <li>
-              <strong>The moving dot</strong> marks where the ripple is during the run.
-            </li>
-          </ul>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 3, your ripple.</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>What is drawn.</strong> The density excess of the starting size you chose (
-              {partsInLabel(startDelta)}), against the same time axis as Picture 2. Up the side, each tick is
-              ten times the one before, from 0.00001 (1 part in 100,000) to 1 (twice the average density).
-            </li>
-            <li>
-              <strong>The green dashed line.</strong> It marks a density excess of 1. A ripple that reaches
-              it has become a clump, and the model stops following it there, because the simple description
-              of a slightly denser region no longer applies once it is that dense.
-            </li>
-            <li>
-              <strong>What to look for.</strong> This line is Picture 2's line, lifted so that it starts at
-              the size you chose. Your ripple ends today at{' '}
-              {result.becameClump
-                ? `a density excess of 1 or more: it became a clump, at a time when the redshift was about ${redshiftLabel(result.redshiftOfClump ?? 0)}.`
-                : `a density excess of about ${result.densityExcessToday.toPrecision(2)}, so it did not reach the green line and did not become a clump.`}{' '}
-              Try a different starting size to see the line start higher or lower, and watch whether it
-              reaches the green line.
-            </li>
-          </ul>
-
-          <p style={{ marginTop: 0, marginBottom: '0.3rem' }}>
-            <strong>Picture 4, how big must a ripple start.</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.6rem 0', paddingLeft: '1.1rem' }}>
-            <li>
-              <strong>What is drawn.</strong> Four dots on one sideways scale of density excess, each tick ten
-              times the one before. Further right means a bigger starting difference.
-            </li>
-            <li>
-              <strong>The idea.</strong> Since a ripple grows by a fixed number of times, you can work
-              backward: the smallest starting ripple that reaches 1 by today is 1 divided by that number. For
-              ordinary matter the growth is about {Math.round(ordinaryResult.growthSinceStart).toLocaleString('en-US')}, so the
-              ripple must start at about 1 ÷ {Math.round(ordinaryResult.growthSinceStart).toLocaleString('en-US')} = {partsInLabel(ordinaryResult.requiredStartDelta)}.
-              With the dark matter head start the growth is about {Math.round(darkResult.growthSinceStart).toLocaleString('en-US')},
-              so it needs only about {partsInLabel(darkResult.requiredStartDelta)}.
-            </li>
-            <li>
-              <strong>The green dot</strong> is the starting size you chose. If it is to the right of a
-              kind of matter's dot, your ripple is big enough to become a clump with that kind of matter. If
-              it is to the left, it is not.
-            </li>
-            <li>
-              <strong>The grey dot at the far left</strong> is the size of the oldest light's ripple (1 part
-              in 100,000), but be careful: that is a difference in <em>temperature</em> (Experiment 3), which
-              is not the same thing as how much denser a region of matter is. The picture puts them side by
-              side for reference only. This model does not say whether the real universe started with
-              enough, and it does not draw that conclusion.
-            </li>
-          </ul>
-
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>Running it.</strong> When you press <strong>Run</strong>, watch for about 9 seconds. The
-            strip and the moving dots play from the start to today. The motion is only there to help you see
-            the growth, and the numbers at the end are exact. Time on the graphs is approximate for the
-            earliest moments, because this model leaves out light and other very fast particles, as in
-            Experiments 5 to 8.
-          </p>
-        </div>
-
-            {status === 'complete' && (
-              <div
-                style={{
-                  marginTop: '1.5rem',
-                  paddingTop: '1rem',
-                  borderTop: '1px solid var(--border-color, #ccc)',
-                }}
-              >
-                <h3 style={{ marginTop: 0 }}>Results</h3>
-                <p>
-                  You chose <strong>{kindLabels[kind].toLowerCase()}</strong> and a starting size of{' '}
-                  <strong>{partsInLabel(startDelta)}</strong>. For that choice:
-                </p>
-                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                    <tbody>
-                      {[
-                        ['The ripple started growing at redshift', redshiftLabel(result.startRedshift)],
-                        ['How many times it grew by today', `about ${Math.round(result.growthSinceStart).toLocaleString('en-US')}`],
-                        [
-                          'Its density excess today',
-                          result.becameClump
-                            ? '1 or more (it became a clump)'
-                            : `about ${result.densityExcessToday.toPrecision(2)} (not a clump)`,
-                        ],
-                        ...(result.becameClump
-                          ? [['It reached a clump at redshift', `about ${redshiftLabel(result.redshiftOfClump ?? 0)}`]]
-                          : []),
-                        ['Starting size needed for a clump (this kind of matter)', partsInLabel(result.requiredStartDelta)],
-                        [
-                          'Starting size needed for a clump (the other kind)',
-                          partsInLabel(result.requiredStartDeltaOtherMatter),
-                        ],
-                      ].map(([label, value]) => (
-                        <tr key={label}>
-                          <td style={{ padding: '0.25rem 1rem 0.25rem 0' }}>{label}</td>
-                          <td style={{ textAlign: 'right', padding: '0.25rem 0', whiteSpace: 'nowrap' }}>{value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>A simple calculation.</strong> The density excess today is the starting size times
-                  the growth: {partsInLabel(startDelta)} × about{' '}
-                  {Math.round(result.growthSinceStart).toLocaleString('en-US')} ≈{' '}
-                  {result.densityExcessToday.toPrecision(2)}. The same reasoning works backward: to reach a
-                  density excess of 1, the ripple must start at 1 ÷ about{' '}
-                  {Math.round(result.growthSinceStart).toLocaleString('en-US')} ≈{' '}
-                  {partsInLabel(result.requiredStartDelta)}. For comparison, a ripple of 1 part in 100,000
-                  (the size of the oldest light's temperature ripples) with ordinary matter would reach only{' '}
-                  {partsInLabel(MIN_START_DELTA * ordinaryResult.growthSinceStart)}.
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Checking your first prediction:</strong> asked about how many times denser a slightly
-                  denser region would become between the oldest light's release and today, you answered "
-                  {growthChoices.find((c) => c.value === submittedGrowthPrediction)!.label}". The model gives
-                  about {Math.round(ordinaryResult.growthSinceStart).toLocaleString('en-US')} times, for any
-                  starting size. While matter dominates, a ripple grows in step with the size of the universe,
-                  and the universe grew about {Math.round(1 + RECOMBINATION_REDSHIFT).toLocaleString('en-US')} times in size over that
-                  time; dark energy took part of that growth away, which is why the answer is a little lower.{' '}
-                  {submittedGrowthPrediction === 'thousand'
-                    ? 'So your prediction was right.'
-                    : 'So your prediction was off this time.'}
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Checking your second prediction:</strong> asked whether starting earlier would change
-                  the answer, you answered "
-                  {headStartChoices.find((c) => c.value === submittedHeadStartPrediction)!.label}". The model
-                  gives a head start for dark matter: the growth rises from about{' '}
-                  {Math.round(ordinaryResult.growthSinceStart).toLocaleString('en-US')} times to about{' '}
-                  {Math.round(darkResult.growthSinceStart).toLocaleString('en-US')} times, a gain of about{' '}
-                  {(darkResult.growthSinceStart / ordinaryResult.growthSinceStart).toFixed(1)}. That is a small
-                  factor next to growth of thousands of times, but whether it decides the outcome depends on the
-                  starting size. For a region that starts at {partsInLabel(HEAD_START_EXAMPLE_DELTA)}, ordinary
-                  matter reaches only a density excess of about{' '}
-                  {exampleOrdinary.densityExcessToday.toPrecision(2)} (not a clump), but with the head start it
-                  reaches about {exampleDark.densityExcessToday.toPrecision(2)} (a clump).{' '}
-                  {submittedHeadStartPrediction === 'none'
-                    ? 'So your prediction was off this time: the head start does change the result.'
-                    : 'So your prediction was partly right: the head start is worth only a small factor, and for some starting sizes that factor decides the outcome.'}
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>A comparison from daily life.</strong> Think of a savings account that earns a small
-                  interest rate. In any one year the balance barely changes, but over many years it has grown
-                  many times over. A ripple in the early universe is similar: it does not suddenly explode, it
-                  grows steadily, and what matters is how long it has to grow. Like any comparison, it is not
-                  exact. A ripple's growth is set by how much the universe has expanded, not by a fixed rate.
-                </p>
-                <div
-                  style={{
-                    margin: '0.75rem 0',
-                    padding: '0.75rem 1rem',
-                    border: '2px solid #f59e0b',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                  }}
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>What matter is gathering:</p>
+              {(['ordinary', 'ordinary-plus-dark'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleKindChange(option)}
+                  className={`toggle-button${kind === option ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
                 >
-                  <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                    <strong>What this model can and cannot tell you.</strong> It tells you how many times a
-                    small ripple grows, and so how big it must start to become a clump. The sizes needed here,
-                    about {partsInLabel(ordinaryResult.requiredStartDelta)} for ordinary matter and about{' '}
-                    {partsInLabel(darkResult.requiredStartDelta)} with the head start, are much larger than the
-                    oldest light's 1 part in 100,000. But that figure is a difference in <em>temperature</em>,
-                    which is not the same as how much denser a region of matter is, and how the two are related
-                    depends on the size of the region. So this model cannot say whether the real universe had
-                    enough, and it does not claim to.
-                  </p>
-                  <p style={{ marginTop: 0, marginBottom: 0 }}>
-                    The starting size here is your own illustrative choice, not a measurement. The dark matter
-                    head start (starting at redshift about 3,400) is a given real value, not something this
-                    model works out.
-                  </p>
+                  {kindLabels[option]}
+                  {option === 'ordinary' ? ` (starts at redshift ${RECOMBINATION_REDSHIFT})` : ` (starts at redshift ${MATTER_RADIATION_EQUALITY_REDSHIFT.toLocaleString('en-US')})`}
+                </button>
+              ))}
+              <p style={{ ...smallNote, marginTop: '0.25rem' }}>
+                For ordinary plus dark matter this model lets a region start growing earlier, at redshift about {MATTER_RADIATION_EQUALITY_REDSHIFT.toLocaleString('en-US')} (when matter began to outweigh radiation), instead of at the oldest light&rsquo;s release. That earlier start is a given value, not something the model works out, and what dark matter is made of is not specified (Cosmology 4).
+              </p>
+
+              <p style={{ fontWeight: 'bold', margin: '1rem 0 0.5rem' }}>How much denser than average the early region starts (its starting density excess):</p>
+              {START_SIZE_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handlePresetChange(p.id)}
+                  className={`toggle-button${mode === 'preset' && presetId === p.id ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                >
+                  {p.label}
+                </button>
+              ))}
+              <button type="button" onClick={handleCustom} className={`toggle-button${mode === 'custom' ? ' is-selected' : ''}`} style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}>
+                Custom
+              </button>
+              {mode === 'custom' && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label htmlFor="structure-start-delta" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                    Starting density excess: {partsInLabel(customDelta)}
+                  </label>
+                  <input
+                    id="structure-start-delta"
+                    type="range"
+                    min={0}
+                    max={SLIDER_STEPS}
+                    step={1}
+                    value={deltaToSlider(customDelta)}
+                    onChange={(event) => {
+                      setCustomDelta(sliderToDelta(Number(event.target.value)))
+                      settle()
+                    }}
+                    style={{ width: '100%' }}
+                  />
                 </div>
-                <p style={{ marginBottom: '0.25rem' }}>
-                  <strong>What this model simplifies.</strong>
-                </p>
-                <ul style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.5rem' }}>
-                  <li>
-                    It is the same simplified universe as Experiments 5, 6 and 8: flat, with matter and a
-                    constant dark energy, an illustrative Hubble constant of 70, and no radiation.
-                  </li>
-                  <li>
-                    Only the first, simple stage of growth is modelled, for a region that is still only
-                    slightly denser than average. Pressure, gas cooling, star formation and mergers of clumps
-                    are not.
-                  </li>
-                  <li>
-                    A single region is followed on its own, and the model says when it would become a clump,
-                    not what the clump looks like. The green glow is only an illustration.
-                  </li>
-                </ul>
+              )}
+              <div style={{ marginTop: '0.75rem' }}>
+                <button type="button" className="action-button" onClick={handlePart2Run} disabled={part2Running} style={{ padding: '0.5rem 1.5rem' }}>
+                  {part2Running ? 'Running...' : 'Run: watch your region grow'}
+                </button>
               </div>
+              <p style={smallNote}>
+                Your guesses are locked while you try other settings. Your guesses do not change the drawings or tables, but these settings do: they change the strip, Picture 3 and the pink row in Part 3. These starting sizes are <strong>trial values</strong>: they show what would happen for a region that starts that much denser, and they do not say the real universe started that way. The starting size is your own illustrative choice, not a measurement.
+              </p>
+              <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem', marginBottom: 0 }}>
+                Chosen: <strong style={{ color: YOUR_COLOR }}>{kindLabels[kind].toLowerCase()}</strong>, starting size <strong style={{ color: YOUR_COLOR }}>{partsInLabel(startDelta)}</strong>
+                <br />
+                Time since the Big Bang: <strong>{yearsLabel(now.yearsAfterBigBang)}</strong> &nbsp;|&nbsp; Redshift: {redshiftLabel(now.redshift)}
+                <br />
+                The ripple has grown <strong>{now.growth.toFixed(1)}</strong> times &nbsp;|&nbsp; Space has stretched {sizeFactor.toFixed(1)} times since the start
+                <br />
+                Density excess: {hasClumped ? `${CLUMP_THRESHOLD} or more (a clump has formed)` : now.densityExcess.toPrecision(2)}
+              </p>
+            </div>
+
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 2: the strip, your region growing</p>
+              <StripPicture kind={kind} startDelta={startDelta} progress={part2Progress} />
+              <StripCaption />
+            </Block>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 3: your ripple, how much denser than average</p>
+              <ExcessGraph kind={kind} startDelta={startDelta} progress={part2Progress} />
+              <ExcessCaption kind={kind} startDelta={startDelta} />
+            </Block>
+            <Block>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Picture 4: how big must a ripple start to become a clump by today?</p>
+              <NeededSizePicture startDelta={startDelta} />
+              <NeededSizeCaption kind={kind} startDelta={startDelta} />
+            </Block>
+            <Block>
+              <WhereFrom>
+                <strong>Calculated here:</strong> every line and number, from the growth formula; the strip&rsquo;s dots are drawn at the model&rsquo;s true density excess. <strong>Given by others:</strong> the two start redshifts (Planck 2018). <strong>An illustration, not computed:</strong> the green glow and the split of dots into amber and violet. <strong>Your choice:</strong> the kind of matter and the starting size (trial values). Nothing here is imagined.
+              </WhereFrom>
+            </Block>
+
+            {/* ===== Part 3 ===== */}
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              These are the results of your first run, with what each table means. The numbers come from the physics and do not change with your guesses; only the pink row follows your settings in Part 2.
+            </PartHeader>
+            <StructureFormationResults guesses={submitted} kind={kind} startDelta={startDelta} />
+
+            {/* ===== Part 4 ===== */}
+            <PartHeader color="#0066cc" title="Part 4: The tutor">
+              The tutor asks you three questions about what you saw, then explains it and goes through your two guesses.
+            </PartHeader>
+            {submitted && (
+              <StructureFormationTutor
+                predictedGrowth={submitted.growth}
+                predictedHeadStart={submitted.headStart}
+                onExplained={() => {
+                  setExplained(true)
+                  onTutorComplete?.()
+                }}
+              />
             )}
+            {explained && <p style={{ ...smallNote, marginTop: '1rem' }}>You have reached the tutor&rsquo;s explanation. You can still try other settings in Part 2; the tutor does not restart.</p>}
           </>
         )}
       </div>
-
-      {status === 'complete' && submittedGrowthPrediction && submittedHeadStartPrediction && (
-        <StructureFormationTutor
-          key={runCount}
-          predictedGrowth={submittedGrowthPrediction}
-          predictedHeadStart={submittedHeadStartPrediction}
-          onExplained={onTutorComplete}
-        />
-      )}
     </div>
   )
 }
