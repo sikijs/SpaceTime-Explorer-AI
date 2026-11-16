@@ -21,6 +21,9 @@ import { CaptionBox, LookFor, listStyle } from './TidalEffectExperiment'
 // growth, the place of a guess mark) comes from the physics module; this file only draws and words it (CLAUDE.md §9). White is only ever
 // the learner's guess (§14). The guess marks are drawn only once the run has finished (§12).
 
+// The dashed lines are drawn this many pixels higher than their true height, only so that they do not hide behind the solid lines.
+const DASHED_OFFSET_PX = 4
+
 export const GUESS_COLOR = '#ffffff'
 export const ORDINARY_COLOR = '#fbbf24' // amber: ordinary matter
 export const DARK_COLOR = '#a78bfa' // violet: ordinary plus dark matter
@@ -165,7 +168,7 @@ export function GrowthGraph({ progress, finished, guesses }: GrowthGraphProps) {
       </text>
 
       {dashed.map((l, i) => (
-        <polyline key={`dashed-${i}`} points={poly(drawnSoFar(l.points, progress, l.value).drawn)} fill="none" stroke={NO_DARK_ENERGY_COLOR} strokeWidth={2} strokeDasharray="4 4" />
+        <polyline key={`dashed-${i}`} points={poly(drawnSoFar(l.points, progress, l.value).drawn)} fill="none" stroke={NO_DARK_ENERGY_COLOR} strokeWidth={2} strokeDasharray="4 4" transform={`translate(0 -${DASHED_OFFSET_PX})`} />
       ))}
       {lines.map((l) => (
         <polyline key={l.color} points={poly(drawnSoFar(l.points, progress, l.value).drawn)} fill="none" stroke={l.color} strokeWidth={2.5} />
@@ -461,7 +464,7 @@ export function Part1GrowthCaption({ arrived }: { arrived: boolean }) {
           The <strong style={{ color: ORDINARY_COLOR }}>amber line</strong> is ordinary matter alone. In this model it starts growing when the oldest light was released, about <strong>{n.ordinaryStartThousandYears} thousand years</strong> after the Big Bang (this model leaves out light, so the real figure is about 380 thousand, as in Cosmology 3). The <strong style={{ color: DARK_COLOR }}>violet line</strong> is ordinary plus dark matter. In this model it starts earlier, about <strong>{n.darkStartThousandYears} thousand years</strong> after the Big Bang. The graph does not depend on how big you choose the starting ripple.
         </li>
         <li>
-          The two <strong style={{ color: NO_DARK_ENERGY_COLOR }}>red dashed lines</strong> show the same growth with <strong>no dark energy at all</strong>, one for each start. They lie just above their solid lines at the end.
+          The two <strong style={{ color: NO_DARK_ENERGY_COLOR }}>red dashed lines</strong> show the same growth with <strong>no dark energy at all</strong>, one for each start. They lie just above their solid lines at the end. (They are drawn about 4 pixels higher than their true height so that they do not hide behind the solid lines; the real gap between each pair is small at the start and grows towards the right.)
         </li>
         <li>
           When you press <strong>Run</strong>, watch for about 9 seconds. The lines draw from their starts, and a dot rides on each. The motion is drawn to help you notice the growth; it is not a movie of real history, but the numbers at the end are exact.
