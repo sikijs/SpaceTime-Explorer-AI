@@ -198,3 +198,268 @@ export function stretchCurve(presetId: ObjectPreset['id']): Array<{ r: number; s
     return { r, stretchInG: stretchInG(preset.massSolarMasses, r) }
   })
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Audit update (Black Holes 5): numbers for the white guess marks, the fixed Part 1 fall (the 10-Sun black hole,
+// released from rest at 10 horizon radii), the check-up, and the comparisons and worked-math numbers the interface and
+// tutor used to work out or type themselves. No function here reads a prediction; the guess functions take the guess as
+// an argument and only describe it or mark it. Every existing export above is unchanged.
+// ---------------------------------------------------------------------------------------------------------------
+
+export const PART_ONE_BLACK_HOLE_ID: ObjectPreset['id'] = 'stellar-black-hole'
+export const PART_ONE_START_IN_HORIZON_RADII = 10
+export const SGR_A_STAR_ID: ObjectPreset['id'] = 'sgr-a-star'
+
+// The fall is the same every time and costs a few hundred numerical integrals, so the new functions share one copy.
+let partOneCache: FallingInResult | null = null
+export function runPartOne(): FallingInResult {
+  if (!partOneCache) partOneCache = runFallingInExperiment(PART_ONE_BLACK_HOLE_ID, PART_ONE_START_IN_HORIZON_RADII)
+  return partOneCache
+}
+
+// ---- the readings near the horizon (the Results and the tutor used to assemble these themselves) ----
+export const NEAR_HORIZON_GAPS = [0.01, 0.001, 0.0001] // horizon radii above the horizon
+export interface NearHorizonReading {
+  gapInHorizonRadii: number
+  travelerClock: number
+  farAwayClock: number
+}
+export function nearHorizonReadings(startInHorizonRadii: number): NearHorizonReading[] {
+  return NEAR_HORIZON_GAPS.map((gap) => ({
+    gapInHorizonRadii: gap,
+    travelerClock: travelerClock(startInHorizonRadii, 1 + gap),
+    farAwayClock: farAwayClock(startInHorizonRadii, 1 + gap),
+  }))
+}
+// How much more the far-away clock reads each time the gap above the horizon shrinks to a tenth, in horizon light-times.
+export function farClockIncreasesPerTenfoldGap(startInHorizonRadii: number): number[] {
+  const readings = nearHorizonReadings(startInHorizonRadii)
+  return readings.slice(1).map((reading, i) => reading.farAwayClock - readings[i].farAwayClock)
+}
+export const LN_10 = Math.log(10)
+
+// ---- Guess 1: does the trip to the horizon come to an end on the traveler's own watch? ----
+export type EndChoice = 'finite' | 'never' | 'depends'
+// "Finite" if the traveler's clock reaches the horizon after a finite time for all three black holes (in horizon
+// light-times it is the same for every hole; only the seconds differ); "depends" if it did for some and not others.
+export function modelEndAnswer(startInHorizonRadii: number = PART_ONE_START_IN_HORIZON_RADII): EndChoice {
+  const finite = BLACK_HOLE_PRESETS.map((p) =>
+    Number.isFinite((travelerClock(startInHorizonRadii, 1) * horizonRadiusKm(p.massSolarMasses)) / REAL_SPEED_OF_LIGHT_KM_PER_S),
+  )
+  if (finite.every(Boolean)) return 'finite'
+  return finite.some(Boolean) ? 'depends' : 'never'
+}
+export function endGuessIsModelAnswer(guess: EndChoice): boolean {
+  return guess === modelEndAnswer()
+}
+// The white marker for each answer is a shape and a place, not a size (an outcome has no size of its own).
+export type EndMarker = { kind: 'at-horizon' } | { kind: 'past-right-edge' } | { kind: 'beside-horizon' }
+export function endGuessMarker(guess: EndChoice): EndMarker {
+  return guess === 'finite' ? { kind: 'at-horizon' } : guess === 'never' ? { kind: 'past-right-edge' } : { kind: 'beside-horizon' }
+}
+
+// ---- Guess 2: what does the far-away clock read as the traveler nears the horizon? ----
+export type FarClockChoice = 'same' | 'settles' | 'no-limit'
+// The page's own marking limits, not physical limits (the real fall is nowhere near either): "about the same" means the
+// far-away clock is within this percent of the traveler's clock; "settles" means the latest tenfold increase is under
+// this fraction of the one before.
+export const SAME_WITHIN_PERCENT = 1
+export const SETTLES_BELOW_FRACTION = 0.5
+export function modelFarClockAnswer(startInHorizonRadii: number = PART_ONE_START_IN_HORIZON_RADII): FarClockChoice {
+  const readings = nearHorizonReadings(startInHorizonRadii)
+  const last = readings[readings.length - 1]
+  if (Math.abs(last.farAwayClock / last.travelerClock - 1) * 100 <= SAME_WITHIN_PERCENT) return 'same'
+  const increases = farClockIncreasesPerTenfoldGap(startInHorizonRadii)
+  return increases[increases.length - 1] < SETTLES_BELOW_FRACTION * increases[increases.length - 2] ? 'settles' : 'no-limit'
+}
+export function farClockGuessIsModelAnswer(guess: FarClockChoice): boolean {
+  return guess === modelFarClockAnswer()
+}
+// "Without limit" is marked at the orange curve's end; the other two are marked in the gap between the curves.
+export type FarClockMarker = { kind: 'orange-end' } | { kind: 'between-curves' }
+export function farClockGuessMarker(guess: FarClockChoice): FarClockMarker {
+  return guess === 'no-limit' ? { kind: 'orange-end' } : { kind: 'between-curves' }
+}
+
+// ---- Guess 3: the stretch at the horizon, the 10-Sun black hole against Sagittarius A* ----
+export type StretchChoice = 'small' | 'same' | 'giant'
+// "Much stronger" means more than this many times as strong (the page's own marking limit).
+export const MUCH_STRONGER_AT_LEAST_TIMES = 10
+// The stretch at the horizon at the 10-Sun hole divided by the stretch at Sagittarius A*'s.
+export function stretchRatioBetweenHoles(): number {
+  const small = BLACK_HOLE_PRESETS.find((p) => p.id === PART_ONE_BLACK_HOLE_ID)!
+  const giant = BLACK_HOLE_PRESETS.find((p) => p.id === SGR_A_STAR_ID)!
+  return stretchInG(small.massSolarMasses, 1) / stretchInG(giant.massSolarMasses, 1)
+}
+// The square of the ratio of the two masses, which the stretch ratio should equal (at the same number of horizon radii).
+export function massRatioSquared(): number {
+  const small = BLACK_HOLE_PRESETS.find((p) => p.id === PART_ONE_BLACK_HOLE_ID)!
+  const giant = BLACK_HOLE_PRESETS.find((p) => p.id === SGR_A_STAR_ID)!
+  return (giant.massSolarMasses / small.massSolarMasses) ** 2
+}
+export function modelStretchAnswer(): StretchChoice {
+  const ratio = stretchRatioBetweenHoles()
+  return ratio >= MUCH_STRONGER_AT_LEAST_TIMES ? 'small' : ratio <= 1 / MUCH_STRONGER_AT_LEAST_TIMES ? 'giant' : 'same'
+}
+export function stretchGuessIsModelAnswer(guess: StretchChoice): boolean {
+  return guess === modelStretchAnswer()
+}
+// The pointer at the horizon edge of the stretch graph: to the 10-Sun curve, to Sagittarius A*'s, or a bracket joining both.
+export type StretchMarker = { target: 'stellar'; presetId: ObjectPreset['id'] } | { target: 'sgr'; presetId: ObjectPreset['id'] } | { target: 'both' }
+export function stretchGuessMarker(guess: StretchChoice): StretchMarker {
+  return guess === 'small'
+    ? { target: 'stellar', presetId: PART_ONE_BLACK_HOLE_ID }
+    : guess === 'giant'
+      ? { target: 'sgr', presetId: SGR_A_STAR_ID }
+      : { target: 'both' }
+}
+
+// ---- Comparisons the interface used to work out itself ----
+// How many times larger the stretch is at the horizon than at the release distance (the distance ratio cubed).
+export function stretchGrowth(result: FallingInResult): number {
+  return result.stretchAtHorizonInG / result.stretchAtStartInG
+}
+
+// ---- The check-up: a separate route to the same numbers ----
+// The traveler's clock by integrating d(tau)/dr = -1 / sqrt(1/r - 1/r0) with r = r0 - s^2, which removes the singularity at the
+// release point: tau = 2 sqrt(r0) times the integral of sqrt(r0 - s^2) ds. A different route from the closed form.
+export function travelerClockByIntegration(startInHorizonRadii: number, rInHorizonRadii: number): number {
+  checkStart(startInHorizonRadii)
+  const sEnd = Math.sqrt(startInHorizonRadii - rInHorizonRadii)
+  const steps = 20000
+  let sum = 0
+  for (let i = 0; i < steps; i++) {
+    const s = ((i + 0.5) / steps) * sEnd
+    sum += Math.sqrt(startInHorizonRadii - s * s)
+  }
+  return (2 * Math.sqrt(startInHorizonRadii) * sum * sEnd) / steps
+}
+
+// The stretch from 2GM h / r^3 with G and the solar mass written out in SI units, not through the c-squared form above.
+const G_SI = 6.674e-11
+const SOLAR_MASS_KG = 1.98847e30
+export function stretchFromGMInG(massSolarMasses: number, rInHorizonRadii: number): number {
+  const rMeters = rInHorizonRadii * horizonRadiusKm(massSolarMasses) * 1000
+  return (2 * G_SI * massSolarMasses * SOLAR_MASS_KG * BODY_LENGTH_METERS) / rMeters ** 3 / GRAVITY_AT_EARTH_SURFACE
+}
+
+// ---- A plain reading of one number against a reference; no cut-offs ----
+export type Reading = 'the same' | 'more' | 'less'
+export function readAgainst(found: number, reference: number): Reading {
+  if (Math.abs(found - reference) <= 1e-9 * Math.max(Math.abs(reference), 1e-300)) return 'the same'
+  return found > reference ? 'more' : 'less'
+}
+// "The same" once both are rounded to the same number of significant figures (the way they are printed).
+export function readAgainstRounded(found: number, reference: number, significantFigures: number): Reading {
+  const round = (x: number) => Number(x.toPrecision(significantFigures))
+  if (round(found) === round(reference)) return 'the same'
+  return found > reference ? 'more' : 'less'
+}
+export function percentAbove(found: number, reference: number): number {
+  return (found / reference - 1) * 100
+}
+
+export interface FallCheckUpRow {
+  what: string
+  expected: number
+  found: number
+  unit: string
+  reading: Reading
+  // How far above the reference the found number is, in percent (not a cut-off, only the gap).
+  percentAbove: number
+}
+// Each row's reference is a formula the calculation is built from, or a separate route to the same number; none is a measurement.
+export function checkUpRows(): FallCheckUpRow[] {
+  const r0 = PART_ONE_START_IN_HORIZON_RADII
+  const part = runPartOne()
+  const stellar = part.preset
+  const increases = farClockIncreasesPerTenfoldGap(r0)
+  const increase = increases[increases.length - 1]
+  return [
+    {
+      what: `The traveler's clock at the horizon, from rest at ${r0} horizon radii: the closed form against a separate integration`,
+      expected: travelerClockByIntegration(r0, 1),
+      found: part.travelerClockAtHorizon,
+      unit: 'light-times',
+      reading: readAgainstRounded(part.travelerClockAtHorizon, travelerClockByIntegration(r0, 1), 5),
+      percentAbove: percentAbove(part.travelerClockAtHorizon, travelerClockByIntegration(r0, 1)),
+    },
+    {
+      what: 'The far-away clock: extra reading when the gap above the horizon shrinks to a tenth (0.001 to 0.0001), against ln 10',
+      expected: LN_10,
+      found: increase,
+      unit: 'light-times',
+      reading: readAgainst(increase, LN_10),
+      percentAbove: percentAbove(increase, LN_10),
+    },
+    {
+      what: 'The stretch at the 10-Sun black hole’s horizon: the formula as the page computes it against 2GM × h ÷ r³ from G and M',
+      expected: stretchFromGMInG(stellar.massSolarMasses, 1),
+      found: part.stretchAtHorizonInG,
+      unit: 'g',
+      reading: readAgainstRounded(part.stretchAtHorizonInG, stretchFromGMInG(stellar.massSolarMasses, 1), 3),
+      percentAbove: percentAbove(part.stretchAtHorizonInG, stretchFromGMInG(stellar.massSolarMasses, 1)),
+    },
+    {
+      what: 'The stretch at the horizon, 10-Sun black hole against Sagittarius A*: the ratio against the square of the ratio of their masses',
+      expected: massRatioSquared(),
+      found: stretchRatioBetweenHoles(),
+      unit: 'times',
+      reading: readAgainstRounded(stretchRatioBetweenHoles(), massRatioSquared(), 6),
+      percentAbove: percentAbove(stretchRatioBetweenHoles(), massRatioSquared()),
+    },
+  ]
+}
+
+// ---- The tables ----
+export interface FallRow {
+  presetId: ObjectPreset['id']
+  startInHorizonRadii: number
+  startKm: number
+  clockAtHorizonLightTimes: number
+  clockAtHorizonSeconds: number
+  farClockAtCutoffLightTimes: number
+  stretchAtStartInG: number
+  stretchAtHorizonInG: number
+  oneGRadiusInHorizonRadii: number | null
+  lightTimeSeconds: number
+}
+export function fallRow(result: FallingInResult): FallRow {
+  return {
+    presetId: result.preset.id,
+    startInHorizonRadii: result.startInHorizonRadii,
+    startKm: result.startInHorizonRadii * result.horizonRadiusKm,
+    clockAtHorizonLightTimes: result.travelerClockAtHorizon,
+    clockAtHorizonSeconds: result.travelerSecondsAtHorizon,
+    farClockAtCutoffLightTimes: result.farAwayClockAtCutoff,
+    stretchAtStartInG: result.stretchAtStartInG,
+    stretchAtHorizonInG: result.stretchAtHorizonInG,
+    oneGRadiusInHorizonRadii: result.stretchOneGRadiusInHorizonRadii,
+    lightTimeSeconds: result.lightTimeSeconds,
+  }
+}
+export function partOneRow(): FallRow {
+  return fallRow(runPartOne())
+}
+
+// Table 4: the three black holes for a fall from the Part 1 release distance (10 horizon radii).
+export interface HoleRow {
+  preset: ObjectPreset
+  horizonRadiusKm: number
+  tripSeconds: number
+  stretchAtHorizonInG: number
+}
+const threeHoleCache = new Map<number, HoleRow[]>()
+export function threeHoleRows(startInHorizonRadii: number = PART_ONE_START_IN_HORIZON_RADII): HoleRow[] {
+  const cached = threeHoleCache.get(startInHorizonRadii)
+  if (cached) return cached
+  const rows = BLACK_HOLE_PRESETS.map((preset) => {
+    const result = runFallingInExperiment(preset.id, startInHorizonRadii)
+    return { preset, horizonRadiusKm: result.horizonRadiusKm, tripSeconds: result.travelerSecondsAtHorizon, stretchAtHorizonInG: result.stretchAtHorizonInG }
+  })
+  threeHoleCache.set(startInHorizonRadii, rows)
+  return rows
+}
+
+// The worked-math numbers the Results typed ("9.81") and the unit conversion: Earth's gravity at its surface, to 3 figures.
+export const GRAVITY_AT_EARTH_SURFACE_ROUNDED = Number(GRAVITY_AT_EARTH_SURFACE.toPrecision(3))

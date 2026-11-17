@@ -7,8 +7,39 @@ import {
   FAR_CLOCK_CUTOFF_IN_HORIZON_RADII,
   MAX_START_IN_HORIZON_RADII,
   MIN_START_IN_HORIZON_RADII,
+  LN_10,
+  MUCH_STRONGER_AT_LEAST_TIMES,
+  NEAR_HORIZON_GAPS,
+  PART_ONE_BLACK_HOLE_ID,
+  PART_ONE_START_IN_HORIZON_RADII,
+  SAME_WITHIN_PERCENT,
+  SETTLES_BELOW_FRACTION,
+  checkUpRows,
+  endGuessIsModelAnswer,
+  endGuessMarker,
   farAwayClock,
+  farClockGuessIsModelAnswer,
+  farClockGuessMarker,
+  farClockIncreasesPerTenfoldGap,
+  fallRow,
+  massRatioSquared,
+  modelEndAnswer,
+  modelFarClockAnswer,
+  modelStretchAnswer,
+  nearHorizonReadings,
+  partOneRow,
+  percentAbove,
+  readAgainst,
+  readAgainstRounded,
   runFallingInExperiment,
+  runPartOne,
+  stretchFromGMInG,
+  stretchGrowth,
+  stretchGuessIsModelAnswer,
+  stretchGuessMarker,
+  stretchRatioBetweenHoles,
+  threeHoleRows,
+  travelerClockByIntegration as moduleClockByIntegration,
   stretchCurve,
   stretchInG,
   stretchInMetersPerSecondSquared,
@@ -313,5 +344,206 @@ describe('reuse (CLAUDE.md §8)', () => {
     ]) {
       expect(importLines.some((line: string) => line.includes(`/${other}'`))).toBe(false)
     }
+  })
+})
+
+// ---------------------------------------------------------------------------------------------------------------
+// Audit update (Black Holes 5)
+// ---------------------------------------------------------------------------------------------------------------
+const END_CHOICES = ['finite', 'never', 'depends'] as const
+const FAR_CHOICES = ['same', 'settles', 'no-limit'] as const
+const STRETCH_CHOICES = ['small', 'same', 'giant'] as const
+
+describe('the fixed Part 1 fall', () => {
+  it('is the 10-Sun black hole released from rest at 10 horizon radii', () => {
+    const run = runPartOne()
+    expect(run.preset.id).toBe(PART_ONE_BLACK_HOLE_ID)
+    expect(run.preset.massSolarMasses).toBe(10)
+    expect(run.startInHorizonRadii).toBe(10)
+    expect(run.startInHorizonRadii).toBe(PART_ONE_START_IN_HORIZON_RADII)
+  })
+
+  it('matches the specification: 48.985 light-times, 4.8 thousandths of a second, far-away clock 64.4, 2.1e4 g and 2.1e7 g, 1 g at about 276 radii', () => {
+    const run = runPartOne()
+    expect(run.travelerClockAtHorizon).toBeCloseTo(48.985, 2)
+    expect(run.travelerSecondsAtHorizon).toBeCloseTo(4.8e-3, 4)
+    expect(run.farAwayClockAtCutoff).toBeCloseTo(64.4, 0)
+    expect(run.stretchAtStartInG / 2.1e4).toBeCloseTo(1, 1)
+    expect(run.stretchAtHorizonInG / 2.1e7).toBeCloseTo(1, 1)
+    expect(run.stretchOneGRadiusInHorizonRadii as number).toBeCloseTo(276, -1)
+  })
+
+  it('is the same fall every time', () => {
+    expect(runPartOne()).toEqual(runPartOne())
+  })
+})
+
+describe('the readings near the horizon', () => {
+  it('give the traveler\'s clock and the far-away clock at gaps of 0.01, 0.001 and 0.0001 (the specification\'s table)', () => {
+    expect(NEAR_HORIZON_GAPS).toEqual([0.01, 0.001, 0.0001])
+    const [a, b, c] = nearHorizonReadings(10)
+    expect(a.travelerClock).toBeCloseTo(48.975, 2)
+    expect(b.travelerClock).toBeCloseTo(48.984, 2)
+    expect(c.travelerClock).toBeCloseTo(48.985, 2)
+    expect(a.farAwayClock).toBeCloseTo(59.8, 0)
+    expect(b.farAwayClock).toBeCloseTo(62.1, 0)
+    expect(c.farAwayClock).toBeCloseTo(64.4, 0)
+  })
+
+  it('agree with the independent far-away integration, and each tenfold closing adds about ln 10', () => {
+    for (const reading of nearHorizonReadings(10)) {
+      expect(reading.farAwayClock / farAwayClockByRates(10, 1 + reading.gapInHorizonRadii)).toBeCloseTo(1, 2)
+    }
+    for (const increase of farClockIncreasesPerTenfoldGap(10)) expect(Math.abs(increase - Math.log(10))).toBeLessThan(0.02)
+    expect(LN_10).toBe(Math.log(10))
+  })
+})
+
+describe('guess 1: does the trip to the horizon come to an end on the traveler\'s own watch?', () => {
+  it('has the model answer "finite": the traveler\'s clock is finite, and the same number of light-times, for every black hole', () => {
+    expect(modelEndAnswer()).toBe('finite')
+    expect(END_CHOICES.filter(endGuessIsModelAnswer)).toEqual(['finite'])
+    const clocks = BLACK_HOLE_PRESETS.map((p) => runFallingInExperiment(p.id, 10).travelerClockAtHorizon)
+    for (const c of clocks) expect(Number.isFinite(c)).toBe(true)
+    expect(new Set(clocks.map((c) => c.toFixed(9))).size).toBe(1)
+    const seconds = BLACK_HOLE_PRESETS.map((p) => runFallingInExperiment(p.id, 10).travelerSecondsAtHorizon)
+    expect(seconds[0]).toBeLessThan(seconds[1])
+    expect(seconds[1]).toBeLessThan(seconds[2])
+  })
+
+  it('marks each answer with a different shape and place, and none is a size', () => {
+    expect(endGuessMarker('finite')).toEqual({ kind: 'at-horizon' })
+    expect(endGuessMarker('never')).toEqual({ kind: 'past-right-edge' })
+    expect(endGuessMarker('depends')).toEqual({ kind: 'beside-horizon' })
+  })
+})
+
+describe('guess 2: what does the far-away clock read as the traveler nears the horizon?', () => {
+  it('has the model answer "later and later, without limit"', () => {
+    expect(modelFarClockAnswer()).toBe('no-limit')
+    expect(FAR_CHOICES.filter(farClockGuessIsModelAnswer)).toEqual(['no-limit'])
+  })
+
+  it('does not depend on the page\'s marking limits: the far-away clock is 32% above the traveler\'s and the last increase is 99% of the one before', () => {
+    const last = nearHorizonReadings(10)[2]
+    expect(percentAbove(last.farAwayClock, last.travelerClock)).toBeGreaterThan(10 * SAME_WITHIN_PERCENT)
+    const [first, second] = farClockIncreasesPerTenfoldGap(10)
+    expect(second / first).toBeGreaterThan(SETTLES_BELOW_FRACTION + 0.4)
+  })
+
+  it('is the same answer for every release distance the controls allow', () => {
+    for (const start of [2, 5, 20, 100]) expect(modelFarClockAnswer(start)).toBe('no-limit')
+  })
+
+  it('marks "without limit" at the orange curve\'s end and the other two in the gap between the curves', () => {
+    expect(farClockGuessMarker('no-limit')).toEqual({ kind: 'orange-end' })
+    expect(farClockGuessMarker('same')).toEqual({ kind: 'between-curves' })
+    expect(farClockGuessMarker('settles')).toEqual({ kind: 'between-curves' })
+  })
+})
+
+describe('guess 3: the stretch at the horizon, the 10-Sun black hole against Sagittarius A*', () => {
+  it('has the model answer "much stronger at the small black hole", by 1.8e11 times', () => {
+    expect(modelStretchAnswer()).toBe('small')
+    expect(STRETCH_CHOICES.filter(stretchGuessIsModelAnswer)).toEqual(['small'])
+    expect(stretchRatioBetweenHoles() / 1.849e11).toBeCloseTo(1, 2)
+    expect(stretchRatioBetweenHoles()).toBeGreaterThan(MUCH_STRONGER_AT_LEAST_TIMES * 1e9)
+  })
+
+  it('agrees with the ratio of the stretch from G and M written separately (the ratio of masses squared)', () => {
+    const ratioFromScratch = stretchInGFromScratch(10, horizonRadiusKm(10)) / stretchInGFromScratch(sgr.massSolarMasses, horizonRadiusKm(sgr.massSolarMasses))
+    expect(stretchRatioBetweenHoles() / ratioFromScratch).toBeCloseTo(1, 3)
+    expect(stretchRatioBetweenHoles() / massRatioSquared()).toBeCloseTo(1, 9)
+    expect(massRatioSquared()).toBeCloseTo((sgr.massSolarMasses / 10) ** 2, 3)
+  })
+
+  it('points to the 10-Sun curve, to Sagittarius A*\'s, or joins both', () => {
+    expect(stretchGuessMarker('small')).toEqual({ target: 'stellar', presetId: 'stellar-black-hole' })
+    expect(stretchGuessMarker('giant')).toEqual({ target: 'sgr', presetId: 'sgr-a-star' })
+    expect(stretchGuessMarker('same')).toEqual({ target: 'both' })
+  })
+})
+
+describe('comparisons moved out of the interface', () => {
+  it('stretchGrowth is the release distance cubed (10 radii: 1,000 times)', () => {
+    expect(stretchGrowth(runPartOne())).toBeCloseTo(1000, 6)
+    expect(stretchGrowth(runFallingInExperiment('sgr-a-star', 5))).toBeCloseTo(125, 6)
+  })
+
+  it('travelerClockByIntegration is the separate route and agrees with the closed form', () => {
+    for (const [r0, r] of [[10, 1], [10, 5], [20, 3], [100, 1], [2, 1]]) {
+      expect(moduleClockByIntegration(r0, r) / travelerClock(r0, r)).toBeCloseTo(1, 4)
+      expect(moduleClockByIntegration(r0, r) / travelerClockByIntegration(r0, r)).toBeCloseTo(1, 9)
+    }
+  })
+
+  it('stretchFromGMInG is the G and M form and agrees with the page\'s c-squared form to three figures', () => {
+    for (const m of [10, sgr.massSolarMasses, m87.massSolarMasses]) {
+      const scratch = stretchInGFromScratch(m, horizonRadiusKm(m))
+      expect(stretchFromGMInG(m, 1) / scratch).toBeCloseTo(1, 9)
+      expect(stretchInG(m, 1) / scratch).toBeCloseTo(1, 2)
+    }
+  })
+})
+
+describe('the check-up', () => {
+  it('reads one number against another with no cut-offs', () => {
+    expect(readAgainst(1, 1)).toBe('the same')
+    expect(readAgainst(1.0001, 1)).toBe('more')
+    expect(readAgainst(0.9, 1)).toBe('less')
+    expect(readAgainstRounded(48.98512, 48.98513, 5)).toBe('the same')
+    expect(readAgainstRounded(2.304, 2.3026, 3)).toBe('the same')
+    expect(readAgainstRounded(2.35, 2.3026, 3)).toBe('more')
+    expect(percentAbove(110, 100)).toBeCloseTo(10, 12)
+  })
+
+  it('has four rows: the traveler\'s clock the same; the far-away increase a hair above ln 10; the stretch the same; the ratio the same', () => {
+    const [clock, far, stretch, ratio] = checkUpRows()
+    expect(clock.reading).toBe('the same')
+    expect(clock.expected).toBeCloseTo(48.985, 2)
+    expect(far.expected).toBe(Math.log(10))
+    expect(far.found).toBeCloseTo(2.304, 2)
+    expect(far.reading).toBe('more')
+    expect(far.percentAbove).toBeGreaterThan(0)
+    expect(far.percentAbove).toBeLessThan(1)
+    expect(stretch.reading).toBe('the same')
+    expect(ratio.reading).toBe('the same')
+    for (const row of checkUpRows()) {
+      expect(Number.isFinite(row.expected)).toBe(true)
+      expect(Number.isFinite(row.found)).toBe(true)
+    }
+  })
+})
+
+describe('the tables', () => {
+  it('Table 2 is the Part 1 fall', () => {
+    const row = partOneRow()
+    expect(row.presetId).toBe('stellar-black-hole')
+    expect(row.startKm).toBeCloseTo(10 * horizonRadiusKm(10), 6)
+    expect(row.clockAtHorizonLightTimes).toBeCloseTo(48.985, 2)
+    expect(row.oneGRadiusInHorizonRadii as number).toBeCloseTo(276, -1)
+    expect(fallRow(runFallingInExperiment('m87-star', 20)).oneGRadiusInHorizonRadii).toBeNull()
+  })
+
+  it('Table 4 gives 4.8 thousandths of a second, 34.6 minutes and 36.3 days, and the stretch at each horizon', () => {
+    const [a, b, c] = threeHoleRows()
+    expect(a.tripSeconds).toBeCloseTo(4.83e-3, 4)
+    expect(b.tripSeconds / 60).toBeCloseTo(34.6, 1)
+    expect(c.tripSeconds / 86400).toBeCloseTo(36.3, 1)
+    expect(a.stretchAtHorizonInG / 2.1e7).toBeCloseTo(1, 1)
+    expect(b.stretchAtHorizonInG / 1.14e-4).toBeCloseTo(1, 1)
+    expect(c.stretchAtHorizonInG / 5.0e-11).toBeCloseTo(1, 1)
+    expect(threeHoleRows(20).map((r) => r.tripSeconds)[0]).toBeGreaterThan(a.tripSeconds)
+  })
+})
+
+describe('the existing exports are unchanged', () => {
+  it('keeps the first build\'s values and still imports only horizonRadiusKm, OBJECT_PRESETS and the speed of light', () => {
+    expect(travelerClock(10, 1)).toBeCloseTo(48.985, 2)
+    expect(stretchInG(10, 1) / 2.1e7).toBeCloseTo(1, 1)
+    expect(MIN_START_IN_HORIZON_RADII).toBe(2)
+    expect(MAX_START_IN_HORIZON_RADII).toBe(100)
+    const importLines = source.split('\n').filter((line: string) => line.trim().startsWith('import'))
+    expect(importLines).toHaveLength(3)
   })
 })
