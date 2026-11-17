@@ -1,1151 +1,457 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BLACK_HOLE_PRESETS,
-  CRITICAL_AIM_IN_HORIZON_RADII,
   MAX_AIM_IN_HORIZON_RADII,
   MIN_AIM_IN_HORIZON_RADII,
   PHOTON_SPHERE_IN_HORIZON_RADII,
-  bendCurve,
-  lightPath,
+  bendDegrees,
   runLightNearBlackHoleExperiment,
-  weakFieldBendRadians,
+  runPartOne,
 } from '../physics/lightNearBlackHoleExperiment'
-import { LightNearBlackHoleTutor } from './LightNearBlackHoleTutor'
-import type { LightPath } from '../physics/lightNearBlackHoleExperiment'
+import type { BendChoice, CaptureChoice, JustOutsideChoice, LightNearBlackHoleResult } from '../physics/lightNearBlackHoleExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
+import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PartHeader } from './GravitationalWaveExperiment'
+import {
+  BlackHoleOptionsNote,
+  GuessNotes,
+  LightNearBlackHoleIntro,
+  LightNearBlackHoleLinks,
+  PART_TWO_AIM_PRESETS,
+  PartTwoGuide,
+  lightNearBlackHoleWordsEntries,
+} from './LightNearBlackHoleIntro'
+import {
+  BEND_CHOICES,
+  BendGraph,
+  CAPTURE_CHOICES,
+  CRITICAL_AIM_TEXT,
+  GraphCaption,
+  JUST_OUTSIDE_CHOICES,
+  LightPanel,
+  PanelsCaption,
+  RUN_PLAYBACK_SECONDS,
+  bendLabel,
+  captureLabel,
+  formatDistance,
+  formatMass,
+  formatRadii,
+  justOutsideLabel,
+} from './LightNearBlackHolePictures'
+import { LightNearBlackHoleResults } from './LightNearBlackHoleResults'
+import { LightNearBlackHoleTutor } from './LightNearBlackHoleTutor'
+import { Block, WhereFrom, smallNote } from './TidalEffectExperiment'
 
 interface LightNearBlackHoleExperimentProps {
   onComplete?: () => void
   onTutorComplete?: () => void
 }
 
-// The path picture: a title strip, a square area seen from above, and a legend strip. The view is zoomed to the aim: it
-// reaches ZOOM_MARGIN times the larger of the aim and the critical aim (and never less than MIN_VIEW_RADIUS horizon
-// radii), with a scale bar saying how long some number of horizon radii is.
-const PANEL_WIDTH = 400
-const PANEL_HEIGHT = 520
-const CENTER_X = 200
-const CENTER_Y = 256
-const AREA_RADIUS_PX = 170
-const ZOOM_MARGIN = 1.25
-const MIN_VIEW_RADIUS = 4
-const SCALE_BAR_LENGTHS = [1, 2, 5, 10, 20]
-const LEGEND_TOP = 446
+// Fixed real-world playback duration, independent of the physics result (CLAUDE.md §11).
+const ANIMATION_DURATION_MS = RUN_PLAYBACK_SECONDS * 1000
 
-// Fixed real-world playback duration for the whole flyby, independent of the physics result (CLAUDE.md §11).
-const ANIMATION_DURATION_MS = 8000
+const DEFAULT_PRESET_ID: ObjectPreset['id'] = 'stellar-black-hole'
+const DEFAULT_AIM = 5
 
-const KM_PER_AU = 149_597_870.7
+type RunStatus = 'idle' | 'running' | 'complete'
 
-const LIGHT_COLOR = '#22d3ee' // the exact theory, as in Experiment 3
-const SIMPLE_COLOR = '#fb923c' // the simple formula of Gravity Experiment 8
-const HORIZON_COLOR = '#fb7185'
-const BLACK_HOLE_COLOR = '#e879f9'
-const PHOTON_COLOR = '#a78bfa'
-const CRITICAL_COLOR = '#4ade80'
-const NO_GRAVITY_COLOR = '#e2e8f0'
-
-const AIM_PRESETS = [20, 10, 5, 3.5, 3, 2.7, 2.6, 2.5, 1.5]
-
-// This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
-// here; they are compared with the model's results later. The question wording was approved by the owner on 2026-10-11.
-type BendChoice = 'straight' | 'bent' | 'captured'
-const bendChoices: Array<{ value: BendChoice; label: string }> = [
-  { value: 'straight', label: 'It goes straight on, barely changed' },
-  { value: 'bent', label: 'It is bent noticeably and then escapes' },
-  { value: 'captured', label: 'It is captured' },
-]
-
-type CaptureChoice = 'horizon' | 'critical' | 'ten'
-const captureChoices: Array<{ value: CaptureChoice; label: string }> = [
-  { value: 'horizon', label: 'Only if aimed at the horizon itself, 1 horizon radius' },
-  { value: 'critical', label: 'About 2.6 horizon radii' },
-  { value: 'ten', label: 'About 10 horizon radii' },
-]
-
-type JustOutsideChoice = 'small-bend' | 'swings' | 'captured-anyway'
-const justOutsideChoices: Array<{ value: JustOutsideChoice; label: string }> = [
-  { value: 'small-bend', label: 'It passes with only a small bend' },
-  { value: 'swings', label: 'It swings right around the black hole, turning by more than 180°, and then escapes' },
-  { value: 'captured-anyway', label: 'It is captured anyway' },
-]
-
-// The graph of the total bend against the aim (the second picture).
-const GRAPH_WIDTH = 640
-const GRAPH_HEIGHT = 400
-const PLOT_LEFT = 70
-const PLOT_RIGHT = 610
-const PLOT_TOP = 66
-const PLOT_BOTTOM = 290
-const GRAPH_MAX_DEGREES = 400
-
-// Caption blocks under each picture (small, muted text, like the other captions in this project).
-const CAPTION_STYLE: CSSProperties = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }
-const CAPTION_PARAGRAPH_STYLE: CSSProperties = { marginTop: 0, marginBottom: '0.4rem' }
-
-const toDegrees = (radians: number) => (radians * 180) / Math.PI
-
-// The critical aim to four digits, so that it can be told apart from an aim of 2.6.
-const CRITICAL_AIM_TEXT = CRITICAL_AIM_IN_HORIZON_RADII.toFixed(3)
-
-// How the exact bend compares with the simple formula's: "X% larger" up to twice as large, "X times as large" beyond.
-function formatLarger(exactRadians: number, simpleRadians: number): string {
-  const ratio = exactRadians / simpleRadians
-  return ratio < 2 ? `${formatNumber((ratio - 1) * 100)}% larger` : `${formatNumber(ratio)} times as large`
-}
-
-// Three significant figures, with no trailing zeros ("10", "2.95", "235,571").
-function formatNumber(value: number): string {
-  if (value >= 1000) return Number(value.toPrecision(3)).toLocaleString('en-US')
-  return String(Number(value.toPrecision(3)))
-}
-
-// A distance in horizon radii, with enough digits to tell 2.6 from 2.598 on the slider.
-function formatRadii(value: number): string {
-  return value < 10 ? String(Number(value.toPrecision(3))) : formatNumber(value)
-}
-
-// A length in plain units, from meters to trillions of kilometers.
-function formatLength(km: number): string {
-  if (km < 1) return `${formatNumber(km * 1000)} m`
-  if (km < 1e6) return `${formatNumber(km)} km`
-  if (km < 1e9) return `${formatNumber(km / 1e6)} million km`
-  if (km < 1e12) return `${formatNumber(km / 1e9)} billion km`
-  return `${formatNumber(km / 1e12)} trillion km`
-}
-
-// Kilometers, with astronomical units added once that is the more natural unit.
-function formatDistance(km: number): string {
-  return km >= 7.5e6 ? `${formatLength(km)}, about ${formatNumber(km / KM_PER_AU)} AU` : formatLength(km)
-}
-
-function formatMass(solarMasses: number): string {
-  if (solarMasses < 1e3) return `${solarMasses} solar masses`
-  if (solarMasses < 1e9) return `${solarMasses / 1e6} million solar masses`
-  return `${solarMasses / 1e9} billion solar masses`
-}
-
-// The part of the path that is inside the picture's view, as a range of point indices. The first points are already
-// far outside it, and an escaping beam leaves it again.
-function viewRange(path: LightPath, viewRadius: number) {
-  let first = path.points.findIndex((p) => p.distanceInHorizonRadii <= viewRadius)
-  if (first < 0) first = path.points.length - 1
-  let last = path.points.length - 1
-  while (last > first && path.points[last].distanceInHorizonRadii > viewRadius) last--
-  return { first: Math.max(first - 1, 0), last }
-}
-
-function LightPanel({
-  path,
-  aim,
-  viewRadius,
-  pixelsPerHorizonRadius,
-  scaleBarHorizonRadii,
-  progress,
-}: {
-  path: LightPath
-  aim: number
-  viewRadius: number
-  pixelsPerHorizonRadius: number
-  scaleBarHorizonRadii: number
-  progress: number
-}) {
-  const range = useMemo(() => viewRange(path, viewRadius), [path, viewRadius])
-  const index = Math.min(range.first + Math.round(progress * (range.last - range.first)), range.last)
-  const point = path.points[index]
-  const finished = progress >= 1
-  const captured = path.outcome === 'captured' && finished
-
-  const px = (x: number) => CENTER_X + x * pixelsPerHorizonRadius
-  const py = (y: number) => CENTER_Y - y * pixelsPerHorizonRadius
-
-  // The closest the light has come so far. Points before the view's first index are farther out than the view itself.
-  let closestSoFar = Infinity
-  for (let i = range.first; i <= index; i++) closestSoFar = Math.min(closestSoFar, path.points[i].distanceInHorizonRadii)
-
-  const trail: string[] = []
-  for (let i = range.first; i <= index; i += 4) trail.push(`${px(path.points[i].x)},${py(path.points[i].y)}`)
-  trail.push(`${px(point.x)},${py(point.y)}`)
-
-  // Where the light would go with no gravity: the straight line y = aim, coming in from the right.
-  const edge = viewRadius * 1.1
-  // Where it ends up heading, once it has left: the mirror image of that line in the axis through the closest approach.
-  const mirrorAngle = path.outcome === 'escapes' ? path.points[path.points.length - 1].phi / 2 : 0
-  const reflect = (x: number, y: number) => ({
-    x: x * Math.cos(2 * mirrorAngle) + y * Math.sin(2 * mirrorAngle),
-    y: x * Math.sin(2 * mirrorAngle) - y * Math.cos(2 * mirrorAngle),
-  })
-  const outA = reflect(edge, aim)
-  const outB = reflect(-edge, aim)
-
-  const ringPoint = (radius: number, degrees: number) => ({
-    x: CENTER_X + radius * pixelsPerHorizonRadius * Math.cos((degrees * Math.PI) / 180),
-    y: CENTER_Y - radius * pixelsPerHorizonRadius * Math.sin((degrees * Math.PI) / 180),
-  })
-  // Ring labels sit in a column at the top left, each joined to its ring by a thin line, so they never collide.
-  const ringLabels = [
-    { text: 'critical aim', radius: CRITICAL_AIM_IN_HORIZON_RADII, color: CRITICAL_COLOR, y: 74 },
-    { text: 'light can circle here', radius: PHOTON_SPHERE_IN_HORIZON_RADII, color: PHOTON_COLOR, y: 88 },
-    { text: 'horizon', radius: 1, color: HORIZON_COLOR, y: 102 },
-  ]
-
-  const rows: Array<{ key: string; draw: ReactNode; text: string; fill: string }> = [
-    {
-      key: 'bh',
-      draw: <circle cx={20} cy={LEGEND_TOP + 8} r={5} fill={BLACK_HOLE_COLOR} stroke={HORIZON_COLOR} strokeWidth={1.5} />,
-      text: 'black hole; the rose ring is its horizon (1 horizon radius)',
-      fill: '#cbd5e1',
-    },
-    {
-      key: 'line',
-      draw: <line x1={13} y1={LEGEND_TOP + 24} x2={27} y2={LEGEND_TOP + 24} stroke={NO_GRAVITY_COLOR} strokeDasharray="3 2" />,
-      text: 'dashed white line: the path the light would take with no gravity',
-      fill: '#cbd5e1',
-    },
-    {
-      key: 'light',
-      draw: <circle cx={20} cy={LEGEND_TOP + 40} r={5} fill={LIGHT_COLOR} />,
-      text: 'the light, and the path it has followed (the exact theory)',
-      fill: LIGHT_COLOR,
-    },
-    {
-      key: 'rings',
-      draw: <circle cx={20} cy={LEGEND_TOP + 56} r={5} fill="none" stroke={PHOTON_COLOR} strokeDasharray="3 2" />,
-      text: 'purple ring: where light can circle. Green ring: the critical aim',
-      fill: '#cbd5e1',
-    },
-  ]
-
-  return (
-    <svg
-      viewBox={`0 0 ${PANEL_WIDTH} ${PANEL_HEIGHT}`}
-      width="100%"
-      style={{
-        display: 'block',
-        maxWidth: `${PANEL_WIDTH}px`,
-        border: '1px solid var(--border-color, #ccc)',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        backgroundColor: '#0b1020',
-      }}
-    >
-      <defs>
-        <clipPath id="light-area">
-          <rect x={0} y={60} width={PANEL_WIDTH} height={PANEL_HEIGHT - 60 - 90} />
-        </clipPath>
-      </defs>
-      <text x={12} y={20} fill={LIGHT_COLOR} fontSize="13" fontWeight="bold">
-        The path of the light, seen from above
-      </text>
-      <text x={12} y={38} fill="#94a3b8" fontSize="11">
-        Angle swept: {formatNumber(toDegrees(point.phi))}° | distance: {point.distanceInHorizonRadii.toFixed(2)} |
-        closest: {closestSoFar.toFixed(2)} horizon radii
-      </text>
-      <text x={12} y={54} fill={captured ? HORIZON_COLOR : '#94a3b8'} fontSize="11" fontWeight={captured ? 'bold' : 'normal'}>
-        {captured
-          ? 'Captured: the light reached the horizon'
-          : finished
-            ? `Escaped, bent by ${formatNumber(toDegrees(path.bendRadians as number))}°`
-            : progress > 0
-              ? 'On its way'
-              : 'Ready'}
-      </text>
-
-      <g clipPath="url(#light-area)">
-        {/* The rings: the critical aim and where light can circle */}
-        <circle cx={CENTER_X} cy={CENTER_Y} r={CRITICAL_AIM_IN_HORIZON_RADII * pixelsPerHorizonRadius} fill="none" stroke={CRITICAL_COLOR} strokeDasharray="4 3" />
-        <circle cx={CENTER_X} cy={CENTER_Y} r={PHOTON_SPHERE_IN_HORIZON_RADII * pixelsPerHorizonRadius} fill="none" stroke={PHOTON_COLOR} strokeDasharray="4 3" />
-
-        {/* Where the light would go with no gravity, and the aim */}
-        <line x1={px(edge)} y1={py(aim)} x2={px(-edge)} y2={py(aim)} stroke={NO_GRAVITY_COLOR} strokeDasharray="5 4" strokeOpacity={0.7} />
-        <line x1={CENTER_X} y1={CENTER_Y} x2={CENTER_X} y2={py(aim)} stroke={NO_GRAVITY_COLOR} strokeOpacity={0.5} />
-
-        {/* Where it ends up heading, once it has left */}
-        {path.outcome === 'escapes' && finished && (
-          <line x1={px(outA.x)} y1={py(outA.y)} x2={px(outB.x)} y2={py(outB.y)} stroke={LIGHT_COLOR} strokeDasharray="2 4" strokeOpacity={0.8} />
-        )}
-
-        {/* The black hole and its horizon */}
-        <circle cx={CENTER_X} cy={CENTER_Y} r={pixelsPerHorizonRadius} fill={BLACK_HOLE_COLOR} fillOpacity={0.35} stroke={HORIZON_COLOR} strokeWidth={2} />
-
-        {/* The path so far and the light */}
-        {trail.length > 1 && <polyline points={trail.join(' ')} fill="none" stroke={LIGHT_COLOR} strokeWidth={2} />}
-        <circle cx={px(point.x)} cy={py(point.y)} r={5} fill={LIGHT_COLOR} stroke="#0b1020" strokeWidth={1.5} />
-      </g>
-
-      {/* On-canvas labels */}
-      <text x={px(0) + 5} y={py(aim / 2) + 3} fill={NO_GRAVITY_COLOR} fontSize="10">
-        aim
-      </text>
-      <text
-        x={px(edge * 0.7) > PANEL_WIDTH - 12 ? PANEL_WIDTH - 12 : px(edge * 0.7)}
-        y={py(aim) - 6}
-        fill={NO_GRAVITY_COLOR}
-        fontSize="10"
-        textAnchor="end"
-      >
-        path with no gravity
-      </text>
-      {path.outcome === 'escapes' && finished && (
-        <text x={12} y={PANEL_HEIGHT - 100} fill={LIGHT_COLOR} fontSize="10">
-          dotted blue line: the direction the light ends up heading
-        </text>
-      )}
-      <text x={px(point.x) > PANEL_WIDTH - 40 ? px(point.x) - 8 : px(point.x) + 8} y={py(point.y) - 8} fill={LIGHT_COLOR} fontSize="10" textAnchor={px(point.x) > PANEL_WIDTH - 40 ? 'end' : 'start'}>
-        light
-      </text>
-      {ringLabels.map((label) => {
-        const end = ringPoint(label.radius, 135)
-        return (
-          <g key={label.text}>
-            <line x1={12 + label.text.length * 5.4 + 3} y1={label.y - 3} x2={end.x} y2={end.y} stroke={label.color} strokeOpacity={0.6} strokeWidth={0.75} />
-            <text x={12} y={label.y} fill={label.color} fontSize="10">
-              {label.text}
-            </text>
-          </g>
-        )
-      })}
-
-      {/* The scale bar */}
-      <g>
-        <line x1={14} y1={LEGEND_TOP - 12} x2={14 + scaleBarHorizonRadii * pixelsPerHorizonRadius} y2={LEGEND_TOP - 12} stroke="#e2e8f0" strokeWidth={2} />
-        <line x1={14} y1={LEGEND_TOP - 16} x2={14} y2={LEGEND_TOP - 8} stroke="#e2e8f0" strokeWidth={2} />
-        <line x1={14 + scaleBarHorizonRadii * pixelsPerHorizonRadius} y1={LEGEND_TOP - 16} x2={14 + scaleBarHorizonRadii * pixelsPerHorizonRadius} y2={LEGEND_TOP - 8} stroke="#e2e8f0" strokeWidth={2} />
-        <text x={22 + scaleBarHorizonRadii * pixelsPerHorizonRadius} y={LEGEND_TOP - 8} fill="#e2e8f0" fontSize="10">
-          scale: {scaleBarHorizonRadii} horizon {scaleBarHorizonRadii === 1 ? 'radius' : 'radii'}
-        </text>
-      </g>
-
-      {rows.map((row, i) => (
-        <g key={row.key}>
-          {row.draw}
-          <text x={32} y={LEGEND_TOP + 12 + i * 16} fill={row.fill} fontSize="10">
-            {row.text}
-          </text>
-        </g>
-      ))}
-    </svg>
-  )
-}
-
-// The total bend against the aim: the exact answer (blue) and the simple formula of Gravity Experiment 8 (orange), with
-// the chosen aim marked on both.
-function BendGraph({ aim, outcome, exactDegrees }: { aim: number; outcome: LightPath['outcome']; exactDegrees: number | null }) {
-  const curve = useMemo(() => bendCurve(), [])
-  const logSpan = Math.log(MAX_AIM_IN_HORIZON_RADII / MIN_AIM_IN_HORIZON_RADII)
-  const xFor = (b: number) => PLOT_LEFT + (Math.log(b / MIN_AIM_IN_HORIZON_RADII) / logSpan) * (PLOT_RIGHT - PLOT_LEFT)
-  const yFor = (degrees: number) => PLOT_BOTTOM - (degrees / GRAPH_MAX_DEGREES) * (PLOT_BOTTOM - PLOT_TOP)
-
-  const exactLine = curve.map((p) => `${xFor(p.aim)},${yFor(toDegrees(p.bendRadians))}`).join(' ')
-  const simpleAims = Array.from({ length: 80 }, (_, i) => MIN_AIM_IN_HORIZON_RADII * (MAX_AIM_IN_HORIZON_RADII / MIN_AIM_IN_HORIZON_RADII) ** (i / 79))
-  const simpleLine = simpleAims.map((b) => `${xFor(b)},${yFor(toDegrees(weakFieldBendRadians(b)))}`).join(' ')
-
-  return (
-    <svg
-      viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-      width="100%"
-      style={{
-        marginTop: '1rem',
-        display: 'block',
-        maxWidth: `${GRAPH_WIDTH}px`,
-        border: '1px solid var(--border-color, #ccc)',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        backgroundColor: '#0b1020',
-      }}
-    >
-      <defs>
-        <clipPath id="bend-plot">
-          <rect x={PLOT_LEFT} y={PLOT_TOP} width={PLOT_RIGHT - PLOT_LEFT} height={PLOT_BOTTOM - PLOT_TOP} />
-        </clipPath>
-      </defs>
-      <text x={12} y={20} fill="#e2e8f0" fontSize="12" fontWeight="bold">
-        The total bend against the aim distance
-      </text>
-      <text x={12} y={38} fill="#94a3b8" fontSize="11">
-        Horizontal: how close to the center the light is aimed, in horizon radii. Vertical: how far its direction is turned.
-      </text>
-
-      {[0, 100, 200, 300, 400].map((v) => (
-        <g key={v}>
-          <line x1={PLOT_LEFT} y1={yFor(v)} x2={PLOT_RIGHT} y2={yFor(v)} stroke="#334155" />
-          <text x={PLOT_LEFT - 8} y={yFor(v) + 4} fill="#94a3b8" fontSize="10" textAnchor="end">
-            {v}°
-          </text>
-        </g>
-      ))}
-      {[1, 2, 3, 5, 10, 20].map((b) => (
-        <g key={b}>
-          <line x1={xFor(b)} y1={PLOT_BOTTOM} x2={xFor(b)} y2={PLOT_BOTTOM + 5} stroke="#94a3b8" />
-          <text x={xFor(b)} y={PLOT_BOTTOM + 18} fill="#94a3b8" fontSize="10" textAnchor="middle">
-            {b}
-          </text>
-        </g>
-      ))}
-      <text x={(PLOT_LEFT + PLOT_RIGHT) / 2} y={PLOT_BOTTOM + 36} fill="#94a3b8" fontSize="11" textAnchor="middle">
-        aim distance, in horizon radii (each step along the axis multiplies the distance)
-      </text>
-
-      {/* Reference lines: half a turn and a full turn */}
-      {[
-        { v: 180, label: '180°: turned right around' },
-        { v: 360, label: '360°: a full turn' },
-      ].map((line) => (
-        <g key={line.v}>
-          <line x1={PLOT_LEFT} y1={yFor(line.v)} x2={PLOT_RIGHT} y2={yFor(line.v)} stroke="#94a3b8" strokeDasharray="2 4" strokeOpacity={0.6} />
-          <text x={PLOT_RIGHT - 4} y={yFor(line.v) - 4} fill="#94a3b8" fontSize="10" textAnchor="end">
-            {line.label}
-          </text>
-        </g>
-      ))}
-
-      {/* The captured region and the critical aim */}
-      <rect x={PLOT_LEFT} y={PLOT_TOP} width={xFor(CRITICAL_AIM_IN_HORIZON_RADII) - PLOT_LEFT} height={PLOT_BOTTOM - PLOT_TOP} fill={HORIZON_COLOR} fillOpacity={0.12} />
-      <text x={(PLOT_LEFT + xFor(CRITICAL_AIM_IN_HORIZON_RADII)) / 2} y={PLOT_TOP + 70} fill={HORIZON_COLOR} fontSize="10" textAnchor="middle">
-        captured:
-      </text>
-      <text x={(PLOT_LEFT + xFor(CRITICAL_AIM_IN_HORIZON_RADII)) / 2} y={PLOT_TOP + 83} fill={HORIZON_COLOR} fontSize="10" textAnchor="middle">
-        no bend to show
-      </text>
-      <line x1={xFor(CRITICAL_AIM_IN_HORIZON_RADII)} y1={PLOT_TOP} x2={xFor(CRITICAL_AIM_IN_HORIZON_RADII)} y2={PLOT_BOTTOM} stroke={CRITICAL_COLOR} strokeDasharray="5 4" />
-      <text x={xFor(CRITICAL_AIM_IN_HORIZON_RADII) + 5} y={PLOT_TOP + 12} fill={CRITICAL_COLOR} fontSize="10">
-        critical aim ({CRITICAL_AIM_TEXT})
-      </text>
-
-      <g clipPath="url(#bend-plot)">
-        <polyline points={simpleLine} fill="none" stroke={SIMPLE_COLOR} strokeWidth={2.5} />
-        <polyline points={exactLine} fill="none" stroke={LIGHT_COLOR} strokeWidth={2.5} />
-      </g>
-
-      {/* The chosen aim */}
-      <line x1={xFor(aim)} y1={PLOT_TOP} x2={xFor(aim)} y2={PLOT_BOTTOM} stroke="#e2e8f0" strokeDasharray="1 4" strokeOpacity={0.8} />
-      <circle cx={xFor(aim)} cy={yFor(Math.min(toDegrees(weakFieldBendRadians(aim)), GRAPH_MAX_DEGREES))} r={5} fill={SIMPLE_COLOR} />
-      {outcome === 'escapes' && exactDegrees !== null && (
-        <circle cx={xFor(aim)} cy={yFor(Math.min(exactDegrees, GRAPH_MAX_DEGREES))} r={5} fill={LIGHT_COLOR} />
-      )}
-      {outcome === 'captured' && (
-        <text x={xFor(aim)} y={PLOT_BOTTOM - 8} fill={HORIZON_COLOR} fontSize="11" fontWeight="bold" textAnchor="middle">
-          ×
-        </text>
-      )}
-      <text x={Math.min(xFor(aim) + 8, PLOT_RIGHT - 70)} y={PLOT_BOTTOM - 8} fill="#e2e8f0" fontSize="10">
-        your aim
-      </text>
-
-      <line x1={96} y1={GRAPH_HEIGHT - 44} x2={126} y2={GRAPH_HEIGHT - 44} stroke={LIGHT_COLOR} strokeWidth={3} />
-      <text x={132} y={GRAPH_HEIGHT - 40} fill={LIGHT_COLOR} fontSize="11">
-        the exact theory
-      </text>
-      <line x1={286} y1={GRAPH_HEIGHT - 44} x2={316} y2={GRAPH_HEIGHT - 44} stroke={SIMPLE_COLOR} strokeWidth={3} />
-      <text x={322} y={GRAPH_HEIGHT - 40} fill={SIMPLE_COLOR} fontSize="11">
-        the simple formula (Gravity Experiment 8)
-      </text>
-      <circle cx={96} cy={GRAPH_HEIGHT - 20} r={5} fill="#e2e8f0" />
-      <text x={108} y={GRAPH_HEIGHT - 16} fill="#e2e8f0" fontSize="11">
-        dots: your aim on each curve
-      </text>
-    </svg>
-  )
-}
-
-export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: LightNearBlackHoleExperimentProps) {
-  const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
-  const [aim, setAim] = useState(5)
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+// One run of a beam: idle, running (progress 0 to 1 over a fixed time), complete.
+function useBeamRun(onDone: () => void) {
+  const [status, setStatus] = useState<RunStatus>('idle')
   const [progress, setProgress] = useState(0)
-  const [runCount, setRunCount] = useState(0)
-
-  const [bendPrediction, setBendPrediction] = useState<BendChoice | null>(null)
-  const [capturePrediction, setCapturePrediction] = useState<CaptureChoice | null>(null)
-  const [justOutsidePrediction, setJustOutsidePrediction] = useState<JustOutsideChoice | null>(null)
-  const [submittedBend, setSubmittedBend] = useState<BendChoice | null>(null)
-  const [submittedCapture, setSubmittedCapture] = useState<CaptureChoice | null>(null)
-  const [submittedJustOutside, setSubmittedJustOutside] = useState<JustOutsideChoice | null>(null)
-
-  const hasPrediction = bendPrediction !== null && capturePrediction !== null && justOutsidePrediction !== null
-  const hasSubmittedPrediction = submittedBend !== null && submittedCapture !== null && submittedJustOutside !== null
-
-  const result = useMemo(() => runLightNearBlackHoleExperiment(presetId, aim), [presetId, aim])
-  const showResults = status === 'complete' && hasSubmittedPrediction
-  const holes = useMemo(() => BLACK_HOLE_PRESETS.map((p) => runLightNearBlackHoleExperiment(p.id, aim)), [aim])
-
-  // The numbers the three prediction checks need. They do not depend on the black hole or aim the learner chose, so
-  // they are computed once, from the same physics module (CLAUDE.md §9).
-  const checks = useMemo(
-    () => ({
-      five: lightPath(5),
-      ten: lightPath(10),
-      two: lightPath(2),
-      insideCritical: lightPath(2.5),
-      outsideCritical: lightPath(2.7),
-      justOutside: lightPath(2.6),
-    }),
-    []
-  )
-
-  // The zoom of the path picture.
-  const viewRadius = Math.max(ZOOM_MARGIN * Math.max(aim, CRITICAL_AIM_IN_HORIZON_RADII), MIN_VIEW_RADIUS)
-  const pixelsPerHorizonRadius = AREA_RADIUS_PX / viewRadius
-  const scaleBarHorizonRadii = [...SCALE_BAR_LENGTHS].reverse().find((n) => n <= viewRadius / 2.5) ?? 1
-
-  const handlePresetChange = (id: ObjectPreset['id']) => {
-    setPresetId(id)
-    setStatus('idle')
-    setProgress(0)
-  }
-
-  const handleAimChange = (value: number) => {
-    setAim(value)
-    setStatus('idle')
-    setProgress(0)
-  }
-
-  const handleRun = () => {
-    if (!hasPrediction || status === 'running') return
-    if (!hasSubmittedPrediction) {
-      setSubmittedBend(bendPrediction)
-      setSubmittedCapture(capturePrediction)
-      setSubmittedJustOutside(justOutsidePrediction)
-    }
-    setStatus('running')
-    setProgress(0)
-    setRunCount((n) => n + 1)
-  }
-
-  // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
-  // chosen black hole or aim.
-  const handleChangePrediction = () => {
-    setSubmittedBend(null)
-    setSubmittedCapture(null)
-    setSubmittedJustOutside(null)
-    setStatus('idle')
-    setProgress(0)
-  }
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
 
   useEffect(() => {
     if (status !== 'running') return
-
     const startTime = performance.now()
     let frameId: number
-
     const animate = (currentTime: number) => {
       const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
       setProgress(fraction)
-
       if (fraction >= 1) {
         setStatus('complete')
-        onComplete?.()
+        onDoneRef.current()
         return
       }
-
       frameId = requestAnimationFrame(animate)
     }
-
     frameId = requestAnimationFrame(animate)
-
     return () => cancelAnimationFrame(frameId)
-  }, [status, onComplete])
+  }, [status])
+
+  return {
+    status,
+    progress,
+    start: () => {
+      setStatus('running')
+      setProgress(0)
+    },
+    reset: () => {
+      setStatus('idle')
+      setProgress(0)
+    },
+  }
+}
+
+export function LightNearBlackHoleExperiment({ onComplete, onTutorComplete }: LightNearBlackHoleExperimentProps) {
+  // ---- the guesses (Part 1) ----
+  const [bendGuess, setBendGuess] = useState<BendChoice | null>(null)
+  const [captureGuess, setCaptureGuess] = useState<CaptureChoice | null>(null)
+  const [justOutsideGuess, setJustOutsideGuess] = useState<JustOutsideChoice | null>(null)
+  const [locked, setLocked] = useState(false)
+  const hasAllGuesses = bendGuess !== null && captureGuess !== null && justOutsideGuess !== null
+
+  // ---- Part 1: the 10-Sun black hole, a beam at 5 horizon radii and one at 2.6, played together by one Run ----
+  const partOne = useMemo(() => runPartOne(), [])
+  const run1 = useBeamRun(() => onComplete?.())
+  const part1Done = run1.status === 'complete'
+
+  // ---- Part 2: the learner's own black hole and aim ----
+  const [presetId, setPresetId] = useState<ObjectPreset['id']>(DEFAULT_PRESET_ID)
+  const [aim, setAim] = useState(DEFAULT_AIM)
+  const [lastPartTwo, setLastPartTwo] = useState<LightNearBlackHoleResult | null>(null)
+  const result2 = useMemo(() => runLightNearBlackHoleExperiment(presetId, aim), [presetId, aim])
+  const run2 = useBeamRun(() => {
+    setLastPartTwo(runLightNearBlackHoleExperiment(presetId, aim))
+    onComplete?.()
+  })
+  const isRunning = run1.status === 'running' || run2.status === 'running'
+
+  const handleRun = () => {
+    if (!hasAllGuesses || isRunning || part1Done) return
+    setLocked(true)
+    run1.start()
+  }
+  const handlePresetChange = (id: ObjectPreset['id']) => {
+    setPresetId(id)
+    run2.reset()
+  }
+  const handleAimChange = (value: number) => {
+    setAim(value)
+    run2.reset()
+  }
+  const handleRunPartTwo = () => {
+    if (isRunning) return
+    run2.start()
+  }
+
+  // Start over: clears the guesses, the runs, the results and the tutor, and returns the page to its first state.
+  const [tutorKey, setTutorKey] = useState(0)
+  const handleStartOver = () => {
+    setBendGuess(null)
+    setCaptureGuess(null)
+    setJustOutsideGuess(null)
+    setLocked(false)
+    run1.reset()
+    run2.reset()
+    setPresetId(DEFAULT_PRESET_ID)
+    setAim(DEFAULT_AIM)
+    setLastPartTwo(null)
+    setTutorKey((k) => k + 1)
+  }
+  const hasAnyGuess = bendGuess !== null || captureGuess !== null || justOutsideGuess !== null
+  const startOverDisabled = (!hasAnyGuess && !locked) || isRunning
 
   const isPresetSelected = (d: number) => Math.abs(Math.log(d / aim)) < 1e-9
-  const exactDegrees = result.path.bendRadians === null ? null : toDegrees(result.path.bendRadians)
-  const holeInSentence = result.preset.label.replace(/^A /, 'a ')
-  const outcomeSoFar =
-    status === 'idle' ? '—' : progress < 1 ? 'on its way' : result.path.outcome === 'captured' ? 'captured' : 'escaped'
+
+  const guessButtons = <T extends string>(choices: Array<{ value: T; label: string }>, selected: T | null, onSelect: (value: T) => void) => (
+    <div style={{ marginBottom: '0.5rem' }}>
+      {choices.map((choice) => (
+        <button
+          key={choice.value}
+          type="button"
+          onClick={() => onSelect(choice.value)}
+          disabled={locked || isRunning}
+          className={`toggle-button${selected === choice.value ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+        >
+          {choice.label}
+        </button>
+      ))}
+    </div>
+  )
+
+  const outcomeSoFar = run2.status === 'idle' ? '—' : run2.status === 'running' ? 'on its way' : result2.path.outcome === 'captured' ? 'captured' : 'escaped'
+  const showOwnPictures = run2.status !== 'idle' || lastPartTwo !== null
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Experiment 4 — Light Near a Black Hole: Can Light Be Trapped?</h2>
+      <h2>Black Holes 4: Light Near a Black Hole: Can Light Be Trapped?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1). It must not give away the answers to
-            the three predictions below (§12): no mention of where light is captured, of light swinging around the
-            black hole, or of how much larger the bend is than the simple formula says. */}
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> In Gravity and Curved Spacetime, Experiment 8, you saw that gravity bends
-            the path of light that passes near a mass, and you met a simple formula for how much. Close to a black
-            hole, gravity is as strong as it ever gets (you saw that in Experiment 2 of this chapter). So how much
-            does a black hole bend light that passes by? And what happens to light that passes very close?
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Why even ask this.</strong> In everyday life, light seems to travel in perfectly straight lines.
-            A torch beam, a laser pointer and sunlight all go straight, and nothing we can see bends them. The
-            bending in Experiment 8 was small, because the gravity there was gentle. But that experiment used a
-            simple formula made for gentle gravity. This experiment asks what happens to light where gravity is at
-            its strongest.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
-            <strong>What happens.</strong> Here is the whole experiment, step by step.
-          </p>
-          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
-            <li>You choose a black hole, and an aim distance (explained just below).</li>
-            <li>
-              <strong>The aim distance is how close to the black hole's center a beam of light would pass if gravity
-              did nothing.</strong> Think of rolling a ball in a straight line past a post: the aim distance is how
-              far from the post the ball's straight path goes. A small aim distance means the ball would pass close
-              to the post. A large one means it would pass far away.
-            </li>
-            <li>
-              A thin beam of light comes in from very far away, from the right, along that straight line. The first
-              picture draws the line as a dashed white line, so you can see where the light would go with no
-              gravity.
-            </li>
-            <li>
-              But gravity does act. The picture also draws the path the light really takes, worked out with the{' '}
-              <strong>exact theory of gravity</strong> (general relativity, the theory that gravity is curved
-              spacetime).
-            </li>
-            <li>
-              You press Run and watch for a few seconds. Either the light gets past the black hole and goes on its
-              way, or it reaches the black hole's edge and goes no further.
-            </li>
-            <li>
-              If the light gets away, its direction has been turned. The angle it has been turned through is called
-              the <strong>bend</strong>. A bend of 0° would mean no bend at all. A bend of 180° would mean the light
-              ends up heading back the way it came.
-            </li>
-            <li>
-              A second picture is a graph of the bend for every aim distance from 1 to 20 horizon radii, so you can
-              see how the bend changes as the aim gets closer. It also shows the simple formula from Experiment 8,
-              for comparison.
-            </li>
-          </ol>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            The question each picture answers is the same: what does the black hole do to the light?
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Some words we will use.</strong> The <strong>aim distance</strong> is the distance described
-            above. The <strong>bend</strong> is the angle the light's direction is turned through, as above. Light
-            that reaches the black hole's edge and goes no further is <strong>captured</strong>. The{' '}
-            <strong>horizon</strong> is that edge, the one-way boundary you met in Experiment 1 of this chapter. The{' '}
-            <strong>horizon radius</strong> is the distance from the black hole's center to its horizon, and we
-            measure distances in horizon radii: 10 horizon radii means ten times as far from the center as the edge
-            is. For the biggest black holes the distances in kilometers are huge, so we also give them in{' '}
-            <strong>astronomical units</strong> (AU): 1 AU is the distance from the Earth to the Sun, about 150
-            million kilometers.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The black holes.</strong> They are the three from Experiments 1, 2 and 3: a stellar black hole of
-            10 Suns' worth of mass (a round, illustrative value), Sagittarius A*, the black hole at the center of
-            our galaxy, and M87*, the black hole imaged in the galaxy M87. Their masses are about 4 million and
-            6.5 billion Suns.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What this builds on.</strong> Gravity and Curved Spacetime, Experiment 8 gave you the bending of
-            light by a mass. Experiment 1 of this chapter gave you the horizon radius, Experiment 2 showed that
-            gravity close to a horizon is strong enough to change how clocks tick, and Experiment 3 asked what that
-            strong gravity does to the orbit of a small probe. Here we ask what it does to light.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> First, make three predictions. Then choose a black hole and an aim distance,
-            and run it. Try other aim distances and other black holes too, and compare.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What to look for.</strong> How the light's real path differs from the dashed straight line, how
-            the bend changes as you aim closer, and what happens to the light when you aim very close.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
-            <strong>What we assume.</strong>
-          </p>
-          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              <strong>This is a thought experiment about a thin beam of light.</strong> The beam's own gravity does
-              not matter. How it got there is not described.
-            </li>
-            <li>
-              <strong>The exact theory's equation is given, not derived.</strong> It is the standard equation for
-              light passing a black hole that does not spin and has no electric charge. Real black holes usually
-              spin, which changes the details.
-            </li>
-            <li>
-              <strong>The light moves in a flat plane,</strong> seen from above, and nothing else (no gas, no dust,
-              no other star) is in the way.
-            </li>
-            <li>
-              <strong>"Captured" means the light reaches the horizon.</strong> Nothing past that is modeled.
-            </li>
-            <li>
-              <strong>The simple formula in the graph is only a comparison.</strong> It comes from Experiment 8 and
-              was made for weak gravity, far from a mass.
-            </li>
-            <li>
-              <strong>This is not a camera view.</strong> It follows one thin beam, not the picture a telescope would
-              make.
-            </li>
-          </ul>
-        </div>
+        {/* ===== Above Part 1: the introduction, the words and the links ===== */}
+        <LightNearBlackHoleIntro />
+        <ReferencePanel entries={lightNearBlackHoleWordsEntries(part1Done)} />
+        <LightNearBlackHoleLinks />
 
-        <div style={{ marginBottom: '1.5rem' }}>
+        {/* ===== Part 1 ===== */}
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          Here you make three guesses, then watch two beams of light pass a black hole. The black hole is the 10-Sun one from Black Holes 1. One run shows a beam aimed to pass at 5 horizon radii and one aimed only a tiny bit farther out than the capture distance, side by side, and then a graph of the bend against the
+          aim. The real pictures and tables do not change with your guesses. After the run, your guesses are drawn on the real pictures in white.
+        </PartHeader>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make your guesses</p>
+          <p style={{ ...smallNote, marginTop: 0, marginBottom: '0.75rem' }}>
+            There are three questions. Question 1 is about a beam aimed at 5 horizon radii, question 2 is about how close light must be aimed to be captured, and question 3 is about a beam aimed only a little farther out than that. Choose one answer for each. A guess is what is wanted:
+            nothing is marked, and it is fine to be unsure. You can change an answer until you press Run. After that your three guesses are locked, they are drawn on the real pictures in white, and they appear again beside the results.
+          </p>
           <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            A beam of light is aimed to pass a black hole at 5 horizon radii from its center, well outside the edge.
-            What happens to its path?
+            A beam of light is aimed to pass a black hole at 5 horizon radii from its center, well outside the edge. What happens to its path?
           </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {bendChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setBendPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${bendPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
+          <GuessNotes n={1} />
+          {guessButtons(BEND_CHOICES, bendGuess, setBendGuess)}
 
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            How close to a black hole's center must light be aimed to be captured?
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>How close to a black hole's center must light be aimed to be captured?</p>
+          <GuessNotes n={2} />
+          {guessButtons(CAPTURE_CHOICES, captureGuess, setCaptureGuess)}
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Light is aimed only a tiny bit farther out than the capture distance. What happens?</p>
+          <GuessNotes n={3} />
+          {guessButtons(JUST_OUTSIDE_CHOICES, justOutsideGuess, setJustOutsideGuess)}
+
+          <p style={smallNote}>
+            {hasAllGuesses
+              ? `Your guesses: ${bendLabel(bendGuess!)}; ${captureLabel(captureGuess!)}; ${justOutsideLabel(justOutsideGuess!)}.`
+              : 'Answer all three questions to run.'}
           </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {captureChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setCapturePrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${capturePrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            Light is aimed only a tiny bit farther out than the capture distance. What happens?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {justOutsideChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setJustOutsidePrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${justOutsidePrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {hasPrediction || hasSubmittedPrediction
-              ? `Your predictions: ${
-                  bendChoices.find((c) => c.value === (bendPrediction ?? submittedBend))!.label
-                }; ${captureChoices.find((c) => c.value === (capturePrediction ?? submittedCapture))!.label}; ${
-                  justOutsideChoices.find((c) => c.value === (justOutsidePrediction ?? submittedJustOutside))!.label
-                }`
-              : 'Answer all three questions to continue'}
-          </p>
-        </div>
-
-        {hasSubmittedPrediction && (
-          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Your predictions are locked in above. You can still try as many black holes and aims as you like
-              below. Or, change your predictions and start over:
-            </p>
-            <button
-              type="button"
-              onClick={handleChangePrediction}
-              className="secondary-button"
-              style={{
-                padding: '0.5rem 1.25rem',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(124, 58, 237, 0.22)',
-              }}
-            >
-              Change predictions
-            </button>
-          </div>
-        )}
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Black hole:</p>
-          {BLACK_HOLE_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => handlePresetChange(p.id)}
-              disabled={!hasPrediction || status === 'running'}
-              className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
-              style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-            Aim a beam of light so that, if gravity did nothing, it would pass this far from the black hole's center:
-          </p>
-          {AIM_PRESETS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => handleAimChange(d)}
-              disabled={!hasPrediction || status === 'running'}
-              className={`toggle-button${isPresetSelected(d) ? ' is-selected' : ''}`}
-              style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-            >
-              {d === MAX_AIM_IN_HORIZON_RADII ? '20 (far)' : d}
-            </button>
-          ))}
-          <div style={{ marginTop: '0.5rem' }}>
-            <label htmlFor="light-near-black-hole-aim" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Aim: {formatRadii(aim)} horizon radii ({formatDistance(result.aimKm)})
-            </label>
-            <input
-              id="light-near-black-hole-aim"
-              type="range"
-              min={Math.log10(MIN_AIM_IN_HORIZON_RADII)}
-              max={Math.log10(MAX_AIM_IN_HORIZON_RADII)}
-              step="any"
-              value={Math.log10(aim)}
-              disabled={!hasPrediction || status === 'running'}
-              onChange={(event) =>
-                handleAimChange(
-                  Math.min(Math.max(10 ** Number(event.target.value), MIN_AIM_IN_HORIZON_RADII), MAX_AIM_IN_HORIZON_RADII),
-                )
-              }
-              style={{ width: '100%' }}
-            />
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
-              The slider is logarithmic: equal steps along it multiply the distance by the same amount. A horizon
-              radius is the size of the black hole's edge. An aim of 1 means aimed at the horizon's edge.
-            </p>
-          </div>
+          {locked && <p style={smallNote}>Your prediction is locked while you try other settings. To change it, press Start over.</p>}
         </div>
 
         <button
           type="button"
           className="action-button"
           onClick={handleRun}
-          disabled={!hasPrediction || status === 'running'}
-          style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
+          disabled={!hasAllGuesses || isRunning || part1Done}
+          style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}
         >
-          {status === 'running' ? 'Running...' : 'Run'}
+          {run1.status === 'running' ? 'Running...' : part1Done ? 'Run (done)' : 'Run'}
+        </button>
+        <button
+          type="button"
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{
+            marginLeft: '0.75rem',
+            padding: '0.5rem 1.25rem',
+            fontSize: '0.875rem',
+            cursor: startOverDisabled ? 'not-allowed' : 'pointer',
+            opacity: startOverDisabled ? 0.5 : 1,
+          }}
+        >
+          Start over
         </button>
 
-        {!hasPrediction && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Answer the predictions above to try the controls.
+        <Block>
+          {run1.status === 'idle' ? (
+            <p style={{ ...smallNote, fontWeight: 'bold' }}>
+              Pictures 1 and 2 appear here when you press Run. They show a black hole of 10 Suns and two beams of light passing it, one aimed at 5 horizon radii and one aimed just outside the capture distance, and then a graph of the bend against the aim.
+            </p>
+          ) : (
+            <>
+              <p style={{ ...smallNote, fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Picture 1: two beams of light passing the 10-Sun black hole</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ flex: '1 1 300px', minWidth: 0 }}>
+                  <LightPanel
+                    path={partOne.five.path}
+                    aim={partOne.five.aimInHorizonRadii}
+                    progress={run1.progress}
+                    showRings={part1Done}
+                    heading="Beam aimed at 5 horizon radii"
+                    outcomeGuess={part1Done && bendGuess ? { kind: 'bend', guess: bendGuess } : null}
+                    captureGuess={part1Done ? captureGuess : null}
+                  />
+                </div>
+                <div style={{ flex: '1 1 300px', minWidth: 0 }}>
+                  <LightPanel
+                    path={partOne.justOutside.path}
+                    aim={partOne.justOutside.aimInHorizonRadii}
+                    progress={run1.progress}
+                    showRings={part1Done}
+                    heading="Beam aimed at 2.6 horizon radii"
+                    outcomeGuess={part1Done && justOutsideGuess ? { kind: 'justOutside', guess: justOutsideGuess } : null}
+                    captureGuess={part1Done ? captureGuess : null}
+                  />
+                </div>
+              </div>
+              <WhereFrom>
+                <strong>Calculated here:</strong> both paths, by stepping the equation for light in the exact theory of gravity in small, equal angles (720 steps per turn); the critical aim and the circle where light can circle, from formulas given by general relativity for a black hole that
+                does not spin and has no electric charge; the simple formula’s value, from Gravity Experiment 8. <strong>Measured:</strong> nothing in this picture. <strong>Imagined for the question:</strong> the thin beam of light and its aim. The white marks, once they appear, are only your guesses.
+              </WhereFrom>
+              <PanelsCaption complete={part1Done} />
+
+              <BendGraph
+                beams={[partOne.five, partOne.justOutside].map((r) => ({
+                  aim: r.aimInHorizonRadii,
+                  label: `aim ${r.aimInHorizonRadii}`,
+                  outcome: r.path.outcome,
+                  exactDegrees: bendDegrees(r.path),
+                }))}
+                showCritical={part1Done}
+                guesses={part1Done ? { bend: bendGuess, capture: captureGuess, justOutside: justOutsideGuess } : null}
+              />
+              <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '0.5rem', marginBottom: 0 }}>Picture 2: the total bend against the aim</p>
+              <WhereFrom>
+                <strong>Calculated here:</strong> both curves (the exact curve from the same calculation as Picture 1, at 160 aims; the simple formula from Gravity Experiment 8). <strong>Measured:</strong> nothing. <strong>Imagined for the question:</strong> the thin beam. The white line and
+                circles, once they appear, are only your guesses.
+              </WhereFrom>
+              <GraphCaption complete={part1Done} />
+            </>
+          )}
+        </Block>
+
+        {/* ===== Parts 2, 3 and 4 appear after the first Run has finished ===== */}
+        {!part1Done && (
+          <p style={{ ...smallNote, marginTop: '2rem', fontWeight: 'bold' }}>
+            {run1.status === 'running'
+              ? 'The beams are running. Part 2 (your own black hole and aim), Part 3 (the results) and Part 4 (the tutor) appear when the run finishes.'
+              : 'Make all three guesses and press Run. Part 2 (your own black hole and aim), Part 3 (the results) and Part 4 (the tutor) appear when the first run has finished.'}
           </p>
         )}
 
-        {/* Shown only once the current settings have been run: changing the black hole or the aim returns to idle and hides it again. */}
-        {hasSubmittedPrediction && status !== 'idle' && (
+        {part1Done && bendGuess && captureGuess && justOutsideGuess && (
           <>
-            <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              {result.preset.label}: {formatMass(result.preset.massSolarMasses)}; horizon radius{' '}
-              {formatDistance(result.horizonRadiusKm)}
-              <br />
-              Aim: {formatRadii(aim)} horizon radii ({formatDistance(result.aimKm)}); the critical aim is{' '}
-              {CRITICAL_AIM_TEXT} horizon radii ({formatDistance(result.criticalAimKm)}); light
-              can circle at {PHOTON_SPHERE_IN_HORIZON_RADII} horizon radii ({formatDistance(result.photonSphereKm)})
-              <br />
-              The light: {outcomeSoFar}
+            {/* ===== Part 2 ===== */}
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              Now you choose the black hole and the aim, run a beam as often as you like, and compare. The guesses you made do not change these drawings, but your choices do.
+            </PartHeader>
+
+            <PartTwoGuide />
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                <strong>1. Choose a black hole:</strong>
+              </p>
+              {BLACK_HOLE_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handlePresetChange(p.id)}
+                  disabled={isRunning}
+                  className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                >
+                  {p.label}
+                </button>
+              ))}
+              <BlackHoleOptionsNote />
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                <strong>2. Aim a beam of light so that, if gravity did nothing, it would pass this far from the black hole's center:</strong>
+              </p>
+              {PART_TWO_AIM_PRESETS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => handleAimChange(d)}
+                  disabled={isRunning}
+                  className={`toggle-button${isPresetSelected(d) ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                >
+                  {d === MAX_AIM_IN_HORIZON_RADII ? '20 (far)' : d}
+                </button>
+              ))}
+              <div style={{ marginTop: '0.5rem' }}>
+                <label htmlFor="light-near-black-hole-aim" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                  Aim: {formatRadii(aim)} horizon radii ({formatDistance(result2.aimKm)})
+                </label>
+                <input
+                  id="light-near-black-hole-aim"
+                  type="range"
+                  min={Math.log10(MIN_AIM_IN_HORIZON_RADII)}
+                  max={Math.log10(MAX_AIM_IN_HORIZON_RADII)}
+                  step="any"
+                  value={Math.log10(aim)}
+                  disabled={isRunning}
+                  onChange={(event) => handleAimChange(Math.min(Math.max(10 ** Number(event.target.value), MIN_AIM_IN_HORIZON_RADII), MAX_AIM_IN_HORIZON_RADII))}
+                  style={{ width: '100%' }}
+                />
+                <p style={{ ...smallNote, margin: '0.25rem 0 0 0' }}>
+                  The slider is logarithmic: equal steps along it multiply the distance by the same amount. A horizon radius is the size of the black hole's edge. An aim of 1 means aimed at the horizon's edge.
+                </p>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              <strong>3. Run it:</strong>
+            </p>
+            <button type="button" className="action-button" onClick={handleRunPartTwo} disabled={isRunning} style={{ marginTop: '0.25rem', padding: '0.6rem 1.5rem' }}>
+              {run2.status === 'running' ? 'Running...' : 'Run your choice'}
+            </button>
+            <p style={smallNote}>
+              Your guesses do not change the drawings or tables, but these settings do. There is no comparison table for the settings: the pictures show what changes. The black hole you pick changes only the kilometers.
             </p>
 
-            <div style={{ marginTop: '1rem', maxWidth: `${PANEL_WIDTH}px` }}>
-              <LightPanel
-                path={result.path}
-                aim={aim}
-                viewRadius={viewRadius}
-                pixelsPerHorizonRadius={pixelsPerHorizonRadius}
-                scaleBarHorizonRadii={scaleBarHorizonRadii}
-                progress={progress}
-              />
-              <div style={CAPTION_STYLE}>
-                <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
-                  <strong>How to read this picture: the path of the light.</strong>
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>What you are looking at.</strong> A bird's-eye view of a thin beam of light passing a black
-                  hole. The black hole is the dark disc in the middle. The rose-colored ring around it is the{' '}
-                  <em>horizon</em>, the point of no return. Anything that reaches the horizon cannot come back out.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>The dashed white line</strong> is the path the light would take if gravity did nothing: a
-                  straight line, passing the center at the distance you chose (the <em>aim</em>, marked by the short
-                  white line from the center). The beam comes in from the right.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>The blue trail</strong> is the path the light really takes, as the exact theory of gravity
-                  works it out. Compare it with the dashed white line: where they part company, gravity is acting.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>The two dashed rings.</strong> The purple ring is 1.5 horizon radii from the center: a
-                  distance at which light can go round in a circle. The green ring is the <em>critical aim</em>, the
-                  closest aim at which a beam of light still gets away.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>The bend.</strong> If the light gets away, its final direction is shown as a dotted blue line.
-                  The <em>bend</em> is the angle between its original direction and its final direction, so a bend of
-                  180° means it ends up heading back the way it came.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>Scale.</strong> The scale bar shows how long some number of horizon radii is. It changes
-                  from one run to the next, because each run is zoomed to fit its aim. To compare one aim with another,
-                  use the scale bar and the numbers above, not the size of the drawing.
-                </p>
-                <p style={{ margin: 0 }}>
-                  <strong>A limit.</strong> This follows a thin beam in a flat plane. It is not what a camera would
-                  see, and it does not show what happens to the light after it is captured.
-                </p>
-              </div>
-            </div>
-
-            <BendGraph aim={aim} outcome={result.path.outcome} exactDegrees={exactDegrees} />
-            <div style={{ ...CAPTION_STYLE, maxWidth: `${GRAPH_WIDTH}px` }}>
-              <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
-                <strong>How to read this graph: the total bend against the aim.</strong>
-              </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>What you are looking at.</strong> For every aim from 1 to 20 horizon radii, how far the light's
-                direction is turned by the time it is far away again. A bend of 0° means no bend at all.
-              </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>The two curves.</strong> The blue curve is the exact theory, worked out for each aim the same way
-                as the path above. The orange curve is the simple formula from Gravity and Curved Spacetime, Experiment
-                8: the bend is 2 divided by the aim, in radians. That formula was made for weak gravity, far from a
-                mass. The dots mark your aim on each curve, so the gap between them is how far the simple formula is off
-                for your aim.
-              </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>The green line and the rose area.</strong> The green line is the critical aim. Aims to its left
-                are in the rose area, where the light is captured and so has no bend to show. A × marks your aim if it
-                is there.
+            <div
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.8125rem',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border-color, #ccc)',
+                borderRadius: '6px',
+              }}
+            >
+              <p style={{ margin: '0 0 0.25rem' }}>
+                <strong>Your settings</strong>
               </p>
               <p style={{ margin: 0 }}>
-                <strong>A limit.</strong> The vertical scale stops at 400°, so the blue curve leaves the top of the
-                graph near the green line.
+                Black hole: {result2.preset.label}, {formatMass(result2.preset.massSolarMasses)}; horizon radius {formatDistance(result2.horizonRadiusKm)}
+                <br />
+                Aim: {formatRadii(aim)} horizon radii ({formatDistance(result2.aimKm)}); the critical aim is {CRITICAL_AIM_TEXT} horizon radii ({formatDistance(result2.criticalAimKm)}); light can circle at {PHOTON_SPHERE_IN_HORIZON_RADII} horizon radii (
+                {formatDistance(result2.photonSphereKm)})
+                <br />
+                The light: {outcomeSoFar}
               </p>
             </div>
 
-            {showResults && (
-              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-                {/* Wording approved by the owner on 2026-10-11 (CLAUDE.md §28.1). */}
-                <h3 style={{ marginTop: 0 }}>Results</h3>
-                <p>
-                  You aimed the light to pass <strong>{formatRadii(aim)} horizon radii</strong> (
-                  {formatDistance(result.aimKm)}) from the center of <strong>{holeInSentence}</strong> (
-                  {formatMass(result.preset.massSolarMasses)}). For this run:
-                </p>
-                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                    <tbody>
-                      {(result.path.outcome === 'escapes'
-                        ? [
-                            ['What happened to the light', 'It escaped.'],
-                            ['The bend (exact theory)', `${formatNumber(exactDegrees as number)}°`],
-                            [
-                              'The simple formula (Gravity Experiment 8) gives',
-                              `${formatNumber(toDegrees(result.weakFieldBendRadians))}°, so the exact bend is ${formatLarger(result.path.bendRadians as number, result.weakFieldBendRadians)}`,
-                            ],
-                            ...((result.path.bendRadians as number) > Math.PI
-                              ? [
-                                  [
-                                    'How far round the black hole it swept',
-                                    `${formatNumber(result.path.turnsAround)} turns around the center before it left (a beam that is not bent at all sweeps half a turn as it goes past)`,
-                                  ],
-                                ]
-                              : []),
-                            [
-                              'Closest the light came to the center',
-                              `${formatNumber(result.path.closestInHorizonRadii)} horizon radii, nearer than the aim of ${formatRadii(aim)}`,
-                            ],
-                          ]
-                        : [
-                            ['What happened to the light', 'It was captured: it reached the horizon.'],
-                            ['The bend', 'None to measure: the light did not get away.'],
-                            [
-                              'The simple formula (Gravity Experiment 8) would have given',
-                              `${formatNumber(toDegrees(result.weakFieldBendRadians))}°, and had no way to say the light is captured`,
-                            ],
-                          ]
-                      ).concat([
-                        [
-                          'The critical aim',
-                          `${CRITICAL_AIM_TEXT} horizon radii, which is ${formatDistance(result.criticalAimKm)} from the center of ${holeInSentence}`,
-                        ],
-                        [
-                          'Where light can circle',
-                          `${PHOTON_SPHERE_IN_HORIZON_RADII} horizon radii, which is ${formatDistance(result.photonSphereKm)} from the center`,
-                        ],
-                      ]).map(([label, value]) => (
-                        <tr key={label}>
-                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
-                          <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
-                            <strong>{value}</strong>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+            <Block>
+              {!showOwnPictures ? (
+                <p style={{ ...smallNote, fontWeight: 'bold' }}>Choose a black hole and an aim, then press Run your choice. Pictures 3 and 4, each with its own caption, appear here.</p>
+              ) : (
+                <>
+                  <div style={{ maxWidth: '400px' }}>
+                    <LightPanel path={result2.path} aim={aim} progress={run2.progress} showRings heading="The path of your beam" />
+                  </div>
+                  <WhereFrom>
+                    <strong>Calculated here:</strong> the path, in the same way as in Part 1, for your settings. <strong>Measured:</strong> the mass of the black hole you chose: about 4 million Suns for Sagittarius A* and about 6.5 billion Suns for M87* (ESO); the stellar black
+                    hole’s 10 Suns is a round, typical size. <strong>Imagined for the question:</strong> the thin beam and its aim.
+                  </WhereFrom>
+                  <PanelsCaption complete={run2.status === 'complete'} own />
 
-                <p>
-                  <strong>Checking your first prediction:</strong> asked what happens to a beam aimed to pass 5 horizon
-                  radii from the center, you answered "{bendChoices.find((c) => c.value === submittedBend)!.label}". In
-                  the exact theory, a beam aimed at 5 horizon radii is bent by{' '}
-                  {formatNumber(toDegrees(checks.five.bendRadians as number))}° and then escapes. The simple formula
-                  gives {formatNumber(toDegrees(weakFieldBendRadians(5)))}°.{' '}
-                  {submittedBend === 'bent'
-                    ? 'So your prediction was right.'
-                    : submittedBend === 'straight'
-                      ? `So your prediction was off this time. A bend of ${formatNumber(toDegrees(checks.five.bendRadians as number))}° is a clear turn, not "barely changed".`
-                      : 'So your prediction was off this time. At 5 horizon radii the light comes no closer than about ' +
-                        formatNumber(checks.five.closestInHorizonRadii) +
-                        ' horizon radii, and it gets away.'}
-                </p>
-                <p>
-                  <strong>Checking your second prediction:</strong> asked how close to the center light must be aimed
-                  to be captured, you answered "{captureChoices.find((c) => c.value === submittedCapture)!.label}". The
-                  critical aim is {CRITICAL_AIM_TEXT} horizon radii. In this model a beam
-                  aimed at 2.5 {checks.insideCritical.outcome === 'captured' ? 'is captured' : 'escapes'}, and one aimed
-                  at 2 {checks.two.outcome === 'captured' ? 'is captured' : 'escapes'}, though both are aimed outside
-                  the horizon (1 horizon radius). A beam aimed at 2.7 escapes, bent by{' '}
-                  {formatNumber(toDegrees(checks.outsideCritical.bendRadians as number))}°, and one aimed at 10 escapes, bent by{' '}
-                  {formatNumber(toDegrees(checks.ten.bendRadians as number))}°.{' '}
-                  {submittedCapture === 'critical'
-                    ? 'So your prediction was right.'
-                    : submittedCapture === 'horizon'
-                      ? 'So your prediction was off this time. The black hole captures light aimed well outside its edge.'
-                      : 'So your prediction was off this time. The capture distance is much closer in than 10 horizon radii: a beam aimed at 10 gets away.'}
-                </p>
-                <p>
-                  <strong>Checking your third prediction:</strong> asked what happens to light aimed only a little
-                  farther out than the capture distance, you answered "
-                  {justOutsideChoices.find((c) => c.value === submittedJustOutside)!.label}". A beam aimed at 2.6, just
-                  outside the critical aim, escapes, but its direction is turned by{' '}
-                  {formatNumber(toDegrees(checks.justOutside.bendRadians as number))}°, which is more than a full circle
-                  (360°). It comes as near as {formatNumber(checks.justOutside.closestInHorizonRadii)} horizon radii, close
-                  to the {PHOTON_SPHERE_IN_HORIZON_RADII} horizon radii where light can circle.{' '}
-                  {submittedJustOutside === 'swings'
-                    ? 'So your prediction was right.'
-                    : submittedJustOutside === 'small-bend'
-                      ? 'So your prediction was off this time. Just outside the critical aim the bend is not small. It is huge, and it grows without limit as the aim gets closer to the critical aim.'
-                      : 'So your prediction was off this time. Just outside the critical aim the light does get away, after swinging right round.'}
-                </p>
+                  <BendGraph
+                    beams={[{ aim, label: 'your aim', outcome: result2.path.outcome, exactDegrees: bendDegrees(result2.path) }]}
+                    showCritical
+                  />
+                  <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '0.5rem', marginBottom: 0 }}>Picture 4: the total bend against the aim, for your beam</p>
+                  <WhereFrom>
+                    <strong>Calculated here:</strong> both curves, from the same calculation as Picture 3. <strong>Measured:</strong> nothing. <strong>Imagined for the question:</strong> the thin beam.
+                  </WhereFrom>
+                  <GraphCaption complete={run2.status === 'complete'} own />
+                </>
+              )}
+            </Block>
 
-                <p style={{ marginBottom: '0.25rem' }}>
-                  <strong>The simple math.</strong> The critical aim is <strong>3√3 ÷ 2</strong> horizon radii, which in other
-                  units is 3√3 GM/c² (G is the strength of gravity, M the black hole's mass and c the speed of light).
-                  This is given, not derived. Worked out:
-                </p>
-                <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
-                  <li>√3 is about 1.732.</li>
-                  <li>3 × 1.732 = 5.196.</li>
-                  <li>5.196 ÷ 2 = {CRITICAL_AIM_TEXT} horizon radii.</li>
-                  <li>
-                    One horizon radius for {holeInSentence} is {formatDistance(result.horizonRadiusKm)}, so the critical aim is{' '}
-                    {CRITICAL_AIM_TEXT} × {formatDistance(result.horizonRadiusKm)} ={' '}
-                    {formatDistance(result.criticalAimKm)}.
-                  </li>
-                </ol>
-                <p style={{ marginBottom: '0.25rem' }}>
-                  The simple formula from Experiment 8, written in horizon radii, gives a first approximation of <strong>2 ÷ b</strong> for the bend,
-                  in radians, where b is the aim distance. For your aim, b = {formatRadii(aim)}:
-                </p>
-                <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
-                  <li>
-                    2 ÷ {formatRadii(aim)} = {formatNumber(result.weakFieldBendRadians)} radians.
-                  </li>
-                  <li>
-                    A radian is about 57.3°, so that is {formatNumber(result.weakFieldBendRadians)} × 57.3 ={' '}
-                    {formatNumber(toDegrees(result.weakFieldBendRadians))}°.
-                  </li>
-                  <li>
-                    {result.path.outcome === 'escapes'
-                      ? `The exact theory gives ${formatNumber(exactDegrees as number)}° for this aim.`
-                      : 'The exact theory says that, at this aim, the light is captured.'}
-                  </li>
-                </ol>
-                <p>
-                  The simple formula is only the first step of the exact answer. Far from the black hole the two agree
-                  closely. Closer in, the exact bend grows much faster, without limit as the aim approaches the
-                  critical aim. Here are the critical aims for all three black holes, which are the same number of
-                  horizon radii for each:
-                </p>
-                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                  <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                    <thead>
-                      <tr>
-                        {['Black hole', 'Horizon radius', 'Critical aim'].map((h) => (
-                          <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {holes.map((r) => (
-                        <tr key={r.preset.id}>
-                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{r.preset.label}</td>
-                          <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>
-                            {formatDistance(r.horizonRadiusKm)}
-                          </td>
-                          <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
-                            <strong>{formatDistance(r.criticalAimKm)}</strong>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+            {/* ===== Part 3 ===== */}
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              Here are the numbers behind the pictures. Under each table a short note says what it is, what it means with the real numbers and why it matters. Your guesses are shown beside the results, and the tables never change with them. Tables 1, 2 and 4 do not follow your
+              settings; Table 3 follows the black hole and aim you ran in Part 2.
+            </PartHeader>
+            <LightNearBlackHoleResults bendGuess={bendGuess} captureGuess={captureGuess} justOutsideGuess={justOutsideGuess} partTwo={lastPartTwo} />
 
-                <p>
-                  <strong>A comparison from daily life.</strong> Picture a ball rolling across a hillside toward a deep
-                  funnel. A ball that passes the funnel far away is only slightly turned aside. A ball that passes
-                  close swings right round the funnel's rim before rolling off. And a ball that passes closer than a
-                  certain distance drops in, even though it was not rolled straight at the hole. This is an analogy for
-                  "the circle the black hole captures is wider than the hole itself", not for how gravity works.
-                </p>
-
-                <div
-                  style={{
-                    margin: '0.75rem 0',
-                    padding: '0.75rem 1rem',
-                    border: '2px solid #f59e0b',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                  }}
-                >
-                  <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                    <strong>What this model can and cannot tell you.</strong> This is a thought experiment about a
-                    thin beam of light. It does not say how the light got there. It follows the beam in a flat plane
-                    until it has gone past the black hole and is far away again, or has reached the horizon. Nothing
-                    inside the horizon is modeled, and this is not the picture a camera or telescope would make.
-                  </p>
-                  <p style={{ marginTop: 0, marginBottom: 0 }}>
-                    The exact equation is given, not derived, and is for a black hole that does not spin and has no
-                    electric charge. Real black holes usually spin, which changes where light is captured. The
-                    simple formula is for weak gravity and is shown only for comparison. The stellar black hole's
-                    mass of 10 Suns is an illustrative round value.
-                  </p>
-                </div>
-              </div>
-            )}
+            {/* ===== Part 4 ===== */}
+            <PartHeader color="#0066cc" title="Part 4: The tutor">
+              The tutor asks three questions, one at a time: what you saw, how your three guesses compare with the pictures, and one question about why. Then it goes through your three guesses one by one, explains the physics step by step with numbers from this page, and ends with
+              what to take away. Your answers to the questions are not marked.
+            </PartHeader>
+            <LightNearBlackHoleTutor key={tutorKey} predictedBend={bendGuess} predictedCapture={captureGuess} predictedJustOutside={justOutsideGuess} onExplained={() => onTutorComplete?.()} />
           </>
         )}
       </div>
-
-      {showResults && (
-        <LightNearBlackHoleTutor
-          key={runCount}
-          predictedBend={submittedBend}
-          predictedCapture={submittedCapture}
-          predictedJustOutside={submittedJustOutside}
-          onExplained={() => onTutorComplete?.()}
-        />
-      )}
     </div>
   )
 }
