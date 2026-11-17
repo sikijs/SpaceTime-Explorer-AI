@@ -245,3 +245,243 @@ export function runSeeingTheFallExperiment(presetId: ObjectPreset['id'], startIn
     curve,
   }
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Audit update (2026-11-17): everything below is new. It holds the fixed Part 1 fall, the three guesses' markers and
+// their marking, the check-up, the near-horizon readings and the numbers the Results, the tables and the tutor used to
+// work out or type themselves (CLAUDE.md §9). No function here reads a prediction: the guess functions take the guess as
+// an argument and only describe it or mark it. Every existing export above is unchanged. This module imports from no
+// other experiment's module, so the small reading helpers are restated here.
+// ---------------------------------------------------------------------------------------------------------------
+
+export const PART_ONE_BLACK_HOLE_ID: ObjectPreset['id'] = 'stellar-black-hole'
+export const PART_ONE_START_IN_HORIZON_RADII = 10
+export const LN_10 = Math.log(10)
+
+// The fall is the same every time and costs a few hundred numerical integrals, so the new functions share one copy.
+let partOneCache: SeeingTheFallResult | null = null
+export function runPartOne(): SeeingTheFallResult {
+  if (!partOneCache) partOneCache = runSeeingTheFallExperiment(PART_ONE_BLACK_HOLE_ID, PART_ONE_START_IN_HORIZON_RADII)
+  return partOneCache
+}
+
+// The page's own marking limit for "about the same" and "does not matter" (a limit of the marking, not of the physics:
+// the real fall is nowhere near it): within this percent.
+export const SAME_WITHIN_PERCENT = 1
+// "Soon after it is sent" means received within this many horizon light-times of being sent (the page's own limit).
+export const SOON_WITHIN_LIGHT_TIMES = 1
+
+// ---- the first and last spacings, for the Results and the tutor ----
+export interface SpacingSummary {
+  firstSent: number
+  firstReceived: number
+  lastSent: number
+  lastReceived: number
+  firstStretch: number
+  lastStretch: number
+}
+// The first pair of flashes (0 and 1) and the last pair before the horizon (the 19th and the 20th flash, numbers 18 and 19).
+export function spacingSummary(result: SeeingTheFallResult = runPartOne()): SpacingSummary {
+  const first = result.flashes[1]
+  const last = result.flashes[FLASH_COUNT - 1]
+  return {
+    firstSent: first.spacingAsSent!,
+    firstReceived: first.spacingAsReceived!,
+    lastSent: last.spacingAsSent!,
+    lastReceived: last.spacingAsReceived!,
+    firstStretch: first.stretchFactor!,
+    lastStretch: last.stretchFactor!,
+  }
+}
+
+// The curve's last point, nearest the horizon (the right-hand end of Pictures 2 and 3).
+export function curveEnd(result: SeeingTheFallResult = runPartOne()): CurvePoint {
+  return result.curve[result.curve.length - 1]
+}
+
+// ---- Guess 1: how do the flashes arrive as the traveler nears the horizon? ----
+export type SpacingChoice = 'same' | 'closer' | 'further'
+// "Further apart" if the spacing as received is more than the spacing as sent at the nearest end of the curve (where the
+// marker sits); "closer together" if less; "the same" if within SAME_WITHIN_PERCENT of 1.
+export function modelSpacingAnswer(result: SeeingTheFallResult = runPartOne()): SpacingChoice {
+  const factor = curveEnd(result).total
+  if (Math.abs(factor - 1) * 100 <= SAME_WITHIN_PERCENT) return 'same'
+  return factor > 1 ? 'further' : 'closer'
+}
+export function spacingGuessIsModelAnswer(guess: SpacingChoice): boolean {
+  return guess === modelSpacingAnswer()
+}
+// A marker at the right-hand end of Picture 2, on the stretch-factor axis: a place, not a size (the answers are kinds).
+export type SpacingMarker = { kind: 'at-one' } | { kind: 'below-one' } | { kind: 'arrow-up' }
+export function spacingGuessMarker(guess: SpacingChoice): SpacingMarker {
+  return guess === 'same' ? { kind: 'at-one' } : guess === 'closer' ? { kind: 'below-one' } : { kind: 'arrow-up' }
+}
+
+// ---- Guess 2: does the observer ever receive the flash sent as the traveler crosses the horizon? ----
+export type LastFlashChoice = 'soon' | 'long-wait' | 'never'
+// "Never" if the model gives the flash sent at the horizon no arrival time; otherwise "soon" if it arrives within
+// SOON_WITHIN_LIGHT_TIMES of being sent, and "after a long wait" if it arrives later.
+export function modelLastFlashAnswer(result: SeeingTheFallResult = runPartOne()): LastFlashChoice {
+  const last = result.flashes[FLASH_COUNT]
+  if (last.arrival === null) return 'never'
+  return last.arrival - last.sentWatch <= SOON_WITHIN_LIGHT_TIMES ? 'soon' : 'long-wait'
+}
+export function lastFlashGuessIsModelAnswer(guess: LastFlashChoice): boolean {
+  return guess === modelLastFlashAnswer()
+}
+// A marker on Picture 3 at the rose horizon line: where it meets the no-delay line, at a finite height at the curve's end,
+// or an arrow up the line past the top edge.
+export type LastFlashMarker = { kind: 'meets-no-delay-line' } | { kind: 'curve-end' } | { kind: 'arrow-off-top' }
+export function lastFlashGuessMarker(guess: LastFlashChoice): LastFlashMarker {
+  return guess === 'soon' ? { kind: 'meets-no-delay-line' } : guess === 'long-wait' ? { kind: 'curve-end' } : { kind: 'arrow-off-top' }
+}
+
+// ---- Guess 3: which effect changes how far apart the flashes arrive? ----
+export type CauseChoice = 'gravity' | 'motion' | 'both'
+// A part "matters" if it is more than SAME_WITHIN_PERCENT above 1 at the nearest end of the curve. If both do, their
+// product is more than either alone.
+export function modelCauseAnswer(result: SeeingTheFallResult = runPartOne()): CauseChoice {
+  const end = curveEnd(result)
+  const gravityMatters = (end.gravity - 1) * 100 > SAME_WITHIN_PERCENT
+  const motionMatters = (end.motion - 1) * 100 > SAME_WITHIN_PERCENT
+  if (gravityMatters && motionMatters) return 'both'
+  return gravityMatters ? 'gravity' : 'motion'
+}
+export function causeGuessIsModelAnswer(guess: CauseChoice): boolean {
+  return guess === modelCauseAnswer()
+}
+// The pointer on Picture 2: to the violet curve, to the green curve, or a bracket on the amber total.
+export type CauseMarker = { target: 'gravity-curve' } | { target: 'motion-curve' } | { target: 'total-curve' }
+export function causeGuessMarker(guess: CauseChoice): CauseMarker {
+  return guess === 'gravity' ? { target: 'gravity-curve' } : guess === 'motion' ? { target: 'motion-curve' } : { target: 'total-curve' }
+}
+
+// ---- the worked calculation (the Results used to choose its own distance) ----
+// The worked stretch factor is shown at 2 horizon radii, or at 1.5 when the traveler is released at 2.
+export function workedDistance(startInHorizonRadii: number): number {
+  return startInHorizonRadii > 2 ? 2 : 1.5
+}
+export function workedSteps(startInHorizonRadii: number): StretchFactorSteps {
+  return stretchFactorSteps(startInHorizonRadii, workedDistance(startInHorizonRadii))
+}
+// The pieces at the last flash before the horizon.
+export function lastFlashSteps(result: SeeingTheFallResult): StretchFactorSteps {
+  return stretchFactorSteps(result.startInHorizonRadii, result.flashes[FLASH_COUNT - 1].distance)
+}
+
+// ---- the readings near the horizon ----
+export const NEAR_HORIZON_GAPS = [0.01, 0.001, 0.0001] // horizon radii above the horizon
+export interface NearHorizonReading {
+  gapInHorizonRadii: number
+  stretch: number
+  arrival: number
+}
+export function nearHorizonReadings(startInHorizonRadii: number): NearHorizonReading[] {
+  return NEAR_HORIZON_GAPS.map((gap) => ({
+    gapInHorizonRadii: gap,
+    stretch: stretchFactor(startInHorizonRadii, 1 + gap),
+    arrival: arrivalTime(startInHorizonRadii, 1 + gap),
+  }))
+}
+// How much later the flash arrives each time the gap above the horizon shrinks to a tenth, in horizon light-times.
+export function arrivalIncreasesPerTenfoldGap(startInHorizonRadii: number): number[] {
+  const readings = nearHorizonReadings(startInHorizonRadii)
+  return readings.slice(1).map((reading, i) => reading.arrival - readings[i].arrival)
+}
+// How many times larger the stretch is each time the gap shrinks to a tenth (the page says "ten times").
+export function stretchRatiosPerTenfoldGap(startInHorizonRadii: number): number[] {
+  const readings = nearHorizonReadings(startInHorizonRadii)
+  return readings.slice(1).map((reading, i) => reading.stretch / readings[i].stretch)
+}
+
+// ---- a plain reading of one number against a reference; no cut-offs ----
+export type Reading = 'the same' | 'more' | 'less'
+export function readAgainstRounded(found: number, reference: number, significantFigures: number): Reading {
+  const round = (x: number) => Number(x.toPrecision(significantFigures))
+  if (round(found) === round(reference)) return 'the same'
+  return found > reference ? 'more' : 'less'
+}
+export function percentAbove(found: number, reference: number): number {
+  return (found / reference - 1) * 100
+}
+
+export interface SeeingCheckUpRow {
+  what: string
+  expected: number
+  found: number
+  unit: string
+  reading: Reading
+  // How far above the reference the found number is, in percent (not a cut-off, only the gap).
+  percentAbove: number
+}
+// Each row's reference is a formula the calculation is built from, or a separate route to the same number; none is a measurement.
+export function checkUpRows(): SeeingCheckUpRow[] {
+  const r0 = PART_ONE_START_IN_HORIZON_RADII
+  const worked = workedSteps(r0)
+  const energy = Math.sqrt(1 - 1 / r0)
+  const smallestGap = SMALLEST_GAP_IN_HORIZON_RADII
+  const increases = arrivalIncreasesPerTenfoldGap(r0)
+  const increase = increases[increases.length - 1]
+  const stretchAtSmallestGap = stretchFactor(r0, 1 + smallestGap)
+  return [
+    {
+      what: `The stretch factor at ${workedDistance(r0)} horizon radii: gravity part × motion part against the one-step formula`,
+      expected: stretchFactor(r0, workedDistance(r0)),
+      found: worked.gravity * worked.motion,
+      unit: 'times',
+      reading: readAgainstRounded(worked.gravity * worked.motion, stretchFactor(r0, workedDistance(r0)), 6),
+      percentAbove: percentAbove(worked.gravity * worked.motion, stretchFactor(r0, workedDistance(r0))),
+    },
+    {
+      what: 'The stretch factor at the release: the formula against 1 ÷ √(1 − 1/r0) for a traveler not yet moving',
+      expected: 1 / Math.sqrt(1 - 1 / r0),
+      found: stretchFactor(r0, r0),
+      unit: 'times',
+      reading: readAgainstRounded(stretchFactor(r0, r0), 1 / Math.sqrt(1 - 1 / r0), 6),
+      percentAbove: percentAbove(stretchFactor(r0, r0), 1 / Math.sqrt(1 - 1 / r0)),
+    },
+    {
+      what: `Near the horizon: the stretch factor × the gap (at a gap of ${smallestGap}) against 2E, where E = √(1 − 1/r0)`,
+      expected: 2 * energy,
+      found: stretchAtSmallestGap * smallestGap,
+      unit: '',
+      reading: readAgainstRounded(stretchAtSmallestGap * smallestGap, 2 * energy, 3),
+      percentAbove: percentAbove(stretchAtSmallestGap * smallestGap, 2 * energy),
+    },
+    {
+      what: 'The observer’s clock: the extra reading when the gap above the horizon shrinks to a tenth (0.001 to 0.0001), against 2 ln 10',
+      expected: 2 * LN_10,
+      found: increase,
+      unit: 'light-times',
+      reading: readAgainstRounded(increase, 2 * LN_10, 3),
+      percentAbove: percentAbove(increase, 2 * LN_10),
+    },
+  ]
+}
+
+// ---- Table 2: the Part 1 fall in one row ----
+export interface FallRow {
+  presetId: ObjectPreset['id']
+  startInHorizonRadii: number
+  startKm: number
+  travelerWatchAtHorizon: number
+  travelerSecondsAtHorizon: number
+  spacing: SpacingSummary
+  lastFlashBeforeHorizonArrival: number
+  lightTimeSeconds: number
+}
+export function fallRow(result: SeeingTheFallResult): FallRow {
+  return {
+    presetId: result.preset.id,
+    startInHorizonRadii: result.startInHorizonRadii,
+    startKm: result.startInHorizonRadii * result.horizonRadiusKm,
+    travelerWatchAtHorizon: result.travelerWatchAtHorizon,
+    travelerSecondsAtHorizon: result.travelerWatchAtHorizon * result.lightTimeSeconds,
+    spacing: spacingSummary(result),
+    lastFlashBeforeHorizonArrival: result.flashes[FLASH_COUNT - 1].arrival!,
+    lightTimeSeconds: result.lightTimeSeconds,
+  }
+}
+export function partOneRow(): FallRow {
+  return fallRow(runPartOne())
+}

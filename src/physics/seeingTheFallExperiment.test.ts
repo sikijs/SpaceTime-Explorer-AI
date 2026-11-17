@@ -7,8 +7,35 @@ import {
   MAX_START_IN_HORIZON_RADII,
   MIN_START_IN_HORIZON_RADII,
   SMALLEST_GAP_IN_HORIZON_RADII,
+  PART_ONE_BLACK_HOLE_ID,
+  PART_ONE_START_IN_HORIZON_RADII,
+  LN_10,
+  SAME_WITHIN_PERCENT,
+  SOON_WITHIN_LIGHT_TIMES,
+  arrivalIncreasesPerTenfoldGap,
   arrivalTime,
+  causeGuessIsModelAnswer,
+  causeGuessMarker,
+  checkUpRows,
+  curveEnd,
+  fallRow,
   gravityPart,
+  lastFlashGuessIsModelAnswer,
+  lastFlashGuessMarker,
+  lastFlashSteps,
+  modelCauseAnswer,
+  modelLastFlashAnswer,
+  modelSpacingAnswer,
+  nearHorizonReadings,
+  partOneRow,
+  readAgainstRounded,
+  runPartOne,
+  spacingGuessIsModelAnswer,
+  spacingGuessMarker,
+  spacingSummary,
+  stretchRatiosPerTenfoldGap,
+  workedDistance,
+  workedSteps,
   motionPart,
   runSeeingTheFallExperiment,
   stretchFactor,
@@ -313,5 +340,201 @@ describe('reuse (CLAUDE.md §8)', () => {
     ]) {
       expect(importLines.some((line: string) => line.includes(`/${other}'`))).toBe(false)
     }
+  })
+})
+
+
+// ---------------------------------------------------------------------------------------------------------------
+// Audit update (2026-11-17): the fixed Part 1 fall, the guess markers and their marking, the check-up, the readings
+// near the horizon and the numbers the interface used to work out itself.
+// ---------------------------------------------------------------------------------------------------------------
+
+describe('the fixed Part 1 fall', () => {
+  it('is the 10-Sun black hole released from rest at 10 horizon radii, and is the same every time', () => {
+    const part = runPartOne()
+    expect(part.preset.id).toBe(PART_ONE_BLACK_HOLE_ID)
+    expect(part.startInHorizonRadii).toBe(PART_ONE_START_IN_HORIZON_RADII)
+    expect(PART_ONE_START_IN_HORIZON_RADII).toBe(10)
+    expect(runPartOne()).toBe(part)
+    expect(part.flashes.map((f) => f.arrival)).toEqual(runSeeingTheFallExperiment(PART_ONE_BLACK_HOLE_ID, 10).flashes.map((f) => f.arrival))
+  })
+
+  it("gives the specification's spacings: 2.449 as sent, 2.60 first and 5.03 last as received", () => {
+    const spacing = spacingSummary()
+    expect(spacing.firstSent).toBeCloseTo(2.449, 3)
+    expect(spacing.lastSent).toBeCloseTo(2.449, 3)
+    expect(spacing.firstReceived).toBeCloseTo(2.6, 1)
+    expect(spacing.lastReceived).toBeCloseTo(5.03, 1)
+    expect(spacing.firstStretch).toBeCloseTo(spacing.firstReceived / spacing.firstSent, 12)
+    expect(spacing.lastStretch).toBeCloseTo(spacing.lastReceived / spacing.lastSent, 12)
+    expect(spacing.lastStretch).toBeGreaterThan(spacing.firstStretch)
+  })
+
+  it('has its curve end at the smallest gap, where the stretch is about 19,000 and the arrival about 84.9', () => {
+    const end = curveEnd()
+    expect(end.gap).toBeCloseTo(SMALLEST_GAP_IN_HORIZON_RADII, 10)
+    expect(end.total).toBeGreaterThan(18_900)
+    expect(end.total).toBeLessThan(19_050)
+    expect(end.arrival).toBeCloseTo(84.86, 1)
+  })
+})
+
+describe('the three guesses: their marking', () => {
+  it('marks the guesses against the model: further apart, never arrives, both effects', () => {
+    expect(modelSpacingAnswer()).toBe('further')
+    expect(modelLastFlashAnswer()).toBe('never')
+    expect(modelCauseAnswer()).toBe('both')
+  })
+
+  it('agrees with the last pair of flashes: both are stretched, so the marker at the curve end and the rows tell one story', () => {
+    expect(spacingSummary().lastStretch).toBeGreaterThan(1)
+    expect(spacingSummary().lastStretch).toBeGreaterThan(spacingSummary().firstStretch)
+    expect(curveEnd().total).toBeGreaterThan(spacingSummary().lastStretch)
+  })
+
+  it('marks every other choice as not the model answer, and only the model answer as right', () => {
+    expect(spacingGuessIsModelAnswer('further')).toBe(true)
+    expect(spacingGuessIsModelAnswer('same')).toBe(false)
+    expect(spacingGuessIsModelAnswer('closer')).toBe(false)
+    expect(lastFlashGuessIsModelAnswer('never')).toBe(true)
+    expect(lastFlashGuessIsModelAnswer('soon')).toBe(false)
+    expect(lastFlashGuessIsModelAnswer('long-wait')).toBe(false)
+    expect(causeGuessIsModelAnswer('both')).toBe(true)
+    expect(causeGuessIsModelAnswer('gravity')).toBe(false)
+    expect(causeGuessIsModelAnswer('motion')).toBe(false)
+  })
+
+  it('reads the answers from the result: a flash that does arrive, or a part that is 1, gives a different answer', () => {
+    const part = runPartOne()
+    // A pretend result in which the flash sent at the horizon arrives 0.5 light-times after it is sent, then 40 later.
+    const sentWatch = part.flashes[FLASH_COUNT].sentWatch
+    const withArrival = (arrival: number | null) => ({
+      ...part,
+      flashes: part.flashes.map((f) => (f.index === FLASH_COUNT ? { ...f, arrival } : f)),
+    })
+    expect(modelLastFlashAnswer(withArrival(sentWatch + SOON_WITHIN_LIGHT_TIMES / 2))).toBe('soon')
+    expect(modelLastFlashAnswer(withArrival(sentWatch + 40))).toBe('long-wait')
+    expect(modelLastFlashAnswer(withArrival(null))).toBe('never')
+    // A pretend result whose curve ends with a motion part of exactly 1, then a gravity part of exactly 1, then both below 1.
+    const withEnd = (gravity: number, motion: number, total: number) => ({
+      ...part,
+      curve: part.curve.map((c, i) => (i === part.curve.length - 1 ? { ...c, gravity, motion, total } : c)),
+    })
+    expect(modelCauseAnswer(withEnd(50, 1, 50))).toBe('gravity')
+    expect(modelCauseAnswer(withEnd(1, 50, 50))).toBe('motion')
+    expect(modelCauseAnswer(withEnd(50, 50, 2500))).toBe('both')
+    expect(modelSpacingAnswer(withEnd(1, 1, 1))).toBe('same')
+    expect(modelSpacingAnswer(withEnd(1, 1, 0.5))).toBe('closer')
+    expect(modelSpacingAnswer(withEnd(1, 1, 1.005))).toBe('same')
+    expect(modelSpacingAnswer(withEnd(1, 1, 1.5))).toBe('further')
+    expect(SAME_WITHIN_PERCENT).toBeGreaterThan(0)
+  })
+
+  it('gives each choice its own marker, a place and not a size', () => {
+    const spacing = (['same', 'closer', 'further'] as const).map((c) => JSON.stringify(spacingGuessMarker(c)))
+    const last = (['soon', 'long-wait', 'never'] as const).map((c) => JSON.stringify(lastFlashGuessMarker(c)))
+    const cause = (['gravity', 'motion', 'both'] as const).map((c) => JSON.stringify(causeGuessMarker(c)))
+    expect(new Set(spacing).size).toBe(3)
+    expect(new Set(last).size).toBe(3)
+    expect(new Set(cause).size).toBe(3)
+    expect(spacingGuessMarker('same')).toEqual({ kind: 'at-one' })
+    expect(lastFlashGuessMarker('never')).toEqual({ kind: 'arrow-off-top' })
+    expect(causeGuessMarker('both')).toEqual({ target: 'total-curve' })
+  })
+
+  it('does not read any guess: no function takes a prediction from outside, and the real result does not move', () => {
+    const before = JSON.stringify(runPartOne().flashes)
+    spacingGuessMarker('closer')
+    lastFlashGuessMarker('soon')
+    causeGuessMarker('gravity')
+    expect(JSON.stringify(runPartOne().flashes)).toBe(before)
+  })
+})
+
+describe('the worked calculation and the readings near the horizon', () => {
+  it('works the stretch at 2 horizon radii as 1.414 × 2.236 = 3.162, and at 1.5 when released at 2', () => {
+    expect(workedDistance(10)).toBe(2)
+    expect(workedDistance(100)).toBe(2)
+    expect(workedDistance(2)).toBe(1.5)
+    const steps = workedSteps(10)
+    expect(steps.gravity).toBeCloseTo(1.414, 3)
+    expect(steps.motion).toBeCloseTo(2.236, 3)
+    expect(steps.total).toBeCloseTo(3.162, 3)
+    expect(workedSteps(2).total).toBeCloseTo(stretchFactor(2, 1.5), 12)
+  })
+
+  it('gives the pieces at the last flash before the horizon', () => {
+    const part = runPartOne()
+    const steps = lastFlashSteps(part)
+    expect(steps.total).toBeCloseTo(stretchFactor(10, part.flashes[FLASH_COUNT - 1].distance), 12)
+  })
+
+  it("gives the specification's table at gaps of 0.01, 0.001 and 0.0001: stretch 191, 1,899, 18,975; arrival 75.63, 80.26, 84.86", () => {
+    const [a, b, c] = nearHorizonReadings(10)
+    expect(a.stretch).toBeCloseTo(191.1, 0)
+    expect(b.stretch).toBeCloseTo(1899, -1)
+    expect(c.stretch).toBeCloseTo(18975, -2)
+    expect(a.arrival).toBeCloseTo(75.63, 1)
+    expect(b.arrival).toBeCloseTo(80.26, 1)
+    expect(c.arrival).toBeCloseTo(84.86, 1)
+  })
+
+  it('shows the tenfold rule: the stretch is ten times larger and the arrival about 2 ln 10 later at each tenfold closing', () => {
+    for (const start of [2, 10, 100]) {
+      for (const ratio of stretchRatiosPerTenfoldGap(start)) expect(ratio).toBeGreaterThan(9.9)
+      for (const ratio of stretchRatiosPerTenfoldGap(start)) expect(ratio).toBeLessThan(10.1)
+      const increases = arrivalIncreasesPerTenfoldGap(start)
+      expect(increases[increases.length - 1]).toBeCloseTo(2 * LN_10, 1)
+    }
+  })
+})
+
+describe('the check-up: each row against a formula or a separate route, with no measurement', () => {
+  const rows = checkUpRows()
+
+  it('has four rows and reads each one as "the same"', () => {
+    expect(rows).toHaveLength(4)
+    for (const row of rows) expect(row.reading).toBe('the same')
+  })
+
+  it('puts the gap in percent beside each row, and the gaps are small', () => {
+    for (const row of rows) {
+      expect(Number.isFinite(row.percentAbove)).toBe(true)
+      expect(Math.abs(row.percentAbove)).toBeLessThan(0.2)
+    }
+  })
+
+  it('uses the right references: gravity × motion, 1 ÷ √(1 − 1/r0), 2E and 2 ln 10', () => {
+    expect(rows[0].expected).toBeCloseTo(3.162, 3)
+    expect(rows[1].expected).toBeCloseTo(1 / Math.sqrt(0.9), 12)
+    expect(rows[1].expected).toBeCloseTo(1.054, 3)
+    expect(rows[2].expected).toBeCloseTo(2 * Math.sqrt(0.9), 12)
+    expect(rows[3].expected).toBeCloseTo(2 * LN_10, 12)
+    expect(rows[3].found).toBeCloseTo(4.6, 1)
+  })
+
+  it('reads a number that differs as "more" or "less", not "the same"', () => {
+    expect(readAgainstRounded(4.7, 4.605, 3)).toBe('more')
+    expect(readAgainstRounded(4.5, 4.605, 3)).toBe('less')
+    expect(readAgainstRounded(4.6051, 4.605, 3)).toBe('the same')
+  })
+})
+
+describe('Table 2: the Part 1 fall in one row', () => {
+  it('has the release at 10 radii in kilometers, the watch at the horizon in light-times and seconds, and the flash arrivals', () => {
+    const row = partOneRow()
+    expect(row.startInHorizonRadii).toBe(10)
+    expect(row.startKm).toBeCloseTo(10 * horizonRadiusKm(BLACK_HOLE_PRESETS[0].massSolarMasses), 6)
+    expect(row.travelerWatchAtHorizon).toBeCloseTo(48.985, 2)
+    expect(row.travelerSecondsAtHorizon).toBeCloseTo(row.travelerWatchAtHorizon * row.lightTimeSeconds, 12)
+    expect(row.lastFlashBeforeHorizonArrival).toBeCloseTo(60.64, 1)
+    expect(row.spacing.lastReceived).toBeGreaterThan(row.spacing.firstReceived)
+  })
+
+  it('gives the other black holes the same light-time numbers and different seconds', () => {
+    const sgr = fallRow(runSeeingTheFallExperiment('sgr-a-star', 10))
+    const row = partOneRow()
+    expect(sgr.travelerWatchAtHorizon).toBeCloseTo(row.travelerWatchAtHorizon, 9)
+    expect(sgr.travelerSecondsAtHorizon).toBeGreaterThan(row.travelerSecondsAtHorizon * 1000)
   })
 })
