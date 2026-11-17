@@ -7,11 +7,43 @@ import {
   MAX_AIM_IN_HORIZON_RADII,
   MIN_AIM_IN_HORIZON_RADII,
   PHOTON_SPHERE_IN_HORIZON_RADII,
+  ANSWER_CHECK_AIMS,
+  BARELY_CHANGED_BELOW_DEGREES,
+  GRAPH_MAX_DEGREES,
+  KM_PER_AU,
+  PART_ONE_BLACK_HOLE_ID,
+  SWING_ROUND_ABOVE_DEGREES,
+  answerCheckPaths,
   bendCurve,
+  bendDegrees,
+  bendGuessGraphMarker,
+  bendGuessIsModelAnswer,
+  captureGuessIsModelAnswer,
+  captureGuessIsOffView,
+  checkUpRows,
+  criticalAimRows,
+  criticalAimWorked,
+  guessedCaptureAimInHorizonRadii,
+  justOutsideGuessGraphMarker,
+  justOutsideGuessIsModelAnswer,
+  largerThanSimple,
   lightPath,
+  modelBendAnswer,
+  modelCaptureAnswer,
+  modelCaptureBoundaryInHorizonRadii,
+  modelJustOutsideAnswer,
+  partOneRows,
+  percentAbove,
+  readAgainst,
+  readAgainstRounded,
   runLightNearBlackHoleExperiment,
+  runPartOne,
+  viewRadiusInHorizonRadii,
+  weakFieldBendDegrees,
   weakFieldBendRadians,
+  weakFieldWorked,
 } from './lightNearBlackHoleExperiment'
+import type { BendChoice, CaptureChoice, JustOutsideChoice } from './lightNearBlackHoleExperiment'
 
 const toDegrees = (radians: number) => (radians * 180) / Math.PI
 
@@ -287,5 +319,273 @@ describe('reuse (CLAUDE.md §8)', () => {
     for (const other of ['lightBendingExperiment', 'orbitsNearBlackHoleExperiment', 'blackHoleExperiment', 'orbitExperiment']) {
       expect(importLines.some((line: string) => line.includes(`/${other}'`))).toBe(false)
     }
+  })
+})
+
+// ---------------------------------------------------------------------------------------------------------------
+// Audit update (Black Holes 4)
+// ---------------------------------------------------------------------------------------------------------------
+const BEND_CHOICES: BendChoice[] = ['straight', 'bent', 'captured']
+const CAPTURE_CHOICES: CaptureChoice[] = ['horizon', 'critical', 'ten']
+const JUST_OUTSIDE_CHOICES: JustOutsideChoice[] = ['small-bend', 'swings', 'captured-anyway']
+
+describe('the fixed Part 1 run', () => {
+  it('runs the 10-Sun black hole with a beam at 5 and a beam at 2.6 horizon radii', () => {
+    const run = runPartOne()
+    expect(run.five.preset.id).toBe(PART_ONE_BLACK_HOLE_ID)
+    expect(run.five.preset.massSolarMasses).toBe(10)
+    expect(run.five.aimInHorizonRadii).toBe(5)
+    expect(run.justOutside.aimInHorizonRadii).toBe(2.6)
+    expect(run.five.aimKm).toBeCloseTo(5 * horizonRadiusKm(10), 9)
+    expect(run.justOutside.aimKm).toBeCloseTo(2.6 * horizonRadiusKm(10), 9)
+  })
+
+  it('matches the specification table: 33.8 degrees at 5 (escapes); 390 degrees at 2.6, more than a full turn', () => {
+    const run = runPartOne()
+    expect(run.five.path.outcome).toBe('escapes')
+    expect(toDegrees(run.five.path.bendRadians as number)).toBeCloseTo(33.8, 0)
+    expect(run.five.path.closestInHorizonRadii).toBeCloseTo(4.39, 1)
+    expect(run.justOutside.path.outcome).toBe('escapes')
+    expect(toDegrees(run.justOutside.path.bendRadians as number)).toBeCloseTo(390, -1)
+    expect(run.justOutside.path.closestInHorizonRadii).toBeCloseTo(1.53, 1)
+  })
+
+  it('is the same run every time (nothing reads a guess or the clock)', () => {
+    expect(runPartOne().five.path.bendRadians).toBe(runPartOne().five.path.bendRadians)
+  })
+})
+
+describe('the picture views', () => {
+  it('reaches 6.25 radii for an aim of 5 and 4 for an aim of 2.6, and 1.25 times the aim from 3.2 upward', () => {
+    expect(viewRadiusInHorizonRadii(5)).toBeCloseTo(6.25, 12)
+    expect(viewRadiusInHorizonRadii(2.6)).toBe(4)
+    expect(viewRadiusInHorizonRadii(20)).toBeCloseTo(25, 12)
+  })
+})
+
+describe('guess 1: a beam aimed at 5 horizon radii', () => {
+  it('has the model answer "bent" (the bend is far above any reading of "barely changed")', () => {
+    expect(modelBendAnswer()).toBe('bent')
+    expect(bendGuessIsModelAnswer('bent')).toBe(true)
+    expect(bendGuessIsModelAnswer('straight')).toBe(false)
+    expect(bendGuessIsModelAnswer('captured')).toBe(false)
+  })
+
+  it('gives the same answer for any "barely changed" limit from 1 to 30 degrees, so the marking choice does not decide it', () => {
+    const bend = toDegrees(lightPath(5).bendRadians as number)
+    expect(bend).toBeGreaterThan(30)
+    expect(BARELY_CHANGED_BELOW_DEGREES).toBeLessThanOrEqual(30)
+  })
+
+  it('draws "straight" lowest, "bent" above it, and "captured" in the rose area with no height', () => {
+    const straight = bendGuessGraphMarker('straight')
+    const bent = bendGuessGraphMarker('bent')
+    const captured = bendGuessGraphMarker('captured')
+    expect(straight.aimInHorizonRadii).toBe(5)
+    expect(straight.markerDegrees as number).toBeLessThan(bent.markerDegrees as number)
+    expect(captured.band).toBeNull()
+    expect(captured.markerDegrees).toBeNull()
+  })
+
+  it('puts the real bend inside the band of the model answer and outside the others', () => {
+    const real = toDegrees(lightPath(5).bendRadians as number)
+    const inBand = (c: BendChoice) => {
+      const b = bendGuessGraphMarker(c).band
+      return b !== null && real >= b.fromDegrees && real <= b.toDegrees
+    }
+    expect(inBand('bent')).toBe(true)
+    expect(inBand('straight')).toBe(false)
+    expect(inBand('captured')).toBe(false)
+  })
+})
+
+describe('guess 2: how close light must be aimed to be captured', () => {
+  it('names 1, 2.6 and 10 horizon radii', () => {
+    expect(CAPTURE_CHOICES.map(guessedCaptureAimInHorizonRadii)).toEqual([1, 2.6, 10])
+  })
+
+  it('has the model answer "about 2.6": the named distance nearest to 3 sqrt(3) / 2, written separately here', () => {
+    const critical = (3 * Math.sqrt(3)) / 2
+    const nearest = CAPTURE_CHOICES.reduce((a, b) =>
+      Math.abs(guessedCaptureAimInHorizonRadii(a) - critical) < Math.abs(guessedCaptureAimInHorizonRadii(b) - critical) ? a : b,
+    )
+    expect(nearest).toBe('critical')
+    expect(modelCaptureAnswer()).toBe('critical')
+    expect(CAPTURE_CHOICES.filter(captureGuessIsModelAnswer)).toEqual(['critical'])
+  })
+
+  it('says a ring at 10 is off the Part 1 pictures (they reach 6.25 and 4) but a ring at 1 or 2.6 is on them', () => {
+    for (const view of [viewRadiusInHorizonRadii(5), viewRadiusInHorizonRadii(2.6)]) {
+      expect(captureGuessIsOffView('ten', view)).toBe(true)
+      expect(captureGuessIsOffView('horizon', view)).toBe(false)
+      expect(captureGuessIsOffView('critical', view)).toBe(false)
+    }
+  })
+
+  it('agrees with the integrated paths: captured at 2.5 and 2, escapes at 2.7 and 10, so the boundary lies between 2 and 2.7 and nowhere near 1 or 10', () => {
+    const checks = answerCheckPaths()
+    expect(checks.insideCritical.outcome).toBe('captured')
+    expect(checks.two.outcome).toBe('captured')
+    expect(checks.outsideCritical.outcome).toBe('escapes')
+    expect(checks.ten.outcome).toBe('escapes')
+  })
+})
+
+describe('guess 3: aimed only a little farther out than the capture distance', () => {
+  it('has the model answer "swings" (escapes, turned by more than 180 degrees)', () => {
+    expect(modelJustOutsideAnswer()).toBe('swings')
+    expect(JUST_OUTSIDE_CHOICES.filter(justOutsideGuessIsModelAnswer)).toEqual(['swings'])
+    expect(toDegrees(lightPath(2.6).bendRadians as number)).toBeGreaterThan(SWING_ROUND_ABOVE_DEGREES)
+  })
+
+  it('draws "small bend" under 180 degrees, "swings" above it and within the axis, and "captured anyway" in the rose area', () => {
+    const small = justOutsideGuessGraphMarker('small-bend')
+    const swings = justOutsideGuessGraphMarker('swings')
+    const captured = justOutsideGuessGraphMarker('captured-anyway')
+    expect(small.aimInHorizonRadii).toBe(2.6)
+    expect(small.markerDegrees as number).toBeLessThan(180)
+    expect(swings.markerDegrees as number).toBeGreaterThan(180)
+    expect(swings.markerDegrees as number).toBeLessThanOrEqual(GRAPH_MAX_DEGREES)
+    expect(captured.band).toBeNull()
+  })
+
+  it('puts the real bend at 2.6 (390 degrees) inside the "swings" band, which the graph (to 400) can show', () => {
+    const real = toDegrees(lightPath(2.6).bendRadians as number)
+    const band = justOutsideGuessGraphMarker('swings').band!
+    expect(real).toBeGreaterThanOrEqual(band.fromDegrees)
+    expect(real).toBeLessThanOrEqual(band.toDegrees)
+  })
+})
+
+describe('guess functions only describe or mark a guess', () => {
+  it('give the same answers however often they are called, and every choice is accepted', () => {
+    for (const c of BEND_CHOICES) expect(bendGuessIsModelAnswer(c)).toBe(bendGuessIsModelAnswer(c))
+    for (const c of JUST_OUTSIDE_CHOICES) expect(justOutsideGuessIsModelAnswer(c)).toBe(justOutsideGuessIsModelAnswer(c))
+    expect(BEND_CHOICES.filter(bendGuessIsModelAnswer)).toHaveLength(1)
+  })
+})
+
+describe('comparisons moved out of the interface', () => {
+  it('bendDegrees and weakFieldBendDegrees convert radians to degrees; a captured path has no bend', () => {
+    expect(bendDegrees(lightPath(5))).toBeCloseTo(toDegrees(lightPath(5).bendRadians as number), 12)
+    expect(bendDegrees(lightPath(2.5))).toBeNull()
+    expect(weakFieldBendDegrees(20)).toBeCloseTo((2 / 20) * (180 / Math.PI), 12)
+  })
+
+  it('largerThanSimple gives a percent below twice as large and a multiple from twice upward', () => {
+    expect(largerThanSimple(1.5, 1)).toEqual({ kind: 'percent', value: 50 })
+    expect(largerThanSimple(2, 1)).toEqual({ kind: 'times', value: 2 })
+    const near = runPartOne().justOutside
+    const larger = largerThanSimple(near.path.bendRadians as number, near.weakFieldBendRadians)
+    expect(larger.kind).toBe('times')
+    expect(larger.value).toBeCloseTo(390 / 44.1, 0) // 8.85 times as large (specification, final review)
+    const twenty = largerThanSimple(lightPath(20).bendRadians as number, weakFieldBendRadians(20))
+    expect(twenty.kind).toBe('percent')
+    expect(twenty.value).toBeCloseTo(8.1, 0) // the exact bend is 8.1% larger at 20 (specification, Results step)
+  })
+
+  it('answerCheckPaths uses the aims the sentences name', () => {
+    expect(ANSWER_CHECK_AIMS).toEqual({ five: 5, ten: 10, two: 2, insideCritical: 2.5, outsideCritical: 2.7, justOutside: 2.6 })
+    expect(answerCheckPaths().five.bendRadians).toBe(lightPath(5).bendRadians)
+  })
+})
+
+describe('the worked math, from the module', () => {
+  it('gives sqrt 3 = 1.732, 3 sqrt 3 = 5.196 and 5.196 / 2 = 2.598', () => {
+    const w = criticalAimWorked()
+    expect(w.sqrt3).toBeCloseTo(1.732, 3)
+    expect(w.threeSqrt3).toBeCloseTo(5.196, 3)
+    expect(w.criticalInHorizonRadii).toBeCloseTo(2.598, 3)
+    expect(w.criticalInHorizonRadii).toBe(CRITICAL_AIM_IN_HORIZON_RADII)
+  })
+
+  it('works the simple formula at 20: 2 / 20 = 0.1 radian, times 57.3 = 5.7 degrees', () => {
+    const w = weakFieldWorked(20)
+    expect(w.radians).toBeCloseTo(0.1, 12)
+    expect(w.degreesPerRadian).toBeCloseTo(57.3, 1)
+    expect(w.degrees).toBeCloseTo(5.73, 2)
+  })
+})
+
+describe('Tables 2 and 4', () => {
+  it('Table 2 has the two Part 1 beams with bend, simple formula, comparison, turns and closest approach', () => {
+    const [five, near] = partOneRows()
+    expect(five.aimInHorizonRadii).toBe(5)
+    expect(five.bendDegrees).toBeCloseTo(33.8, 0)
+    expect(five.simpleDegrees).toBeCloseTo(22.9, 1)
+    expect(five.larger?.kind).toBe('percent')
+    expect(near.aimInHorizonRadii).toBe(2.6)
+    expect(near.simpleDegrees).toBeCloseTo(44.1, 1)
+    // half a turn plus the bend, in turns: (180 + 390) / 360 = 1.58 (specification, final review)
+    expect(near.turnsAround).toBeCloseTo(1.58, 1)
+    expect(near.turnsAround).toBeCloseTo((Math.PI + (near.bendDegrees as number) / (180 / Math.PI)) / (2 * Math.PI), 6)
+  })
+
+  it('Table 4 gives 76.7 km, about 33 million km (0.22 AU) and about 50 billion km (330 AU) for the three black holes', () => {
+    const rows = criticalAimRows()
+    expect(rows).toHaveLength(3)
+    expect(rows[0].criticalAimKm).toBeCloseTo(76.7, 0)
+    expect(rows[1].criticalAimKm / 1e6).toBeCloseTo(33, 0)
+    expect(rows[1].criticalAimAu).toBeCloseTo(0.22, 2)
+    expect(rows[2].criticalAimKm / 1e9).toBeCloseTo(50, 0)
+    expect(rows[2].criticalAimAu).toBeCloseTo(330, -1)
+    for (const row of rows) {
+      expect(row.criticalAimKm).toBeCloseTo(CRITICAL_AIM_IN_HORIZON_RADII * horizonRadiusKm(row.preset.massSolarMasses), 6)
+      expect(row.criticalAimAu).toBeCloseTo(row.criticalAimKm / KM_PER_AU, 12)
+      expect(row.photonSphereKm).toBeCloseTo(1.5 * row.horizonRadiusKm, 9)
+    }
+  })
+})
+
+describe('the check-up', () => {
+  it('reads one number against another with no cut-offs', () => {
+    expect(readAgainst(1, 1)).toBe('the same')
+    expect(readAgainst(1.0001, 1)).toBe('more')
+    expect(readAgainst(0.9, 1)).toBe('less')
+    expect(readAgainstRounded(2.5981, 2.598076, 3)).toBe('the same')
+    expect(readAgainstRounded(2.62, 2.598076, 3)).toBe('more')
+    expect(percentAbove(110, 100)).toBeCloseTo(10, 12)
+  })
+
+  it('finds this model\'s capture boundary by halving, and it agrees with 3 sqrt(3) / 2 and with the independent effective potential 1 / b^2 = 4/27', () => {
+    const boundary = modelCaptureBoundaryInHorizonRadii()
+    expect(boundary).toBeCloseTo(CRITICAL_AIM_IN_HORIZON_RADII, 5)
+    expect(1 / (boundary * boundary)).toBeCloseTo(4 / 27, 5)
+    expect(lightPath(boundary - 1e-4).outcome).toBe('captured')
+    expect(lightPath(boundary + 1e-4).outcome).toBe('escapes')
+  })
+
+  it('has three rows: the simple formula at 100 is a little below the exact bend; the boundary is the same; the closest approach is a little above 1.5', () => {
+    const [far, boundary, circle] = checkUpRows()
+    expect(far.expected).toBeCloseTo(2 * (180 / Math.PI) / 100, 6)
+    expect(far.found).toBeGreaterThan(far.expected)
+    expect(far.reading).toBe('more')
+    expect(far.percentAbove).toBeGreaterThan(0)
+    expect(far.percentAbove).toBeLessThan(2) // within 2% (specification, test 5)
+    expect(boundary.reading).toBe('the same')
+    expect(circle.expected).toBe(1.5)
+    expect(circle.found).toBeCloseTo(1.53, 1)
+    expect(circle.reading).toBe('more')
+    expect(circle.percentAbove).toBeGreaterThan(0)
+  })
+
+  it('compares the simple formula at 100, beyond the controls, because at the controls\' largest aim (20) it is 8% off', () => {
+    expect(MAX_AIM_IN_HORIZON_RADII).toBe(20)
+    expect(checkUpRows()[0].what).toContain('100')
+  })
+})
+
+describe('the existing exports are unchanged (Cosmic Horizons 21 imports the critical aim)', () => {
+  it('keeps the critical aim, the circle for light and the path values the first build tested', () => {
+    expect(CRITICAL_AIM_IN_HORIZON_RADII).toBe((3 * Math.sqrt(3)) / 2)
+    expect(PHOTON_SPHERE_IN_HORIZON_RADII).toBe(1.5)
+    expect(toDegrees(lightPath(3).bendRadians as number)).toBeCloseTo(98.5, 0)
+    expect(toDegrees(lightPath(20).bendRadians as number)).toBeCloseTo(6.19, 1)
+    expect(MIN_AIM_IN_HORIZON_RADII).toBe(1)
+  })
+
+  it('still imports only horizonRadiusKm and OBJECT_PRESETS (the new code adds no import)', () => {
+    const importLines = source.split('\n').filter((line: string) => line.trim().startsWith('import'))
+    expect(importLines).toHaveLength(2)
   })
 })
