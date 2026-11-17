@@ -2,6 +2,34 @@ import { describe, expect, it } from 'vitest'
 import { horizonRadiusKm } from './blackHoleSizeExperiment'
 import {
   BLACK_HOLE_PRESETS,
+  FAR_PANEL_VIEW_IN_HORIZON_RADII,
+  FAR_START_IN_HORIZON_RADII,
+  FLIES_OFF_AT_LEAST_TIMES_THE_START,
+  NEARLY_THE_SAME_WITHIN_PERCENT,
+  PART_ONE_BLACK_HOLE_ID,
+  PART_ONE_GRAPH_MAX_IN_HORIZON_RADII,
+  PART_ONE_PANEL_VIEW_IN_HORIZON_RADII,
+  PART_ONE_START_IN_HORIZON_RADII,
+  S2_CLOSEST_APPROACH_AU_ESO,
+  S2_CLOSEST_APPROACH_KM_UPPER_BOUND,
+  S301_CLOSEST_APPROACH_KM,
+  checkUpRows,
+  farGuessIsModelAnswer,
+  farGuessMark,
+  guessedLastSafeInHorizonRadii,
+  lastSafeGuessIsModelAnswer,
+  lastSafeGuessIsOffView,
+  lastSafeOrbitRows,
+  modelNudgeAnswer,
+  nudgeGuessIsModelAnswer,
+  nudgeGuessMark,
+  readAgainst,
+  realStarRows,
+  runFarPair,
+  runPartOne,
+  s301TopSpeedFractionOfLight,
+  speedGapPercent,
+  wobblePercent,
   LAST_SAFE_ORBIT_IN_HORIZON_RADII,
   MAX_START_IN_HORIZON_RADII,
   MAX_TURNS,
@@ -247,5 +275,195 @@ describe('reuse (CLAUDE.md §8)', () => {
     expect(from('blackHoleSizeExperiment')).toContain('OBJECT_PRESETS')
     expect(importLines.some((line: string) => line.includes("/blackHoleExperiment'"))).toBe(false)
     expect(importLines.some((line: string) => line.includes("/orbitExperiment'"))).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------------------------------------------
+// Audit update (Black Holes 3): the fixed Part 1 runs, the white guess marks and their marking, the check-up and the
+// real-orbit comparisons.
+// ---------------------------------------------------------------------------------------------------------------
+describe('the fixed Part 1 runs', () => {
+  it('runs the 10-Sun black hole with a pair at 2 horizon radii and a pair at 20', () => {
+    const two = runPartOne()
+    const far = runFarPair()
+    expect(two.preset.id).toBe(PART_ONE_BLACK_HOLE_ID)
+    expect(two.startInHorizonRadii).toBe(PART_ONE_START_IN_HORIZON_RADII)
+    expect(far.preset.id).toBe(PART_ONE_BLACK_HOLE_ID)
+    expect(far.startInHorizonRadii).toBe(FAR_START_IN_HORIZON_RADII)
+    expect(two.horizonRadiusKm).toBeCloseTo(29.53, 1)
+    expect(two.startKm).toBeCloseTo(59.06, 1)
+  })
+
+  it('has the exact-theory probe at 2 radii plunge after about 1.55 turns while the ordinary one keeps circling', () => {
+    const two = runPartOne()
+    expect(two.exact.outcome).toBe('plunges')
+    expect(two.exact.turnsCompleted).toBeGreaterThan(1.5)
+    expect(two.exact.turnsCompleted).toBeLessThan(1.6)
+    expect(two.ordinary.outcome).toBe('keeps-circling')
+    expect(two.ordinary.turnsCompleted).toBeCloseTo(MAX_TURNS, 6)
+  })
+
+  it('has both probes keep circling at 20 radii, with launch speeds 0.162 and 0.158', () => {
+    const far = runFarPair()
+    expect(far.exact.outcome).toBe('keeps-circling')
+    expect(far.ordinary.outcome).toBe('keeps-circling')
+    expect(far.exactSpeedFractionOfLight).toBeCloseTo(0.1622, 3)
+    expect(far.ordinarySpeedFractionOfLight).toBeCloseTo(0.1581, 3)
+  })
+
+  it('fits the ring at 3 horizon radii inside the 2-radii panels and the graph', () => {
+    expect(PART_ONE_PANEL_VIEW_IN_HORIZON_RADII).toBeGreaterThan(LAST_SAFE_ORBIT_IN_HORIZON_RADII)
+    expect(PART_ONE_GRAPH_MAX_IN_HORIZON_RADII).toBeGreaterThanOrEqual(10)
+    expect(FAR_PANEL_VIEW_IN_HORIZON_RADII).toBeGreaterThan(FAR_START_IN_HORIZON_RADII)
+  })
+})
+
+describe('guess 1: a nudged circle at 2 horizon radii', () => {
+  it('gives each answer its own shape of marker, so a different guess is visibly different', () => {
+    const marks = new Set([nudgeGuessMark('wobbles'), nudgeGuessMark('spirals-in'), nudgeGuessMark('flies-off')])
+    expect(marks.size).toBe(3)
+  })
+
+  it('has the model answer "spirals in" taken from the exact-theory path, not typed in', () => {
+    expect(modelNudgeAnswer()).toBe('spirals-in')
+    expect(nudgeGuessIsModelAnswer('spirals-in')).toBe(true)
+    expect(nudgeGuessIsModelAnswer('wobbles')).toBe(false)
+    expect(nudgeGuessIsModelAnswer('flies-off')).toBe(false)
+  })
+
+  it('never sees the probe fly off: the exact path ends no farther out than it began', () => {
+    const farthest = orbitPath('exact', PART_ONE_START_IN_HORIZON_RADII).farthestInHorizonRadii
+    expect(farthest).toBeLessThan(FLIES_OFF_AT_LEAST_TIMES_THE_START * PART_ONE_START_IN_HORIZON_RADII)
+    expect(farthest).toBeLessThan(PART_ONE_START_IN_HORIZON_RADII * 1.01)
+  })
+})
+
+describe('guess 2: the last safe place to circle', () => {
+  it('gives a ring distance for 3 and 10 and none for "anywhere"', () => {
+    expect(guessedLastSafeInHorizonRadii('three')).toBe(3)
+    expect(guessedLastSafeInHorizonRadii('ten')).toBe(10)
+    expect(guessedLastSafeInHorizonRadii('anywhere')).toBeNull()
+  })
+
+  it('follows the guess: a different guess gives a different distance', () => {
+    expect(guessedLastSafeInHorizonRadii('three')).not.toBe(guessedLastSafeInHorizonRadii('ten'))
+  })
+
+  it('flags a guess of 10 as off the 2-radii panels (which reach 4) but on the graph (which reaches 12)', () => {
+    expect(lastSafeGuessIsOffView('ten', PART_ONE_PANEL_VIEW_IN_HORIZON_RADII)).toBe(true)
+    expect(lastSafeGuessIsOffView('ten', PART_ONE_GRAPH_MAX_IN_HORIZON_RADII)).toBe(false)
+    expect(lastSafeGuessIsOffView('three', PART_ONE_PANEL_VIEW_IN_HORIZON_RADII)).toBe(false)
+    expect(lastSafeGuessIsOffView('anywhere', 1)).toBe(false)
+  })
+
+  it('marks only "about 3" as the model answer, which agrees with what the paths do', () => {
+    expect(lastSafeGuessIsModelAnswer('three')).toBe(true)
+    expect(lastSafeGuessIsModelAnswer('ten')).toBe(false)
+    expect(lastSafeGuessIsModelAnswer('anywhere')).toBe(false)
+    // The probe at 3.5 circles for all turns; one at 2 plunges: the safe edge lies between them, near 3.
+    expect(orbitPath('exact', 3.5).outcome).toBe('keeps-circling')
+    expect(orbitPath('exact', 2).outcome).toBe('plunges')
+    // And a probe at 10 radii is also safe, so 10 is not "the last safe place".
+    expect(orbitPath('exact', 10).outcome).toBe('keeps-circling')
+  })
+})
+
+describe('guess 3: the two rules at 20 horizon radii', () => {
+  it('has launch speeds only about 2.6 percent apart', () => {
+    expect(speedGapPercent(FAR_START_IN_HORIZON_RADII)).toBeCloseTo(2.6, 1)
+    expect(speedGapPercent(2)).toBeCloseTo(41.4, 1)
+  })
+
+  it('marks "nearly the same" as the model answer, from the paths and the speed gap', () => {
+    expect(farGuessIsModelAnswer('nearly-same')).toBe(true)
+    expect(farGuessIsModelAnswer('very-different')).toBe(false)
+    expect(speedGapPercent(FAR_START_IN_HORIZON_RADII)).toBeLessThanOrEqual(NEARLY_THE_SAME_WITHIN_PERCENT)
+  })
+
+  it('gives each answer its own sign, so a different guess is visibly different', () => {
+    expect(farGuessMark('very-different')).not.toBe(farGuessMark('nearly-same'))
+  })
+
+  it('keeps the two paths close to their start for all turns at 20 radii', () => {
+    const far = runFarPair()
+    expect(wobblePercent(far.ordinary, FAR_START_IN_HORIZON_RADII)).toBeLessThan(1)
+    expect(wobblePercent(far.exact, FAR_START_IN_HORIZON_RADII)).toBeLessThan(1)
+  })
+})
+
+describe('the figures the interface used to work out itself', () => {
+  it('has wobblePercent agree with the closest and farthest distances', () => {
+    const path = orbitPath('ordinary', 2)
+    const byHand = Math.max(1 - path.closestInHorizonRadii / 2, path.farthestInHorizonRadii / 2 - 1) * 100
+    expect(wobblePercent(path, 2)).toBeCloseTo(byHand, 10)
+    expect(wobblePercent(path, 2)).toBeLessThan(0.3)
+  })
+
+  it('reads one number against another as the same, more or less, with no cut-offs', () => {
+    expect(readAgainst(3, 3)).toBe('the same')
+    expect(readAgainst(3.025, 3)).toBe('more')
+    expect(readAgainst(2.9999, 3)).toBe('less')
+  })
+})
+
+describe('the check-up', () => {
+  const rows = checkUpRows()
+
+  it('has five rows, each from a formula the model is built from or a figure already published', () => {
+    expect(rows).toHaveLength(5)
+  })
+
+  it('shows the model edge as a little more than 3, and every closed-formula row as the same', () => {
+    expect(rows[0].found).toBeCloseTo(3.025, 2)
+    expect(rows[0].reading).toBe('more')
+    for (const row of rows.slice(1, 4)) expect(row.reading).toBe('the same')
+  })
+
+  it('reads the 10-Sun horizon radius against the 30 km published figure, to the rounding', () => {
+    expect(rows[4].found).toBeCloseTo(29.53, 1)
+    expect(rows[4].reading).toBe('the same, to the rounding')
+  })
+})
+
+describe('where real orbits sit, in horizon radii', () => {
+  const [s2, s301] = realStarRows()
+
+  it('puts S2 less than about 1,600 horizon radii from Sagittarius A* (an upper bound)', () => {
+    expect(s2.label).toBe('S2')
+    expect(s2.isUpperBound).toBe(true)
+    expect(s2.horizonRadiiThisPage).toBeCloseTo(1575, -1)
+  })
+
+  it('puts S301 at about 140 horizon radii with this page\'s 4.3 million Suns, and about 150 with ESO\'s four million', () => {
+    expect(s301.label).toBe('S301')
+    expect(s301.isUpperBound).toBe(false)
+    expect(s301.horizonRadiiThisPage).toBeCloseTo(140.2, 0)
+    expect(s301.horizonRadiiEsoMass).toBeCloseTo(150.7, 0)
+    expect(s301.closestApproachAu).toBeCloseTo(11.9, 1)
+  })
+
+  it('keeps both stars far outside the last safe orbit, and S301 closer in than S2', () => {
+    expect(s301.horizonRadiiThisPage).toBeGreaterThan(20 * LAST_SAFE_ORBIT_IN_HORIZON_RADII)
+    expect(s301.horizonRadiiThisPage).toBeLessThan(s2.horizonRadiiThisPage)
+    expect(S301_CLOSEST_APPROACH_KM).toBeLessThan(S2_CLOSEST_APPROACH_KM_UPPER_BOUND)
+  })
+
+  it('keeps ESO\'s two S2 figures consistent: 120 AU is under the 20 billion km bound', () => {
+    expect(S2_CLOSEST_APPROACH_AU_ESO * 149_597_870.7).toBeLessThan(S2_CLOSEST_APPROACH_KM_UPPER_BOUND)
+  })
+
+  it('has S301 top out at over 8 percent of the speed of light', () => {
+    expect(s301TopSpeedFractionOfLight()).toBeGreaterThan(0.08)
+    expect(s301TopSpeedFractionOfLight()).toBeCloseTo(0.0834, 3)
+  })
+
+  it('gives the last safe orbit of the three black holes as 88.6 km, 38.1 million km and 57.6 billion km', () => {
+    const [stellar, sgr, m87] = lastSafeOrbitRows()
+    expect(stellar.lastSafeOrbitKm).toBeCloseTo(88.6, 1)
+    expect(sgr.lastSafeOrbitKm / 1e6).toBeCloseTo(38.1, 1)
+    expect(sgr.lastSafeOrbitAu).toBeCloseTo(0.25, 2)
+    expect(m87.lastSafeOrbitKm / 1e9).toBeCloseTo(57.6, 1)
+    expect(m87.lastSafeOrbitAu).toBeCloseTo(385, -1)
+    for (const row of [stellar, sgr, m87]) expect(row.lastSafeOrbitKm / row.horizonRadiusKm).toBeCloseTo(3, 10)
   })
 })

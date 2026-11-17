@@ -1,4 +1,4 @@
-import { OBJECT_PRESETS, horizonRadiusKm } from './blackHoleSizeExperiment'
+import { KM_PER_AU, OBJECT_PRESETS, PUBLISHED, horizonRadiusKm, readAgainstPublished } from './blackHoleSizeExperiment'
 import type { ObjectPreset } from './blackHoleSizeExperiment'
 
 // Orbits of a small probe near a non-rotating, uncharged black hole, in the equatorial plane. Two probes are
@@ -200,4 +200,211 @@ export function modelEdgeInHorizonRadii(nudge: number = NUDGE): number {
   }
   edgeCache.set(nudge, circles)
   return circles
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Audit update (Black Holes 3): numbers for the white guess marks, the fixed Part 1 run (a pair at 2 horizon radii and
+// a pair at 20), the check-up, and the comparisons the interface and tutor used to work out themselves. No function
+// here reads a prediction; the guess functions take the guess as an argument and only describe it or mark it.
+// ---------------------------------------------------------------------------------------------------------------
+
+// Part 1 always runs the 10-Sun black hole: a pair at 2 horizon radii (guesses 1 and 2) and a pair at 20 (guess 3).
+export const PART_ONE_BLACK_HOLE_ID: ObjectPreset['id'] = 'stellar-black-hole'
+export const PART_ONE_START_IN_HORIZON_RADII = 2
+export const FAR_START_IN_HORIZON_RADII = 20
+// How far the Part 1 pictures reach, in horizon radii: the 2-radii panels reach 4 (so the ring at 3 fits), the graph
+// reaches 12 on a log axis (so a ring at 3 or 10 fits), and the compact 20-radii panels reach 25.
+export const PART_ONE_PANEL_VIEW_IN_HORIZON_RADII = 4
+export const PART_ONE_GRAPH_MAX_IN_HORIZON_RADII = 12
+export const FAR_PANEL_VIEW_IN_HORIZON_RADII = 25
+
+export function runPartOne(): OrbitsNearBlackHoleResult {
+  return runOrbitsNearBlackHoleExperiment(PART_ONE_BLACK_HOLE_ID, PART_ONE_START_IN_HORIZON_RADII)
+}
+export function runFarPair(): OrbitsNearBlackHoleResult {
+  return runOrbitsNearBlackHoleExperiment(PART_ONE_BLACK_HOLE_ID, FAR_START_IN_HORIZON_RADII)
+}
+
+// ---- Guess 1: what a nudged circle at 2 horizon radii does ----
+export type NudgeGuess = 'wobbles' | 'spirals-in' | 'flies-off'
+// The white marker for each answer is a shape, not a size (an outcome has no position of its own).
+export type NudgeMark = 'ring-at-start' | 'inward-arrow' | 'outward-arrow'
+export function nudgeGuessMark(guess: NudgeGuess): NudgeMark {
+  return guess === 'wobbles' ? 'ring-at-start' : guess === 'spirals-in' ? 'inward-arrow' : 'outward-arrow'
+}
+// A probe "flies off" if the exact-theory probe ends the run at least this many times as far out as it began. This is
+// the page's own marking choice; no run in this experiment comes anywhere near it.
+export const FLIES_OFF_AT_LEAST_TIMES_THE_START = 2
+// For the tutor only: the answer the exact-theory probe at 2 horizon radii gives.
+export function modelNudgeAnswer(): NudgeGuess {
+  const path = orbitPath('exact', PART_ONE_START_IN_HORIZON_RADII)
+  if (path.outcome === 'plunges') return 'spirals-in'
+  const end = path.points[path.points.length - 1].distanceInHorizonRadii
+  return end >= FLIES_OFF_AT_LEAST_TIMES_THE_START * PART_ONE_START_IN_HORIZON_RADII ? 'flies-off' : 'wobbles'
+}
+export function nudgeGuessIsModelAnswer(guess: NudgeGuess): boolean {
+  return guess === modelNudgeAnswer()
+}
+
+// ---- Guess 2: the last safe place to circle ----
+export type LastSafeGuess = 'anywhere' | 'three' | 'ten'
+export const GUESSED_LAST_SAFE_IN_HORIZON_RADII: Record<LastSafeGuess, number | null> = {
+  anywhere: null, // no distance of its own: drawn as a marker only
+  three: 3,
+  ten: 10,
+}
+export function guessedLastSafeInHorizonRadii(guess: LastSafeGuess): number | null {
+  return GUESSED_LAST_SAFE_IN_HORIZON_RADII[guess]
+}
+// True if the guessed ring lies beyond what a picture reaches, so the page draws an arrow at its edge instead.
+export function lastSafeGuessIsOffView(guess: LastSafeGuess, viewInHorizonRadii: number): boolean {
+  const radii = guessedLastSafeInHorizonRadii(guess)
+  return radii !== null && radii > viewInHorizonRadii
+}
+export function lastSafeGuessIsModelAnswer(guess: LastSafeGuess): boolean {
+  return guessedLastSafeInHorizonRadii(guess) === LAST_SAFE_ORBIT_IN_HORIZON_RADII
+}
+
+// ---- Guess 3: far out, do the two rules give different orbits? ----
+export type FarGuess = 'very-different' | 'nearly-same'
+export type FarMark = 'not-equal-sign' | 'about-equal-sign'
+export function farGuessMark(guess: FarGuess): FarMark {
+  return guess === 'very-different' ? 'not-equal-sign' : 'about-equal-sign'
+}
+// "Nearly the same" is marked when both probes keep circling and their launch speeds differ by no more than this
+// percent. The page's own marking choice, not a physical limit.
+export const NEARLY_THE_SAME_WITHIN_PERCENT = 5
+export function speedGapPercent(startInHorizonRadii: number): number {
+  return (exactCircularSpeedFractionOfLight(startInHorizonRadii) / ordinaryCircularSpeedFractionOfLight(startInHorizonRadii) - 1) * 100
+}
+export function farGuessIsModelAnswer(guess: FarGuess): boolean {
+  const far = runFarPair()
+  const same =
+    far.ordinary.outcome === far.exact.outcome && Math.abs(speedGapPercent(FAR_START_IN_HORIZON_RADII)) <= NEARLY_THE_SAME_WITHIN_PERCENT
+  return guess === (same ? 'nearly-same' : 'very-different')
+}
+
+// How far a path wanders from its starting distance, as a percent of that distance (the tutor and Results used to work
+// this out themselves).
+export function wobblePercent(path: OrbitPath, startInHorizonRadii: number): number {
+  return Math.max(1 - path.closestInHorizonRadii / startInHorizonRadii, path.farthestInHorizonRadii / startInHorizonRadii - 1) * 100
+}
+
+// ---- The check-up: a plain reading of one number against a reference; no cut-offs ----
+export type Reading = 'the same' | 'more' | 'less'
+export function readAgainst(found: number, reference: number): Reading {
+  if (Math.abs(found - reference) <= 1e-9 * Math.max(Math.abs(reference), 1e-300)) return 'the same'
+  return found > reference ? 'more' : 'less'
+}
+export interface OrbitCheckUpRow {
+  what: string
+  expected: string
+  found: number
+  // "the same", "more", "less", or, for a rounded published figure, "the same, to the rounding" / "a different value".
+  reading: string
+}
+// Each row's reference is a formula the model is built from, or a figure already published for Black Holes 1; none is a
+// measurement of an orbit.
+export function checkUpRows(): OrbitCheckUpRow[] {
+  const two = runPartOne()
+  const far = runFarPair()
+  const closedExact = (x: number) => Math.sqrt(1 / (2 * (x - 1)))
+  const closedOrdinary = (x: number) => Math.sqrt(1 / (2 * x))
+  return [
+    {
+      what: 'Last safe orbit: this model\'s edge against the exact theory\'s 6GM/c² (horizon radii)',
+      expected: String(LAST_SAFE_ORBIT_IN_HORIZON_RADII),
+      found: modelEdgeInHorizonRadii(),
+      reading: readAgainst(modelEdgeInHorizonRadii(), LAST_SAFE_ORBIT_IN_HORIZON_RADII),
+    },
+    {
+      what: 'Launch speed at 2 horizon radii, exact theory (fraction of light speed)',
+      expected: closedExact(PART_ONE_START_IN_HORIZON_RADII).toFixed(3),
+      found: two.exactSpeedFractionOfLight,
+      reading: readAgainst(two.exactSpeedFractionOfLight, closedExact(PART_ONE_START_IN_HORIZON_RADII)),
+    },
+    {
+      what: 'Launch speed at 2 horizon radii, ordinary gravity (fraction of light speed)',
+      expected: closedOrdinary(PART_ONE_START_IN_HORIZON_RADII).toFixed(3),
+      found: two.ordinarySpeedFractionOfLight,
+      reading: readAgainst(two.ordinarySpeedFractionOfLight, closedOrdinary(PART_ONE_START_IN_HORIZON_RADII)),
+    },
+    {
+      what: 'Launch speed at 20 horizon radii, exact theory (fraction of light speed)',
+      expected: closedExact(FAR_START_IN_HORIZON_RADII).toFixed(3),
+      found: far.exactSpeedFractionOfLight,
+      reading: readAgainst(far.exactSpeedFractionOfLight, closedExact(FAR_START_IN_HORIZON_RADII)),
+    },
+    {
+      what: 'Horizon radius of 10 Suns (km), against the figure used in Black Holes 1',
+      expected: String(PUBLISHED.tenSunsHorizonKm),
+      found: two.horizonRadiusKm,
+      reading: readAgainstPublished(two.horizonRadiusKm, PUBLISHED.tenSunsHorizonKm),
+    },
+  ]
+}
+
+// ---- Where real orbits sit, in horizon radii (calculated here from published distances) ----
+// ESO eso2006 (16 Apr 2020): S2 comes "less than 20 billion kilometres" from Sagittarius A* (an upper bound),
+// "once every 16 years", at "almost three percent of the speed of light".
+// ESO eso2612 (19 Aug 2026): S301 passes "just 1.78 billion km" from it, "just 8.7 years" per orbit, at "25 000 km/s",
+// "over 8% of the speed of light", with its next closest passage in 2031. The Nature paper was not read.
+export const S2_CLOSEST_APPROACH_KM_UPPER_BOUND = 20e9
+// The same page also says "one hundred and twenty times the distance between the Sun and Earth" (about 17.9 billion km,
+// which agrees with "less than 20 billion"; 20 billion km itself would be about 134 AU). The page's rounder figures are
+// kept as published, and the rows below use the bound.
+export const S2_CLOSEST_APPROACH_AU_ESO = 120
+export const S2_PERIOD_YEARS = 16
+export const S301_CLOSEST_APPROACH_KM = 1.78e9
+export const S301_PERIOD_YEARS = 8.7
+export const S301_TOP_SPEED_KM_PER_S = 25_000
+export const SPEED_OF_LIGHT_KM_PER_SECOND = 299_792.458
+export const S301_NEXT_CLOSEST_PASSAGE_YEAR = 2031
+
+export function s301TopSpeedFractionOfLight(): number {
+  return S301_TOP_SPEED_KM_PER_S / SPEED_OF_LIGHT_KM_PER_SECOND
+}
+
+export interface RealStarRow {
+  label: string
+  closestApproachKm: number
+  closestApproachAu: number
+  // True where ESO gives only an upper bound ("less than").
+  isUpperBound: boolean
+  // In Sagittarius A*'s horizon radii, with this page's 4.3 million Suns and with ESO's rounder four million.
+  horizonRadiiThisPage: number
+  horizonRadiiEsoMass: number
+}
+export function realStarRows(): RealStarRow[] {
+  const sgr = OBJECT_PRESETS.find((p) => p.id === 'sgr-a-star')
+  if (!sgr) throw new Error('Sgr A* preset missing')
+  const thisPage = horizonRadiusKm(sgr.massSolarMasses)
+  const eso = horizonRadiusKm(PUBLISHED.sgrAStarMassSolarMasses)
+  const row = (label: string, km: number, isUpperBound: boolean): RealStarRow => ({
+    label,
+    closestApproachKm: km,
+    closestApproachAu: km / KM_PER_AU,
+    isUpperBound,
+    horizonRadiiThisPage: km / thisPage,
+    horizonRadiiEsoMass: km / eso,
+  })
+  return [
+    row('S2', S2_CLOSEST_APPROACH_KM_UPPER_BOUND, true),
+    row('S301', S301_CLOSEST_APPROACH_KM, false),
+  ]
+}
+
+// The last safe orbit of each black hole, in km and AU (3 horizon radii).
+export interface LastSafeOrbitRow {
+  preset: ObjectPreset
+  horizonRadiusKm: number
+  lastSafeOrbitKm: number
+  lastSafeOrbitAu: number
+}
+export function lastSafeOrbitRows(): LastSafeOrbitRow[] {
+  return BLACK_HOLE_PRESETS.map((preset) => {
+    const horizon = horizonRadiusKm(preset.massSolarMasses)
+    const km = LAST_SAFE_ORBIT_IN_HORIZON_RADII * horizon
+    return { preset, horizonRadiusKm: horizon, lastSafeOrbitKm: km, lastSafeOrbitAu: km / KM_PER_AU }
+  })
 }
