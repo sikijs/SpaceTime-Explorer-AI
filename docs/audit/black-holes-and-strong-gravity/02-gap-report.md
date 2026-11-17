@@ -54,3 +54,64 @@ TimeNearBlackHoleExperiment.tsx (marks on Picture 2, small panel for P2, source 
 
 ## Not checked
 Not run in a browser. SVG text was read from grep of the text elements, not every attribute. Tutor "explained" step read only by search for prediction wording. Links: none on this page.
+
+---
+
+# Re-read of 2026-11-16 (against Rule E, the 2026-11-07 rules, and the owner's request for rich Black Holes pages)
+Status: read-only, nothing in the app, tests or specification changed. The findings above still stand; the new findings are below. Line numbers are from `TimeNearBlackHoleExperiment.tsx` as read today (1,134 lines; tutor 223 lines; module 106 lines).
+
+## Rule E (the page in four Parts): not met
+| Item | Result | Evidence | Gap |
+|---|---|---|---|
+| E1 | Not met | One long card: introduction (:324-410), predictions (:420-500), controls and Run (:515-590), pictures (:593-920), Results (:924-1120), tutor (:1123) | Split into Part 1 (predict, then watch), Part 2 (black-hole and distance controls and any drawing that follows them), Part 3 (results), Part 4 (tutor) |
+| E2 | Not met | No Part headings, colours or leads | Four leads to draft; Part 1's lead gives no answers |
+| E3 | Not met | No "Want to know more?" list and no "Words and formulas" box (the first gap report found no links on this page) | Both go above Part 1 with no heading |
+| E4, E5 | n/a yet | | Leads to be drafted; one experiment, no sub-parts |
+
+## The 2026-11-07 rules
+- **Parts 2, 3 and 4 appear after the first Run has finished: partly met.** Results and tutor wait for `status === 'complete'` (:303, :1123), but the black-hole buttons, distance buttons and slider (Part 2 content) are on screen from the start, disabled until all three guesses exist (:523-581). They must move below the first Run.
+- **Start over, not Change prediction: not met.** The button is "Change predictions" (:511), shown only after the first Run, and it keeps the chosen hole and distance. Replace it with an always-visible "Start over" (greyed until there is a guess or a run, and while a run plays), and say the guess is locked after Run.
+- **Run must not need a choice that belongs to Part 2:** the Run today uses the hole and distance the learner picked. Part 1 therefore needs a fixed run (question 1).
+- **Several guesses, one Run:** the three guesses are all asked before the first Run, and Run is the only step, so the "several runs" trap of Gravitational Waves 4 does not arise. Part 3's "all three black holes" table and the real-surfaces table need no extra run.
+- **Links and words: not met** (see E3).
+
+## Content for a favourite topic (all of it is the owner's to approve, §28.1)
+What exists today: a long text-only introduction (about 90 lines), no pictures other than the three drawn graphs, no links. The project holds seven licensed images in `public/images/black-holes/` (M87* and Sgr A* by the EHT, S2's orbit, Gaia BH3, the Crab Nebula, M77 and a labelled NASA visualisation; all added for Black Holes 1) and an image component with credit line, alt text and size, so no new framework is needed.
+
+Proposed, as a menu to accept or cut:
+1. **A fuller introduction with sub-headings** that fully explains the subject without giving the three answers: what "time runs at different rates" means (a clock on a mountain against one at sea level, Gravity 2 and 9); why a black hole is the strongest test; what "hovering" means and why it is a thought experiment; a pointer back to Black Holes 1 for the horizon radius.
+2. **Real-world grounding (new, was "none" in the specification, decision 10):** real measurements of gravity slowing clocks (for example optical-clock height comparisons and GPS, each only if a source is read); the "Interstellar" film question is **not** raised unless you ask. Only facts from read pages.
+3. **Images:** reuse the M87* and Sgr A* pictures (already in the project) to show the three real black holes the page uses; an own labelled drawing of two clocks at different heights; a NASA or ESA visualisation of light climbing out of a black hole's gravity only if its licence and wording are read. Nothing about the fall of a traveller (Black Holes 5's job).
+4. **A "Recent news" block** of dated facts, only from read pages, as for Black Holes 1.
+5. **A "Want to know more?" list** of official pages and papers (for gravitational time dilation: NASA, NIST or an observatory page on optical clocks and height; for black holes: the pages already read for Black Holes 1), each fetched and read first; gaps recorded under §29 rule 3(c) practice.
+6. **A "Words and formulas" box** (collapsed): far-away clock, hovering clock, horizon, horizon radius, slowing factor, first-order formula, logarithmic scale, astronomical unit; the formula √(1 − r_s / r) with the worked 2-radii example, **shown only after the first Run** because the example gives Prediction 2's answer.
+7. **Held back until after the first Run (§12):** the factor at the horizon (zero), the independence of mass, and where the simple formula fails; the "swimmer above a waterfall" comparison stays in the Results.
+
+## What to draw for the predictions (Rule A, planned)
+- **Prediction 1** (clock at 1.01 radii): white mark on Picture 2 at the guessed height (1, 0.5, 0.1 or 0) above x = 1.01, in a YOUR GUESS box.
+- **Prediction 2** (small against giant black hole at 2 radii): a new panel in Picture 2's frame on its own scale, "the same distance in radii around two black holes": two real bars (10-Sun hole and M87*, both from the module at 2 radii) with a white marker for the guess ("small ticks slower", "giant ticks slower", "same"). The marker has no size of its own, so the caption says it is only a marker.
+- **Prediction 3** (is the simple formula still accurate?): white marker beside the gap between the solid and dashed lines (drawn once the dashed line is drawn), caption says it is only a marker.
+- **Part 1 fixed run:** the 10-Sun black hole with the hovering clock at **1.01 horizon radii** (so the first Run itself shows Prediction 1's feature), 60 s of far-away time; Picture 2 is drawn in full with the three marks; Picture 3 fills in during the run. The Part 2 controls then let the learner pick another hole and distance.
+
+## Updated list of what an update would touch
+TimeNearBlackHoleExperiment.tsx (four Parts, Start over, marks and the Prediction 2 panel, source lines, check-up and notes, three-part "what to look for", extended introduction, links, words box, fixed Part 1 run), a new render test file, TimeNearBlackHoleTutor.tsx (name the marks; mark each guess; move the percentage arithmetic into the module), physics/timeNearBlackHoleExperiment.ts and .test.ts (guess-to-height, marker mapping, the two-hole panel values, check-up numbers, the percent-too-high and surface comparisons now in the interface), `public/images/black-holes/` (new images only after licences are read), the specification, DEVELOPMENT-STATE.md and the tracker.
+
+## Updated size
+**Medium to Large** (Medium before): the four-Part rebuild, the illustrated introduction, links and words box, and the reading guide on top of the marks. Smaller than Black Holes 1 because the three guesses sit on the existing axes.
+
+## Questions for the owner, each with a suggested default
+1. **Part 1 fixed run:** the 10-Sun black hole, the hovering clock at 1.01 horizon radii, 60 s of far-away time; hole and distance choices move to Part 2. *Default: yes.*
+2. **Prediction 1 mark:** white mark on Picture 2 at the guessed height above x = 1.01. *Default: yes.*
+3. **Prediction 2 panel:** a two-bar panel (10-Sun hole and M87* at 2 radii) with a white marker, on its own scale. *Default: yes.*
+4. **Prediction 3 marker:** a white marker at the gap between the lines, drawn once the dashed line is drawn. *Default: yes.*
+5. **Colours:** white only for the guess; the exact line stays blue, the simple formula orange, the horizon red, the far-away clock gold. *Default: yes.*
+6. **Verdicts:** "your prediction was right / off this time" (:964, :979, :991) moves to the tutor; Results show each guess only, with a tag on its row. *Default: yes.*
+7. **Check-up (Rule B1):** the exact formula against the simple formula at 10, 2 and 1.01 radii, and the simple formula against Gravity 9's GPS figure (the existing test, within 1%), each with a plain reading ("the same", "6% too high", "5 times too high"). No published value near a black hole exists, so no "published" column. *Default: yes.*
+8. **Real-world grounding:** add one or two real measurements of gravity slowing clocks (only from pages read in the draft step), in the introduction's "why ask this" and in Part 3. *Default: yes, from official pages only; none raised if none can be read.*
+9. **Images and extras:** reuse the M87*, Sgr A* and NASA images already in the project; own drawing of two clocks at different heights; a "Recent news" block; no strip of objects (Black Holes 1 has it). *Default: yes.*
+10. **Reading guide for the learner's own run:** the table that follows the controls is optional (§14); the pictures already show the controls' effect. *Default: leave it out.*
+11. **Heading:** "Experiment 2 — ..." becomes "Black Holes 2: Time Near a Black Hole: Does a Clock Ever Stop?". Cross-references use the sidebar's names. *Default: yes.*
+12. **Sources:** an official-source search and fetch (with licence reading for each image) is run in the draft-wording step, before any wording is shown; nothing is linked or embedded until read. *Default: yes.*
+
+## Not checked (re-read)
+Not run in a browser; nothing fetched (no link, licence or fact has been verified here; the candidates above are proposals); the tutor was read only by search for prediction wording; the module's tests were not re-run; the intro and caption text were mapped by line, not re-read word by word.
