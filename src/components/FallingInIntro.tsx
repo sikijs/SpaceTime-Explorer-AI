@@ -90,6 +90,96 @@ function TwoWatchesDrawing() {
   )
 }
 
+// Drawing 1b: the Moon's uneven pull on Earth. Arrow lengths are exaggerated so the difference can be seen; the caption says so.
+function MoonTidesDrawing() {
+  // One row per arrow so they never overlap. Each starts at a dot on Earth and points left, toward the Moon.
+  const arrow = (x: number, y: number, len: number, w: number, label: string) => (
+    <g>
+      <circle cx={x} cy={y} r={4} fill="#e2e8f0" />
+      <path d={`M${x},${y} L${x - len + 10},${y}`} stroke="#fbbf24" strokeWidth={w} fill="none" />
+      <polygon points={`${x - len},${y} ${x - len + 14},${y - w - 3} ${x - len + 14},${y + w + 3}`} fill="#fbbf24" />
+      <text x={x - len + 18} y={y - 12} fill="#fbbf24" fontSize="10" stroke="#0b1020" strokeWidth={3} paintOrder="stroke">
+        {label}
+      </text>
+    </g>
+  )
+  return (
+    <svg
+      viewBox="0 0 440 260"
+      width="100%"
+      style={{ ...imgStyle, maxWidth: '520px' }}
+      role="img"
+      aria-label="The Moon on the left and Earth on the right. Three arrows point toward the Moon: a long one from the side of Earth nearest the Moon, a medium one from Earth's center, and a short one from the far side."
+    >
+      <text x={12} y={20} fill="#e2e8f0" fontSize="12" fontWeight="bold">
+        Panel A: the pull
+      </text>
+      <circle cx={50} cy={150} r={26} fill="#cbd5e1" fillOpacity={0.35} stroke="#cbd5e1" strokeWidth={2} />
+      <text x={50} y={196} fill="#cbd5e1" fontSize="11" textAnchor="middle">
+        the Moon
+      </text>
+      <circle cx={290} cy={150} r={70} fill="#38bdf8" fillOpacity={0.25} stroke="#38bdf8" strokeWidth={2} />
+      <text x={290} y={242} fill="#38bdf8" fontSize="11" textAnchor="middle">
+        Earth
+      </text>
+      {arrow(228, 110, 112, 5, 'near side: pulled hardest')}
+      {arrow(290, 150, 92, 4, 'middle: pulled a middle amount')}
+      {arrow(352, 190, 74, 3, 'far side: pulled least')}
+    </svg>
+  )
+}
+
+// Drawing 1c: the two tidal bulges. The ocean's height is exaggerated far beyond the real tides (about a meter); the caption says so.
+function MoonBulgesDrawing() {
+  return (
+    <svg
+      viewBox="0 0 440 280"
+      width="100%"
+      style={{ ...imgStyle, maxWidth: '520px', marginTop: '0.5rem' }}
+      role="img"
+      aria-label="Panel B. The Moon on the left. Earth in the middle with an ocean stretched into two bulges, one on the side facing the Moon and one on the opposite side, labelled high tide. The places between are labelled low tide. A curved arrow shows Earth spinning."
+    >
+      <text x={12} y={20} fill="#e2e8f0" fontSize="12" fontWeight="bold">
+        Panel B: the two bulges
+      </text>
+      <circle cx={50} cy={150} r={26} fill="#cbd5e1" fillOpacity={0.35} stroke="#cbd5e1" strokeWidth={2} />
+      <text x={50} y={110} fill="#cbd5e1" fontSize="11" textAnchor="middle">
+        the Moon
+      </text>
+      <g transform="translate(-30,0)">
+        <ellipse cx={270} cy={150} rx={118} ry={78} fill="#38bdf8" fillOpacity={0.3} stroke="#38bdf8" strokeWidth={2} />
+        <circle cx={270} cy={150} r={66} fill="#a16207" fillOpacity={0.6} stroke="#fbbf24" strokeWidth={1} />
+        <text x={270} y={154} fill="#e2e8f0" fontSize="11" textAnchor="middle">
+          Earth
+        </text>
+        <path d="M338,92 A78,78 0 0 1 344,146" stroke="#e2e8f0" strokeWidth={2} fill="none" />
+        <polygon points="346,156 338,142 351,141" fill="#e2e8f0" />
+      </g>
+      <text x={112} y={186} fill="#38bdf8" fontSize="10" textAnchor="end">
+        high tide
+      </text>
+      <text x={112} y={199} fill="#38bdf8" fontSize="10" textAnchor="end">
+        (near bulge)
+      </text>
+      <text x={372} y={186} fill="#38bdf8" fontSize="10" textAnchor="start">
+        high tide
+      </text>
+      <text x={372} y={199} fill="#38bdf8" fontSize="10" textAnchor="start">
+        (far bulge)
+      </text>
+      <text x={240} y={58} fill="#38bdf8" fontSize="10" textAnchor="middle">
+        low tide (thinner ocean)
+      </text>
+      <text x={240} y={256} fill="#38bdf8" fontSize="10" textAnchor="middle">
+        low tide (thinner ocean)
+      </text>
+      <text x={372} y={130} fill="#e2e8f0" fontSize="10" textAnchor="start">
+        Earth spins
+      </text>
+    </svg>
+  )
+}
+
 // Drawing 2: why the feet are pulled harder than the head. No black-hole numbers and no comparison between black holes.
 function FeetDrawing() {
   return (
@@ -152,8 +242,92 @@ export function FallingInIntro() {
         <TwoWatchesDrawing />
       </Figure>
       <p style={paragraph}>
-        <strong>Why the feet are pulled harder than the head.</strong> Gravity pulls harder on whatever is nearer to the thing doing the pulling. You can see this with the Moon: NASA explains that the Moon’s pull is strongest on the points of Earth closest to the Moon and weakest on the points farthest away, and that this
-        uneven pull is part of what raises the tides. Now picture a traveler falling feet first toward a black hole. Their feet are slightly nearer than their head, so the feet are pulled slightly harder, and the traveler is stretched. We measure the stretch as the difference in pull between the two ends of a{' '}
+        <strong>Why the feet are pulled harder than the head.</strong> Gravity pulls harder on whatever is nearer to the thing doing the pulling. The farther away you are, the weaker the pull. Here is an everyday picture: stand a few steps from a campfire and then move back. The heat on your skin is stronger up close and fainter far away.
+        Gravity fades with distance in a similar way.
+      </p>
+      <p style={paragraph}>
+        <strong>The Moon and the tides.</strong> The Moon pulls on every part of Earth, but not equally. NASA explains that the Moon’s pull is strongest on the points of Earth closest to the Moon and weakest on the points farthest away, and that this uneven pull is part of what raises the tides. Here is
+        what that looks like with rough numbers. The Moon is about 384,000 km from Earth’s center, and Earth is about 12,700 km across. So the side of Earth facing the Moon is about 378,000 km from the Moon, and the opposite side is about 391,000 km from it. That is only 13,000 km of difference out of nearly 400,000 km. Even so,
+        a gravitational pull that weakens with distance works out to a pull on the near side that is roughly 7 percent stronger than on the far side. (We use the usual rule that the pull falls in proportion to 1 divided by the distance multiplied by itself; this experiment does not need that rule beyond this example.)
+      </p>
+      <p style={paragraph}>
+        <strong>Why the near side rises.</strong> The whole Earth falls toward the Moon, the ground and the ocean together. What matters for the tide is how the water moves compared with the ground under it, because we stand on the ground and watch the sea. On the side facing the Moon, the water is pulled a little harder than the
+        ground beneath it. It gets ahead of the ground, toward the Moon, and heaps up: that is a bulge.
+      </p>
+      <p style={paragraph}>
+        <strong>Why the far side rises too, even though the pull there is weaker.</strong> It is true that the Moon’s pull is weakest on the far side. But a weaker pull does not by itself lift the water. What matters is the pull on the water compared with the pull on the ground under it. Here are rough numbers, in units of
+        0.00001 meters per second, each second (the speed that each kilogram picks up from the Moon’s pull):
+      </p>
+      <ul style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+        <li>At Earth’s center (the ground, as a whole): about 3.3.</li>
+        <li>On the near side: about 3.4, about 3 percent more than the center.</li>
+        <li>On the far side: about 3.2, about 3 percent less than the center.</li>
+      </ul>
+      <p style={paragraph}>
+        On the far side, the ground is pulled toward the Moon with 3.3, but the water above it is pulled with only 3.2. So the ground speeds toward the Moon slightly faster than the water above it. The ground moves ahead and the water is left behind. Seen from the ground, the water moves away from Earth, toward the side that faces away
+        from the Moon, and heaps up there. On the near side it is the other way round: the water is pulled with 3.4 and the ground with 3.3, so the water gets ahead of the ground. (These figures are rounded, and are our own arithmetic from the Moon’s distance, not NASA’s.)
+      </p>
+      <p style={paragraph}>
+        <strong>A picture from everyday life.</strong> Picture three cars in a line on a road, each towed forward by its own cable. The front cable is the strongest, the middle one weaker and the back one weakest. All three cars move forward. But the front car pulls ahead of the middle car, and the back car falls behind it.
+        If you sit in the middle car, which stands for Earth’s solid ground, the front car seems to move away from you forward and the back car seems to move away from you backward. Both ends move away from the middle, so the line is stretched. The front car is the near-side water, the back car is the far-side water, and you are in the ground.
+        The stretchy rope with a bead at each end works the same way: the near bead is tugged hardest, the middle less, the far bead least, and the rope between them gets longer. A difference in pull stretches. It is the difference, not the pull itself, that matters.
+      </p>
+      <p style={paragraph}>
+        <strong>What NASA says.</strong> NASA admits that a bulge on the side away from the Moon “might seem strange”, and gives the same answer in everyday terms: the Moon’s gravity acts on every bit of Earth and every bit of water. The water is also easier to slide sideways than to lift, so it is “pushed and squeezed around
+        on the globe” until it ends up bulging on the near and far sides. The water that flows into the two bulges comes from the parts of the ocean in between, which is why those places have low tide.
+      </p>
+      <Figure
+        caption={
+          <>
+            <strong>The Moon’s uneven pull, and the two bulges it makes.</strong> A schematic drawn for this page, not to scale. In both panels the Moon is on the left.
+            <ul style={{ margin: '0.25rem 0', paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>Panel A, the pull.</strong> Every arrow points toward the Moon. A longer, thicker arrow is a stronger pull. The arrows are drawn with a much bigger difference than the real one, which is only about 7 percent between the near and far sides, so that you can see it.
+              </li>
+              <li>
+                <strong>Panel B, the result.</strong> The blue ring is the ocean around Earth (the brown disc), drawn much taller than the real tides, which raise the sea by about a meter, so that you can see it. It is stretched into two bulges, one toward the Moon and one away from it. “High tide” marks the bulges and “low tide” marks the
+                places in between. The curved arrow shows which way Earth spins.
+              </li>
+            </ul>
+            <strong>What to look for.</strong>
+            <ul style={{ margin: '0.25rem 0', paddingLeft: '1.25rem' }}>
+              <li>
+                <strong>Look at</strong> the three arrows in Panel A. <strong>What it means:</strong> the near side is pulled harder than the middle, and the middle harder than the far side. <strong>Why it matters:</strong> this difference, not the Moon’s pull on its own, is what stretches the ocean.
+              </li>
+              <li>
+                <strong>Look at</strong> the two bulges in Panel B. <strong>What it means:</strong> the water is heaped up on both the side facing the Moon and the side facing away. <strong>Why it matters:</strong> the traveler’s feet and head are in the same situation, with the feet playing the part of Earth’s near side.
+              </li>
+            </ul>
+          </>
+        }
+      >
+        <MoonTidesDrawing />
+        <MoonBulgesDrawing />
+      </Figure>
+      <p style={paragraph}>
+        <strong>Why there are two high tides a day, and why they are not exactly 12 hours apart.</strong> Earth spins once a day underneath the two bulges, so a place on the shore is carried through a bulge, then a low place, then the other bulge, then another low place. NASA says that most shorelines have two high and two low tides a
+        day, and that one high tide to the next takes a little over 12 hours. The extra time comes from the Moon’s own movement. The Moon travels around Earth in the same direction that Earth spins, so each day a place on Earth needs about 50 extra minutes to turn back to the spot directly under the Moon. Shared between two high
+        tides, that is about 25 extra minutes each. (That halving is our arithmetic, not NASA’s.) Example: if high tide is at 6:00 in the morning, the next one is at about 6:25 in the evening, and the one after at about 6:50 the next morning. These are rounded numbers for a day. On a real coast the gaps vary.
+      </p>
+      <p style={paragraph}>
+        <strong>Is it exactly like clockwork?</strong> Close, but not exactly. The Moon sets the pattern, and other things adjust it.
+      </p>
+      <ul style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
+        <li>
+          <strong>The Sun adds its own, smaller tide.</strong> NASA says the Sun has about 27 million times the Moon’s mass but is about 390 times farther away, so its tide-raising force is a little less than half of the Moon’s. Twice a month, when Earth, Sun and Moon line up, the two add together and give very high and very low
+          tides, called <strong>spring tides</strong> (nothing to do with the season). About a week later, when the Sun and Moon are at right angles, the Sun’s pull partly cancels the Moon’s and the tides are moderate, called <strong>neap tides</strong>.
+        </li>
+        <li>
+          <strong>The bulges are not exactly under the Moon.</strong> NASA says that Earth’s spin carries the bulges a little ahead of the Moon, so high tide does not arrive at the exact moment the Moon is overhead.
+        </li>
+        <li>
+          <strong>Earth is not a smooth ball covered by water.</strong> NASA says that continents, the shape of Earth, the depth of the ocean in different places, and also wind and storms all change the timing and the height of the tide near you. This is why tide tables are made for each place, and why NASA advises checking your
+          local tide forecast.
+        </li>
+      </ul>
+      <p style={paragraph}>
+        <strong>Now the traveler.</strong> Picture a traveler falling feet first toward a black hole. Their feet are slightly nearer than their head, so the feet are pulled slightly harder, and the traveler is stretched, in the same way that the Moon stretches the oceans. The difference is tiny for a body 2 meters tall, if the black hole is far away,
+        because the feet and head are almost the same distance from it. Close to a small black hole the same two meters can mean a very large difference, because the pull changes quickly over a short distance. We measure the stretch as the difference in pull between the two ends of a{' '}
         {BODY_LENGTH_METERS}-meter body, in <strong>g</strong>: 1 g is the pull of Earth’s gravity at its surface. It is the same kind of effect as the tidal effect you met in Gravity and Curved Spacetime, Experiment 3.
       </p>
       <Figure
@@ -188,7 +362,7 @@ export function FallingInIntro() {
         <strong>Some new words.</strong> The <strong>traveler’s clock</strong> is the watch the traveler wears: it shows time as they experience it. The <strong>far-away clock</strong> is a clock at rest far from the black hole, read at the moment the traveler passes each distance. The{' '}
         <strong>horizon</strong> is the one-way boundary you met in Experiment 1 of this chapter, and the <strong>horizon radius</strong> is the distance from the black hole’s center to its horizon. We measure distances in horizon radii: 10 horizon radii means ten times as far from the center as the edge is.
         Because the three black holes are so different in size, we measure time in a unit that scales with them: a <strong>horizon light-time</strong> is the time light takes to travel across one horizon radius. For example, light travels about 300,000 km each second, and the 10-Sun black hole’s horizon radius is about
-        30 km, so one horizon light-time for it is about 30 ÷ 300,000 = 0.0001 seconds. For the biggest black holes the distances in kilometers are huge, so we also give them in <strong>astronomical units</strong> (AU): 1 AU is the distance from the Earth to the Sun, about 150 million kilometers. All of these,
+        30 km, so one horizon light-time for it is about 30 ÷ 300,000 = 0.0001 seconds. For the biggest black holes the distances in kilometers are huge, so we also give them in <strong>astronomical units</strong> (AU): 1 AU is the distance from the Earth to the Sun, about 150 million kilometers. The tide words (<strong>tidal bulge</strong>, <strong>spring tide</strong>, <strong>neap tide</strong>), all of these,
         and the stretch formula, are in the “Words and formulas” box below.
       </p>
       <p style={paragraph}>
@@ -297,6 +471,8 @@ export function fallingInWordsEntries(afterRun: boolean): { term: string; meanin
     { term: 'Distance in horizon radii', meaning: 'the distance from the center divided by r_s. “10 horizon radii” means ten times as far from the center as the edge is.' },
     { term: 'Horizon light-time', meaning: `the time light takes to cross one horizon radius: r_s ÷ c. For the 10-Sun black hole, ${formatSeconds(run.lightTimeSeconds)}. It is the unit of time on the graphs.` },
     { term: 'Stretch', meaning: `the difference in pull between the two ends of a ${BODY_LENGTH_METERS}-meter body, in g. The nearer end is pulled harder.` },
+    { term: 'Tide, tidal bulge', meaning: 'the rise and fall of the sea. The Moon pulls harder on the near side of Earth than the far side, which stretches the ocean into a bulge on each side. Earth spins under the two bulges, so most shores have two high tides a day.' },
+    { term: 'Spring tide, neap tide', meaning: 'a spring tide is an extra-high (and extra-low) tide, twice a month, when Earth, Sun and Moon line up and their pulls add. A neap tide is a moderate tide, about a week later, when the Sun and Moon are at right angles and the Sun’s pull partly cancels the Moon’s. “Spring” has nothing to do with the season.' },
     { term: 'g', meaning: 'the pull of Earth’s gravity at its surface (9.81 m/s²). A stretch of 3 g means the feet are pulled harder than the head by three times that.' },
     { term: 'Exact theory of gravity', meaning: 'general relativity, Einstein’s theory in which gravity is curved spacetime.' },
     { term: 'Astronomical unit (AU)', meaning: 'the distance from the Earth to the Sun, about 150 million kilometers.' },

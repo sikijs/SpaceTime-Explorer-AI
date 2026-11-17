@@ -69,10 +69,11 @@ describe('Black Holes 5 renders (at rest)', () => {
     expect(html).toContain('Pictures 1 to 3 appear here when you press Run')
   })
 
-  it('has the two introduction drawings, schematic and with no numbers', () => {
+  it('has the three introduction drawings, schematic and with no numbers', () => {
     expect(html).toContain('Two watches.')
+    expect(html).toContain('The Moon’s uneven pull, and the two bulges it makes.')
     expect(html).toContain('Why the feet are pulled harder.')
-    expect(count(html, 'A schematic drawn for this page, not to scale')).toBe(2)
+    expect(count(html, 'A schematic drawn for this page, not to scale')).toBe(3)
   })
 
   it('tells the learner the predictions never change the real pictures, that guesses are drawn in white and shown again beside the results', () => {
