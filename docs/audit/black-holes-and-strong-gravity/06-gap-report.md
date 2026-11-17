@@ -56,3 +56,76 @@ Components: SeeingTheFallExperiment.tsx, SeeingTheFallTutor.tsx; module seeingTh
 
 ## Not checked
 Not run in a browser; tests not run; the tutor's explanation (:140-205) read only in part for A9; spec sources not read beyond the headings; "What's next" text in App.tsx not read.
+
+
+---
+
+# Re-read of 2026-11-17 (against Rule E, the 2026-11-07 rules, and the owner's request for rich Black Holes pages)
+Status: read-only; nothing in the app, tests or specification changed. The findings above still stand; the new findings are below. Line numbers are from `SeeingTheFallExperiment.tsx` as read today (1,253 lines; tutor 205; module 247; 317 test lines, 26 `it` blocks). The page was not opened in a browser and the tests were not run for this re-read. Later modules mention this module in tests or import from it, so existing exports and values must not change (new functions only).
+
+## Rule E (the page in four Parts): not met
+| Item | Result | Evidence | Gap |
+|---|---|---|---|
+| E1 | Not met | One long card: introduction (:646-737), three predictions, controls and Run (:835-880), three pictures with captions (:~885-1050), Results (:1056-1237), tutor (:1244) | Split into Part 1 (predict, then watch), Part 2 (black-hole and release-distance controls and the drawings that follow them), Part 3 (results), Part 4 (tutor) |
+| E2 | Not met | No Part headings, colours or leads | Four leads to draft; Part 1's gives no answers |
+| E3 | Not met | No "Want to know more?" list, no "Words and formulas" box (the words are a paragraph, :689-700) | Both go above Part 1 with no heading |
+| E4, E5 | n/a yet | | One experiment, no sub-parts |
+
+## The 2026-11-07 rules
+- **Parts 2, 3 and 4 appear after the first Run: not met in a way that matters.** `handlePresetChange` and `handleStartChange` call `setStatus('idle')` (:562-571) and the Results and tutor need `status === 'complete'` (:620). So **choosing another black hole or release distance hides the Results and the tutor**, and the tutor is keyed to `runCount` (:1244), so every Run restarts it. Same fault as Black Holes 5.
+- **Start over, not Change prediction: not met.** "Change predictions" (:825, handler :590-595) re-opens the guesses and keeps the chosen hole and distance, and appears only after the first Run. Replace with an always-visible "Start over".
+- **Links and words: not met** (E3). No link on the page.
+- **A Run must not need a choice that belongs to Part 2.** Today the learner picks a hole and a distance and then runs (default 10-Sun, 10 radii). The three guesses are about *a* fall: the same in horizon radii for every hole (only the seconds change), and all three answers live on pictures that any one fall draws. So **one fixed Part 1 fall is enough, with no second picture pair.** See question 1.
+
+## Findings that are new
+- **White is already used, twice, for things that are not guesses (Rule A, §14).** Picture 2's flash dots are white (:416, :435, caption :984), and the dashed reference lines use `REFERENCE_COLOR` `#e2e8f0` (:33), close to white. White must mean the learner's guess only, so the dots take another colour (the traveler's cyan is the natural one, since they are flashes sent from the traveler) and the reference lines a clearly grey. Decision for the owner (question 4).
+- **Verdicts before the tutor (§12, §13):** the Results have three paragraphs, each ending in a verdict (:1107-1140). They move to the tutor's explanation, as in Black Holes 1 to 5. The tutor's explanation at present never marks the guesses (the first report's A9).
+- **The caption gives the whole mechanism (the first report's C7, re-read):** "What is really happening" in each caption (:932-937, :988-994, :1024-1030) states the two causes and "the observer never sees the traveler cross". The learner has already guessed, so §12 is not broken, but §14 says the mechanism and any verdict belong to the tutor. Decision for the owner (question 5).
+- **The conceptual tutor question follows a Results panel that has already answered it** ("How can both be true?", Tutor :112, after "In the model it never arrives", :1121). Once the verdicts move, the order works again.
+- **Heading:** "Experiment 6 — Seeing the Fall From Far Away: Does Anyone See the Traveler Cross?" (:642). Black Holes 1 to 5 now read "Black Holes N: ...". The heading's question is guess 2's question in other words, but it asks and does not answer. Rename to "Black Holes 6: ...".
+- **Early hints in the introduction: none found that answer a guess.** "What to look for" (:711) says "what happens to the last flash", which points at guess 2's object without saying what happens; "Why even ask this" (:653-658) asks "do you see it happen? And if you do, when?" and gives no answer. I treat both as setup (question 5).
+- **UI arithmetic that moves into the module (§9):** the demo-distance rule and the near-horizon row assembly (:615-626), the "demoDistance = start > 2 ? 2 : 1.5" choice, the "4.6 light-times" and "ln 10" typed in the Results (:1125), and the verdict tests (:1107-1140).
+- **Marks that already say the answer before the run ends:** Picture 1's flash-20 "never arrives" arrow, its legend (:216, :286) and Picture 2's legend (:537) are drawn while the run plays. The guesses are locked by then, so this is allowed (§12); the white marks wait until the feature beside them is drawn (Rule A4).
+
+## What to draw for the guesses (Rule A, planned)
+All three answers are categories, so each is a marker (white YOUR GUESS box joined by a line to a place on the real picture), with a caption line saying it is a marker only. No guessed curves are drawn, because a curve would need a number the learner did not give.
+- **Guess 1 (how the flashes arrive: same spacing / closer together / further and further apart):** on **Picture 2**, at the right-hand end (the traveler nearest the horizon), on the vertical axis of the stretch factor: "same spacing" at the dashed "not stretched" line (1), "closer together" in the band below that line, "further apart" with an arrow towards the top edge. The real total curve ends far above (about 19,000). Drawn only once the curve has reached the right end.
+- **Guess 2 (the flash sent at the horizon: soon / after a long wait / never):** on **Picture 3**, at the rose horizon line: "soon" at the point where the horizon line meets the dashed no-delay line, "long wait" at a finite height on the curve's end, "never" with an arrow running up the horizon line past the top edge. Drawn only once the curve is drawn to its end.
+- **Guess 3 (which effect: only gravity / only motion / both):** on **Picture 2**, a pointer to the violet curve, the green curve, or a bracket on the amber total with "both, together". Drawn after the curves are drawn.
+- Picture 1 carries no guess (it is the real two-row picture), and says so in its "Where the real picture comes from" line.
+
+## Rule A6 line for each picture
+Under each: **calculated here** (every flash time, the stretch factor and its two parts, from the formulas given in the specification, for a thin flash sent straight outward from a falling traveler); **measured**: nothing (no observation of a real fall exists; the specification says the arrival-time and stretch formulas were not checked against a primary source, :240 of the specification); **imagined for the question**: the traveler, the flashes and the far-away observer, and the white guess marks.
+
+## Rule B, re-read
+- Today's Results: one 9-row table (:1063-1104), three verdict paragraphs, a worked calculation, a near-horizon table of three gaps (:1173-1198), the toss-a-ball comparison (:1205-1211) and the limits box (:1213-1234). No check-up, no "What this table tells us".
+- **Real references that exist (all from the same theory, tested):** the stretch factor equals gravity part × motion part by two routes (module test); at release the stretch is `1 ÷ √(1 − 1/r0)` with a motion part of exactly 1; near the horizon `(1 + z)(r − 1)` tends to `2E`, so each tenfold closing multiplies the stretch by 10; the arrival time grows by `2 ln 10 ≈ 4.605` light-times for each tenfold closing (twice Experiment 5's 2.303); the arrival time equals Experiment 5's far-away clock plus the delay `r0 + ln(r0 − 1) − r − ln(r − 1)`. **No measurement of a fall exists to compare with**, so the check-up reads "the same" with the gap, and there are no cut-offs.
+- A settings table is not needed: the controls (hole, release distance) only move marks and the kilometers and seconds.
+- The "Your guesses beside the results" block carries each guess as made, the question, and the table row where its number appears, with no verdict (verdicts go to the tutor).
+
+## Content for a favourite topic (all of it is the owner's to approve, §28.1)
+What exists today: a text-only introduction (about 90 lines), three drawn pictures, no images, no links, and no real-world grounding. Proposed as a menu to accept or cut, each fact only if a page is read in the next step (none is read yet for this experiment; the candidates below are leads, not sources):
+1. **A fuller introduction with sub-headings and two drawings made for the page:** (a) "the observer's view", a far-away observer with a clock receiving flashes from a falling friend (no answer drawn: the flashes are equally spaced on the traveler's side); (b) "how light climbs out", a flash sent from near the horizon taking longer to reach the observer than a flash sent from far out (no numbers). Held back until after the first Run (§12): that the gaps grow without limit, that the last flash never arrives, and the stretch numbers.
+2. **Real-world grounding, only from pages read, after the first Run, each marked as outside the model:** how real telescopes see matter near a black hole appear to dim and slow (for example, gas or flares near the horizon of Sagittarius A*, ESO's GRAVITY instrument), and why real black holes are still seen: matter and light from *outside* the horizon. Leads to search for in the next step: NASA Goddard, NASA Science, ESA, ESO (GRAVITY flares and orbits), Chandra.
+3. **Images:** only a real image whose licence is read (as ESA/Hubble's was for Black Holes 4). The EHT images are already in the project and are not about this topic.
+4. **A "Recent news" block** only from read pages, otherwise a dated block and a recorded gap (§29 rule 3(c)).
+5. **A "Want to know more?" list:** official plain pages on the event horizon and on time near a black hole, with gaps recorded where none is found. Black Holes 5's held-back list already links NASA Goddard's "Anatomy of Black Holes", page 8 (an explorer falling in and two clocks that disagree): reuse only if its content fits what this page says.
+6. **A "Words and formulas" box (collapsed):** flash, as sent, as received, observer, light travel time, stretch factor, horizon, horizon radius, horizon light-time, with the stretch formula `(1 + z) = [E + √(1/r − 1/r0)] ÷ (1 − 1/r)` as gravity part × motion part, with a worked example at 2 horizon radii (`1.414 × 2.236 = 3.162`); the formula's worked example and the "never arrives" arithmetic appear only after the first Run, because they give the answers away.
+
+## Questions for the owner (default first)
+1. **What does Part 1 show?** Default: **one Run, one fall**: the 10-Sun black hole, released from rest at 10 horizon radii (the specification's reference fall, 49 light-times on the traveler's watch, flashes arriving 2.6 apart at first and 5.0 apart by the nineteenth), 10 seconds, with Pictures 1, 2 and 3 as built. Part 2 then lets the learner pick any hole and release distance (100, 20, 10, 5, 2) with a second set of the same three pictures. Alternatives: (a) Sagittarius A* in Part 1 (flashes in minutes instead of fractions of a millisecond); (b) two falls in Part 1.
+2. **Verdicts out of the Results:** the three verdict paragraphs move to the tutor's explanation, which marks each guess; the Results only tag rows. Default: yes.
+3. **How the guesses are drawn.** Default: markers in white YOUR GUESS boxes as planned above (guesses 1 and 3 on Picture 2, guess 2 on Picture 3); Picture 1 carries none. Alternative: guess 2 on Picture 1 at flash 20's arrow instead of Picture 3.
+4. **White in the real pictures changes:** Picture 2's flash dots become the traveler's cyan and the dashed reference lines a clear grey, so that white means only the learner's guess. Default: yes.
+5. **The captions' "What is really happening" paragraphs** (the two-cause mechanism and "never sees the traveler cross"). Default: keep what each drawn thing is and give each caption a worked moment and three-part "what to look for"; move the mechanism and the verdict into the tutor's explanation. The introduction's "What to look for" and "Why even ask this" are kept as setup.
+6. **Real-world grounding, images and recent news.** Default: sourced real observations of matter near a black hole's horizon (only from pages read in the next step), after the first Run, each marked as outside the model; no new image unless its licence is read; no "recent news" block if no page can be read.
+7. **Two drawings for the introduction** ("the observer's view" and "how light climbs out"). Default: yes.
+8. **A check-up** of the stretch (two routes), the release value `1 ÷ √(1 − 1/r0)`, the near-horizon tenfold rule (×10 stretch, +4.605 light-times arrival) and the arrival time against Experiment 5's far-away clock plus the delay. Default: yes, in the words "the same" with the gap; no measured numbers.
+9. **The near-horizon table** (gap 0.01, 0.001, 0.0001) stays as an ordinary Results table fixed at the Part 1 release, with a note; no settings table. Default: yes.
+10. **The toss-a-ball comparison** (the friend walking away, tossing a ball every second, for the motion part only). Default: keep it in the Results and the tutor after the first Run, labelled an analogy (specification Decision 9).
+11. **Heading and cross-references:** "Black Holes 6: Seeing the Fall From Far Away", with the three guess wordings staying exactly as approved (2026-10-11). Default: yes.
+12. **The "What you learned" box staying after Start over for a completed chapter** (open since Black Holes 2). Default: leave as the app's existing behaviour; decide once for all chapters.
+13. **Colour of the fall (Black Holes 7) is next.** Default: this page does not say what colour the flashes turn or how bright they stay (the specification already excludes it) and the real-world block does not preview it.
+
+## Not checked in this re-read
+Not run in a browser. Tests not run. No link was fetched and no source read for any real-world claim. The tutor was read only to its first third (:1-80) and the Results and captions were judged from the line list; the tutor's explanation (:140-205) was read in part for the earlier finding. The specification was read to the start of the tutor section.
