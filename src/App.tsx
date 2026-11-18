@@ -858,7 +858,7 @@ const chapters: Chapter[] = [
     Component: ColorOfTheFallExperiment,
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
-      "The crests of a light wave are stretched apart just as the flashes in Experiment 6 were, by the same stretch factor, so the wavelength the observer receives is the lamp's wavelength times that factor. A falling traveler's green lamp turns redder (this is called redshift), leaves visible light well before the horizon, and goes on into infrared and then microwaves, with no limit near the horizon. Two effects multiply to give the stretching: gravity slowing the traveler's clock, and the traveler moving away. The color depends only on the distance in horizon radii, not on the mass of the black hole.",
+      "The crests of a light wave are stretched apart just as the flashes in Black Holes 6 were, by the same stretch factor, so the wavelength the observer receives is the lamp's wavelength times that factor. A falling traveler's green lamp turns redder (this is called redshift), leaves visible light well before the horizon, and goes on into infrared and then microwaves, with no limit near the horizon. Two effects multiply to give the stretching: gravity slowing the traveler's clock, and the traveler moving away. The color depends only on the distance in horizon radii, not on the mass of the black hole.",
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1): changed to point to Experiment 8.
     next: 'Next, spinning black holes: does the direction a probe circles, and how fast the black hole spins, change where orbits are safe?',
   },
