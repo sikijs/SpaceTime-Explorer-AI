@@ -4,10 +4,34 @@ import {
   BANDS,
   BLACK_HOLE_PRESETS,
   LAMP_WAVELENGTH_NM,
+  MASS_PANEL_DISTANCE_IN_HORIZON_RADII,
   MAX_START_IN_HORIZON_RADII,
   MIN_START_IN_HORIZON_RADII,
+  PART_ONE_START_IN_HORIZON_RADII,
   SMALLEST_GAP_IN_HORIZON_RADII,
   bandOf,
+  checkUpRows,
+  colorGuessIsModelAnswer,
+  colorGuessMarker,
+  curveEnd,
+  fallRow,
+  massGuessIsModelAnswer,
+  massAnswerFromWavelengths,
+  massGuessMarker,
+  massPanelColumns,
+  modelColorAnswer,
+  modelMassAnswer,
+  modelVisibleAnswer,
+  nearHorizonReadings,
+  partOneRow,
+  percentAbove,
+  readAgainstRounded,
+  runPartOne,
+  visibleGuessIsModelAnswer,
+  visibleGuessMarker,
+  wavelengthRatiosPerTenfoldGap,
+  workedDistance,
+  workedSteps,
   distanceWhereWavelengthPasses,
   lightPeriodSeconds,
   receivedWavelengthNm,
@@ -256,6 +280,155 @@ describe('determinism and playback speed', () => {
 
   it('uses no wall-clock time or randomness, so playback speed cannot change a result (CLAUDE.md §11)', () => {
     expect(source).not.toMatch(/performance\.now|Date\.now|new Date|Math\.random|requestAnimationFrame|setTimeout/)
+  })
+})
+
+describe('the fixed Part 1 fall', () => {
+  it('is the 10-Sun black hole released from rest at 10 horizon radii, and is the same object each time', () => {
+    const part = runPartOne()
+    expect(part.preset.id).toBe('stellar-black-hole')
+    expect(part.startInHorizonRadii).toBe(10)
+    expect(PART_ONE_START_IN_HORIZON_RADII).toBe(10)
+    expect(runPartOne()).toBe(part)
+  })
+
+  it('gives 580 nm at the release, leaves visible light at 6.83 and ends at about 10.4 mm in the microwave band', () => {
+    const row = partOneRow()
+    closeTo(row.wavelengthAtReleaseNm, 579.8, 0.001)
+    expect(row.bandAtRelease).toBe('visible')
+    closeTo(row.leavesVisibleAt as number, 6.83, 0.001)
+    closeTo(row.endWavelengthNm, 10.436e6, 0.001)
+    expect(row.endBand).toBe('microwave')
+    expect(curveEnd().gap).toBeCloseTo(SMALLEST_GAP_IN_HORIZON_RADII, 12)
+  })
+})
+
+describe('guess 1: the color the observer receives', () => {
+  it('is "redder with no limit" in the model, and only that choice is marked as matching', () => {
+    expect(modelColorAnswer()).toBe('no-limit')
+    expect(colorGuessIsModelAnswer('no-limit')).toBe(true)
+    for (const wrong of ['same', 'bluer', 'limit'] as const) expect(colorGuessIsModelAnswer(wrong)).toBe(false)
+  })
+
+  it('gives a different marker for each answer', () => {
+    const kinds = (['same', 'bluer', 'limit', 'no-limit'] as const).map((c) => colorGuessMarker(c).kind)
+    expect(new Set(kinds).size).toBe(4)
+    expect(kinds).toEqual(['at-lamp', 'left-of-lamp', 'stop-bar', 'arrow-to-right-edge'])
+  })
+
+  it('has a curve that would be called "no limit" at every release distance from 2 to 100', () => {
+    for (const r of [2, 5, 10, 20, 100]) expect(modelColorAnswer(runColorOfTheFallExperiment('stellar-black-hole', r))).toBe('no-limit')
+  })
+})
+
+describe('guess 2: whether the light stays visible', () => {
+  it('is "well before the horizon" for the fall from 10, because the light passes 750 nm 5.83 horizon radii above the horizon', () => {
+    expect(modelVisibleAnswer()).toBe('well-before')
+    expect(visibleGuessIsModelAnswer('well-before')).toBe(true)
+    expect(visibleGuessIsModelAnswer('all-the-way')).toBe(false)
+    expect(visibleGuessIsModelAnswer('near-horizon')).toBe(false)
+  })
+
+  it('is "well before" also when the light is already past 750 nm at the release (a release at 2)', () => {
+    expect(modelVisibleAnswer(runColorOfTheFallExperiment('stellar-black-hole', 2))).toBe('well-before')
+  })
+
+  it('gives a different marker for each answer', () => {
+    expect(visibleGuessMarker('all-the-way').kind).toBe('right-end')
+    expect(visibleGuessMarker('near-horizon').kind).toBe('near-right-end')
+    expect(visibleGuessMarker('well-before').kind).toBe('left-half')
+  })
+})
+
+describe('guess 3: the color at 5 horizon radii for two black holes', () => {
+  it('has two columns of 870 nm, the same wavelength, at different distances in kilometers', () => {
+    const [small, big] = massPanelColumns()
+    expect(small.presetId).toBe('stellar-black-hole')
+    expect(big.presetId).toBe('m87-star')
+    closeTo(small.wavelengthNm, 869.6, 0.001)
+    expect(small.wavelengthNm).toBe(big.wavelengthNm)
+    expect(MASS_PANEL_DISTANCE_IN_HORIZON_RADII).toBe(5)
+    closeTo(big.distanceKm / small.distanceKm, 6.5e9 / 10, 1e-9)
+  })
+
+  it('is "no, the same" in the model, and only that choice is marked as matching', () => {
+    expect(modelMassAnswer()).toBe('same')
+    expect(massGuessIsModelAnswer('same')).toBe(true)
+    expect(massGuessIsModelAnswer('small')).toBe(false)
+    expect(massGuessIsModelAnswer('big')).toBe(false)
+  })
+
+  it('would mark the longer column, or "the same" within 1 percent, if the two columns ever differed', () => {
+    expect(massAnswerFromWavelengths(870, 870)).toBe('same')
+    expect(massAnswerFromWavelengths(870, 875)).toBe('same')
+    expect(massAnswerFromWavelengths(1000, 870)).toBe('small')
+    expect(massAnswerFromWavelengths(870, 1000)).toBe('big')
+  })
+
+  it('gives a different marker for each answer', () => {
+    expect(massGuessMarker('same').target).toBe('both-columns')
+    expect(massGuessMarker('small').target).toBe('small-column')
+    expect(massGuessMarker('big').target).toBe('big-column')
+  })
+})
+
+describe('the worked calculation and the near-horizon readings', () => {
+  it('works at 5 horizon radii from a release above 5, and halfway down the gap otherwise', () => {
+    expect(workedDistance(10)).toBe(5)
+    expect(workedDistance(100)).toBe(5)
+    expect(workedDistance(5)).toBe(3)
+    expect(workedDistance(2)).toBe(1.5)
+    closeTo(workedSteps(10).wavelengthNm, 869.6, 0.001)
+  })
+
+  it('reads 105 micrometers, 1.04 millimeters and 10.4 millimeters at gaps of 0.01, 0.001 and 0.0001, with the bands', () => {
+    const [a, b, c] = nearHorizonReadings(10)
+    closeTo(a.wavelengthNm, 105.1e3, 0.001)
+    closeTo(b.wavelengthNm, 1.04e6, 0.005)
+    closeTo(c.wavelengthNm, 10.4e6, 0.005)
+    expect([a.band, b.band, c.band]).toEqual(['infrared', 'microwave', 'microwave'])
+  })
+
+  it('is ten times longer at each tenfold closing of the gap, to within the gap', () => {
+    for (const ratio of wavelengthRatiosPerTenfoldGap(10)) closeTo(ratio, 10, 0.02)
+  })
+})
+
+describe('the check-up', () => {
+  it('has four rows, each reading "the same"', () => {
+    const rows = checkUpRows()
+    expect(rows).toHaveLength(4)
+    for (const row of rows) expect(row.reading).toBe('the same')
+  })
+
+  it('compares the wavelength two ways, the period ratio with the stretch factor, the release value, and the tenfold rule', () => {
+    const [wavelength, period, release, tenfold] = checkUpRows()
+    closeTo(wavelength.found, 869.6, 0.001)
+    closeTo(period.found, 1.5811, 0.0001)
+    closeTo(release.expected, 579.8, 0.001)
+    expect(tenfold.expected).toBe(10)
+    expect(Math.abs(tenfold.percentAbove)).toBeLessThan(1)
+    expect(Number(tenfold.found.toPrecision(2))).toBe(tenfold.expected)
+    expect(Number(wavelength.found.toPrecision(6))).toBe(Number(wavelength.expected.toPrecision(6)))
+    expect(Number(period.found.toPrecision(6))).toBe(Number(period.expected.toPrecision(6)))
+    expect(Number(release.found.toPrecision(6))).toBe(Number(release.expected.toPrecision(6)))
+  })
+
+  it('reads a number against a reference without a cut-off: the same only when equal to the figures shown', () => {
+    expect(readAgainstRounded(1.5811, 1.5811, 6)).toBe('the same')
+    expect(readAgainstRounded(1.6, 1.5, 3)).toBe('more')
+    expect(readAgainstRounded(1.4, 1.5, 3)).toBe('less')
+    closeTo(100 + percentAbove(110, 100), 110, 1e-12)
+  })
+})
+
+describe('a fall in one row', () => {
+  it('gives the same wavelengths for the three black holes and different kilometers', () => {
+    const small = fallRow(runColorOfTheFallExperiment('stellar-black-hole', 10))
+    const big = fallRow(runColorOfTheFallExperiment('m87-star', 10))
+    expect(small.wavelengthAtReleaseNm).toBe(big.wavelengthAtReleaseNm)
+    expect(small.endWavelengthNm).toBe(big.endWavelengthNm)
+    expect(big.startKm).toBeGreaterThan(small.startKm)
   })
 })
 

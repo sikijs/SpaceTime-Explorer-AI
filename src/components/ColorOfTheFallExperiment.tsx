@@ -1,20 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  BANDS,
   BLACK_HOLE_PRESETS,
-  LAMP_WAVELENGTH_NM,
-  SMALLEST_GAP_IN_HORIZON_RADII,
-  bandOf,
-  lightPeriodSeconds,
+  MAX_START_IN_HORIZON_RADII,
+  MIN_START_IN_HORIZON_RADII,
+  PART_ONE_START_IN_HORIZON_RADII,
   receivedWavelengthNm,
   runColorOfTheFallExperiment,
+  runPartOne,
   stretchFactor,
-  stretchFactorSteps,
 } from '../physics/colorOfTheFallExperiment'
-import type { ColorOfTheFallResult } from '../physics/colorOfTheFallExperiment'
+import type { ColorChoice, ColorOfTheFallResult, MassChoice, VisibleChoice } from '../physics/colorOfTheFallExperiment'
 import type { ObjectPreset } from '../physics/blackHoleSizeExperiment'
+import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PartHeader } from './GravitationalWaveExperiment'
+import { ColorOfTheFallHeldBackLinks, ColorOfTheFallIntro, ColorOfTheFallLinks, GuessNotes, colorOfTheFallWordsEntries } from './ColorOfTheFallIntro'
+import { COLOR_CHOICES, COLOR_QUESTION, MASS_CHOICES, MASS_QUESTION, VISIBLE_CHOICES, VISIBLE_QUESTION, colorLabel, massLabel, visibleLabel } from './ColorOfTheFallChoices'
+import { ColorStrip, GraphCaption, StripCaption, WavelengthGraph, formatDistance, formatMass, formatWavelength, withBand } from './ColorOfTheFallPictures'
+import { ColorOfTheFallResults } from './ColorOfTheFallResults'
 import { ColorOfTheFallTutor } from './ColorOfTheFallTutor'
+import { Block, WhereFrom, smallNote } from './TidalEffectExperiment'
 
 interface ColorOfTheFallExperimentProps {
   onComplete?: () => void
@@ -25,1134 +29,347 @@ interface ColorOfTheFallExperimentProps {
 // gap above the horizon shrinks by the same factor in each equal slice of it, as on the graph's logarithmic axis.
 const ANIMATION_DURATION_MS = 10_000
 
-const KM_PER_AU = 149_597_870.7
-
-const LAMP_COLOR = '#4ade80' // the lamp's own color, as emitted
-const RECEIVED_COLOR = '#fb923c' // the color as received by the observer, orange as the observer's clock in Experiment 6
-const REFERENCE_COLOR = '#e2e8f0'
-const TRAVELER_COLOR = '#22d3ee' // the traveler, cyan as the traveler's watch in Experiment 6
-
+const DEFAULT_PRESET_ID: ObjectPreset['id'] = 'stellar-black-hole'
+const DEFAULT_START = 10
 const START_PRESETS = [100, 20, 10, 5, 2]
 
-// This experiment's three prediction questions, per its specification's "Prediction Activity". Choices are not scored
-// here; they are compared with the model's results later. The question wording was approved by the owner on 2026-10-12.
-type ColorChoice = 'same' | 'bluer' | 'limit' | 'no-limit'
-const colorChoices: Array<{ value: ColorChoice; label: string }> = [
-  { value: 'same', label: 'It stays green' },
-  { value: 'bluer', label: 'It turns bluer (a shorter wavelength)' },
-  { value: 'limit', label: 'It turns redder (a longer wavelength), but only up to a point, then stays the same' },
-  { value: 'no-limit', label: 'It turns redder (a longer wavelength) and keeps on getting redder, with no limit' },
-]
+type RunStatus = 'idle' | 'running' | 'complete'
 
-type VisibleChoice = 'all-the-way' | 'near-horizon' | 'well-before'
-const visibleChoices: Array<{ value: VisibleChoice; label: string }> = [
-  { value: 'all-the-way', label: 'Yes, all the way to the horizon, only dimmer' },
-  { value: 'near-horizon', label: 'Yes, until the traveler is very close to the horizon' },
-  { value: 'well-before', label: 'No, it stops being visible light well before the horizon' },
-]
-
-type MassChoice = 'small' | 'big' | 'same'
-const massChoices: Array<{ value: MassChoice; label: string }> = [
-  { value: 'small', label: 'Yes, much redder for the 10-Sun black hole' },
-  { value: 'big', label: 'Yes, much redder for M87*' },
-  { value: 'same', label: 'No, the same' },
-]
-
-// The color strip (the first picture): wavelength on a logarithmic axis from 100 nm to 10 m.
-const STRIP_WIDTH = 640
-const STRIP_HEIGHT = 440
-const STRIP_LEFT = 30
-const STRIP_RIGHT = 610
-const STRIP_Y = 222
-const STRIP_BAND_HEIGHT = 84
-const STRIP_MIN_NM = 100
-const STRIP_MAX_NM = 1e10
-const CREST_SPACING_PX = 14
-const MAX_DRAWN_STRETCH = 20
-
-// The wavelength graph (the second picture).
-const GRAPH_WIDTH = 640
-const GRAPH_HEIGHT = 440
-const GRAPH_LEFT = 84
-const GRAPH_RIGHT = 610
-const GRAPH_TOP = 66
-const GRAPH_BOTTOM = 300
-
-const CAPTION_STYLE: CSSProperties = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }
-const CAPTION_PARAGRAPH_STYLE: CSSProperties = { marginTop: 0, marginBottom: '0.4rem' }
-
-const BAND_FILL: Record<string, string> = {
-  ultraviolet: '#4c1d95',
-  visible: 'url(#visible-rainbow)',
-  infrared: '#7f1d1d',
-  microwave: '#78350f',
-  radio: '#1e293b',
-}
-const BAND_LABEL: Record<string, string> = {
-  ultraviolet: 'ultraviolet',
-  visible: 'visible light',
-  infrared: 'infrared',
-  microwave: 'microwave',
-  radio: 'radio waves',
-}
-
-// Three significant figures, with no trailing zeros ("10", "2.95", "235,571").
-function formatNumber(value: number): string {
-  if (value >= 1000) return Number(value.toPrecision(3)).toLocaleString('en-US')
-  return String(Number(value.toPrecision(3)))
-}
-
-const SUPERSCRIPT: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' }
-
-// A number in plain form when it is moderate, as a power of ten when it is very large or very small.
-function formatBig(value: number): string {
-  if (value >= 0.01 && value < 10_000) return formatNumber(value)
-  const exponent = Math.floor(Math.log10(value))
-  const mantissa = Number((value / 10 ** exponent).toPrecision(2))
-  return `${mantissa} × 10${String(exponent)
-    .split('')
-    .map((ch) => SUPERSCRIPT[ch])
-    .join('')}`
-}
-
-// A length in plain units, from meters to trillions of kilometers.
-function formatLength(km: number): string {
-  if (km < 1) return `${formatNumber(km * 1000)} m`
-  if (km < 1e6) return `${formatNumber(km)} km`
-  if (km < 1e9) return `${formatNumber(km / 1e6)} million km`
-  if (km < 1e12) return `${formatNumber(km / 1e9)} billion km`
-  return `${formatNumber(km / 1e12)} trillion km`
-}
-
-// Kilometers, with astronomical units added once that is the more natural unit.
-function formatDistance(km: number): string {
-  return km >= 7.5e6 ? `${formatLength(km)}, about ${formatNumber(km / KM_PER_AU)} AU` : formatLength(km)
-}
-
-function formatMass(solarMasses: number): string {
-  if (solarMasses < 1e3) return `${solarMasses} solar masses`
-  if (solarMasses < 1e9) return `${solarMasses / 1e6} million solar masses`
-  return `${solarMasses / 1e9} billion solar masses`
-}
-
-// A wavelength in the unit that fits it, from nanometers to meters.
-function formatWavelength(nm: number): string {
-  if (nm < 1000) return `${formatNumber(nm)} nm`
-  if (nm < 1e6) return `${formatNumber(nm / 1e3)} µm`
-  if (nm < 1e9) return `${formatNumber(nm / 1e6)} mm`
-  return `${formatNumber(nm / 1e9)} m`
-}
-
-// A gap above the horizon, with enough digits to tell 0.01 from 0.001.
-const formatGap = (gap: number) => (gap >= 1 ? formatNumber(gap) : String(Number(gap.toPrecision(2))))
-
-// Where the traveler is at a given point of the playback: the gap above the horizon falls from the release gap to the
-// smallest gap, by the same factor in each equal slice of the playback.
-function gapAt(result: ColorOfTheFallResult, progress: number): number {
-  const widest = result.startInHorizonRadii - 1
-  return widest * (SMALLEST_GAP_IN_HORIZON_RADII / widest) ** progress
-}
-
-// The first picture: the traveler's lamp and the observer's view of its crests, and the strip of colors, with the lamp's
-// own wavelength (fixed) and the wavelength as received (moving).
-function ColorStrip({ result, progress }: { result: ColorOfTheFallResult; progress: number }) {
-  const start = result.startInHorizonRadii
-  const gap = gapAt(result, progress)
-  const r = Math.min(1 + gap, start)
-  const wavelength = receivedWavelengthNm(start, r)
-  const factor = stretchFactor(start, r)
-  const band = bandOf(wavelength)
-
-  const logMin = Math.log10(STRIP_MIN_NM)
-  const logMax = Math.log10(STRIP_MAX_NM)
-  const xFor = (nm: number) => STRIP_LEFT + ((Math.log10(nm) - logMin) / (logMax - logMin)) * (STRIP_RIGHT - STRIP_LEFT)
-  const ticks: Array<{ nm: number; label: string }> = [
-    { nm: 1e2, label: '100 nm' },
-    { nm: 1e3, label: '1 µm' },
-    { nm: 1e4, label: '10 µm' },
-    { nm: 1e5, label: '100 µm' },
-    { nm: 1e6, label: '1 mm' },
-    { nm: 1e7, label: '1 cm' },
-    { nm: 1e8, label: '10 cm' },
-    { nm: 1e9, label: '1 m' },
-    { nm: 1e10, label: '10 m' },
-  ]
-  const rainbowStops = [380, 450, 495, 570, 590, 620, 750].map((nm) => ({
-    nm,
-    color: nm < 450 ? '#8b5cf6' : nm < 495 ? '#3b82f6' : nm < 570 ? '#22c55e' : nm < 590 ? '#eab308' : nm < 620 ? '#f97316' : '#ef4444',
-  }))
-
-  // The crests: at the lamp they are CREST_SPACING_PX apart. At the observer they are that times the stretch factor,
-  // drawn to scale only up to MAX_DRAWN_STRETCH, since a larger spacing would not fit on the picture.
-  const drawnStretch = Math.min(factor, MAX_DRAWN_STRETCH)
-  const crestsFrom = (left: number, right: number, spacing: number) => {
-    const xs: number[] = []
-    for (let x = left; x <= right; x += spacing) xs.push(x)
-    return xs
-  }
-  const emittedCrests = crestsFrom(104, 236, CREST_SPACING_PX)
-  const receivedCrests = crestsFrom(404, 600, CREST_SPACING_PX * drawnStretch)
-
-  const bandEdge = (name: string) => BANDS.find((b) => b.name === name)!
-  const bandRect = (name: string) => {
-    const b = bandEdge(name)
-    const from = xFor(Math.max(b.fromNm, STRIP_MIN_NM))
-    const to = xFor(Math.min(b.toNm, STRIP_MAX_NM))
-    return { from, to }
-  }
-  const markerX = xFor(Math.min(Math.max(wavelength, STRIP_MIN_NM), STRIP_MAX_NM))
-  const lampX = xFor(LAMP_WAVELENGTH_NM)
-  const labelAnchor = markerX > STRIP_RIGHT - 130 ? 'end' : markerX < STRIP_LEFT + 130 ? 'start' : 'middle'
-
-  return (
-    <svg
-      viewBox={`0 0 ${STRIP_WIDTH} ${STRIP_HEIGHT}`}
-      width="100%"
-      style={{
-        display: 'block',
-        maxWidth: `${STRIP_WIDTH}px`,
-        border: '1px solid var(--border-color, #ccc)',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        backgroundColor: '#0b1020',
-      }}
-    >
-      <defs>
-        <linearGradient id="visible-rainbow" x1="0" x2="1" y1="0" y2="0">
-          {rainbowStops.map((s) => (
-            <stop key={s.nm} offset={(Math.log10(s.nm) - Math.log10(380)) / (Math.log10(750) - Math.log10(380))} stopColor={s.color} />
-          ))}
-        </linearGradient>
-      </defs>
-      <text x={12} y={20} fill="#e2e8f0" fontSize="12" fontWeight="bold">
-        The color of the lamp, as received
-      </text>
-      <text x={12} y={38} fill="#94a3b8" fontSize="11">
-        Traveler {String(Number(r.toPrecision(6)))} horizon radii from the center ({formatGap(gap)} above the horizon) · stretch factor{' '}
-        {formatBig(factor)}
-      </text>
-      <text x={12} y={54} fill="#94a3b8" fontSize="11">
-        Wavelength as received: {formatWavelength(wavelength)} ({BAND_LABEL[band]})
-      </text>
-
-      {/* The traveler with the lamp, the crests at the lamp and the crests at the observer */}
-      <circle cx={52} cy={104} r={9} fill={TRAVELER_COLOR} />
-      <circle cx={62} cy={104} r={4} fill={LAMP_COLOR} />
-      <text x={52} y={132} fill={TRAVELER_COLOR} fontSize="10" textAnchor="middle">
-        traveler + lamp
-      </text>
-      <text x={592} y={132} fill={RECEIVED_COLOR} fontSize="10" textAnchor="end">
-        observer, far away
-      </text>
-      {emittedCrests.map((x) => (
-        <line key={`e${x}`} x1={x} y1={88} x2={x} y2={120} stroke={LAMP_COLOR} strokeWidth={2.5} />
-      ))}
-      <text x={170} y={82} fill={LAMP_COLOR} fontSize="10" textAnchor="middle">
-        crests as emitted, at the lamp
-      </text>
-      {receivedCrests.map((x) => (
-        <line key={`r${x}`} x1={x} y1={88} x2={x} y2={120} stroke={RECEIVED_COLOR} strokeWidth={2.5} />
-      ))}
-      <text x={500} y={82} fill={RECEIVED_COLOR} fontSize="10" textAnchor="middle">
-        crests as received, at the observer
-      </text>
-      <line x1={252} y1={104} x2={388} y2={104} stroke="#64748b" strokeDasharray="4 4" />
-      <polygon points="388,100 396,104 388,108" fill="#64748b" />
-      <text x={320} y={98} fill="#94a3b8" fontSize="10" textAnchor="middle">
-        light travels outward
-      </text>
-      <text x={320} y={150} fill="#94a3b8" fontSize="10" textAnchor="middle">
-        crests are {formatBig(factor)} times as far apart at the observer
-      </text>
-      {factor > MAX_DRAWN_STRETCH && (
-        <text x={320} y={164} fill="#94a3b8" fontSize="10" textAnchor="middle">
-          (drawn to scale only up to {MAX_DRAWN_STRETCH} times; beyond that they would not fit)
-        </text>
-      )}
-
-      {/* The strip of colors */}
-      {BANDS.map((b) => {
-        const { from, to } = bandRect(b.name)
-        return (
-          <g key={b.name}>
-            <rect x={from} y={STRIP_Y} width={to - from} height={STRIP_BAND_HEIGHT} fill={BAND_FILL[b.name]} />
-            {to - from < 60 ? (
-              // Narrow bands (ultraviolet and visible light) get their name written upward inside the band.
-              <text
-                x={(from + to) / 2 + 4}
-                y={STRIP_Y + STRIP_BAND_HEIGHT / 2}
-                fill="#ffffff"
-                fontSize="10"
-                fontWeight="bold"
-                textAnchor="middle"
-                transform={`rotate(-90 ${(from + to) / 2 + 4} ${STRIP_Y + STRIP_BAND_HEIGHT / 2})`}
-              >
-                {BAND_LABEL[b.name]}
-              </text>
-            ) : (
-              <text x={(from + to) / 2} y={STRIP_Y + STRIP_BAND_HEIGHT / 2 + 4} fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle">
-                {BAND_LABEL[b.name]}
-              </text>
-            )}
-          </g>
-        )
-      })}
-      {ticks.map((t) => (
-        <g key={t.nm}>
-          <line x1={xFor(t.nm)} y1={STRIP_Y + STRIP_BAND_HEIGHT} x2={xFor(t.nm)} y2={STRIP_Y + STRIP_BAND_HEIGHT + 5} stroke="#94a3b8" />
-          <text x={xFor(t.nm)} y={STRIP_Y + STRIP_BAND_HEIGHT + 18} fill="#94a3b8" fontSize="9" textAnchor="middle">
-            {t.label}
-          </text>
-        </g>
-      ))}
-      <text x={(STRIP_LEFT + STRIP_RIGHT) / 2} y={STRIP_Y + STRIP_BAND_HEIGHT + 34} fill="#94a3b8" fontSize="10" textAnchor="middle">
-        wavelength (each step to the right is ten times longer)
-      </text>
-
-      {/* The lamp's own wavelength (fixed) below the strip's labels, and the wavelength as received (moving) above the strip */}
-      <polygon points={`${lampX},${STRIP_Y + STRIP_BAND_HEIGHT} ${lampX - 6},${STRIP_Y + STRIP_BAND_HEIGHT + 12} ${lampX + 6},${STRIP_Y + STRIP_BAND_HEIGHT + 12}`} fill={LAMP_COLOR} />
-      <text x={lampX} y={STRIP_Y + STRIP_BAND_HEIGHT + 46} fill={LAMP_COLOR} fontSize="10" textAnchor="start">
-        green marker: the lamp's own color, {LAMP_WAVELENGTH_NM} nm (as emitted)
-      </text>
-      <line x1={markerX} y1={STRIP_Y - 26} x2={markerX} y2={wavelength > 750 ? STRIP_Y + STRIP_BAND_HEIGHT : STRIP_Y} stroke={RECEIVED_COLOR} strokeWidth={3} />
-      <polygon points={`${markerX},${STRIP_Y} ${markerX - 7},${STRIP_Y - 12} ${markerX + 7},${STRIP_Y - 12}`} fill={RECEIVED_COLOR} />
-      <text x={markerX} y={STRIP_Y - 32} fill={RECEIVED_COLOR} fontSize="11" fontWeight="bold" textAnchor={labelAnchor}>
-        orange marker: as received, {formatWavelength(wavelength)}
-      </text>
-
-      <circle cx={24} cy={STRIP_HEIGHT - 44} r={4} fill={TRAVELER_COLOR} />
-      <text x={34} y={STRIP_HEIGHT - 40} fill="#e2e8f0" fontSize="10">
-        the traveler, carrying a lamp
-      </text>
-      <line x1={220} y1={STRIP_HEIGHT - 44} x2={234} y2={STRIP_HEIGHT - 44} stroke={LAMP_COLOR} strokeWidth={3} />
-      <text x={240} y={STRIP_HEIGHT - 40} fill="#e2e8f0" fontSize="10">
-        a crest of the light as emitted
-      </text>
-      <line x1={420} y1={STRIP_HEIGHT - 44} x2={434} y2={STRIP_HEIGHT - 44} stroke={RECEIVED_COLOR} strokeWidth={3} />
-      <text x={440} y={STRIP_HEIGHT - 40} fill="#e2e8f0" fontSize="10">
-        a crest as received
-      </text>
-      <text x={24} y={STRIP_HEIGHT - 20} fill="#94a3b8" fontSize="10">
-        The bands are the usual ranges, not sharp edges. Only the wavelength is shown, not how bright the light is.
-      </text>
-    </svg>
-  )
-}
-
-// The received wavelength against the traveler's gap above the horizon, over shaded stripes for each band.
-function WavelengthGraph({ result, progress }: { result: ColorOfTheFallResult; progress: number }) {
-  const widest = result.curve[0].gap
-  const logWidest = Math.log10(widest)
-  const logSmallest = Math.log10(SMALLEST_GAP_IN_HORIZON_RADII)
-  const logBottom = 2 // 100 nm
-  const logTop = Math.ceil(Math.log10(result.curve[result.curve.length - 1].wavelengthNm) + 0.05)
-  const xFor = (gap: number) => GRAPH_LEFT + ((logWidest - Math.log10(gap)) / (logWidest - logSmallest)) * (GRAPH_RIGHT - GRAPH_LEFT)
-  const yFor = (nm: number) => GRAPH_BOTTOM - ((Math.log10(nm) - logBottom) / (logTop - logBottom)) * (GRAPH_BOTTOM - GRAPH_TOP)
-  const clampY = (nm: number) => Math.min(Math.max(yFor(nm), GRAPH_TOP), GRAPH_BOTTOM)
-  const line = result.curve.map((p) => `${xFor(p.gap)},${yFor(p.wavelengthNm)}`).join(' ')
-  const gapTicks: number[] = []
-  for (let k = Math.ceil(logSmallest); k <= Math.floor(logWidest); k++) gapTicks.push(10 ** k)
-  const nmTicks = Array.from({ length: logTop - logBottom + 1 }, (_, i) => 10 ** (logBottom + i))
-
-  const start = result.startInHorizonRadii
-  const gap = Math.max(gapAt(result, progress), SMALLEST_GAP_IN_HORIZON_RADII)
-  const wavelength = receivedWavelengthNm(start, Math.min(1 + gap, start))
-  const lastPoint = result.curve[result.curve.length - 1]
-
-  return (
-    <svg
-      viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-      width="100%"
-      style={{
-        marginTop: '1rem',
-        display: 'block',
-        maxWidth: `${GRAPH_WIDTH}px`,
-        border: '1px solid var(--border-color, #ccc)',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        backgroundColor: '#0b1020',
-      }}
-    >
-      <defs>
-        <clipPath id="wavelength-plot">
-          <rect x={GRAPH_LEFT} y={GRAPH_TOP} width={GRAPH_RIGHT - GRAPH_LEFT} height={GRAPH_BOTTOM - GRAPH_TOP + 1} />
-        </clipPath>
-      </defs>
-      <text x={12} y={20} fill="#e2e8f0" fontSize="12" fontWeight="bold">
-        The wavelength against the traveler's distance
-      </text>
-      <text x={12} y={38} fill="#94a3b8" fontSize="11">
-        Horizontal: gap above the horizon (log, farther on the left). Vertical: wavelength as received (log).
-      </text>
-
-      {/* The bands, as shaded stripes */}
-      <g clipPath="url(#wavelength-plot)">
-        {BANDS.map((b) => {
-          const top = clampY(Math.min(b.toNm, 10 ** logTop))
-          const bottom = clampY(Math.max(b.fromNm, 10 ** logBottom))
-          const fill = { ultraviolet: '#4c1d95', visible: '#166534', infrared: '#7f1d1d', microwave: '#78350f', radio: '#1e293b' }[b.name]
-          return bottom > top ? (
-            <g key={b.name}>
-              <rect x={GRAPH_LEFT} y={top} width={GRAPH_RIGHT - GRAPH_LEFT} height={bottom - top} fill={fill} fillOpacity={0.45} />
-              <text x={GRAPH_LEFT + 8} y={Math.min(top + 14, (top + bottom) / 2 + 4)} fill="#e2e8f0" fontSize="10" fontWeight="bold">
-                {BAND_LABEL[b.name]}
-              </text>
-            </g>
-          ) : null
-        })}
-      </g>
-
-      {nmTicks.map((nm) => (
-        <g key={nm}>
-          <line x1={GRAPH_LEFT} y1={yFor(nm)} x2={GRAPH_RIGHT} y2={yFor(nm)} stroke="#334155" />
-          <text x={GRAPH_LEFT - 8} y={yFor(nm) + 4} fill="#94a3b8" fontSize="10" textAnchor="end">
-            {formatWavelength(nm)}
-          </text>
-        </g>
-      ))}
-      <text x={14} y={(GRAPH_TOP + GRAPH_BOTTOM) / 2} fill="#94a3b8" fontSize="10" textAnchor="middle" transform={`rotate(-90 14 ${(GRAPH_TOP + GRAPH_BOTTOM) / 2})`}>
-        wavelength as received
-      </text>
-      {gapTicks.map((g) => (
-        <g key={g}>
-          <line x1={xFor(g)} y1={GRAPH_BOTTOM} x2={xFor(g)} y2={GRAPH_BOTTOM + 5} stroke="#94a3b8" />
-          <text x={xFor(g)} y={GRAPH_BOTTOM + 18} fill="#94a3b8" fontSize="10" textAnchor="middle">
-            {formatNumber(g)}
-          </text>
-        </g>
-      ))}
-      <text x={(GRAPH_LEFT + GRAPH_RIGHT) / 2} y={GRAPH_BOTTOM + 36} fill="#94a3b8" fontSize="11" textAnchor="middle">
-        gap above the horizon, in horizon radii (the traveler falls to the right)
-      </text>
-
-      {/* The lamp's own color, if nothing stretched it, and the two edges worth marking */}
-      <line x1={GRAPH_LEFT} y1={yFor(LAMP_WAVELENGTH_NM)} x2={GRAPH_RIGHT} y2={yFor(LAMP_WAVELENGTH_NM)} stroke={LAMP_COLOR} strokeDasharray="5 4" />
-      <text x={GRAPH_RIGHT - 6} y={yFor(LAMP_WAVELENGTH_NM) + 14} fill={LAMP_COLOR} fontSize="10" textAnchor="end">
-        the lamp's own color, 550 nm: where the line would stay if nothing stretched it
-      </text>
-      <line x1={GRAPH_LEFT} y1={yFor(750)} x2={GRAPH_RIGHT} y2={yFor(750)} stroke={REFERENCE_COLOR} strokeDasharray="2 4" strokeOpacity={0.7} />
-      <text x={GRAPH_RIGHT - 6} y={yFor(750) - 5} fill={REFERENCE_COLOR} fontSize="10" textAnchor="end">
-        750 nm: the red edge of visible light
-      </text>
-      <line x1={GRAPH_LEFT} y1={yFor(1e6)} x2={GRAPH_RIGHT} y2={yFor(1e6)} stroke={REFERENCE_COLOR} strokeDasharray="2 4" strokeOpacity={0.7} />
-      <text x={GRAPH_LEFT + 8} y={yFor(1e6) - 5} fill={REFERENCE_COLOR} fontSize="10">
-        1 mm: where microwaves begin
-      </text>
-
-      <g clipPath="url(#wavelength-plot)">
-        <polyline points={line} fill="none" stroke={RECEIVED_COLOR} strokeWidth={3.5} />
-      </g>
-      <text x={xFor(lastPoint.gap) - 12} y={yFor(lastPoint.wavelengthNm) - 8} fill={RECEIVED_COLOR} fontSize="10" textAnchor="end">
-        keeps going, no limit
-      </text>
-      {progress > 0 && <circle cx={xFor(gap)} cy={yFor(wavelength)} r={5} fill="#ffffff" stroke={RECEIVED_COLOR} strokeWidth={2} />}
-
-      <line x1={96} y1={GRAPH_HEIGHT - 60} x2={126} y2={GRAPH_HEIGHT - 60} stroke={RECEIVED_COLOR} strokeWidth={4} />
-      <text x={132} y={GRAPH_HEIGHT - 56} fill={RECEIVED_COLOR} fontSize="11">
-        the wavelength the observer receives
-      </text>
-      <line x1={96} y1={GRAPH_HEIGHT - 42} x2={126} y2={GRAPH_HEIGHT - 42} stroke={LAMP_COLOR} strokeWidth={2} strokeDasharray="5 4" />
-      <text x={132} y={GRAPH_HEIGHT - 38} fill={LAMP_COLOR} fontSize="11">
-        the lamp's own wavelength
-      </text>
-      <circle cx={400} cy={GRAPH_HEIGHT - 60} r={5} fill="#ffffff" stroke={RECEIVED_COLOR} strokeWidth={2} />
-      <text x={412} y={GRAPH_HEIGHT - 56} fill="#e2e8f0" fontSize="11">
-        where the traveler is now
-      </text>
-      <text x={96} y={GRAPH_HEIGHT - 16} fill="#94a3b8" fontSize="10">
-        Shaded stripes are the usual ranges of each kind of light, not sharp edges.
-      </text>
-    </svg>
-  )
-}
-
-export function ColorOfTheFallExperiment({ onComplete, onTutorComplete }: ColorOfTheFallExperimentProps) {
-  const [presetId, setPresetId] = useState<ObjectPreset['id']>('stellar-black-hole')
-  const [start, setStart] = useState(10)
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+// One run of the fall: idle, running (progress 0 to 1 over a fixed time), complete.
+function useFallRun(onDone: () => void) {
+  const [status, setStatus] = useState<RunStatus>('idle')
   const [progress, setProgress] = useState(0)
-  const [runCount, setRunCount] = useState(0)
-
-  const [colorPrediction, setColorPrediction] = useState<ColorChoice | null>(null)
-  const [visiblePrediction, setVisiblePrediction] = useState<VisibleChoice | null>(null)
-  const [massPrediction, setMassPrediction] = useState<MassChoice | null>(null)
-  const [submittedColor, setSubmittedColor] = useState<ColorChoice | null>(null)
-  const [submittedVisible, setSubmittedVisible] = useState<VisibleChoice | null>(null)
-  const [submittedMass, setSubmittedMass] = useState<MassChoice | null>(null)
-
-  const hasPrediction = colorPrediction !== null && visiblePrediction !== null && massPrediction !== null
-  const hasSubmittedPrediction = submittedColor !== null && submittedVisible !== null && submittedMass !== null
-
-  const result = useMemo(() => runColorOfTheFallExperiment(presetId, start), [presetId, start])
-  const showResults = status === 'complete' && hasSubmittedPrediction
-
-  // The numbers the Results need, all from the physics module (CLAUDE.md §9). The worked example is at 5 horizon radii
-  // from the center, as in the specification, or at 2 or 1.5 when the traveler is released too close for that.
-  const demoDistance = start > 5 ? 5 : start > 2 ? 2 : 1.5
-  const demoSteps = useMemo(() => stretchFactorSteps(start, demoDistance), [start, demoDistance])
-  const halfwayDistance = 1 + (start - 1) / 2
-  const nearHorizon = useMemo(
-    () =>
-      [0.01, 0.001, 0.0001].map((gap) => ({
-        gap,
-        stretch: stretchFactor(start, 1 + gap),
-        wavelengthNm: receivedWavelengthNm(start, 1 + gap),
-      })),
-    [start],
-  )
-  // The same for every black hole, so any one of them gives the rows of the release table and the 10-horizon-radii case.
-  const releaseRows = useMemo(() => START_PRESETS.map((d) => runColorOfTheFallExperiment('stellar-black-hole', d)), [])
-  const fromTen = releaseRows.find((row) => row.startInHorizonRadii === 10)!
-  const holes = useMemo(() => BLACK_HOLE_PRESETS.map((p) => runColorOfTheFallExperiment(p.id, 10)), [])
-
-  const handlePresetChange = (id: ObjectPreset['id']) => {
-    setPresetId(id)
-    setStatus('idle')
-    setProgress(0)
-  }
-
-  const handleStartChange = (value: number) => {
-    setStart(value)
-    setStatus('idle')
-    setProgress(0)
-  }
-
-  const handleRun = () => {
-    if (!hasPrediction || status === 'running') return
-    if (!hasSubmittedPrediction) {
-      setSubmittedColor(colorPrediction)
-      setSubmittedVisible(visiblePrediction)
-      setSubmittedMass(massPrediction)
-    }
-    setStatus('running')
-    setProgress(0)
-    setRunCount((n) => n + 1)
-  }
-
-  // Matches the rest of the project's precedent: re-opens all three questions for editing without resetting the
-  // chosen black hole or release distance.
-  const handleChangePrediction = () => {
-    setSubmittedColor(null)
-    setSubmittedVisible(null)
-    setSubmittedMass(null)
-    setStatus('idle')
-    setProgress(0)
-  }
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
 
   useEffect(() => {
     if (status !== 'running') return
-
     const startTime = performance.now()
     let frameId: number
-
     const animate = (currentTime: number) => {
       const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
       setProgress(fraction)
-
       if (fraction >= 1) {
         setStatus('complete')
-        onComplete?.()
+        onDoneRef.current()
         return
       }
-
       frameId = requestAnimationFrame(animate)
     }
-
     frameId = requestAnimationFrame(animate)
-
     return () => cancelAnimationFrame(frameId)
-  }, [status, onComplete])
+  }, [status])
+
+  return {
+    status,
+    progress,
+    start: () => {
+      setStatus('running')
+      setProgress(0)
+    },
+    reset: () => {
+      setStatus('idle')
+      setProgress(0)
+    },
+  }
+}
+
+export function ColorOfTheFallExperiment({ onComplete, onTutorComplete }: ColorOfTheFallExperimentProps) {
+  // ---- the guesses (Part 1) ----
+  const [colorGuess, setColorGuess] = useState<ColorChoice | null>(null)
+  const [visibleGuess, setVisibleGuess] = useState<VisibleChoice | null>(null)
+  const [massGuess, setMassGuess] = useState<MassChoice | null>(null)
+  const [locked, setLocked] = useState(false)
+  const hasAllGuesses = colorGuess !== null && visibleGuess !== null && massGuess !== null
+
+  // ---- Part 1: the 10-Sun black hole, released from rest at 10 horizon radii, played by one Run ----
+  const partOne = useMemo(() => runPartOne(), [])
+  const run1 = useFallRun(() => onComplete?.())
+  const part1Done = run1.status === 'complete'
+
+  // ---- Part 2: the learner's own black hole and release distance ----
+  const [presetId, setPresetId] = useState<ObjectPreset['id']>(DEFAULT_PRESET_ID)
+  const [start, setStart] = useState(DEFAULT_START)
+  const [lastPartTwo, setLastPartTwo] = useState<ColorOfTheFallResult | null>(null)
+  const result2 = useMemo(() => runColorOfTheFallExperiment(presetId, start), [presetId, start])
+  const run2 = useFallRun(() => {
+    setLastPartTwo(runColorOfTheFallExperiment(presetId, start))
+    onComplete?.()
+  })
+  const isRunning = run1.status === 'running' || run2.status === 'running'
+
+  const handleRun = () => {
+    if (!hasAllGuesses || isRunning || part1Done) return
+    setLocked(true)
+    run1.start()
+  }
+  const handlePresetChange = (id: ObjectPreset['id']) => {
+    setPresetId(id)
+    run2.reset()
+  }
+  const handleStartChange = (value: number) => {
+    setStart(value)
+    run2.reset()
+  }
+  const handleRunPartTwo = () => {
+    if (isRunning) return
+    run2.start()
+  }
+
+  // Start over: clears the guesses, the runs, the results and the tutor, and returns the page to its first state.
+  const [tutorKey, setTutorKey] = useState(0)
+  const handleStartOver = () => {
+    setColorGuess(null)
+    setVisibleGuess(null)
+    setMassGuess(null)
+    setLocked(false)
+    run1.reset()
+    run2.reset()
+    setPresetId(DEFAULT_PRESET_ID)
+    setStart(DEFAULT_START)
+    setLastPartTwo(null)
+    setTutorKey((k) => k + 1)
+  }
+  const hasAnyGuess = colorGuess !== null || visibleGuess !== null || massGuess !== null
+  const startOverDisabled = (!hasAnyGuess && !locked) || isRunning
+
+  const guessButtons = <T extends string>(choices: Array<{ value: T; label: string }>, selected: T | null, onSelect: (value: T) => void) => (
+    <div style={{ marginBottom: '0.5rem' }}>
+      {choices.map((choice) => (
+        <button
+          key={choice.value}
+          type="button"
+          onClick={() => onSelect(choice.value)}
+          disabled={locked || isRunning}
+          className={`toggle-button${selected === choice.value ? ' is-selected' : ''}`}
+          style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+        >
+          {choice.label}
+        </button>
+      ))}
+    </div>
+  )
+
+  const showOwnPictures = run2.status !== 'idle' || lastPartTwo !== null
+  const own = { complete: run2.status === 'complete' }
+  // The traveler's place and the color as received at this point of the Part 2 playback, from the module's own formulas.
+  const endGap2 = result2.curve[result2.curve.length - 1].gap
+  const widest2 = result2.startInHorizonRadii - 1
+  const rNow2 = Math.min(1 + widest2 * (endGap2 / widest2) ** run2.progress, result2.startInHorizonRadii)
+  const outcomeSoFar =
+    run2.status === 'idle'
+      ? '—'
+      : run2.status === 'running'
+        ? `${formatWavelength(receivedWavelengthNm(result2.startInHorizonRadii, rNow2))} so far`
+        : `${withBand(result2.curve[result2.curve.length - 1].wavelengthNm)} at the end`
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Experiment 7 — The Color of the Fall: What Color Does the Falling Traveler's Light Have?</h2>
+      <h2>Black Holes 7: The Color of the Fall: What Color Does the Falling Traveler’s Light Have?</h2>
 
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). The introduction must not give away the
-            answers to the three predictions below (§12): not that the light turns red, not that its wavelength has no
-            limit, not that it leaves the visible range, and not that the black hole's mass does not matter. For that
-            reason it does not name "redshift", which the tutor introduces. */}
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> In Experiment 6 a traveler fell toward a black hole, sending flashes of light
-            at equal steps of their own watch, and a far-away observer received them. We followed the timing of the
-            flashes. We did not ask about the light itself. This time the traveler carries a lamp that shines a steady
-            green light straight outward. What color does the observer receive, as the traveler falls?
+        {/* ===== Above Part 1: the introduction, the words and the links ===== */}
+        <ColorOfTheFallIntro />
+        <ReferencePanel entries={colorOfTheFallWordsEntries(part1Done)} />
+        <ColorOfTheFallLinks />
+
+        {/* ===== Part 1 ===== */}
+        <PartHeader color="#d97706" title="Part 1: Predict, then watch">
+          Here you make three guesses, then watch a traveler fall into a black hole with a green lamp on. The black hole is the 10-Sun one from Black Holes 1, and the traveler is released from rest at {PART_ONE_START_IN_HORIZON_RADII} horizon radii. Press Run and watch the color the observer receives. Picture 1 shows the
+          lamp’s own color and the color as received on a strip of all the kinds of light, and Picture 2 shows the color as received against how far the traveler still is from the horizon. The real pictures and tables never change with your guesses. Your guesses are drawn on them in white once the features they are about are
+          drawn, and they appear again beside the results.
+        </PartHeader>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make your guesses</p>
+          <p style={{ ...smallNote, marginTop: 0, marginBottom: '0.75rem' }}>
+            There are three questions. Choose one answer to each. Once you press Run, your three guesses are locked, they are drawn on the real pictures in white, and they appear again beside the results.
           </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Why even ask this.</strong> Picture yourself as the observer, far from the black hole, watching a
-            friend fall in. Your friend carries a green lamp. In everyday life, the color of a lamp belongs to the lamp:
-            a green lamp looks green whether it is near or far, and whether you are walking toward it or away from it.
-            So ask yourself: as your friend falls, does their lamp keep looking green to you? And if it changes, how far
-            does it go?
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>{COLOR_QUESTION}</p>
+          <GuessNotes n={1} />
+          {guessButtons(COLOR_CHOICES, colorGuess, setColorGuess)}
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>{VISIBLE_QUESTION}</p>
+          <GuessNotes n={2} />
+          {guessButtons(VISIBLE_CHOICES, visibleGuess, setVisibleGuess)}
+
+          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>{MASS_QUESTION}</p>
+          <GuessNotes n={3} />
+          {guessButtons(MASS_CHOICES, massGuess, setMassGuess)}
+
+          <p style={smallNote}>
+            {hasAllGuesses ? `Your guesses: ${colorLabel(colorGuess!)}; ${visibleLabel(visibleGuess!)}; ${massLabel(massGuess!)}.` : 'Answer all three questions to run.'}
           </p>
-          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
-            <strong>What happens.</strong> Here is the whole experiment, step by step.
-          </p>
-          <ol style={{ marginTop: 0, marginBottom: '0.75rem', paddingLeft: '1.25rem' }}>
-            <li>You choose a black hole and a release distance, as in Experiments 5 and 6.</li>
-            <li>The traveler is released from rest and falls straight in, as before, with the lamp on.</li>
-            <li>
-              The <strong>observer</strong>, at rest far from the black hole, receives the lamp's light and measures its
-              wavelength.
-            </li>
-            <li>
-              You press Run. The first picture shows the lamp's own color and the color as received, on a strip of all
-              the kinds of light. A second picture is a graph of the color as received against how far the traveler
-              still is from the horizon.
-            </li>
-            <li>The experiment ends close to the horizon: it does not show anything inside.</li>
-          </ol>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Some words we will use.</strong> Light is a wave, and a <strong>wavelength</strong> is the distance
-            from one crest of the wave to the next. We measure it in <strong>nanometers</strong> (nm): one nanometer is a
-            billionth of a meter, so a sheet of paper is about 100,000 nm thick. The light our eyes can see, called{' '}
-            <strong>visible light</strong>, has wavelengths of about 380 nm (violet) to 750 nm (red), and green is in the
-            middle, at about 550 nm. Longer than red there is light we cannot see: <strong>infrared</strong>, the kind a
-            heat lamp gives out; then <strong>microwaves</strong>, like those in a microwave oven; then{' '}
-            <strong>radio waves</strong>, the longest. The edges between these kinds are conventions, not sharp lines.
-            The wavelength of the lamp's light on the traveler is called <strong>as emitted</strong>, and the wavelength
-            the observer measures is called <strong>as received</strong>. Three words come from Experiment 6: the{' '}
-            <strong>horizon</strong>, the one-way boundary of a black hole; the <strong>horizon radius</strong>, the
-            distance from the black hole's center to its horizon; and the <strong>stretch factor</strong>, how many times
-            as long the gap between two flashes is when they are received, compared with when they were sent. We also
-            use the <strong>gap above the horizon</strong>: how far the traveler is above the horizon, measured in
-            horizon radii (their distance from the center, minus 1). This is a distance, not the time between two
-            flashes.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What this builds on.</strong> Experiment 6 followed flashes of light from the falling traveler, and
-            found how their spacing changes. Experiment 2 showed a clock near a black hole ticking differently from one
-            far away. Gravitational Waves, Experiment 5, dealt with light from a source that is moving away from you.
-            Here we follow the lamp's light itself.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> First, make three predictions. Then choose a black hole and a release distance, and
-            run it. Try other black holes and release distances too, and compare.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What to look for.</strong> Where the received color is at the start, what kind of light it is as the
-            traveler falls, and what it does near the end.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
-            <strong>What we assume.</strong>
-          </p>
-          <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              <strong>This is a thought experiment about a small lamp</strong> that shines light of one color, 550 nm,
-              straight outward from a traveler who falls straight in from rest. The lamp's own gravity does not matter.
-            </li>
-            <li>
-              <strong>The observer is at rest, very far away.</strong>
-            </li>
-            <li>
-              <strong>The equations are given, not derived.</strong> They are the standard ones for a black hole that
-              does not spin and has no electric charge. Real black holes usually spin, which changes the details.
-            </li>
-            <li>
-              <strong>Only the wavelength is modeled.</strong> How bright the light is, what a camera or telescope would
-              show, and whether a real detector could pick up light of these wavelengths are not.
-            </li>
-            <li>
-              <strong>The experiment stops close to the horizon,</strong> at 0.0001 horizon radii above it. Nothing
-              inside the horizon is modeled.
-            </li>
-          </ul>
+          {locked && <p style={smallNote}>Your prediction is locked while you try other settings. To change it, press Start over.</p>}
         </div>
 
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            A traveler falling into a black hole shines a steady green lamp straight outward to a far-away observer. As the
-            traveler falls, what happens to the color the observer receives?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {colorChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setColorPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${colorPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            For a fall from rest at 10 horizon radii, does the lamp's light stay visible to the eye all the way down?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {visibleChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setVisiblePrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${visiblePrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-            Would the color the observer receives at 5 horizon radii from the center be different for a 10-Sun black hole
-            and for M87*?
-          </p>
-          <div style={{ marginBottom: '0.5rem' }}>
-            {massChoices.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => setMassPrediction(choice.value)}
-                disabled={hasSubmittedPrediction}
-                className={`toggle-button${massPrediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            {hasPrediction || hasSubmittedPrediction
-              ? `Your predictions: ${colorChoices.find((c) => c.value === (colorPrediction ?? submittedColor))!.label}; ${
-                  visibleChoices.find((c) => c.value === (visiblePrediction ?? submittedVisible))!.label
-                }; ${massChoices.find((c) => c.value === (massPrediction ?? submittedMass))!.label}`
-              : 'Answer all three questions to continue'}
-          </p>
-        </div>
-
-        {hasSubmittedPrediction && (
-          <div style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              Your predictions are locked in above. You can still try as many black holes and release distances as you
-              like below. Or, change your predictions and start over:
-            </p>
-            <button
-              type="button"
-              onClick={handleChangePrediction}
-              className="secondary-button"
-              style={{
-                padding: '0.5rem 1.25rem',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(124, 58, 237, 0.22)',
-              }}
-            >
-              Change predictions
-            </button>
-          </div>
-        )}
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Black hole:</p>
-          {BLACK_HOLE_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => handlePresetChange(p.id)}
-              disabled={!hasPrediction || status === 'running'}
-              className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
-              style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-            Release the traveler from rest at this distance from the black hole's center, in horizon radii:
-          </p>
-          {START_PRESETS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => handleStartChange(d)}
-              disabled={!hasPrediction || status === 'running'}
-              className={`toggle-button${start === d ? ' is-selected' : ''}`}
-              style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
-            >
-              {d}
-            </button>
-          ))}
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
-            That is {formatDistance(result.startInHorizonRadii * result.horizonRadiusKm)} from the center. A horizon radius is
-            the size of the black hole's edge.
-          </p>
-        </div>
-
+        <button type="button" className="action-button" onClick={handleRun} disabled={!hasAllGuesses || isRunning || part1Done} style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}>
+          {run1.status === 'running' ? 'Running...' : part1Done ? 'Run (done)' : 'Run'}
+        </button>
         <button
           type="button"
-          className="action-button"
-          onClick={handleRun}
-          disabled={!hasPrediction || status === 'running'}
-          style={{ marginTop: '0.5rem', padding: '0.6rem 1.5rem' }}
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{
+            marginLeft: '0.75rem',
+            padding: '0.5rem 1.25rem',
+            fontSize: '0.875rem',
+            cursor: startOverDisabled ? 'not-allowed' : 'pointer',
+            opacity: startOverDisabled ? 0.5 : 1,
+          }}
         >
-          {status === 'running' ? 'Running...' : 'Run'}
+          Start over
         </button>
 
-        {!hasPrediction && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Answer the predictions above to try the controls.
+        <Block>
+          {run1.status === 'idle' ? (
+            <p style={{ ...smallNote, fontWeight: 'bold' }}>
+              Pictures 1 and 2 appear here when you press Run: the color of the lamp as received on a strip of all the kinds of light, and the wavelength against the traveler’s distance. Each has its own caption.
+            </p>
+          ) : (
+            <>
+              <p style={{ ...smallNote, fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Picture 1: the color of the lamp, as received</p>
+              <ColorStrip result={partOne} progress={run1.progress} guess={part1Done ? colorGuess : null} />
+              <WhereFrom>
+                <strong>Calculated here:</strong> every wavelength, from the formulas given. <strong>Measured:</strong> nothing, because no real fall has been observed. <strong>Imagined for the question:</strong> the traveler, the lamp and the observer. The green marker is the lamp’s own color, chosen for this page (550 nm). The white
+                mark is your guess and shows where your answer belongs, not a number you chose.
+              </WhereFrom>
+              <StripCaption result={partOne} started={run1.progress > 0} complete={part1Done} withGuess />
+
+              <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '1.25rem', marginBottom: 0 }}>Picture 2: the wavelength against the traveler’s distance</p>
+              <WavelengthGraph
+                result={partOne}
+                progress={run1.progress}
+                guesses={part1Done && colorGuess && visibleGuess ? { color: colorGuess, visible: visibleGuess } : null}
+                panel={{ complete: part1Done, guess: part1Done ? massGuess : null }}
+              />
+              <WhereFrom>
+                <strong>Calculated here:</strong> the curve and the two bars of the small panel, from the formulas given. <strong>Measured:</strong> nothing. <strong>Imagined for the question:</strong> the traveler and the lamp. The 550 nm line is the lamp’s color if nothing stretched it. The white marks are your guesses and show
+                where your answer belongs, not a size you chose.
+              </WhereFrom>
+              <GraphCaption result={partOne} complete={part1Done} withGuesses />
+            </>
+          )}
+        </Block>
+
+        {/* ===== Parts 2, 3 and 4 appear after the first Run has finished ===== */}
+        {!part1Done && (
+          <p style={{ ...smallNote, marginTop: '2rem', fontWeight: 'bold' }}>
+            {run1.status === 'running'
+              ? 'The traveler is falling. Part 2 (your own black hole and release distance), Part 3 (the results) and Part 4 (the tutor) appear when the run finishes.'
+              : 'Make all three guesses and press Run. Part 2 (your own black hole and release distance), Part 3 (the results) and Part 4 (the tutor) appear when the first run has finished.'}
           </p>
         )}
 
-        {/* Shown only once the current settings have been run: changing the black hole or the release distance returns to idle and hides it again. */}
-        {hasSubmittedPrediction && status !== 'idle' && (
+        {part1Done && colorGuess && visibleGuess && massGuess && (
           <>
-            <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              {result.preset.label}: {formatMass(result.preset.massSolarMasses)}; horizon radius{' '}
-              {formatDistance(result.horizonRadiusKm)}
-              <br />
-              Released from rest at {result.startInHorizonRadii} horizon radii (
-              {formatDistance(result.startInHorizonRadii * result.horizonRadiusKm)}). The lamp is {LAMP_WAVELENGTH_NM} nm,
-              green.
+            {/* ===== Part 2 ===== */}
+            <PartHeader color="#be185d" title="Part 2: Now try it yourself">
+              Now you choose the black hole and the release distance, run the fall as often as you like, and compare. The guesses you made stay as they were. They do not change any picture or table; these settings do.
+            </PartHeader>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                <strong>1. Choose a black hole:</strong>
+              </p>
+              {BLACK_HOLE_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handlePresetChange(p.id)}
+                  disabled={isRunning}
+                  className={`toggle-button${presetId === p.id ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                <strong>2. Release the traveler from rest at this distance from the black hole’s center, in horizon radii:</strong>
+              </p>
+              {START_PRESETS.filter((d) => d >= MIN_START_IN_HORIZON_RADII && d <= MAX_START_IN_HORIZON_RADII).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => handleStartChange(d)}
+                  disabled={isRunning}
+                  className={`toggle-button${start === d ? ' is-selected' : ''}`}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                >
+                  {d}
+                </button>
+              ))}
+              <p style={{ ...smallNote, margin: '0.25rem 0 0 0' }}>
+                That is {formatDistance(result2.startInHorizonRadii * result2.horizonRadiusKm)} from the center. A horizon radius is the size of the black hole’s edge.
+              </p>
+            </div>
+
+            <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              <strong>3. Run it:</strong>
+            </p>
+            <button type="button" className="action-button" onClick={handleRunPartTwo} disabled={isRunning} style={{ marginTop: '0.25rem', padding: '0.6rem 1.5rem' }}>
+              {run2.status === 'running' ? 'Running...' : 'Run your choice'}
+            </button>
+            <p style={smallNote}>
+              Your guesses do not change the drawings or tables, but these settings do. There is no comparison table for the settings. The black hole you pick changes the kilometers, and the release distance changes the wavelengths.
             </p>
 
-            <div style={{ marginTop: '1rem', maxWidth: `${STRIP_WIDTH}px` }}>
-              <ColorStrip result={result} progress={progress} />
-              {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
-              <div style={CAPTION_STYLE}>
-                <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
-                  <strong>How to read this picture: the color of the lamp, as received.</strong>
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>1. What is happening.</strong> The traveler falls toward the black hole carrying a lamp that
-                  shines a steady green light straight outward, with a wavelength of 550 nm. A <em>wavelength</em> is the
-                  distance from one crest of a light wave to the next, and a nanometer (nm) is a billionth of a meter. A
-                  far-away observer, at rest, receives the light and measures its wavelength.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>2. The top part.</strong> The cyan dot is the traveler, with the lamp. The green lines on the left
-                  are crests of the light as emitted, at the lamp, and the orange lines on the right are the same crests as
-                  received by the observer. Under them, the picture says how many times as far apart the crests are at the
-                  observer. That number is the stretch factor you met in Experiment 6.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>3. The strip.</strong> The strip is a scale of all the wavelengths, from short (left) to long
-                  (right). Each step to the right is ten times longer, so the scale covers a huge range. It is divided into
-                  the usual kinds of light: ultraviolet, visible light (drawn as the rainbow), infrared, microwave and radio
-                  waves. The edges between them are conventions, not sharp lines.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>4. The two markers.</strong> The green marker below the strip is the lamp's own wavelength,
-                  550 nm, and it never moves. The orange marker above the strip is the wavelength as received, and it moves
-                  as the traveler falls.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>5. What is really happening.</strong> The lamp sends out one crest after another at equal steps
-                  of its own clock, just as the traveler in Experiment 6 sent flashes at equal steps of their own watch. So
-                  the crests reach the observer stretched apart in the same way as the flashes did, by the same stretch
-                  factor: gravity slows the traveler's clock as seen from far away, and the traveler is moving away, so
-                  each crest has a little farther to travel than the one before. The wavelength is the speed of light times
-                  the time between crests, so it is longer by that same factor.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>6. How the picture shows it.</strong> The orange crests are farther apart than the green ones by
-                  the stretch factor. The orange marker is the green marker's 550 nm multiplied by that factor, so it is
-                  always to the right of the green marker, and the further the traveler has fallen the further to the right
-                  it is. When the orange marker leaves the rainbow, the light is no longer visible light.
-                </p>
-                <p style={CAPTION_PARAGRAPH_STYLE}>
-                  <strong>7. What to watch.</strong> Where the orange marker is at the start, which kind of light it is in
-                  as the traveler falls, and what it does near the end.
-                </p>
-                <p style={{ margin: 0 }}>
-                  <strong>A limit.</strong> This follows the wavelength only, for a lamp shining straight outward. It is not
-                  what a camera would see, it does not say how bright the light is, and it stops at the horizon: nothing
-                  inside is shown. The crests are drawn to scale only up to 20 times as far apart.
-                </p>
-              </div>
-            </div>
-
-            <WavelengthGraph result={result} progress={progress} />
-            <div style={{ ...CAPTION_STYLE, maxWidth: `${GRAPH_WIDTH}px` }}>
-              <p style={{ marginTop: 0, marginBottom: '0.4rem' }}>
-                <strong>How to read this graph: the wavelength against the traveler's distance.</strong>
-              </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>What you are looking at.</strong> The vertical axis is the wavelength the observer receives, on a
-                logarithmic scale, so each step up is ten times longer. The shaded stripes are the kinds of light, as in
-                the strip. The dashed green line is the lamp's own wavelength, 550 nm: where the received wavelength would
-                stay if nothing stretched it.
-              </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>The gap above the horizon.</strong> This is the horizontal axis. It means how far the traveler is
-                above the horizon, measured in horizon radii. It is the traveler's distance from the center of the black
-                hole, minus 1 (the horizon is 1 horizon radius from the center). For example, a traveler 10 horizon radii
-                from the center is 9 horizon radii above the horizon, and at 1.0001 from the center the gap is 0.0001. This is a
-                distance, not a time. The traveler starts at the left and falls to the right, so the gap shrinks. Each step to the right is ten times
-                smaller.
-              </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>The curve and the dot.</strong> The orange curve is the wavelength the observer receives when the
-                traveler is at each gap. The white dot is where the traveler is now. The two dotted lines mark 750 nm, the
-                red edge of visible light, and 1 mm, where microwaves begin.
-              </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>What is really happening.</strong> At each gap, the received wavelength is the lamp's 550 nm times
-                the stretch factor of Experiment 6. That factor is the product of two effects (gravity slowing the
-                traveler's clock, and the traveler moving away), and both keep growing as the traveler nears the horizon.
-              </p>
-              <p style={CAPTION_PARAGRAPH_STYLE}>
-                <strong>How the picture shows it.</strong> At the left, the traveler has not started moving, so only gravity
-                acts and the curve starts just above the dashed line. Moving right it climbs through the stripes, and near
-                the right edge it is a straight line on this scale: each step ten times closer to the horizon makes the
-                wavelength ten times longer. It does not level off.
+            <div style={{ marginTop: '1rem', padding: '0.5rem 0.75rem', fontSize: '0.8125rem', color: 'var(--text-muted)', border: '1px solid var(--border-color, #ccc)', borderRadius: '6px' }}>
+              <p style={{ margin: '0 0 0.25rem' }}>
+                <strong>Your settings</strong>
               </p>
               <p style={{ margin: 0 }}>
-                <strong>A limit.</strong> The curve is drawn until the traveler is 0.0001 horizon radii above the horizon
-                (a tiny distance, explained above) and then stops, but that is only where the drawing ends.
+                Black hole: {result2.preset.label}, {formatMass(result2.preset.massSolarMasses)}; horizon radius {formatDistance(result2.horizonRadiusKm)}.
+                <br />
+                Released from rest at {result2.startInHorizonRadii} horizon radii ({formatDistance(result2.startInHorizonRadii * result2.horizonRadiusKm)}). Traveler now:{' '}
+                {run2.status === 'idle' ? '—' : `${Number(rNow2.toPrecision(6))} horizon radii from the center, stretch factor ${Number(stretchFactor(result2.startInHorizonRadii, rNow2).toPrecision(3))}`}.
+                <br />
+                The color as received: {outcomeSoFar}
               </p>
             </div>
 
-            {showResults && (() => {
-              const last = result.curve[result.curve.length - 1]
-              const holeLabel = result.preset.label.replace(/^A /, 'a ')
-              const withBand = (nm: number) => `${formatWavelength(nm)} (${BAND_LABEL[bandOf(nm)]})`
-              const four = (v: number) => v.toFixed(4)
-              const tenVisibleAt = fromTen.leavesVisibleAt as number
-              const periodEmitted = lightPeriodSeconds(LAMP_WAVELENGTH_NM)
-              return (
-                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #ccc)' }}>
-                  {/* Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). */}
-                  <h3 style={{ marginTop: 0 }}>Results</h3>
-                  <p>
-                    The traveler was released from rest at <strong>{start} horizon radii</strong> (
-                    {formatDistance(start * result.horizonRadiusKm)}) from the center of <strong>{holeLabel}</strong> (
-                    {formatMass(result.preset.massSolarMasses)}), carrying a lamp of {LAMP_WAVELENGTH_NM} nm green light. For
-                    this run:
-                  </p>
-                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                      <tbody>
-                        {[
-                          ['The wavelength as received, at the release', withBand(result.wavelengthAtReleaseNm)],
-                          [
-                            `The wavelength as received, halfway down (${formatNumber(halfwayDistance)} horizon radii from the center)`,
-                            withBand(receivedWavelengthNm(start, halfwayDistance)),
-                          ],
-                          [
-                            `The wavelength as received, ${formatGap(last.gap)} horizon radii above the horizon`,
-                            `${withBand(last.wavelengthNm)}, and still growing`,
-                          ],
-                          [
-                            'Where the light leaves visible light (passes 750 nm)',
-                            result.leavesVisibleAt === null
-                              ? 'Already past 750 nm at the release'
-                              : `${formatNumber(result.leavesVisibleAt)} horizon radii from the center (${formatGap(result.leavesVisibleAt - 1)} above the horizon, ${formatDistance(result.leavesVisibleAt * result.horizonRadiusKm)} from the center)`,
-                          ],
-                          [
-                            'Where the light becomes microwave (passes 1 mm)',
-                            `about ${formatGap(result.becomesMicrowaveAtGap)} horizon radii above the horizon`,
-                          ],
-                          ['At the horizon itself', 'No limit: the wavelength has no largest value'],
-                        ].map(([label, value]) => (
-                          <tr key={label}>
-                            <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>{label}</td>
-                            <td style={{ padding: '0.3rem 0', verticalAlign: 'top' }}>
-                              <strong>{value}</strong>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+            <Block>
+              {!showOwnPictures ? (
+                <p style={{ ...smallNote, fontWeight: 'bold' }}>Not run yet. Choose a black hole and a release distance, then press Run your choice. Pictures 3 and 4, each with its own caption, appear here.</p>
+              ) : (
+                <>
+                  <p style={{ ...smallNote, fontWeight: 'bold', marginTop: 0, marginBottom: '0.5rem' }}>Picture 3: the color of the lamp, as received, for your settings</p>
+                  <ColorStrip result={result2} progress={run2.progress} />
+                  <WhereFrom>
+                    <strong>Calculated here:</strong> every wavelength, in the same way as in Part 1, for your settings. <strong>Measured:</strong> the mass of the black hole you chose (about 4 million Suns for Sagittarius A*, from ESO’s observations of stars orbiting it); the other two are the page’s own examples.{' '}
+                    <strong>Imagined for the question:</strong> the traveler, the lamp and the observer.
+                  </WhereFrom>
+                  <StripCaption result={result2} started={run2.progress > 0} complete={own.complete} own />
 
-                  <p>
-                    <strong>Checking your first prediction:</strong> asked what happens to the color the observer receives,
-                    you answered "{colorChoices.find((c) => c.value === submittedColor)!.label}". In the model, the lamp's
-                    light is {withBand(result.wavelengthAtReleaseNm)} at the release and{' '}
-                    {withBand(last.wavelengthNm)} at {formatGap(last.gap)} horizon radii above the horizon. From a gap of{' '}
-                    {nearHorizon.map((n) => n.gap).join(', ')} horizon radii it is{' '}
-                    {nearHorizon.map((n) => formatWavelength(n.wavelengthNm)).join(', ')}. Each time the gap shrinks to a
-                    tenth, the wavelength is about ten times longer, and it never settles.{' '}
-                    {submittedColor === 'no-limit'
-                      ? 'So your prediction was right.'
-                      : submittedColor === 'same'
-                        ? 'So your prediction was off this time. The color does not stay green: the wavelength is longer at every step.'
-                        : submittedColor === 'bluer'
-                          ? 'So your prediction was off this time. The wavelength gets longer, not shorter, so the light moves toward red and beyond.'
-                          : 'So your prediction was off this time. The wavelength does not settle at a largest value: it has no limit.'}
-                  </p>
-                  <p>
-                    <strong>Checking your second prediction:</strong> asked whether the lamp's light stays visible all the way
-                    down for a fall from rest at 10 horizon radii, you answered "
-                    {visibleChoices.find((c) => c.value === submittedVisible)!.label}". In the model, the light passes 750 nm,
-                    the red edge of visible light, at {formatNumber(tenVisibleAt)} horizon radii from the center. That is{' '}
-                    {formatNumber(tenVisibleAt - 1)} horizon radii above the horizon, so the traveler is still far from it.{' '}
-                    {submittedVisible === 'well-before'
-                      ? 'So your prediction was right.'
-                      : submittedVisible === 'all-the-way'
-                        ? 'So your prediction was off this time. The light stops being visible light long before the horizon, however bright the lamp.'
-                        : 'So your prediction was off this time. The light is already infrared when the traveler is still far from the horizon, not just near it.'}
-                  </p>
-                  <p>
-                    <strong>Checking your third prediction:</strong> asked whether the color at 5 horizon radii from the center
-                    differs between a 10-Sun black hole and M87*, you answered "
-                    {massChoices.find((c) => c.value === submittedMass)!.label}". In the model, for a fall from rest at 10
-                    horizon radii, the received wavelength at 5 horizon radii from the center is{' '}
-                    {formatWavelength(receivedWavelengthNm(10, 5))} for all three black holes. Only the distance in
-                    kilometers differs:{' '}
-                    {holes.map((h) => `${formatDistance(5 * h.horizonRadiusKm)} for ${h.preset.label.replace(/^A /, 'a ')}`).join('; ')}
-                    .{' '}
-                    {submittedMass === 'same'
-                      ? 'So your prediction was right.'
-                      : 'So your prediction was off this time. The color depends only on the distance in horizon radii, not on the size of the black hole.'}
-                  </p>
+                  <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '1.25rem', marginBottom: 0 }}>Picture 4: the wavelength against the traveler’s distance, for your settings</p>
+                  <WavelengthGraph result={result2} progress={run2.progress} />
+                  <WhereFrom>
+                    <strong>Calculated here:</strong> the curve, from the same formulas. <strong>Measured:</strong> nothing. <strong>Imagined for the question:</strong> the traveler and the lamp.
+                  </WhereFrom>
+                  <GraphCaption result={result2} complete={own.complete} own />
+                </>
+              )}
+            </Block>
 
-                  <p style={{ marginBottom: '0.25rem' }}>
-                    <strong>The simple math: the wavelength as received.</strong> For a fall from rest at {start} horizon
-                    radii, the received wavelength at a distance r is{' '}
-                    <strong>{LAMP_WAVELENGTH_NM} nm × (stretch factor)</strong>, where the stretch factor is [E + √(1/r −
-                    1/{start})] ÷ (1 − 1/r), with E = √(1 − 1/{start}), as in Experiment 6. This is given, not derived. Worked
-                    out at r = {demoDistance}:
-                  </p>
-                  <ol style={{ margin: 0, paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>
-                    <li>
-                      E = √(1 − 1/{start}) = {four(demoSteps.energy)}.
-                    </li>
-                    <li>
-                      √(1/{demoDistance} − 1/{start}) = {four(demoSteps.speedTerm)}.
-                    </li>
-                    <li>
-                      1 − 1/{demoDistance} = {four(demoSteps.rootGravity ** 2)}.
-                    </li>
-                    <li>
-                      The stretch factor is ({four(demoSteps.energy)} + {four(demoSteps.speedTerm)}) ÷{' '}
-                      {four(demoSteps.rootGravity ** 2)} = {four(demoSteps.stretch)}.
-                    </li>
-                    <li>
-                      The wavelength as received is {LAMP_WAVELENGTH_NM} nm × {four(demoSteps.stretch)} ={' '}
-                      <strong>{withBand(demoSteps.wavelengthNm)}</strong>.
-                    </li>
-                  </ol>
-                  <p>
-                    <strong>Why the wavelength is stretched by the same number.</strong> The time between two crests of the
-                    light is the wavelength divided by the speed of light. For {LAMP_WAVELENGTH_NM} nm that is {LAMP_WAVELENGTH_NM}{' '}
-                    nm ÷ 299,792 km/s = {formatBig(periodEmitted)} seconds at the lamp. The crests reach the observer stretched
-                    apart by the stretch factor, just as the flashes did in Experiment 6, so at r = {demoDistance} the time
-                    between them is {formatBig(periodEmitted)} × {four(demoSteps.stretch)} ={' '}
-                    {formatBig(periodEmitted * demoSteps.stretch)} seconds. Check: {formatWavelength(demoSteps.wavelengthNm)}{' '}
-                    ÷ 299,792 km/s = {formatBig(lightPeriodSeconds(demoSteps.wavelengthNm))} seconds, the same.
-                  </p>
+            {/* ===== Part 3 ===== */}
+            <PartHeader color="#0f766e" title="Part 3: The results">
+              Here are the numbers behind the pictures. Under each table a short note says what it is, what it means with the real numbers and why it matters. Your guesses are shown beside the results, and the tables stay the same however you guess. Table 3 follows the black hole and release distance you ran in Part 2.
+            </PartHeader>
+            <ColorOfTheFallResults colorGuess={colorGuess} visibleGuess={visibleGuess} massGuess={massGuess} partTwo={lastPartTwo} />
+            <ColorOfTheFallHeldBackLinks />
 
-                  <p>
-                    <strong>Closer and closer.</strong> The wavelength grows without limit as the gap above the horizon
-                    shrinks. From the release distance you chose:
-                  </p>
-                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                      <thead>
-                        <tr>
-                          {['Gap above the horizon (horizon radii)', 'Stretch factor', 'Wavelength as received'].map((h) => (
-                            <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {nearHorizon.map((n) => (
-                          <tr key={n.gap}>
-                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{n.gap}</td>
-                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>
-                              <strong>{formatBig(n.stretch)}</strong>
-                            </td>
-                            <td style={{ padding: '0.3rem 0' }}>
-                              <strong>{withBand(n.wavelengthNm)}</strong>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <p>
-                    Each row has a gap ten times smaller than the one above, a stretch factor about ten times larger and a
-                    wavelength about ten times longer. This keeps going for every smaller gap. (Radio waves, longer than 1
-                    meter, would need a gap of about 0.000001, which is further than the pictures go.)
-                  </p>
-
-                  <p>The release distances compare like this, for the same lamp. They are the same for all three black holes:</p>
-                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                    <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                      <thead>
-                        <tr>
-                          {['Release distance (horizon radii)', 'Wavelength at the release', 'Passes 750 nm (leaves visible light) at'].map((h) => (
-                            <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {releaseRows.map((row) => (
-                          <tr key={row.startInHorizonRadii} style={row.startInHorizonRadii === start ? { fontWeight: 'bold' } : undefined}>
-                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{row.startInHorizonRadii}</td>
-                            <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{withBand(row.wavelengthAtReleaseNm)}</td>
-                            <td style={{ padding: '0.3rem 0' }}>
-                              {row.leavesVisibleAt === null
-                                ? 'already past at the release'
-                                : `${formatNumber(row.leavesVisibleAt)} horizon radii from the center`}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <p>
-                    <strong>A comparison from daily life.</strong> The siren of an ambulance driving steadily away from you
-                    sounds lower than the same siren when the ambulance is parked, because its sound waves are stretched out
-                    as it moves away. This is an analogy for the effect of the traveler <em>moving away</em> (the motion
-                    part) only. There is no everyday comparison for the gravity part, which comes from the slowing of
-                    clocks near a black hole that you met in Experiment 2.
-                  </p>
-
-                  <div
-                    style={{
-                      margin: '0.75rem 0',
-                      padding: '0.75rem 1rem',
-                      border: '2px solid #f59e0b',
-                      borderRadius: '8px',
-                      backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                    }}
-                  >
-                    <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                      <strong>What this model can and cannot tell you.</strong> This is a thought experiment about a small
-                      lamp shining light of one color straight outward from a traveler who falls straight in from rest. It
-                      follows only the <em>wavelength</em>. It does not model how bright the light is, what a camera or
-                      telescope would show, or whether a real detector could pick up light of these wavelengths. The kinds
-                      of light (visible, infrared, microwave, radio) are the usual ranges, and their edges are conventions.
-                      It stops close to the horizon: nothing inside is modeled.
-                    </p>
-                    <p style={{ marginTop: 0, marginBottom: 0 }}>
-                      The equations are given, not derived, and are for a black hole that does not spin and has no electric
-                      charge. Real black holes usually spin, which changes the details. The stellar black hole's mass of 10
-                      Suns is an illustrative round value.
-                    </p>
-                  </div>
-                </div>
-              )
-            })()}
+            {/* ===== Part 4 ===== */}
+            <PartHeader color="#0066cc" title="Part 4: The tutor">
+              The tutor asks three questions, one at a time: what you saw, how your three guesses compare with the pictures, and one question about two things that both seem true. Then it goes through your three guesses and explains. The tutor’s questions are not marked.
+            </PartHeader>
+            <ColorOfTheFallTutor key={tutorKey} predictedColor={colorGuess} predictedVisible={visibleGuess} predictedMass={massGuess} onExplained={() => onTutorComplete?.()} />
           </>
         )}
       </div>
-
-      {showResults && (
-        <ColorOfTheFallTutor
-          key={runCount}
-          predictedColor={submittedColor}
-          predictedVisible={submittedVisible}
-          predictedMass={submittedMass}
-          onExplained={() => onTutorComplete?.()}
-        />
-      )}
     </div>
   )
 }
