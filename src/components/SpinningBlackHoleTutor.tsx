@@ -1,9 +1,6 @@
 import { useState } from 'react'
-import { BLACK_HOLE_PRESETS, energyReleasedSteps, runSpinningBlackHoleExperiment } from '../physics/spinningBlackHoleExperiment'
-
-type EdgeChoice = 'closer' | 'same' | 'farther'
-type HorizonChoice = 'bigger' | 'same' | 'smaller'
-type EnergyChoice = 'with' | 'against' | 'same'
+import { BLACK_HOLE_PRESETS, PART_ONE_PRESET_ID, PART_ONE_SPIN, energyReleasedSteps, runSpinningBlackHoleExperiment } from '../physics/spinningBlackHoleExperiment'
+import type { EdgeAnswer as EdgeChoice, EnergyAnswer as EnergyChoice, HorizonAnswer as HorizonChoice } from '../physics/spinningBlackHoleExperiment'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface SpinningBlackHoleTutorProps {
@@ -11,7 +8,7 @@ interface SpinningBlackHoleTutorProps {
   predictedAgainst: EdgeChoice
   predictedHorizon: HorizonChoice
   predictedEnergy: EnergyChoice
-  // Whether each prediction matched the model, worked out once, in the experiment (the same sentences as its Results).
+  // Whether each prediction matched the model at Part 1's spin, worked out in the physics module (`markGuesses`). The tutor is where the guesses are marked.
   matches: { with: boolean; against: boolean; horizon: boolean; energy: boolean }
   onExplained?: () => void
 }
@@ -48,8 +45,8 @@ function fmtDistance(km: number): string {
   return `${fmt(km)} km`
 }
 
-// The two spins the explanation uses: the specification's reference case, and the fast one for the horizon.
-const REFERENCE_SPIN = 0.9
+// The two spins the explanation uses: Part 1's spin (the specification's reference case), and the fast one for the horizon.
+const REFERENCE_SPIN = PART_ONE_SPIN
 const FAST_SPIN = 0.99
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
@@ -76,14 +73,15 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
 
   // Numbers for the explanation come from the experiment's own model, for a spin of 0.9 (REFERENCE_SPIN, the specification's reference
   // case), never typed in by hand.
-  const reference = runSpinningBlackHoleExperiment('stellar-black-hole', REFERENCE_SPIN)
-  const fast = runSpinningBlackHoleExperiment('stellar-black-hole', FAST_SPIN)
+  const reference = runSpinningBlackHoleExperiment(PART_ONE_PRESET_ID, REFERENCE_SPIN)
+  const fast = runSpinningBlackHoleExperiment(PART_ONE_PRESET_ID, FAST_SPIN)
   const withSteps = energyReleasedSteps(REFERENCE_SPIN, 'with')
   const againstSteps = energyReleasedSteps(REFERENCE_SPIN, 'against')
   const noSpinSteps = energyReleasedSteps(0, 'with')
   const holes = BLACK_HOLE_PRESETS.map((p) => runSpinningBlackHoleExperiment(p.id, REFERENCE_SPIN))
   const label = (h: (typeof holes)[number]) => h.preset.label.replace(/^A /, 'a ')
   const verdict = (right: boolean) => (right ? 'right' : 'off this time')
+  const mark = (n: number, right: boolean) => `Your guess ${n}: ${verdict(right)}.`
 
   return (
     <div
@@ -106,11 +104,11 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at the map and the graph. What happens to the green ring and the rose ring as the black hole spins up? Which way does each move? Now try a different spin and compare.'}
+              'Look at the map and the graph. Find the white YOUR GUESS marks. What happens to the green ring and the rose ring as the black hole spins up? Which way does each move? Now try a different spin in Part 2 and compare.'}
             {tutorStep === 'compare' &&
-              `You predicted that, circling with the spin, ${edgeClauses[predictedWith]} (${verdict(matches.with)}); that, circling against the spin, ${edgeClauses[predictedAgainst]} (${verdict(matches.against)}); that the horizon would ${horizonClauses[predictedHorizon]} (${verdict(matches.horizon)}); and that ${energyClauses[predictedEnergy]} (${verdict(matches.energy)}). Comparing that to what you saw, what do you notice?`}
+              `Find your four white marks: guesses 1, 2 and 3 on the map and the graph, and guess 4 on the energy picture. You guessed that, circling with the spin, ${edgeClauses[predictedWith]}; that, circling against the spin, ${edgeClauses[predictedAgainst]}; that the horizon would ${horizonClauses[predictedHorizon]}; and that ${energyClauses[predictedEnergy]}. Which of your white marks sit where the real ring, line or bar ended up, and which do not? What do you notice?`}
             {tutorStep === 'conceptual' &&
-              `At a spin of ${REFERENCE_SPIN}, a probe circling with the spin has its last safe orbit at ${fmt2(reference.lastSafeWith)} reference radii, closer in than the ${fmt(reference.noSpinLastSafe)} of Experiment 3. A probe circling against the spin has it at ${fmt2(reference.lastSafeAgainst)}, farther out. It is the same black hole with the same mass. Why might the direction of the probe's circling matter?`}
+              `At a spin of ${REFERENCE_SPIN}, a probe circling with the spin has its last safe orbit at ${fmt2(reference.lastSafeWith)} reference radii, closer in than the ${fmt(reference.noSpinLastSafe)} of Black Holes 3. A probe circling against the spin has it at ${fmt2(reference.lastSafeAgainst)}, farther out. It is the same black hole with the same mass. Why might the direction of the probe's circling matter?`}
           </p>
 
           <textarea
@@ -154,7 +152,7 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
         <div>
           <p style={paragraphStyle}>
             <strong>1. A black hole can spin, and one number describes how much.</strong> The spin runs from 0 (not
-            spinning, the black holes of Experiments 1 to 7) up to just under 1, the most spin a black hole of that mass can
+            spinning, the black holes of Black Holes 1 to 7) up to just under 1, the most spin a black hole of that mass can
             have. A spin of {REFERENCE_SPIN} is {Math.round(REFERENCE_SPIN * 100)}% of that limit. It cannot be seen turning, because a black hole has no
             surface. It shows up in the gravity around it.
           </p>
@@ -164,7 +162,7 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
             jar of honey. The honey close to the spoon swirls around with it, and the honey farther away swirls more slowly.
             In the same way, the space close to a spinning black hole is carried around in the direction of the spin, and
             the carrying is stronger the closer you are. This is only a comparison. Space is not honey, and nothing rubs: the
-            point is only the swirl.
+            point is only the swirl. The honey picture is not ours: NASA’s Gravity Probe B page puts it this way: “as a celestial body spins on its axis, it drags local spacetime around with it, much like a spinning ball in bowl of molasses would drag around some of the molasses as it spins.”
           </p>
           <p style={paragraphStyle}>
             <strong>3. Why the direction matters.</strong> Think of a ball rolled around in the swirling honey. If it goes
@@ -174,14 +172,15 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
             say, not a derivation of them.
           </p>
           <p style={paragraphStyle}>
-            <strong>4. The numbers.</strong> With no spin, the last safe orbit is at {fmt(reference.noSpinLastSafe)} reference radii (Experiment 3). At a
+            <strong>4. The numbers.</strong> With no spin, the last safe orbit is at {fmt(reference.noSpinLastSafe)} reference radii (Black Holes 3). At a
             spin of {REFERENCE_SPIN}, a probe circling with the spin has it at {fmt2(reference.lastSafeWith)}, and a probe circling
             against the spin has it at {fmt2(reference.lastSafeAgainst)}. For the 10-Sun black hole, where one reference
             radius is about {fmt(reference.referenceRadiusKm)} km, that is about{' '}
             {Math.round(reference.lastSafeWith * reference.referenceRadiusKm)} km and about{' '}
             {Math.round(reference.lastSafeAgainst * reference.referenceRadiusKm)} km from the center. The second is{' '}
             {fmt(reference.lastSafeAgainst / reference.lastSafeWith)} times the first, for the same black hole with the same
-            mass.
+            mass. {mark(1, matches.with)} You guessed that, circling with the spin, {edgeClauses[predictedWith]}. {mark(2, matches.against)} You guessed that, circling against
+            the spin, {edgeClauses[predictedAgainst]}.
           </p>
           <p style={paragraphStyle}>
             <strong>5. The horizon gets smaller as the spin grows.</strong> At a spin of {REFERENCE_SPIN} it is {fmt2(reference.horizon)}{' '}
@@ -189,7 +188,8 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
             The formulas give a smaller horizon for the same mass when it spins. At {FAST_SPIN}, the last safe orbit for a
             probe circling with the spin is at {fmt2(fast.lastSafeWith)}, which is closer in than 1, the horizon of a black
             hole that does not spin. That is not a contradiction: this black hole's horizon is smaller, at{' '}
-            {fmt2(fast.horizon)}, and the last safe orbit stays outside it at every spin.
+            {fmt2(fast.horizon)}, and the last safe orbit stays outside it at every spin. {mark(3, matches.horizon)} You guessed that the horizon would{' '}
+            {horizonClauses[predictedHorizon]}.
           </p>
           <p style={paragraphStyle}>
             <strong>6. Closer in means more energy given up.</strong> A probe that slowly spirals down to its last safe orbit
@@ -197,7 +197,7 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
             {pct(withSteps.released)} circling with the spin, which is {fmt(withSteps.released / noSpinSteps.released)} times
             as much, and {pct(againstSteps.released)} circling against it. Like a ball that rolls farther down a hill, a probe
             that gets closer in has gone farther down gravity's hill, so it has given up more. (This is for a gradual descent.
-            Where the energy goes is not modeled.)
+            Where the energy goes is not modeled.) {mark(4, matches.energy)} You guessed that {energyClauses[predictedEnergy]}.
           </p>
           <p style={paragraphStyle}>
             <strong>7. It does not depend on the black hole's mass.</strong> In reference radii, the last safe orbit with the
@@ -209,8 +209,9 @@ export function SpinningBlackHoleTutor({ predictedWith, predictedAgainst, predic
           <p style={paragraphStyle}>
             <strong>8. The honest limits.</strong> This was a thought experiment about a small probe circling in the flat
             sheet through the black hole's equator. It placed the horizon and the last safe orbits with given formulas. It
-            did not follow a probe's path, and it did not cover tilted orbits. It did not model the ergosphere, a region
-            outside a spinning black hole's horizon where nothing can stay at rest. Astronomers estimate the spins of real
+            did not follow a probe's path, and it did not cover tilted orbits. It did not model the ergosphere. NASA describes it as a flattened region around a spinning
+            black hole where “the black hole’s rotation drags space-time along with it”, so that everything there is forced to move the same way, and says that “the faster
+            the black hole spins, the larger its ergosphere becomes”. Astronomers estimate the spins of real
             black holes, and how they do that is not covered here. The equations were given, not derived, and are for a
             spinning black hole with no electric charge. The spin stayed below 1. Nothing inside the horizon was modeled.
           </p>
