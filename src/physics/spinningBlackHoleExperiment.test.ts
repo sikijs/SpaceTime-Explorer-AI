@@ -2,14 +2,26 @@ import { describe, expect, it } from 'vitest'
 import source from './spinningBlackHoleExperiment.ts?raw'
 import {
   BLACK_HOLE_PRESETS,
+  EDGE_MARKER_RADII,
+  HORIZON_MARKER_RADII,
   MAX_SPIN,
   MIN_SPIN,
+  PART_ONE_PRESET_ID,
+  PART_ONE_SPIN,
+  checkUp,
+  edgeAnswer,
+  energyAnswer,
   energyReleasedFraction,
+  energyReleasedSecondRoute,
   energyReleasedSteps,
+  horizonAnswer,
   horizonRadius,
   lastSafeOrbitRadius,
+  markGuesses,
+  radiiToKm,
   runSpinningBlackHoleExperiment,
 } from './spinningBlackHoleExperiment'
+import { horizonRadiusKm } from './blackHoleSizeExperiment'
 
 const closeTo = (actual: number, expected: number, relative: number) =>
   expect(Math.abs(actual / expected - 1)).toBeLessThan(relative)
@@ -302,5 +314,150 @@ describe('reuse (CLAUDE.md §8)', () => {
     ]) {
       expect(importLines.some((line: string) => line.includes(`/${other}'`))).toBe(false)
     }
+  })
+})
+
+describe('audit update: the fixed Part 1 run', () => {
+  it('is the 10-Sun black hole spun up to 0.9, which the module can run', () => {
+    expect(PART_ONE_PRESET_ID).toBe('stellar-black-hole')
+    expect(PART_ONE_SPIN).toBe(0.9)
+    const run = runSpinningBlackHoleExperiment(PART_ONE_PRESET_ID, PART_ONE_SPIN)
+    closeTo(run.lastSafeWith, 1.16, 0.001)
+    closeTo(run.lastSafeAgainst, 4.359, 0.001)
+    closeTo(run.horizon, 0.718, 0.001)
+    closeTo(run.energyReleasedWith, 0.156, 0.005)
+    closeTo(run.energyReleasedAgainst, 0.039, 0.01)
+  })
+})
+
+describe('audit update: the answers to the four predictions', () => {
+  it('with no spin, every answer is "the same" (nothing differs from Black Holes 1 and 3)', () => {
+    expect(edgeAnswer(0, 'with')).toBe('same')
+    expect(edgeAnswer(0, 'against')).toBe('same')
+    expect(horizonAnswer(0)).toBe('same')
+    expect(energyAnswer(0)).toBe('same')
+  })
+
+  it('with spin, the last safe orbit is closer in with the spin and farther out against it, at every spin above 0', () => {
+    for (const a of [0.01, 0.5, 0.9, 0.99]) {
+      expect(edgeAnswer(a, 'with')).toBe('closer')
+      expect(edgeAnswer(a, 'against')).toBe('farther')
+    }
+  })
+
+  it('the horizon is smaller at every spin above 0, and the probe circling with the spin gives up more', () => {
+    for (const a of [0.01, 0.5, 0.9, 0.99]) {
+      expect(horizonAnswer(a)).toBe('smaller')
+      expect(energyAnswer(a)).toBe('with')
+    }
+  })
+
+  it('agree with the numbers the pictures draw (no answer is decided separately from them)', () => {
+    for (const a of [0.1, 0.5, 0.9]) {
+      expect(lastSafeOrbitRadius(a, 'with')).toBeLessThan(3)
+      expect(lastSafeOrbitRadius(a, 'against')).toBeGreaterThan(3)
+      expect(horizonRadius(a)).toBeLessThan(1)
+      expect(energyReleasedFraction(a, 'with')).toBeGreaterThan(energyReleasedFraction(a, 'against'))
+    }
+  })
+
+  it('marks each guess against the model at the run\'s spin', () => {
+    const right = { with: 'closer', against: 'farther', horizon: 'smaller', energy: 'with' } as const
+    expect(markGuesses(0.9, right)).toEqual({ with: true, against: true, horizon: true, energy: true })
+    const wrong = { with: 'same', against: 'closer', horizon: 'bigger', energy: 'against' } as const
+    expect(markGuesses(0.9, wrong)).toEqual({ with: false, against: false, horizon: false, energy: false })
+    expect(markGuesses(0, { with: 'same', against: 'same', horizon: 'same', energy: 'same' })).toEqual({
+      with: true,
+      against: true,
+      horizon: true,
+      energy: true,
+    })
+  })
+})
+
+describe('audit update: where the guess marks go', () => {
+  it('puts "closer" inside the dashed no-spin ring, "same" on it and "farther" outside it', () => {
+    expect(EDGE_MARKER_RADII.closer).toBeLessThan(EDGE_MARKER_RADII.same)
+    expect(EDGE_MARKER_RADII.same).toBe(runSpinningBlackHoleExperiment('stellar-black-hole', 0.5).noSpinLastSafe)
+    expect(EDGE_MARKER_RADII.farther).toBeGreaterThan(EDGE_MARKER_RADII.same)
+  })
+
+  it('puts "smaller" inside the dotted no-spin horizon ring (radius 1), "same" on it and "bigger" outside it', () => {
+    expect(HORIZON_MARKER_RADII.smaller).toBeLessThan(1)
+    expect(HORIZON_MARKER_RADII.same).toBe(1)
+    expect(HORIZON_MARKER_RADII.bigger).toBeGreaterThan(1)
+  })
+
+  it('does not depend on the spin: a guess has no size of its own, so a marker only shows the kind of answer', () => {
+    expect(Object.keys(EDGE_MARKER_RADII)).toEqual(['closer', 'same', 'farther'])
+    expect(Object.keys(HORIZON_MARKER_RADII)).toEqual(['smaller', 'same', 'bigger'])
+  })
+})
+
+describe('audit update: the second route to the energy given up', () => {
+  it('is 1 - sqrt(8/9), about 5.72%, with no spin, in both directions', () => {
+    expect(energyReleasedSecondRoute(0, 'with')).toBeCloseTo(1 - Math.sqrt(8 / 9), 12)
+    expect(energyReleasedSecondRoute(0, 'against')).toBeCloseTo(0.0572, 4)
+  })
+
+  it('agrees with the circular-orbit route at every spin and both directions', () => {
+    for (const a of [0, 0.1, 0.5, 0.9, 0.99]) {
+      for (const d of ['with', 'against'] as const) {
+        expect(energyReleasedSecondRoute(a, d)).toBeCloseTo(energyReleasedFraction(a, d), 9)
+      }
+    }
+  })
+
+  it('gives about 26.4% with the spin and 3.8% against at a spin of 0.99', () => {
+    expect(energyReleasedSecondRoute(0.99, 'with')).toBeCloseTo(0.264, 3)
+    expect(energyReleasedSecondRoute(0.99, 'against')).toBeCloseTo(0.038, 3)
+  })
+
+  it('rejects a spin of 1 or more', () => {
+    expect(() => energyReleasedSecondRoute(1, 'with')).toThrow(RangeError)
+  })
+})
+
+describe('audit update: the check-up', () => {
+  it('has seven rows, each read as expected, at every spin the page offers', () => {
+    for (const a of [0, 0.5, 0.9, 0.99]) {
+      const rows = checkUp(a)
+      expect(rows).toHaveLength(7)
+      for (const row of rows) expect(['the same', 'outside the horizon']).toContain(row.reading)
+    }
+  })
+
+  it('compares the no-spin rows with Black Holes 3 (3), Black Holes 1 (1) and 1 - sqrt(8/9)', () => {
+    const byId = Object.fromEntries(checkUp(0.9).map((r) => [r.id, r]))
+    expect(byId.noSpinLastSafe).toMatchObject({ expected: 3, found: 3, reading: 'the same' })
+    expect(byId.noSpinHorizon).toMatchObject({ expected: 1, found: 1, reading: 'the same' })
+    expect(byId.noSpinEnergy.expected).toBeCloseTo(0.0572, 4)
+    expect(byId.noSpinEnergy.reading).toBe('the same')
+  })
+
+  it('puts the last safe orbit outside the horizon in both directions (0.9: 1.16 and 4.36 against 0.72)', () => {
+    const byId = Object.fromEntries(checkUp(0.9).map((r) => [r.id, r]))
+    closeTo(byId.withOutsideHorizon.found, 1.16, 0.001)
+    closeTo(byId.againstOutsideHorizon.found, 4.359, 0.001)
+    closeTo(byId.withOutsideHorizon.expected, 0.718, 0.001)
+    expect(byId.withOutsideHorizon.reading).toBe('outside the horizon')
+  })
+
+  it('rejects a spin outside 0 up to, but not including, 1', () => {
+    expect(() => checkUp(1)).toThrow(RangeError)
+    expect(() => checkUp(-0.1)).toThrow(RangeError)
+  })
+})
+
+describe('audit update: kilometers', () => {
+  it('multiplies reference radii by Black Holes 1\'s horizon radius (29.5 km for 10 Suns)', () => {
+    const km = horizonRadiusKm(BLACK_HOLE_PRESETS.find((p) => p.id === 'stellar-black-hole')!.massSolarMasses)
+    expect(radiiToKm(1, 'stellar-black-hole')).toBeCloseTo(km, 9)
+    closeTo(radiiToKm(1.16, 'stellar-black-hole'), 34.2, 0.01)
+    closeTo(radiiToKm(4.359, 'stellar-black-hole'), 128.6, 0.01)
+  })
+
+  it('throws for an unknown black hole', () => {
+    expect(() => radiiToKm(1, 'moon' as never)).toThrow()
   })
 })

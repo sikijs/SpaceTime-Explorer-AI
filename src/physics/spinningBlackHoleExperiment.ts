@@ -140,3 +140,109 @@ export function runSpinningBlackHoleExperiment(presetId: ObjectPreset['id'], spi
     curve,
   }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Audit update (Black Holes 8, 2026-11-18): the fixed Part 1 run, the answers to the four predictions, the places where the
+// white guess marks are drawn, a second route to the energy given up, the check-up rows and kilometers. The interface only
+// displays these (CLAUDE.md §9).
+
+// Part 1 spins the 10-Sun black hole up to this spin (the specification's reference case).
+export const PART_ONE_PRESET_ID: ObjectPreset['id'] = 'stellar-black-hole'
+export const PART_ONE_SPIN = 0.9
+
+export type EdgeAnswer = 'closer' | 'same' | 'farther'
+export type HorizonAnswer = 'bigger' | 'same' | 'smaller'
+export type EnergyAnswer = 'with' | 'against' | 'same'
+
+// Two numbers are "the same" when they agree to rounding error in the arithmetic, not to a chosen tolerance.
+const SAME = 1e-9
+
+function compareTo(value: number, reference: number): -1 | 0 | 1 {
+  if (Math.abs(value - reference) <= SAME * Math.max(1, Math.abs(reference))) return 0
+  return value < reference ? -1 : 1
+}
+
+// Prediction 1 (with the spin) and 2 (against it): the last safe orbit, compared with Black Holes 3's no-spin 3 radii.
+export function edgeAnswer(spin: number, direction: Direction): EdgeAnswer {
+  const c = compareTo(lastSafeOrbitRadius(spin, direction), NO_SPIN_LAST_SAFE)
+  return c < 0 ? 'closer' : c > 0 ? 'farther' : 'same'
+}
+
+// Prediction 3: the horizon, compared with the reference radius (1, by definition).
+export function horizonAnswer(spin: number): HorizonAnswer {
+  const c = compareTo(horizonRadius(spin), 1)
+  return c < 0 ? 'smaller' : c > 0 ? 'bigger' : 'same'
+}
+
+// Prediction 4: which probe gives up the larger share of its rest-mass energy.
+export function energyAnswer(spin: number): EnergyAnswer {
+  const c = compareTo(energyReleasedFraction(spin, 'with'), energyReleasedFraction(spin, 'against'))
+  return c > 0 ? 'with' : c < 0 ? 'against' : 'same'
+}
+
+export interface Guesses {
+  with: EdgeAnswer
+  against: EdgeAnswer
+  horizon: HorizonAnswer
+  energy: EnergyAnswer
+}
+
+// For the tutor, which marks each guess against the model's answer at the given spin (the Results never do).
+export function markGuesses(spin: number, guesses: Guesses): Record<keyof Guesses, boolean> {
+  return {
+    with: guesses.with === edgeAnswer(spin, 'with'),
+    against: guesses.against === edgeAnswer(spin, 'against'),
+    horizon: guesses.horizon === horizonAnswer(spin),
+    energy: guesses.energy === energyAnswer(spin),
+  }
+}
+
+// Where each guess mark is drawn, in reference radii from the center. Markers only: a guess has no size of its own, so each
+// answer has one fixed place (inside the dashed ring, on it, outside it), and the place shows the kind of answer, not a number.
+export const EDGE_MARKER_RADII: Record<EdgeAnswer, number> = { closer: 2, same: NO_SPIN_LAST_SAFE, farther: 4 }
+export const HORIZON_MARKER_RADII: Record<HorizonAnswer, number> = { smaller: 0.8, same: 1, bigger: 1.2 }
+
+// A second route to the energy given up, written differently from `energyReleasedFraction`: at the last safe orbit r (in
+// units of M) a circular orbit's energy per rest-mass energy is sqrt(1 - 2/(3 r)), so the share given up is
+// 1 - sqrt(1 - 2/(3 r)). Given, not derived. It is used for the check-up.
+export function energyReleasedSecondRoute(spin: number, direction: Direction): number {
+  checkSpin(spin)
+  return 1 - Math.sqrt(1 - 2 / (3 * lastSafeOrbitInM(spin, direction)))
+}
+
+export type CheckUpReading = 'the same' | 'outside the horizon' | 'not the same'
+
+export interface CheckUpRow {
+  id: 'noSpinLastSafe' | 'noSpinHorizon' | 'noSpinEnergy' | 'energyWith' | 'energyAgainst' | 'withOutsideHorizon' | 'againstOutsideHorizon'
+  expected: number // a value the same physics or an earlier experiment gives (a radius, or a share as a fraction)
+  found: number
+  reading: CheckUpReading
+}
+
+// The page's own checks, all internal: no published value was read for the last safe orbit or the energy share (CLAUDE.md §29
+// rule 3(c)), so none is claimed. `spin` is the spin of the run.
+export function checkUp(spin: number): CheckUpRow[] {
+  checkSpin(spin)
+  const same = (expected: number, found: number): CheckUpReading => (compareTo(found, expected) === 0 ? 'the same' : 'not the same')
+  const outside = (found: number, horizon: number): CheckUpReading => (found > horizon ? 'outside the horizon' : 'not the same')
+  const horizon = horizonRadius(spin)
+  const withR = lastSafeOrbitRadius(spin, 'with')
+  const againstR = lastSafeOrbitRadius(spin, 'against')
+  const noSpinEnergy = 1 - Math.sqrt(8 / 9) // 1 - sqrt(1 - 2/(3 * 6)): the share at the no-spin last safe orbit, 6M
+  return [
+    { id: 'noSpinLastSafe', expected: NO_SPIN_LAST_SAFE, found: lastSafeOrbitRadius(0, 'with'), reading: same(NO_SPIN_LAST_SAFE, lastSafeOrbitRadius(0, 'with')) },
+    { id: 'noSpinHorizon', expected: 1, found: horizonRadius(0), reading: same(1, horizonRadius(0)) },
+    { id: 'noSpinEnergy', expected: noSpinEnergy, found: energyReleasedFraction(0, 'with'), reading: same(noSpinEnergy, energyReleasedFraction(0, 'with')) },
+    { id: 'energyWith', expected: energyReleasedSecondRoute(spin, 'with'), found: energyReleasedFraction(spin, 'with'), reading: same(energyReleasedSecondRoute(spin, 'with'), energyReleasedFraction(spin, 'with')) },
+    { id: 'energyAgainst', expected: energyReleasedSecondRoute(spin, 'against'), found: energyReleasedFraction(spin, 'against'), reading: same(energyReleasedSecondRoute(spin, 'against'), energyReleasedFraction(spin, 'against')) },
+    { id: 'withOutsideHorizon', expected: horizon, found: withR, reading: outside(withR, horizon) },
+    { id: 'againstOutsideHorizon', expected: horizon, found: againstR, reading: outside(againstR, horizon) },
+  ]
+}
+
+// A distance in reference radii, in kilometers, for the chosen black hole.
+export function radiiToKm(radii: number, presetId: ObjectPreset['id']): number {
+  const preset = BLACK_HOLE_PRESETS.find((p) => p.id === presetId)
+  if (!preset) throw new Error(`Unknown black hole: ${presetId}`)
+  return radii * horizonRadiusKm(preset.massSolarMasses)
+}
