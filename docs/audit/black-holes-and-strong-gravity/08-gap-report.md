@@ -57,3 +57,36 @@ SpinningBlackHoleExperiment.tsx, SpinningBlackHoleTutor.tsx, the module and its 
 
 ## Not checked
 Not run in a browser; tests not run; the tutor's explanation step and `pointAt`/layout code read only in part; "What's next" not read.
+
+
+---
+
+# Re-read (2026-11-18)
+Re-read against the rules set after the first report: the four Parts and "Parts 2, 3 and 4 appear after the first Run" (2026-11-02, 2026-11-07), the links and words box on every page, "Start over, not Change prediction", predictions drawn on the real picture, and the owner's request for rich content on Black Holes pages (2026-11-16), repeated on 2026-11-18 with "add more details, elaborate and make it better", NASA/Hubble images and the latest resource links, "you decide". Read: the specification in full, the module in full, the introduction (`SpinningBlackHoleExperiment.tsx:540-680`), the prediction block (:683-760), the controls and the three captions (:760-1030), the Results (:1033-1237) and the tutor (`SpinningBlackHoleTutor.tsx:60-221`). Nothing changed. `git status` was clean.
+
+## What is still true from the first report
+Everything above stands: no guess marks, no source lines, no table notes, no three-part look-fors, no check-up, the right/off logic is in the component, white is used by the horizon and the "now" dots, and the Observe prompt does not name marks.
+
+## New findings
+| # | Finding | Evidence | What it needs |
+|---|---|---|---|
+| N1 | **No four Parts.** One long page; the controls stay disabled until all four predictions are entered; Parts 2 to 4 do not exist. | :683-760, :763-800 | Part 1 (predict, one Run, three pictures), Part 2 (black hole and spin choices, with their own pictures), Part 3 (results), Part 4 (tutor); Parts 2 to 4 appear after the first Run. |
+| N2 | **"Change predictions" button** reopens the guess without resetting. | :746-760 | Always-visible "Start over" with the lock sentence. |
+| N3 | **No links and no "Words and formulas" box**, though the intro defines the words in one long paragraph (:604-625). | :540-680 | Both, above Part 1. |
+| N4 | **Cross-references say "Experiment 3", "Experiments 1 to 7", "Experiment 1".** | intro, captions, tutor | "Black Holes 3", "Black Holes 1 to 7", and so on. |
+| N5 | **The intro is a good base but has no pictures at all**, none from a real observation, and no real black hole is named. The owner likes it and asks for more detail. | :540-680 | Keep every part the owner liked; add pictures (NASA, ESA/Hubble, EHT, plus drawings made for the page) and real examples (below), without giving any of the four answers (§12). |
+| N6 | **White clash, confirmed:** horizon colour `#e2e8f0` (:22) called "the white line/disk edge", and the "now" dots. | :22, :323-325, :417-420 | Horizon to violet, "now" dots to cyan; white then means only a guess. |
+| N7 | **Two unsourced or loose statements.** The intro and Results say rest-mass energy "turns into speed and heat" (:621-624, :1212-1219), which the specification says is not modeled. The intro says "most are thought to spin" with no source. | | Reword to "gives up"; the spin statement is covered by the sources below (Reynolds 2021; LVK GW231123 spins) or softened. |
+| N8 | **Captions give outcomes** ("the green line bends down... the horizon gets smaller", "the green curve rises") and the tutor's compare step gives right/off before the explanation. | :~940-960, :~1003, Tutor:110-111 | Captions keep what each thing is; outcomes and verdicts move to the tutor (as Black Holes 5 to 7). |
+| N9 | **The Results mark guesses first** ("So your prediction was right/off"). | :1084-1121 | Results only tag rows; the tutor marks. |
+| N10 | **Dead hosts.** The project already removed `heasarc.gsfc.nasa.gov` links on 2025-10-25 (CLAUDE.md status); NASA's "Frame Dragging Around a Rotating Black Hole" page lives there, so it is not offered here. | | Not linked. |
+| N11 | **Source gap for the formulas.** The specification (Decision 9) says the formulas were never checked at a primary source. Today's search could not read Bardeen, Press and Teukolsky 1972 (ADS returned 405) or any page quoting the ISCO values. The values were recomputed independently (Python in the research agent, and Node by me) and match the module. | draft wording, sources | Keep "given, not derived"; cite BPT 1972 as the origin only as a citation, not as a page I read; record §29 rule 3(c) gaps. |
+
+## Plan for Part 1 (as at Black Holes 5 to 7)
+One Run, one fixed black hole: the 10-Sun black hole spun up from 0 to 0.9 (the specification's reference case), over 10 seconds. Three pictures with white YOUR GUESS markers (markers only, since every answer is a direction): guesses 1 and 2 on the map and the edges graph (a marker inside, on or outside the dashed no-spin ring), guess 3 on the map (the dotted no-spin ring against the black disk) and the graph's horizon line, guess 4 over the bars of the energy picture. Part 2 offers the three black holes and spins 0, 0.5, 0.9, 0.99 with their own set of pictures. Part 3 has a check-up and notes under each table. Part 4 is the tutor, which marks each guess.
+
+## Questions for the owner (default first)
+Listed at the end of `08-draft-wording.md`.
+
+## Not checked in this re-read
+Not run in a browser; tests not run. `SafeOrbitMap`, `EdgesGraph` and `EnergyPicture` SVG bodies and the Results' two worked calculations (:1139-1183) were read only in part; the Tutor's `edgeClauses` constants were not read.
