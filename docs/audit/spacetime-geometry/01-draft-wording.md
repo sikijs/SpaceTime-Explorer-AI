@@ -1,5 +1,5 @@
 # Draft wording: Spacetime Geometry Experiment 1 (The Interval: One Number Everyone Agrees On)
-Date: 2026-11-19 | Status: DRAFT for the owner's line-by-line approval (Step 2 of `docs/AUDIT-PLAN.md` §5). Nothing has been built, changed or committed. The specification, component, tutor and module are untouched.
+Date: 2026-11-19 | Status: BUILT and committed (`f97f7df`, 2026-11-19). The owner approved the introduction wording on 2026-11-19 (1a, 1d and the "Why this recipe?" note after three expansions at their request); **a line-by-line approval of the rest of this draft is not recorded.** The specification's Audit Update records what was built.
 
 Gaps chosen (the owner, 2026-11-19, "all defaults" to the seven questions of the gap report): fix N1 to N14; Part 1 fixed on a 0.6c clock and a +0.5c passing observer, with both speed controls in Part 2; a white marker plus a small side scale for time² − distance²; the leaking phrase removed from the prediction question; a short check-up of "expected 1.00, found" for each observer; Results stop saying "Your prediction was ..." and the tutor marks the guess; search for plain official pages and apply §29 rule 3(c) where none is found; accept size M.
 
