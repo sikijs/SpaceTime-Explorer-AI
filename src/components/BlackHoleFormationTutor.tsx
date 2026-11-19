@@ -2,22 +2,21 @@ import { useState } from 'react'
 import {
   CHANDRASEKHAR_LIMIT_SOLAR_MASSES,
   NEUTRON_STAR_RADIUS_KM,
+  PUBLISHED,
   SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
   SURE_NEUTRON_STAR_TOP_SOLAR_MASSES,
   runBlackHoleFormationExperiment,
   whiteDwarfRadiusKm,
 } from '../physics/blackHoleFormationExperiment'
 
-type SizeChoice = 'bigger' | 'same' | 'smaller'
-type ThresholdChoice = 'about-one' | 'about-three' | 'about-thirty'
-type LimitChoice = 'higher' | 'same' | 'lower'
+import type { LimitAnswer as LimitChoice, SizeAnswer as SizeChoice, ThresholdAnswer as ThresholdChoice } from '../physics/blackHoleFormationExperiment'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface BlackHoleFormationTutorProps {
   predictedSize: SizeChoice
   predictedThreshold: ThresholdChoice
   predictedLimit: LimitChoice
-  // Whether each prediction matched the model, worked out once, in the experiment (the same sentences as its Results).
+  // Whether each prediction matched the model, worked out in the physics module (`markGuesses`). The tutor is where the guesses are marked.
   matches: { size: boolean; threshold: boolean; limit: boolean }
   onExplained?: () => void
 }
@@ -70,6 +69,7 @@ export function BlackHoleFormationTutor({ predictedSize, predictedThreshold, pre
 
   const isResponseEmpty = responseInput.trim() === ''
   const verdict = (right: boolean) => (right ? 'right' : 'off this time')
+  const mark = (n: number, right: boolean) => `Your guess ${n}: ${verdict(right)}.`
 
   // Numbers for the explanation come from the experiment's own model, never typed in by hand.
   const light = whiteDwarfRadiusKm(0.6)
@@ -77,7 +77,7 @@ export function BlackHoleFormationTutor({ predictedSize, predictedThreshold, pre
   const lowNeutron = runBlackHoleFormationExperiment(1.6)
   const threeSuns = runBlackHoleFormationExperiment(3)
   const tenSuns = runBlackHoleFormationExperiment(10)
-  // A neutron star of 1.4 Suns, as in Experiment 1: its radius over the horizon radius of 1.4 Suns.
+  // A neutron star of 1.4 Suns, as in Black Holes 1: its radius over the horizon radius of 1.4 Suns.
   const experimentOneRatio = NEUTRON_STAR_RADIUS_KM / runBlackHoleFormationExperiment(1.4).horizonRadiusKm
 
   return (
@@ -100,9 +100,9 @@ export function BlackHoleFormationTutor({ predictedSize, predictedThreshold, pre
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at the ladder and the size picture. Try a few masses. What changes in the pictures as the core gets heavier, and where does the ball stop?'}
+              'Look at the ladder and the size picture. Find the white YOUR GUESS marks. Try a few masses in Part 2. What changes in the pictures as the core gets heavier, and where does the ball stop?'}
             {tutorStep === 'compare' &&
-              `You predicted that ${sizeClauses[predictedSize]} (${verdict(matches.size)}); that ${thresholdClauses[predictedThreshold]} (${verdict(matches.threshold)}); and that ${limitClauses[predictedLimit]} (${verdict(matches.limit)}). Comparing that to what you saw, what do you notice?`}
+              `Find your three white marks: guess 1 on the white dwarf graph, and guesses 2 and 3 on the ladder. You guessed that ${sizeClauses[predictedSize]}; that ${thresholdClauses[predictedThreshold]}; and that ${limitClauses[predictedLimit]}. Which of your white marks sit where the real curve or edge ended up, and which do not? What do you notice?`}
             {tutorStep === 'conceptual' && 'A heavier white dwarf is smaller, not bigger. Why might adding mass make it shrink?'}
           </p>
 
@@ -161,7 +161,7 @@ export function BlackHoleFormationTutor({ predictedSize, predictedThreshold, pre
             <strong>3. A heavier white dwarf is smaller.</strong> More mass pulls harder, so the electrons have to be squeezed
             tighter, into less room, before their push is strong enough to match gravity. In the model, a white dwarf of 0.6 Suns
             has a radius of {fmtKm(light)}, and one of 1.4 Suns has {fmtKm(heavy)}. The same mass, squeezed harder, takes up less
-            room.
+            room. {mark(1, matches.size)} You guessed that {sizeClauses[predictedSize]}.
           </p>
           <p style={paragraphStyle}>
             <strong>4. Near {CHANDRASEKHAR_LIMIT_SOLAR_MASSES} Suns the electrons give out.</strong> As the core is squeezed
@@ -175,18 +175,18 @@ export function BlackHoleFormationTutor({ predictedSize, predictedThreshold, pre
             pushed together into neutrons. Neutrons cannot all be in the same state either, so they push back in the same way,
             and they can hold up a much smaller, denser core: a neutron star, about {NEUTRON_STAR_RADIUS_KM} km in radius (about {2 * NEUTRON_STAR_RADIUS_KM} km across). But its
             push also gives out. Its largest mass is not known exactly, because the matter inside a neutron star is not fully
-            understood: neutron stars of about 2 Suns are known, and the theory says the limit is somewhere between about 2 and {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} (some newer studies point to the lower end). That is why
+            understood: neutron stars of {PUBLISHED.heavyNeutronStarMasses[0]} and {PUBLISHED.heavyNeutronStarMasses[1]} Suns have been measured (NICER and Romani and others), and the theory says the limit is somewhere between about 2 and {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} (some newer studies point to the lower end). NASA’s page on neutron stars describes what happens as the core collapses: it is “crushing together every proton and electron into a neutron”, and NASA adds that a core of between about 1 and 3 solar masses can be stopped by neutrons. That is why
             the model shows a stretch between about {SURE_NEUTRON_STAR_TOP_SOLAR_MASSES} and {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns as
-            not known.
+            not known. {mark(3, matches.limit)} You guessed that {limitClauses[predictedLimit]}.
           </p>
           <p style={paragraphStyle}>
             <strong>6. Beyond that, nothing known holds the core up.</strong> It keeps shrinking until it is inside its own
-            horizon. That is a black hole. The ratio of the held-up core's radius to its horizon radius shows how close a core
-            gets to this: for a neutron star of 1.4 Suns, as in Experiment 1, it is {fmt(experimentOneRatio)}; for one of 1.6
+            horizon, the boundary around a black hole of that mass, inside which nothing can get out, not even light. That is a black hole. The ratio of the held-up core's radius to its horizon radius shows how close a core
+            gets to this: for a neutron star of 1.4 Suns, as in Black Holes 1, it is {fmt(experimentOneRatio)}; for one of 1.6
             Suns, {fmt(lowNeutron.radiusOverHorizon as number)}; and for one of {SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES} Suns, if it
             could exist, only {fmt(threeSuns.radiusOverHorizon as number)}. For a core of 10 Suns the horizon radius is{' '}
             {fmtKm(tenSuns.horizonRadiusKm)}, and nothing known stops it from getting smaller than that. (A form of matter that
-            could hold up a heavier core has been suggested, but none has been seen, and this experiment does not model one.)
+            could hold up a heavier core has been suggested, but none has been seen, and this experiment does not model one.) {mark(2, matches.threshold)} You guessed that {thresholdClauses[predictedThreshold]}.
           </p>
           <p style={paragraphStyle}>
             <strong>7. What is settled, and what is not.</strong> The white dwarf's limit is well established. The neutron star's
