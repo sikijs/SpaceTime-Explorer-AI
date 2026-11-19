@@ -17,6 +17,13 @@ const predictionClauses: Record<Prediction, string> = {
   smaller: 'the number would be smaller for the lab than for the clock itself',
 }
 
+// How the guess compares with what was found, for the tutor's marking of the guess (no score; the learner's own words stay theirs).
+const predictionSummary: Record<Prediction, string> = {
+  bigger: 'bigger than',
+  same: 'the same as',
+  smaller: 'smaller than',
+}
+
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
 export function SpacetimeIntervalTutor({ clockSpeed, passingSpeed, predicted, onExplained }: SpacetimeIntervalTutorProps) {
@@ -65,7 +72,7 @@ export function SpacetimeIntervalTutor({ clockSpeed, passingSpeed, predicted, on
             {tutorStep === 'observe' &&
               "Look at the table and the bars. What happened to the time between the ticks as seen from the lab? What happened to the distance?"}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In the table, the lab's number is ${two(lab.intervalSquared)} and the clock's own frame's number is ${two(clockFrame.intervalSquared)}. The passing observer's number is ${two(passing.intervalSquared)}. Comparing that to what you saw, what do you notice?`}
+              `You guessed that the lab's number would be ${predictionSummary[predicted]} the clock's own. That is the white mark on the side scale. In the table, the lab's number is ${two(lab.intervalSquared)}, the clock's own frame's number is ${two(clockFrame.intervalSquared)}, and the passing observer's is ${two(passing.intervalSquared)}. What do you notice when you compare them with your guess?`}
             {tutorStep === 'conceptual' &&
               'The time and the distance can differ from one observer to the next. Why might one combination of them stay the same?'}
           </p>
@@ -107,8 +114,24 @@ export function SpacetimeIntervalTutor({ clockSpeed, passingSpeed, predicted, on
         </div>
       )}
 
-      {tutorStep === 'explained' && (
-        <div>
+      {tutorStep === 'explained' && <SpacetimeIntervalExplanation clockSpeed={clockSpeed} passingSpeed={passingSpeed} predicted={predicted} />}
+    </div>
+  )
+}
+
+// The tutor's explanation (its last step). Every number comes from the experiment's own model (CLAUDE.md §9).
+export function SpacetimeIntervalExplanation({ clockSpeed, passingSpeed, predicted }: { clockSpeed: number; passingSpeed: number; predicted: Prediction }) {
+  const { lab, clockFrame, passing } = runIntervalExperiment(clockSpeed, passingSpeed)
+  const two = (value: number) => Math.abs(value).toFixed(2)
+  // Compared at the two decimals shown to the learner, so a guess is never marked on a difference the table does not show.
+  const actual: Prediction = two(lab.intervalSquared) === two(clockFrame.intervalSquared) ? 'same' : lab.intervalSquared > clockFrame.intervalSquared ? 'bigger' : 'smaller'
+  const guessMatches = predicted === actual
+  return (
+    <div>
+          <p style={paragraphStyle}>
+            <strong>Your guess, marked.</strong> You guessed that {predictionClauses[predicted]}. The lab&rsquo;s number was{' '}
+            {two(lab.intervalSquared)} and the clock&rsquo;s own frame&rsquo;s was {two(clockFrame.intervalSquared)}, so the lab&rsquo;s number was {predictionSummary[actual]} the clock&rsquo;s own{guessMatches ? ', as you guessed' : ', which is not what you guessed'}.
+          </p>
           <p style={paragraphStyle}>
             <strong>1. The time and the distance can change from observer to observer, but one combination did not.</strong> For the lab, the time between
             the ticks was {two(lab.timeBetween)} seconds and the distance was {two(lab.distanceBetween)} light-seconds. For the
@@ -140,7 +163,7 @@ export function SpacetimeIntervalTutor({ clockSpeed, passingSpeed, predicted, on
             {two(clockFrame.timeBetween)} × {two(clockFrame.timeBetween)} − {two(clockFrame.distanceBetween)} ×{' '}
             {two(clockFrame.distanceBetween)} = {two(clockFrame.intervalSquared)}. So the interval is just what the clock's face
             reads between the two ticks. Everyone agrees on that, whatever time and distance they found. This is the idea from
-            Experiment 1, the one-clock experiment: a clock measures elapsed time along its own history. The interval is that same idea,
+            the one-clock experiment of the first chapter (&ldquo;One clock&rdquo;): a clock measures elapsed time along its own history. The interval is that same idea,
             now stated for any two events.
           </p>
           <p style={paragraphStyle}>
@@ -149,8 +172,11 @@ export function SpacetimeIntervalTutor({ clockSpeed, passingSpeed, predicted, on
             events; later experiments come back to that. And the experiment did not work out why the subtraction, and not
             addition, is the combination that stays the same.
           </p>
+          <p style={paragraphStyle}>
+            <strong>6. Space and time as one thing.</strong> In 1908 Hermann Minkowski gave a lecture in which he said that space by
+            itself and time by itself would fade into shadows, and only a union of the two would stay. The interval is the first piece
+            of that union you have met.
+          </p>
         </div>
-      )}
-    </div>
   )
 }

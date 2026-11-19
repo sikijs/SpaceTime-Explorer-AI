@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { intervalSquared, runIntervalExperiment } from './spacetimeInterval'
+import {
+  intervalSquared,
+  runIntervalExperiment,
+  guessMarkerOnScale,
+  intervalFractionOnScale,
+  checkUpRows,
+  INTERVAL_SCALE_END,
+} from './spacetimeInterval'
+import type { IntervalGuess } from './spacetimeInterval'
 import { timeDilationFactorFor } from './movingClockExperiment'
 import { runMovingClockExperiment } from './movingClockExperiment'
 
@@ -89,5 +97,68 @@ describe('Spacetime interval physics (Spacetime Geometry, Experiment 1)', () => 
 
   it('is a pure function of (v, u): repeated runs give identical results', () => {
     expect(runIntervalExperiment(0.9, -0.5)).toEqual(runIntervalExperiment(0.9, -0.5))
+  })
+})
+
+describe('Guess mark and check-up numbers (Spacetime Geometry 1, audit update)', () => {
+  const part1 = runIntervalExperiment(0.6, 0.5)
+
+  it('the side scale ends at 2, so a real value of 1.00 sits at half the scale', () => {
+    expect(INTERVAL_SCALE_END).toBe(2)
+    expect(intervalFractionOnScale(part1.clockFrame.intervalSquared)).toBeCloseTo(0.5, 12)
+  })
+
+  it('the marker for "same" lands on the clock-frame value, "bigger" above it and "smaller" below it', () => {
+    const same = guessMarkerOnScale(part1, 'same')
+    const bigger = guessMarkerOnScale(part1, 'bigger')
+    const smaller = guessMarkerOnScale(part1, 'smaller')
+    expect(same.markerValue).toBeCloseTo(part1.clockFrame.intervalSquared, 12)
+    expect(bigger.markerValue).toBeCloseTo(1.5, 12)
+    expect(smaller.markerValue).toBeCloseTo(0.5, 12)
+    expect(bigger.markerValue).toBeGreaterThan(same.markerValue)
+    expect(smaller.markerValue).toBeLessThan(same.markerValue)
+  })
+
+  it('the marker positions are 0.75, 0.5 and 0.25 of the scale for bigger, same and smaller', () => {
+    expect(guessMarkerOnScale(part1, 'bigger').markerFraction).toBeCloseTo(0.75, 12)
+    expect(guessMarkerOnScale(part1, 'same').markerFraction).toBeCloseTo(0.5, 12)
+    expect(guessMarkerOnScale(part1, 'smaller').markerFraction).toBeCloseTo(0.25, 12)
+  })
+
+  it('the real values do not depend on the guess', () => {
+    const guesses: IntervalGuess[] = ['bigger', 'same', 'smaller']
+    guesses.forEach((g) => {
+      const marker = guessMarkerOnScale(part1, g)
+      expect(marker.labValue).toBeCloseTo(1, 12)
+      expect(marker.clockFrameValue).toBeCloseTo(1, 12)
+    })
+    expect(runIntervalExperiment(0.6, 0.5)).toEqual(part1)
+    expect(part1.lab.timeBetween).toBeCloseTo(1.25, 12)
+    expect(part1.lab.distanceBetween).toBeCloseTo(0.75, 12)
+    expect(part1.passing.intervalSquared).toBeCloseTo(1, 12)
+  })
+
+  it('the check-up expects 1 (the clock face time squared) and finds the same for all three observers at many speeds', () => {
+    CLOCK_SPEEDS.forEach((v) => {
+      PASSING_SPEEDS.forEach((u) => {
+        const rows = checkUpRows(runIntervalExperiment(v, u))
+        expect(rows.map((r) => r.observer)).toEqual(['lab', 'clockFrame', 'passing'])
+        rows.forEach((r) => {
+          expect(r.expected).toBe(1)
+          expect(r.found).toBeCloseTo(1, 9)
+          expect(r.reading).toBe('the same')
+        })
+      })
+    })
+  })
+
+  it('the check-up reads "different" when a found value really differs from the expected one', () => {
+    const tampered = { ...part1, lab: { ...part1.lab, intervalSquared: 1.5 } }
+    expect(checkUpRows(tampered)[0].reading).toBe('different')
+    expect(checkUpRows(tampered)[1].reading).toBe('the same')
+  })
+
+  it('refuses an unknown guess', () => {
+    expect(() => guessMarkerOnScale(part1, 'larger' as IntervalGuess)).toThrow(RangeError)
   })
 })

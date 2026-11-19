@@ -52,3 +52,45 @@ Files: SpacetimeIntervalExperiment.tsx (introduction, results drawing marker pan
 
 ## Not checked
 Rendering in a browser (text overflow in row names, marker placement), narrow widths, other browsers, keyboard use, the specification's source table (the spec states no outside sources were used), the tests beyond their titles.
+
+
+---
+
+# Re-read (2026-11-19)
+Re-read against the rules set after the first report: the four Parts and "Parts 2, 3 and 4 appear after the first Run", the links and words box on every page, "Start over, not Change prediction", and predictions drawn on the real picture. Read: the specification's prediction, behaviour and implementation notes, the module in full, the component's state, introduction, controls, prediction, both captions and Results (`SpacetimeIntervalExperiment.tsx:243-577`), the tutor's steps (`SpacetimeIntervalTutor.tsx:40-156`). Nothing changed. Not run in a browser; tests not run; the SVG bodies (:60-240) were read only for colours and constants.
+
+## What is still true from the first report
+No guess mark, no source line, no check-up, no "What this table tells us", no three-part look-fors, one fixed-length green block so a guess has no scale, the tutor never marks the guess (O2b), and the introduction does not say that guesses leave the pictures alone.
+
+## New findings
+| # | Finding | Evidence | What it needs |
+|---|---|---|---|
+| N1 | **No four Parts.** One card holds the introduction, both speed controls, the prediction, Run, the setup picture, the results and (below the card) the tutor. | :313-575 | Part 1 (predict, one Run, setup picture, results picture), Part 2 (the two speed controls and the drawings that follow them), Part 3 (results table), Part 4 (tutor), each with the coloured line, heading and "What we are about to do" lead. |
+| N2 | **Parts 2 to 4 are not gated the new way, and the controls come before the prediction.** Results and tutor appear after the first Run (good), but the controls sit above Part 1's prediction and Run, and any change of speed or prediction calls `returnToIdle`, which deletes the results and the tutor. | :272-283, :490, :566 | Part 1 fixed on one pair of speeds (default: 0.6c clock, +0.5c passing observer, the worked case in the spec's tests); the speeds move to Part 2; changing a speed after the first Run must not remove the results of Part 1 or the tutor. Owner to confirm the fixed pair. |
+| N3 | **Prediction can be changed freely, with no "Start over".** Clicking another answer silently resets the run. No lock sentence, no Start over button. | :280-283, :408-418 | Always-visible "Start over" (greyed until a guess or run exists, and while running); the guess locks after Run, with the lock sentence. |
+| N4 | **No "Want to know more?" list and no "Words and formulas" box.** Terms ("event", "light-second", "c") are defined in one paragraph (:328-332); the formula time² − distance² and its worked example are in the prediction block (:396-400), not in a box. "Interval" and "interval squared" are not listed anywhere before the tutor. | :315-353 | Both above Part 1. The spec says no outside source was used (spec item 10, :303), so links must be found and read: candidates to search are a NASA or ESA or university-level page on the spacetime interval, light-seconds (NIST or NASA), and Einstein 1905 or Minkowski 1908 as the original source. None has been fetched. If no plain official page is found, record the gap as in §29 rule 3(c). |
+| N5 | **Cross-references use group-local numbers.** "as the moving clock did in Experiments 3 to 5" (:336) and, in the tutor, "the idea from Experiment 1, the one-clock experiment" (Tutor point 4). In the Spacetime Geometry chapter these read as this group's Experiments 3 to 5 and 1. | :336; Tutor:138-143 | "Relativity of Time and Motion 3 to 5" and "Relativity of Time and Motion 1 (One clock)", per the audited pages' convention. |
+| N6 | **Heading reads "Experiment 1 — ...".** | :311 | Match the audited pages' heading style. |
+| N7 | **Early leak in the prediction block (C7 made firmer).** The sentence "the lab sees its two ticks farther apart in time and in space than the clock's own face shows" is true, but it also states that both numbers are larger for the lab, which steers the learner to "bigger" (time² and distance² both grow, and only the difference matters). The tutor later uses the same facts. | :402-405 | Owner to judge. Default: keep a version that asks the question without saying both numbers grow, and leave the facts to the observation (Part 1's table). |
+| N8 | **Setup picture's passing speed has no visible effect (C2) and is not the learner's choice in Part 1 once fixed.** With the pair fixed, this matters less; it becomes a Part 2 drawing, where the arrow length should follow the speed. | :91-109 | In Part 2, make the purple arrow's length follow the speed, or say in its caption that only the direction shows. Owner to choose. |
+| N9 | **Guess mark has no scale to sit on (A5 reconfirmed).** The green block is deliberately the same length in every row (:187-189, :229), and the results picture is drawn only after the run. Three answers (bigger / same / smaller) have no size. | :229, :490 | A marker for the lab row's green block with a white YOUR GUESS box and line, plus a small side panel with its own scale of time² − distance² per row so "bigger / same / smaller" is a visibly different position, with the caption saying the mark is only a marker. Owner to decide if the panel clutters. |
+| N10 | **Dark-canvas colours.** No white is used in the pictures (greens, blues, pinks, a lime green block, slate text `#e2e8f0` and `#cbd5e1`), so a white guess mark does not clash. The pale ruler and tick text (`#cbd5e1`) is close to white, so the mark needs a heavy outline and the box. | :16-18, :55-58 | Check by eye in a browser. |
+| N11 | **Module has no function for the mark.** `intervalSquared` and `runIntervalExperiment` only. A guess of "bigger/same/smaller" needs a position for the lab-row marker and the real lab and clock values on one scale, and a function for the Part 3 comparison. | spacetimeInterval.ts:8, :42 | New tested functions, nothing existing changed. |
+| N12 | **Check-up (B1) has a real reference inside the physics.** For a clock the interval equals its own face time (1.00 s). A table "expected 1.00, found" per observer is possible; no outside value is needed. Whether a three-row check-up of the same number tells the learner anything the table does not is for the owner. | spec :303; Tutor point 4 | Owner to decide. |
+| N13 | **Tutor.** Compare step restates the guess and the three numbers, with no verdict, and the explanation never marks it. The conceptual question ("Why might one combination of them stay the same?") is asked after the table already shows 1.00, 1.00, 1.00. | Tutor:67-68, :14-18, :110-152 | Tutor names the white mark and marks the guess in the explanation (as at Black Holes 5 to 9); the Results stop saying "Your prediction was ..." (:494-496) and show the guess only as a tag. Owner to approve. |
+| N14 | **One quoted claim has no source.** The tutor's "That minus sign is what makes space and time together different from ordinary space" and the "interval" terms come from standard special relativity and the spec lists no outside source. | Tutor:130-136; spec :303 | Fetch and read a source while drafting; record it in the source table. |
+
+## Plan for Part 1 (as at Black Holes 5 to 9)
+Part 1 has one Run on a fixed pair of speeds. The setup picture builds as before (ruler, tick 0, the clock travelling, tick 1). After the run, the results picture shows the three rows and, only then, the white YOUR GUESS marker beside the lab row's green block and the new side scale. Part 2 holds the two speed controls. Part 3 holds the table with a note, and the check-up if the owner wants it. Part 4 is the tutor, which marks the guess.
+
+## Size
+Still **Medium**, leaning **M-L**: a marker panel, new tested module functions, the Part split, links and a words box with one worked formula, and caption rewrites.
+
+## Questions for the owner (default first)
+1. All gaps N1 to N14 fixed as listed? (default: yes)
+2. Part 1 fixed on a 0.6c clock and a +0.5c passing observer, with both speed controls moved to Part 2? (default: yes)
+3. Guess mark as a marker plus a small side scale for time² − distance² (N9)? (default: yes)
+4. Early leak (N7): drop "farther apart in time and in space" from the prediction question? (default: yes, the owner approves the replacement)
+5. Check-up of "expected 1.00, found" for each observer (N12)? (default: yes, as one short table)
+6. Results stop saying "Your prediction was ..." and the tutor marks the guess (N13)? (default: yes)
+7. Links (N4): search for plain official pages, and apply §29 rule 3(c) where none is found? (default: yes, every link read first)
