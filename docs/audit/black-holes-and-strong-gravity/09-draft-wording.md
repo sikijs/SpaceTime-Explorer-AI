@@ -163,7 +163,7 @@ Nothing is built and nothing was viewed in a browser. I did not read: Chandrasek
 
 ## Wording changes of 2026-11-18 (all approved by the owner the same day)
 
-*(Made after the owner read the page in the browser, one question at a time. They change wording only: no physics, no numbers and no answer are changed, and none gives away what a prediction asks. Where the text above differs, this section is the later and approved wording.)*
+*(Made at the owner's request, one passage at a time. They change wording only: no physics, no numbers and no answer are changed, and none gives away what a prediction asks. Where the text above differs, this section is the later and approved wording.)*
 
 1. **Introduction, "The question"** (what "about 3 times too big" means). After "…is only about 3 times too big.": "'Too big' means too big to be a black hole. Any object turns into a black hole if all of its mass is squeezed inside its own critical radius, and that radius is larger for a heavier object. A neutron star holds about 1.4 Suns of mass, so its critical radius is about 4.1 km. Its real radius is 12 km, so it would have to shrink to about a third of its size (12 ÷ 4.1 is about 3). That is a tiny squeeze compared with the Sun, which would have to shrink about 236,000 times. In other words, a neutron star is already almost small enough." (Numbers from Black Holes 1; the 4.1 km and 236,000 are typed in the text.)
 2. **Introduction, idea 6 ("What is left depends on what holds the core up")** becomes three bullets, then a spring comparison.
