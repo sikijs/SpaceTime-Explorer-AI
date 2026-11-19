@@ -56,3 +56,36 @@ BlackHoleFormationExperiment.tsx, BlackHoleFormationTutor.tsx, the module and it
 
 ## Not checked
 Not run in a browser; tests not run; the SVG bodies of the ruler and graph and the tutor's explanation step were read only in part; line numbers marked "~" are approximate; "What's next" not read.
+
+
+---
+
+# Re-read (2026-11-18)
+Re-read against the rules set after the first report: the four Parts and "Parts 2, 3 and 4 appear after the first Run" (2026-11-02, 2026-11-07), the links and words box on every page, "Start over, not Change prediction", predictions drawn on the real picture, and the owner's request for rich content on Black Holes pages (2026-11-16), repeated on 2026-11-18 with "the existing content in the intro is good. Keep it and augment, improve with more details if required. Add images from NASA etc wherever required". Read: the specification in full, the module in full, the introduction (`BlackHoleFormationExperiment.tsx:512-620`), the prediction block, the Results (:985-1173) and the tutor's first steps (`BlackHoleFormationTutor.tsx:95-110`). Nothing changed. `git status` was clean.
+
+## What is still true from the first report
+Everything above stands: no guess marks, no source lines, no table notes, no three-part look-fors, no check-up, the right/off logic and the guess masses live in the component, white is used for the chosen-mass marker and the horizon, and "Change predictions" is a button.
+
+## New findings
+| # | Finding | Evidence | What it needs |
+|---|---|---|---|
+| N1 | **No four Parts.** One long page; the controls stay disabled until all three predictions are entered. | :640-760 | Part 1 (predict, one Run, three pictures), Part 2 (core mass, with its own pictures), Part 3 (results), Part 4 (tutor); Parts 2 to 4 appear after the first Run. |
+| N2 | **"Change predictions" button** reopens the guesses without resetting. | :~746 | Always-visible "Start over" with the lock sentence. |
+| N3 | **No links and no "Words and formulas" box**; the words are one long paragraph. | :~590-618 | Both, above Part 1. |
+| N4 | **Cross-references say "Experiment 1", "Experiment 5".** | intro, Results, tutor (Tutor:80, :169, :185) | "Black Holes 1" and so on; Relativity "Experiment 5" becomes the learner's chapter name. |
+| N5 | **The introduction is a good base and has no pictures, no real stars and no real numbers.** The owner likes it and asks for more detail and NASA-type images. | :512-620 | Keep every part; add pictures and real examples without giving any answer (§12). |
+| N6 | **White clash, confirmed:** the chosen-mass marker and its text, the horizon ring and the black-hole zone (`#e2e8f0`, :58-59), and the graph dot. Also the neutron-star zone is violet, so a violet horizon (as at Black Holes 8) would clash here. | :58-59 | Chosen mass and the graph dot to cyan; the horizon ring and the black-hole zone to rose. |
+| N7 | **Prediction 2 is the one guess with a number of its own** (1, 3 or 30 Suns), but 30 is off the ladder's 0.3 to 10 scale. | :39-46 | A positional mark at 1 and at 3, and an arrow off the right end, labelled, for 30. |
+| N8 | **The introduction leans toward answers in two sentences.** "The more mass a core has, the harder gravity pulls it in" and "held up by another, much more tightly squeezed" (the gap report's C7). They give nothing the guesses need, but the owner may wish to check. | :~545-575 | Left as approved; flagged. |
+| N9 | **A fact has moved since the specification.** The specification says the heaviest well-measured neutron star is about 2.08 Suns and sets the "sure neutron star" edge at 2. Sources read today give **2.35 ± 0.17 Suns** (PSR J0952-0607, Romani et al. 2022) and **2.073 ± 0.069** (PSR J0740+6620, NICER 2024), and LVK GW230529 found a compact object of 2.5 to 4.5 Suns that gravitational waves alone cannot call a neutron star or a black hole. The 2-to-3 "not known" zone is therefore consistent with the sources, but "sure up to 2" is conservative. | draft wording, sources | The model's round edges are the owner's physics decision (CLAUDE.md §8): kept, with a plain note after the run (Question 6). |
+| N10 | **Two statements in the specification now have a source.** NASA's neutron-star page says a collapsing core of "between about 1 and 3 solar masses" can be stopped by neutrons, and heavier cores go on to form black holes: the model's 3-Suns edge. NASA says the Chandrasekhar limit is "1.4 times the mass of the Sun" (the model uses 1.44). | sources | Used in the check-up and the real-world block. |
+| N11 | **The white dwarf size formula is still the page's own fit** (Decision 4), but a real white dwarf can now be compared with it: Sirius B, 1.018 ± 0.011 Suns (Bond et al. 2017), is about 12,000 km across (ESA/Hubble). The page's formula gives a radius of 5,512 km at 1.018 Suns, which is about 8% less than the 6,000 km radius that 12,000 km gives. | sources | One row of the check-up, with the numbers. |
+
+## Plan for Part 1 (as at Black Holes 5 to 8)
+One Run, one fixed core. Three pictures with white YOUR GUESS marks: guess 1 on the white dwarf graph (a short arrow, up, flat or down, markers only); guess 2 on the ladder at its own mass (1 or 3 Suns, an arrow off the end for 30); guess 3 on the ladder against the 1.44 edge (an arrow to the right, a short bar, or an arrow to the left, markers only). Part 2 offers the seven preset masses with their own pictures. Part 3 has a check-up and notes under each table. Part 4 is the tutor, which marks each guess.
+
+## Questions for the owner (default first)
+Listed at the end of `09-draft-wording.md`.
+
+## Not checked in this re-read
+Not run in a browser; tests not run. The `Ladder`, `SizeRuler` and `WhiteDwarfGraph` SVG bodies (:136-417) and the tutor's explanation step were read only in part.
