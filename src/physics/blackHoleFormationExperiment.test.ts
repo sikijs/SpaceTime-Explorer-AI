@@ -9,8 +9,19 @@ import {
   SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
   SURE_NEUTRON_STAR_TOP_SOLAR_MASSES,
   HORIZON_KM_PER_SOLAR_MASS,
+  LIMIT_MARKERS,
+  PART_ONE_MASS,
+  PUBLISHED,
+  SIZE_MARKERS,
+  THRESHOLD_GUESS_MASSES,
+  checkUp,
   coreOutcome,
+  isOffScale,
+  limitAnswer,
+  markGuesses,
   runBlackHoleFormationExperiment,
+  sizeAnswer,
+  thresholdAnswer,
   whiteDwarfRadiusKm,
   whiteDwarfRadiusSteps,
 } from './blackHoleFormationExperiment'
@@ -305,5 +316,110 @@ describe('reuse (CLAUDE.md §8)', () => {
     ]) {
       expect(importLines.some((line: string) => line.includes(`/${other}'`))).toBe(false)
     }
+  })
+})
+
+describe('audit update: the fixed Part 1 run', () => {
+  it('is a core of 5 Suns, which is a black hole in the model, with a horizon of 14.8 km', () => {
+    expect(PART_ONE_MASS).toBe(5)
+    expect(coreOutcome(PART_ONE_MASS)).toBe('black-hole')
+    const run = runBlackHoleFormationExperiment(PART_ONE_MASS)
+    closeTo(run.horizonRadiusKm, 14.76, 0.001)
+    expect(run.heldUpRadiusKm).toBeNull()
+  })
+})
+
+describe('audit update: the answers to the three predictions', () => {
+  it('a heavier white dwarf is smaller, so the answer to the first is "smaller"', () => {
+    expect(sizeAnswer()).toBe('smaller')
+    expect(whiteDwarfRadiusKm(1.0)).toBeLessThan(whiteDwarfRadiusKm(0.6))
+  })
+
+  it('the answer to the second is "about 3 Suns", the choice nearest (in ratio) to the black hole edge', () => {
+    expect(thresholdAnswer()).toBe('about-three')
+    const distance = (m: number) => Math.abs(Math.log(m / SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES))
+    const nearest = Object.entries(THRESHOLD_GUESS_MASSES).sort((a, b) => distance(a[1]) - distance(b[1]))[0][0]
+    expect(thresholdAnswer()).toBe(nearest)
+  })
+
+  it('the answer to the third is "higher": a neutron star holds up more than a white dwarf', () => {
+    expect(limitAnswer()).toBe('higher')
+    expect(SURE_NEUTRON_STAR_TOP_SOLAR_MASSES).toBeGreaterThan(CHANDRASEKHAR_LIMIT_SOLAR_MASSES)
+  })
+
+  it('marks each guess against the model, for the tutor', () => {
+    expect(markGuesses({ size: 'smaller', threshold: 'about-three', limit: 'higher' })).toEqual({ size: true, threshold: true, limit: true })
+    expect(markGuesses({ size: 'bigger', threshold: 'about-thirty', limit: 'lower' })).toEqual({ size: false, threshold: false, limit: false })
+    expect(markGuesses({ size: 'same', threshold: 'about-one', limit: 'same' })).toEqual({ size: false, threshold: false, limit: false })
+    expect(markGuesses({ size: 'smaller', threshold: 'about-one', limit: 'higher' })).toEqual({ size: true, threshold: false, limit: true })
+  })
+})
+
+describe('audit update: where the guess marks go', () => {
+  it('gives guess 2 a mass of its own: 1, 3 and 30 Suns, and only 30 is off the ladder', () => {
+    expect(THRESHOLD_GUESS_MASSES).toEqual({ 'about-one': 1, 'about-three': 3, 'about-thirty': 30 })
+    expect(isOffScale(THRESHOLD_GUESS_MASSES['about-one'])).toBe(false)
+    expect(isOffScale(THRESHOLD_GUESS_MASSES['about-three'])).toBe(false)
+    expect(isOffScale(THRESHOLD_GUESS_MASSES['about-thirty'])).toBe(true)
+    expect(isOffScale(MAX_CORE_MASS)).toBe(false)
+    expect(THRESHOLD_GUESS_MASSES['about-thirty']).toBeGreaterThan(MAX_CORE_MASS)
+  })
+
+  it('gives guesses 1 and 3 one distinct marker each, and no size of their own', () => {
+    expect(new Set(Object.values(SIZE_MARKERS)).size).toBe(3)
+    expect(new Set(Object.values(LIMIT_MARKERS)).size).toBe(3)
+    expect(SIZE_MARKERS).toEqual({ bigger: 'up', same: 'flat', smaller: 'down' })
+    expect(LIMIT_MARKERS).toEqual({ higher: 'right', same: 'bar', lower: 'left' })
+  })
+})
+
+describe('audit update: the check-up against published values', () => {
+  const rows = checkUp()
+  const byId = Object.fromEntries(rows.map((r) => [r.id, r]))
+
+  it('has five rows', () => {
+    expect(rows.map((r) => r.id)).toEqual(['chandrasekhar', 'siriusB', 'neutronStarRadius', 'blackHoleEdge', 'sureNeutronStarEdge'])
+  })
+
+  it('reads the Chandrasekhar limit as the same once rounded to the 1.4 NASA gives', () => {
+    expect(byId.chandrasekhar.page).toBe(1.44)
+    expect(byId.chandrasekhar.published).toEqual([1.4])
+    expect(byId.chandrasekhar.reading).toBe('the same')
+  })
+
+  it('compares the page\'s white dwarf radius at Sirius B\'s mass with half of ESA/Hubble\'s 12,000 km', () => {
+    const expected = 0.0131 * SUN_RADIUS_KM * 1.018 ** (-1 / 3) * Math.sqrt(1 - (1.018 / 1.44) ** (4 / 3)) // written separately here
+    closeTo(byId.siriusB.page, expected, 1e-9)
+    closeTo(byId.siriusB.page, 5512, 0.001)
+    expect(byId.siriusB.published).toEqual([6000])
+    expect(byId.siriusB.reading).toBe('less')
+    expect(byId.siriusB.percentGap).toBeCloseTo(-8.1, 1)
+  })
+
+  it('reads the neutron star\'s 12 km as inside both measured ranges (10.73 to 12.31, and 11.61 to 13.77)', () => {
+    expect(byId.neutronStarRadius.page).toBe(12)
+    expect(byId.neutronStarRadius.published).toEqual([11.36, 12.49])
+    expect(byId.neutronStarRadius.reading).toBe('inside the measured ranges')
+    const ranges = PUBLISHED.neutronStarRadii.map((r) => [r.radiusKm - r.minusKm, r.radiusKm + r.plusKm])
+    expect(ranges[0][0]).toBeCloseTo(10.73, 2)
+    expect(ranges[0][1]).toBeCloseTo(12.31, 2)
+    expect(ranges[1][0]).toBeCloseTo(11.61, 2)
+    expect(ranges[1][1]).toBeCloseTo(13.77, 2)
+  })
+
+  it('reads the 3-Suns black hole edge as the same as NASA\'s upper end of the neutron star core range', () => {
+    expect(byId.blackHoleEdge.page).toBe(3)
+    expect(byId.blackHoleEdge.published).toEqual([3])
+    expect(byId.blackHoleEdge.reading).toBe('the same')
+  })
+
+  it('reads the "sure neutron star" edge of 2 Suns as less than both measured heavy neutron stars (2.073 and 2.35)', () => {
+    expect(byId.sureNeutronStarEdge.page).toBe(2)
+    expect(byId.sureNeutronStarEdge.published).toEqual([2.073, 2.35])
+    expect(byId.sureNeutronStarEdge.reading).toBe('less')
+  })
+
+  it('is deterministic', () => {
+    expect(checkUp()).toEqual(checkUp())
   })
 })

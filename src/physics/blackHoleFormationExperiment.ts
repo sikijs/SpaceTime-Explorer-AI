@@ -133,3 +133,161 @@ export function runBlackHoleFormationExperiment(coreMassSolarMasses: number): Co
     curve,
   }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Audit update (Black Holes 9, 2026-11-18): the fixed Part 1 run, the answers to the three predictions, the places where the white
+// guess marks are drawn, and the check-up against published values. The interface only displays these (CLAUDE.md §9).
+
+// Part 1 squeezes a core of this many Suns: heavy enough to end as a black hole, so the title's event is the first thing watched.
+export const PART_ONE_MASS = 5
+
+export type SizeAnswer = 'bigger' | 'same' | 'smaller'
+export type ThresholdAnswer = 'about-one' | 'about-three' | 'about-thirty'
+export type LimitAnswer = 'higher' | 'same' | 'lower'
+
+// Two numbers are "the same" when they agree to rounding error in the arithmetic, not to a chosen tolerance.
+const SAME = 1e-9
+function compareTo(value: number, reference: number): -1 | 0 | 1 {
+  if (Math.abs(value - reference) <= SAME * Math.max(1, Math.abs(reference))) return 0
+  return value < reference ? -1 : 1
+}
+
+// The two white dwarf masses the first prediction compares (the question: if you add mass, what happens to the size?).
+const LIGHT_WHITE_DWARF_MASS = 0.6
+const HEAVY_WHITE_DWARF_MASS = 1.0
+
+// Prediction 1: what happens to a white dwarf's size as mass is added.
+export function sizeAnswer(): SizeAnswer {
+  const c = compareTo(whiteDwarfRadiusKm(HEAVY_WHITE_DWARF_MASS), whiteDwarfRadiusKm(LIGHT_WHITE_DWARF_MASS))
+  return c > 0 ? 'bigger' : c < 0 ? 'smaller' : 'same'
+}
+
+// The mass each answer to Prediction 2 names, in Suns. Unlike the other two, this guess has a mass of its own.
+export const THRESHOLD_GUESS_MASSES: Record<ThresholdAnswer, number> = { 'about-one': 1, 'about-three': 3, 'about-thirty': 30 }
+
+// Prediction 2: the answer nearest (in ratio) to the mass above which nothing known holds a core up.
+export function thresholdAnswer(): ThresholdAnswer {
+  const choices = Object.keys(THRESHOLD_GUESS_MASSES) as ThresholdAnswer[]
+  return choices.reduce((best, choice) =>
+    Math.abs(Math.log(THRESHOLD_GUESS_MASSES[choice] / SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES)) <
+    Math.abs(Math.log(THRESHOLD_GUESS_MASSES[best] / SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES))
+      ? choice
+      : best,
+  )
+}
+
+// Prediction 3: a neutron star's largest sure mass, against a white dwarf's (the Chandrasekhar limit).
+export function limitAnswer(): LimitAnswer {
+  const c = compareTo(SURE_NEUTRON_STAR_TOP_SOLAR_MASSES, CHANDRASEKHAR_LIMIT_SOLAR_MASSES)
+  return c > 0 ? 'higher' : c < 0 ? 'lower' : 'same'
+}
+
+export interface Guesses {
+  size: SizeAnswer
+  threshold: ThresholdAnswer
+  limit: LimitAnswer
+}
+
+// For the tutor, which marks each guess against the model's answer (the Results never do).
+export function markGuesses(guesses: Guesses): Record<keyof Guesses, boolean> {
+  return {
+    size: guesses.size === sizeAnswer(),
+    threshold: guesses.threshold === thresholdAnswer(),
+    limit: guesses.limit === limitAnswer(),
+  }
+}
+
+// Where each guess mark is drawn. Guess 2 has a mass of its own, so it is positional on the ladder; a mass above the ladder's right
+// end is drawn as an arrow off the scale. Guesses 1 and 3 have no size of their own, so each is a marker only.
+export function isOffScale(massSolarMasses: number): boolean {
+  return massSolarMasses > MAX_CORE_MASS
+}
+export type SizeMarker = 'up' | 'flat' | 'down' // an arrow beside the white dwarf curve: bigger, the same, smaller
+export type LimitMarker = 'right' | 'bar' | 'left' // from the Chandrasekhar edge: higher, the same, lower
+export const SIZE_MARKERS: Record<SizeAnswer, SizeMarker> = { bigger: 'up', same: 'flat', smaller: 'down' }
+export const LIMIT_MARKERS: Record<LimitAnswer, LimitMarker> = { higher: 'right', same: 'bar', lower: 'left' }
+
+// ---- The check-up against published values. Every published figure below is from a page that was read (see the draft wording's source table,
+// docs/audit/black-holes-and-strong-gravity/09-draft-wording.md). Nothing here is a chosen cut-off: a reading is "the same" only when the numbers
+// agree at the precision the published figure is given to, and otherwise "less" or "more"; for a measured range it is "inside" or outside it.
+export const PUBLISHED = {
+  // NASA Imagine the Universe, "White Dwarfs": "1.4 times the mass of the Sun".
+  chandrasekharLimitSolarMasses: 1.4,
+  chandrasekharDecimals: 1,
+  // Sirius B: Bond et al. 2017 (mass 1.018 ± 0.011 Suns); ESA/Hubble 2005 (diameter 12,000 km, rounded to two figures).
+  siriusBMassSolarMasses: 1.018,
+  siriusBDiameterKm: 12_000,
+  // NICER, Choudhury et al. 2024 (PSR J0437-4715) and Salmi et al. 2024 (PSR J0740+6620): radius with its upper and lower error.
+  neutronStarRadii: [
+    { massSolarMasses: 1.418, radiusKm: 11.36, plusKm: 0.95, minusKm: 0.63 },
+    { massSolarMasses: 2.073, radiusKm: 12.49, plusKm: 1.28, minusKm: 0.88 },
+  ],
+  // NASA Imagine the Universe, "Neutron Stars": a core "between about 1 and 3 solar masses" can be stopped by neutrons.
+  nasaNeutronStarCoreToSolarMasses: 3,
+  // Measured neutron star masses: Salmi et al. 2024 (2.073 ± 0.069) and Romani et al. 2022 (2.35 ± 0.17).
+  heavyNeutronStarMasses: [2.073, 2.35],
+} as const
+
+export type CheckUpReading = 'the same' | 'less' | 'more' | 'inside the measured ranges'
+
+export interface CheckUpRow {
+  id: 'chandrasekhar' | 'siriusB' | 'neutronStarRadius' | 'blackHoleEdge' | 'sureNeutronStarEdge'
+  page: number // the page's own value (Suns, or km for the two radii)
+  published: number[] // the published value or values it is read against
+  reading: CheckUpReading
+  percentGap: number | null // (page ÷ published − 1) × 100 for a single published value; null otherwise
+}
+
+const percentGap = (page: number, published: number) => (page / published - 1) * 100
+const readingAgainst = (page: number, published: number): CheckUpReading => {
+  const c = compareTo(page, published)
+  return c === 0 ? 'the same' : c < 0 ? 'less' : 'more'
+}
+
+export function checkUp(): CheckUpRow[] {
+  const roundTo = (value: number, decimals: number) => Number(value.toFixed(decimals))
+
+  const chandra = CHANDRASEKHAR_LIMIT_SOLAR_MASSES
+  const siriusRadius = whiteDwarfRadiusKm(PUBLISHED.siriusBMassSolarMasses)
+  const siriusPublished = PUBLISHED.siriusBDiameterKm / 2
+  const insideBoth = PUBLISHED.neutronStarRadii.every((r) => NEUTRON_STAR_RADIUS_KM >= r.radiusKm - r.minusKm && NEUTRON_STAR_RADIUS_KM <= r.radiusKm + r.plusKm)
+  const lightestHeavy = Math.min(...PUBLISHED.heavyNeutronStarMasses)
+
+  return [
+    {
+      id: 'chandrasekhar',
+      page: chandra,
+      published: [PUBLISHED.chandrasekharLimitSolarMasses],
+      reading: readingAgainst(roundTo(chandra, PUBLISHED.chandrasekharDecimals), PUBLISHED.chandrasekharLimitSolarMasses),
+      percentGap: null,
+    },
+    {
+      id: 'siriusB',
+      page: siriusRadius,
+      published: [siriusPublished],
+      reading: readingAgainst(siriusRadius, siriusPublished),
+      percentGap: percentGap(siriusRadius, siriusPublished),
+    },
+    {
+      id: 'neutronStarRadius',
+      page: NEUTRON_STAR_RADIUS_KM,
+      published: PUBLISHED.neutronStarRadii.map((r) => r.radiusKm),
+      reading: insideBoth ? 'inside the measured ranges' : NEUTRON_STAR_RADIUS_KM < PUBLISHED.neutronStarRadii[0].radiusKm - PUBLISHED.neutronStarRadii[0].minusKm ? 'less' : 'more',
+      percentGap: null,
+    },
+    {
+      id: 'blackHoleEdge',
+      page: SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES,
+      published: [PUBLISHED.nasaNeutronStarCoreToSolarMasses],
+      reading: readingAgainst(SURE_BLACK_HOLE_BOTTOM_SOLAR_MASSES, PUBLISHED.nasaNeutronStarCoreToSolarMasses),
+      percentGap: null,
+    },
+    {
+      id: 'sureNeutronStarEdge',
+      page: SURE_NEUTRON_STAR_TOP_SOLAR_MASSES,
+      published: [...PUBLISHED.heavyNeutronStarMasses],
+      reading: SURE_NEUTRON_STAR_TOP_SOLAR_MASSES < lightestHeavy ? 'less' : SURE_NEUTRON_STAR_TOP_SOLAR_MASSES > Math.max(...PUBLISHED.heavyNeutronStarMasses) ? 'more' : 'the same',
+      percentGap: null,
+    },
+  ]
+}
