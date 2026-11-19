@@ -1,11 +1,15 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { GrowthGuess, HeadStartGuess } from '../physics/structureFormationExperiment'
 import { StructureFormationExperiment } from './StructureFormationExperiment'
 import { ExcessCaption, ExcessGraph, GrowthGraph, NeededSizeCaption, NeededSizePicture, Part1GrowthCaption, StripCaption, StripPicture } from './StructureFormationPictures'
 import { StructureFormationResults } from './StructureFormationResults'
 import { StructureFormationExplanation, StructureFormationTutor, tutorPrompt } from './StructureFormationTutor'
+
+// Several tests here render the Results for all nine pairs of guesses and take 1 to 2.5 seconds on their own, so under load (the whole suite at once) they
+// passed the 5-second default now and then. The limit for this file is raised to 30 seconds (found 2026-11-19, when the full suite failed twice on it).
+vi.setConfig({ testTimeout: 30_000 })
 
 // Render checks only (no browser): nothing crashes, no "NaN" is drawn, nothing that answers a guess is drawn before the run has finished,
 // the white marks appear exactly when a guess is given and the run has finished, and no page says "right", "wrong" or "matched" before the
