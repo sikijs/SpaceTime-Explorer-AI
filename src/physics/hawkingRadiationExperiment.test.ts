@@ -7,12 +7,23 @@ import {
   LIFETIME_OF_ONE_SUN_YEARS,
   MAX_MASS_KG,
   MIN_MASS_KG,
+  PART_ONE_MASS_KG,
   SUN_MASS_KG,
   UNIVERSE_AGE_YEARS,
+  DIRECTION_MARKERS,
+  HOT_MARKERS,
   balanceMassKg,
+  checkUp,
+  coldnessAgainstBackground,
+  directionAnswer,
   hawkingSteps,
   hawkingTemperatureKelvin,
+  hotAnswer,
   lifetimeYears,
+  longerAnswer,
+  longerMark,
+  markGuesses,
+  tenfoldLifetimeRatio,
   massDirection,
   massForLifetimeKg,
   runHawkingRadiationExperiment,
@@ -241,5 +252,86 @@ describe('reuse (CLAUDE.md §8)', () => {
     expect(from('blackHoleSizeExperiment')).toContain('OBJECT_PRESETS')
     expect(from('cosmicMicrowaveBackgroundExperiment')).toContain('CMB_TEMPERATURE_TODAY_KELVIN')
     expect(from('bigBangExperiment')).toContain('REAL_UNIVERSE_AGE_YEARS')
+  })
+})
+
+describe('the fixed Part 1 run and the answers to the three predictions (audit update)', () => {
+  it('Part 1 runs a black hole of 10 Suns', () => {
+    expect(PART_ONE_MASS_KG).toBe(10 * SUN_MASS_KG)
+  })
+  it('the smaller black hole (1 Sun) is the hotter one: 6.17e-8 K against 6.17e-9 K', () => {
+    expect(hotAnswer()).toBe('small')
+    closeTo(hawkingTemperatureKelvin(SUN_MASS_KG) / hawkingTemperatureKelvin(PART_ONE_MASS_KG), 10, 1e-9)
+  })
+  it('the 10-Suns black hole is gaining mass, because it is colder than the background', () => {
+    expect(directionAnswer()).toBe('gaining')
+    expect(hawkingTemperatureKelvin(PART_ONE_MASS_KG)).toBeLessThan(BACKGROUND_KELVIN)
+  })
+  it('ten times the mass takes exactly 1,000 times as long, and the nearest answer is "thousand"', () => {
+    closeTo(tenfoldLifetimeRatio(), 1000, 1e-9)
+    expect(longerAnswer()).toBe('thousand')
+  })
+  it('the three answers are the module\'s, whatever the learner guessed: the tutor marks each guess against them', () => {
+    expect(markGuesses({ hot: 'small', direction: 'gaining', longer: 'thousand' })).toEqual({ hot: true, direction: true, longer: true })
+    expect(markGuesses({ hot: 'big', direction: 'losing', longer: 'ten' })).toEqual({ hot: false, direction: false, longer: false })
+    expect(markGuesses({ hot: 'same', direction: 'same', longer: 'hundred' })).toEqual({ hot: false, direction: false, longer: false })
+  })
+})
+
+describe('where the white guess marks are drawn (audit update)', () => {
+  it('a different guess gives a different marker, for each of the two guesses that have no size of their own', () => {
+    expect(new Set(Object.values(HOT_MARKERS)).size).toBe(3)
+    expect(new Set(Object.values(DIRECTION_MARKERS)).size).toBe(3)
+    expect(HOT_MARKERS.big).toBe('ten-suns')
+    expect(HOT_MARKERS.small).toBe('one-sun')
+    expect(DIRECTION_MARKERS.gaining).toBe('grows')
+  })
+  it('the third guess has a lifetime of its own: 10, 100 or 1,000 times the 1-Sun lifetime, in increasing order', () => {
+    const marks = (['ten', 'hundred', 'thousand'] as const).map(longerMark)
+    expect(marks.map((m) => m.factor)).toEqual([10, 100, 1000])
+    closeTo(marks[0].lifetimeYears, LIFETIME_OF_ONE_SUN_YEARS * 10, 1e-12)
+    expect(marks[0].log10Years).toBeLessThan(marks[1].log10Years)
+    expect(marks[1].log10Years).toBeLessThan(marks[2].log10Years)
+  })
+  it('only the "1,000 times" guess ends on the real 10-Suns lifetime; the other two end short of it', () => {
+    const real = lifetimeYears(PART_ONE_MASS_KG)
+    closeTo(longerMark('thousand').lifetimeYears, real, 1e-9)
+    expect(longerMark('ten').lifetimeYears).toBeLessThan(real)
+    expect(longerMark('hundred').lifetimeYears).toBeLessThan(real)
+    closeTo(longerMark('hundred').realLifetimeYears, real, 1e-12)
+  })
+  it('the marks never change the real result: running the experiment before and after gives the same numbers', () => {
+    const before = runHawkingRadiationExperiment(PART_ONE_MASS_KG)
+    longerMark('ten')
+    markGuesses({ hot: 'big', direction: 'losing', longer: 'ten' })
+    expect(runHawkingRadiationExperiment(PART_ONE_MASS_KG)).toEqual(before)
+  })
+  it('M87* and Sagittarius A* are hundreds of quadrillions and billions of times colder than the background', () => {
+    closeTo(coldnessAgainstBackground(byId('m87-star')), BACKGROUND_KELVIN / temperatureCheck(byId('m87-star')), 1e-9)
+    expect(coldnessAgainstBackground(byId('m87-star'))).toBeGreaterThan(1e17)
+    expect(coldnessAgainstBackground(byId('sgr-a-star'))).toBeGreaterThan(1e14)
+    expect(coldnessAgainstBackground(byId('m87-star'))).toBeGreaterThan(coldnessAgainstBackground(byId('sgr-a-star')))
+  })
+})
+
+describe('the check-up against published values (audit update)', () => {
+  const rows = Object.fromEntries(checkUp().map((r) => [r.id, r]))
+  it('the page\'s 1-Sun temperature is less than NASA\'s round 1e-7 K (ratio 0.617) and less than Hawking\'s rounded 1e-6 K (ratio 0.0617)', () => {
+    expect(rows.temperatureNasa.reading).toBe('less')
+    closeTo(rows.temperatureNasa.ratio, 0.617, 1e-3)
+    expect(rows.temperatureHawking1974.reading).toBe('less')
+    closeTo(rows.temperatureHawking1974.ratio, 0.0617, 1e-3)
+  })
+  it('the 1-Sun lifetime is far longer than the age of the universe (the letter says "much longer")', () => {
+    expect(rows.lifetimeAgainstUniverse.reading).toBe('more')
+    expect(rows.lifetimeAgainstUniverse.ratio).toBeGreaterThan(1e50)
+  })
+  it('the mass evaporating about now (1.7e11 kg) is less than Hawking\'s round 1e12 kg, within a factor of six', () => {
+    expect(rows.evaporatingNowMass.reading).toBe('less')
+    expect(rows.evaporatingNowMass.ratio).toBeGreaterThan(1 / 6)
+    expect(rows.evaporatingNowMass.ratio).toBeLessThan(1)
+  })
+  it('each row\'s ratio is the page value over the published value', () => {
+    for (const r of checkUp()) closeTo(r.ratio, r.page / r.published, 1e-12)
   })
 })
