@@ -10,16 +10,14 @@ import {
   runHawkingRadiationExperiment,
 } from '../physics/hawkingRadiationExperiment'
 
-type HotChoice = 'big' | 'small' | 'same'
-type DirectionChoice = 'losing' | 'gaining' | 'same'
-type LongerChoice = 'ten' | 'hundred' | 'thousand'
+import type { DirectionAnswer as DirectionChoice, HotAnswer as HotChoice, LongerAnswer as LongerChoice } from '../physics/hawkingRadiationExperiment'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface HawkingRadiationTutorProps {
   predictedHot: HotChoice
   predictedDirection: DirectionChoice
   predictedLonger: LongerChoice
-  // Whether each prediction matched the model, worked out once, in the experiment (the same verdicts as its Results).
+  // Whether each prediction matched the model, worked out once by the module's markGuesses. Only the tutor marks the guesses (the Results never do).
   matches: { hot: boolean; direction: boolean; longer: boolean }
   onExplained?: () => void
 }
@@ -37,9 +35,9 @@ const directionClauses: Record<DirectionChoice, string> = {
 }
 
 const longerClauses: Record<LongerChoice, string> = {
-  ten: 'a black hole of ten times the mass would take about 10 times as long to evaporate',
-  hundred: 'a black hole of ten times the mass would take about 100 times as long to evaporate',
-  thousand: 'a black hole of ten times the mass would take about 1,000 times as long to evaporate',
+  ten: 'a black hole of 10 Suns would take about 10 times as long to evaporate as one of 1 Sun',
+  hundred: 'a black hole of 10 Suns would take about 100 times as long to evaporate as one of 1 Sun',
+  thousand: 'a black hole of 10 Suns would take about 1,000 times as long to evaporate as one of 1 Sun',
 }
 
 const SUPERSCRIPT: Record<string, string> = {
@@ -117,9 +115,9 @@ export function HawkingRadiationTutor({ predictedHot, predictedDirection, predic
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              "Look at the thermometer and the arrows. Try a few black holes. What happens to a black hole's temperature as its mass goes up, and which side of the background's line does each one fall on?"}
+              "Look at the thermometer, the heat-in-and-heat-out picture and the graph, and at your white YOUR GUESS marks on them. Then try a few black holes in Part 2. What happens to a black hole's temperature as its mass goes up, and which side of the green background line does each one fall on?"}
             {tutorStep === 'compare' &&
-              `You predicted that ${hotClauses[predictedHot]} (${verdict(matches.hot)}); that ${directionClauses[predictedDirection]} (${verdict(matches.direction)}); and that ${longerClauses[predictedLonger]} (${verdict(matches.longer)}). Comparing that to what you saw, what do you notice?`}
+              `You predicted that ${hotClauses[predictedHot]} (${verdict(matches.hot)}); that ${directionClauses[predictedDirection]} (${verdict(matches.direction)}); and that ${longerClauses[predictedLonger]} (${verdict(matches.longer)}). Look at your white marks beside the real dots, arrows and times. What do you notice?`}
             {tutorStep === 'conceptual' &&
               "A black hole of 10 Suns is colder than the space around it. Hot things lose heat to cold surroundings, and cold things take heat from warm ones. So what must be happening to the black hole's mass, and why might that be a surprise?"}
           </p>
@@ -167,7 +165,7 @@ export function HawkingRadiationTutor({ predictedHot, predictedDirection, predic
             <strong>1. A black hole is not perfectly black.</strong> Quantum physics changes the picture of a horizon: a black
             hole gives off a very faint heat of its own. This is called Hawking radiation, after Stephen Hawking, who worked it
             out in 1974. It is stated here, not derived. You may have heard that a pair of particles appears at the edge, and one
-            falls in while the other escapes. That picture is only a rough guide, and Hawking himself said so.
+            falls in while the other escapes. That picture is only a rough guide to what happens.
           </p>
           <p style={paragraphStyle}>
             <strong>2. A bigger black hole is colder.</strong> The temperature is {kelvin(sunResult.temperatureKelvin)} divided by
@@ -178,7 +176,7 @@ export function HawkingRadiationTutor({ predictedHot, predictedDirection, predic
           </p>
           <p style={paragraphStyle}>
             <strong>3. The glow carries energy away, and the energy comes out of the black hole's mass.</strong> Energy and mass
-            are linked: an object's energy is stored in its mass, its rest-mass energy, which you met in Experiment 8, on spinning black holes. What
+            are linked: an object's energy is stored in its mass, its rest-mass energy, which you met in Black Holes 8, on spinning black holes. What
             leaves in the glow is taken from the black hole's own mass, so the black hole loses mass. And the smaller it gets, the
             hotter it gets, so the faster it loses mass.
           </p>
@@ -193,7 +191,7 @@ export function HawkingRadiationTutor({ predictedHot, predictedDirection, predic
             <strong>5. So every black hole found in space is gaining mass today,</strong> though by a tiny amount. For one of 1
             Sun to start losing mass, the background would have to get about {fmt(sunResult.coolingFactorNeeded as number)} times
             colder, and for one of 10 Suns, about {fmt(tenSunsResult.coolingFactorNeeded as number)} times colder. The background
-            does keep getting colder as the universe expands (Cosmology, Experiments 3 and 10), but this experiment does not say
+            does keep getting colder as the universe expands (Cosmology 3 and Cosmology 10), but this experiment does not say
             when it would be cold enough.
           </p>
           <p style={paragraphStyle}>
@@ -206,8 +204,9 @@ export function HawkingRadiationTutor({ predictedHot, predictedDirection, predic
           </p>
           <p style={paragraphStyle}>
             <strong>7. What is settled, and what is not.</strong> The formulas for the temperature and the time are standard
-            results. But Hawking radiation has never been seen from a real black hole, so it is a prediction of the theory. What
-            happens at the very end of an evaporation, and what becomes of the information that fell in (the "information
+            results. But Hawking radiation has never been seen from a real black hole, so it is a prediction of the theory. Scientists
+            have seen the same kind of glow only in small laboratory copies, which are not black holes, and NASA says no primordial (very early, tiny) black hole has yet been
+            found. What happens at the very end of an evaporation, and what becomes of the information that fell in (the "information
             paradox"), is not settled.
           </p>
           <p style={paragraphStyle}>
