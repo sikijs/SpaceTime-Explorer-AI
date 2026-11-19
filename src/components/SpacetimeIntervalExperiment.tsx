@@ -730,7 +730,7 @@ export function SpacetimeIntervalExperiment({ onComplete, onTutorComplete }: Spa
             the drawings, and the marks they move are in the Part 2 colour.
           </p>
           <p style={paragraph}>
-            <strong>Space and time as one thing.</strong> In everyday life we keep space and time apart. Space is <em>where</em>
+            <strong>Space and time as one thing.</strong> In everyday life we keep space and time apart. Space is <em>where</em>{' '}
             something is, measured in meters or kilometers. Time is <em>when</em> it happens, measured in seconds or hours. We use two
             different rulers, one for each. Yet to pin down an event you need both. &ldquo;Meet me at the station&rdquo; is not enough.
             You also need &ldquo;at 3 o&rsquo;clock&rdquo;. A ball landing, a clock ticking and a flash of light each have a place
