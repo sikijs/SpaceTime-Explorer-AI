@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { runCauseBeforeEffectExperiment } from '../physics/causeBeforeEffect'
-import type { EventOrder } from '../physics/causeBeforeEffect'
+import { guessMatchesStrip, guessRegion, orderStripForEvent, runCauseBeforeEffectExperiment } from '../physics/causeBeforeEffect'
+import type { EventOrder, StripRegion } from '../physics/causeBeforeEffect'
 import type { WorldlinePoint } from '../physics/spacetimeDiagramView'
 
 type Prediction = 'yes' | 'same-moment' | 'no'
@@ -17,6 +17,13 @@ const predictionClauses: Record<Prediction, string> = {
   yes: 'a fast enough observer could find B first',
   'same-moment': 'an observer could find the two events at exactly the same moment, but none could find B first',
   no: 'every observer finds O first',
+}
+
+// Where the white ring sits on the strip for each kind of place, for the tutor's naming and marking of the guess.
+const ringPlaces: Record<StripRegion, string> = {
+  'b-first': 'in the “B first” stretch',
+  'same-moment': 'on the yellow line, the same moment',
+  'o-first': 'in the “O first” stretch',
 }
 
 const orderPhrases: Record<EventOrder, string> = {
@@ -74,6 +81,30 @@ export function CauseBeforeEffectTutor({ event, passingSpeed, predicted, onExpla
         ? 'above the line'
         : 'below the line'
 
+  // The tutor's marking of the guess: where the white ring is, what the strip really has, and whether the guess fits it. Every
+  // number and every verdict comes from the physics module.
+  const strip = orderStripForEvent(event)
+  const speedWords = (u: number) => `${u < 0 ? '\u2212' : ''}${Math.abs(u).toFixed(2)}c`
+  const fits = guessMatchesStrip(predicted, strip)
+  const bStretch = strip.stretches.find((s) => s.order === 'b-first')
+  const markingWords = (() => {
+    const flip = strip.flipSpeed
+    const bText = bStretch ? `the “B first” stretch runs from ${speedWords(bStretch.from)} to ${speedWords(bStretch.to)}` : ''
+    if (predicted === 'yes') {
+      return fits
+        ? `For this event, ${bText}, so some speeds do find B first, as you guessed.`
+        : 'For this event the strip has no “B first” stretch: every speed finds O first. So this guess does not fit this event.'
+    }
+    if (predicted === 'no') {
+      return fits
+        ? 'For this event the strip has no “B first” stretch: every speed finds O first, as you guessed.'
+        : `For this event, ${bText}, so some speeds do find B first. This guess does not fit this event.`
+    }
+    return flip === null
+      ? 'For this event no speed puts O and B at the same moment, and every speed finds O first. So this guess does not fit this event.'
+      : `For this event the same moment does occur, at ${speedWords(flip)}, but ${bText}, right beyond it. So some speeds do find B first, and “none could find B first” does not fit this event.`
+  })()
+
   // The speed (a fraction of c) at which two events 1 second apart could be found in the opposite order, and the distance
   // that takes: time ÷ speed.
   const carSpeed = CAR_SPEED_METERS_PER_SECOND / LIGHT_SPEED_METERS_PER_SECOND
@@ -100,9 +131,9 @@ export function CauseBeforeEffectTutor({ event, passingSpeed, predicted, onExpla
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at the table and the drawing. In the lab, which event happened first? And which event did the passing observer find first?'}
+              'Look at the drawing, the strip of speeds and your white ring. In the lab, which event happened first? And which event did the passing observer find first?'}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In this run, the lab found ${orderPhrases[lab.order]}, and the passing observer found ${orderPhrases[passing.order]}. Your prediction was about any observer moving at any speed below the speed of light, and this run showed just one. Comparing your prediction with what the table and the drawing show, what do you notice?`}
+              `You predicted that ${predictionClauses[predicted]}. That is the white ring on the strip, ${ringPlaces[guessRegion(predicted)]}. In this run, the lab found ${orderPhrases[lab.order]}, and the passing observer found ${orderPhrases[passing.order]}. The strip shows every speed, not only the one you ran. Looking at the stretches and your ring, what do you notice?`}
             {tutorStep === 'conceptual' &&
               'Think about how the light cone from the last experiment sorts the five events. What do the events whose order never changes have in common?'}
           </p>
@@ -147,15 +178,20 @@ export function CauseBeforeEffectTutor({ event, passingSpeed, predicted, onExpla
       {tutorStep === 'explained' && (
         <div>
           <p style={paragraphStyle}>
+            <strong>Your guess, marked first.</strong> You predicted that {predictionClauses[predicted]}. That is the white ring {ringPlaces[guessRegion(predicted)]}.{' '}
+            {markingWords} Your guess was about this one event, B at {two(event.time)} seconds and {two(event.position)} light-seconds. For the other four events
+            in Part 2, the strip looks different: try each one and see which have a “B first” stretch.
+          </p>
+          <p style={paragraphStyle}>
             <strong>1. What the table shows.</strong> In your run, the lab found B {timeWords(lab.timeBetween, lab.order)}.
             The passing observer found B {timeWords(passing.timeBetween, passing.order)}. To see that the order can really
-            change, look at one of the five choices that you may not have tried: B 3 seconds after O and 5 light-seconds away,
-            with a passing observer at +0.9c. The lab finds B {timeWords(example.lab.timeBetween, example.lab.order)}. The
+            change, look at the same event, B 3 seconds after O and 5 light-seconds away, with a passing observer at +0.9c, a
+            speed you did not run in Part 1. The lab finds B {timeWords(example.lab.timeBetween, example.lab.order)}. The
             passing observer finds B {timeWords(example.passing.timeBetween, example.passing.order)}. So two observers can
             disagree about which of two events came first.
           </p>
           <p style={paragraphStyle}>
-            <strong>2. Why some events can change order and some cannot.</strong> Look at the passing observer's tilted
+            <strong>2. Why some events can change order and some cannot.</strong> First, a test for whether O could be the cause of an event: compare how far away it is with the time until it happens. Light covers 1 light-second each second, so in {two(event.time)} seconds a flash from O covers {two(event.time)} light-seconds, and B is {two(event.position)} away. If the distance is no bigger than the time, the event is inside or on the cone and O could be its cause; if it is bigger, it is outside and O could not. Now look at the passing observer's tilted
             line through O. A line like this is tilted by the observer's speed: for every light-second you go to the side, it
             changes height by that many seconds, where the speed is counted as a fraction of the speed of light. The edge of
             the light cone changes height by exactly 1 second for every light-second to the side. A passing observer's speed is always below the speed of light, so the tilted line is always flatter
@@ -188,7 +224,7 @@ export function CauseBeforeEffectTutor({ event, passingSpeed, predicted, onExpla
             on their order. So no observer ever finds a cause after its effect.
           </p>
           <p style={paragraphStyle}>
-            <strong>6. What the speed limit does.</strong> Suppose something could go faster than light. Then it could
+            <strong>6. What the speed limit does.</strong> This is a thought experiment about what would follow, not something that has been seen: no signal faster than light has ever been observed. Suppose something could go faster than light. Then it could
             connect two events that are outside each other's cone. Take the example from paragraph 1: for the observer at
             +0.9c, B was {two(example.passing.timeBetween)} seconds <em>before</em> O. So for that observer, a signal sent
             from O to B would arrive before it was sent, and an effect would be found before its cause. The rule that nothing

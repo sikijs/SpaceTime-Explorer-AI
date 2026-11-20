@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { eventOrder, runCauseBeforeEffectExperiment, simultaneitySpeed } from './causeBeforeEffect'
+import {
+  checkUpRows,
+  eventOrder,
+  guessMarkerSpeed,
+  guessMatchesStrip,
+  guessRegion,
+  orderFromStrip,
+  orderStripForEvent,
+  regionsOnStrip,
+  runCauseBeforeEffectExperiment,
+  simultaneitySpeed,
+} from './causeBeforeEffect'
 import { PRESET_EVENTS } from './lightCones'
 
 const SPREAD = [-0.999, -0.99, -0.9, -0.8, -0.6, -0.3, 0, 0.3, 0.6, 0.8, 0.9, 0.99, 0.999]
@@ -138,5 +149,120 @@ describe('Cause before effect physics (Spacetime Geometry, Experiment 3)', () =>
 
   it('the result is a pure function of (event, u)', () => {
     expect(runCauseBeforeEffectExperiment(UNREACHABLE_RIGHT, 0.9)).toEqual(runCauseBeforeEffectExperiment(UNREACHABLE_RIGHT, 0.9))
+  })
+
+  describe('Audit update: the strip of speeds, the guess marker and the check-up', () => {
+    it('the strip splits at the flip speed for the two unreachable presets, with the sides the specification gives', () => {
+      const right = orderStripForEvent(UNREACHABLE_RIGHT)
+      expect(right.flipSpeed).toBeCloseTo(0.6, 12)
+      expect(right.stretches.map((s) => s.order)).toEqual(['o-first', 'b-first'])
+      expect(right.stretches[0].from).toBe(-1)
+      expect(right.stretches[0].to).toBeCloseTo(0.6, 12)
+      expect(right.stretches[1].to).toBe(1)
+      const left = orderStripForEvent(UNREACHABLE_LEFT)
+      expect(left.flipSpeed).toBeCloseTo(-0.8, 12)
+      expect(left.stretches.map((s) => s.order)).toEqual(['b-first', 'o-first'])
+    })
+
+    it('reachable and light-only events have one o-first stretch and no flip speed or b-first stretch', () => {
+      for (const i of NOT_UNREACHABLE) {
+        const strip = orderStripForEvent(PRESET_EVENTS[i])
+        expect(strip.flipSpeed).toBeNull()
+        expect(strip.stretches).toEqual([{ order: 'o-first', from: -1, to: 1 }])
+        expect(regionsOnStrip(strip)).toEqual(['o-first'])
+      }
+    })
+
+    it('the strip agrees with the Lorentz-transformed order for every preset and every speed in the spread', () => {
+      for (const event of PRESET_EVENTS) {
+        const strip = orderStripForEvent(event)
+        for (const u of [...SPREAD, 0.6, -0.8]) {
+          expect(orderFromStrip(strip, u)).toBe(runCauseBeforeEffectExperiment(event, u).passing.order)
+        }
+      }
+    })
+
+    it('the stretches cover −c to +c with no gap, and meet at the flip speed', () => {
+      for (const event of PRESET_EVENTS) {
+        const strip = orderStripForEvent(event)
+        expect(strip.stretches[0].from).toBe(-1)
+        expect(strip.stretches[strip.stretches.length - 1].to).toBe(1)
+        for (let i = 1; i < strip.stretches.length; i++) {
+          expect(strip.stretches[i].from).toBe(strip.stretches[i - 1].to)
+          expect(strip.stretches[i].from).toBe(strip.flipSpeed)
+        }
+      }
+    })
+
+    it('each answer names its own kind of place, and the marker lands inside it', () => {
+      expect(guessRegion('yes')).toBe('b-first')
+      expect(guessRegion('same-moment')).toBe('same-moment')
+      expect(guessRegion('no')).toBe('o-first')
+      const strip = orderStripForEvent(UNREACHABLE_RIGHT) // Part 1's event: (3 s, 5 ls)
+      // yes: the middle of the b-first stretch, 0.6 to 1.
+      expect(guessMarkerSpeed('yes', strip)).toBeCloseTo(0.8, 12)
+      expect(orderFromStrip(strip, guessMarkerSpeed('yes', strip)!)).toBe('b-first')
+      // same moment: the flip speed itself.
+      expect(guessMarkerSpeed('same-moment', strip)).toBeCloseTo(0.6, 12)
+      expect(orderFromStrip(strip, guessMarkerSpeed('same-moment', strip)!)).toBe('same-moment')
+      // no: the middle of the o-first stretch, −1 to 0.6.
+      expect(guessMarkerSpeed('no', strip)).toBeCloseTo(-0.2, 12)
+      expect(orderFromStrip(strip, guessMarkerSpeed('no', strip)!)).toBe('o-first')
+    })
+
+    it('different answers give different markers, and a place the strip does not have gives no marker', () => {
+      const strip = orderStripForEvent(UNREACHABLE_RIGHT)
+      const marks = (['yes', 'same-moment', 'no'] as const).map((a) => guessMarkerSpeed(a, strip))
+      expect(new Set(marks).size).toBe(3)
+      const inside = orderStripForEvent(PRESET_EVENTS[0])
+      expect(guessMarkerSpeed('yes', inside)).toBeNull()
+      expect(guessMarkerSpeed('same-moment', inside)).toBeNull()
+      expect(guessMarkerSpeed('no', inside)).toBe(0)
+    })
+
+    it('regionsOnStrip lists the real places: all three for an unreachable event, only o-first otherwise', () => {
+      expect(regionsOnStrip(orderStripForEvent(UNREACHABLE_RIGHT)).sort()).toEqual(['b-first', 'o-first', 'same-moment'])
+      expect(regionsOnStrip(orderStripForEvent(UNREACHABLE_LEFT)).sort()).toEqual(['b-first', 'o-first', 'same-moment'])
+    })
+
+    it('guessMatchesStrip: yes holds only where B can be first, no only where it cannot, and the middle answer never holds', () => {
+      for (const i of [3, 4]) {
+        const strip = orderStripForEvent(PRESET_EVENTS[i])
+        expect(guessMatchesStrip('yes', strip)).toBe(true)
+        expect(guessMatchesStrip('no', strip)).toBe(false)
+        expect(guessMatchesStrip('same-moment', strip)).toBe(false)
+      }
+      for (const i of NOT_UNREACHABLE) {
+        const strip = orderStripForEvent(PRESET_EVENTS[i])
+        expect(guessMatchesStrip('yes', strip)).toBe(false)
+        expect(guessMatchesStrip('no', strip)).toBe(true)
+        expect(guessMatchesStrip('same-moment', strip)).toBe(false)
+      }
+    })
+
+    it('the strip and the guess marker do not depend on any guess or on the passing speed (pure function of the event)', () => {
+      expect(orderStripForEvent(UNREACHABLE_RIGHT)).toEqual(orderStripForEvent({ ...UNREACHABLE_RIGHT }))
+    })
+
+    it('the check-up for Part 1 (3 s, 5 ls, +0.3c) says the same on all three rows', () => {
+      const rows = checkUpRows(runCauseBeforeEffectExperiment(UNREACHABLE_RIGHT, 0.3))
+      expect(rows).toHaveLength(3)
+      expect(rows[0]).toMatchObject({ expected: '-16.00', found: '-16.00', same: true })
+      expect(rows[1]).toMatchObject({ expected: 'unreachable', found: 'unreachable', same: true })
+      expect(rows[2]).toMatchObject({ expected: 'o-first', found: 'o-first', same: true })
+    })
+
+    it('every row of the check-up says the same for every preset and every speed', () => {
+      for (const event of PRESET_EVENTS) {
+        for (const u of [...SPREAD, 0.6, -0.8]) {
+          for (const row of checkUpRows(runCauseBeforeEffectExperiment(event, u))) expect(row.same).toBe(true)
+        }
+      }
+    })
+
+    it('orderStripForEvent and orderFromStrip throw RangeError out of range', () => {
+      expect(() => orderStripForEvent({ time: 0, position: 3 })).toThrow(RangeError)
+      expect(() => orderFromStrip(orderStripForEvent(UNREACHABLE_RIGHT), 1.5)).toThrow(RangeError)
+    })
   })
 })
