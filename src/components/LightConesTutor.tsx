@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { runLightConeExperiment } from '../physics/lightCones'
-import type { EventRelation } from '../physics/lightCones'
+import { answerRegion, runLightConeExperiment } from '../physics/lightCones'
+import type { EventRelation, LightConeGuess } from '../physics/lightCones'
 import type { WorldlinePoint } from '../physics/spacetimeDiagramView'
 
-type Prediction = 'slower' | 'light-only' | 'no'
+type Prediction = LightConeGuess
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface LightConesTutorProps {
@@ -23,6 +23,18 @@ const relationWords: Record<EventRelation, string> = {
   reachable: 'reachable',
   'light-only': 'light only',
   unreachable: 'unreachable',
+}
+
+// Where the white ring sits for each answer, and what B's place means for that answer, for the tutor's marking of the guess.
+const ringRegion: Record<Prediction, string> = {
+  slower: 'inside the cone',
+  'light-only': 'on the edge of the cone',
+  no: 'outside the cone',
+}
+const regionMeaning: Record<EventRelation, string> = {
+  reachable: 'inside the cone, so something slower than light could get there',
+  'light-only': 'on the edge of the cone, so only light could get there',
+  unreachable: 'outside the cone, so nothing could get there',
 }
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
@@ -101,7 +113,7 @@ export function LightConesTutor({ event, passingSpeed, predicted, onExplained }:
             {tutorStep === 'observe' &&
               "Look at the drawing of the flash. In the lab, did the flash from O get to B's place before B happened, exactly when B happened, or after?"}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In the table, the lab's number is ${signed(lab.intervalSquared)} and the passing observer's number is ${signed(passing.intervalSquared)}. The "Which case" column says "${relationWords[lab.relation]}" for the lab and "${relationWords[passing.relation]}" for the passing observer. Comparing that to what you predicted, what do you notice?`}
+              `You predicted that ${predictionClauses[predicted]}. That is the white ring ${ringRegion[predicted]}. In the table, the lab's number is ${signed(lab.intervalSquared)} and the passing observer's number is ${signed(passing.intervalSquared)}. The "Which case" column says "${relationWords[lab.relation]}" for the lab and "${relationWords[passing.relation]}" for the passing observer. Comparing that to what you predicted, what do you notice?`}
             {tutorStep === 'conceptual' &&
               'The passing observer measured a different time and a different distance. Why might they still agree on whether the flash could have reached B?'}
           </p>
@@ -146,6 +158,12 @@ export function LightConesTutor({ event, passingSpeed, predicted, onExplained }:
       {tutorStep === 'explained' && (
         <div>
           <p style={paragraphStyle}>
+            <strong>Your guess, marked first.</strong> You predicted that {predictionClauses[predicted]}. B was {regionMeaning[lab.relation]}.{' '}
+            {answerRegion(predicted) === lab.relation
+              ? 'So your guess names the region B was in.'
+              : `So your guess names a different region: B was ${lab.relation === 'reachable' ? 'inside the cone' : lab.relation === 'light-only' ? 'on the edge of the cone' : 'outside the cone'}, not ${ringRegion[predicted]}.`}
+          </p>
+          <p style={paragraphStyle}>
             <strong>1. What happened in the lab.</strong> B happened {two(lab.timeBetween)} seconds after O and{' '}
             {two(lab.distanceBetween)} light-seconds away. Light covers 1 light-second in 1 second, so in {two(lab.timeBetween)}{' '}
             seconds the flash from O spread {two(lab.timeBetween)} light-seconds. {flashSentence} {meaning}
@@ -163,7 +181,7 @@ export function LightConesTutor({ event, passingSpeed, predicted, onExplained }:
             distance was {two(lab.distanceBetween)} light-seconds. Multiply each by itself: {two(lab.timeBetween)} ×{' '}
             {two(lab.timeBetween)} = {two(lab.timeBetween ** 2)} and {two(lab.distanceBetween)} × {two(lab.distanceBetween)} ={' '}
             {two(lab.distanceBetween ** 2)}. Subtract: {two(lab.timeBetween ** 2)} − {two(lab.distanceBetween ** 2)} ={' '}
-            {signed(lab.intervalSquared)}. This is the number from the last experiment, time² − distance². Comparing the time
+            {signed(lab.intervalSquared)}. This is the number from "The Interval", time² − distance². Comparing the time
             with the distance, and checking whether this number is positive, zero or negative, are the same test. A positive
             number means more time than distance, so something slower than light could make the trip. Zero means the time
             and the distance are equal, so only light could. A negative number means less time than distance, so nothing
@@ -173,8 +191,8 @@ export function LightConesTutor({ event, passingSpeed, predicted, onExplained }:
           <p style={paragraphStyle}>
             <strong>4. Why everyone agrees.</strong> The passing observer found {two(passing.timeBetween)} seconds and{' '}
             {two(passing.distanceBetween)} light-seconds. Those are not the lab's numbers, but their time² − distance² is{' '}
-            {signed(passing.intervalSquared)}, the same as the lab's {signed(lab.intervalSquared)}. This is what the last
-            experiment showed: the interval squared is the same for every observer. So its sign is the same for every observer too. A
+            {signed(passing.intervalSquared)}, the same as the lab's {signed(lab.intervalSquared)}. This is what "The Interval"
+            showed: the interval squared is the same for every observer. So its sign is the same for every observer too. A
             number that is positive for one observer is positive for all of them, and cannot turn negative for someone who is
             moving. That means all observers agree on which of the three cases an event is. Another way to see it is to
             look at the speed needed to get from O to B. The lab found {two(lab.speedNeeded)} of the speed of light, and
@@ -187,12 +205,12 @@ export function LightConesTutor({ event, passingSpeed, predicted, onExplained }:
           </p>
           <p style={paragraphStyle}>
             <strong>5. Where the shout example stops working.</strong> A fast jet can overtake the sound of your shout, and
-            observers moving through the air do not all agree on how fast the sound goes. Light is different. Its speed is the
-            same for every observer (Experiment 5, "Why can't light go faster?"), and nothing can overtake it. That is why the
+            sound moves at a fixed speed through the air, so someone moving through the air measures a different speed for it. Light is different. Its speed is the
+            same for every observer (Relativity of Time and Motion 5, "Why can't light go faster?"), and nothing can overtake it. That is why the
             cone, whose edges are the paths of light, is the same for everyone.
           </p>
           <p style={paragraphStyle}>
-            <strong>6. A negative interval squared.</strong> In the last experiment, the square root of the interval
+            <strong>6. A negative interval squared.</strong> In "The Interval", the square root of the interval
             squared, the interval, was the time a clock reads between two of its ticks. That idea works when the number is
             positive. When the number is negative, as for an unreachable event, no clock could travel from one event to the
             other, because it would have to go faster than light. So in that case the number is not a clock's time squared, and

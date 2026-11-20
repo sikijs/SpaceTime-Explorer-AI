@@ -1,12 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import {
   EVENT_O,
+  PART1_EVENT_INDEX,
+  PART1_PASSING_SPEED,
   PRESET_EVENTS,
+  answerRegion,
+  checkUpRows,
   classifyEventPair,
+  guessMarkerPosition,
   runLightConeExperiment,
   speedNeeded,
 } from './lightCones'
-import type { EventRelation } from './lightCones'
+import type { EventRelation, LightConeGuess } from './lightCones'
 
 const PASSING_SPEEDS = [-0.99, -0.8, -0.5, -0.3, 0, 0.3, 0.5, 0.8, 0.99]
 const OFFERED_SPEEDS = [-0.5, -0.3, 0, 0.3, 0.5]
@@ -135,5 +140,85 @@ describe('Light cone physics (Spacetime Geometry, Experiment 2)', () => {
 
   it('the result is a pure function of (event, u)', () => {
     expect(runLightConeExperiment(PRESET_EVENTS[3], 0.3)).toEqual(runLightConeExperiment(PRESET_EVENTS[3], 0.3))
+  })
+
+  describe('audit update: Part 1, the answers and the check-up', () => {
+    const GUESSES: LightConeGuess[] = ['slower', 'light-only', 'no']
+
+    it('answerRegion maps the three answers to the three cases and refuses an unknown answer', () => {
+      expect(answerRegion('slower')).toBe('reachable')
+      expect(answerRegion('light-only')).toBe('light-only')
+      expect(answerRegion('no')).toBe('unreachable')
+      expect(() => answerRegion('maybe' as LightConeGuess)).toThrow(RangeError)
+    })
+
+    it('each guess marker lies in the region its answer names, and never on an event B', () => {
+      GUESSES.forEach((guess) => {
+        const marker = guessMarkerPosition(guess)
+        expect(classifyEventPair(EVENT_O, marker)).toBe(answerRegion(guess))
+        PRESET_EVENTS.forEach((event) => {
+          expect(marker.time === event.time && marker.position === event.position).toBe(false)
+        })
+      })
+      expect(() => guessMarkerPosition('maybe' as LightConeGuess)).toThrow(RangeError)
+    })
+
+    it('the marker is a copy, so changing it cannot move the real marker', () => {
+      const marker = guessMarkerPosition('slower')
+      marker.time = 99
+      expect(guessMarkerPosition('slower').time).toBe(4)
+    })
+
+    it('the Part 1 values are the first preset and +0.3c, and the real result does not depend on any guess', () => {
+      expect(PART1_EVENT_INDEX).toBe(0)
+      expect(PART1_PASSING_SPEED).toBe(0.3)
+      const result = runLightConeExperiment(PRESET_EVENTS[PART1_EVENT_INDEX], PART1_PASSING_SPEED)
+      expect(result.lab.timeBetween).toBe(5)
+      expect(result.lab.distanceBetween).toBe(3)
+      expect(result.lab.intervalSquared).toBeCloseTo(16, 12)
+      expect(result.lab.speedNeeded).toBeCloseTo(0.6, 12)
+      expect(result.lab.relation).toBe('reachable')
+      expect(result.passing.timeBetween).toBeCloseTo(4.298, 3)
+      expect(result.passing.distanceBetween).toBeCloseTo(1.572, 3)
+      expect(result.passing.intervalSquared).toBeCloseTo(16, 9)
+      expect(result.passing.speedNeeded).toBeCloseTo(0.366, 3)
+      expect(result.passing.relation).toBe('reachable')
+      GUESSES.forEach((guess) => {
+        guessMarkerPosition(guess)
+        answerRegion(guess)
+        expect(runLightConeExperiment(PRESET_EVENTS[PART1_EVENT_INDEX], PART1_PASSING_SPEED)).toEqual(result)
+      })
+    })
+
+    it('the check-up reads "the same" for every offered event and speed, and every speed in range', () => {
+      PRESET_EVENTS.forEach((event) => {
+        ;[...OFFERED_SPEEDS, ...PASSING_SPEEDS].forEach((u) => {
+          const rows = checkUpRows(runLightConeExperiment(event, u))
+          expect(rows).toHaveLength(3)
+          expect(rows[0].reading).toBe('the same')
+          expect(rows[1].reading).toBe('the same')
+          expect(rows[2].reading).toBe('the same side of 1')
+        })
+      })
+    })
+
+    it('the check-up shows the Part 1 numbers: 16.00, reachable, 0.60 and 0.37', () => {
+      const rows = checkUpRows(runLightConeExperiment(PRESET_EVENTS[PART1_EVENT_INDEX], PART1_PASSING_SPEED))
+      expect(rows[0].expected).toBe('16.00')
+      expect(rows[0].found).toBe('16.00')
+      expect(rows[1].expected).toBe('reachable')
+      expect(rows[1].found).toBe('reachable')
+      expect(rows[2].expected).toBe('below 1, as for the lab (0.60)')
+      expect(rows[2].found).toBe('0.37')
+    })
+
+    it('the check-up says "different" when two readings really differ (a deliberate-break check)', () => {
+      const result = runLightConeExperiment(PRESET_EVENTS[0], 0.3)
+      const broken = { ...result, passing: { ...result.passing, intervalSquared: 15, relation: 'unreachable' as const, speedNeeded: 1.5 } }
+      const rows = checkUpRows(broken)
+      expect(rows[0].reading).toBe('different')
+      expect(rows[1].reading).toBe('different')
+      expect(rows[2].reading).toBe('different sides of 1')
+    })
   })
 })

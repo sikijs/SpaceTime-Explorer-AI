@@ -90,3 +90,83 @@ export function runLightConeExperiment(event: WorldlinePoint, passingObserverSpe
     lightFrontPositionAtEventTime: side * SPEED_OF_LIGHT * event.time,
   }
 }
+
+// ---- Audit update (2026-11-19): the fixed Part 1 run, the answers and their guess marks, and the check-up ----
+
+// Part 1 is fixed on the first preset event (5 s, 3 ls) and a passing observer at +0.3c; Part 2 offers every preset.
+export const PART1_EVENT_INDEX = 0
+export const PART1_PASSING_SPEED = 0.3
+
+// The three answers of the prediction. Each names one of the three cases.
+export type LightConeGuess = 'slower' | 'light-only' | 'no'
+
+const GUESS_REGIONS: Record<LightConeGuess, EventRelation> = {
+  slower: 'reachable',
+  'light-only': 'light-only',
+  no: 'unreachable',
+}
+
+export function answerRegion(guess: LightConeGuess): EventRelation {
+  const region = GUESS_REGIONS[guess]
+  if (region === undefined) throw new RangeError(`Unknown answer: ${String(guess)}`)
+  return region
+}
+
+// Where the white YOUR GUESS ring sits for each answer, in the lab's units (time in seconds, position in light-seconds):
+// inside the cone, on its left edge and outside it. The ring marks the answer only; it is never placed at event B.
+const GUESS_MARKERS: Record<LightConeGuess, WorldlinePoint> = {
+  slower: { time: 4, position: -1 },
+  'light-only': { time: 2.5, position: -2.5 },
+  no: { time: 2, position: -4 },
+}
+
+export function guessMarkerPosition(guess: LightConeGuess): WorldlinePoint {
+  const marker = GUESS_MARKERS[guess]
+  if (marker === undefined) throw new RangeError(`Unknown answer: ${String(guess)}`)
+  return { ...marker }
+}
+
+export type CheckUpReading = 'the same' | 'different'
+
+export interface CheckUpRow {
+  what: string
+  expected: string
+  found: string
+  reading: CheckUpReading | 'the same side of 1' | 'different sides of 1'
+}
+
+const SIDE_OF_ONE_TOLERANCE = 1e-9
+
+function sideOfOne(speed: number): 'below' | 'at' | 'above' {
+  if (Math.abs(speed - 1) <= SIDE_OF_ONE_TOLERANCE) return 'at'
+  return speed < 1 ? 'below' : 'above'
+}
+
+// The passing observer against the lab: the interval squared, the case and the side of 1 of the speed needed must all agree.
+// The reference is the lab's own reading, from the same model, so no outside value is needed and no cut-off is invented.
+export function checkUpRows(result: LightConeExperimentResult): CheckUpRow[] {
+  const { lab, passing } = result
+  const intervalAgrees = Math.abs(lab.intervalSquared - passing.intervalSquared) <= 1e-9
+  const sameSide = sideOfOne(lab.speedNeeded) === sideOfOne(passing.speedNeeded)
+  const fixed = (value: number) => value.toFixed(2).replace('-', '−')
+  return [
+    {
+      what: 'time² − distance² for the passing observer',
+      expected: fixed(lab.intervalSquared),
+      found: fixed(passing.intervalSquared),
+      reading: intervalAgrees ? 'the same' : 'different',
+    },
+    {
+      what: 'The case for the passing observer',
+      expected: lab.relation,
+      found: passing.relation,
+      reading: lab.relation === passing.relation ? 'the same' : 'different',
+    },
+    {
+      what: 'Speed needed, passing observer',
+      expected: `${sideOfOne(lab.speedNeeded)} 1, as for the lab (${lab.speedNeeded.toFixed(2)})`,
+      found: passing.speedNeeded.toFixed(2),
+      reading: sameSide ? 'the same side of 1' : 'different sides of 1',
+    },
+  ]
+}
