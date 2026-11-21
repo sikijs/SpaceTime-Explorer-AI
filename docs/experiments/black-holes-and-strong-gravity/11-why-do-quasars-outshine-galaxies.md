@@ -255,7 +255,35 @@ The page has the four Parts (amber, pink, teal, blue). The module and component 
 
 **Part 3 and Part 4 wording reviewed and approved 2026-11-21, with seven changes.** (1) Part 3's opening says that the published values are the light outputs of 3C 273 and the Milky Way in Table 2 and the "published" column of Table 1; it had said only Table 1's. (2) J0529-4351 is "the quasar that ESO described in 2024 as the brightest known", not "the brightest quasar known as of November 2026" (the only source is ESO, 2024). (3) The tutor marks each guess as "the closest of the five choices" or "not the closest of the five choices", not "right" or "off this time", because a guess of "about 100 times" sits beside a real ratio of about 160. (4) Each mark names its picture, for example "Your guess 3 (Picture C)", because the explanation reaches guess 3 before guess 2. (5) "8.06 times less matter" became "fusion would need about 8 times as much". (6) "before it is gone" became "as it falls in". (7) "three trial brightnesses" became "four", as Part 2 offers four trial values plus 3C 273. The OpenStax line "can easily reach 10% or, in the extreme theoretical limit, 32%" was read on 2026-11-21 (section 27.2; the share is of the mass-energy of the falling matter).
 
-**Differences from this specification.** Not yet listed. They should be compiled and shown to the owner for approval before the specification is called final (§28.2).
+**Differences between this specification and the build (listed 2026-11-21, from the code and the pictures' captions; the drawings were not compared pixel by pixel).** Items 5 and 6 are the only ones that look like gaps in the build. They await the owner's decision: restore the missing parts, or approve the pictures as built.
+
+*Predictions and controls*
+1. **Question 2's buttons.** Built: a tenth, a thousandth, a hundred-thousandth, a ten-millionth, a billionth. Specified: as wide, a tenth, a thousandth, a millionth, a hundred-millionth. The nearest button to the real answer (about 1 part in 5.2 million) is "a ten-millionth".
+2. **Question 3's buttons.** Built: 0.05, 0.5, 5, 50, 500 Suns a year. Specified: 0.01, 0.1, 1, 10, 100 ("balanced in the spec step"). The nearest button to 4.73 is "5".
+3. **Question 1's buttons** match: same, 10, 100, 1,000, 100,000. The nearest button to about 160 is "100".
+4. **Brightness control in Part 2.** Built: five buttons, with "3C 273: about 4 trillion Suns" added to the four trial values. Specified: four.
+
+*Pictures*
+5. **Picture A.** Built: a ruler with an amber band (the Milky Way), a sky-blue dot (3C 273), an arrow for the ratio, and the white guess. Specified: also "a bar for the quasar's light and a bar for the galaxy's stars" after the run. No such bars are in the caption.
+6. **Picture B.** Built: three amber comparison dots (Neptune's orbit, one light-year, the Milky Way) and a sky-blue bar up to the limit. Specified: five marks, including one light-day and one light-week.
+7. **Stages.** The specification implies Picture A is drawn after the run. The built pictures are drawn at once when Run is pressed. The captions say the real picture is drawn first and the white mark is added beside it.
+
+*Introduction*
+8. **Longer than the plan.** The plan had ten items. The build adds: "Why even ask this", "Four ideas to start from", "Where quasars live", "Hiding the glare" (how anyone sees the galaxy), "Is a quasar always in the middle?" (two quasars close together; a black hole pushed off-centre), "Does a quasar keep growing?", "Were quasars around long ago?", "More than one kind of light", and the step-by-step "Where the light comes from". It has five figures. The owner added three sentences or paragraphs on 2026-11-21 (see (a) to (c) in the Introduction plan).
+9. **J0529-4351 and the "latest" results** (plan items 7 and 8) are held until after the first Run, so that "just over a Sun per day" does not give away guess 3. The plan put them in the introduction.
+10. **Decision 17's "match and a city" example** is not used. The stadium wave is.
+11. **Images.** All five planned images are used, in a different order from the table; the spare (`opo1227a`) is not. Alt text is written for all five. The recheck of the ESO licence on ESO's own page is not recorded.
+12. **The Eddington limit** is left out, as Decision 3 said.
+
+*Results and links*
+13. **Check-up.** Built: six rows (J0529 rate, no-spin share, ceiling against Begelman, ceiling against OpenStax, fusion share, light-day). Decision 10 also named the luminosity ratio as a range. The build puts that range in Table 2.
+14. **Links.** About 14 beyond the specification's list (checked and recorded 2026-11-21). All 16 of the specification's links are present.
+
+*Tutor and tests*
+15. **Tutor.** The specification names it only in the step list: observe, compare, one "why" question, then a seven-part explanation that marks each guess. The wording was approved 2026-11-21.
+16. **Tests.** All eleven planned tests are covered. The "playback speed" test checks that the same inputs give the same result, because there is no playback.
+
+*Matches the specification:* the energy and size model, Black Holes 8's function reused unchanged, Decisions 1 to 11 and 13 to 16, the four Parts, Start over, and the chapter summary. They should be compiled and shown to the owner for approval before the specification is called final (§28.2).
 
 **Housekeeping.** The header comment at the top of `QuasarBrightnessExperiment.tsx` still says "STEP 3 … no prediction, no reading guide, no four-Part layout and no tutor yet". That is out of date, because Steps 4 to 6 are now in the file. It has not been changed.
 
