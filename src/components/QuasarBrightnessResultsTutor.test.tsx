@@ -51,6 +51,12 @@ describe('Part 3: the results', () => {
     const strip = (html: string) => html.slice(html.indexOf('Table 1:'))
     expect(strip(a)).toBe(strip(results))
   })
+
+  it('says which numbers are published, and describes J0529-4351 as ESO did in 2024 (wording approved 2026-11-21)', () => {
+    expect(results).toContain('except the published values')
+    expect(results).toContain('the quasar that ESO described in 2024 as the brightest known')
+    expect(results).not.toContain('as of November 2026')
+  })
 })
 
 describe('Part 4: the tutor', () => {

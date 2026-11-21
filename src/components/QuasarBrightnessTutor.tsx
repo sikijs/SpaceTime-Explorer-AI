@@ -46,7 +46,7 @@ export function QuasarBrightnessTutor({ ratioGuess, widthGuess, fuelGuess, match
   }
 
   const isResponseEmpty = responseInput.trim() === ''
-  const mark = (n: number, right: boolean) => `Your guess ${n}: ${right ? 'right' : 'off this time'}.`
+  const mark = (n: number, picture: string, closest: boolean) => `Your guess ${n} (${picture}): ${closest ? 'the closest of the five choices' : 'not the closest of the five choices'}.`
 
   const run = runQuasarExperiment(PART_ONE_LUMINOSITY_SOLAR, PART_ONE_SPIN)
   const rows = checkUp()
@@ -119,18 +119,18 @@ export function QuasarBrightnessTutor({ ratioGuess, widthGuess, fuelGuess, match
           <p style={paragraphStyle}>
             <strong>1. One point of light, many galaxies.</strong> The Milky Way gives out about {formatSuns(mwLow)} to {formatSuns(mwHigh)} of light, and 3C 273 about {formatSuns(run.luminositySolar)}. Dividing,
             3C 273 is about {formatNumber(run.ratioToMilkyWay)} times brighter ({formatNumber(run.ratioToMilkyWayRange.low)} to {formatNumber(run.ratioToMilkyWayRange.high)} over the two published values for the Milky Way).
-            {' '}{mark(1, matches.ratio)} You guessed {ratioLabel(ratioGuess)}. The brightness of 3C 273 is a round number, because published values range from about 2 to 5 trillion Suns, so the ratio is good to about a factor of two and not better.
+            {' '}{mark(1, 'Picture A', matches.ratio)} You guessed {ratioLabel(ratioGuess)}. The brightness of 3C 273 is a round number, because published values range from about 2 to 5 trillion Suns, so the ratio is good to about a factor of two and not better.
           </p>
           <p style={paragraphStyle}>
             <strong>2. Where the energy comes from: falling releases far more of a kilogram’s mass than fusion.</strong> Einstein’s E = mc² says that mass is stored energy: a share of a piece of matter’s mass can come out as light.
-            A star turns {formatPercent(FUSION_EFFICIENCY)} of its hydrogen’s mass into light, by fusion. Falling toward a black hole does much better, as Black Holes 8 found: {formatPercent(run.infallEfficiency)} with no spin, and more with spin. A good comparison is a stone dropped from a cliff. It gives up energy as it falls, and it hits the ground hot and fast. Gas falling toward a black hole falls through a much stronger pull, so it gives up a much larger share of its mass before it is gone. It swirls into a hot disk and glows. This is a comparison only, and this page does not model the disk.
-            The result: for the same light, falling in needs {formatNumber(run.infallSolarMassesPerYear)} Suns of mass a year, where fusion would need {formatNumber(run.fusionSolarMassesPerYear)} Suns of hydrogen a year. That is
-            {' '}{formatNumber(run.lightPerKilogramRatio)} times less matter ({formatPercent(run.infallEfficiency)} ÷ {formatPercent(FUSION_EFFICIENCY)}). {mark(3, matches.fuel)} You guessed {fuelLabel(fuelGuess)}.
+            A star turns {formatPercent(FUSION_EFFICIENCY)} of its hydrogen’s mass into light, by fusion. Falling toward a black hole does much better, as Black Holes 8 found: {formatPercent(run.infallEfficiency)} with no spin, and more with spin. A good comparison is a stone dropped from a cliff. It gives up energy as it falls, and it hits the ground hot and fast. Gas falling toward a black hole falls through a much stronger pull, so it gives up a much larger share as it falls in. It swirls into a hot disk and glows. This is a comparison only, and this page does not model the disk.
+            The result: for the same light, falling in needs {formatNumber(run.infallSolarMassesPerYear)} Suns of mass a year, where fusion would need {formatNumber(run.fusionSolarMassesPerYear)} Suns of hydrogen a year. So fusion would need
+            {' '}about {formatNumber(run.lightPerKilogramRatio)} times as much ({formatPercent(run.infallEfficiency)} ÷ {formatPercent(FUSION_EFFICIENCY)}). {mark(3, 'Picture C', matches.fuel)} You guessed {fuelLabel(fuelGuess)}.
           </p>
           <p style={paragraphStyle}>
             <strong>3. How small the source must be.</strong> Think of a crowd doing “the wave”. It takes time to go round, because each person reacts only after seeing a neighbor. A source whose light brightens and fades as a whole in {days} days cannot be wider than the distance light covers in {days} days, because no part of it can learn of a change in another part faster than light travels. That is {days} light-days, about {formatNumber(run.sizeLimitAU)} AU, or about {formatNumber(sizeLimitInNeptuneOrbits(days))} times the width of Neptune’s orbit.
             The Milky Way is {formatNumber(run.galaxyToSourceWidthRatio / 1e6)} million times wider, so the source is about 1 part in {Math.round(run.galaxyToSourceWidthRatio).toLocaleString('en-US')} of the galaxy’s width.
-            {' '}{mark(2, matches.width)} You guessed {widthLabel(widthGuess)} as the Milky Way. The week is an example from a review of quasar flickering, and not 3C 273’s own flicker time, and the rule gives a limit and not an exact size.
+            {' '}{mark(2, 'Picture B', matches.width)} You guessed {widthLabel(widthGuess)} as the Milky Way. The week is an example from a review of quasar flickering, and not 3C 273’s own flicker time, and the rule gives a limit and not an exact size.
           </p>
           <p style={paragraphStyle}>
             <strong>4. The two halves fit together.</strong> A galaxy of hundreds of billions of stars is bright because it has a great many stars, spread over 100,000 light-years. A quasar is bright for the opposite reason: a very small place, fed by a few Suns of gas a year, that turns a large share of what falls in into light. This is why a quasar can outshine the whole galaxy that holds it.
@@ -142,7 +142,7 @@ export function QuasarBrightnessTutor({ ratioGuess, widthGuess, fuelGuess, match
             <strong>6. What is settled, and what is not.</strong> That quasars are fed by gas falling toward supermassive black holes is well established. The numbers for one quasar are not: the brightness of 3C 273 differs between sources, the spin of a real quasar’s black hole is not well known, and so the share of mass turned to light (about 6 percent up to about 42 percent in theory, and some textbooks quote about 32 percent as the extreme) is a range. How the disk makes its light, what drives the jets, and how fast a black hole can be fed (the subject of Cosmic Horizons 22) are not modeled here.
           </p>
           <p style={paragraphStyle}>
-            <strong>7. The honest limits.</strong> This page used a stand-in: the share of mass that a probe gives up on its way down to the last safe orbit (Black Holes 8), as the share of falling gas that becomes light. It did not model the disk, magnetic fields, jets, dust, the host galaxy’s own light, or how long a quasar lasts. The one-week flicker, the three trial brightnesses and the “star-powered” bar are examples for the question, and not measurements.
+            <strong>7. The honest limits.</strong> This page used a stand-in: the share of mass that a probe gives up on its way down to the last safe orbit (Black Holes 8), as the share of falling gas that becomes light. It did not model the disk, magnetic fields, jets, dust, the host galaxy’s own light, or how long a quasar lasts. The one-week flicker, the four trial brightnesses and the “star-powered” bar are examples for the question, and not measurements.
           </p>
         </div>
       )}
