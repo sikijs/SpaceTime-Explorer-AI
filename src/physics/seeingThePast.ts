@@ -95,3 +95,76 @@ export function runSeeingExperiment(direction: Direction, speed: number): Seeing
     samples,
   }
 }
+
+// ---- The audit update (2026-11-21): Part 1's fixed case, the strip of image speeds, the check-up ----
+
+// Part 1 is fixed on a spaceship coming toward the lab at 0.6c (the specification's headline case: the image looks to move at 1.5c).
+export const PART_ONE_DIRECTION: Direction = 'approaching'
+export const PART_ONE_SPEED = 0.6
+
+// The image's speed from the two arrival times is v / (1 - v) approaching and v / (1 + v) receding (the same straight-line motion plus the light's travel
+// time, no relativity). The run measures it from its samples; this closed form is the shortcut used by the check-up.
+export function closedFormImageSpeed(direction: Direction, speed: number): number {
+  checkSpeed(speed)
+  return direction === 'approaching' ? speed / (1 - speed) : speed / (1 + speed)
+}
+
+export type SpeedGuess = 'slower' | 'same' | 'faster'
+
+// What the tutor marks the guess against: how the image's speed compares with the spaceship's real speed. 'same' is never the result for a speed
+// above 0 and below c, because v / (1 - v) is more than v and v / (1 + v) is less.
+export function imageComparedWithShip(direction: Direction, speed: number): SpeedGuess {
+  const image = closedFormImageSpeed(direction, speed)
+  if (Math.abs(image - speed) < 1e-9) return 'same'
+  return image > speed ? 'faster' : 'slower'
+}
+
+// The strip of image speeds in Panel B: a linear scale from 0 to 2c (so Part 1's 1.5c fits), 0 at the left end and 1 at the right.
+export const STRIP_MAX_C = 2
+
+export function stripPosition(speedInC: number): number {
+  if (!(speedInC >= 0)) throw new RangeError(`speed must be 0 or more, got ${speedInC}`)
+  return Math.min(1, speedInC / STRIP_MAX_C)
+}
+
+// The stretch of the strip a guess names, in c: 'slower' from 0 up to the real speed, 'same' the tick at the real speed, 'faster' from the real speed
+// to the end of the strip. It is only a marker for an answer that has no size of its own.
+export function guessStretch(guess: SpeedGuess, speed: number): { from: number; to: number } {
+  checkSpeed(speed)
+  if (guess === 'slower') return { from: 0, to: speed }
+  if (guess === 'same') return { from: speed, to: speed }
+  return { from: speed, to: STRIP_MAX_C }
+}
+
+export type CheckUpReading = 'the same' | 'more' | 'less'
+
+export interface CheckUpRow {
+  id: 'image-speed' | 'image-distance' | 'image-time'
+  page: number
+  expected: number
+  reading: CheckUpReading
+  gap: number
+}
+
+// The page's numbers set beside what the same physics gives. "The same" means the same at the two decimals the page shows.
+function reading(page: number, expected: number): CheckUpReading {
+  if (Math.abs(page - expected) < 0.005) return 'the same'
+  return page > expected ? 'more' : 'less'
+}
+
+export function checkUpRows(direction: Direction, speed: number): CheckUpRow[] {
+  const run = runSeeingExperiment(direction, speed)
+  const shipDistance = Math.abs(measuredPositionAt(direction, speed, run.measuredDuration) - measuredPositionAt(direction, speed, 0))
+  const row = (id: CheckUpRow['id'], page: number, expected: number): CheckUpRow => ({
+    id,
+    page,
+    expected,
+    reading: reading(page, expected),
+    gap: Math.abs(page - expected),
+  })
+  return [
+    row('image-speed', run.imageSpeed, closedFormImageSpeed(direction, speed)),
+    row('image-distance', run.distanceCovered, shipDistance),
+    row('image-time', run.imageDuration, run.measuredDuration),
+  ]
+}
