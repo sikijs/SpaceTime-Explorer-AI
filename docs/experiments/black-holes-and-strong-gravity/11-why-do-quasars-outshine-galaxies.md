@@ -144,6 +144,27 @@ All image URLs were opened and returned HTTP 200 on 2026-11-20. **Not yet done:*
 15. Peterson, "Variability of Active Galactic Nuclei" (arXiv:astro-ph/0109495, 2001), `ar5iv.labs.arxiv.org/html/astro-ph/0109495`: the light-travel-time argument (a primary review; only the first part was read).
 16. Kellermann, "The Discovery of Quasars and its Aftermath" (J. Astron. Hist. Heritage 2014), `arxiv.org/abs/1304.3627`: a history of 3C 273 by an astronomer.
 
+**Added to the page after the list above (checked 2026-11-21 through a fetch tool, which returned the page text for 13 of them; the STScI page was read only through a summary).** All opened (HTTP 200). "Verbatim" means the quoted words were found on the page.
+
+| Link | Date shown | Result |
+|---|---|---|
+| NASA, "Black Hole Anatomy" `science.nasa.gov/universe/black-holes/anatomy/` | updated 12 Aug 2026 | "main light source ... accretion disk" and "settles into a hot, bright, rapidly spinning disk": verbatim |
+| NASA, "Black Hole Types" `.../black-holes/types/` | updated 12 Aug 2026 | supermassive black holes at the centres of large galaxies; "they can also merge ... when galaxies collide" is one sentence. The link line was changed to say so |
+| Chandra, "Black Holes" illustrations `chandra.harvard.edu/resources/illustrations/blackholes3.html` | revised 1 Oct 2026 | "temperatures reach millions of degrees" verbatim; about black holes in general |
+| ESA XMM-Newton, "Black hole at the centre of a quasar" | 2 Dec 2015; a banner says the site is "under review and not being updated" | "is heated by friction and shines brightly": verbatim |
+| ESA, "Integral rolls back history of the Milky Way's super-massive black hole" | archive, 28 Jan 2005 | "quiet and harmless black hole": verbatim; about 350 years ago it was much more active (gamma-ray echo off the cloud Sgr B2) |
+| NASA Goddard, "Ask an Astrophysicist", quasars `imagine.gsfc.nasa.gov/ask_astro/quasar.html` | the lifetime answer was submitted 1 Mar 1998; page updated 2020 | "10 million to a few billion years" and "we only know this on the basis of theoretical arguments that are consistent with observational data": found. **The first draft's "from 10 million" was not verbatim, and "ends through reduced accretion" was not what the answer says** (it says the quasar fades as conversion efficiency drops, even at the same accretion rate). "Massive black holes can't be destroyed" is in a different answer (Kallman, Nov 1998). Both were corrected in the page. Gamma-ray echoes are not on this page, only on ESA's |
+| NASA, "Most Quasars Live on Snacks, Not Large Meals" | 19 Jun 2012 | "small, long-term events": verbatim |
+| NASA, "Hubble Sees the 'Teenage Years' of Quasars" | 18 Jun 2015 | **"many more quasars than we see at our local neighborhood" is not on the page** and the page does not say in one sentence that quasar activity peaked 12 billion years ago. It says 11 ultra-bright quasars shone at the peak of the star-formation era, 12 billion years ago, and that the peak of quasar activity is driven by galaxies colliding and merging. The page was reworded to say that |
+| NASA StarChild, "Quasars" | no date | "it is like we are looking back in time": verbatim |
+| NASA Hubble, "Hubble Spots Double Quasars in Merging Galaxies" | 6 Apr 2021 | two quasars so close they look like one: confirmed. The tool cut the page short, so its "last updated" date was not seen |
+| STScI/NASA, "NASA's Hubble, Chandra Find Supermassive Black Hole Duo" | 9 Sep 2024 | title, date and "about 300 light-years apart" **seen only through a summary**, not verbatim |
+| NASA SVS 12539, "Hubble Detects a Rogue Supermassive Black Hole" | released 23 Mar 2017 | 3C 186 is offset from its galaxy's centre; the page says astronomers "hypothesize" a recoil kick from a merger |
+| NASA Hubble, "Supermassive Black Holes May Frequently Roam Galaxy Centers" | 25 May 2010 | the M87 black hole "is displaced from the galaxy center" |
+| OpenStax Astronomy 2e, 16.2 | book dated 9 Mar 2022 | "The mass lost, 0.02862 u, is 0.71% of the mass of the initial hydrogen": verbatim |
+
+Two NASA pages differ (the 2012 "snacks" page says most massive black holes grew by small, long-term events; the 2015 page says the brightest early quasars it studied were in merging galaxies). The page now says so and does not choose. The corrections are pinned by a test.
+
 **Gaps recorded (§29 rule 3(c)):**
 - **Schmidt (1963)** "3C 273: A Star-Like Object with Large Red-Shift", *Nature*, 16 March 1963: the title, journal and date were confirmed on two read pages (Kellermann; APS News), but the Nature, Springer and ADS pages could not be fetched and a PDF could not be read. **It is not linked as read.** The volume and page are not confirmed.
 - **Flicker-to-size, an official agency page:** no NASA, ESA, ESO, NOIRLab or Chandra page was found that explains it. OpenStax (a textbook) and Peterson (a review) are the nearest. The introduction defines the idea in its own words (§15).
