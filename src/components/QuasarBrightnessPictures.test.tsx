@@ -7,9 +7,14 @@ import {
   PART_ONE_SPIN,
   SPIN_CHOICES,
   brightnessRatio,
+  BRIGHTNESS_RULER_MAX_SOLAR,
+  BRIGHTNESS_RULER_MIN_SOLAR,
+  MILKY_WAY_LUMINOSITY_SOLAR,
+  THREE_C_273_LUMINOSITY_SOLAR,
   brightnessRatioRange,
   galaxyToSourceWidthRatio,
   lightDayAU,
+  rulerTicksBetween,
   runQuasarExperiment,
   sizeLimitAU,
 } from '../physics/quasarBrightness'
@@ -35,15 +40,56 @@ describe('Picture A, brightness', () => {
     expect(svg).not.toContain('NaN')
   })
 
-  it('has a caption in the standard form, with two three-part look-fors and a worked moment', () => {
+  it('has a caption in the standard form, with three three-part look-fors and a worked moment', () => {
     for (const phrase of ['How to read this diagram.', 'A worked moment.', 'What to look for.', 'Where the real picture comes from.']) expect(caption).toContain(phrase)
-    expect((caption.match(/Look at:/g) ?? []).length).toBe(2)
-    expect((caption.match(/What it means:/g) ?? []).length).toBe(2)
-    expect((caption.match(/Why it matters:/g) ?? []).length).toBe(2)
+    expect((caption.match(/Look at:/g) ?? []).length).toBe(3)
+    expect((caption.match(/What it means:/g) ?? []).length).toBe(3)
+    expect((caption.match(/Why it matters:/g) ?? []).length).toBe(3)
     expect(caption).toContain('4,000,000,000,000 ÷ 25,000,000,000 = 160')
     expect(caption).toContain('Measured:')
     expect(caption).toContain('Calculated here:')
     expect(caption).not.toContain('NaN')
+  })
+})
+
+describe('Picture A, the two bars (restored from the specification, 2026-11-21)', () => {
+  const svg = renderToStaticMarkup(createElement(BrightnessPicture))
+  const caption = renderToStaticMarkup(createElement(BrightnessCaption))
+
+  it('draws a bar for the Milky Way\'s stars and a bar for 3C 273\'s light, each labelled on the canvas', () => {
+    expect(svg).toContain('brightness-bars')
+    expect(svg).toContain('the light of all the Milky Way’s stars together')
+    expect(svg).toContain('the light of 3C 273')
+  })
+
+  it('the bars end where the values sit on the ruler, so the quasar\'s bar is longer by the module\'s number of ticks', () => {
+    const ticks = rulerTicksBetween(MILKY_WAY_LUMINOSITY_SOLAR, THREE_C_273_LUMINOSITY_SOLAR)
+    expect(ticks).toBeCloseTo(Math.log10(brightnessRatio(THREE_C_273_LUMINOSITY_SOLAR)), 10)
+    const widths = [...svg.matchAll(/<rect x="40" y="(?:40|58)" width="([\d.]+)"/g)].map((m) => Number(m[1]))
+    expect(widths.length).toBe(2)
+    const pxPerTick = 520 / Math.log10(BRIGHTNESS_RULER_MAX_SOLAR / BRIGHTNESS_RULER_MIN_SOLAR)
+    expect((widths[1] - widths[0]) / pxPerTick).toBeCloseTo(ticks, 6)
+  })
+
+  it('the caption names the bars, says the bar length only grows by ticks, and gives the module\'s number', () => {
+    expect(caption).toContain('Two bars above the ruler')
+    expect(caption).toContain(`about ${formatNumber(rulerTicksBetween(MILKY_WAY_LUMINOSITY_SOLAR, THREE_C_273_LUMINOSITY_SOLAR))} ticks longer`)
+    expect(caption).toContain('the two bars, amber and sky-blue, one above the other')
+  })
+})
+
+describe('Picture B, the light-day and light-week marks (restored from the specification, 2026-11-21)', () => {
+  const svg = renderToStaticMarkup(createElement(SizePicture))
+  const caption = renderToStaticMarkup(createElement(SizeCaption))
+
+  it('labels one light-day and one light-week on the canvas, next to Neptune\'s orbit, one light-year and the Milky Way', () => {
+    for (const label of ['Neptune’s orbit', 'one light-day', 'one light-week', 'one light-year', 'the Milky Way']) expect(svg).toContain(label)
+  })
+
+  it('the caption says five things to compare with and where the light-week mark sits', () => {
+    expect(caption).toContain('five things to compare with')
+    expect(caption).toContain('one light-week')
+    expect(caption).toContain('where the sky-blue bar ends')
   })
 })
 
@@ -176,7 +222,7 @@ describe('the white YOUR GUESS marks', () => {
   })
 
   it('the white guess does not change the real part of the picture', () => {
-    const strip = (svg: string) => svg.replace(/<g data-testid="guess-mark">.*<\/g>/, '').replace(/<line[^>]*stroke="#ffffff"[^>]*><\/line>/, '').replace(/viewBox="[^"]*"/, '')
+    const strip = (svg: string) => svg.replace(/<g data-testid="guess-mark">.*?<\/g>/, '').replace(/<line[^>]*stroke="#ffffff"[^>]*><\/line>/, '').replace(/viewBox="[^"]*"/, '')
     const withGuess = renderToStaticMarkup(createElement(BrightnessPicture, { guess: 'ten' }))
     expect(strip(withGuess)).toBe(strip(none[0]))
   })

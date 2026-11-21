@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { energyReleasedFraction } from './spinningBlackHoleExperiment'
 import {
   BRIGHTNESS_CHOICES_SOLAR,
+  BRIGHTNESS_RULER_MAX_SOLAR,
+  BRIGHTNESS_RULER_MIN_SOLAR,
+  THREE_C_273_LUMINOSITY_SOLAR,
+  rulerTicksBetween,
   FLICKER_ILLUSTRATION_DAYS,
   FUEL_CHOICES,
   FUSION_EFFICIENCY,
@@ -381,5 +385,24 @@ describe('Step 6: marking the guesses', () => {
     expect(markGuesses({ ratio: ratioAnswer(), width: widthAnswer(), fuel: fuelAnswer() })).toEqual({ ratio: true, width: true, fuel: true })
     expect(markGuesses({ ratio: 'same', width: 'tenth', fuel: 'twentieth' })).toEqual({ ratio: false, width: false, fuel: false })
     expect(markGuesses({ ratio: ratioAnswer(), width: 'tenth', fuel: fuelAnswer() })).toEqual({ ratio: true, width: false, fuel: true })
+  })
+})
+
+describe('rulerTicksBetween: how far apart two values sit on a ruler of tenfold ticks', () => {
+  it('is 1 for a factor of 10, 2 for 100, and about 2.2 for 3C 273 against the Milky Way (160 times)', () => {
+    expect(rulerTicksBetween(1, 10)).toBeCloseTo(1, 12)
+    expect(rulerTicksBetween(5, 500)).toBeCloseTo(2, 12)
+    expect(rulerTicksBetween(MILKY_WAY_LUMINOSITY_SOLAR, THREE_C_273_LUMINOSITY_SOLAR)).toBeCloseTo(Math.log10(160), 2)
+  })
+
+  it('is the distance between the two values\' ruler positions, in ticks', () => {
+    const decades = Math.log10(BRIGHTNESS_RULER_MAX_SOLAR / BRIGHTNESS_RULER_MIN_SOLAR)
+    const gap = brightnessRulerPosition(THREE_C_273_LUMINOSITY_SOLAR) - brightnessRulerPosition(MILKY_WAY_LUMINOSITY_SOLAR)
+    expect(gap * decades).toBeCloseTo(rulerTicksBetween(MILKY_WAY_LUMINOSITY_SOLAR, THREE_C_273_LUMINOSITY_SOLAR), 10)
+  })
+
+  it('rejects a value that is not positive', () => {
+    expect(() => rulerTicksBetween(0, 10)).toThrow()
+    expect(() => rulerTicksBetween(10, -1)).toThrow()
   })
 })

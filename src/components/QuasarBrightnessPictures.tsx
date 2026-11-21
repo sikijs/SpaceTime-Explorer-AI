@@ -25,6 +25,7 @@ import {
   luminosityWatts,
   massPerSecondKg,
   milkyWayWidthLightDays,
+  rulerTicksBetween,
   sizeLimitAU,
   sizeLimitInNeptuneOrbits,
   fuelGuessMarker,
@@ -132,14 +133,31 @@ export function BrightnessPicture({ guess = null }: { guess?: RatioChoiceId | nu
   const guessX = mark ? xAt(mark.position) : 0
   return (
     <svg
-      viewBox={`0 0 600 ${200 + (mark ? GUESS_EXTRA_HEIGHT : 0)}`}
+      viewBox={`0 0 600 ${260 + (mark ? GUESS_EXTRA_HEIGHT : 0)}`}
       role="img"
-      aria-label={`Picture A: a ruler of brightness in which each tick is 10 times brighter than the one before. The Milky Way sits at about 20 to 30 billion Suns. The quasar 3C 273 sits about ${formatNumber(brightnessRatio(THREE_C_273_LUMINOSITY_SOLAR))} times further along, at about 4 trillion Suns.`}
+      aria-label={`Picture A: a ruler of brightness in which each tick is 10 times brighter than the one before. The Milky Way sits at about 20 to 30 billion Suns. The quasar 3C 273 sits about ${formatNumber(brightnessRatio(THREE_C_273_LUMINOSITY_SOLAR))} times further along, at about 4 trillion Suns. Two bars above the ruler run from its left end to the light of the Milky Way's stars and to the light of 3C 273.`}
       style={SVG_STYLE}
     >
       <text x="12" y="20" fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
         Picture A: how much light does each give out?
       </text>
+
+      {/* The two bars: each runs from the left end of the ruler to its brightness, so its end sits exactly above its value on the ruler. */}
+      <g data-testid="brightness-bars">
+        <text x={X0} y="34" fontSize="10" fill={MUTED_COLOR}>
+          each bar runs from the left end of the ruler to how bright it is
+        </text>
+        <rect x={X0} y="40" width={mwX - X0} height="11" fill={MILKY_WAY_COLOR} fillOpacity="0.9" />
+        <text x={mwX + 8} y="49" fontSize="10" fontWeight="bold" fill={MILKY_WAY_COLOR} style={HALO}>
+          the light of all the Milky Way’s stars together
+        </text>
+        <rect x={X0} y="58" width={qX - X0} height="11" fill={QUASAR_COLOR} fillOpacity="0.9" />
+        <text x={qX + 8} y="67" fontSize="10" fontWeight="bold" fill={QUASAR_COLOR} style={HALO}>
+          the light of 3C 273
+        </text>
+      </g>
+
+      <g transform="translate(0,60)">
       {mark && <GuessLine x={guessX} axisY={axisY} boxY={190} />}
       <line x1={X0} y1={axisY} x2={X1} y2={axisY} stroke={TICK_COLOR} strokeWidth="2" />
       <Ticks
@@ -181,6 +199,7 @@ export function BrightnessPicture({ guess = null }: { guess?: RatioChoiceId | nu
         about 4 trillion Suns
       </text>
       {mark && <GuessMark x={guessX} axisY={axisY} boxY={190} lines={['Brightness compared with the Milky Way:', ratioLabel(guess!)]} />}
+      </g>
     </svg>
   )
 }
@@ -198,6 +217,11 @@ export function BrightnessCaption({ withGuess = false }: { withGuess?: boolean }
       <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
         <li>
           <strong>The line and its ticks.</strong> Further to the right means brighter. The numbers under the ticks are powers of ten, written like {powerOfTen(12)}.
+        </li>
+        <li>
+          <strong>Two bars above the ruler, the galaxy’s stars and the quasar’s light.</strong> The amber bar is the light of all the Milky Way’s stars together. The sky-blue bar is
+          the light of 3C 273. Each bar runs from the left end of the ruler to its brightness, so the end of a bar sits right above its value. Because every tick is 10 times
+          brighter, the sky-blue bar is only about {formatNumber(rulerTicksBetween(MILKY_WAY_LUMINOSITY_SOLAR, THREE_C_273_LUMINOSITY_SOLAR))} ticks longer than the amber one, even though 3C 273 gives out about {formatNumber(brightnessRatio(THREE_C_273_LUMINOSITY_SOLAR))} times as much light.
         </li>
         <li>
           <strong style={{ color: MILKY_WAY_COLOR }}>Amber band, the Milky Way.</strong> Our own galaxy, all its stars together. Its brightness is not known exactly: the
@@ -238,6 +262,11 @@ export function BrightnessCaption({ withGuess = false }: { withGuess?: boolean }
             matters: 'this is the first half of the puzzle: a single object outshines a whole galaxy of stars',
           },
           {
+            look: 'the two bars, amber and sky-blue, one above the other',
+            means: `the sky-blue bar ends about ${formatNumber(rulerTicksBetween(MILKY_WAY_LUMINOSITY_SOLAR, THREE_C_273_LUMINOSITY_SOLAR))} ticks further to the right than the amber one, and that small gap is ${formatNumber(brightnessRatio(THREE_C_273_LUMINOSITY_SOLAR))} times as much light`,
+            matters: 'a ruler of tenfold steps makes a very large difference look small, so read the numbers and the arrow, and not only how long the bars are',
+          },
+          {
             look: 'the width of the amber band',
             means: `the Milky Way’s own brightness is uncertain by about one and a half times (20 to 30 billion Suns), which moves the ratio between ${formatNumber(range.low)} and ${formatNumber(range.high)}`,
             matters: 'it shows how sure the answer is: the quasar is well over 100 times brighter whichever end of the stretch is right',
@@ -263,6 +292,8 @@ export function SizePicture({ guess = null }: { guess?: WidthChoiceId | null }) 
   const limitX = xAt(widthRulerPosition(days))
   const neptuneDays = NEPTUNE_ORBIT_WIDTH_AU / lightDayAU()
   const neptuneX = xAt(widthRulerPosition(neptuneDays))
+  const dayX = xAt(widthRulerPosition(1))
+  const weekX = xAt(widthRulerPosition(days))
   const yearX = xAt(widthRulerPosition(365.25))
   const galaxyX = xAt(widthRulerPosition(milkyWayWidthLightDays()))
   const mark = guess ? widthGuessMarker(guess) : null
@@ -273,18 +304,18 @@ export function SizePicture({ guess = null }: { guess?: WidthChoiceId | null }) 
   }
   return (
     <svg
-      viewBox={`0 0 600 ${240 + (mark ? GUESS_EXTRA_HEIGHT : 0)}`}
+      viewBox={`0 0 600 ${312 + (mark ? GUESS_EXTRA_HEIGHT : 0)}`}
       role="img"
-      aria-label={`Picture B: a ruler of widths in light-days, each tick 10 times wider than the one before. Neptune's orbit is a little under half a light-day across. A source that changes in ${days} days is no wider than ${days} light-days. One light-year is 365 light-days. The Milky Way is about 36 million light-days across, about ${formatNumber(galaxyToSourceWidthRatio(days))} times wider than that limit.`}
+      aria-label={`Picture B: a ruler of widths in light-days, each tick 10 times wider than the one before. Neptune's orbit is a little under half a light-day across. One light-day and one light-week are marked. A source that changes in ${days} days is no wider than ${days} light-days. One light-year is 365 light-days. The Milky Way is about 36 million light-days across, about ${formatNumber(galaxyToSourceWidthRatio(days))} times wider than that limit.`}
       style={SVG_STYLE}
     >
       <text x="12" y="20" fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
         Picture B: how wide can the source be?
       </text>
-      {mark && <GuessLine x={guessX} axisY={axisY} boxY={230} />}
+      {mark && <GuessLine x={guessX} axisY={axisY} boxY={304} />}
       <line x1={X0} y1={axisY} x2={X1} y2={axisY} stroke={TICK_COLOR} strokeWidth="2" />
       <Ticks fromExponent={minE} toExponent={maxE} axisY={axisY} labelOf={labelOf} positionOf={(e) => widthRulerPosition(10 ** e)} />
-      <text x={(X0 + X1) / 2} y={axisY + 38} textAnchor="middle" fontSize="10" fill={MUTED_COLOR}>
+      <text x={(X0 + X1) / 2} y={axisY + 146} textAnchor="middle" fontSize="10" fill={MUTED_COLOR}>
         width, in light-days (each tick is 10 times wider than the one to its left)
       </text>
 
@@ -298,13 +329,29 @@ export function SizePicture({ guess = null }: { guess?: WidthChoiceId | null }) 
       </text>
 
       {/* The comparison marks. */}
-      <line x1={neptuneX} y1={axisY} x2={neptuneX} y2={axisY + 24} stroke={MUTED_COLOR} />
+      <line x1={neptuneX} y1={axisY} x2={neptuneX} y2={axisY + 44} stroke={MUTED_COLOR} />
       <circle cx={neptuneX} cy={axisY} r="4" fill={MILKY_WAY_COLOR} />
-      <text x={neptuneX} y={axisY + 56} textAnchor="middle" fontSize="10" fill={MILKY_WAY_COLOR} style={HALO}>
+      <text x={neptuneX + 4} y={axisY + 56} textAnchor="end" fontSize="10" fill={MILKY_WAY_COLOR} style={HALO}>
         Neptune’s orbit
       </text>
-      <text x={neptuneX} y={axisY + 68} textAnchor="middle" fontSize="9" fill={MUTED_COLOR} style={HALO}>
+      <text x={neptuneX + 4} y={axisY + 68} textAnchor="end" fontSize="9" fill={MUTED_COLOR} style={HALO}>
         {NEPTUNE_ORBIT_WIDTH_AU} AU across
+      </text>
+      <line x1={dayX} y1={axisY} x2={dayX} y2={axisY + 74} stroke={MUTED_COLOR} />
+      <circle cx={dayX} cy={axisY} r="4" fill={MILKY_WAY_COLOR} />
+      <text x={dayX + 4} y={axisY + 86} textAnchor="end" fontSize="10" fill={MILKY_WAY_COLOR} style={HALO}>
+        one light-day
+      </text>
+      <text x={dayX + 4} y={axisY + 98} textAnchor="end" fontSize="9" fill={MUTED_COLOR} style={HALO}>
+        about {formatNumber(lightDayAU())} AU
+      </text>
+      <line x1={weekX} y1={axisY} x2={weekX} y2={axisY + 104} stroke={MUTED_COLOR} />
+      <circle cx={weekX} cy={axisY} r="4" fill={MILKY_WAY_COLOR} />
+      <text x={weekX - 4} y={axisY + 116} textAnchor="start" fontSize="10" fill={MILKY_WAY_COLOR} style={HALO}>
+        one light-week
+      </text>
+      <text x={weekX - 4} y={axisY + 128} textAnchor="start" fontSize="9" fill={MUTED_COLOR} style={HALO}>
+        {days} light-days, the size limit above
       </text>
       <line x1={yearX} y1={axisY} x2={yearX} y2={axisY + 44} stroke={MUTED_COLOR} />
       <circle cx={yearX} cy={axisY} r="4" fill={MILKY_WAY_COLOR} />
@@ -331,7 +378,7 @@ export function SizePicture({ guess = null }: { guess?: WidthChoiceId | null }) 
       </text>
       <line x1={limitX} y1={64} x2={limitX} y2={axisY - 44} stroke={MUTED_COLOR} strokeDasharray="3 3" />
       <line x1={galaxyX} y1={64} x2={galaxyX} y2={axisY - 44} stroke={MUTED_COLOR} strokeDasharray="3 3" />
-      {mark && <GuessMark x={guessX} axisY={axisY} boxY={230} lines={['Width of the source, compared with the Milky Way:', widthLabel(guess!)]} />}
+      {mark && <GuessMark x={guessX} axisY={axisY} boxY={304} lines={['Width of the source, compared with the Milky Way:', widthLabel(guess!)]} />}
     </svg>
   )
 }
@@ -354,8 +401,9 @@ export function SizeCaption({ withGuess = false }: { withGuess?: boolean }) {
           the measured flicker of 3C 273.
         </li>
         <li>
-          <strong style={{ color: MILKY_WAY_COLOR }}>Amber dots, three things to compare with.</strong> Neptune’s orbit around the Sun ({NEPTUNE_ORBIT_WIDTH_AU} AU across,
-          the edge of the planets), one light-year (the distance light goes in a year, 365 light-days), and the Milky Way (about {MILKY_WAY_WIDTH_LIGHT_YEARS.toLocaleString('en-US')} light-years across).
+          <strong style={{ color: MILKY_WAY_COLOR }}>Amber dots, five things to compare with.</strong> Neptune’s orbit around the Sun ({NEPTUNE_ORBIT_WIDTH_AU} AU across,
+          the edge of the planets), one light-day (about {formatNumber(lightDayAU())} AU), one light-week ({days} light-days, which is where the sky-blue bar ends, because the flicker time used here is one week),
+          one light-year (the distance light goes in a year, 365 light-days), and the Milky Way (about {MILKY_WAY_WIDTH_LIGHT_YEARS.toLocaleString('en-US')} light-years across). The names are written under the ruler, in three rows so that they do not overlap.
         </li>
         <li>
           <strong>The arrow.</strong> How many times wider the Milky Way is than the size limit. A longer arrow means a bigger ratio.

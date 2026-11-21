@@ -224,6 +224,14 @@ export const WIDTH_RULER_MAX_LIGHT_DAYS = 1e8
 export const FUEL_RULER_MIN_SOLAR_PER_YEAR = 1e-3
 export const FUEL_RULER_MAX_SOLAR_PER_YEAR = 1e3
 
+// How many ticks apart two values sit on a ruler where each tick is 10 times more: log10 of their ratio. For 3C 273 and the Milky Way this is about 2.2
+// ticks, although the quasar is about 160 times brighter, which is why the bars on Picture A end only a little apart.
+export function rulerTicksBetween(low: number, high: number): number {
+  checkPositive(low, 'The lower value')
+  checkPositive(high, 'The higher value')
+  return Math.log10(high / low)
+}
+
 export function brightnessRulerPosition(luminositySolar: number): number {
   return logRulerPosition(luminositySolar, BRIGHTNESS_RULER_MIN_SOLAR, BRIGHTNESS_RULER_MAX_SOLAR)
 }
