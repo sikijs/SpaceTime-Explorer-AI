@@ -623,7 +623,7 @@ The project foundation uses:
 * Vite
 * Vitest
 
-**Update (2026-11-02):** the project has grown well beyond the early state recorded in the paragraphs below. The application now has 88 chapters in eight groups (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology, Black Holes and Strong Gravity, Spacetime Geometry, Evidence and Imagination, and Cosmic Horizons), each with a tested physics model, a prediction, a results panel and an AI tutor, plus a Welcome page at the start and a Conclusion page at the end. The current per-experiment status is in `CLAUDE.md` §27 and its history is in `docs/STATUS.md`. The paragraphs below describe the project when only Experiments 1 to 10 of the first group existed, and are kept as history.
+**Update (2026-11-02):** the project has grown well beyond the early state recorded in the paragraphs below. The application now has 88 chapters in eight groups (89 from 2026-11-20, when Experiment 11 of Black Holes and Strong Gravity, "Why do quasars outshine galaxies?", was added; the count below is as of the date of this update) (Relativity of Time and Motion, Gravity and Curved Spacetime, Gravitational Waves, Cosmology, Black Holes and Strong Gravity, Spacetime Geometry, Evidence and Imagination, and Cosmic Horizons), each with a tested physics model, a prediction, a results panel and an AI tutor, plus a Welcome page at the start and a Conclusion page at the end. The current per-experiment status is in `CLAUDE.md` §27 and its history is in `docs/STATUS.md`. The paragraphs below describe the project when only Experiments 1 to 10 of the first group existed, and are kept as history.
 
 Experiments 1 and 2 are implemented.
 

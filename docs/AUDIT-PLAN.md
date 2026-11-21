@@ -23,7 +23,7 @@ Until the owner approves a plan, CLAUDE.md §14 still says: do not add guess mar
 | Cosmic Horizons | 1 to 14 (specification numbers) | 14 |
 | **Total** | | **71** |
 
-Not audited, because they were built to the newer rules: Cosmic Horizons 15 (the pilot) and 17 to 25 (specification numbers), and all seven experiments of Evidence and Imagination. Cosmic Horizons Experiment 12 already has the reading guide (Rule B below), so it needs only Rule A.
+Not audited, because they were built to the newer rules: Cosmic Horizons 15 (the pilot) and 17 to 25 (specification numbers), all seven experiments of Evidence and Imagination, and Black Holes and Strong Gravity 11 (added 2026-11-20, built to the newer rules, so it is not counted in the table above). Cosmic Horizons Experiment 12 already has the reading guide (Rule B below), so it needs only Rule A.
 
 The group recaps and the Conclusion and Welcome pages are not experiments and are not audited, except that a recap's quoted figures must still match any experiment this audit changes.
 
