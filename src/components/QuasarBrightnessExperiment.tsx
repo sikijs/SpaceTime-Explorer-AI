@@ -30,9 +30,9 @@ import { BrightnessCaption, BrightnessPicture, FuelCaption, FuelPicture, SizeCap
 export { formatNumber, formatPercent, formatSuns }
 
 // Black Holes and Strong Gravity, Experiment 11 (docs/experiments/black-holes-and-strong-gravity/11-why-do-quasars-outshine-galaxies.md).
-// STEP 3: the introduction, the links, the words box, the three pictures with their captions, and what is held back until the first Run. The
-// brightness and spin buttons, the Run button and the table are from Step 2. There is no prediction, no reading guide, no four-Part layout and no tutor
-// yet; those are Steps 4 to 6. Every number shown is computed by src/physics/quasarBrightness.ts and only displayed here (CLAUDE.md §9).
+// The whole page: the introduction, the links and the words box; Part 1 (three predictions, the Run button, the three pictures with white guess marks);
+// Part 2 (brightness and spin buttons, Picture C and a table); Part 3 (the results and reading guide); Part 4 (the tutor); and Start over. Parts 2 to 4
+// appear after the first Run. Every number shown is computed by src/physics/quasarBrightness.ts and only displayed here (CLAUDE.md §9).
 
 interface QuasarBrightnessExperimentProps {
   onComplete?: () => void
