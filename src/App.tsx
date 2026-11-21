@@ -115,6 +115,7 @@ import { ColorOfTheFallExperiment } from './components/ColorOfTheFallExperiment'
 import { SpinningBlackHoleExperiment } from './components/SpinningBlackHoleExperiment'
 import { BlackHoleFormationExperiment } from './components/BlackHoleFormationExperiment'
 import { HawkingRadiationExperiment } from './components/HawkingRadiationExperiment'
+import { QuasarBrightnessExperiment } from './components/QuasarBrightnessExperiment'
 import { SpacetimeIntervalExperiment } from './components/SpacetimeIntervalExperiment'
 import { LightConesExperiment } from './components/LightConesExperiment'
 import { CauseBeforeEffectExperiment } from './components/CauseBeforeEffectExperiment'
@@ -889,7 +890,8 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A black hole is not perfectly black: it gives off a very faint heat, called Hawking radiation, and the smaller the black hole, the hotter it is (1 Sun: about 0.00000006 K). Heat flows from hot to cold, so a black hole hotter than its surroundings loses mass and one colder gains it. The cosmic microwave background is at 2.725 K, warmer than every black hole found in space, so today they gain mass. A lone black hole would take a time that grows as the cube of its mass to evaporate: about 2 × 10⁶⁷ years for 1 Sun, against the universe's 1.4 × 10¹⁰ years.",
-    next: 'This is currently the last experiment in the project. No further experiment is approved in this chapter.',
+    // Draft wording for the owner's approval (CLAUDE.md §28.1): changed to point to Black Holes 11, which sits after this chapter in the sidebar.
+    next: 'Next, quasars: how can something about the size of a solar system outshine a whole galaxy of stars?',
   },  {
     title: 'The Interval',
     group: 'Spacetime Geometry: What Is Real, What Is Seen',
@@ -1277,6 +1279,16 @@ const chapters: Chapter[] = [
     // Chapter summary and "What's next": Claude's DRAFT of 2026-11-02, for the owner's approval. This is the last experiment of its group, so "What's next" points to the group that follows in the sidebar.
     learned: microwaveDipoleSummary(),
     next: 'This is the last experiment in this group. The group that follows, Cosmic Horizons, turns to recent results that are still being tested, beginning with two measurements of how fast the universe is expanding that do not agree.',
+  },
+  // Appended at the end of the list so that the saved progress (kept by position) is not disturbed; the sidebar and Previous/Next put it after "Hawking Radiation" through its group name.
+  // Draft wording for the owner's approval (CLAUDE.md §28.1). Shown only after the tutor's explanation. The numbers are the physics module's (src/physics/quasarBrightness.ts).
+  {
+    title: 'Why Do Quasars Outshine Galaxies?',
+    group: 'Black Holes and Strong Gravity',
+    Component: QuasarBrightnessExperiment,
+    learned:
+      "A quasar is the very bright centre of a distant galaxy, powered by gas falling toward a supermassive black hole. 3C 273 gives out about 4 trillion Suns of light, about 160 times as much as the whole Milky Way (the sources differ, so this is good to about a factor of two). Two things explain it. First, falling toward a black hole turns a much larger share of a kilogram's mass into light than fusion does: 5.7 percent with no spin and up to about 42 percent in theory, against 0.71 percent for fusion, so the same light needs only about 4.7 Suns of mass a year instead of about 38 Suns of hydrogen. Second, a source whose brightness changes as a whole in a week cannot be wider than the distance light travels in a week, about 1,200 AU, about 1 part in 5 million of the Milky Way's width. How the disk makes its light, what drives the jets and how fast a black hole can be fed are not modeled here.",
+    next: 'This is currently the last experiment in this group. Cosmic Horizons 22 takes up a related question: how fast can a black hole grow?',
   },
 ]
 
