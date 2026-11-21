@@ -19,7 +19,7 @@ import { paragraph } from './TidalEffectExperiment'
 import { formatNumber, formatPercent, powerOfTen, scientific } from './QuasarBrightnessFormat'
 
 // Black Holes, Experiment 11 (quasars), Step 3: the introduction, the links, the held-back section and the words box
-// (docs/experiments/black-holes-and-strong-gravity/11-why-do-quasars-outshine-galaxies.md, "Introduction"). DRAFT WORDING for the owner's approval
+// (docs/experiments/black-holes-and-strong-gravity/11-why-do-quasars-outshine-galaxies.md, "Introduction"). Wording approved by the owner on 2026-11-21
 // (CLAUDE.md §28.1). The introduction keeps clear of what the page will ask the learner to predict (CLAUDE.md §12): it does not give 3C 273's brightness,
 // the Milky Way's brightness, the size limit, the mass that must fall in each year, or fusion's share of mass turned to light. Those, the record-breaking
 // quasar and the latest results appear only after the first Run (QuasarBrightnessHeldBack and the held-back links). Nothing in the drawings is white:

@@ -17,7 +17,7 @@ import { listStyle } from './TidalEffectExperiment'
 
 // Black Holes 11, Step 5: Part 3, the results (CLAUDE.md §14, "Reading the Results"). Nothing here changes with a guess. The guesses are shown beside the
 // results and never marked right or wrong (that is the tutor's job, §12, §13). Every number comes from the physics module and is only formatted here (§9).
-// Draft wording, for the owner's approval (§28.1). The parent mounts this only after the first Run.
+// Wording approved by the owner on 2026-11-21 (CLAUDE.md §28.1). The parent mounts this only after the first Run.
 
 const cell = { padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' } as const
 const headCell = { ...cell, textAlign: 'left', fontSize: '0.8125rem', borderBottom: '1px solid var(--border-color, #ccc)' } as const

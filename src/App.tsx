@@ -890,7 +890,7 @@ const chapters: Chapter[] = [
     // Wording approved by the owner on 2026-10-12 (CLAUDE.md §28.1). Shown only after the tutor's explanation.
     learned:
       "A black hole is not perfectly black: it gives off a very faint heat, called Hawking radiation, and the smaller the black hole, the hotter it is (1 Sun: about 0.00000006 K). Heat flows from hot to cold, so a black hole hotter than its surroundings loses mass and one colder gains it. The cosmic microwave background is at 2.725 K, warmer than every black hole found in space, so today they gain mass. A lone black hole would take a time that grows as the cube of its mass to evaporate: about 2 × 10⁶⁷ years for 1 Sun, against the universe's 1.4 × 10¹⁰ years.",
-    // Draft wording for the owner's approval (CLAUDE.md §28.1): changed to point to Black Holes 11, which sits after this chapter in the sidebar.
+    // Wording approved by the owner on 2026-11-21 (CLAUDE.md §28.1): changed to point to Black Holes 11, which sits after this chapter in the sidebar.
     next: 'Next, quasars: how can something so small shine brighter than a whole galaxy of stars?',
   },  {
     title: 'The Interval',
@@ -1281,7 +1281,7 @@ const chapters: Chapter[] = [
     next: 'This is the last experiment in this group. The group that follows, Cosmic Horizons, turns to recent results that are still being tested, beginning with two measurements of how fast the universe is expanding that do not agree.',
   },
   // Appended at the end of the list so that the saved progress (kept by position) is not disturbed; the sidebar and Previous/Next put it after "Hawking Radiation" through its group name.
-  // Draft wording for the owner's approval (CLAUDE.md §28.1). Shown only after the tutor's explanation. The numbers are the physics module's (src/physics/quasarBrightness.ts).
+  // Wording approved by the owner on 2026-11-21 (CLAUDE.md §28.1). Shown only after the tutor's explanation. The numbers are the physics module's (src/physics/quasarBrightness.ts).
   {
     title: 'Why Do Quasars Outshine Galaxies?',
     group: 'Black Holes and Strong Gravity',

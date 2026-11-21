@@ -42,7 +42,7 @@ import { formatNumber, formatPercent, formatSuns, fuelLabel, powerOfTen, ratioLa
 // "Pictures"). The real drawing never changes with a guess. When a `guess` is given (Step 4), a separate white YOUR GUESS box, joined by a line to a white mark
 // on the ruler, is added below the real picture. Every position and number comes from the physics module; the drawing only places them (CLAUDE.md §9).
 // Nothing else here is white: white is kept for the learner's guess.
-// Draft wording, for the owner's approval (CLAUDE.md §28.1).
+// Wording approved by the owner on 2026-11-21 (CLAUDE.md §28.1).
 
 const SVG_STYLE: CSSProperties = {
   display: 'block',

@@ -15,7 +15,7 @@ import { formatNumber, formatPercent, formatSuns, fuelLabel, ratioLabel, widthLa
 
 // Black Holes 11, Step 6: Part 4, the tutor (docs/experiments/black-holes-and-strong-gravity/11-why-do-quasars-outshine-galaxies.md). The sequence follows the
 // project's tutor pattern (CLAUDE.md §12, §13): observe, compare with the guesses, one conceptual question, then the explanation, where the guesses are marked.
-// Every number comes from the physics module (§9). Draft wording, for the owner's approval (§28.1).
+// Every number comes from the physics module (§9). Wording approved by the owner on 2026-11-21 (CLAUDE.md §28.1).
 
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
