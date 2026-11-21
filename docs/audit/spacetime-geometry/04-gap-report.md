@@ -52,3 +52,34 @@ Files: SeeingThePastExperiment.tsx (intro, PositionPlot and/or SpeedBars markers
 
 ## Not checked
 Browser rendering (label collisions at 0.9c, long caption), narrow widths, keyboard, other browsers, the specification's source table, the first tutor prompts' exact wording, test bodies beyond titles.
+
+
+---
+
+## Re-read on 2026-11-21 (against every rule now in CLAUDE.md §14, not only Rules A to C)
+
+The code has not changed since the first report (the last commit that touched it is the owner's wording approval). The first report was written before the owner's later rules, so these were checked now:
+
+| Rule | Result | Evidence |
+|---|---|---|
+| **E. The page in four Parts** (2026-11-02) | Not met | No Part headings, no coloured lines, no "What we are about to do" leads. The controls, the prediction, Run, both pictures, the results and the tutor all sit in one column (`SeeingThePastExperiment.tsx`). |
+| **Parts 2 to 4 appear after the first Run** (2026-11-07) | Not met | There is no Part 2. The direction and speed buttons, the prediction and Run are one flow: the learner chooses a case first, then predicts it, and a change of direction or speed clears the guess (`setPrediction(null)`, the `onClick` of both button rows). |
+| **Links on every page** ("Want to know more?") | Not met | No `href` in either component. |
+| **A "Words and formulas" box and "Some new words"** | Not met | Terms (telescope, light-second, looking time, image, past light cone) are defined in the introduction, but there is no box and no "Some new words" line. |
+| **Start over, not Change prediction** (2026-11-07) | Not met | No Start over button. The guess is cleared only by changing direction or speed. |
+| **Prediction locked after Run, with a note** | Not met | The learner can change the guess after Run. |
+
+**What this means for the layout.** Rule E's Part 1 is a *fixed* run, with Part 2 as the learner's own settings. Here the learner picks the direction and speed *before* predicting, so the structure has to change: Part 1 would fix one case and ask one question about it, and Part 2 would hold the two direction buttons and the speed buttons.
+
+### Questions for the owner (recommended default first; "all defaults" is a valid answer)
+
+1. **Part 1's fixed case and Part 2.** Default: Part 1 is **a spaceship coming toward the lab at 0.6c** (the specification's headline numbers: it looks to move at 1.5c). Part 2 holds both directions and all the speed buttons, with Picture 2 and the speed bars for the learner's own choice. Alternative: a receding case, or 0.4c (the introduction's present example).
+2. **Where the guess lives.** Three answers have no size, so Rule A, item 3 asks for a marker. Default: a **strip of image speeds** as its own panel with its own scale and title, in the same picture as the real result: a "slower" stretch (from 0 up to the real speed), a tick at the real speed ("the same") and a "faster" stretch above it, with a white YOUR GUESS ring on the stretch the guess names and a note that it is only a marker; the real image speed is drawn on the same strip. Alternative: a white slope line on Picture 2.
+3. **What the introduction may say before the prediction (§12).** Default, as in Experiment 3: the **postcard comparison**, the **worked example** (4 ÷ 6 = 0.67c) and the caption line "the hollow square sits lower than the dot" leave the introduction and the pre-run caption. The tutor gives them after the run. Alternative: keep them.
+4. **A fuller introduction, with pictures.** Experiment 3's owner asked for much more detail, figures and links. Default: add figures only for what the page already teaches (what "looking" means, a light trip that takes time, why a nearer ship's light arrives sooner), without giving the answer. Alternative: keep the introduction's length and add only the links and the words box.
+5. **Results.** Default: a short **check-up** that sets the page's image speed beside the closed forms v ÷ (1 − v) and v ÷ (1 + v) (the same physics gives both, from `seeingThePast.ts`; no outside source is needed), a "What this table tells us" note under the table, and the guess shown beside the table with a tag. No table for Part 2's controls (they only move the drawings). Alternative: add a real-world reference (the apparent faster-than-light motion of jets in some quasars), which needs sources found and read first.
+6. **Links.** Default: search for plain pages from NASA, ESA or an observatory for "light takes time to reach us" and for apparent faster-than-light motion in jets, read each before approving, and record §29 rule 3(c) where none is found.
+7. **Tutor.** Default: the observe and compare prompts name the white marks; the explanation marks the guess ("the closest" or "not the closest" wording is not needed here, because the three answers are exact: slower, the same, faster); the tutor's "nothing travels along the image" gets a source or is reworded; the postcard comparison and the worked example move here (question 3).
+8. **Captions and labels.** Default: one caption under each picture (Picture 2's caption moves beneath Picture 2); the dashed continuation, the path's end square and the two lines in Picture 2 get on-canvas labels; every "what to look for" item is rewritten as Look at / What it means / Why it matters; each picture gets a "Where the real picture comes from" line (calculated here from straight-line motion and the light's travel time; the spaceship is imagined, nothing was measured).
+
+**Size:** Medium to Large (a new layout, a marker strip, a check-up and links), larger than the first report said, because Rule E was not in it.
