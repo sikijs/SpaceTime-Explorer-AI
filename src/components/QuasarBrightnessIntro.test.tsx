@@ -175,10 +175,16 @@ describe('where the light comes from: the step-by-step section and the numbers h
 describe('does a quasar keep growing, and were quasars more common long ago', () => {
   const intro = renderToStaticMarkup(createElement(QuasarBrightnessIntro))
 
-  it('says a quasar switches off, that the lifetime is uncertain, that growth is slow, and why far quasars show the past', () => {
-    for (const phrase of ['Not for ever', 'It switches off when the gas runs out', 'How long a quasar lasts is uncertain', 'from 10 million to a few billion years', 'grows while the quasar shines, slowly', 'Were quasars more common long ago', 'looking back in time']) {
+  it('says a quasar fades, that the lifetime is uncertain, that growth is slow, and why far quasars show the past', () => {
+    for (const phrase of ['Not for ever', 'It fades, and the black hole stays', 'How long a quasar lasts is uncertain', '10 million to a few billion years', 'grows while the quasar shines, slowly', 'Were quasars around long ago', 'looking back in time']) {
       expect(intro).toContain(phrase)
     }
+  })
+
+  it('does not print the lines that the NASA pages do not contain (checked against the pages on 2026-11-21)', () => {
+    expect(intro).not.toContain('many more quasars than we see')
+    expect(intro).not.toContain('reduced accretion')
+    expect(intro).not.toContain('from 10 million')
   })
 
   it('does not give the record-breaker held back until the first Run', () => {

@@ -294,8 +294,8 @@ export function QuasarBrightnessIntro() {
         and they do not fall in. Our own Sun, about 26,000 light-years from the middle of the Milky Way, would carry on exactly as it does now if the middle held a quasar. A quasar is fed
         mostly by <strong>gas</strong>, not stars. Gas can rub and collide as it circles, lose some of its sideways motion and spiral in, but a star on a smooth orbit cannot. A good
         comparison is a campfire in the middle of a huge field: it can burn fiercely and warm the ground close by, but it does not burn the whole field. Astronomers think a quasar’s
-        light and winds can also push gas out of the galaxy’s centre, which can cut off the quasar’s own fuel. So a quasar switches on while gas is falling in and fades when the gas
-        runs short. While it shines, the black hole grows. It does not eat the galaxy.
+        light and winds can also push gas out of the galaxy’s centre, which can cut off the quasar’s own fuel. So a quasar is a bright phase that switches on while gas is falling in,
+        and later fades. While it shines, the black hole grows. It does not eat the galaxy.
       </p>
 
       <Figure
@@ -366,17 +366,17 @@ export function QuasarBrightnessIntro() {
       </p>
 
       <p style={paragraph}>
-        <strong>Does a quasar keep growing, getting bigger and brighter?</strong> Not for ever. A quasar shines only while gas keeps falling toward its black hole.
+        <strong>Does a quasar keep growing, getting bigger and brighter?</strong> Not for ever. A quasar is a bright phase in the life of a black hole that is taking in gas.
       </p>
       <ul style={{ ...paragraph, paddingLeft: '1.25rem' }}>
         <li>
-          <strong>It switches off when the gas runs out.</strong> NASA’s “Ask an Astrophysicist” page says that a quasar’s life ends through reduced accretion (less gas
-          falling in), and that the black hole is not destroyed. Many galaxies have “quiet” black holes. Our own Milky Way has one: ESA says it “appears today as a quiet and
-          harmless black hole”, although gamma-ray echoes show that it was far brighter a few centuries ago (<Ext href="https://imagine.gsfc.nasa.gov/ask_astro/quasar.html">NASA Goddard</Ext>;{' '}
-          <Ext href="https://www.esa.int/Science_Exploration/Space_Science/Integral/Integral_rolls_back_history_of_Milky_Way_s_super-massive_black_hole2">ESA</Ext>).
+          <strong>It fades, and the black hole stays.</strong> NASA’s “Ask an Astrophysicist” page says that a quasar is a luminous phase of a black hole that is taking in matter, and that
+          it gets fainter and fainter in the end. Another answer on the same page says that massive black holes cannot be destroyed, and that nearby galaxies have “quiet” black holes in
+          their centers (<Ext href="https://imagine.gsfc.nasa.gov/ask_astro/quasar.html">NASA Goddard</Ext>). Our own Milky Way has one: ESA says it “appears today as a quiet and
+          harmless black hole”, and that echoes of gamma rays show it was far more active about 350 years ago (<Ext href="https://www.esa.int/Science_Exploration/Space_Science/Integral/Integral_rolls_back_history_of_Milky_Way_s_super-massive_black_hole2">ESA, 2005</Ext>).
         </li>
         <li>
-          <strong>How long a quasar lasts is uncertain.</strong> The same NASA page gives “from 10 million to a few billion years”, and says that this is known only “on the
+          <strong>How long a quasar lasts is uncertain.</strong> The same NASA page gives “10 million to a few billion years”, and says that this is known only “on the
           basis of theoretical arguments that are consistent with observational data”. That is a wide range, from an answer written in 1998, and this page does not claim to narrow it.
         </li>
         <li>
@@ -386,8 +386,9 @@ export function QuasarBrightnessIntro() {
         </li>
       </ul>
       <p style={paragraph}>
-        <strong>Were quasars more common long ago?</strong> NASA says there are “many more quasars than we see at our local neighborhood”, and that a peak of quasar activity
-        in the early universe came about 12 billion years ago, around the time of the universe’s star-formation peak (<Ext href="https://science.nasa.gov/missions/hubble/hubble-sees-the-teenage-years-of-quasars/">NASA Science</Ext>).
+        <strong>Were quasars around long ago?</strong> Yes. NASA’s Hubble team studied 11 ultra-bright quasars that shone about 12 billion years ago, at the peak of the universe’s
+        star-formation era, and found them in colliding and merging galaxies (<Ext href="https://science.nasa.gov/missions/hubble/hubble-sees-the-teenage-years-of-quasars/">NASA Science, 2015</Ext>).
+        That differs from the page above, which says most black holes grew by small, long-term events. The two pages are about different groups of quasars, and this page does not choose between them.
         NASA’s StarChild page for young learners says: “When we look at a quasar, it is like we are looking back in time.” The light of a quasar billions of light-years away left
         it billions of years ago, so we see it as it was then (<Ext href="https://starchild.gsfc.nasa.gov/docs/StarChild/universe_level1/quasars.html">NASA StarChild</Ext>).
       </p>
@@ -547,8 +548,8 @@ export function QuasarBrightnessLinks() {
           <Ext href="https://chandra.harvard.edu/resources/illustrations/blackholes3.html">Chandra X-ray Center, “Black Holes” illustration</Ext>: friction heats the gas, hottest at the inner edge.
         </li>
         <li style={linkItem}>
-          <Ext href="https://science.nasa.gov/universe/black-holes/types/">NASA Science, “Black Hole Types”</Ext>: supermassive black holes at the centers of galaxies, and
-          what happens when galaxies collide.
+          <Ext href="https://science.nasa.gov/universe/black-holes/types/">NASA Science, “Black Hole Types”</Ext>: supermassive black holes at the centers of large galaxies, and
+          that they can merge when galaxies collide.
         </li>
         <li style={linkItem}>
           <Ext href="https://science.nasa.gov/missions/hubble/hubble-spots-double-quasars-in-merging-galaxies">NASA Hubble, “Hubble Spots Double Quasars in Merging Galaxies”</Ext>{' '}
