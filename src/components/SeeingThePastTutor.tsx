@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { measuredPositionAt, runSeeingExperiment } from '../physics/seeingThePast'
+import { imageComparedWithShip, measuredPositionAt, runSeeingExperiment } from '../physics/seeingThePast'
 import type { Direction } from '../physics/seeingThePast'
 
 type Prediction = 'slower' | 'same' | 'faster'
@@ -10,6 +10,13 @@ interface SeeingThePastTutorProps {
   speed: number
   predicted: Prediction
   onExplained?: () => void
+}
+
+// How each answer reads when the tutor names the real result.
+const answerPhrases: Record<Prediction, string> = {
+  slower: "slower than the spaceship's real speed",
+  same: "the same as the spaceship's real speed",
+  faster: "faster than the spaceship's real speed",
 }
 
 const predictionClauses: Record<Prediction, string> = {
@@ -49,6 +56,9 @@ export function SeeingThePastTutor({ direction, speed, predicted, onExplained }:
   const approaching = direction === 'approaching'
   const directionWords = approaching ? 'toward the lab' : 'away from the lab'
   const imageAboveLight = run.imageSpeed > 1
+  // The tutor marks the guess here, and nowhere earlier (CLAUDE.md §12, §13). The answer is the module's, not typed in.
+  const answer = imageComparedWithShip(direction, speed)
+  const guessWasRight = predicted === answer
 
   return (
     <div
@@ -60,7 +70,7 @@ export function SeeingThePastTutor({ direction, speed, predicted, onExplained }:
         backgroundColor: '#f0f7ff',
       }}
     >
-      {/* Wording approved by the owner on 2026-10-14 (CLAUDE.md §28.1). Follows the tutor sequence in the specification:
+      {/* Wording approved by the owner on 2026-10-14 and, for the audit update, on 2026-11-21 (CLAUDE.md §28.1). Follows the tutor sequence in the specification:
           observe, compare with the prediction, one conceptual question, then the explanation and the limits. */}
       <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.125rem', color: '#0066cc' }}>
         Let's reflect on what you observed
@@ -70,9 +80,9 @@ export function SeeingThePastTutor({ direction, speed, predicted, onExplained }:
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              "Look at the second drawing and the table. How fast did the spaceship really move, and how fast did its image seem to move?"}
+              'Look at Picture 1, Picture 2 and Panel B, and find the white YOUR GUESS ring. Then try other directions and speeds in Part 2. What do you notice about the hollow square compared with the solid square, and about the two lines in Picture 2?'}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In this run, the spaceship really moved at ${two(run.measuredSpeed)}c, and its image seemed to move at ${two(run.imageSpeed)}c. Comparing your prediction with what the table and the drawings show, what do you notice?`}
+              `You predicted that ${predictionClauses[predicted]}. In this run the spaceship really moved at ${two(run.measuredSpeed)}c and its image seemed to move at ${two(run.imageSpeed)}c. Find your white ring in Panel B and the hollow diamond. What do you notice?`}
             {tutorStep === 'conceptual' &&
               (approaching
                 ? 'At the moment the lab looks, the telescope shows light that left the spaceship earlier. For a spaceship coming toward the lab, is the trip for the later light longer or shorter than the trip for the earlier light? What would that do to the gaps between the times when the pictures arrive?'
@@ -119,6 +129,12 @@ export function SeeingThePastTutor({ direction, speed, predicted, onExplained }:
       {tutorStep === 'explained' && (
         <div>
           <p style={paragraphStyle}>
+            <strong>Your guess.</strong> You guessed that {predictionClauses[predicted]}.{' '}
+            {guessWasRight
+              ? `Your guess was right. The image's speed was ${two(run.imageSpeed)}c, against the spaceship's ${two(run.measuredSpeed)}c.`
+              : `Your guess was not right this time. The image was ${answerPhrases[answer]}: ${two(run.imageSpeed)}c against the spaceship's ${two(run.measuredSpeed)}c.`}
+          </p>
+          <p style={paragraphStyle}>
             <strong>1. What the drawings show, in your own numbers.</strong> The spaceship flew {directionWords} at{' '}
             {two(run.measuredSpeed)}c. It covered {two(run.distanceCovered)} light-seconds, from {startPosition}{' '}
             light-seconds away to {endPosition} light-seconds away, and that took {two(run.measuredDuration)} seconds on
@@ -154,10 +170,11 @@ export function SeeingThePastTutor({ direction, speed, predicted, onExplained }:
             and clocks, was below the speed of light in every run. The image's speed is how fast the place where the
             spaceship <em>looks</em> to be changes. {imageAboveLight
               ? `In your run, that was ${two(run.imageSpeed)}c, which is more than the speed of light. `
-              : 'In your run it was below the speed of light, but for a spaceship coming toward the lab at 0.6c or 0.9c you would see an image faster than light. '}
+              : `In your run it was ${two(run.imageSpeed)}c, which is less than the speed of light. `}
             Nothing breaks, because nothing travels along the image. Each picture is made by light that left the
             spaceship at a different time, and every piece of that light travels at the speed of light. No object and no
-            signal moves from one place where the spaceship looks to be to the next.
+            signal moves from one place where the spaceship looks to be to the next. Astronomers describe the apparent faster-than-light motion of real jets in space as an illusion in the same way
+            (see the links at the end of Part 3). Part 2's other runs show it too: a spaceship coming toward the lab faster than 0.5c gives an image faster than light, and one going away never does.
           </p>
           <p style={paragraphStyle}>
             <strong>5. What this effect is not.</strong> It comes only from the time light takes to travel. It would be
@@ -166,8 +183,8 @@ export function SeeingThePastTutor({ direction, speed, predicted, onExplained }:
             Effects that really are relativistic are a different matter.
           </p>
           <p style={paragraphStyle}>
-            <strong>6. What was shown, and what was not.</strong> You saw one spaceship at four possible speeds, flying
-            toward or away from the lab, one direction at a time, along one line. You saw only where the spaceship looks to
+            <strong>6. What was shown, and what was not.</strong> You saw one spaceship coming toward the lab at 0.6c in Part 1, and in Part 2 whatever settings you chose, flying toward or away from
+            the lab at four possible speeds, one direction at a time, along one line. You saw only where the spaceship looks to
             be. You did not see its brightness or its color, and you did not see a spaceship moving across the line of
             sight, where the picture is different.
           </p>
