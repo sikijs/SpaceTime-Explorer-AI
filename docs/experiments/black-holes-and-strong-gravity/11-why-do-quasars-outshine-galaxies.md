@@ -215,4 +215,27 @@ All image URLs were opened and returned HTTP 200 on 2026-11-20. **Not yet done:*
 
 ## Implementation Notes
 
-None yet. If approved: Step 1 physics model and tests; Step 2 basic interface; Step 3 introduction, pictures and captions; Step 4 predictions and guess marks; Step 5 results with the reading guide; Step 6 tutor and chapter summary; Step 7 complete-flow testing; Step 8 review. One step at a time (§6), each reported before the next.
+**Status as of 2026-11-21 (recorded at the owner's request).** Steps 1 to 6 are built and committed. Steps 7 (complete-flow testing) and 8 (review) have not been done. The plan was one step at a time (§6), each reported before the next.
+
+| Step | What | Where | State |
+|---|---|---|---|
+| 1 | Physics model and tests | `src/physics/quasarBrightness.ts`, `quasarBrightness.test.ts` (42 tests) | Built, tests pass. Commit `c79cc9e` |
+| 2 | Basic interface: brightness and spin buttons, Run, table | `QuasarBrightnessExperiment.tsx` | Built. Commit `04a490b` |
+| 3 | Introduction, links, words box, three pictures with captions, what is held back until the first Run | `QuasarBrightnessIntro.tsx`, `QuasarBrightnessPictures.tsx`, five images in `public/images/quasars/` (17 and 14 render tests); draft wording in `11-draft-step3-wording.md` | Built. Commit `04a490b` |
+| 4 | Three predictions, white YOUR GUESS marks on the pictures, Start over, locked-guess note | `QuasarBrightnessExperiment.tsx`, `QuasarBrightnessPictures.tsx` | Built. Commit `04a490b` |
+| 5 | Part 3 results with the check-up and reading guide | `QuasarBrightnessResults.tsx` | Built. Commit `04a490b` |
+| 6 | Part 4 tutor, and the chapter summary in `src/App.tsx` | `QuasarBrightnessTutor.tsx`, `App.tsx` (render tests for results and tutor: 8; page tests: 6) | Built. Commit `04a490b` |
+
+The page has the four Parts (amber, pink, teal, blue). The module and component tests total 87, and they and the type check (`tsc --noEmit -p tsconfig.app.json`) passed on 2026-11-21. The full test suite and `npm run build` were not run.
+
+**Owner-approved wording.** On 2026-11-21 the owner approved three additions to the introduction, recorded in the Introduction plan, item 4 (a) to (c): the sentences about Sagittarius A*, the black hole's spin, and whether a quasar can swallow a galaxy.
+
+**Wording still marked as a draft for the owner's approval (§28.1).** The code comments mark the Part 3 results, the Part 4 tutor, the chapter summary (`learned` and `next`) for this chapter, and the changed "What's next" line for Black Holes 10 as drafts. The owner has not approved them line by line in this record. The rest of the introduction and the captions are also from the draft wording file, and this record does not show an approval date for them.
+
+**Differences from this specification.** Not yet listed. They should be compiled and shown to the owner for approval before the specification is called final (§28.2).
+
+**Housekeeping.** The header comment at the top of `QuasarBrightnessExperiment.tsx` still says "STEP 3 … no prediction, no reading guide, no four-Part layout and no tutor yet". That is out of date, because Steps 4 to 6 are now in the file. It has not been changed.
+
+**Not checked (§28.6).** The complete flow in a browser (all prediction combinations and all control settings against a separate calculation); narrow widths, other browsers, keyboard use and a real learner; the sources listed in "Not checked" above, including the three sentences added on 2026-11-21.
+
+**Next.** Step 7, complete-flow testing, then Step 8, the review, after the owner has reviewed the draft wording.
