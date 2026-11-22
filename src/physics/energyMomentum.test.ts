@@ -2,16 +2,42 @@ import { describe, it, expect } from 'vitest'
 import { lorentzTransform } from './lorentzTransform'
 import { timeDilationFactorFor } from './movingClockExperiment'
 import {
+  AGREEMENT_TOLERANCE,
   ELECTRON_REST_ENERGY_MEV,
   HELIUM4_BINDING_ENERGY_MEV,
   HELIUM4_NUCLEUS_REST_ENERGY_MEV,
+  LHC_PROTON_ENERGY_MEV,
   NEUTRON_REST_ENERGY_MEV,
   PAIR_CREATION_THRESHOLD,
   PROTON_REST_ENERGY_MEV,
+  SECTION_A_PASSING_SPEED,
+  SECTION_A_SPEED,
+  SECTION_B_PASSING_SPEED,
+  SECTION_C_PASSING_SPEED,
+  SECTION_C_SPEED,
+  CODATA_ALPHA_MEV,
+  CODATA_ELECTRON_MEV,
+  HELIUM_ROUNDING_TOLERANCE_MEV,
+  heliumBindingEnergyFromCodata,
+  heliumCheckUp,
+  reactionCheckUpRows,
+  reactionGuessMarker,
+  realReactionAnswerFor,
+  sunMassLossFraction,
+  SECTION_B_SPEED,
   SOLAR_LUMINOSITY_WATTS,
   SPEED_OF_LIGHT_METERS_PER_SECOND,
+  agreedQuantities,
+  checkUpRows,
+  collisionCheckUpRows,
+  collisionGuessMarker,
+  everydayTotalGuessMarker,
+  realEverydayTotalAnswerFor,
   everydayCollisionExtraMassKg,
+  guessMarkerFor,
   kineticEnergy,
+  realAnswerFor,
+  realCollisionAnswerFor,
   leftMovingParticleReading,
   lightReading,
   newtonKineticEnergy,
@@ -430,5 +456,320 @@ describe('Energy, momentum and mass physics (Spacetime Geometry, Experiment 5)',
     expect(leftMovingParticleReading(0.6).momentumTimesC).toBeCloseTo(-0.75, 12)
     const reading: EnergyMomentumReading = lightReading(1)
     expect(reading.invariant).toBe(0)
+  })
+})
+
+describe('Section A audit additions: the guess marker and the check-up (docs/audit/spacetime-geometry/05-draft-wording.md)', () => {
+  const FIXED = runInvariantExperiment('particle', 0.6, 0.3)
+
+  it('A1. the lab at 0.6c finds E = 1.25 and p × c = 0.75, and the passing observer at 0.3c finds other values', () => {
+    expect(FIXED.lab.energy).toBeCloseTo(1.25, 12)
+    expect(FIXED.lab.momentumTimesC).toBeCloseTo(0.75, 12)
+    expect(FIXED.passing.energy).not.toBeCloseTo(FIXED.lab.energy, 3)
+    expect(FIXED.passing.momentumTimesC).not.toBeCloseTo(FIXED.lab.momentumTimesC, 3)
+  })
+
+  it('A2. in the fixed case only the invariant is agreed, so the real answer is (c)', () => {
+    expect(agreedQuantities(FIXED)).toEqual({ energy: false, momentum: false, invariant: true })
+  })
+
+  it('A3. the invariant is agreed for every preset speed and passing speed, for particles and light', () => {
+    for (const v of PARTICLE_SPEEDS) {
+      for (const u of [-0.8, -0.6, -0.3, 0, 0.3, 0.6, 0.8]) {
+        expect(agreedQuantities(runInvariantExperiment('particle', v, u)).invariant).toBe(true)
+      }
+    }
+    for (const u of [-0.8, -0.3, 0, 0.3, 0.8]) {
+      expect(agreedQuantities(runInvariantExperiment('light', 0, u)).invariant).toBe(true)
+    }
+  })
+
+  it('A4. a passing observer at rest agrees on every quantity, and one in motion does not agree on energy', () => {
+    expect(agreedQuantities(runInvariantExperiment('light', 0, 0))).toEqual({ energy: true, momentum: true, invariant: true })
+    // The particle's own observer disagrees with the lab at any speed above 0, so nothing but the invariant is agreed.
+    expect(agreedQuantities(runInvariantExperiment('particle', 0.6, 0)).energy).toBe(false)
+  })
+
+  it('A5. each answer puts its white outline on the bars it names', () => {
+    expect(guessMarkerFor('same').map((o) => o.bars)).toEqual([['energy', 'momentum']])
+    expect(guessMarkerFor('nothing').map((o) => o.bars)).toEqual([['energy', 'momentum', 'invariant']])
+    expect(guessMarkerFor('one-number').map((o) => o.bars)).toEqual([['energy', 'momentum'], ['invariant']])
+    for (const guess of ['same', 'nothing', 'one-number'] as const) {
+      for (const outline of guessMarkerFor(guess)) expect(outline.label.startsWith('YOUR GUESS')).toBe(true)
+    }
+  })
+
+  it('A6. the marker depends on the answer alone: it cannot change a real value and never says right or wrong', () => {
+    const before = JSON.stringify(runInvariantExperiment('particle', 0.6, 0.3))
+    for (const guess of ['same', 'nothing', 'one-number'] as const) {
+      const labels = guessMarkerFor(guess).map((o) => o.label.toLowerCase())
+      for (const text of labels) expect(text).not.toMatch(/right|wrong|match|correct/)
+    }
+    expect(JSON.stringify(runInvariantExperiment('particle', 0.6, 0.3))).toBe(before)
+  })
+
+  it('A7. the check-up for the fixed case: three invariants of 1 ("the same") and different energies', () => {
+    const rows = checkUpRows(FIXED, 'particle')
+    expect(rows).toHaveLength(4)
+    for (const row of rows.slice(0, 3)) {
+      expect(row.expected).toBe(1)
+      expect(Math.abs(row.found[0] - 1)).toBeLessThan(AGREEMENT_TOLERANCE)
+      expect(row.reading).toBe('the same')
+    }
+    expect(rows[3].expected).toBeNull()
+    expect(rows[3].found).toEqual([FIXED.lab.energy, FIXED.passing.energy])
+    expect(rows[3].reading).toBe('different')
+  })
+
+  it('A8. the check-up for light expects 0, has no row for a particle-rest observer, and its energy row reads "the same" when the passing observer is at rest', () => {
+    const rows = checkUpRows(runInvariantExperiment('light', 0, 0.6), 'light')
+    expect(rows).toHaveLength(3)
+    expect(rows[0].expected).toBe(0)
+    expect(rows.slice(0, 2).every((r) => r.reading === 'the same')).toBe(true)
+    expect(rows[2].reading).toBe('different')
+    expect(checkUpRows(runInvariantExperiment('light', 0, 0), 'light')[2].reading).toBe('the same')
+  })
+
+  it('A9. the LHC energy constant is CERN\'s 6.8 TeV per beam, and gives a proton about 7,247 rest energies', () => {
+    expect(LHC_PROTON_ENERGY_MEV).toBe(6.8e6)
+    expect(LHC_PROTON_ENERGY_MEV / PROTON_REST_ENERGY_MEV).toBeCloseTo(7247.4, 0)
+    expect(speedFromEnergy(LHC_PROTON_ENERGY_MEV / PROTON_REST_ENERGY_MEV)).toBeLessThan(1)
+  })
+
+  it('A10. Section A\'s fixed case is a particle at 0.6c with a passing observer at +0.3c', () => {
+    expect(SECTION_A_SPEED).toBe(0.6)
+    expect(SECTION_A_PASSING_SPEED).toBe(0.3)
+  })
+
+  it('A11. the real answer of the run is (c) for the fixed case, (a) only when the passing observer is at rest, and never (b)', () => {
+    expect(realAnswerFor(runInvariantExperiment('particle', 0.6, 0.3))).toBe('one-number')
+    expect(realAnswerFor(runInvariantExperiment('light', 0, 0))).toBe('same')
+    for (const v of PARTICLE_SPEEDS) {
+      for (const u of [-0.8, -0.3, 0, 0.3, 0.8]) {
+        expect(realAnswerFor(runInvariantExperiment('particle', v, u))).not.toBe('nothing')
+      }
+    }
+  })
+})
+
+describe('Section B audit additions: the guess marker and the check-up (docs/audit/spacetime-geometry/05-draft-wording-section-b.md)', () => {
+  const PASSING = [-0.6, -0.3, 0.3, 0.6]
+
+  it('B1. the fixed case is two lumps at 0.6c with a passing observer at +0.3c, and the lump has M = 2.5 m', () => {
+    expect(SECTION_B_SPEED).toBe(0.6)
+    expect(SECTION_B_PASSING_SPEED).toBe(0.3)
+    const result = runCollisionExperiment(SECTION_B_SPEED, SECTION_B_PASSING_SPEED)
+    expect(result.lumpMass).toBeCloseTo(2.5, 9)
+    expect(result.extraMass).toBeCloseTo(0.5, 9)
+  })
+
+  it('B2. each answer puts its white tick on its own side of 2m: less below, exactly on it, more above', () => {
+    expect(collisionGuessMarker('less').position).toBeLessThan(2)
+    expect(collisionGuessMarker('same').position).toBe(2)
+    expect(collisionGuessMarker('more').position).toBeGreaterThan(2)
+  })
+
+  it('B3. the marker depends on the answer alone, says nothing of right or wrong, and never sits on the real M of any preset', () => {
+    for (const guess of ['less', 'same', 'more'] as const) {
+      const marker = collisionGuessMarker(guess)
+      expect(marker.label.startsWith('YOUR GUESS')).toBe(true)
+      expect(marker.label).not.toMatch(/right|wrong|match/i)
+      for (const v of PRESET_COLLISION_SPEEDS) {
+        for (const u of PASSING) {
+          const lumpMass = runCollisionExperiment(v, u).lumpMass
+          // no tick is within 0.05 of a preset's real M, so a guess never looks like a match (and the marker takes no result as input)
+          expect(Math.abs(marker.position - lumpMass)).toBeGreaterThan(0.05)
+        }
+      }
+    }
+  })
+
+  it('B4. the real answer is "more" for every preset (the lump is heavier than 2m) and never "less"', () => {
+    for (const v of PRESET_COLLISION_SPEEDS) {
+      expect(realCollisionAnswerFor(runCollisionExperiment(v, 0.3))).toBe('more')
+    }
+    expect(realCollisionAnswerFor(runCollisionExperiment(0, 0.3))).toBe('same')
+  })
+
+  it('B5. the check-up has seven rows and, for the fixed case, every row reads "the same" with the energy and momentum differences at 0', () => {
+    const rows = collisionCheckUpRows(runCollisionExperiment(0.6, 0.3))
+    expect(rows).toHaveLength(7)
+    for (const row of rows) expect(row.reading).toBe('the same')
+    for (const row of rows.slice(0, 4)) {
+      expect(row.expected).toBe(0)
+      expect(Math.abs(row.found[0])).toBeLessThan(AGREEMENT_TOLERANCE)
+    }
+  })
+
+  it('B6. the check-up reads "the same" for every preset speed and passing speed', () => {
+    for (const v of PRESET_COLLISION_SPEEDS) {
+      for (const u of PASSING) {
+        for (const row of collisionCheckUpRows(runCollisionExperiment(v, u))) expect(row.reading).toBe('the same')
+      }
+    }
+  })
+
+  it('B7. the system-mass rows carry the same number for both observers (2.5 in the fixed case), unlike the lump masses added', () => {
+    const rows = collisionCheckUpRows(runCollisionExperiment(0.6, 0.3))
+    for (const row of rows.slice(4)) {
+      for (const value of row.found) expect(value).toBeCloseTo(2.5, 9)
+    }
+  })
+
+  it('B8. the check-up compares the real numbers: a broken conservation would read "different"', () => {
+    const result = runCollisionExperiment(0.6, 0.3)
+    const broken = { ...result, labAfter: { ...result.labAfter, energy: result.labAfter.energy + 0.1 } }
+    const rows = collisionCheckUpRows(broken)
+    expect(rows[0].reading).toBe('different')
+  })
+
+  it('B9. the everyday total (mass × speed, with the passing observer\'s speeds) is NOT the same before and after, in the fixed case and for every preset with a moving observer', () => {
+    const fixed = runCollisionExperiment(SECTION_B_SPEED, SECTION_B_PASSING_SPEED)
+    expect(fixed.newtonMomentumBefore).toBeCloseTo(-0.3968, 3)
+    expect(fixed.newtonMomentumAfter).toBeCloseTo(-0.6, 9)
+    expect(realEverydayTotalAnswerFor(fixed)).toBe('different')
+    for (const v of PRESET_COLLISION_SPEEDS) {
+      for (const u of PASSING) expect(realEverydayTotalAnswerFor(runCollisionExperiment(v, u))).toBe('different')
+    }
+  })
+
+  it('B10. the same total is found when the observer is the lab itself (passing speed 0), where the rule works', () => {
+    for (const v of PRESET_COLLISION_SPEEDS) expect(realEverydayTotalAnswerFor(runCollisionExperiment(v, 0))).toBe('same')
+  })
+
+  it('B11. the second guess\'s tick: "the same" sits on the real before total, "different" sits 0.5 below it, and neither is ever on the real after total', () => {
+    const fixed = runCollisionExperiment(SECTION_B_SPEED, SECTION_B_PASSING_SPEED)
+    const same = everydayTotalGuessMarker('same', fixed)
+    const different = everydayTotalGuessMarker('different', fixed)
+    expect(same.afterPosition).toBe(fixed.newtonMomentumBefore)
+    expect(different.afterPosition).toBeCloseTo(fixed.newtonMomentumBefore - 0.5, 12)
+    expect(Math.abs(different.afterPosition - fixed.newtonMomentumAfter)).toBeGreaterThan(0.05)
+    expect(different.afterPosition).not.toBe(same.afterPosition)
+    for (const marker of [same, different]) {
+      expect(marker.label.startsWith('YOUR GUESS')).toBe(true)
+      expect(marker.label).not.toMatch(/right|wrong|match/i)
+    }
+  })
+
+  it('B12. a guess cannot change the real numbers: the result is the same whichever marker is asked for', () => {
+    const fixed = runCollisionExperiment(SECTION_B_SPEED, SECTION_B_PASSING_SPEED)
+    const snapshot = JSON.stringify(fixed)
+    everydayTotalGuessMarker('same', fixed)
+    everydayTotalGuessMarker('different', fixed)
+    expect(JSON.stringify(fixed)).toBe(snapshot)
+  })
+})
+
+describe('Section C audit additions: the guess tick, the check-up and the helium reference (docs/audit/spacetime-geometry/05-draft-wording-section-c.md)', () => {
+  const ANNIHILATION_SPEEDS = [0, 0.6, 0.9]
+  const PHOTON_ENERGIES = [0.5, 1, 2, 5]
+  const OBSERVERS = [-0.6, -0.3, 0.3, 0.6]
+
+  it('C1. the fixed case is a particle and its antiparticle at 0.6c with a passing observer at +0.3c: the sum of the rest masses goes from 2 to 0, the system stays at 2.5', () => {
+    expect(SECTION_C_SPEED).toBe(0.6)
+    expect(SECTION_C_PASSING_SPEED).toBe(0.3)
+    const result = runReactionExperiment('annihilation', SECTION_C_SPEED, SECTION_C_PASSING_SPEED)
+    expect(result.sumOfRestMassesBefore).toBe(2)
+    expect(result.sumOfRestMassesAfter).toBe(0)
+    expect(result.systemMassBefore).toBeCloseTo(2.5, 9)
+    expect(result.systemMassAfter).toBeCloseTo(2.5, 9)
+    expect(result.energyReleased).toBe(2)
+  })
+
+  it('C2. each answer puts its white tick on its own side of the "before" bar: less inside it, the same at its end, more beyond it', () => {
+    expect(reactionGuessMarker('less', 2).position).toBeLessThan(2)
+    expect(reactionGuessMarker('same', 2).position).toBe(2)
+    expect(reactionGuessMarker('more', 2).position).toBeGreaterThan(2)
+    expect(reactionGuessMarker('less', 2).position).toBeCloseTo(1, 12)
+    expect(reactionGuessMarker('more', 2).position).toBeCloseTo(3, 12)
+  })
+
+  it('C3. the marker reads only the "before" value, says nothing of right or wrong, and never sits on the real "after" value of an annihilation preset', () => {
+    for (const guess of ['less', 'same', 'more'] as const) {
+      const marker = reactionGuessMarker(guess, 2)
+      expect(marker.label.startsWith('YOUR GUESS')).toBe(true)
+      expect(marker.label).not.toMatch(/right|wrong|match/i)
+      for (const v of ANNIHILATION_SPEEDS) {
+        for (const u of OBSERVERS) {
+          const result = runReactionExperiment('annihilation', v, u)
+          expect(Math.abs(marker.position - result.sumOfRestMassesAfter)).toBeGreaterThan(0.5)
+        }
+      }
+    }
+  })
+
+  it('C4. making a marker changes no real value of the run', () => {
+    const before = JSON.stringify(runReactionExperiment('annihilation', 0.6, 0.3))
+    reactionGuessMarker('more', 2)
+    reactionGuessMarker('less', 2)
+    expect(JSON.stringify(runReactionExperiment('annihilation', 0.6, 0.3))).toBe(before)
+  })
+
+  it('C5. the real answer: less for annihilation and helium, more for pair creation at or above the threshold, the same below it', () => {
+    for (const v of ANNIHILATION_SPEEDS) expect(realReactionAnswerFor(runReactionExperiment('annihilation', v, 0.3))).toBe('less')
+    expect(realReactionAnswerFor(runReactionExperiment('helium-binding', 0, 0.3))).toBe('less')
+    expect(realReactionAnswerFor(runReactionExperiment('pair-creation', 0.5, 0.3))).toBe('same')
+    for (const e of [1, 2, 5]) expect(realReactionAnswerFor(runReactionExperiment('pair-creation', e, 0.3))).toBe('more')
+  })
+
+  it('C6. the check-up has seven rows and reads "the same" for the fixed case, with the energy and momentum differences at 0', () => {
+    const rows = reactionCheckUpRows(runReactionExperiment('annihilation', 0.6, 0.3))
+    expect(rows).toHaveLength(7)
+    for (const row of rows) expect(row.reading).toBe('the same')
+    for (const row of rows.slice(0, 4)) {
+      expect(row.expected).toBe(0)
+      expect(Math.abs(row.found[0])).toBeLessThan(AGREEMENT_TOLERANCE)
+    }
+  })
+
+  it('C7. the check-up reads "the same" for every process, setting and passing observer', () => {
+    const cases: [ReactionKind, number][] = [
+      ...ANNIHILATION_SPEEDS.map((v): [ReactionKind, number] => ['annihilation', v]),
+      ...PHOTON_ENERGIES.map((e): [ReactionKind, number] => ['pair-creation', e]),
+      ['helium-binding', 0],
+    ]
+    for (const [kind, parameter] of cases) {
+      for (const u of OBSERVERS) {
+        for (const row of reactionCheckUpRows(runReactionExperiment(kind, parameter, u))) expect(row.reading).toBe('the same')
+      }
+    }
+  })
+
+  it('C8. the check-up compares the real numbers: a broken conservation reads "different"', () => {
+    const result = runReactionExperiment('annihilation', 0.6, 0.3)
+    const broken = { ...result, labAfter: result.labAfter.map((p, i) => (i === 0 ? { ...p, reading: { ...p.reading, energy: p.reading.energy + 0.1 } } : p)) }
+    expect(reactionCheckUpRows(broken)[0].reading).toBe('different')
+  })
+
+  it('C9. the helium reference worked out from the CODATA 2022 masses is 28.2956 MeV, and the page\'s run agrees with it within the rounding of the page\'s masses', () => {
+    expect(heliumBindingEnergyFromCodata()).toBeCloseTo(28.2956, 3)
+    const check = heliumCheckUp(runReactionExperiment('helium-binding', 0, 0.3))
+    expect(check.published).toBeCloseTo(28.2956, 3)
+    expect(check.found).toBeCloseTo(28.295, 3)
+    expect(Math.abs(check.difference)).toBeLessThanOrEqual(HELIUM_ROUNDING_TOLERANCE_MEV)
+    expect(check.reading).toBe('the same')
+  })
+
+  it('C10. the helium check-up reads "different" when the energy released is not the published binding energy', () => {
+    const result = runReactionExperiment('helium-binding', 0, 0.3)
+    expect(heliumCheckUp({ ...result, energyReleased: 20 }).reading).toBe('different')
+  })
+
+  it('C11. the electron\'s rest energy is 0.511 MeV, so each light pulse of a particle and antiparticle at rest is 511 keV, and the page\'s constant agrees with CODATA', () => {
+    expect(CODATA_ELECTRON_MEV * 1000).toBeCloseTo(511, 0)
+    expect(Math.abs(ELECTRON_REST_ENERGY_MEV - CODATA_ELECTRON_MEV)).toBeLessThan(1e-6)
+    const result = runReactionExperiment('annihilation', 0, 0)
+    expect(result.labAfter[0].reading.energy).toBe(1)
+    expect(result.labAfter[0].reading.energy * ELECTRON_REST_ENERGY_MEV * 1000).toBeCloseTo(511, 0)
+  })
+
+  it('C12. the page\'s helium masses agree with the CODATA masses to the rounding of the page', () => {
+    expect(Math.abs(PROTON_REST_ENERGY_MEV - 938.27208943)).toBeLessThan(0.001)
+    expect(Math.abs(NEUTRON_REST_ENERGY_MEV - 939.56542194)).toBeLessThan(0.001)
+    expect(Math.abs(HELIUM4_NUCLEUS_REST_ENERGY_MEV - CODATA_ALPHA_MEV)).toBeLessThan(0.001)
+  })
+
+  it('C13. the Sun releases about 0.7 percent of the hydrogen\'s mass: its mass loss over the hydrogen fused (the ratio of NASA\'s two numbers)', () => {
+    expect(sunMassLossFraction() * 100).toBeCloseTo(0.71, 2)
   })
 })
