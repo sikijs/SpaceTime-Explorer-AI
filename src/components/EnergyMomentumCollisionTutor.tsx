@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { everydayCollisionExtraMassKg, runCollisionExperiment, totalsOf } from '../physics/energyMomentum'
+import { everydayCollisionExtraMassKg, realCollisionAnswerFor, realEverydayTotalAnswerFor, runCollisionExperiment, totalsOf } from '../physics/energyMomentum'
+import type { EverydayTotalGuess } from '../physics/energyMomentum'
 
 type Prediction = 'less' | 'same' | 'more'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
@@ -9,8 +10,15 @@ interface EnergyMomentumCollisionTutorProps {
   speed: number
   passingSpeed: number
   predicted: Prediction
+  // The second guess, about the passing observer's everyday totals.
+  everydayPredicted: EverydayTotalGuess
   // Called once, when the learner reaches the explanation (the last step), so the next part can be shown.
   onExplained?: () => void
+}
+
+const everydayClauses: Record<EverydayTotalGuess, string> = {
+  same: 'the passing observer would find the everyday total the same before and after',
+  different: 'the passing observer would find the everyday total not the same before and after',
 }
 
 const predictionClauses: Record<Prediction, string> = {
@@ -29,10 +37,11 @@ function scientific(value: number, digits = 1): string {
   return `${mantissa} × 10${String(Number(exponent)).split('').map((c) => SUPERSCRIPT[c]).join('')}`
 }
 
+// Section B's tutor (Part 4 of Section B). Audit update of 2026-11-21: the prompts name the white tick, and the explanation marks the guess, the only place it is marked (§12, §13).
 // Draft wording for the owner's review (CLAUDE.md §28.1). Follows the Part 2 tutor sequence in the specification: observe,
 // compare with the prediction, one conceptual question, then the explanation and the limits. Every number below comes from the
 // physics model, never typed in by hand.
-export function EnergyMomentumCollisionTutor({ speed, passingSpeed, predicted, onExplained }: EnergyMomentumCollisionTutorProps) {
+export function EnergyMomentumCollisionTutor({ speed, passingSpeed, predicted, everydayPredicted, onExplained }: EnergyMomentumCollisionTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -60,9 +69,22 @@ export function EnergyMomentumCollisionTutor({ speed, passingSpeed, predicted, o
 
   const paragraphs: ReactNode[] = []
 
+  // The tutor marks the learner's guess here, and nowhere earlier (the pictures only show it). The real answer is read from the physics module.
+  const realAnswer = realCollisionAnswerFor(result)
+  const guessLetter = { less: '(a)', same: '(b)', more: '(c)' }[predicted]
+  const realReason = {
+    less: `the lump's mass, ${f(result.lumpMass)} m, was less than 2 m`,
+    same: `the lump's mass, ${f(result.lumpMass)} m, was exactly 2 m`,
+    more: `the lump's mass, ${f(result.lumpMass)} m, was more than 2 m`,
+  }[realAnswer]
+  const guessMark =
+    predicted === realAnswer
+      ? `Your guess was ${guessLetter}, and it was right: ${realReason}.`
+      : `Your guess was ${guessLetter}, and it was not this time: ${realReason}.`
+
   paragraphs.push(
     <>
-      <strong>What the results show.</strong> In your run, each lump moved at {speed}c in the lab, so each had an energy of{' '}
+      <strong>What the results show.</strong> {guessMark} In your run, each lump moved at {speed}c in the lab, so each had an energy of{' '}
       {f(lumpEnergy)} (in rest energies of one lump). The total energy was 2 × {f(lumpEnergy)} = {f(labTotal.energy)}, and the
       total momentum × c was {f(labTotal.momentumTimesC)}, because the two momenta point in opposite directions. After the
       collision there is one lump at rest, with an energy of {f(result.labAfter.energy)}. Its mass is the square root of{' '}
@@ -86,7 +108,8 @@ export function EnergyMomentumCollisionTutor({ speed, passingSpeed, predicted, o
 
   paragraphs.push(
     <>
-      <strong>Why energy and momentum are conserved for everyone, but the sum of the masses is not.</strong> The mass of a{' '}
+      <strong>Why energy and momentum are conserved for everyone, but the sum of the masses is not.</strong> The mass of a system is not simply the masses of the pieces added together.
+      The mass of a{' '}
       <em>single object</em> is the invariant of its own energy and momentum. A lump made from two objects is a different object.
       What is conserved is the <em>total</em> energy and the <em>total</em> momentum, and so the mass of the whole{' '}
       <em>system</em> taken together. Here it was {f(result.systemMass)} <em>m</em> before the collision (two moving lumps, total
@@ -97,9 +120,21 @@ export function EnergyMomentumCollisionTutor({ speed, passingSpeed, predicted, o
     </>,
   )
 
+  // The second guess is marked here too, and nowhere earlier. The real answer is read from the physics module.
+  const realEveryday = realEverydayTotalAnswerFor(result)
+  const everydayLetter = { same: '(a)', different: '(b)' }[everydayPredicted]
+  const everydayReason =
+    realEveryday === 'same'
+      ? `the everyday total was the same before and after, ${f(result.newtonMomentumBefore)} m and ${f(result.newtonMomentumAfter)} m`
+      : `the everyday total was not the same: ${f(result.newtonMomentumBefore)} m before and ${f(result.newtonMomentumAfter)} m after`
+  const everydayMark =
+    everydayPredicted === realEveryday
+      ? `Your second guess was ${everydayLetter}, and it was right: ${everydayReason}.`
+      : `Your second guess was ${everydayLetter}, and it was not this time: ${everydayReason}.`
+
   paragraphs.push(
     <>
-      <strong>The everyday momentum fails.</strong> With the speeds the passing observer measured, the everyday sum m × (speed
+      <strong>The everyday momentum fails.</strong> {everydayMark} With the speeds the passing observer measured, the everyday sum m × (speed
       of Lump 1 + speed of Lump 2) was {f(result.newtonMomentumBefore)} <em>m</em> before the collision, and the everyday value
       for the lump afterward, 2<em>m</em> × (its speed), was {f(result.newtonMomentumAfter)} <em>m</em>. They are not equal, so for
       this observer the everyday rule is not conserved. The relativistic momentum, with its extra factor of 1 ÷ D(v), is
@@ -151,9 +186,9 @@ export function EnergyMomentumCollisionTutor({ speed, passingSpeed, predicted, o
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at the totals in the results. Compare the totals before and after the collision, for the lab and for the passing observer. What do you notice?'}
+              "Look at the totals in Part 3's tables. Compare the totals before and after the collision, for the lab and for the passing observer. What do you notice?"}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In this run, the two masses added were 2 m, and the mass of the lump was ${f(result.lumpMass)} m. Comparing your prediction with the results, what do you notice?`}
+              `You predicted that ${predictionClauses[predicted]}. Look at the white tick on Picture 1, beside the grey and blue bars. How does your guess compare with the blue bar? Then look at the white tick on the outlined bar in the lower panel of Picture 2. You predicted that ${everydayClauses[everydayPredicted]}. How does that guess compare with the two purple bars?`}
             {tutorStep === 'conceptual' &&
               'The two lumps were moving, and the final lump is at rest in the lab. Where did the energy of their motion go?'}
           </p>

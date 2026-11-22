@@ -2,30 +2,23 @@ import { useEffect, useState } from 'react'
 import { EnergyMomentumTutor } from './EnergyMomentumTutor'
 import { EnergyMomentumCollision, PART_TWO_REFERENCE_ENTRIES } from './EnergyMomentumCollision'
 import { EnergyMomentumReactions, PART_THREE_REFERENCE_ENTRIES } from './EnergyMomentumReactions'
+import { EnergyMomentumIntro, EnergyMomentumLinks, EnergyMomentumSources, energyMomentumWordsEntries } from './EnergyMomentumIntro'
+import { EnergyMomentumResultsTables, PREDICTION_CHOICES } from './EnergyMomentumResults'
+import type { Prediction } from './EnergyMomentumResults'
+import { PartHeader } from './GravitationalWaveExperiment'
+import { LookForList } from './WideBinariesExperiment'
+import { WhereFrom } from './TidalEffectExperiment'
 import type { CSSProperties } from 'react'
-import { particleReading, readingFor, runInvariantExperiment } from '../physics/energyMomentum'
-import type { EnergyMomentumReading } from '../physics/energyMomentum'
+import { SECTION_A_PASSING_SPEED, SECTION_A_SPEED, guessMarkerFor, particleReading, readingFor, runInvariantExperiment } from '../physics/energyMomentum'
+import type { BarName, EnergyMomentumReading } from '../physics/energyMomentum'
 
-// Steps 4 and 5 of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md, Part 1 only: the controls, the setup
-// diagram, and the run that connects the diagram to the physics model (the curve of readings, the particle's own reading, the
-// passing observer's reading sliding along the curve as their speed sweeps up, and the bars). Every number comes from
-// `energyMomentum.ts`. The prediction (which gates the Run button), the introduction stages, the quick-reference panel, the
-// results, the tutors and Parts 2 and 3 are later steps. The presets are Decision 5 of that specification. Wording here is draft
-// for the owner's review (CLAUDE.md §28.1).
+// Spacetime Geometry 5, Section A (energy and momentum, seen by different observers), of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md.
+// Audit update of 2026-11-21 (wording in docs/audit/spacetime-geometry/05-draft-wording.md, approved by the owner on 2026-11-21, "approved all defaults"): Section A is
+// in four Parts. Part 1 is one guess about one fixed run (a particle at 0.6c, a passing observer at +0.3c), with the map and, from Run, the bars with the white guess
+// marker; Part 2 lets the learner choose the object and speeds; Part 3 has the results; Part 4 the tutor. Parts 2 to 4 appear after the first Run, and Start over clears
+// Section A. Sections B and C (below, in `EnergyMomentumCollision.tsx` and `EnergyMomentumReactions.tsx`) are not changed by this step except for their names.
+// Every number comes from `energyMomentum.ts`. The introduction and links are in `EnergyMomentumIntro.tsx`, the results in `EnergyMomentumResults.tsx`.
 type Kind = 'particle' | 'light'
-type Prediction = 'same' | 'nothing' | 'one-number'
-
-// The three answers of Part 1's prediction in the specification's "Prediction Activity" section (wording is a draft, §28.1).
-// Not scored, and the learner is not told which is right (§12).
-const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
-  { value: 'same', label: '(a) The same energy and the same momentum.' },
-  { value: 'nothing', label: '(b) Different energies and different momenta, with nothing about them that they agree on.' },
-  {
-    value: 'one-number',
-    label:
-      '(c) Different energies and different momenta, but there is some number, worked out from the energy and the momentum, that they agree on.',
-  },
-]
 
 // The elements Part 1 and Part 2 sit in, so the skip link and the back link can scroll to them.
 const PART_TWO_ID = 'energy-momentum-part-2'
@@ -77,12 +70,6 @@ const TOP_Y = 152
 
 function kindWords(kind: Kind): string {
   return kind === 'particle' ? 'a particle with mass' : 'a light pulse'
-}
-
-// Numbers shown in the results table: four decimal places, with a minus sign for a negative number and no "-0.0000".
-function formatNumber(value: number): string {
-  const text = value.toFixed(4)
-  return /^-0\.0+$/.test(text) ? text.slice(1) : text
 }
 
 function passingLabel(speed: number): string {
@@ -297,13 +284,38 @@ const BARS_TOP = 62
 const BARS_GROUP_HEIGHT = 92
 const BARS_ROW_HEIGHT = 20
 
+// Words of a YOUR GUESS box, broken into short lines.
+function wrapWords(text: string, maxChars: number): string[] {
+  const lines: string[] = []
+  let current = ''
+  for (const word of text.split(' ')) {
+    if (current !== '' && (current + ' ' + word).length > maxChars) {
+      lines.push(current)
+      current = word
+    } else current = current === '' ? word : current + ' ' + word
+  }
+  if (current !== '') lines.push(current)
+  return lines
+}
+
+const GUESS_COLOR = '#ffffff'
+const BARS_GUTTER = 200
+const BAR_ROW_OF: Record<BarName, number> = { energy: 0, momentum: 1, invariant: 2 }
+
 // For each observer, three bars on one scale around a middle line at zero: the energy, the momentum × c, and the combination
 // E² − (pc)². A bar to the right is positive and a bar to the left is negative. The numbers beside each bar say the same, so
-// colour is not needed.
-function ReadingBars({ rows }: { rows: BarsRow[] }) {
+// colour is not needed. With a `guess`, white outlines go round the bars the guess names, for every observer, and a YOUR GUESS box
+// in the right-hand margin is joined to an outline by a line. The outlines are only a marker: they have no size of their own and
+// change no bar (`guessMarkerFor`, Rule A of the audit).
+export function ReadingBars({ rows, guess }: { rows: BarsRow[]; guess?: Prediction | null }) {
   const longest = Math.max(...rows.flatMap((r) => [r.reading.energy, Math.abs(r.reading.momentumTimesC), Math.abs(r.reading.invariant)]), 1e-9)
   const lengthOf = (value: number) => (Math.abs(value) / longest) * BARS_MAX_LENGTH
   const height = BARS_TOP + rows.length * BARS_GROUP_HEIGHT + 28
+  const outlines = guess ? guessMarkerFor(guess) : []
+  const width = BARS_VIEW_WIDTH + (outlines.length > 0 ? BARS_GUTTER : 0)
+  const OUTLINE_LEFT = BARS_LABEL_X - 8
+  const OUTLINE_RIGHT = BARS_VIEW_WIDTH - 4
+  const groupTop = (g: number) => BARS_TOP + g * BARS_GROUP_HEIGHT
 
   const quantities = (reading: EnergyMomentumReading) => [
     { label: 'Energy E', value: reading.energy, color: ENERGY_BAR_COLOR },
@@ -313,11 +325,11 @@ function ReadingBars({ rows }: { rows: BarsRow[] }) {
 
   return (
     <svg
-      viewBox={`0 0 ${BARS_VIEW_WIDTH} ${height}`}
+      viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={`Bars of the energy, the momentum times c, and the combination E squared minus the square of momentum times c, for each observer. ${rows
         .map((row) => `${row.name}: energy ${row.reading.energy.toFixed(2)}, momentum times c ${row.reading.momentumTimesC.toFixed(2)}, combination ${row.reading.invariant.toFixed(2)}`)
-        .join('. ')}.`}
+        .join('. ')}.${outlines.length > 0 ? ` White outlines mark your guess: ${outlines.map((o) => o.label).join('. ')}. They are only a marker.` : ''}`}
       style={SVG_STYLE}
     >
       <text x="20" y="22" fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
@@ -328,7 +340,7 @@ function ReadingBars({ rows }: { rows: BarsRow[] }) {
       </text>
       <line x1={BARS_CENTER_X} y1="46" x2={BARS_CENTER_X} y2={height - 24} stroke={TICK_COLOR} strokeWidth="1.5" />
       {rows.map((row, g) => {
-        const top = BARS_TOP + g * BARS_GROUP_HEIGHT
+        const top = groupTop(g)
         return (
           <g key={row.name}>
             <text x={BARS_LABEL_X} y={top - 4} fontSize="12" fontWeight="bold" fill={row.color}>
@@ -357,6 +369,51 @@ function ReadingBars({ rows }: { rows: BarsRow[] }) {
       <text x="20" y={height - 8} fontSize="10" fill={MUTED_COLOR}>
         The longest bar here is {longest.toFixed(2)}.
       </text>
+
+      {/* The white guess: an outline round the bars the answer names, for every observer, and a YOUR GUESS box joined to one outline by a line. */}
+      {outlines.map((outline, k) => {
+        const firstRow = Math.min(...outline.bars.map((b) => BAR_ROW_OF[b]))
+        const lastRow = Math.max(...outline.bars.map((b) => BAR_ROW_OF[b]))
+        const onlyInvariant = outline.bars.length === 1 && outline.bars[0] === 'invariant'
+        const linkedGroup = onlyInvariant ? rows.length - 1 : 0
+        const y0 = (g: number) => groupTop(g) + 4 + firstRow * BARS_ROW_HEIGHT + 1
+        const y1 = (g: number) => groupTop(g) + 4 + (lastRow + 1) * BARS_ROW_HEIGHT - 1
+        const midY = (y0(linkedGroup) + y1(linkedGroup)) / 2
+        const [title, rest] = outline.label.split(': ')
+        const lines = wrapWords(rest, 22)
+        const boxX = BARS_VIEW_WIDTH + 18
+        const boxW = BARS_GUTTER - 28
+        const boxH = 38 + lines.length * 14
+        const boxY = Math.max(6, Math.min(midY - boxH / 2, height - boxH - 6))
+        return (
+          <g key={k}>
+            {rows.map((row, g) => (
+              <rect
+                key={row.name}
+                x={OUTLINE_LEFT}
+                y={y0(g)}
+                width={OUTLINE_RIGHT - OUTLINE_LEFT}
+                height={y1(g) - y0(g)}
+                rx="4"
+                fill="none"
+                stroke={GUESS_COLOR}
+                strokeWidth="3"
+              />
+            ))}
+            <line x1={OUTLINE_RIGHT + 8} y1={midY} x2={boxX} y2={Math.max(boxY + 10, Math.min(midY, boxY + boxH - 10))} stroke={GUESS_COLOR} strokeWidth="3" />
+            <polygon points={`${OUTLINE_RIGHT + 2},${midY} ${OUTLINE_RIGHT + 14},${midY - 7} ${OUTLINE_RIGHT + 14},${midY + 7}`} fill={GUESS_COLOR} />
+            <rect x={boxX} y={boxY} width={boxW} height={boxH} rx="6" fill="#0b1020" stroke={GUESS_COLOR} strokeWidth="3" />
+            <text x={boxX + boxW / 2} y={boxY + 24} textAnchor="middle" fontSize="16" fontWeight="bold" fill={GUESS_COLOR}>
+              {title}
+            </text>
+            {lines.map((line, i) => (
+              <text key={i} x={boxX + boxW / 2} y={boxY + 42 + i * 14} textAnchor="middle" fontSize="11" fill={GUESS_COLOR}>
+                {line}
+              </text>
+            ))}
+          </g>
+        )
+      })}
     </svg>
   )
 }
@@ -422,393 +479,49 @@ export function ReferencePanel({ entries }: { entries: { term: string; meaning: 
   )
 }
 
-// Changing the object, its speed or the passing observer's speed returns to the idle state, so a run is never shown for
-// different settings. The completion mark is saved only when Part 3's playback ends (Decision 18 of the specification), and the
-// explained mark, which shows the chapter summary, when Part 3's tutor reaches its explanation. Parts 1 and 2 call neither.
-export function EnergyMomentumExperiment({ onComplete, onTutorComplete }: EnergyMomentumExperimentProps) {
-  const [kind, setKind] = useState<Kind>('particle')
-  const [speed, setSpeed] = useState(0.6)
-  const [passingSpeed, setPassingSpeed] = useState(0.3)
-  const [prediction, setPrediction] = useState<Prediction | null>(null)
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
-  const [progress, setProgress] = useState(0)
-  const [runCount, setRunCount] = useState(0)
-  // Part 2 is shown only after the learner has reached Part 1's tutor explanation (spec, Learner Controls, Decision 2).
-  const [partOneExplained, setPartOneExplained] = useState(false)
-  // A learner who already knows Part 1 can skip to Part 2 with a link under Part 1's heading. Part 2 is then shown without
-  // Part 1's tutor explanation, and it says so (it uses a combination from Part 1). Skipping does not count as having
-  // reached the explanation, so it does not call onTutorComplete or onComplete. Once Part 2 is open, the same link reads
-  // "Go to Part 2 - Collision" and scrolls down to it, so a learner who went back up can return.
-  const [skippedToPartTwo, setSkippedToPartTwo] = useState(false)
-  // Part 3 is shown after the learner has reached Part 2's tutor explanation (spec, Learner Controls), or by a skip link in Part 1
-  // or Part 2. Skipping to Part 3 also opens Part 2 above it, because Part 3 uses Part 2's terms. As with Part 2, skipping does
-  // not count as having reached an explanation.
-  const [partTwoExplained, setPartTwoExplained] = useState(false)
-  const [skippedToPartThree, setSkippedToPartThree] = useState(false)
-  const partTwoShown = partOneExplained || skippedToPartTwo || skippedToPartThree
-  const partThreeShown = partTwoExplained || skippedToPartThree
-  const result = runInvariantExperiment(kind, speed, passingSpeed)
-  const returnToIdle = () => {
-    setStatus('idle')
-    setProgress(0)
-  }
+// ---- The pictures' captions (CLAUDE.md §14, "Animated Diagrams"; wording: docs/audit/spacetime-geometry/05-draft-wording.md, section 5) ----
 
-  useEffect(() => {
-    if (skippedToPartTwo) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [skippedToPartTwo])
+const captionStyle = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' } as const
+const smallNote = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 } as const
+const pictureTitle = { fontWeight: 'bold', fontSize: '0.875rem', marginTop: '1.5rem', marginBottom: '0.5rem' } as const
+const PART_ONE_COLOR = '#d97706'
+const PART_TWO_COLOR = '#be185d'
+const PART_THREE_COLOR = '#0f766e'
+const PART_FOUR_COLOR = '#0066cc'
 
-  useEffect(() => {
-    if (skippedToPartThree) document.getElementById(PART_THREE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [skippedToPartThree])
+interface CaptionProps {
+  kind: Kind
+  speed: number
+  passingSpeed: number
+  // True once the playback has started, and once it has finished: a feature is explained only when it is drawn (§12).
+  started: boolean
+  done: boolean
+  // True for Part 2's drawings, which follow the learner's settings.
+  own?: boolean
+}
 
-  const goToPartThree = () => {
-    if (partThreeShown) document.getElementById(PART_THREE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    else setSkippedToPartThree(true)
-  }
-
-  useEffect(() => {
-    if (status !== 'running') return
-
-    const startTime = performance.now()
-    let frameId: number
-
-    const animate = (currentTime: number) => {
-      const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
-      setProgress(fraction)
-
-      if (fraction >= 1) {
-        setStatus('complete')
-        return
-      }
-
-      frameId = requestAnimationFrame(animate)
-    }
-
-    frameId = requestAnimationFrame(animate)
-
-    return () => cancelAnimationFrame(frameId)
-  }, [status])
-
-  const currentSpeed = status === 'idle' ? 0 : sweptSpeed(passingSpeed, progress)
-  const barRows: BarsRow[] = [{ name: 'The lab', color: LAB_COLOR, reading: result.lab }]
-  if (result.own) barRows.push({ name: 'The particle’s own observer', color: OWN_COLOR, reading: result.own })
-  barRows.push({ name: 'The passing observer', color: PASSING_COLOR, reading: readingFor(currentSpeed, result.lab) })
-
+// The caption of the map of energy and momentum (Picture 1 in Part 1, Drawing A in Part 2).
+function MapCaption({ kind, speed, passingSpeed, started, done, own }: CaptionProps) {
+  const fixedRun = runInvariantExperiment('particle', SECTION_A_SPEED, SECTION_A_PASSING_SPEED)
+  const f2 = (v: number) => signed(Math.abs(v) < 5e-10 ? 0 : v, 2)
   return (
-    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h2>Experiment 5 — Energy, Momentum and Mass: What Do All Observers Agree On?</h2>
-
-      <div id={PART_ONE_ID} className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        <h3 style={{ marginTop: 0 }}>Part 1 — Energy and momentum, seen by different observers</h3>
-        <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
-          {!partTwoShown && <span style={{ color: 'var(--text-muted)' }}>Already know this? </span>}
-          <button
-            type="button"
-            onClick={() => {
-              if (partTwoShown) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              else setSkippedToPartTwo(true)
-            }}
-            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
-          >
-            {partTwoShown ? 'Go to Part 2 - Collision ↓' : 'Skip to Part 2 - Collision'}
-          </button>
-          {' · '}
-          <button
-            type="button"
-            onClick={goToPartThree}
-            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
-          >
-            {partThreeShown ? 'Go to Part 3 - Reactions ↓' : 'Skip to Part 3 - Reactions'}
-          </button>
-        </p>
-
-        {/* Introduction, stage A (needed by Part 1): draft wording for the owner's review (CLAUDE.md §28.1), from the
-            specification's "Introduction: three stages". It gives the formulas for one observer's numbers and one worked
-            example each, and does not say what other observers find (that is Part 1's prediction, §12). */}
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> In earlier experiments, observers who move differently disagreed about the time and the
-            distance between two events, but they all found the same value of time² − distance² (Experiment 1 of this group). This
-            experiment asks the same kind of question about something else belonging to a moving thing: its <strong>energy</strong>{' '}
-            and its <strong>momentum</strong>. Do observers who move differently agree on them? If not, is there something about
-            them that the observers <em>do</em> agree on?
-          </p>
-
-          <div style={{ marginBottom: '0.75rem' }}>
-            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-              <strong>Some words we will use.</strong> Here is each one in plain language.
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-              <li>
-                <strong>Particle:</strong> a very small piece of matter, such as an electron or a proton. Here we treat it as a
-                single point, with no size.
-              </li>
-              <li>
-                <strong>Observer:</strong> someone with their own ruler and synchronized clocks, as in the earlier experiments.{' '}
-                <strong>The lab</strong> is at rest. <strong>A passing observer</strong> moves past the lab.{' '}
-                <strong>The particle's own observer</strong> travels along with the particle, so the particle is at rest for them.
-              </li>
-              <li>
-                <strong>The speed of light, c:</strong> about 300,000 kilometers per second. Speeds are given as a fraction of c: 0.6c
-                is 60 percent of it.
-              </li>
-              <li>
-                <strong>Time dilation factor:</strong> from Experiment 3 of the first chapter, the number √(1 − v²) that says how
-                much a moving clock's ticking is slowed. For example, at 0.6c it is √(1 − 0.36) = √0.64 = 0.8, so a clock moving at
-                0.6c ticks at 0.8 of the usual rate. We write D(v) for it. It is 1 for something at rest, and it gets smaller and
-                smaller as the speed gets closer to c.
-              </li>
-              <li>
-                <strong>Mass:</strong> how much matter a thing has, which you can also feel as how hard it is to get moving. A
-                5-kilogram bag of sugar is harder to push than a 1-kilogram bag. In this experiment, the mass of a particle means
-                the number you would find if the particle were sitting still beside you. (Some books use the word "mass"
-                differently, for something that changes with speed. We do not.)
-              </li>
-              <li>
-                <strong>Energy:</strong> the ability to make things happen, such as to heat water, to move something, or to make
-                light. It comes in many forms. A moving car can dent a wall. Hot water can cook an egg. In everyday life energy is
-                measured in <strong>joules</strong> (J).
-              </li>
-              <li>
-                <strong>Kinetic energy:</strong> energy of motion. For everyday speeds it is ½ × mass × speed². For example, a
-                1000-kilogram car at 20 meters per second has ½ × 1000 × 20² = 200,000 joules. This everyday formula is correct for
-                slow things. The experiment shows how it changes for fast ones.
-              </li>
-              <li>
-                <strong>Momentum:</strong> a measure of how hard a moving thing is to stop. For everyday speeds it is mass × speed.
-                A 7-kilogram bowling ball rolling at 2 meters per second has 7 × 2 = 14 units; a 0.06-kilogram tennis ball flying at
-                30 meters per second has 0.06 × 30 = 1.8. The heavy, slow ball is harder to stop, even though the light one moves
-                faster.
-              </li>
-              <li>
-                <strong>Rest energy:</strong> the energy a particle has when it is not moving at all, its own energy. We use it as
-                our unit of energy, so a particle's rest energy is written as <strong>1</strong>. An energy of 2.5 means 2.5 times
-                the particle's rest energy.
-              </li>
-              <li>
-                <strong>Total energy:</strong> the rest energy plus the kinetic energy.
-              </li>
-              <li>
-                <strong>A light pulse:</strong> a short flash of light. It carries energy and momentum, but it has no mass.
-              </li>
-            </ul>
-          </div>
-
-          <div style={{ marginBottom: '0.75rem' }}>
-            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-              <strong>The rules this experiment uses.</strong> We do not derive these here. They are the rules of special
-              relativity, and the experiment lets you see what they predict. Each is read out in words, with a worked example.
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-              <li>
-                <strong>Total energy:</strong> E = mc² ÷ D(v). In words: "the total energy is the rest energy mc² divided by the time
-                dilation factor." In our units mc² = 1, so E = 1 ÷ D(v). As the speed rises, D shrinks, so the energy grows. For
-                example, at 0.5c: D = √(1 − 0.25) = √0.75 = 0.866, so E = 1 ÷ 0.866 = 1.155 rest energies. At v = 0, D = 1, so E =
-                mc², the rest energy. <em>What it does not mean:</em> it does not say that the particle's mass grows. The mass stays
-                the number found at rest. What grows with speed is the energy.
-              </li>
-              <li>
-                <strong>Momentum (times c):</strong> pc = (mc² ÷ D(v)) × v. In words: "the total energy multiplied by the speed." We
-                multiply the momentum by c so that it has the same units as energy, and the two can be compared. In our units, pc =
-                v ÷ D(v). For example, at 0.5c: pc = 0.5 ÷ 0.866 = 0.577. <em>What it does not mean:</em> it is not the everyday mass
-                × speed, which is the slow-speed version of it. They agree at low speed and differ at high speed.
-              </li>
-              <li>
-                <strong>A combination of the two:</strong> E² − (pc)². In words: "square the energy, square the momentum times c, and
-                subtract", the same "subtract the squares" move as in Experiment 1. For example, at 0.5c: 1.155² − 0.577² = 1.333 −
-                0.333 = 1.000. The experiment asks you to predict what other observers would get. <em>What it does not mean:</em> it
-                is not E² + (pc)². The minus sign matters, as it did in Experiment 1.
-              </li>
-              <li>
-                <strong>What speed does another observer measure?</strong> v′ = (v − u) ÷ (1 − uv), where v is the particle's speed
-                in the lab and u is the passing observer's speed (both fractions of c, in the same direction). In words: "it is almost
-                the difference of the two speeds, but divided by a correction that keeps the result below c." For example, v = 0.6
-                and u = 0.3: (0.6 − 0.3) ÷ (1 − 0.18) = 0.3 ÷ 0.82 = 0.366, not 0.3. If u = v, the result is 0: the particle's own
-                observer finds it at rest. We do not derive this rule here. <em>What it does not mean:</em> it is not a plain
-                subtraction, v − u, which would let speeds pass c.
-              </li>
-              <li>
-                <strong>Energy and momentum seen by a passing observer.</strong> The rule that turns the lab's times and positions
-                into the passing observer's (Experiment 3 of the first chapter and Experiment 1 of this group) also turns the lab's
-                energy and momentum into theirs, with energy playing the part of time, and pc the part of position. The experiment
-                does this arithmetic for you and shows the result.
-              </li>
-              <li>
-                <strong>Light:</strong> for a light pulse, E = pc (the energy equals the momentum times c), and it always moves at c.{' '}
-                <em>What it does not mean:</em> it does not mean that light has mass. For light, the combination E² − (pc)² is zero.
-              </li>
-            </ul>
-          </div>
-
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> A particle (or a light pulse) moves past the lab. Three observers (the lab, the particle's
-            own observer, and a passing observer) each measure its energy and momentum. A drawing shows the three readings as
-            points, and a table gives the numbers.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Choose whether the object is a particle with mass or a light pulse. For a particle, choose its
-            speed in the lab. Choose the passing observer's speed. Then make a prediction. You are not graded. The Run button stays
-            off until you choose a prediction.
-          </p>
-          <p style={{ margin: 0 }}>
-            <strong>What we assume.</strong> Speeds are steady, there is no gravity, energy is in rest energies, and momentum is
-            given as pc. For light, energy is in units of the lab's measurement of the pulse.
-          </p>
-        </div>
-
-        <ReferencePanel
-          entries={
-            partThreeShown
-              ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES, ...PART_THREE_REFERENCE_ENTRIES]
-              : partTwoShown
-                ? [...REFERENCE_ENTRIES, ...PART_TWO_REFERENCE_ENTRIES]
-                : REFERENCE_ENTRIES
-          }
-        />
-
-        <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>What moves past the lab?</label>
-          <div style={{ marginBottom: '1rem' }}>
-            {KIND_CHOICES.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => {
-                  setKind(choice.value)
-                  returnToIdle()
-                }}
-                className={`toggle-button${kind === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-
-          {kind === 'particle' && (
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The particle's speed in the lab</label>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
-                It is given as a fraction of <strong>c</strong>, the speed of light. The particle moves to the right. 0c means it is
-                at rest in the lab.
-              </p>
-              <div>
-                {PARTICLE_SPEED_PRESETS.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => {
-                      setSpeed(value)
-                      returnToIdle()
-                    }}
-                    className={`toggle-button${speed === value ? ' is-selected' : ''}`}
-                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-                  >
-                    {value === 0 ? '0c (at rest)' : `${value}c`}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The passing observer's speed</label>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
-            The passing observer moves past the lab, along the same line. A plus sign means they move to the right, and a minus sign
-            to the left. 0c means they are at rest in the lab, like the lab itself.
-          </p>
-          <div>
-            {PASSING_SPEED_PRESETS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setPassingSpeed(value)
-                  returnToIdle()
-                }}
-                className={`toggle-button${passingSpeed === value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-              >
-                {passingLabel(value)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-            {kind === 'particle' ? 'A particle with mass is' : 'A light pulse is'} moving past the lab. The lab measures its energy
-            and its momentum. A passing observer, who moves differently, measures them too. Earlier, two observers measured different
-            times and different distances between two events, but the same <code>time² − distance²</code>. What do you think the two
-            observers find for this {kind === 'particle' ? 'particle' : 'light pulse'}?
-          </p>
-          <div>
-            {PREDICTION_CHOICES.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                onClick={() => {
-                  setPrediction(choice.value)
-                  returnToIdle()
-                }}
-                className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
-                style={{ display: 'block', textAlign: 'left', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-              >
-                {choice.label}
-              </button>
-            ))}
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
-            {prediction !== null
-              ? `Your prediction: ${PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.slice(0, 3)}. This is not graded.`
-              : 'Choose an option to continue'}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="action-button"
-          onClick={() => {
-            setProgress(0)
-            setRunCount((n) => n + 1)
-            setStatus('running')
-          }}
-          disabled={prediction === null || status === 'running'}
-          style={{ padding: '0.6rem 1.5rem' }}
-        >
-          {status === 'running' ? 'Running...' : 'Run'}
-        </button>
-        {prediction === null && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>
-            Choose a prediction above to run the experiment.
-          </p>
-        )}
-
-        <div style={{ marginTop: '2rem' }}>
-          <Diagram kind={kind} speed={speed} passingSpeed={passingSpeed} progress={status === 'idle' ? null : progress} />
-        </div>
-
-        {status !== 'idle' && (
-          <div style={{ marginTop: '1.5rem' }}>
-            <ReadingBars rows={barRows} />
-          </div>
-        )}
-
-        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>How to read these pictures.</strong> There are two pictures. The first is a map of{' '}
-            <strong>energy and momentum</strong>. The second, which appears when you press Run, is a set of{' '}
-            <strong>bars</strong> that show the same numbers. For your current choice, the lab measures {kindWords(kind)}
-            {kind === 'particle' ? ` moving at ${speed}c` : ' moving to the right'}, and the passing observer moves at{' '}
-            {passingLabel(passingSpeed)}.
-          </p>
-
-          <p style={{ margin: '0 0 0.5rem' }}>
-            <strong>Picture 1: the map of energy and momentum.</strong> Across the bottom is <strong>momentum × c</strong>.
+    <div style={captionStyle}>
+      <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+        <strong>{own ? 'How to read Drawing A.' : 'How to read this diagram.'}</strong>{' '}
+        {own
+          ? 'This is the map of Part 1 again, drawn for your settings, with a pink line beside it because it follows your settings. Everything in it means what it meant in Part 1. '
+          : ''}
+        For {own ? 'your settings' : 'this run'}, the lab measures {kindWords(kind)}
+        {kind === 'particle' ? ` moving at ${speed}c` : ' moving to the right'}, and the passing observer moves at {passingLabel(passingSpeed)}.
+      </p>
+      <p style={{ margin: '0 0 0.5rem' }}>
+            <strong>{own ? 'Drawing A: the map of energy and momentum.' : 'Picture 1: the map of energy and momentum.'}</strong> Across the bottom is <strong>momentum × c</strong>.
             Zero is in the middle, a point to the right means moving to the right, and a point to the left means moving to the
-            left. Up the side is <strong>energy</strong>. Both are measured in{' '}
-            {kind === 'particle' ? "the particle's rest energies, so that its energy when it is at rest is 1" : "the lab's measurement of the pulse, so that the lab finds an energy of 1"}
-            . The parts of the map are:
+            left. Up the side is <strong>energy</strong>.{' '}
+            {kind === 'particle'
+              ? 'We count it in a convenient unit: the energy the particle has when it is sitting still, which we call 1. So an energy of 1 means "just its resting energy", and an energy of 2.5 means "2.5 times that". Across the bottom, momentum × c is counted in the same unit, so the two can be compared.'
+              : "We count it in the lab's own measurement of the pulse, which we call 1, because a light pulse never sits still and so has no resting energy. Across the bottom, momentum × c is counted in the same unit, so the two can be compared."}{' '}
+            The parts of the map are:
           </p>
           <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
             <li>
@@ -818,7 +531,10 @@ export function EnergyMomentumExperiment({ onComplete, onTutorComplete }: Energy
             {kind === 'particle' && (
               <li>
                 <strong>The green diamond, "The particle's own reading".</strong> What an observer who travels along with the
-                particle measures, for whom the particle is at rest. It appears when you press Run.
+                particle measures. For them the particle is at rest, like a person sitting beside you on a train: they are not moving
+                relative to you. Momentum depends on how fast something moves relative to the observer, so for this observer the
+                momentum × c is 0. All that is left is the particle's resting energy, which is 1. The diamond therefore sits on the
+                zero line, at height 1. It appears when you press Run.
               </li>
             )}
             <li>
@@ -832,14 +548,17 @@ export function EnergyMomentumExperiment({ onComplete, onTutorComplete }: Energy
               moves across the map. A dashed purple line shows the path the circle has travelled, and the words beside it give
               their speed at that moment and their two numbers.
             </li>
+            {started && (
             <li>
               <strong>{kind === 'particle' ? 'The yellow curve.' : 'The two straight yellow lines.'}</strong>{' '}
               {kind === 'particle'
                 ? 'Every observer, whatever their speed, gets one energy and one momentum × c for this particle, and so has one dot on the map. The yellow curve is the line that all of those dots fall on. Think of a road drawn on a map: you can stand at many places along it, but you cannot stand off it. In the same way, the passing observer\'s circle can sit at many places, depending on their speed, but it always stays on the curve. Notice the lowest point of the curve, straight above zero. That is where an observer who moves along with the particle sits, because for them the particle is not moving, so its momentum × c is zero and only its rest energy is left. The farther an observer\'s dot is from that point, the faster the particle appears to move to them, and the more energy and momentum it has. The curve appears when you press Run.'
                 : 'Every observer, whatever their speed, gets one energy and one momentum × c for the light pulse, and so has one dot on the map. A light pulse always has an energy equal to its momentum × c. That is why all of those dots fall on a straight line: the right-hand line if the pulse moves to the right, the left-hand line if it moves to the left (where the momentum × c is a negative number). Think of a road drawn on a map: you can stand at many places along it, but you cannot stand off it. In the same way, the passing observer\'s circle can sit at many places, depending on their speed, but it always stays on the line. Light has no "at rest" reading, so unlike a particle, no observer can get a dot at zero momentum. The lines appear when you press Run.'}
             </li>
+            )}
           </ul>
-
+      {started && (
+        <>
           <p style={{ margin: '0 0 0.75rem' }}>
             <strong>What if a momentum is negative?</strong> A negative momentum × c means moving to the <em>left</em>. The sign
             shows only the direction; the size shows how much. Energy has no direction, so it is never negative.{' '}
@@ -850,32 +569,76 @@ export function EnergyMomentumExperiment({ onComplete, onTutorComplete }: Energy
             stopped and turned around. A particle that really did that would need something to push it, such as a wall it
             bounces off.
           </p>
-
-          <p style={{ margin: '0 0 0.75rem' }}>
-            <strong>What is happening in this experiment.</strong> {kind === 'particle'
-              ? 'The particle itself never changes. In the lab it keeps moving at the same speed the whole time, and nothing pushes it. Only the passing observer changes: they speed up, and every speed gives a different reading of the same particle. The circle moves from positive momentum, through zero, to negative momentum only because the observer\'s own speed has changed. It crosses zero at the moment the observer\'s speed matches the particle\'s. They are then travelling along with the particle, so it looks at rest to them, which is the green diamond. Faster than that, they overtake it, and it looks as if it is moving to the left. It is like standing at the roadside watching a truck that goes 60 km/h, then driving off and speeding up. At 30 km/h the truck still pulls ahead of you. At 60 km/h it seems to hover beside you. At 100 km/h you overtake it and it slides backward. The truck never changed its speed; only yours changed.'
-              : 'The light pulse itself never changes. It keeps moving in the same direction the whole time. Only the passing observer changes: they speed up, and every speed gives a different reading of the same pulse. A left-moving pulse is seen moving left by every observer, so its momentum × c stays negative for all of them. Only its size changes.'}
-            {' '}The sign does not affect the bar for E² − (momentum × c)². A negative number multiplied by itself is positive, so the sign drops out.
-          </p>
-
           <p style={{ margin: '0 0 0.5rem' }}>
-            <strong>Picture 2: the bars.</strong> For each observer there are three bars on one scale. The top bar is the{' '}
-            <strong>energy</strong>, the middle bar is the <strong>momentum × c</strong>, and the bottom bar is the{' '}
-            <strong>combination E² − (momentum × c)²</strong>: the energy multiplied by itself, minus the momentum × c
-            multiplied by itself. Each bar starts at the middle line, which is zero. A bar to the left means a negative number.
-            The number beside each bar says the same thing.
+            <strong>What is happening in this experiment.</strong>{' '}
+            {kind === 'particle'
+              ? 'In short: one particle, one lab, and an observer who gradually speeds up. Nothing about the particle changes. Only the observer\'s speed changes, and with it, what the observer measures.'
+              : 'In short: one light pulse, one lab, and an observer who gradually speeds up. Nothing about the pulse changes. Only the observer\'s speed changes, and with it, what the observer measures.'}
           </p>
-
-          <p style={{ margin: '0 0 0.5rem' }}>
+          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+            <li>
+              <strong>What stays the same.</strong>{' '}
+              {kind === 'particle'
+                ? 'The particle moves through the lab at one steady speed the whole time, and nothing pushes it. The lab\'s square never moves on the map.'
+                : 'The pulse moves through the lab in one direction the whole time. The lab\'s square never moves on the map.'}
+            </li>
+            <li>
+              <strong>What changes.</strong> The passing observer starts at rest beside the lab and then speeds up. At every speed they
+              are a different observer, so they get a different energy and a different momentum × c for the very same{' '}
+              {kind === 'particle' ? 'particle' : 'pulse'}. The purple circle shows those two numbers, so it moves as their speed changes.
+            </li>
+            {kind === 'particle' ? (
+              <li>
+                <strong>What the circle does, step by step.</strong> Think of watching a truck that drives at 60 km/h along a road. Now
+                you drive along the same road, speeding up.
+                <ul style={{ margin: '0.25rem 0', paddingLeft: '1.25rem' }}>
+                  <li>
+                    <em>You are slower than the truck</em> (say 30 km/h). The truck still pulls ahead of you. In the same way, while the
+                    observer is slower than the particle, the particle still moves to the right for them, and the circle sits to the
+                    right of the middle line (momentum × c is positive).
+                  </li>
+                  <li>
+                    <em>You match the truck</em> (60 km/h). It seems to hover beside your window. In the same way, when the observer
+                    moves at the particle's speed, the particle is at rest for them. The circle lands on the green diamond, and momentum × c
+                    is 0.
+                  </li>
+                  <li>
+                    <em>You are faster than the truck</em> (say 100 km/h). You overtake it, and it seems to slide backward. In the same
+                    way, the particle seems to move to the left, and the circle moves to the left of the middle line (momentum × c is
+                    negative).
+                  </li>
+                </ul>
+                The truck never changed its speed, only yours did. The circle goes through all three stages only if the observer's chosen
+                speed is beyond the particle's. If it is smaller, the circle stops before it gets to the diamond.
+              </li>
+            ) : (
+              <li>
+                <strong>What the circle does.</strong> The pulse moves to the right in the lab, and every observer sees it moving to the
+                right, because nothing can overtake light. So its momentum × c stays positive for all of them, and only the size changes.
+                An observer who moves to the right (with the pulse) sees a smaller energy and a smaller momentum × c. One who moves to the
+                left (toward it) sees larger ones. The circle slides along the line but never crosses the middle.
+              </li>
+            )}
+          </ul>
+        </>
+      )}
+      <div style={{ margin: '0.75rem 0' }}>
+      <WhereFrom>
+        <strong>Calculated here:</strong> every number on the map, from the rules of special relativity given in the introduction (the same rule that carries time and position from one
+        observer to another carries the lab's energy and momentum to the passing observer's). <strong>Measured:</strong> nothing on this page. The rules have been tested in particle
+        accelerators (the tutor says more). <strong>Imagined for the question:</strong> the particle and the observers.
+      </WhereFrom>
+      </div>
+      <p style={{ margin: '0 0 0.5rem' }}>
             <strong>What happens in the animation.</strong>
           </p>
           <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
             <li>
-              Before you press Run, Picture 1 shows only the lab's reading. Nothing from the other observers is drawn yet.
+              Before you press Run, {own ? 'Drawing A' : 'Picture 1'} shows only the lab's reading. Nothing from the other observers is drawn yet.
             </li>
             <li>
               When you press Run, {kind === 'particle' ? 'the curve and the particle’s own reading appear' : 'the two straight lines appear'},
-              and the passing observer's circle appears on top of the lab's square. Picture 2 appears below.
+              and the passing observer's circle appears on top of the lab's square. {own ? 'Drawing B' : 'Picture 2'} appears below.
             </li>
             <li>
               The passing observer's speed climbs from 0 to the chosen speed. The circle slides along{' '}
@@ -886,130 +649,469 @@ export function EnergyMomentumExperiment({ onComplete, onTutorComplete }: Energy
               finds. At the end, everything stays on the screen.
             </li>
           </ol>
-
+      {!own && done && (
+        <>
           <p style={{ margin: '0 0 0.5rem' }}>
-            <strong>A worked moment, with numbers that are not among the choices.</strong> Say a particle moves at 0.5c in the
-            lab. The lab finds energy 1.155 and momentum × c 0.577. A passing observer moves at +0.2c. Their numbers come from
-            the same rule as for time and position in the earlier experiments, with energy in the place of time and momentum × c
-            in the place of position: they divide by the time dilation factor at 0.2c, which is √(1 − 0.04) = 0.980, and use
-            energy − 0.2 × momentum × c, and momentum × c − 0.2 × energy. So the energy is (1.155 − 0.2 × 0.577) ÷ 0.980 =
-            1.061, and the momentum × c is (0.577 − 0.2 × 1.155) ÷ 0.980 = 0.354. The experiment does this arithmetic for you.
+            <strong>A worked moment, with numbers that are not among the choices.</strong> Say a particle moves at 0.5c in the lab. The lab finds energy 1.155 and momentum × c 0.577. A passing
+            observer moves at +0.2c. Their numbers come from the same rule as for time and position in the earlier experiments, with energy in the place of time and momentum × c in the place of
+            position: they divide by the time dilation factor at 0.2c, which is √(1 − 0.04) = 0.980, and use energy − 0.2 × momentum × c, and momentum × c − 0.2 × energy. So the energy is
+            (1.155 − 0.2 × 0.577) ÷ 0.980 = 1.061, and the momentum × c is (0.577 − 0.2 × 1.155) ÷ 0.980 = 0.354. The experiment does this arithmetic for you.
           </p>
+          <p style={{ margin: '0 0 0.25rem' }}>
+            <strong>What to look for.</strong>
+          </p>
+          <LookForList
+            items={[
+              {
+                look: 'the hollow purple circle, as it slid',
+                means: `its height is the passing observer's energy and its place across is their momentum × c. In this run both changed, from the lab's ${f2(fixedRun.lab.energy)} and ${f2(fixedRun.lab.momentumTimesC)} to ${f2(fixedRun.passing.energy)} and ${f2(fixedRun.passing.momentumTimesC)}`,
+                matters: 'it shows that two observers measuring the same particle get different energies and different momenta, so energy and momentum on their own are not what everyone agrees on',
+              },
+              {
+                look: 'the yellow curve and where the circle ended up',
+                means: 'every reading, whatever the observer\'s speed, lands on this one curve. The circle never leaves it',
+                matters: 'the readings differ, but they are not scattered anywhere on the map. Something is held fixed, and the tutor says what',
+              },
+              {
+                look: 'the green diamond, at the lowest point of the curve',
+                means: `the particle's own observer finds a momentum × c of ${f2(fixedRun.own!.momentumTimesC)} and an energy of ${f2(fixedRun.own!.energy)}, the rest energy, which is our unit`,
+                matters: 'it is the lowest point of the curve, so no observer finds less energy than the rest energy',
+              },
+            ]}
+          />
+        </>
+      )}
+    </div>
+  )
+}
 
-          <p style={{ margin: 0 }}>
-            <strong>What to look for.</strong> Follow these steps.
+// The caption of the bars (Picture 2 in Part 1, Drawing B in Part 2). Only Part 1's Picture 2 carries the white guess marker.
+function BarsCaption({ kind, speed, passingSpeed, done, own, guess }: CaptionProps & { guess: Prediction | null }) {
+  const fixedRun = runInvariantExperiment('particle', SECTION_A_SPEED, SECTION_A_PASSING_SPEED)
+  const f2 = (v: number) => signed(Math.abs(v) < 5e-10 ? 0 : v, 2)
+  return (
+    <div style={captionStyle}>
+      <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+        <strong>{own ? 'How to read Drawing B.' : 'How to read Picture 2.'}</strong>{' '}
+        {own ? 'These are the bars of Part 1 again, drawn for your settings. ' : ''}
+        This picture is a set of <strong>bars</strong> that show the same numbers as the map. For {own ? 'your settings' : 'this run'}, the lab measures {kindWords(kind)}
+        {kind === 'particle' ? ` moving at ${speed}c` : ' moving to the right'}, and the passing observer moves at {passingLabel(passingSpeed)}.
+      </p>
+      <p style={{ margin: '0 0 0.5rem' }}>
+            <strong>{own ? 'Drawing B: the bars.' : 'Picture 2: the bars.'}</strong> For each observer there are three bars on one scale. The top bar is the{' '}
+            <strong>energy</strong>, the middle bar is the <strong>momentum × c</strong>, and the bottom bar is the{' '}
+            <strong>combination E² − (momentum × c)²</strong>: the energy multiplied by itself, minus the momentum × c
+            multiplied by itself. Each bar starts at the middle line, which is zero. A bar to the left means a negative number.
+            The number beside each bar says the same thing.
           </p>
-          <ol style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
-            <li>
-              <strong>While it runs:</strong> watch the passing observer's circle slide. Does its height change? Its place
-              across?
-            </li>
-            <li>
-              <strong>In the bars:</strong> compare the three observers' three bars. Which bars change from one observer to the
-              next, and which do not?
-            </li>
-            <li>
-              <strong>Then</strong> choose another speed for the particle, or another passing observer, and run it again.
-            </li>
-          </ol>
-        </div>
-        {status === 'complete' && prediction !== null && (
-          <div
-            style={{
-              marginTop: '2rem',
-              padding: '1.5rem',
-              border: '1px solid var(--border-color, #ccc)',
-              borderRadius: '8px',
+      {guess !== null && (
+        <p style={{ margin: '0 0 0.5rem' }}>
+          <strong>The white outlines.</strong> The white outlines and the YOUR GUESS box are your guess, drawn on the bars it names. They are <strong>only a marker</strong>: they have no size
+          of their own, and they do not change the bars. A different guess puts the outlines round different bars.
+        </p>
+      )}
+      {done && !own && (
+        <p style={{ margin: '0 0 0.5rem' }}>
+          The sign of a number does not change the bottom bar. A negative number multiplied by itself is positive, so the sign drops out.
+        </p>
+      )}
+      <div style={{ margin: '0.75rem 0' }}>
+      <WhereFrom>
+        <strong>Calculated here:</strong> the bars, by the same calculation as the map. <strong>Measured:</strong> nothing on this page. <strong>Imagined for the question:</strong> the particle and
+        the observers. {guess !== null && 'The white outlines are your guess, drawn by this page. They are not part of the result.'}
+      </WhereFrom>
+      </div>
+      {!own && done && (
+        <>
+          <p style={{ margin: '0.75rem 0 0.25rem' }}>
+            <strong>What to look for.</strong>
+          </p>
+          <LookForList
+            items={[
+              {
+                look: 'the top bar of each observer (the energy)',
+                means: `the three observers' energy bars have different lengths: ${f2(fixedRun.lab.energy)} for the lab, ${f2(fixedRun.own!.energy)} for the particle's own observer and ${f2(fixedRun.passing.energy)} for the passing observer`,
+                matters: 'the observers do not agree on the energy',
+              },
+              {
+                look: 'the middle bar of each observer (the momentum × c)',
+                means: `the lab's is ${f2(fixedRun.lab.momentumTimesC)}, the particle's own observer's is ${f2(fixedRun.own!.momentumTimesC)} and the passing observer's is ${f2(fixedRun.passing.momentumTimesC)}`,
+                matters: 'the observers do not agree on the momentum either',
+              },
+              {
+                look: 'the bottom bar of each observer (E² − (momentum × c)²)',
+                means: `all three bars are the same length, ${f2(fixedRun.lab.invariant)}`,
+                matters: 'one combination of energy and momentum is the same for every observer. The tutor explains why',
+              },
+            ]}
+          />
+        </>
+      )}
+    </div>
+  )
+}
+
+type PlayStatus = 'idle' | 'running' | 'complete'
+
+// Plays a run: progress goes from 0 to 1 over ANIMATION_DURATION_MS, then the status becomes 'complete'. The length only sets how fast the result is
+// shown; the physics does not depend on it (§11).
+function usePlayback(status: PlayStatus, setStatus: (status: PlayStatus) => void, setProgress: (progress: number) => void) {
+  useEffect(() => {
+    if (status !== 'running') return
+    const startTime = performance.now()
+    let frameId: number
+    const animate = (currentTime: number) => {
+      const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
+      setProgress(fraction)
+      if (fraction >= 1) {
+        setStatus('complete')
+        return
+      }
+      frameId = requestAnimationFrame(animate)
+    }
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [status, setStatus, setProgress])
+}
+
+// The bars of one run at one moment of the playback: the lab, the particle's own observer (not for light) and the passing observer, whose
+// speed is swept from 0 to its chosen value.
+function barRowsFor(kind: Kind, speed: number, passingSpeed: number, status: PlayStatus, progress: number): BarsRow[] {
+  const result = runInvariantExperiment(kind, speed, passingSpeed)
+  const currentSpeed = status === 'idle' ? 0 : sweptSpeed(passingSpeed, progress)
+  const rows: BarsRow[] = [{ name: 'The lab', color: LAB_COLOR, reading: result.lab }]
+  if (result.own) rows.push({ name: 'The particle’s own observer', color: OWN_COLOR, reading: result.own })
+  rows.push({ name: 'The passing observer', color: PASSING_COLOR, reading: readingFor(currentSpeed, result.lab) })
+  return rows
+}
+
+export function EnergyMomentumExperiment({ onComplete, onTutorComplete }: EnergyMomentumExperimentProps) {
+  // ---- Section A, Part 1: one guess, one fixed run (a particle at 0.6c, a passing observer at +0.3c) ----
+  const [prediction, setPrediction] = useState<Prediction | null>(null)
+  const [locked, setLocked] = useState(false)
+  const [status, setStatus] = useState<PlayStatus>('idle')
+  const [progress, setProgress] = useState(0)
+  // Counts the Start overs, so the tutor starts again at its first question.
+  const [resetCount, setResetCount] = useState(0)
+
+  // ---- Section A, Part 2: the learner's own object and speeds ----
+  const [kind, setKind] = useState<Kind>('particle')
+  const [speed, setSpeed] = useState(SECTION_A_SPEED)
+  const [passingSpeed, setPassingSpeed] = useState(SECTION_A_PASSING_SPEED)
+  const [ownStatus, setOwnStatus] = useState<PlayStatus>('idle')
+  const [ownProgress, setOwnProgress] = useState(0)
+  // True once a light pulse has been run in Part 2: the tutor's paragraph about light appears then.
+  const [ranLight, setRanLight] = useState(false)
+
+  // ---- Sections B and C (not changed by this audit step) ----
+  // Section B is shown only after the learner has reached Section A's tutor explanation (spec, Learner Controls, Decision 2).
+  const [partOneExplained, setPartOneExplained] = useState(false)
+  // A learner who already knows Section A can skip to Section B with a link. Section B is then shown without Section A's tutor explanation, and it says so (it
+  // uses a combination from Section A). Skipping does not count as having reached the explanation, so it does not call onTutorComplete or onComplete. Once Section B is open,
+  // the same link reads "Go to Section B - Collision" and scrolls down to it, so a learner who went back up can return.
+  const [skippedToPartTwo, setSkippedToPartTwo] = useState(false)
+  // Section C is shown after the learner has reached Section B's tutor explanation (spec, Learner Controls), or by a skip link in Section A or B. Skipping to Section C also
+  // opens Section B above it, because Section C uses Section B's terms. As with Section B, skipping does not count as having reached an explanation.
+  const [partTwoExplained, setPartTwoExplained] = useState(false)
+  const [skippedToPartThree, setSkippedToPartThree] = useState(false)
+  const partTwoShown = partOneExplained || skippedToPartTwo || skippedToPartThree
+  const partThreeShown = partTwoExplained || skippedToPartThree
+
+  usePlayback(status, setStatus, setProgress)
+  usePlayback(ownStatus, setOwnStatus, setOwnProgress)
+
+  // Parts 2, 3 and 4 appear as soon as the first Run has finished.
+  const partOneDone = status === 'complete'
+  const playing = status === 'running' || ownStatus === 'running'
+  const startOverDisabled = (prediction === null && status === 'idle' && ownStatus === 'idle') || playing
+
+  useEffect(() => {
+    if (skippedToPartTwo) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [skippedToPartTwo])
+
+  useEffect(() => {
+    if (skippedToPartThree) document.getElementById(PART_THREE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [skippedToPartThree])
+
+  useEffect(() => {
+    if (ownStatus === 'complete' && kind === 'light') setRanLight(true)
+  }, [ownStatus, kind])
+
+  const goToPartThree = () => {
+    if (partThreeShown) document.getElementById(PART_THREE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    else setSkippedToPartThree(true)
+  }
+
+  const handleRun = () => {
+    if (prediction === null || locked) return
+    setLocked(true)
+    setProgress(0)
+    setStatus('running')
+  }
+  // Start over: clears the guess, the runs, the results and the tutor of Section A, and returns Section A to its first state.
+  const handleStartOver = () => {
+    if (playing) return
+    setPrediction(null)
+    setLocked(false)
+    setStatus('idle')
+    setProgress(0)
+    setKind('particle')
+    setSpeed(SECTION_A_SPEED)
+    setPassingSpeed(SECTION_A_PASSING_SPEED)
+    setOwnStatus('idle')
+    setOwnProgress(0)
+    setRanLight(false)
+    setResetCount((n) => n + 1)
+  }
+  const chooseOwn = (change: () => void) => {
+    change()
+    setOwnStatus('idle')
+    setOwnProgress(0)
+  }
+  const handleRunOwn = () => {
+    setOwnProgress(0)
+    setOwnStatus('running')
+  }
+
+  const guessLabel = prediction === null ? '' : PREDICTION_CHOICES.find((c) => c.value === prediction)!.label
+  const partOneRows = barRowsFor('particle', SECTION_A_SPEED, SECTION_A_PASSING_SPEED, status, progress)
+  const ownRows = barRowsFor(kind, speed, passingSpeed, ownStatus, ownProgress)
+  const pinkFrame = { borderLeft: `4px solid ${PART_TWO_COLOR}`, paddingLeft: '0.75rem' } as const
+
+  const wordsEntries = [
+    ...energyMomentumWordsEntries(partOneDone),
+    ...(partTwoShown ? PART_TWO_REFERENCE_ENTRIES : []),
+    ...(partThreeShown ? PART_THREE_REFERENCE_ENTRIES : []),
+  ]
+
+  return (
+    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+      <h2>Experiment 5 — Energy, Momentum and Mass: What Do All Observers Agree On?</h2>
+
+      <div id={PART_ONE_ID} className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        <h3 style={{ marginTop: 0 }}>Section A: Energy and momentum, seen by different observers</h3>
+        <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
+          {!partTwoShown && <span style={{ color: 'var(--text-muted)' }}>Already know this? </span>}
+          <button
+            type="button"
+            onClick={() => {
+              if (partTwoShown) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              else setSkippedToPartTwo(true)
             }}
+            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
           >
-            <h3 style={{ marginBottom: '0.5rem' }}>Results</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
-              {kind === 'particle' ? `The particle moved at ${speed}c in the lab.` : 'The light pulse moved to the right in the lab.'}{' '}
-              The passing observer moved at {passingLabel(passingSpeed)}. <strong>Your prediction was:</strong>{' '}
-              {PREDICTION_CHOICES.find((c) => c.value === prediction)?.label} It is only recorded here, not marked right or wrong.
-            </p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
-              <strong>The table.</strong> Each observer has one row.{' '}
-              {kind === 'light' && 'There is no row for an observer who travels along with the light, because no observer can. '}
-              All the numbers are in {kind === 'particle' ? "the particle's rest energies" : "the lab's measurement of the pulse"}.
-            </p>
-            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                <thead>
-                  <tr>
-                    {['Observer', 'Speed they measure (c)', 'Energy E', 'Momentum × c', 'E² − (momentum × c)²'].map((h) => (
-                      <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { name: 'The lab', reading: result.lab },
-                    ...(result.own ? [{ name: 'The particle’s own observer', reading: result.own }] : []),
-                    { name: 'The passing observer', reading: result.passing },
-                  ].map((o) => (
-                    <tr key={o.name}>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{o.name}</td>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatNumber(o.reading.speed)}</td>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatNumber(o.reading.energy)}</td>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatNumber(o.reading.momentumTimesC)}</td>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{formatNumber(o.reading.invariant)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <ul style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0 0 1rem', paddingLeft: '1.25rem' }}>
-              <li>
-                <strong>Speed they measure:</strong> how fast that observer finds {kind === 'particle' ? 'the particle' : 'the light pulse'}{' '}
-                moving. A plus sign means to the right and a minus sign to the left.
-              </li>
-              <li>
-                <strong>Energy E</strong> and <strong>Momentum × c:</strong> what that observer measures. A minus sign on the
-                momentum means it points to the left.
-              </li>
-              <li>
-                <strong>E² − (momentum × c)²:</strong> the energy multiplied by itself, minus the momentum × c multiplied by
-                itself.
-              </li>
-            </ul>
+            {partTwoShown ? 'Go to Section B - Collision ↓' : 'Skip to Section B - Collision'}
+          </button>
+          {' · '}
+          <button
+            type="button"
+            onClick={goToPartThree}
+            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            {partThreeShown ? 'Go to Section C - Reactions ↓' : 'Skip to Section C - Reactions'}
+          </button>
+        </p>
 
-            {result.kineticEnergy !== null && result.newtonKineticEnergy !== null && (
+        {/* ===== Above Part 1: the introduction, the words and the links ===== */}
+        <EnergyMomentumIntro />
+        <ReferencePanel entries={wordsEntries} />
+        <EnergyMomentumLinks />
+
+        {/* ===== Part 1 ===== */}
+        <PartHeader color={PART_ONE_COLOR} title="Part 1: Predict, then watch">
+          You will predict what two observers who move differently will find when they measure the same particle, then press Run and watch. Your guess is drawn on the real bars in
+          white. It never changes them.
+        </PartHeader>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make a prediction</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
+            A particle with mass is moving past the lab at <strong>{SECTION_A_SPEED}c</strong>. The lab measures its energy and its momentum. A passing observer, who moves past the lab at{' '}
+            <strong>+{SECTION_A_PASSING_SPEED}c</strong> in the same direction, measures them too. What do you think the two observers find for this particle?
+          </p>
+          <p style={{ ...smallNote, marginTop: 0, marginBottom: '0.5rem' }}>Your guess is drawn on the bars in Picture 2, in white.</p>
+          <div>
+            {PREDICTION_CHOICES.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                disabled={locked}
+                onClick={() => setPrediction(choice.value)}
+                className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
+                style={{ display: 'block', textAlign: 'left', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem', cursor: locked ? 'not-allowed' : 'pointer' }}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+          <p style={smallNote}>
+            {prediction === null
+              ? 'Choose an option to continue'
+              : locked
+                ? 'Your prediction is locked while you try other settings. To change it, press Start over.'
+                : `Your prediction: ${guessLabel.slice(0, 3)}. You can still change it until you press Run.`}
+          </p>
+        </div>
+
+        <button type="button" className="action-button" onClick={handleRun} disabled={prediction === null || locked} style={{ padding: '0.6rem 1.5rem' }}>
+          {status === 'running' ? 'Running...' : locked ? 'Run (done)' : 'Run'}
+        </button>
+        <button
+          type="button"
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{ marginLeft: '0.75rem', padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: startOverDisabled ? 'not-allowed' : 'pointer', opacity: startOverDisabled ? 0.5 : 1 }}
+        >
+          Start over
+        </button>
+        {prediction === null && <p style={smallNote}>Choose a prediction above to run the experiment.</p>}
+
+        <p style={pictureTitle}>Picture 1: the map of energy and momentum</p>
+        <Diagram kind="particle" speed={SECTION_A_SPEED} passingSpeed={SECTION_A_PASSING_SPEED} progress={status === 'idle' ? null : progress} />
+        <MapCaption kind="particle" speed={SECTION_A_SPEED} passingSpeed={SECTION_A_PASSING_SPEED} started={status !== 'idle'} done={partOneDone} />
+
+        {status === 'idle' ? (
+          <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '1rem' }}>Picture 2, the bars, and your white guess on them, appear here when you press Run.</p>
+        ) : (
+          <>
+            <p style={pictureTitle}>Picture 2: the bars{prediction !== null ? ', with your guess in white' : ''}</p>
+            <ReadingBars rows={partOneRows} guess={prediction} />
+            <BarsCaption
+              kind="particle"
+              speed={SECTION_A_SPEED}
+              passingSpeed={SECTION_A_PASSING_SPEED}
+              started
+              done={partOneDone}
+              guess={prediction}
+            />
+          </>
+        )}
+
+        {/* ===== Part 2: appears when the first Run has finished ===== */}
+        {partOneDone && (
+          <>
+            <PartHeader color={PART_TWO_COLOR} title="Part 2: Now try it yourself">
+              You choose a different object (a light pulse instead of a particle), a different speed for the particle, or a different speed for the passing observer, and run it again. These
+              choices change the drawings. Your prediction does not. They are trial values for an imagined particle, and they do not say that a real particle is like that.
+            </PartHeader>
+
+            <p style={{ ...smallNote, marginTop: 0, marginBottom: '0.75rem' }}>
+              Your prediction does not change the drawings or the tables. These settings change Drawing A and Drawing B below, and they do not change Part 3's table, which is for Part 1's run.
+            </p>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>What moves past the lab?</label>
+              <div style={{ marginBottom: '1rem' }}>
+                {KIND_CHOICES.map((choice) => (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    disabled={ownStatus === 'running'}
+                    onClick={() => chooseOwn(() => setKind(choice.value))}
+                    className={`toggle-button${kind === choice.value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+
+              {kind === 'particle' && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The particle's speed in the lab</label>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
+                    It is given as a fraction of <strong>c</strong>, the speed of light. The particle moves to the right. 0c means it is at rest in the lab.
+                  </p>
+                  <div>
+                    {PARTICLE_SPEED_PRESETS.map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        disabled={ownStatus === 'running'}
+                        onClick={() => chooseOwn(() => setSpeed(value))}
+                        className={`toggle-button${speed === value ? ' is-selected' : ''}`}
+                        style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                      >
+                        {value === 0 ? '0c (at rest)' : `${value}c`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The passing observer's speed</label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
+                The passing observer moves past the lab, along the same line. A plus sign means they move to the right, and a minus sign to the left. 0c means they are at rest in the lab, like
+                the lab itself.
+              </p>
+              <div>
+                {PASSING_SPEED_PRESETS.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={ownStatus === 'running'}
+                    onClick={() => chooseOwn(() => setPassingSpeed(value))}
+                    className={`toggle-button${passingSpeed === value ? ' is-selected' : ''}`}
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {passingLabel(value)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button type="button" className="action-button" onClick={handleRunOwn} disabled={ownStatus === 'running'} style={{ padding: '0.6rem 1.5rem' }}>
+              {ownStatus === 'running' ? 'Running...' : 'Run these settings'}
+            </button>
+            {!ranLight && (
+              <p style={smallNote}>The tutor's paragraph about light appears after you have run a light pulse here. Choose "A light pulse" and press Run these settings.</p>
+            )}
+
+            {ownStatus === 'idle' ? (
+              <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '1rem' }}>
+                Choose an object and speeds, then press Run these settings. Drawing A (the map) and Drawing B (the bars) appear here.
+              </p>
+            ) : (
               <>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
-                  <strong>The energy ledger</strong>, for the lab's measurement of the particle at {speed}c, in the particle's rest
-                  energies:
-                </p>
-                <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '0.5rem' }}>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>Rest energy (the energy at rest)</td>
-                      <td>1.0000</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>Kinetic energy (the extra energy from moving)</td>
-                      <td>{result.kineticEnergy.toFixed(4)}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>Total energy</td>
-                      <td>{result.lab.energy.toFixed(4)}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>Newton's ½ × (speed)² for comparison</td>
-                      <td>{result.newtonKineticEnergy.toFixed(4)}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div style={pinkFrame}>
+                  <p style={{ ...pictureTitle, color: PART_TWO_COLOR }}>
+                    Drawing A: the map, for your settings ({kind === 'particle' ? `a particle at ${speed}c` : 'a light pulse'}, passing observer at {passingLabel(passingSpeed)})
+                  </p>
+                  <Diagram kind={kind} speed={speed} passingSpeed={passingSpeed} progress={ownProgress} />
+                  <MapCaption kind={kind} speed={speed} passingSpeed={passingSpeed} started done={ownStatus === 'complete'} own />
+                  <p style={{ ...pictureTitle, color: PART_TWO_COLOR }}>Drawing B: the bars, for your settings</p>
+                  <ReadingBars rows={ownRows} />
+                  <BarsCaption kind={kind} speed={speed} passingSpeed={passingSpeed} started done={ownStatus === 'complete'} own guess={null} />
+                </div>
               </>
             )}
-          </div>
+
+            {/* ===== Part 3: the results of Part 1's run ===== */}
+            <PartHeader color={PART_THREE_COLOR} title="Part 3: The results">
+              Here are the numbers behind Part 1's pictures, a check-up of this page against its own physics, and your guess beside the real result. The check-up and the tables never change
+              with your prediction or with the settings you tried in Part 2.
+            </PartHeader>
+            {prediction !== null && <EnergyMomentumResultsTables prediction={prediction} />}
+            <EnergyMomentumSources />
+
+            {/* ===== Part 4: the tutor ===== */}
+            <PartHeader color={PART_FOUR_COLOR} title="Part 4: The tutor">
+              The tutor asks three questions, one at a time: what you saw, how your guess compares with the pictures, and one question about the particle's own observer. Then it goes through
+              your guess and explains. The tutor's questions are not marked.
+            </PartHeader>
+          </>
         )}
       </div>
 
-      {status === 'complete' && prediction !== null && (
-        <EnergyMomentumTutor key={runCount} kind={kind} speed={speed} passingSpeed={passingSpeed} predicted={prediction} onExplained={() => setPartOneExplained(true)} />
+      {partOneDone && prediction !== null && (
+        <EnergyMomentumTutor
+          key={resetCount}
+          kind="particle"
+          speed={SECTION_A_SPEED}
+          passingSpeed={SECTION_A_PASSING_SPEED}
+          predicted={prediction}
+          ranLight={ranLight}
+          onExplained={() => setPartOneExplained(true)}
+        />
       )}
 
       {partTwoShown && (

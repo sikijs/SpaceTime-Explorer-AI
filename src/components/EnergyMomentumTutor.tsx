@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  LHC_PROTON_ENERGY_MEV,
   PROTON_REST_ENERGY_MEV,
   SPEED_OF_LIGHT_METERS_PER_SECOND,
   kineticEnergy,
   lightReading,
   newtonKineticEnergy,
   readingFor,
+  realAnswerFor,
   runInvariantExperiment,
   speedDeficit,
 } from '../physics/energyMomentum'
@@ -19,6 +21,8 @@ interface EnergyMomentumTutorProps {
   speed: number
   passingSpeed: number
   predicted: Prediction
+  // True once the learner has run a light pulse in Part 2; the tutor's paragraph about light appears then.
+  ranLight?: boolean
   // Called once, when the learner reaches the explanation (the last step), so the next part can be shown.
   onExplained?: () => void
 }
@@ -31,15 +35,13 @@ const predictionClauses: Record<Prediction, string> = {
 
 // The speeds used in the explanation's tables of examples (general choices, not the learner's).
 const LEDGER_SPEEDS = [0.3, 0.6, 0.8, 0.9, 0.99]
-// The Large Hadron Collider proton energy used in the real-world paragraph, in MeV (6.5 TeV; spec "Real-World Facts Used").
-const LHC_PROTON_ENERGY_MEV = 6.5e6
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
 // Draft wording for the owner's review (CLAUDE.md §28.1). Follows the Part 1 tutor sequence in the specification:
 // observe, compare with the prediction, one conceptual question, then the explanation and the limits. Every number below
 // comes from the physics model, never typed in by hand.
-export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted, onExplained }: EnergyMomentumTutorProps) {
+export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted, ranLight = false, onExplained }: EnergyMomentumTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -75,9 +77,22 @@ export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted, onEx
 
   const paragraphs: ReactNode[] = []
 
+  // The tutor marks the learner's guess here, and nowhere earlier (the pictures only show it). The real answer is read from the physics module.
+  const realAnswer = realAnswerFor(runInvariantExperiment(kind, speed, passingSpeed))
+  const guessLetter = { same: '(a)', nothing: '(b)', 'one-number': '(c)' }[predicted]
+  const realReason = {
+    same: 'the energies and the momenta were the same for every observer',
+    nothing: 'nothing was agreed',
+    'one-number': 'the last column is the same number for every observer, while the energies and the momenta differ from row to row',
+  }[realAnswer]
+  const guessMark =
+    predicted === realAnswer
+      ? `Your guess was ${guessLetter}, and it was right: ${realReason}.`
+      : `Your guess was ${guessLetter}, and it was not this time: ${realReason}.`
+
   paragraphs.push(
     <>
-      <strong>What the table shows.</strong>{' '}
+      <strong>What the table shows.</strong> {guessMark}{' '}
       {isParticle
         ? `In your run, the lab found an energy of ${f(lab.energy, 4)} and a momentum × c of ${f(lab.momentumTimesC, 4)}. The passing observer found ${f(passing.energy, 4)} and ${f(passing.momentumTimesC, 4)}. Different numbers. But look at the last column. For the lab, ${f(lab.energy, 4)} multiplied by itself is ${f(squareOf(lab.energy), 4)}, and ${f(lab.momentumTimesC, 4)} multiplied by itself is ${f(squareOf(lab.momentumTimesC), 4)}, and ${f(squareOf(lab.energy), 4)} − ${f(squareOf(lab.momentumTimesC), 4)} = ${f(lab.invariant, 4)}. For the passing observer, ${f(squareOf(passing.energy), 4)} − ${f(squareOf(passing.momentumTimesC), 4)} = ${f(passing.invariant, 4)}. The same number. The observer who rides along with the particle finds an energy of 1 and a momentum of 0, and 1 − 0 = 1 as well.`
         : `In your run, the lab found an energy of ${f(lab.energy, 4)} and a momentum × c of ${f(lab.momentumTimesC, 4)}. The passing observer found ${f(passing.energy, 4)} and ${f(passing.momentumTimesC, 4)}. Different numbers. But for the lab, ${f(squareOf(lab.energy), 4)} − ${f(squareOf(lab.momentumTimesC), 4)} = ${f(lab.invariant, 4)}, and for the passing observer, ${f(squareOf(passing.energy), 4)} − ${f(squareOf(passing.momentumTimesC), 4)} = ${f(passing.invariant, 4)}. The same number again: zero.`}
@@ -156,13 +171,19 @@ export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted, onEx
 
   if (isParticle) {
     paragraphs.push(
+      ranLight ? (
       <>
-        <strong>Light.</strong> Try the light pulse next. It has E = momentum × c, so its invariant is zero: it has no mass.
+        <strong>Light.</strong> You ran a light pulse in Part 2. It has E = momentum × c, so its invariant is zero: it has no mass.
         Every observer finds it moving at speed 1, and no observer can ride along with it. Its energy does differ between
         observers, by the factor √((1 − u) ÷ (1 + u)). For example, at u = 0.6 the factor is √(0.4 ÷ 1.6) ={' '}
         {f(lightFactor, 2)}, so that passing observer finds half the lab's energy. A later experiment treats this shift as the
         Doppler effect.
-      </>,
+      </>
+      ) : (
+        <>
+          <strong>Light.</strong> This paragraph appears after you have run a light pulse in Part 2. Choose "A light pulse" there and press Run these settings.
+        </>
+      ),
     )
   }
 
@@ -179,7 +200,7 @@ export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted, onEx
       <>
         <strong>How big is this in the real world.</strong> An electron's rest energy is 0.511 MeV and a proton's is about{' '}
         {f(PROTON_REST_ENERGY_MEV, 0)} MeV. A "MeV" is a unit of energy used for particles: one million electron-volts. At the
-        Large Hadron Collider, protons were accelerated to 6.5 TeV (6.5 million million electron-volts), which is about{' '}
+        Large Hadron Collider, CERN gives each proton beam an energy of 6.8 TeV (6.8 million million electron-volts), which is about{' '}
         {(Math.round(lhcRestEnergies / 100) * 100).toLocaleString('en-US')} times the proton's rest energy. Their speed is below the speed of light by about
         one part in {Math.round(1 / lhcDeficit / 1e7) * 10} million. And one kilogram is worth about{' '}
         {(kilogramJoules / 1e16).toFixed(0)} × 10¹⁶ joules as rest energy.
@@ -213,9 +234,9 @@ export function EnergyMomentumTutor({ kind, speed, passingSpeed, predicted, onEx
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at the table and the pictures. How did the energy and the momentum differ between the observers? Was anything the same?'}
+              'Look at the bars in Picture 2 and the table in Part 3. How did the energy and the momentum differ between the observers? Was anything the same?'}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In this run, the lab found an energy of ${f(lab.energy)} and the passing observer ${f(passing.energy)}; the lab found a momentum × c of ${f(lab.momentumTimesC)} and the passing observer ${f(passing.momentumTimesC)}; and the last column reads ${f(lab.invariant)} for the lab and ${f(passing.invariant)} for the passing observer. Comparing your prediction with the table, what do you notice?`}
+              `You predicted that ${predictionClauses[predicted]}. In this run, the lab found an energy of ${f(lab.energy)} and the passing observer ${f(passing.energy)}; the lab found a momentum × c of ${f(lab.momentumTimesC)} and the passing observer ${f(passing.momentumTimesC)}; and the last column reads ${f(lab.invariant)} for the lab and ${f(passing.invariant)} for the passing observer. Look at the white YOUR GUESS box on the bars in Picture 2, which shows what you chose, and compare it with the three bars of each observer. What do you notice?`}
             {tutorStep === 'conceptual' &&
               (isParticle
                 ? 'The particle’s own observer is riding along with the particle. Why do you think they measure zero momentum? And what is their energy, compared with the lab’s?'
