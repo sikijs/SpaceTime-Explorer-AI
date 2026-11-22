@@ -331,5 +331,15 @@ The caption gives no verdict on whether the bars are equal (§12, §13). It sits
 3. **Signed bars:** the totals are negative in the fixed case (everything moves left for this observer), so the bars run left from a zero line (default). Alternative: draw lengths only.
 4. **The lump-mass guess and the new guess both lock at Run** (default, as the owner asked for "required before Run").
 
+### Checked in Chrome (2026-11-22, `http://localhost:5173`, real 12-second playback)
+- **Gating:** Run is disabled with no guess, still disabled with only the first guess, and enabled once both are chosen. Both guesses lock at Run ("Run (done)"). Start over clears both guesses, disables Run again and hides Parts 3 and 4.
+- **Picture 2's lower panel:** it appears once the passing observer's lump has formed, with its own title and scale, the solid "before" bar (−0.40), the outlined "after" bar (−0.60) and the zero line. Two YOUR GUESS boxes are in the picture (one in Picture 1, one in the lower panel).
+- **Cases looked at:** (c) more than 2m with (b) not the same; (a) less than 2m with (a) the same. "Same" puts the tick where the solid bar ends; "not the same" puts it to the left of the outlined bar; "less than 2m" puts Picture 1's tick left of the end of the grey bar.
+- **Bugs found and fixed (commit `4136f83`):** the YOUR GUESS box clipped "not the same before and after" (the box is now wider); the "before" bar's number was dark on dark and invisible (now purple); the white tick crossed the "After:" label (it now starts lower); one tutor sentence had two colons in a row.
+- **Part 3:** "Your predictions, beside the results" shows both guesses, and two "your guess" tags are on the page ("The lump's mass, M" and "m × (the sum of the speeds)").
+- **Tutor:** all three questions stepped through. The compare question names both white ticks. The explanation marks the first guess in paragraph 1 and the second in paragraph 4, both in the "it was right" case ((c) and (b)) and in the "it was not this time" case ((a) and (a)).
+
 ### Not checked
-The new panel and the whole second-guess flow have not been viewed in a browser; narrow widths and keyboard use not checked; the tutor's explanation is checked from the source text, not by stepping through it; the full flow with the real 12-second playback not run.
+- **Narrow widths:** a real narrow window could not be tested (the window resize did not change the viewport). Forcing the picture to 340 px wide showed nothing clipped, but the picture's text is then drawn at about 65% size (10 px labels near 6.5 px, 12 px near 7.8 px), which would be hard to read on a phone. The older pictures in this chapter use the same label sizes, so this is a chapter-wide layout question for the owner, not changed here.
+- **Not looked at:** the sidebar row below 850 px; keyboard use; other browsers; the other guess pairs ((a) less than 2m with (b) not the same, (b) exactly 2m, and the remaining combinations), beyond the four guesses above; the tutor's "it was right" mark for the second guess with (a) the same (that answer is never the real one in the fixed case, so it only reads "not this time").
+- **Still open from the build:** in Picture 1 the white mass-bar tick crosses the "The two masses added, 2m" label (noted at the earlier build, not changed).

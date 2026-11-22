@@ -212,3 +212,114 @@ Tests: each answer puts its tick on its own side of the before bar; the tick nev
 
 ## Not checked
 Narrow widths, keyboard use and other browsers. The helium process's drawing code was only re-read for text labels. Nothing was committed.
+
+---
+
+## Update of 2026-11-22: a second prediction, about the passing observer; and "Light turns into particles, in more detail"
+
+Requested by the owner: in Part 1, Picture 2 shows a passing observer, but the prediction offered no choice about that observer. The owner approved the question, its two choices and "required before Run". Status: **built, wording for the owner's approval (CLAUDE.md §28.1).** Built one step at a time: physics and tests; the two prediction blocks and Run; the lower panel of Picture 2 with its caption and the introduction lines; Part 3; the tutor. The same fix was made in Section B (see `05-draft-wording-section-b.md`, "Update of 2026-11-22").
+
+### A. The second prediction (wording as built; approved by the owner on 2026-11-22)
+
+> **Make a prediction (2 of 2): the passing observer.** Now think about Picture 2. The passing observer measures each piece's energy and momentum for themselves, so their numbers differ from the lab's. They work out the mass of the whole system from their own total energy and total momentum, with the formula from Section B: M = √(E_total² − (P_total c)²). They do this once before the particle and its antiparticle meet, and once after. Is the mass of the whole system the same before and after, for this observer?
+> - (a) The same before and after.
+> - (b) Not the same before and after.
+
+- The first prediction is retitled "Make a prediction (1 of 2): the total of the separate masses". **Run stays disabled until both are chosen**; the note reads "Choose both predictions above to run the experiment." The Run button reads "Run (lab view, then passing observer)" before it is pressed.
+- Both guesses lock together at Run and Start over clears both (enabled as soon as either guess is chosen).
+- **"What Run will show"** (new paragraph under the first question): "Pressing Run plays this one meeting twice. **Picture 1** is the lab's view, where the particle and its antiparticle move toward each other at 0.6c. **Picture 2** is the same meeting as a **passing observer** sees it: a second person who moves steadily past the lab, along the same line, at +0.3c to the right (think of someone watching the same meeting from a train that is passing by). You make two predictions before you press Run: the first is about the total of the separate masses, and the second is about what the passing observer finds for the mass of the whole system. You will see both pictures."
+- Nothing says whether the two system masses are equal (§12).
+
+### B. Introduction lines changed
+
+- **"What you will do"** (end of "The question"): adds "You are also asked what a passing observer finds for the mass of the whole system."
+- **Picture 2 bullet under "What happens":** adds "Under it, a lower panel works out the mass of the whole system for this observer, before and after the reaction, as two bars on their own scale."
+- **"Your job":** "...You make two predictions: choose one of the three answers about the total of the separate masses, and one of the two answers about the passing observer. Both must be chosen before you can press Run. You are not graded. **Your predictions never change the pictures or the tables.** They come from the physics. Your first guess is drawn on the mass ledger in white, and your second on the passing observer's system mass, each with a box labelled YOUR GUESS, and both are shown again beside the results. After your first run, Part 2 lets you try other processes and settings. Those choices *do* change the drawings, but not your predictions. If you want to change your predictions, press Start over."
+- **Part 1 lead:** "You will predict how the total of the masses of the pieces compares before and after a particle and its antiparticle meet, then guess what the passing observer finds for the mass of the whole system, press Run and watch the meeting from two points of view. Your guesses are drawn on the real bars in white. They never change them."
+- **Note under the picture before Run:** "Picture 2, the passing observer's view, the mass ledger, and your two white guesses (one on the mass ledger, one on the passing observer's system mass), appear in this picture when you press Run."
+
+### C. The second guess marker (Rule A; a lower panel of Picture 2)
+
+The question lives in the passing observer's system mass, which had no picture, so it gets its own panel under Picture 2, on its own scale and with its own title: **"Picture 2, lower panel: the passing observer's mass of the whole system"** (subtitle: "Their own scale (in rest energies). A longer bar is a bigger mass."). The picture is taller in Part 1 only; Part 2's drawings are unchanged.
+
+| What | How it is drawn |
+|---|---|
+| Dashed line "zero" | A mass of zero; the bars start from it |
+| Solid purple bar, "Before: the mass of the whole system" | The mass this observer finds before the reaction, with its number (2.50 in the fixed case) |
+| Outlined purple bar, "After: the mass of the whole system" | The mass after the reaction, with its number (2.50) |
+| (a) The same before and after | White tick **on the "after" bar at the place where the solid bar ends**, box "the same before and after" |
+| (b) Not the same before and after | White tick **at half that length**, box "not the same before and after" |
+
+- Drawn only once the passing observer's pieces after the reaction are drawn (same moment for the drawing and the caption); before then the picture says "The two masses are drawn here once their pieces after the reaction are drawn."
+- Thick tick, joined by a line to a large YOUR GUESS box; guess only, never "right", "wrong" or "matched"; each tick is **only a marker** (a yes or no has no size of its own) and the caption says so. Solid and outlined bars make the two quantities to compare visibly distinct.
+- Every number comes from the physics module (`passingSystemMassOf`, `passingSystemMassGuessMarker`).
+
+### D. Caption of the lower panel (wording as built; appears only once the panel is drawn)
+
+> **Picture 2, lower panel: the passing observer's mass of the whole system.** It appears under the purple picture once the passing observer's pieces after the reaction are drawn. It has its own scale, so its bars cannot be compared with the mass ledger in Picture 1. It asks the question of your second prediction.
+> - **The dashed line, "zero".** A mass of zero. The bars start from it, and a longer bar means a bigger mass.
+> - **The solid purple bar.** The mass of the whole system *before* the reaction, as this observer works it out from their own total energy and total momentum × c, with the formula M = √(E_total² − (P_total c)²) from Section B.
+> - **The outlined purple bar.** The same mass *after* the reaction. It is outlined instead of solid so that the two can be told apart.
+> - **The numbers beside the bars.** Each mass in rest energies, one rest energy being the rest energy of one particle.
+> - **The white tick and the YOUR GUESS box** (once a guess is chosen). This is the answer you chose to the second prediction, drawn across the outlined bar. It is **only a marker**: it has no size of its own. If you chose "the same", it sits where the solid bar ends. If you chose "not the same", it sits at half that length. It does not change either bar.
+>
+> **What to look for in the lower panel** (Look at / What it means / Why it matters, with the real numbers from the module):
+> 1. **Look at** the solid bar. **What it means:** the mass this observer works out from their own total energy (2.62) and total momentum × c (−0.79) before the reaction: the square root of 2.62² − (−0.79)², which is 2.50. **Why it matters:** it is the "before" side of the question of your second prediction, using only their own numbers.
+> 2. **Look at** the outlined bar. **What it means:** the same calculation after the reaction, with their total energy and total momentum × c after it: 2.50. **Why it matters:** setting its length beside the solid bar answers the question of your second prediction. The page does not say whether they are equal.
+>
+> **Where the real picture comes from.** *Calculated here:* both masses, from the passing observer's total energy and total momentum (found by the rule of Section A) and the formula of Section B. *Measured:* nothing on this page. *Imagined for the question:* the particles and the observer.
+
+No verdict on whether the bars are equal (§12, §13).
+
+### E. Part 3 (wording as built)
+
+- The block is now "Your predictions, beside the results", with "**Your first guess:**" (its "Where its numbers appear" now names its row: the row "Sum of the rest masses" in the first table, tagged "your guess", and the first two bars of the mass ledger) and a new paragraph: "**Your second guess:** *(its label)* **The question it was about:** when the passing observer works out the mass of the whole system from their own total energy and total momentum, is it the same before and after the reaction? **Where its numbers appear:** the row "The system's mass, found by the passing observer" in the table "The system's mass", which is tagged "your guess", and the white tick on the outlined bar in the lower panel of Picture 2. It shows only what you chose."
+- A "your guess" tag now sits on the row "The system's mass, found by the passing observer" as well as on "Sum of the rest masses".
+- The opening note and the Part 3 lead say "predictions" and "your two guesses". No table number changes.
+
+### F. Part 4, the tutor (wording as built)
+
+- **Compare** (extended; still three questions): "... What do you notice? Then look at the white tick on the outlined bar in the lower panel of Picture 2. You predicted that *(the passing observer would find the mass of the whole system the same / not the same before and after)*. How does that guess compare with the two purple bars?" Not marked here. (As before, this step already states the real numbers of both totals, in the same sentence as for the first guess.)
+- **Explanation, paragraph "A system of lights has mass":** now opens with the mark for the second guess, the only place it is marked: "Your second guess was (a), and it was right: the passing observer found a system mass of 2.500 before and 2.500 after, which is the same." or "... it was not this time: ...". Same phrasing as the first guess ("right / not this time", decision 3).
+
+### G. Physics-module additions (all in `energyMomentum.ts`; no existing physics changed)
+
+- `PassingSystemMassGuess` (`'same' | 'different'`), `PassingSystemMassGuessMarker`.
+- `passingSystemMassOf(result)`: the system mass the passing observer finds before and after (2.5 and 2.5 in the fixed case, equal to the lab's).
+- `passingSystemMassGuessMarker(guess, result)`: "same" at the real "before" mass, "different" at half of it; labels start "YOUR GUESS". Depends on the guess and on the "before" mass only, so it never changes a real value.
+- `realPassingSystemMassAnswerFor(result)`: "same" if the two masses agree within the relative tolerance used by the check-up, else "different". Used by the tutor to mark the guess.
+- Tests C14 to C17 (physics): "same" for the fixed case, every annihilation preset and passing speeds from −0.6c to +0.6c; a changed system mass would read "different"; tick positions and labels; a marker call does not change the result. Render tests in `EnergyMomentumSectionC.test.tsx`: the milestones, panel timing, numbers and label from the module, two tick positions, no panel in Part 2's drawings, the caption, the first screen, Part 3's second guess and tag, and the tutor's prompt and marking.
+
+### H. "Light turns into particles, in more detail" (wording as built; owner-approved on 2026-11-22)
+
+A collapsed panel under the three situation bullets in "The question", with the owner's approved text: the short idea; (1) energy and mass are two forms of the same thing (dollars and euros, rate c²); (2) why it costs so much (electron rest energy 0.511 MeV, a pair 1.022 MeV, visible light about 2 or 3 eV, several hundred thousand times too weak); (3) why a pair, not one particle (charge conservation, −1 + 1 = 0); (4) how much energy, in the experiment's units (a four-row table: each beam less than 1, exactly 1, 2 and 5; at 2 the pair flies off at √(1 − 1/2²) = 0.866c, at 5 at 0.980c); (5) is it real (Fermi's tungsten converter, the atmospheric shower, SLAC E144's light-hits-light route, the reverse used by PET scans); (6) what the experiment shows and does not show.
+
+- **Deliberately left out of the page:** why one beam alone cannot make a pair (it uses the finding that the system's mass is conserved, which would give away a Part 3 result, §12; it stays in the tutor); how the sum of the separate masses changes; the 1932 positron discovery (no source read); a "needs a nearby nucleus" remark (as decision 4).
+- **The 1.022 MeV and 0.511 MeV figures** are stated as what this section's rules give, not as a sourced fact (no plain official page that gives the minimum energy was read).
+- **New links** (added to "Want to know more?"; fetched and read on 2026-11-22):
+
+| Link | What the learner finds | Status |
+|---|---|---|
+| NASA, "Fermi Gamma-Ray Space Telescope Learning Center: Large Area Telescope" (imagine.gsfc.nasa.gov/observatories/learning/fermi/mission/lat.html) | Plain page: a gamma ray hits a layer of tungsten and creates an electron and positron pair; tracking the pair gives the gamma ray's direction and energy | **Read, 2026-11-22.** Page last updated 11 Dec 2018. No threshold, no nucleus, no "the light disappears" on the page |
+| NASA, "Gamma-ray Detectors: More Information" (imagine.gsfc.nasa.gov/observatories/technology/gammaray_detectors2.html) | Marked "Advanced", harder: how telescopes use pair production; the air shower in the atmosphere | **Read, 2026-11-22.** Text updated September 2018. No threshold, no nucleus |
+| SLAC, "Experiment E144 Home Page" (slac.stanford.edu/exp/e144/e144.html) | The experiment's own page, popular style: an electron hits a laser beam and makes a gamma ray, which hits four or more laser photons and makes a pair | **Read, 2026-11-22.** Last modified 17 Jan 1998. Its route is not the page's simple two-beam picture (said in the link text). No positron count or journal reference on the page |
+
+- **Gaps (§29 rule 3(c)), searched 2026-11-22:** no plain official page was read that gives the minimum energy for pair creation. Candidates that could not be read are **not linked**: Symmetry magazine, "E=mc²" (Cloudflare error, "Edge IP Restricted"); Fermilab, "Inquiring Minds: E=mc²" (403; the browser tool also refused to read the domain); APS News, "Discovery of the Positron" (403, then a bot check, which was not bypassed); the Nobel Prize page on Carl Anderson (403; page reading refused). The SLAC report SLAC-R-678 is a scanned PDF with no readable text, so the original paper for E144 was not read and its citation is not stated.
+
+### I. Decisions and notes for the owner
+
+1. **Question chosen:** the passing observer's system mass, same or not, recommended and approved. **Choices:** two, approved. (Alternative: a three-way "less after / the same / more after".)
+2. **Marker offset:** "not the same" at half the "before" mass (default). Alternative: a distance that is a fixed amount.
+3. **Both guesses lock at Run** (default, as the owner asked for "required before Run").
+4. **Old question in the guess block:** the first guess's "where its numbers appear" now names its row, because the page has two tagged rows.
+
+### Checked in Chrome (2026-11-22, `http://localhost:5173`, real 12-second playback)
+- **Gating:** Run disabled with no guess, still disabled with one, enabled with both; both lock at Run ("Run (done)"). Start over clears both guesses, disables Run, hides Parts 2 to 4 and removes the lower panel.
+- **Lower panel:** appears once the passing observer's pieces after the reaction are drawn; solid "before" bar 2.50, outlined "after" bar 2.50; two YOUR GUESS boxes in the picture. Cases looked at: (c) more with (b) not the same (tick at half length, box fits); (a) less with (a) the same (tick exactly at the end of the solid bar).
+- **Part 3:** both guesses shown, exactly two "your guess" tags, one on "Sum of the rest masses" and one on "The system's mass, found by the passing observer".
+- **Tutor:** all three questions stepped through; the compare prompt names both ticks; the explanation marks the first guess ("Your guess.") and the second ("A system of lights has mass.") in both the "right" case ((a) and (a)) and the "not this time" case ((c) and (b)).
+- **The "Light turns into particles, in more detail" panel:** collapsed by default, opens, shows the table and the three new links (each opens in a new tab; the pages were not opened from the page).
+
+### Not checked
+A real narrow window (the window resize did not change the viewport; the Section B note describes forcing a picture to 340 px, where the text becomes small, a chapter-wide question); the sidebar row below 850 px; keyboard use; other browsers; the remaining guess pairs ((b) exactly the same, (a) less with (b), (c) with (a)); the three links were not opened from the page; no commit had been made when this note was written.
+
