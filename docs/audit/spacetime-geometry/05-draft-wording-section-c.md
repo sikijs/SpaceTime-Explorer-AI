@@ -321,5 +321,8 @@ A collapsed panel under the three situation bullets in "The question", with the 
 - **The "Light turns into particles, in more detail" panel:** collapsed by default, opens, shows the table and the three new links (each opens in a new tab; the pages were not opened from the page).
 
 ### Not checked
-A real narrow window (the window resize did not change the viewport; the Section B note describes forcing a picture to 340 px, where the text becomes small, a chapter-wide question); the sidebar row below 850 px; keyboard use; other browsers; the remaining guess pairs ((b) exactly the same, (a) less with (b), (c) with (a)); the three links were not opened from the page; no commit had been made when this note was written.
+A real narrow window (the window resize did not change the viewport; the Section B note describes forcing a picture to 340 px, where the text becomes small, a chapter-wide question); the sidebar row below 850 px; keyboard use; other browsers; the three links were not opened from the page. All six guess pairs were checked (see below).
+
+### All six guess pairs, Section C
+**All guess pairs checked in Chrome (2026-11-22, scripted, real 12-second playback):** in each section, every one of the three first guesses was run with each of the two second guesses (six pairs per section; the two pairs looked at by hand earlier plus the four scripted). For each pair: Run was disabled with no guess and with one, and enabled with both; Run read "Run (done)" afterwards; two YOUR GUESS boxes with the chosen labels; the second tick sat at the end of the solid bar for "the same" and away from it for "not the same" (Section B: x = 175 and 55; Section C: x = 340 and 190); two "your guess" tags on the page for each section; and the tutor's explanation marked each guess correctly (Section B: first guess right only for "more", second right only for "not the same"; Section C: first right only for "less", second right only for "the same").
 
