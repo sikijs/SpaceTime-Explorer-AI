@@ -54,3 +54,64 @@ Files: EnergyMomentumExperiment.tsx, EnergyMomentumCollision.tsx, EnergyMomentum
 
 ## Not checked
 Browser rendering; narrow widths; keyboard; other browsers; the CollisionDiagram and ReactionDiagram drawing code (lines 124-400 of the Collision file and 244-495 of the Reactions file) was only skimmed for text labels; the three tutors' explanation paragraphs were not read in full; the "Words and formulas" entries for Parts 2 and 3; the specification's source table and the helium published value; test bodies beyond titles.
+
+---
+
+## Re-read on 2026-11-21 (against every rule now in CLAUDE.md §14, not only Rules A to C)
+
+The three components, the physics module and the tutors have not changed since the owner's wording approval (last code commits: `909f440` and `687862b`, Experiment 6's work; `dd5de61` recorded Experiment 5 as built). The first report was written before the owner's later rules, so these were checked now by reading the code:
+
+| Rule | Result | Evidence |
+|---|---|---|
+| **E. The page in four Parts** (2026-11-02) | Not met | No Part headings, coloured lines or "What we are about to do" leads. The page is one column with three sections of its own, headed "Part 1 — Energy and momentum...", "Part 2 — A collision..." and "Part 3 — Reactions..." (`EnergyMomentumExperiment.tsx:502`, `EnergyMomentumCollision.tsx:551`, `EnergyMomentumReactions.tsx:674`). These names clash with the four Parts of the layout. |
+| **Parts 2 to 4 appear after the first Run** (2026-11-07) | Not met, and the gating is different in kind | Within each section the controls, the guess, Run, the pictures, the results and the tutor are one flow. Between sections, the next section appears only after the previous tutor's explanation (`partTwoShown = partOneExplained || skipped...`, `Experiment.tsx:448-449`), or by a "Skip to Part 2 / 3" link (`:509-521`). |
+| **Controls come after the first Run** (Exp. 3 and 4 pattern) | Not met | The learner picks the object, its speed and the passing observer's speed *before* predicting (`Experiment.tsx:~700-760`); Part 2 picks the passing speed and speed before predicting; Part 3 picks the process and its setting before predicting. A change of any control clears the guess in Part 3 (`Reactions.tsx:897, :925`) and returns the run to idle in all three. |
+| **Links on every page** ("Want to know more?") | Not met | No `href` in any of the three components. |
+| **"Words and formulas" box and "Some new words"** | Partly met | The box exists (`Experiment.tsx:369-412`) and grows as sections open; each section has a "Some new words" passage (`Collision.tsx:601`, `Reactions.tsx:741`; Part 1's words are inside its stages). It lists the formulas from the start, and several of them (the invariant, the mass formula) are given before the predictions, which the checklist says to withhold where they give the answer (see C7 above). |
+| **Start over, not Change prediction** (2026-11-07) | Not met | No Start over button. A learner "changes the prediction" by clicking another answer at any time, even after Run, and the click returns the run to idle (`setPrediction(...); returnToIdle()`, `Experiment.tsx:751-752`, `Collision.tsx:711-712`, `Reactions.tsx:974`). The guess is never locked. |
+| **Prediction locked after Run, with a note** | Not met | As above. |
+| **Run button** | Met | One Run button per section, disabled until a guess is chosen and while running (`Experiment.tsx:776`, `Collision.tsx:736`, `Reactions.tsx:999`). |
+| **Completion marks** | Note | `onComplete` and `onTutorComplete` fire only at the end of Part 3's run and tutor (`Experiment.tsx:426-427`). Any restructuring has to keep this or the owner must say how it should work. |
+
+### The structural problem (Rule E5: reported, not decided)
+
+This experiment is three experiments in one chapter: three questions, three sets of controls, three runs, three tutors, 4,400 lines. Rule E5 says to report how its own parts map onto the four Parts and not to decide. Two things make the mapping hard:
+
+- The **names collide**: "Part 1" would mean both the experiment's first section and the layout's "Predict, then watch".
+- The **gating differs**: the experiment's own Parts open one after another (tutor explanation or skip link), while the rule says a layout Part must never hide behind several runs, choices or extra steps.
+
+### Questions for the owner (recommended default first; "all defaults" is a valid answer)
+
+1. **How the three sections map onto the four Parts.** Default: keep one chapter, and give **each of the three sections its own four Parts** (Predict, then watch / Now try it yourself / The results / The tutor), stacked under a short heading for the section. To avoid the name clash, the sections are called **Section A (energy and momentum), Section B (a collision) and Section C (reactions)** instead of "Part 1/2/3", and the introduction, tutors and cross-references are updated to match. Alternative 1: split into three sidebar chapters (changes `App.tsx`, the numbering, the group recap, the "What's next" lines and the learner's chapter count; the largest change). Alternative 2: keep "Part 1/2/3" and use "Step 1 to 4" for the layout (not recommended: the four Parts have fixed names and colours).
+2. **Gating between sections.** Default: keep it. Section B opens when the learner finishes Section A's tutor (or uses the skip link), and C likewise, because B uses A's ideas and C uses B's. Inside each section, Parts 2 to 4 appear after the first Run. Alternative: show all three sections from the start.
+3. **Each section's fixed Part 1 case and the controls in Part 2.** The controls come after the first Run, as in Experiments 3 and 4. Default: Section A is fixed on **a particle at 0.6c with a passing observer at 0.3c** (the page's present starting choice); Section B on **two lumps at 0.6c each, passing observer at 0.3c** (present starting choice); Section C on **a particle and its antiparticle meeting** (present starting process). Part 2 of each section holds the present controls, with the pictures and tables for the learner's own choice. Alternative: other fixed cases.
+4. **Where each guess lives (Rule A).** Defaults: **A**, a white YOUR GUESS box on the third bar (E² − (pc)²) of the two observers' bars, or a white marker for "same / different / some number agreed on" beside the three-bar picture (only a marker); **B**, a white tick on a scale beside the grey 2m bar and the blue M bar ("less / exactly / more" than 2m); **C**, a white tick on the "before" and "after" mass bars of the mass ledger. Each answer is "less / same / more" or "same / different", so each mark is a marker and the caption says so.
+5. **What the introductions may say before the predictions (§12).** The checklist's C7 flagged all three (the worked 0.5c calculation of 1.155² − 0.577² = 1.000 and the "same move as in Experiment 1" hint in A; "not simply the masses added together" in B; "it is not the sum of the pieces' masses" in C). Default: move each of those lines, with the formulas that give them away, out of the introduction and the pre-run words box and into the section's tutor after its run. Alternative: keep them as approved.
+6. **Results (Rule B).** Defaults: **a check-up** for each section from references that already exist: A, E² − (pc)² is 1 for a particle and 0 for light (the same physics); B, totals of energy and momentum unchanged for each observer and M above 2m; C, totals unchanged and, for helium, the mass defect against the accepted binding energy of 28.3 MeV (needs a published source found and read first). A "What this table tells us" note under each of the roughly 11 tables, and the guess shown beside the results with a tag. No tables for the controls. Alternative: a check-up only, or notes only on the main tables.
+7. **Links.** Default: search for plain pages from NASA, CERN or a similar official source for energy and momentum, particle and antiparticle annihilation, and nuclear fusion in the Sun, and for original sources of the helium mass and the LHC energy used in the tutor; read each before approving; record §29 rule 3(c) gaps where none are found. The page's unsourced claims (the LHC 6.5 TeV, the Sun's "0.7 percent" and "600 million tonnes") get a source or are reworded (O2 above).
+8. **Tutors.** Default: the observe and compare prompts name the white marks; each explanation marks the guess; the "turned into" wording of Section C is reviewed (O2a).
+9. **Captions and labels.** Default: one caption under each picture (today there is one per section), every "what to look for" item rewritten as Look at / What it means / Why it matters and drawn only once its feature is drawn, a "Where the real picture comes from" line under each picture with a mark (calculated here; for helium, the measured masses), and the yellow collision ring checked for an on-canvas label.
+10. **Pace.** This is larger than any experiment audited so far (three questions, three tutors, about 11 tables). Default: audit it **one section at a time**, A first, with a stop and your approval after each, and the layout decision (question 1) applied to all three from the start. Alternative: all three together.
+
+**Size:** Large, now larger than the first report said, because Rule E, the Start over and locking rules, the "controls after the first Run" pattern, the links and the structure question were not in it.
+
+### Not checked in this re-read
+The two diagram drawings (`CollisionDiagram`, `ReactionDiagram`) beyond their text labels; the tutors' explanation paragraphs; the "Words and formulas" entries for Sections B and C; the specification's source table; the browser, narrow widths and keyboard. Nothing was run, and no code, test or wording was changed.
+
+---
+
+## Done on 2026-11-21
+
+All ten questions were answered "all defaults" and the three sections were built one after another: Section A (`05-draft-wording.md`), Section B (`05-draft-wording-section-b.md`) and Section C (`05-draft-wording-section-c.md`). Rules A, B and E, the "Parts 2 to 4 appear after the first Run" rule, the Links and Words rule, and the Start over rule are now met in all three sections. Open items are listed under "Audit Update (2026-11-21)" in the specification.
+
+---
+
+## Done on 2026-11-22
+
+Two changes at the owner's request, outside the original ten questions:
+
+1. **A second prediction in Section B, about the passing observer.** Finding: Picture 2 (the passing observer) carried no prediction, so the learner had nothing to guess about it, and Section B's choices and Run button said nothing about a moving observer. Done: the Run button and a "What Run will show" paragraph now name both pictures; a second required prediction (the same / not the same, the everyday mass × speed total for the passing observer) is drawn as a lower panel of Picture 2, shown beside the results and marked by the tutor (Rule A, Rule B, Rule C each met for the new guess). Both guesses lock at Run and clear at Start over. New tested physics: `everydayTotalGuessMarker`, `realEverydayTotalAnswerFor` (tests B9 to B12 and render tests).
+2. **Plain-language elaboration** of Section B's "Why a collision" and Section C's "The question", with everyday examples. Neither reveals a prediction's answer.
+
+Wording as built: `05-draft-wording-section-b.md` ("Update of 2026-11-22") and `05-draft-wording-section-c.md` (1b); the specification's "Audit Update (2026-11-21)" has a matching 2026-11-22 entry. **Not checked:** the new panel and the second-guess flow in a browser, narrow widths, keyboard use, and the tutor's explanation by stepping through it (checked from the source text only). No commit has been made.
+
