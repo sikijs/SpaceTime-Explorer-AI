@@ -126,7 +126,7 @@ export function EnergyMomentumCollisionTutor({ speed, passingSpeed, predicted, e
   const everydayReason =
     realEveryday === 'same'
       ? `the everyday total was the same before and after, ${f(result.newtonMomentumBefore)} m and ${f(result.newtonMomentumAfter)} m`
-      : `the everyday total was not the same: ${f(result.newtonMomentumBefore)} m before and ${f(result.newtonMomentumAfter)} m after`
+      : `the everyday total was not the same, ${f(result.newtonMomentumBefore)} m before and ${f(result.newtonMomentumAfter)} m after`
   const everydayMark =
     everydayPredicted === realEveryday
       ? `Your second guess was ${everydayLetter}, and it was right: ${everydayReason}.`

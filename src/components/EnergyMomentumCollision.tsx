@@ -453,7 +453,7 @@ export function CollisionDiagram({ speed, passingSpeed, progress, own = false, g
                     fontSize="10"
                     fontWeight="bold"
                     textAnchor={bar.value < 0 ? 'start' : 'end'}
-                    fill={bar.fill ? '#0b1020' : PASSING_COLOR}
+                    fill={PASSING_COLOR}
                   >
                     {signed(bar.value)}
                   </text>
@@ -464,16 +464,16 @@ export function CollisionDiagram({ speed, passingSpeed, progress, own = false, g
                   {(() => {
                     const marker = everydayTotalGuessMarker(everydayGuess, result)
                     const tickX = TOTALS_ZERO_X + marker.afterPosition * TOTALS_PIXELS_PER_UNIT
-                    const boxX = Math.min(Math.max(tickX - 85, 10), VIEW_WIDTH - 180)
+                    const boxX = Math.min(Math.max(tickX - 115, 10), VIEW_WIDTH - 240)
                     return (
                       <g>
-                        <line x1={tickX} y1={TOTALS_TOP_Y + 84} x2={tickX} y2={TOTALS_TOP_Y + 114} stroke={GUESS_COLOR} strokeWidth="4" />
-                        <line x1={tickX} y1={TOTALS_TOP_Y + 114} x2={boxX + 85} y2={TOTALS_TOP_Y + 134} stroke={GUESS_COLOR} strokeWidth="2" />
-                        <rect x={boxX} y={TOTALS_TOP_Y + 134} width="170" height="54" rx="6" fill="#0b1020" stroke={GUESS_COLOR} strokeWidth="3" />
-                        <text x={boxX + 85} y={TOTALS_TOP_Y + 156} textAnchor="middle" fontSize="16" fontWeight="bold" fill={GUESS_COLOR}>
+                        <line x1={tickX} y1={TOTALS_TOP_Y + 90} x2={tickX} y2={TOTALS_TOP_Y + 114} stroke={GUESS_COLOR} strokeWidth="4" />
+                        <line x1={tickX} y1={TOTALS_TOP_Y + 114} x2={boxX + 115} y2={TOTALS_TOP_Y + 134} stroke={GUESS_COLOR} strokeWidth="2" />
+                        <rect x={boxX} y={TOTALS_TOP_Y + 134} width="230" height="54" rx="6" fill="#0b1020" stroke={GUESS_COLOR} strokeWidth="3" />
+                        <text x={boxX + 115} y={TOTALS_TOP_Y + 156} textAnchor="middle" fontSize="16" fontWeight="bold" fill={GUESS_COLOR}>
                           YOUR GUESS
                         </text>
-                        <text x={boxX + 85} y={TOTALS_TOP_Y + 172} textAnchor="middle" fontSize="12" fill={GUESS_COLOR}>
+                        <text x={boxX + 115} y={TOTALS_TOP_Y + 172} textAnchor="middle" fontSize="12" fill={GUESS_COLOR}>
                           {marker.label.replace('YOUR GUESS: ', '')}
                         </text>
                       </g>
