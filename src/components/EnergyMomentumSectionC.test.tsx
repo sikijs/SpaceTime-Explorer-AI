@@ -1,7 +1,16 @@
 import { createElement } from 'react'
+import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { SECTION_C_PASSING_SPEED, SECTION_C_SPEED, reactionCheckUpRows, reactionGuessMarker, runReactionExperiment } from '../physics/energyMomentum'
+import {
+  SECTION_C_PASSING_SPEED,
+  SECTION_C_SPEED,
+  passingSystemMassGuessMarker,
+  passingSystemMassOf,
+  reactionCheckUpRows,
+  reactionGuessMarker,
+  runReactionExperiment,
+} from '../physics/energyMomentum'
 import {
   EnergyMomentumReactions,
   PART_THREE_REFERENCE_ENTRIES,
@@ -9,6 +18,7 @@ import {
   ReactionDiagram,
   ReactionLinks,
   ReactionResults,
+  reactionMilestones,
 } from './EnergyMomentumReactions'
 import { EnergyMomentumReactionsTutor } from './EnergyMomentumReactionsTutor'
 
@@ -18,7 +28,8 @@ import { EnergyMomentumReactionsTutor } from './EnergyMomentumReactionsTutor'
 const GUESSES = ['less', 'same', 'more'] as const
 const diagram = (guess: (typeof GUESSES)[number] | null, progress = 1, kind: 'annihilation' | 'pair-creation' | 'helium-binding' = 'annihilation', setting = SECTION_C_SPEED, own = false) =>
   renderToStaticMarkup(createElement(ReactionDiagram, { kind, setting, passingSpeed: SECTION_C_PASSING_SPEED, progress, guess, own }))
-const results = (guess: (typeof GUESSES)[number], heliumRun = false) => renderToStaticMarkup(createElement(ReactionResults, { prediction: guess, heliumRun }))
+const results = (guess: (typeof GUESSES)[number], heliumRun = false, systemMassGuess: 'same' | 'different' = 'same') =>
+  renderToStaticMarkup(createElement(ReactionResults, { prediction: guess, systemMassGuess, heliumRun }))
 
 describe('Section C: the first screen, before any Run', () => {
   const html = renderToStaticMarkup(createElement(EnergyMomentumReactions))
@@ -42,7 +53,7 @@ describe('Section C: the first screen, before any Run', () => {
   })
 
   it('tells the learner the predictions never change the pictures or the tables', () => {
-    expect(html).toContain('Your prediction never changes the pictures or the tables.')
+    expect(html).toContain('Your predictions never change the pictures or the tables.')
     expect(html).toContain('YOUR GUESS')
   })
 
@@ -156,7 +167,7 @@ describe('the captions', () => {
   it('gives every look-for item in three parts and a "Where the real picture comes from" line', () => {
     const done = caption(1)
     const items = (done.match(/Look at:/g) ?? []).length
-    expect(items).toBe(6)
+    expect(items).toBe(8) // 3 + 3 for Pictures 1 and 2, and 2 for Picture 2's lower panel
     expect((done.match(/What it means:/g) ?? []).length).toBe(items)
     expect((done.match(/Why it matters:/g) ?? []).length).toBe(items)
     expect(done).toContain('Where the real picture comes from')
@@ -200,14 +211,25 @@ describe('Part 3: the results', () => {
     expect((html.match(/Why it matters:/g) ?? []).length).toBe(5)
   })
 
-  it('shows the guess beside the results with one tag, and never marks it', () => {
+  it('shows both guesses beside the results with one tag each (on its own row), and never marks them', () => {
     for (const guess of GUESSES) {
       const html = results(guess)
-      expect((html.match(/your guess<\/span>/g) ?? []).length).toBe(1)
-      const block = html.slice(html.indexOf('Your prediction, beside the results'), html.indexOf('Now that you have run it')).toLowerCase()
+      expect((html.match(/your guess<\/span>/g) ?? []).length).toBe(2)
+      const block = html.slice(html.indexOf('Your predictions, beside the results'), html.indexOf('Now that you have run it')).toLowerCase()
       expect(block).toContain('it shows only what you chose')
       expect(block).not.toMatch(/\bright\b|\bwrong\b|matched/)
     }
+  })
+
+  it('names the second guess, its label and its row, and the tables do not depend on it', () => {
+    for (const second of ['same', 'different'] as const) {
+      const html = results('less', false, second)
+      expect(html).toContain('Your second guess:')
+      expect(html).toContain(second === 'same' ? 'The same before and after.' : 'Not the same before and after.')
+      expect(html).toContain("The system&#x27;s mass, found by the passing observer<span")
+    }
+    const strip = (html: string) => html.replace(/<div[^>]*>\s*<p[^>]*>Your predictions, beside the results[\s\S]*?<\/p><\/div>/, '')
+    expect(strip(results('less', false, 'same'))).toBe(strip(results('less', false, 'different')))
   })
 
   it('shows the same real numbers for every guess', () => {
@@ -235,10 +257,93 @@ describe('Part 3: the results', () => {
 })
 
 describe('Part 4: the tutor', () => {
-  const tutor = renderToStaticMarkup(createElement(EnergyMomentumReactionsTutor, { kind: 'annihilation', setting: SECTION_C_SPEED, passingSpeed: SECTION_C_PASSING_SPEED, predicted: 'less' }))
+  const tutor = renderToStaticMarkup(createElement(EnergyMomentumReactionsTutor, { kind: 'annihilation', setting: SECTION_C_SPEED, passingSpeed: SECTION_C_PASSING_SPEED, predicted: 'less', systemMassPredicted: 'same' }))
 
   it('starts with the observe question naming Picture 1 and Part 3, and does not mark the guess yet', () => {
     expect(tutor).toContain('Look at the mass ledger in Picture 1 and at the tables in Part 3')
     expect(tutor.toLowerCase()).not.toMatch(/\bright\b|\bwrong\b/)
+  })
+
+  it('points to the second white tick by name in the compare prompt, and marks the second guess only in the explanation, from the physics module', () => {
+    const source = readFileSync(new URL('./EnergyMomentumReactionsTutor.tsx', import.meta.url), 'utf8')
+    expect(source).toContain('Then look at the white tick on the outlined bar in the lower panel of Picture 2.')
+    expect(source).toContain('realPassingSystemMassAnswerFor(result)')
+    expect(source).toContain('Your second guess was')
+    // the first screen of the tutor (observe) marks nothing, whichever second guess was made
+    for (const second of ['same', 'different'] as const) {
+      const html = renderToStaticMarkup(
+        createElement(EnergyMomentumReactionsTutor, { kind: 'annihilation', setting: SECTION_C_SPEED, passingSpeed: SECTION_C_PASSING_SPEED, predicted: 'less', systemMassPredicted: second }),
+      )
+      expect(html).not.toContain('Your second guess was')
+    }
+  })
+})
+
+describe('the second guess: the passing observer\'s system mass (Part 1 only)', () => {
+  const fixed = runReactionExperiment('annihilation', SECTION_C_SPEED, SECTION_C_PASSING_SPEED)
+  const second = (progress: number | null, systemMassGuess: 'same' | 'different' | null) =>
+    renderToStaticMarkup(
+      createElement(ReactionDiagram, { kind: 'annihilation', setting: SECTION_C_SPEED, passingSpeed: SECTION_C_PASSING_SPEED, progress, guess: 'less', systemMassGuess }),
+    )
+  const secondCaption = (progress: number | null, systemMassGuess: 'same' | 'different' | null) =>
+    renderToStaticMarkup(
+      createElement(ReactionCaptions, { kind: 'annihilation', setting: SECTION_C_SPEED, passingSpeed: SECTION_C_PASSING_SPEED, progress, guess: 'less', systemMassGuess }),
+    )
+  const count = (html: string) => (html.match(/YOUR GUESS/g) ?? []).length
+
+  it('is drawn only once the passing observer\'s pieces after the reaction are drawn: not before Run and not while their picture is still approaching', () => {
+    expect(reactionMilestones(null).systemMassDrawn).toBe(false)
+    expect(reactionMilestones(0.5).systemMassDrawn).toBe(false)
+    expect(reactionMilestones(0.75).systemMassDrawn).toBe(true)
+    expect(second(null, 'same')).not.toContain('lower panel')
+    expect(count(second(0.5, 'same'))).toBe(1) // only the ledger guess
+    expect(count(second(0.75, 'same'))).toBe(2)
+  })
+
+  it('takes its numbers and its label from the physics module, and draws no second guess without one', () => {
+    const html = second(1, 'different')
+    const { before, after } = passingSystemMassOf(fixed)
+    expect(html).toContain(passingSystemMassGuessMarker('different', fixed).label.replace('YOUR GUESS: ', ''))
+    expect(html).toContain('Before: the mass of the whole system')
+    expect(html).toContain(before.toFixed(2))
+    expect(html).toContain(after.toFixed(2))
+    expect(count(second(1, null))).toBe(1)
+  })
+
+  it('moves with the guess: the two answers draw two different tick positions', () => {
+    const tickX = (guess: 'same' | 'different') => {
+      const all = [...second(1, guess).matchAll(/<line x1="([\d.]+)" y1="[\d.]+" x2="\1"[^>]*stroke="#ffffff" stroke-width="4"/g)]
+      return all[all.length - 1][1]
+    }
+    expect(tickX('same')).not.toBe(tickX('different'))
+  })
+
+  it('is not drawn in Part 2\'s drawings', () => {
+    const html = renderToStaticMarkup(
+      createElement(ReactionDiagram, { kind: 'pair-creation', setting: 2, passingSpeed: 0.3, progress: 1, own: true, systemMassGuess: 'same' }),
+    )
+    expect(html).not.toContain('lower panel')
+    expect(html).not.toContain('YOUR GUESS')
+  })
+
+  it('has a caption only once the panel is drawn, with the whole three-part form, a "Where the real picture comes from" line and no verdict', () => {
+    expect(secondCaption(0.5, 'same')).not.toContain('lower panel')
+    const html = secondCaption(1, 'same')
+    expect(html).toContain('lower panel')
+    expect(html).toContain('The solid purple bar')
+    expect(html).toContain('The outlined purple bar')
+    expect(html).toContain('only a marker')
+    expect(html.slice(html.indexOf('lower panel'))).not.toMatch(/is wrong|is right|matched|correct|the mass is (kept|conserved)/i)
+    expect(secondCaption(1, null)).not.toContain('This is the answer you chose to the second prediction')
+  })
+
+  it('the first screen asks both predictions, and the Run button names both pictures', () => {
+    const html = renderToStaticMarkup(createElement(EnergyMomentumReactions))
+    expect(html).toContain('Make a prediction (1 of 2): the total of the separate masses')
+    expect(html).toContain('Make a prediction (2 of 2): the passing observer')
+    expect(html).toContain('(a) The same before and after.')
+    expect(html).toContain('(b) Not the same before and after.')
+    expect(html).toContain('Run (lab view, then passing observer)')
+    expect(html).toContain('Choose both predictions above to run the experiment.')
   })
 })

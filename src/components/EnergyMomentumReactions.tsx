@@ -8,13 +8,15 @@ import {
   SECTION_C_PASSING_SPEED,
   SECTION_C_SPEED,
   heliumCheckUp,
+  passingSystemMassGuessMarker,
+  passingSystemMassOf,
   reactionCheckUpRows,
   reactionGuessMarker,
   runReactionExperiment,
   systemMassOf,
   totalsOf,
 } from '../physics/energyMomentum'
-import type { ReactionExperimentResult, ReactionGuess, ReactionKind, ReactionPiece } from '../physics/energyMomentum'
+import type { PassingSystemMassGuess, ReactionExperimentResult, ReactionGuess, ReactionKind, ReactionPiece } from '../physics/energyMomentum'
 
 // Spacetime Geometry 5, Section C (reactions: can the masses change?), of docs/experiments/spacetime-geometry/05-energy-momentum-and-mass.md.
 // Audit update of 2026-11-21 (wording in docs/audit/spacetime-geometry/05-draft-wording-section-c.md; the owner accepted all defaults of the gap report): Section C is in
@@ -31,6 +33,12 @@ const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
   { value: 'less', label: '(a) The total mass after is less than before.' },
   { value: 'same', label: '(b) The total mass is the same.' },
   { value: 'more', label: '(c) The total mass after is more than before.' },
+]
+
+// The two answers of Part 1's second prediction, about the passing observer (approved by the owner on 2026-11-22). Not scored, and the learner is not told which is right (§12).
+const SYSTEM_MASS_CHOICES: { value: PassingSystemMassGuess; label: string }[] = [
+  { value: 'same', label: '(a) The same before and after.' },
+  { value: 'different', label: '(b) Not the same before and after.' },
 ]
 
 const PROCESS_SENTENCE: Record<ReactionKind, string> = {
@@ -102,6 +110,11 @@ const VIEW_HEIGHT = 830
 const MEET_X = 260
 const LAB_LINE_Y = 150
 const OBSERVER_LINE_Y = 690
+// Part 1 only: a third band under Picture 2 for the passing observer's system mass (its own scale), which makes the picture taller.
+const SYSTEM_TOP_Y = 835
+const SYSTEM_BAR_X = 40
+const SYSTEM_BAR_MAX = 300
+const VIEW_HEIGHT_WITH_SYSTEM = 1040
 const PIECE_RADIUS = 16
 const NUCLEUS_RADIUS = 22
 // Pixels of travel to the meeting point for each 1c of speed, the same as in Section B and in both pictures here.
@@ -411,7 +424,13 @@ function MassLedger({ result, inMeV, guess }: { result: ReactionExperimentResult
 export function reactionMilestones(progress: number | null) {
   const playing = progress !== null
   const labQ = playing ? clamp01(progress / LAB_END) : 0
-  return { playing, ledgerDrawn: playing && panelStory(labQ).collided, observerDrawn: playing && progress > LAB_END }
+  return {
+    playing,
+    ledgerDrawn: playing && panelStory(labQ).collided,
+    observerDrawn: playing && progress > LAB_END,
+    // the passing observer's pieces after the reaction are drawn, so both of their system masses can be drawn
+    systemMassDrawn: playing && panelStory(clamp01((progress - LAB_END) / (OBSERVER_END - LAB_END))).collided,
+  }
 }
 
 interface ReactionDiagramProps {
@@ -424,11 +443,13 @@ interface ReactionDiagramProps {
   own?: boolean
   // The learner's guess, drawn as a white tick on the mass ledger once it is drawn (Part 1 only).
   guess?: Prediction | null
+  // The second guess (about the passing observer), drawn as a white tick on the "after" bar of the system-mass panel (Part 1 only). The panel is drawn in Part 1 only, whether or not a guess is set.
+  systemMassGuess?: PassingSystemMassGuess | null
 }
 
 // While idle it draws the lab's setup, just before the reaction, with the passing observer marked. While the run plays it shows the
 // lab's reaction first, with the mass ledger, and then the same reaction as the passing observer sees it, both in the same style.
-export function ReactionDiagram({ kind, setting, passingSpeed, progress, own = false, guess = null }: ReactionDiagramProps) {
+export function ReactionDiagram({ kind, setting, passingSpeed, progress, own = false, guess = null, systemMassGuess = null }: ReactionDiagramProps) {
   const result = runReactionExperiment(kind, setting, passingSpeed)
   const inMeV = kind === 'helium-binding'
   const playing = progress !== null
@@ -437,6 +458,8 @@ export function ReactionDiagram({ kind, setting, passingSpeed, progress, own = f
   const observerQ = playing ? clamp01((progress - LAB_END) / (OBSERVER_END - LAB_END)) : 0
   const showObserverPicture = playing && progress > LAB_END
   const labCollided = panelStory(labQ).collided
+  const { systemMassDrawn } = reactionMilestones(progress)
+  const passingMass = passingSystemMassOf(result)
   const piecesText = (pieces: ReactionPiece[]) =>
     pieces.map((p) => `${p.label}: energy ${p.reading.energy.toFixed(2)}, momentum times c ${p.reading.momentumTimesC.toFixed(2)}, rest mass ${p.restMass.toFixed(2)}`).join('. ')
   const afterText = labCollided
@@ -448,7 +471,7 @@ export function ReactionDiagram({ kind, setting, passingSpeed, progress, own = f
 
   return (
     <svg
-      viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
+      viewBox={`0 0 ${VIEW_WIDTH} ${own ? VIEW_HEIGHT : VIEW_HEIGHT_WITH_SYSTEM}`}
       role="img"
       aria-label={`${complete ? 'Result: ' : playing ? 'Playback: ' : 'Setup: '}the lab's view of the reaction "${KIND_CHOICES.find((c) => c.value === kind)?.label.toLowerCase()}"${inMeV ? ', in MeV' : ''}. Before: ${piecesText(result.labBefore)}. A passing observer moves at ${passingLabel(passingSpeed)}.${afterText}${observerText}`}
       style={SVG_STYLE}
@@ -513,6 +536,66 @@ export function ReactionDiagram({ kind, setting, passingSpeed, progress, own = f
             Next, the same reaction as the passing observer sees it.
           </text>
         )
+      )}
+
+      {/* Part 1 only: the passing observer's system mass, on its own scale. Solid bar = before, outlined bar = after. The white tick is the second guess; it is only a marker. */}
+      {!own && showObserverPicture && (
+        <g>
+          <text x="12" y={SYSTEM_TOP_Y} fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
+            Picture 2, lower panel: the passing observer's mass of the whole system
+          </text>
+          <text x="12" y={SYSTEM_TOP_Y + 15} fontSize="11" fill={MUTED_COLOR}>
+            Their own scale (in {inMeV ? 'MeV' : 'rest energies'}). A longer bar is a bigger mass.
+          </text>
+          {!systemMassDrawn && (
+            <text x="12" y={SYSTEM_TOP_Y + 40} fontSize="11" fill={MUTED_COLOR}>
+              The two masses are drawn here once their pieces after the reaction are drawn.
+            </text>
+          )}
+          {systemMassDrawn &&
+            (() => {
+              const scale = SYSTEM_BAR_MAX / Math.max(passingMass.before, passingMass.after, 1e-9)
+              const bars = [
+                { key: 'before', value: passingMass.before, y: SYSTEM_TOP_Y + 50, text: 'Before: the mass of the whole system', fill: true },
+                { key: 'after', value: passingMass.after, y: SYSTEM_TOP_Y + 90, text: 'After: the mass of the whole system', fill: false },
+              ]
+              const marker = systemMassGuess === null ? null : passingSystemMassGuessMarker(systemMassGuess, result)
+              const tickX = marker === null ? 0 : SYSTEM_BAR_X + marker.afterPosition * scale
+              const boxX = Math.min(Math.max(tickX - 115, 10), VIEW_WIDTH - 240)
+              return (
+                <g>
+                  <line x1={SYSTEM_BAR_X} y1={SYSTEM_TOP_Y + 28} x2={SYSTEM_BAR_X} y2={SYSTEM_TOP_Y + 112} stroke={MUTED_COLOR} strokeWidth="1" strokeDasharray="3 4" />
+                  <text x={SYSTEM_BAR_X} y={SYSTEM_TOP_Y + 124} fontSize="10" textAnchor="middle" fill={MUTED_COLOR} style={HALO}>
+                    zero
+                  </text>
+                  {bars.map((bar) => (
+                    <g key={bar.key}>
+                      <text x="12" y={bar.y - 6} fontSize="10" fill={PASSING_COLOR} style={HALO}>
+                        {bar.text}
+                      </text>
+                      <rect x={SYSTEM_BAR_X} y={bar.y} width={Math.max(bar.value * scale, 2)} height="14" rx="2" fill={bar.fill ? PASSING_COLOR : 'none'} stroke={PASSING_COLOR} strokeWidth="2" />
+                      <text x={SYSTEM_BAR_X + Math.max(bar.value * scale, 2) + 6} y={bar.y + 11} fontSize="10" fontWeight="bold" fill={PASSING_COLOR} style={HALO}>
+                        {bar.value.toFixed(2)}
+                      </text>
+                    </g>
+                  ))}
+                  {marker !== null && (
+                    <g>
+                      <line x1={tickX} y1={SYSTEM_TOP_Y + 90} x2={tickX} y2={SYSTEM_TOP_Y + 114} stroke={GUESS_COLOR} strokeWidth="4" />
+                      <line x1={tickX} y1={SYSTEM_TOP_Y + 114} x2={boxX + 115} y2={SYSTEM_TOP_Y + 134} stroke={GUESS_COLOR} strokeWidth="2" />
+                      <rect x={boxX} y={SYSTEM_TOP_Y + 134} width="230" height="54" rx="6" fill="#0b1020" stroke={GUESS_COLOR} strokeWidth="3" />
+                      <text x={boxX + 115} y={SYSTEM_TOP_Y + 156} textAnchor="middle" fontSize="16" fontWeight="bold" fill={GUESS_COLOR}>
+                        YOUR GUESS
+                      </text>
+                      <text x={boxX + 115} y={SYSTEM_TOP_Y + 172} textAnchor="middle" fontSize="12" fill={GUESS_COLOR}>
+                        {marker.label.replace('YOUR GUESS: ', '')}
+                      </text>
+                    </g>
+                  )}
+                </g>
+              )
+            })()}
+        </g>
       )}
     </svg>
   )
@@ -623,13 +706,15 @@ interface CaptionProps {
   // True for Part 2's drawings.
   own?: boolean
   guess?: Prediction | null
+  systemMassGuess?: PassingSystemMassGuess | null
 }
 
 // A feature is explained only once it is drawn (§12). Nothing here says which of the "before" and "after" bars is longer, or whether the totals are kept: that is the
 // learner's to observe and the tutor's to explain (§12, §13).
-export function ReactionCaptions({ kind, setting, passingSpeed, progress, own = false, guess = null }: CaptionProps) {
+export function ReactionCaptions({ kind, setting, passingSpeed, progress, own = false, guess = null, systemMassGuess = null }: CaptionProps) {
   const result = runReactionExperiment(kind, setting, passingSpeed)
-  const { playing, ledgerDrawn, observerDrawn } = reactionMilestones(progress)
+  const { playing, ledgerDrawn, observerDrawn, systemMassDrawn } = reactionMilestones(progress)
+  const passingMass = passingSystemMassOf(result)
   const inMeV = kind === 'helium-binding'
   const unit = inMeV ? 'MeV' : 'rest energies'
   const picture1 = own ? 'Drawing A' : 'Picture 1'
@@ -680,6 +765,19 @@ export function ReactionCaptions({ kind, setting, passingSpeed, progress, own = 
       look: 'the totals in this picture, before and after the reaction',
       means: `this observer's total energy is ${two(passingBefore.energy)} before and ${two(passingAfter.energy)} after, and their total momentum × c is ${two(passingBefore.momentumTimesC)} before and ${two(passingAfter.momentumTimesC)} after`,
       matters: 'this is the check, on this observer\'s own numbers, of whether the totals were kept. Part 3 lists the differences',
+    },
+  ]
+
+  const systemMassItems = [
+    {
+      look: 'the solid bar, "Before: the mass of the whole system"',
+      means: `this is the mass this observer works out from their own total energy (${two(passingBefore.energy)}) and total momentum × c (${two(passingBefore.momentumTimesC)}) before the reaction: the square root of ${two(passingBefore.energy)}² − (${two(passingBefore.momentumTimesC)})², which is ${two(passingMass.before)} (in ${unit})`,
+      matters: 'it is the "before" side of the question of your second prediction, for this observer, using only their own numbers',
+    },
+    {
+      look: 'the outlined bar, "After: the mass of the whole system"',
+      means: `this is the same calculation after the reaction, with their total energy of ${two(passingAfter.energy)} and total momentum × c of ${two(passingAfter.momentumTimesC)}: ${two(passingMass.after)} (in ${unit})`,
+      matters: 'setting its length beside the solid bar answers the question of your second prediction. The page does not say whether they are equal, so read it from the bars',
     },
   ]
 
@@ -802,6 +900,43 @@ export function ReactionCaptions({ kind, setting, passingSpeed, progress, own = 
               {inMeV ? 'the three masses (CODATA 2022, from NIST)' : 'nothing on this page'}. <strong>Imagined for the question:</strong> the particles and the observers.
             </WhereFrom>
           )}
+          {systemMassDrawn && !own && (
+            <>
+              <p style={{ margin: '1.25rem 0 0.5rem' }}>
+                <strong>{picture2}, lower panel: the passing observer's mass of the whole system.</strong> It appears under the purple picture once the passing observer's pieces after the reaction are drawn. It has its own
+                scale, so its bars cannot be compared with the mass ledger in {picture1}. It asks the question of your second prediction.
+              </p>
+              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  <strong>The dashed line, "zero".</strong> A mass of zero. The bars start from it, and a longer bar means a bigger mass.
+                </li>
+                <li>
+                  <strong>The solid purple bar.</strong> The mass of the whole system <em>before</em> the reaction, as this observer works it out from their own total energy and total momentum × c, with the formula
+                  M = √(E_total² − (P_total c)²) from Section B.
+                </li>
+                <li>
+                  <strong>The outlined purple bar.</strong> The same mass <em>after</em> the reaction. It is outlined instead of solid so that the two can be told apart.
+                </li>
+                <li>
+                  <strong>The numbers beside the bars.</strong> Each mass in {unit}, one rest energy being the rest energy of one particle.
+                </li>
+                {systemMassGuess !== null && (
+                  <li>
+                    <strong>The white tick and the YOUR GUESS box.</strong> This is the answer you chose to the second prediction, drawn across the outlined bar. It is <strong>only a marker</strong>: it has no size of
+                    its own. If you chose "the same", it sits where the solid bar ends. If you chose "not the same", it sits at half that length. It does not change either bar.
+                  </li>
+                )}
+              </ul>
+              <p style={{ margin: '0 0 0.5rem' }}>
+                <strong>What to look for in the lower panel.</strong>
+              </p>
+              <LookForList items={systemMassItems} />
+              <WhereFrom>
+                <strong>Calculated here:</strong> both masses, from the passing observer's total energy and total momentum (found by the rule of Section A) and the formula of Section B. <strong>Measured:</strong>{' '}
+                nothing on this page. <strong>Imagined for the question:</strong> the particles and the observer.
+              </WhereFrom>
+            </>
+          )}
         </>
       )}
       <p style={{ ...smallNote, marginTop: '0.75rem' }}>
@@ -813,7 +948,7 @@ export function ReactionCaptions({ kind, setting, passingSpeed, progress, own = 
 
 // ---- Part 3: the results of Part 1's run (draft section 6) ----
 
-export function ReactionResults({ prediction, heliumRun }: { prediction: Prediction; heliumRun: boolean }) {
+export function ReactionResults({ prediction, systemMassGuess, heliumRun }: { prediction: Prediction; systemMassGuess: PassingSystemMassGuess; heliumRun: boolean }) {
   const result = runReactionExperiment('annihilation', SECTION_C_SPEED, SECTION_C_PASSING_SPEED)
   const unit = 'rest energies'
   const readings = (pieces: ReactionPiece[]) => pieces.map((piece) => piece.reading)
@@ -827,6 +962,7 @@ export function ReactionResults({ prediction, heliumRun }: { prediction: Predict
   const row = (name: string, before: number, after: number) => [name, formatNumber(before), formatNumber(after), formatDifference(after - before)]
   const released = result.energyReleased
   const guessLabel = PREDICTION_CHOICES.find((c) => c.value === prediction)!.label
+  const systemMassGuessLabel = SYSTEM_MASS_CHOICES.find((c) => c.value === systemMassGuess)!.label
   const helium = heliumCheckUp(runReactionExperiment('helium-binding', 0, 0.3))
   const heliumResult = runReactionExperiment('helium-binding', 0, 0.3)
 
@@ -834,14 +970,19 @@ export function ReactionResults({ prediction, heliumRun }: { prediction: Predict
     <div style={{ marginBottom: '1.5rem' }}>
       <p style={{ ...NOTE, marginTop: 0 }}>
         These numbers are for Part 1's run: a particle and its antiparticle, each moving at {SECTION_C_SPEED}c in the lab, and a passing observer moving at +{SECTION_C_PASSING_SPEED}c. They are in rest energies of one particle.
-        They never change with your prediction or with the settings you try in Part 2.
+        They never change with your predictions or with the settings you try in Part 2.
       </p>
 
       <div style={{ ...NOTE, padding: '0.75rem 1rem', border: '1px solid var(--border-color, #ccc)', borderRadius: '8px', marginBottom: '1.25rem' }}>
-        <p style={{ margin: '0 0 0.25rem', fontWeight: 'bold' }}>Your prediction, beside the results</p>
+        <p style={{ margin: '0 0 0.25rem', fontWeight: 'bold' }}>Your predictions, beside the results</p>
+        <p style={{ margin: '0 0 0.5rem' }}>
+          <strong>Your first guess:</strong> {guessLabel} <strong>The question it was about:</strong> how does the total of the masses of the separate pieces compare before and after a particle and its antiparticle meet?{' '}
+          <strong>Where its numbers appear:</strong> the row "Sum of the rest masses" in the first table below, which is tagged "your guess", and the first two bars of the mass ledger in Picture 1. It shows only what you chose.
+        </p>
         <p style={{ margin: 0 }}>
-          <strong>Your guess:</strong> {guessLabel} <strong>The question it was about:</strong> how does the total of the masses of the separate pieces compare before and after a particle and its antiparticle meet?{' '}
-          <strong>Where its numbers appear:</strong> the row tagged "your guess" in the table below, and the first two bars of the mass ledger in Picture 1. It shows only what you chose.
+          <strong>Your second guess:</strong> {systemMassGuessLabel} <strong>The question it was about:</strong> when the passing observer works out the mass of the whole system from their own total energy and total momentum,
+          is it the same before and after the reaction? <strong>Where its numbers appear:</strong> the row "The system's mass, found by the passing observer" in the table "The system's mass", which is tagged "your guess", and
+          the white tick on the outlined bar in the lower panel of Picture 2. It shows only what you chose.
         </p>
       </div>
 
@@ -935,6 +1076,7 @@ export function ReactionResults({ prediction, heliumRun }: { prediction: Predict
           row("The system's mass, found by the lab", result.systemMassBefore, result.systemMassAfter),
           row("The system's mass, found by the passing observer", passingMassBefore, passingMassAfter),
         ]}
+        tagRow={1}
       />
       <NotesBlock title="What this table tells us">
         <li>
@@ -1070,6 +1212,18 @@ export function ReactionLinks() {
           electron, which gives two gamma-ray photons going in opposite directions.
         </li>
         <li style={linkItem}>
+          <Ext href="https://imagine.gsfc.nasa.gov/observatories/learning/fermi/mission/lat.html">NASA, "Fermi Gamma-Ray Space Telescope Learning Center: Large Area Telescope"</Ext> (plain language; page read on 22 November 2026,
+          last updated 11 December 2018): a gamma ray hits a layer of tungsten and creates an electron and positron pair. Tracking the pair shows where the gamma ray came from and how much energy it had.
+        </li>
+        <li style={linkItem}>
+          <Ext href="https://imagine.gsfc.nasa.gov/observatories/technology/gammaray_detectors2.html">NASA, "Gamma-ray Detectors: More Information"</Ext> (marked "Advanced", so harder; page read on 22 November 2026, text updated
+          September 2018): how telescopes use the pair, and how a gamma ray high in the atmosphere makes a pair that sets off a shower of more light and more pairs.
+        </li>
+        <li style={linkItem}>
+          <Ext href="https://www.slac.stanford.edu/exp/e144/e144.html">SLAC, "Experiment E144 Home Page"</Ext> (the experiment's own page, with a cartoon; read on 22 November 2026, last modified 17 January 1998): an experiment in which
+          light was used to make electron-positron pairs. Its route is more complicated than this section's two-beam picture: an electron hits a laser beam and makes a gamma ray, which then hits four or more laser photons.
+        </li>
+        <li style={linkItem}>
           <Ext href="https://science.gsfc.nasa.gov/attic/cosmicopia.gsfc.nasa.gov/qa_sun.html">NASA Goddard, "Cosmicopia: Ask Us: Sun"</Ext> (an archived Goddard page, read on 21 November 2026; its answers are dated 2000 to 2010): the Sun fuses
           about 600 million tons of hydrogen every second, and its power divided by c² is about 4 million tons of mass per second.
         </li>
@@ -1085,7 +1239,7 @@ export function ReactionLinks() {
       </ul>
       <p style={{ margin: 0, fontSize: '0.75rem' }}>
         No plain-language page from NASA, ESA, CERN or another official source was found, and read, for <em>binding energy and mass defect</em> or for <em>the electron-volt</em> (searched 21 November 2026), so this page explains
-        them in its own words. The original papers for the positron (Anderson, 1932) and the antiparticle idea (Dirac, 1928) were not fetched, so they are not linked. The energy rule behind this chapter is Einstein's 1905 paper,
+        them in its own words. For <em>light turning into particles</em>, no plain official page was read that gives the minimum energy (about 1.022 MeV), so that figure is stated as what this section's rules give, not as a sourced fact. Candidate pages that could not be read on 22 November 2026 (they returned an error, a refusal or a bot check) are not linked: Symmetry magazine, "E=mc²"; Fermilab, "Inquiring Minds: E=mc²"; APS News, "Discovery of the Positron"; and the Nobel Prize page on Carl Anderson. The original papers for the positron (Anderson, 1932) and the antiparticle idea (Dirac, 1928), and the original SLAC paper, were not fetched, so they are not linked. The energy rule behind this chapter is Einstein's 1905 paper,
         linked at the end of Section A's results.
       </p>
     </div>
@@ -1145,6 +1299,7 @@ export function EnergyMomentumReactions({
 }) {
   // ---- Part 1: one guess, one fixed run (a particle and its antiparticle at 0.6c, a passing observer at +0.3c) ----
   const [prediction, setPrediction] = useState<Prediction | null>(null)
+  const [systemMassGuess, setSystemMassGuess] = useState<PassingSystemMassGuess | null>(null)
   const [locked, setLocked] = useState(false)
   const [status, setStatus] = useState<PlayStatus>('idle')
   const [progress, setProgress] = useState(0)
@@ -1163,7 +1318,7 @@ export function EnergyMomentumReactions({
 
   const partOneDone = status === 'complete'
   const playing = status === 'running' || ownStatus === 'running'
-  const startOverDisabled = (prediction === null && status === 'idle' && ownStatus === 'idle') || playing
+  const startOverDisabled = (prediction === null && systemMassGuess === null && status === 'idle' && ownStatus === 'idle') || playing
   const setting = settings[kind]
   const settingPresets = kind === 'annihilation' ? ANNIHILATION_SPEEDS : kind === 'pair-creation' ? PHOTON_ENERGIES : []
 
@@ -1181,7 +1336,7 @@ export function EnergyMomentumReactions({
   }, [ownStatus])
 
   const handleRun = () => {
-    if (prediction === null || locked) return
+    if (prediction === null || systemMassGuess === null || locked) return
     setLocked(true)
     setProgress(0)
     setStatus('running')
@@ -1190,6 +1345,7 @@ export function EnergyMomentumReactions({
   const handleStartOver = () => {
     if (playing) return
     setPrediction(null)
+    setSystemMassGuess(null)
     setLocked(false)
     setStatus('idle')
     setProgress(0)
@@ -1268,6 +1424,84 @@ export function EnergyMomentumReactions({
               <strong>Four particles join into one.</strong> Two protons and two neutrons can bind together into a single helium nucleus. This kind of joining is what makes the Sun shine.
             </li>
           </ul>
+          <details style={{ margin: '0 0 0.75rem', padding: '0.5rem 0.75rem', border: '1px solid var(--border-color, #ccc)', borderRadius: '8px' }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Light turns into particles, in more detail</summary>
+            <div style={{ marginTop: '0.5rem' }}>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>The short idea.</strong> Light does not change into particles the way ice changes into water. What changes is the <em>form of the energy</em>. The light's energy is used up, and the same
+                amount of energy appears as two new particles: their mass, plus their motion.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>1. Energy and mass are two forms of the same thing.</strong> Energy comes in forms: heat, motion, light. Mass is a form of energy too, stored inside an object. The rule is <em>E = mc²</em>.
+                It works like swapping dollars for euros at a fixed rate. Here the rate is c², a huge number (about 9 × 10¹⁶). That is why a tiny bit of mass holds a huge amount of energy, and why you never see this
+                in daily life.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>2. Why it costs so much.</strong> An electron's rest energy is 0.511 MeV, and a pair needs two of them, 1.022 MeV. A particle of visible light carries only about 2 or 3 eV. One
+                visible-light particle is several hundred thousand times too weak. Only gamma rays, the most energetic light, are enough.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>3. Why a pair, not one particle.</strong> Light has no electric charge. If it made only an electron (negative), the total charge would change from zero to negative, and charge is
+                conserved. An electron and its twin, the positron, have a total charge of −1 + 1 = 0, so the books balance.
+              </p>
+              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                <strong>4. How much energy, in this experiment's units.</strong> Energy is counted in rest energies of one particle, so one particle costs 1 and a pair costs 2. Two beams meet head-on, and each
+                carries the energy shown.
+              </p>
+              <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '0.5rem' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>Each beam carries</th>
+                      <th style={{ textAlign: 'left', padding: '0.3rem 0' }}>What happens</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>Less than 1</td>
+                      <td style={{ padding: '0.3rem 0' }}>Nothing. Like a ticket costing 2 coins when you have 1: you do not get half a ticket.</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>Exactly 1</td>
+                      <td style={{ padding: '0.3rem 0' }}>A pair appears sitting still. All the energy has become mass.</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>2</td>
+                      <td style={{ padding: '0.3rem 0' }}>
+                        A pair appears and flies off. The total energy is 2 + 2 = 4. Two of that goes into the two masses (1 + 1), and 2 is left over as motion. Each particle has energy 2, so its speed is √(1 − 1/2²)
+                        = 0.866c.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '0.3rem 1rem 0.3rem 0', verticalAlign: 'top' }}>5</td>
+                      <td style={{ padding: '0.3rem 0' }}>The same pair, much faster: 0.980c.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p style={{ marginTop: 0, marginBottom: '0.25rem' }}>
+                <strong>5. Is it real?</strong> Yes.
+              </p>
+              <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
+                <li>
+                  A gamma-ray telescope in space works by this. A gamma ray hits a layer of tungsten and makes an electron and a positron. Following their tracks shows where the gamma ray came from and how strong it
+                  was (NASA's Fermi telescope).
+                </li>
+                <li>
+                  High in our atmosphere, a gamma ray can make a pair, and each of those can make more light, which makes more pairs, so one gamma ray sets off a shower (NASA).
+                </li>
+                <li>
+                  In the 1990s, an experiment at SLAC used light to make pairs. In it, light hit light, though by a more complicated route than the two-beam picture here.
+                </li>
+                <li>The reverse also happens. When a particle meets its twin, both vanish and light comes out. A hospital PET scan uses it.</li>
+              </ul>
+              <p style={{ margin: 0 }}>
+                <strong>6. What this experiment shows and does not show.</strong> It shows the <em>bookkeeping</em>: the totals of energy and momentum before and after. It does not show <em>how</em> the change
+                happens inside, which needs quantum physics beyond this course. We use an electron and its twin as the example, but the same rules hold for other particle pairs. The two beams meeting head-on is
+                the setup chosen for this experiment. Real detectors use thick layers of heavy metal instead.
+              </p>
+            </div>
+          </details>
           <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
             <strong>What stays the same in all three.</strong> The total energy and the total momentum are conserved, as in Section B. Think of money moved between bank accounts: the amount in each account changes,
             but the grand total does not. Here the "accounts" are the pieces before and the pieces after.
@@ -1290,8 +1524,8 @@ export function EnergyMomentumReactions({
             might stay the same or might change. Section C finds out which is which, for the masses.
           </p>
           <p style={{ margin: 0 }}>
-            <strong>What you will do.</strong> You are asked to predict first, for a particle meeting its twin: how does the total of the separate masses compare before and after they meet? Then you can try all three
-            situations and watch what each one does.
+            <strong>What you will do.</strong> You are asked to predict first, for a particle meeting its twin: how does the total of the separate masses compare before and after they meet? You are also asked what a
+            passing observer finds for the mass of the whole system. Then you can try all three situations and watch what each one does.
           </p>
         </div>
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
@@ -1381,7 +1615,7 @@ export function EnergyMomentumReactions({
               <strong>Picture 1, the lab's view.</strong> The pieces slide together, a yellow ring flashes where they meet, and the pieces after the meeting appear. Then four bars appear on one scale: the mass ledger.
             </li>
             <li>
-              <strong>Picture 2, a passing observer's view.</strong> The same reaction replayed with that observer's numbers.
+              <strong>Picture 2, a passing observer's view.</strong> The same reaction replayed with that observer's numbers. Under it, a lower panel works out the mass of the whole system for this observer, before and after the reaction, as two bars on their own scale.
             </li>
             <li>
               <strong>Then it is your turn.</strong> In Part 2 you try two other processes (two beams of light meeting, and a helium nucleus forming) and other settings. Part 3 gives the numbers and Part 4 is the tutor.
@@ -1398,10 +1632,10 @@ export function EnergyMomentumReactions({
           energies and momenta from the lab, as the passing observers did in Sections A and B. The experiment shows their numbers next to the lab's, so that you can compare what each observer finds.
         </p>
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-          <strong>Your job.</strong> Predict first. Part 1 uses a particle and its antiparticle that each move at 0.6c in the lab, and a passing observer who moves at 0.3c to the right. Choose one of the three answers, then press
-          Run. You are not graded. <strong>Your prediction never changes the pictures or the tables.</strong> They come from the physics. Your guess is drawn on the mass ledger in white, with a box labelled YOUR GUESS, and it is
-          shown again beside the results. After your first run, Part 2 lets you try other processes and settings. Those choices <em>do</em> change the drawings, but not your prediction. If you want to change your prediction, press
-          Start over.
+          <strong>Your job.</strong> Predict first. Part 1 uses a particle and its antiparticle that each move at 0.6c in the lab, and a passing observer who moves at 0.3c to the right. You make two predictions: choose one of the three answers about the total of the separate masses, and one of the two answers about the
+          passing observer. Both must be chosen before you can press Run. You are not graded. <strong>Your predictions never change the pictures or the tables.</strong> They come from the physics. Your first guess is drawn on the mass
+          ledger in white, and your second on the passing observer's system mass, each with a box labelled YOUR GUESS, and both are shown again beside the results. After your first run, Part 2 lets you try other processes and settings.
+          Those choices <em>do</em> change the drawings, but not your predictions. If you want to change your predictions, press Start over.
         </p>
         <p style={{ margin: 0 }}>
           <strong>What we assume.</strong> Energy and momentum are conserved, and nothing else enters or leaves: this is a rule of the experiment. Everything happens along one line. Only the situation just before and just after each
@@ -1414,15 +1648,21 @@ export function EnergyMomentumReactions({
 
       {/* ===== Part 1: predict, then watch ===== */}
       <PartHeader color={PART_ONE_COLOR} title="Part 1: Predict, then watch">
-        You will predict how the total of the masses of the pieces compares before and after a particle and its antiparticle meet, then press Run and watch the meeting from two points of view. Your guess is drawn on the real mass ledger
-        in white. It never changes it.
+        You will predict how the total of the masses of the pieces compares before and after a particle and its antiparticle meet, then guess what the passing observer finds for the mass of the whole system, press Run and watch the
+        meeting from two points of view. Your guesses are drawn on the real bars in white. They never change them.
       </PartHeader>
 
       <div style={{ marginBottom: '1.5rem' }}>
-        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make a prediction</p>
+        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make a prediction (1 of 2): the total of the separate masses</p>
         <p style={{ ...HINT, marginBottom: '0.75rem' }}>
           A particle and its antiparticle, each moving at {SECTION_C_SPEED}c in the lab, meet. {PROCESS_SENTENCE.annihilation} Energy and momentum are conserved. Add up the masses of the separate pieces <strong>before</strong>, and the
           masses of the pieces <strong>after</strong>. How do the two totals compare?
+        </p>
+        <p style={{ ...HINT, marginBottom: '0.75rem' }}>
+          <strong>What Run will show.</strong> Pressing Run plays this one meeting twice. <strong>Picture 1</strong> is the lab's view, where the particle and its antiparticle move toward each other at {SECTION_C_SPEED}c.
+          <strong> Picture 2</strong> is the same meeting as a <strong>passing observer</strong> sees it: a second person who moves steadily past the lab, along the same line, at {SECTION_C_PASSING_SPEED > 0 ? '+' : '−'}
+          {Math.abs(SECTION_C_PASSING_SPEED)}c to the right (think of someone watching the same meeting from a train that is passing by). You make two predictions before you press Run: the first is about the total of the
+          separate masses, and the second is about what the passing observer finds for the mass of the whole system. You will see both pictures.
         </p>
         <div>
           {PREDICTION_CHOICES.map((choice) => (
@@ -1447,8 +1687,38 @@ export function EnergyMomentumReactions({
         </p>
       </div>
 
-      <button type="button" className="action-button" onClick={handleRun} disabled={prediction === null || locked} style={{ padding: '0.6rem 1.5rem' }}>
-        {status === 'running' ? 'Running...' : locked ? 'Run (done)' : 'Run'}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make a prediction (2 of 2): the passing observer</p>
+        <p style={{ ...HINT, marginBottom: '0.75rem' }}>
+          Now think about Picture 2. The passing observer measures each piece's energy and momentum for themselves, so their numbers differ from the lab's. They work out the mass of the whole system from their own total
+          energy and total momentum, with the formula from Section B: M = √(E_total² − (P_total c)²). They do this once before the particle and its antiparticle meet, and once after. Is the mass of the whole system the
+          same before and after, for this observer?
+        </p>
+        <div>
+          {SYSTEM_MASS_CHOICES.map((choice) => (
+            <button
+              key={choice.value}
+              type="button"
+              disabled={locked}
+              onClick={() => setSystemMassGuess(choice.value)}
+              className={`toggle-button${systemMassGuess === choice.value ? ' is-selected' : ''}`}
+              style={{ display: 'block', textAlign: 'left', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+            >
+              {choice.label}
+            </button>
+          ))}
+        </div>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+          {systemMassGuess === null
+            ? 'Choose an option to continue'
+            : locked
+              ? 'Your prediction is locked while you try other settings. To change it, press Start over.'
+              : `Your prediction: ${SYSTEM_MASS_CHOICES.find((c) => c.value === systemMassGuess)?.label.slice(0, 3)}. You can still change it until you press Run.`}
+        </p>
+      </div>
+
+      <button type="button" className="action-button" onClick={handleRun} disabled={prediction === null || systemMassGuess === null || locked} style={{ padding: '0.6rem 1.5rem' }}>
+        {status === 'running' ? 'Running...' : locked ? 'Run (done)' : 'Run (lab view, then passing observer)'}
       </button>
       <button
         type="button"
@@ -1459,16 +1729,16 @@ export function EnergyMomentumReactions({
       >
         Start over
       </button>
-      {prediction === null && <p style={smallNote}>Choose a prediction above to run the experiment.</p>}
+      {(prediction === null || systemMassGuess === null) && <p style={smallNote}>Choose both predictions above to run the experiment.</p>}
 
       <p style={pictureTitle}>Pictures 1 and 2: the meeting, as the lab sees it and as a passing observer sees it</p>
-      <ReactionDiagram kind="annihilation" setting={SECTION_C_SPEED} passingSpeed={SECTION_C_PASSING_SPEED} progress={status === 'idle' ? null : progress} guess={prediction} />
+      <ReactionDiagram kind="annihilation" setting={SECTION_C_SPEED} passingSpeed={SECTION_C_PASSING_SPEED} progress={status === 'idle' ? null : progress} guess={prediction} systemMassGuess={systemMassGuess} />
       {status === 'idle' && (
         <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '0.75rem' }}>
-          Picture 2, the passing observer's view, the mass ledger, and your white guess on it, appear in this picture when you press Run.
+          Picture 2, the passing observer's view, the mass ledger, and your two white guesses (one on the mass ledger, one on the passing observer's system mass), appear in this picture when you press Run.
         </p>
       )}
-      <ReactionCaptions kind="annihilation" setting={SECTION_C_SPEED} passingSpeed={SECTION_C_PASSING_SPEED} progress={status === 'idle' ? null : progress} guess={prediction} />
+      <ReactionCaptions kind="annihilation" setting={SECTION_C_SPEED} passingSpeed={SECTION_C_PASSING_SPEED} progress={status === 'idle' ? null : progress} guess={prediction} systemMassGuess={systemMassGuess} />
 
       {/* ===== Part 2: appears when the first Run has finished ===== */}
       {partOneDone && (
@@ -1570,21 +1840,24 @@ export function EnergyMomentumReactions({
 
           {/* ===== Part 3: the results of Part 1's run ===== */}
           <PartHeader color={PART_THREE_COLOR} title="Part 3: The results">
-            Here are the numbers behind Part 1's pictures, a check-up of this page against its own physics, and your guess beside the real result. The tables never change with your prediction or with the settings you tried in Part 2.
+            Here are the numbers behind Part 1's pictures, a check-up of this page against its own physics, and your two guesses beside the real results. The tables never change with your predictions or with the settings you tried in Part 2.
           </PartHeader>
-          {prediction !== null && <ReactionResults prediction={prediction} heliumRun={ran['helium-binding'] !== undefined} />}
+          {prediction !== null && systemMassGuess !== null && (
+            <ReactionResults prediction={prediction} systemMassGuess={systemMassGuess} heliumRun={ran['helium-binding'] !== undefined} />
+          )}
 
           {/* ===== Part 4: the tutor ===== */}
           <PartHeader color={PART_FOUR_COLOR} title="Part 4: The tutor">
             The tutor asks you three questions, one at a time: what you saw, how your guess compares with the pictures, and where the energy went. Then it goes through your guess and explains. The tutor's questions are not marked.
           </PartHeader>
-          {prediction !== null && (
+          {prediction !== null && systemMassGuess !== null && (
             <EnergyMomentumReactionsTutor
               key={resetCount}
               kind="annihilation"
               setting={SECTION_C_SPEED}
               passingSpeed={SECTION_C_PASSING_SPEED}
               predicted={prediction}
+              systemMassPredicted={systemMassGuess}
               extraRuns={extraRuns}
               onExplained={() => onTutorComplete?.()}
             />

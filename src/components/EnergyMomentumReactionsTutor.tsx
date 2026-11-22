@@ -7,12 +7,14 @@ import {
   SPEED_OF_LIGHT_METERS_PER_SECOND,
   SUN_HYDROGEN_FUSED_KG_PER_SECOND,
   heliumCheckUp,
+  passingSystemMassOf,
+  realPassingSystemMassAnswerFor,
   realReactionAnswerFor,
   runReactionExperiment,
   sunMassLossFraction,
   totalsOf,
 } from '../physics/energyMomentum'
-import type { ReactionGuess, ReactionKind } from '../physics/energyMomentum'
+import type { PassingSystemMassGuess, ReactionGuess, ReactionKind } from '../physics/energyMomentum'
 
 type Prediction = ReactionGuess
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
@@ -29,6 +31,8 @@ interface EnergyMomentumReactionsTutorProps {
   setting: number
   passingSpeed: number
   predicted: Prediction
+  // The second guess, about the passing observer's system mass.
+  systemMassPredicted: PassingSystemMassGuess
   // The runs the learner has finished in Part 2, by process: the paragraphs about light and helium appear once they have been run.
   extraRuns?: Partial<Record<'pair-creation' | 'helium-binding', ExtraRun>>
   // Called once, when the learner reaches the explanation (the last step).
@@ -41,6 +45,11 @@ const predictionClauses: Record<Prediction, string> = {
   more: 'the total mass after would be more than before',
 }
 
+const systemMassClauses: Record<PassingSystemMassGuess, string> = {
+  same: 'the passing observer would find the mass of the whole system the same before and after',
+  different: 'the passing observer would find the mass of the whole system not the same before and after',
+}
+
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
 // Draft wording for the owner's review (CLAUDE.md §28.1; docs/audit/spacetime-geometry/05-draft-wording-section-c.md, section 7). Follows the Section C tutor sequence in the
@@ -48,7 +57,7 @@ const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333
 // model, never typed in by hand, except the real-world facts the draft lists (NASA's 600 million tons of hydrogen a second; the 511 keV of a PET scan, which is the electron's
 // rest energy from CODATA). The tutor marks the learner's guess in the explanation, and nowhere earlier. The paragraphs that belong to the light and helium processes are shown
 // once the learner has run them in Part 2.
-export function EnergyMomentumReactionsTutor({ kind, setting, passingSpeed, predicted, extraRuns = {}, onExplained }: EnergyMomentumReactionsTutorProps) {
+export function EnergyMomentumReactionsTutor({ kind, setting, passingSpeed, predicted, systemMassPredicted, extraRuns = {}, onExplained }: EnergyMomentumReactionsTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -94,6 +103,19 @@ export function EnergyMomentumReactionsTutor({ kind, setting, passingSpeed, pred
     </>,
   )
 
+  // The second guess is marked here too, and nowhere earlier. The real answer is read from the physics module.
+  const passingMass = passingSystemMassOf(result)
+  const realSystemMass = realPassingSystemMassAnswerFor(result)
+  const systemMassLetter = { same: '(a)', different: '(b)' }[systemMassPredicted]
+  const systemMassReason =
+    realSystemMass === 'same'
+      ? `the passing observer found a system mass of ${f(passingMass.before)} before and ${f(passingMass.after)} after, which is the same`
+      : `the passing observer found a system mass that was not the same, ${f(passingMass.before)} before and ${f(passingMass.after)} after`
+  const systemMassMark =
+    systemMassPredicted === realSystemMass
+      ? `Your second guess was ${systemMassLetter}, and it was right: ${systemMassReason}.`
+      : `Your second guess was ${systemMassLetter}, and it was not this time: ${systemMassReason}.`
+
   // 1. What the ledger shows, in the learner's own numbers.
   paragraphs.push(
     <>
@@ -120,7 +142,7 @@ export function EnergyMomentumReactionsTutor({ kind, setting, passingSpeed, pred
       it was before they pushed.
     </>,
     <>
-      <strong>A system of lights has mass.</strong> Each pulse of light has no mass. But the two together have a total energy of{' '}
+      <strong>A system of lights has mass.</strong> {systemMassMark} Each pulse of light has no mass. But the two together have a total energy of{' '}
       {f(labAfter.energy)} and a total momentum of {f(labAfter.momentumTimesC)}, so as a system their mass is √(
       {f(labAfter.energy)}² − {f(labAfter.momentumTimesC)}²) = {f(result.systemMassAfter)} {unit}, the same as the particle and
       its antiparticle had. The mass of the whole system never changed. What changed is that it is now carried by light. The two
@@ -260,7 +282,7 @@ export function EnergyMomentumReactionsTutor({ kind, setting, passingSpeed, pred
             {tutorStep === 'observe' &&
               "Look at the mass ledger in Picture 1 and at the tables in Part 3. What happened to the sum of the masses of the pieces? What happened to the mass of the whole system?"}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In this run, the sum of the rest masses went from ${f(result.sumOfRestMassesBefore)} to ${f(result.sumOfRestMassesAfter)} ${unit}, and the system's mass went from ${f(result.systemMassBefore)} to ${f(result.systemMassAfter)}. Look at the white tick on the ledger, which shows the answer you chose, and compare it with the grey and blue bars of the sum of the rest masses. What do you notice?`}
+              `You predicted that ${predictionClauses[predicted]}. In this run, the sum of the rest masses went from ${f(result.sumOfRestMassesBefore)} to ${f(result.sumOfRestMassesAfter)} ${unit}, and the system's mass went from ${f(result.systemMassBefore)} to ${f(result.systemMassAfter)}. Look at the white tick on the ledger, which shows the answer you chose, and compare it with the grey and blue bars of the sum of the rest masses. What do you notice? Then look at the white tick on the outlined bar in the lower panel of Picture 2. You predicted that ${systemMassClauses[systemMassPredicted]}. How does that guess compare with the two purple bars?`}
             {tutorStep === 'conceptual' &&
               'Energy and momentum are conserved here. Where did the energy go (or where did it come from) when the sum of the masses changed?'}
           </p>
