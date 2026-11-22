@@ -22,6 +22,10 @@ import {
   heliumCheckUp,
   reactionCheckUpRows,
   reactionGuessMarker,
+  makeReading,
+  passingSystemMassGuessMarker,
+  passingSystemMassOf,
+  realPassingSystemMassAnswerFor,
   realReactionAnswerFor,
   sunMassLossFraction,
   SECTION_B_SPEED,
@@ -771,5 +775,49 @@ describe('Section C audit additions: the guess tick, the check-up and the helium
 
   it('C13. the Sun releases about 0.7 percent of the hydrogen\'s mass: its mass loss over the hydrogen fused (the ratio of NASA\'s two numbers)', () => {
     expect(sunMassLossFraction() * 100).toBeCloseTo(0.71, 2)
+  })
+
+  it('C14. the passing observer\'s system mass is the same before and after (2.5 in the fixed case) and equals the lab\'s, so the real answer is "same"', () => {
+    const fixed = runReactionExperiment('annihilation', SECTION_C_SPEED, SECTION_C_PASSING_SPEED)
+    const { before, after } = passingSystemMassOf(fixed)
+    expect(before).toBeCloseTo(2.5, 9)
+    expect(after).toBeCloseTo(2.5, 9)
+    expect(before).toBeCloseTo(fixed.systemMassBefore, 9)
+    expect(realPassingSystemMassAnswerFor(fixed)).toBe('same')
+    for (const v of ANNIHILATION_SPEEDS) {
+      for (const u of [-0.6, -0.3, 0, 0.3, 0.6]) expect(realPassingSystemMassAnswerFor(runReactionExperiment('annihilation', v, u))).toBe('same')
+    }
+  })
+
+  it('C15. the answer is read from the real numbers: a system mass that changed would read "different"', () => {
+    const fixed = runReactionExperiment('annihilation', SECTION_C_SPEED, SECTION_C_PASSING_SPEED)
+    const broken = {
+      ...fixed,
+      passingAfter: fixed.passingAfter.map((piece) => ({ ...piece, reading: makeReading(piece.reading.energy + 0.5, piece.reading.momentumTimesC) })),
+    }
+    expect(realPassingSystemMassAnswerFor(broken)).toBe('different')
+  })
+
+  it('C16. the second guess\'s tick: "the same" sits on the real before mass, "different" sits at half of it, never on the real after mass; labels never say right, wrong or match', () => {
+    const fixed = runReactionExperiment('annihilation', SECTION_C_SPEED, SECTION_C_PASSING_SPEED)
+    const { before, after } = passingSystemMassOf(fixed)
+    const same = passingSystemMassGuessMarker('same', fixed)
+    const different = passingSystemMassGuessMarker('different', fixed)
+    expect(same.afterPosition).toBe(before)
+    expect(different.afterPosition).toBeCloseTo(0.5 * before, 12)
+    expect(Math.abs(different.afterPosition - after)).toBeGreaterThan(0.05)
+    for (const marker of [same, different]) {
+      expect(marker.label.startsWith('YOUR GUESS')).toBe(true)
+      expect(marker.label).not.toMatch(/right|wrong|match/i)
+    }
+  })
+
+  it('C17. asking for a marker or an answer changes no real value of the run', () => {
+    const fixed = runReactionExperiment('annihilation', SECTION_C_SPEED, SECTION_C_PASSING_SPEED)
+    const snapshot = JSON.stringify(fixed)
+    passingSystemMassGuessMarker('same', fixed)
+    passingSystemMassGuessMarker('different', fixed)
+    realPassingSystemMassAnswerFor(fixed)
+    expect(JSON.stringify(fixed)).toBe(snapshot)
   })
 })

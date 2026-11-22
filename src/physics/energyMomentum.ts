@@ -524,6 +524,40 @@ export function realReactionAnswerFor(result: ReactionExperimentResult): Reactio
   return change < 0 ? 'less' : 'more'
 }
 
+// Section C, Part 1's second guess (about the passing observer, 2026-11-22): the passing observer works out the mass of the whole system from their own total
+// energy and total momentum, once before the reaction and once after. Is it the same before and after?
+export type PassingSystemMassGuess = 'same' | 'different'
+
+export interface PassingSystemMassGuessMarker {
+  afterPosition: number // where the white tick sits on the "after" bar, in the same unit as the system mass
+  label: string // the words in its YOUR GUESS box
+}
+
+// The system mass the passing observer finds before and after the reaction (the unit of the reaction: rest energies, or MeV for helium).
+export function passingSystemMassOf(result: ReactionExperimentResult): { before: number; after: number } {
+  const readings = (pieces: ReactionPiece[]) => pieces.map((piece) => piece.reading)
+  return { before: systemMassOf(readings(result.passingBefore)), after: systemMassOf(readings(result.passingAfter)) }
+}
+
+// The white tick of the second guess. Neither answer has a size of its own, so each tick is only a marker. "The same" sits at the real "before" mass (an equal
+// bar). "Different" sits at half of it. The tick depends on the guess and on the "before" mass, which a guess cannot change, so it never changes a real value.
+// The system's mass is at least 2 rest energies in Part 1's case, so half of it never falls on a real "after" mass that equals the "before" one.
+export function passingSystemMassGuessMarker(guess: PassingSystemMassGuess, result: ReactionExperimentResult): PassingSystemMassGuessMarker {
+  const { before } = passingSystemMassOf(result)
+  switch (guess) {
+    case 'same':
+      return { afterPosition: before, label: 'YOUR GUESS: the same before and after' }
+    case 'different':
+      return { afterPosition: 0.5 * before, label: 'YOUR GUESS: not the same before and after' }
+  }
+}
+
+// What the run actually shows for that question: the tutor uses it to mark the guess; the page never compares them earlier. The tolerance is relative, as in the check-up.
+export function realPassingSystemMassAnswerFor(result: ReactionExperimentResult): PassingSystemMassGuess {
+  const { before, after } = passingSystemMassOf(result)
+  return Math.abs(after - before) < AGREEMENT_TOLERANCE * Math.max(1, before) ? 'same' : 'different'
+}
+
 // The check-up of Part 3 (draft, 6b): total energy and total momentum are conserved for each observer, so each difference (after minus before) is expected to be 0;
 // the mass of the whole system is the same before and after, and the same for the lab and the passing observer. These rows say nothing about the sum of the rest
 // masses (that is the prediction, the tutor's). The tolerance is relative, because helium is in MeV (thousands) and the others are in rest energies (about 1).
