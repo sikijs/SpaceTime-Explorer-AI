@@ -2,21 +2,25 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   LHC_BEAM_ENERGY_GEV,
-  NEUTRAL_PION_REST_ENERGY_MEV,
   PROTON_REST_ENERGY_MEV,
+  ownObserverSystemMassOf,
+  realOwnObserverMassAnswerFor,
+  realUsableEnergyAnswerFor,
   runMakingExperiment,
   stationaryTargetBeamEnergyFor,
   stationaryTargetSystemMass,
-  thresholdKineticEnergy,
 } from '../physics/makingNewParticles'
+import type { OwnObserverMassGuess, UsableEnergyGuess } from '../physics/makingNewParticles'
 
-type Prediction = 'setup-a' | 'same' | 'setup-b'
+type Prediction = UsableEnergyGuess
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface MakingNewParticlesTutorProps {
   energyOfMotion: number
   newMass: number
   predicted: Prediction
+  // The second guess, about the system's own observer's system mass.
+  ownObserverPredicted: OwnObserverMassGuess
   // Called once, when the learner reaches the explanation (the last step), so the next part can be shown.
   onExplained?: () => void
 }
@@ -27,12 +31,17 @@ const predictionClauses: Record<Prediction, string> = {
   'setup-b': 'Setup B, the head-on beams, would leave more usable energy',
 }
 
+const ownObserverClauses: Record<OwnObserverMassGuess, string> = {
+  same: "the system's own observer would find the same system's mass as the lab",
+  different: "the system's own observer would find a different system's mass from the lab's",
+}
+
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
 // Draft wording for the owner's review (CLAUDE.md §28.1). Follows the Part 1 tutor sequence in the specification: observe, compare
 // with the prediction, one conceptual question, then the explanation and the limits. Every number below comes from the physics
 // model (`makingNewParticles.ts`), never typed in by hand; the real-world figures are the named constants and the model's formulas.
-export function MakingNewParticlesTutor({ energyOfMotion, newMass, predicted, onExplained }: MakingNewParticlesTutorProps) {
+export function MakingNewParticlesTutor({ energyOfMotion, newMass, predicted, ownObserverPredicted, onExplained }: MakingNewParticlesTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -56,10 +65,8 @@ export function MakingNewParticlesTutor({ energyOfMotion, newMass, predicted, on
   // A rough size, to two significant figures with thousands separators, such as 90,000.
   const rough = (value: number) => Number(value.toPrecision(2)).toLocaleString('en-US')
 
-  // Real-world figures (spec, "Real-World Facts Used"): the neutral pion from two protons, and the Large Hadron Collider.
-  const pionMass = NEUTRAL_PION_REST_ENERGY_MEV / PROTON_REST_ENERGY_MEV // in proton masses
-  const pionHeadOnMeV = thresholdKineticEnergy('head-on', pionMass) * PROTON_REST_ENERGY_MEV
-  const pionTargetMeV = thresholdKineticEnergy('stationary-target', pionMass) * PROTON_REST_ENERGY_MEV
+  // Real-world figures: the Large Hadron Collider's 2015 to 2018 running (6.5 TeV per beam, 13 TeV collisions; CERN's page now gives 6.8 TeV and 13.6 TeV), with the stationary-target
+  // numbers computed from this experiment's own formula. The earlier example with a particle-physics mass and the 280 MeV figure had no source read (audit draft, section 7), so it is not used here.
   const protonGeV = PROTON_REST_ENERGY_MEV / 1000
   const lhcCollisionGeV = 2 * LHC_BEAM_ENERGY_GEV
   const lhcTargetMassGeV = stationaryTargetSystemMass(LHC_BEAM_ENERGY_GEV, protonGeV)
@@ -67,9 +74,29 @@ export function MakingNewParticlesTutor({ energyOfMotion, newMass, predicted, on
 
   const paragraphs: ReactNode[] = []
 
+  // The tutor marks both guesses here, in the explanation, and nowhere earlier (the pictures only show them). The real answers are read from the physics module.
+  const realUsable = realUsableEnergyAnswerFor(result)
+  const guess1Letter = { 'setup-a': '(a)', same: '(b)', 'setup-b': '(c)' }[predicted]
+  const guess1Reason = `the usable energy was ${f(A.usable, 3)} in Setup A and ${f(B.usable, 3)} in Setup B`
+  const guess1Mark =
+    predicted === realUsable
+      ? `Your first guess was ${guess1Letter}, and it was right: ${guess1Reason}.`
+      : `Your first guess was ${guess1Letter}, and it was not this time: ${guess1Reason}.`
+  const masses = ownObserverSystemMassOf(A)
+  const realOwn = realOwnObserverMassAnswerFor(result)
+  const guess2Letter = { same: '(a)', different: '(b)' }[ownObserverPredicted]
+  const guess2Reason =
+    realOwn === 'same'
+      ? `the system's own observer found a system's mass of ${f(masses.own, 3)}, the same as the ${f(masses.lab, 3)} the lab found`
+      : `the system's own observer found ${f(masses.own, 3)}, not the same as the ${f(masses.lab, 3)} the lab found`
+  const guess2Mark =
+    ownObserverPredicted === realOwn
+      ? `Your second guess was ${guess2Letter}, and it was right: ${guess2Reason}.`
+      : `Your second guess was ${guess2Letter}, and it was not this time: ${guess2Reason}.`
+
   paragraphs.push(
     <>
-      <strong>What the results show.</strong> You supplied K = {K} in both setups. In Setup A, the stationary target, the system's mass was
+      <strong>What the results show.</strong> {guess1Mark} The white outline on the bars showed the answer you chose. You supplied K = {K} in both setups. In Setup A, the stationary target, the system's mass was
       M = {f(A.systemMass)}, so the usable energy was {f(A.systemMass)} − 2 = {f(A.usable)}, and the locked-in energy was {K} −{' '}
       {f(A.usable)} = {f(A.lockedIn)}, which is {f(A.lockedShare * 100, 1)} percent of K. In Setup B, the head-on beams, the system's mass
       was M = {f(B.systemMass)}, so the usable energy was {f(B.usable)}, all of K, and nothing was locked in.
@@ -98,7 +125,7 @@ export function MakingNewParticlesTutor({ energyOfMotion, newMass, predicted, on
 
   paragraphs.push(
     <>
-      <strong>The same collision, seen by two observers.</strong> The system's own observer travels along with the system at{' '}
+      <strong>The same collision, seen by two observers.</strong> {guess2Mark} The white tick in the lower panel of Picture 2 showed the answer you chose. The system's own observer travels along with the system at{' '}
       {f(A.ownObserverSpeed)}c. For them the total momentum is zero, and they see Setup A as a head-on collision, with the two particles
       approaching at {f(Math.abs(A.ownPieces[0].speed))}c each. The energy of motion they find is only {f(A.usable)}, the usable part, not
       the {K} the lab supplied. The lab and the system's own observer find different energies and momenta, but both find the same system's
@@ -120,13 +147,11 @@ export function MakingNewParticlesTutor({ energyOfMotion, newMass, predicted, on
 
   paragraphs.push(
     <>
-      <strong>How big is this in the real world?</strong> To make a neutral pion (mass {f(NEUTRAL_PION_REST_ENERGY_MEV, 1)} MeV) from two
-      protons, two head-on beams need a total energy of motion of {f(pionHeadOnMeV, 0)} MeV, while a proton beam on a stationary proton
-      needs {f(pionTargetMeV, 0)} MeV, more than twice as much. At the Large Hadron Collider, two {f(LHC_BEAM_ENERGY_GEV / 1000, 1)} TeV
-      beams meeting head-on give a system's mass of {f(lhcCollisionGeV / 1000, 0)} TeV. A {f(LHC_BEAM_ENERGY_GEV / 1000, 1)} TeV proton
-      hitting a stationary proton would give only {f(lhcTargetMassGeV, 0)} GeV. To match {f(lhcCollisionGeV / 1000, 0)} TeV with a
-      stationary target, the beam would need about {rough(lhcTargetBeamGeV / 1000)} TeV, about{' '}
-      {rough(lhcTargetBeamGeV / LHC_BEAM_ENERGY_GEV)} times more. That is why the Large Hadron Collider is a collider.
+      <strong>How big is this in the real world?</strong> CERN says that colliders give a higher collision energy because the energies of the two particles are added. At the Large Hadron Collider,
+      two {f(LHC_BEAM_ENERGY_GEV / 1000, 1)} TeV beams meeting head-on give a system's mass of {f(lhcCollisionGeV / 1000, 0)} TeV (its 2015 to 2018 running; CERN's page now gives 6.8 TeV per beam and
+      13.6 TeV). With this experiment's own formula, M² = 2m² + 2mE, a {f(LHC_BEAM_ENERGY_GEV / 1000, 1)} TeV proton hitting a stationary proton would give only about {f(lhcTargetMassGeV, 0)} GeV, and to
+      match {f(lhcCollisionGeV / 1000, 0)} TeV with a stationary target the beam would need about {rough(lhcTargetBeamGeV / 1000)} TeV, about {rough(lhcTargetBeamGeV / LHC_BEAM_ENERGY_GEV)} times more.
+      Those last two numbers are worked out here from the formula, not taken from a source. That is why the Large Hadron Collider is a collider.
     </>,
   )
 
@@ -162,9 +187,9 @@ export function MakingNewParticlesTutor({ energyOfMotion, newMass, predicted, on
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              "Look at the tables and the bars. Compare the system's mass for the two setups, and how much of the energy supplied was usable in each. What do you notice?"}
+              "Look at the first set of bars in the picture and at the tables in Part 3. How much of the energy supplied is green (usable) in each setup? What do you notice?"}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In this run, the usable energy was ${f(A.usable)} in Setup A and ${f(B.usable)} in Setup B. Comparing your prediction with the results, what do you notice?`}
+              `You predicted that ${predictionClauses[predicted]}. Look at the white outline on the bars. In this run, the usable energy was ${f(A.usable)} in Setup A and ${f(B.usable)} in Setup B. How does your guess compare? Then look at the white tick on the outlined bar in the lower panel of Picture 2. You predicted that ${ownObserverClauses[ownObserverPredicted]}. How does that guess compare with the two bars there?`}
             {tutorStep === 'conceptual' &&
               'In the stationary-target collision, the whole system keeps moving after the collision. What does that tell you about the energy of motion, and why is the head-on collision different?'}
           </p>

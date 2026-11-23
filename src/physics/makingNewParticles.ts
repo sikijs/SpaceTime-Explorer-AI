@@ -1,5 +1,5 @@
-import { PROTON_REST_ENERGY_MEV, makeReading, readingFor, systemMassOf, totalsOf } from './energyMomentum'
-import type { EnergyMomentumReading } from './energyMomentum'
+import { AGREEMENT_TOLERANCE, PROTON_REST_ENERGY_MEV, makeReading, readingFor, systemMassOf, totalsOf } from './energyMomentum'
+import type { CheckUpRow, EnergyMomentumReading } from './energyMomentum'
 
 // Spacetime Geometry, Experiment 6: making new particles, and decay (docs/experiments/spacetime-geometry/06-making-new-particles.md).
 // Units: c = 1. Energy is in rest energies and momentum is shown as p × c, as in Experiment 5 (energyMomentum.ts), whose readings and
@@ -198,3 +198,127 @@ export function runDecay(restMassOfEachPiece: number, passingSpeed: number): Dec
     systemMassPassing: systemMassOf(passingPieces.map((p) => p.reading)),
   }
 }
+
+// ---- Section A audit additions (2026-11-22; docs/audit/spacetime-geometry/06-draft-wording.md, sections 3, 5 and 8). None changes the physics above.
+
+// A relative tolerance, as in the Experiment 5 check-ups: the numbers range from about 1 to over a thousand.
+function near(a: number, b: number): boolean {
+  return Math.abs(a - b) < AGREEMENT_TOLERANCE * Math.max(1, Math.abs(a), Math.abs(b))
+}
+
+// Section A's fixed Part 1 case: K = 5 and a new particle of mass X = 2 (the page's present starting choices). At these values Setup A cannot make the new particle
+// (its system's mass is below 2 + X) and Setup B can.
+export const SECTION_A_ENERGY_OF_MOTION = 5
+export const SECTION_A_NEW_MASS = 2
+
+// Guess 1: which setup leaves more usable energy. The values are the page's answers (a), (b) and (c).
+export type UsableEnergyGuess = 'setup-a' | 'same' | 'setup-b'
+
+export interface UsableEnergyGuessMarker {
+  outlinedSetups: Setup[] // the bars the white outline goes round
+  equalsSign: boolean // an "=" is drawn between the two bars (the answer "the same")
+  label: string // the words in its YOUR GUESS box
+}
+
+// The white mark of guess 1. The answers have no size of their own, so each is only a marker: it depends on the answer alone and never on the result,
+// so a guess cannot change a real value. It says nothing about right or wrong.
+export function usableEnergyGuessMarker(guess: UsableEnergyGuess): UsableEnergyGuessMarker {
+  switch (guess) {
+    case 'setup-a':
+      return { outlinedSetups: ['stationary-target'], equalsSign: false, label: 'YOUR GUESS: Setup A leaves more' }
+    case 'same':
+      return { outlinedSetups: ['stationary-target', 'head-on'], equalsSign: true, label: 'YOUR GUESS: they leave the same' }
+    case 'setup-b':
+      return { outlinedSetups: ['head-on'], equalsSign: false, label: 'YOUR GUESS: Setup B leaves more' }
+  }
+}
+
+// What the run actually shows for guess 1: the tutor uses it to mark the guess; the page never compares a guess with it earlier.
+export function realUsableEnergyAnswerFor(result: MakingExperimentResult): UsableEnergyGuess {
+  const a = result.stationaryTarget.usable
+  const b = result.headOn.usable
+  if (near(a, b)) return 'same'
+  return a > b ? 'setup-a' : 'setup-b'
+}
+
+// Guess 2: is the system's mass that the system's own observer finds for Setup A the same as the lab found?
+export type OwnObserverMassGuess = 'same' | 'different'
+
+export interface OwnObserverMassGuessMarker {
+  afterPosition: number // where the white tick sits on the outlined bar, in the same unit as the system's mass (rest energies)
+  label: string // the words in its YOUR GUESS box
+}
+
+// The system's mass of one setup, as the lab finds it and as the system's own observer finds it (worked out from that observer's own pieces).
+export function ownObserverSystemMassOf(setup: SetupResult): { lab: number; own: number } {
+  return { lab: setup.systemMass, own: systemMassOf(setup.ownPieces) }
+}
+
+// The white tick of guess 2, on the outlined bar of the lower panel of Picture 2. "The same" sits at the real lab mass (the end of the solid bar). "Not the same"
+// sits at half of it. The tick depends on the guess and on the lab's mass, which a guess cannot change. The system's mass is at least 2 here, so half of it never
+// falls on a real own-observer mass that equals the lab's.
+export function ownObserverMassGuessMarker(guess: OwnObserverMassGuess, result: MakingExperimentResult): OwnObserverMassGuessMarker {
+  const { lab } = ownObserverSystemMassOf(result.stationaryTarget)
+  switch (guess) {
+    case 'same':
+      return { afterPosition: lab, label: 'YOUR GUESS: the same as the lab\'s' }
+    case 'different':
+      return { afterPosition: 0.5 * lab, label: 'YOUR GUESS: not the same as the lab\'s' }
+  }
+}
+
+// What the run actually shows for guess 2: the tutor uses it to mark the guess; the page never compares them earlier.
+export function realOwnObserverMassAnswerFor(result: MakingExperimentResult): OwnObserverMassGuess {
+  const { lab, own } = ownObserverSystemMassOf(result.stationaryTarget)
+  return near(lab, own) ? 'same' : 'different'
+}
+
+// The check-up of Part 3 (draft section 5b): expected against found, from this experiment's own physics, with no outside number. The rows say nothing about which
+// setup leaves more usable energy (that is the prediction, the tutor's).
+export function makingCheckUpRows(result: MakingExperimentResult): CheckUpRow[] {
+  const K = result.energyOfMotion
+  const A = result.stationaryTarget
+  const B = result.headOn
+  const LAB = 'the lab'
+  const OWN = "the system's own observer"
+  const sum = (name: string, setup: SetupResult, label: string): CheckUpRow => ({
+    check: `${name}, ${label}`,
+    expected: K,
+    found: [setup.usable + setup.lockedIn],
+    observers: [LAB],
+    reading: near(setup.usable + setup.lockedIn, K) ? 'the same' : 'different',
+  })
+  const massRow = (label: string, setup: SetupResult): CheckUpRow => {
+    const { lab, own } = ownObserverSystemMassOf(setup)
+    return {
+      check: `The system's mass, ${label}: the lab and the system's own observer`,
+      expected: null,
+      found: [lab, own],
+      observers: [LAB, OWN],
+      reading: near(lab, own) ? 'the same' : 'different',
+    }
+  }
+  const ownMomentum = totalsOf(A.ownPieces).momentumTimesC
+  const formula = Math.sqrt(4 + 2 * K)
+  return [
+    sum('Usable plus locked-in energy', A, 'Setup A'),
+    sum('Usable plus locked-in energy', B, 'Setup B'),
+    massRow('Setup A', A),
+    massRow('Setup B', B),
+    {
+      check: "Total momentum × c for the system's own observer, Setup A",
+      expected: 0,
+      found: [ownMomentum],
+      observers: [OWN],
+      reading: Math.abs(ownMomentum) < AGREEMENT_TOLERANCE * Math.max(1, A.totalEnergy) ? 'the same' : 'different',
+    },
+    {
+      check: "Setup A's system's mass against √(4 + 2K), the formula for a beam on a target at rest",
+      expected: formula,
+      found: [A.systemMass],
+      observers: [LAB],
+      reading: near(A.systemMass, formula) ? 'the same' : 'different',
+    },
+  ]
+}
+

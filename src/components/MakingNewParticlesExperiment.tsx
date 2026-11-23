@@ -1,74 +1,51 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { runMakingExperiment } from '../physics/makingNewParticles'
-import type { MakingExperimentResult, SetupResult } from '../physics/makingNewParticles'
-import { systemMassOf, totalsOf } from '../physics/energyMomentum'
+import {
+  SECTION_A_ENERGY_OF_MOTION,
+  SECTION_A_NEW_MASS,
+  ownObserverMassGuessMarker,
+  ownObserverSystemMassOf,
+  runMakingExperiment,
+  usableEnergyGuessMarker,
+} from '../physics/makingNewParticles'
+import type { MakingExperimentResult, OwnObserverMassGuess, SetupResult, UsableEnergyGuess } from '../physics/makingNewParticles'
 import { MakingNewParticlesTutor } from './MakingNewParticlesTutor'
-import { REFERENCE_ENTRIES, ReferencePanel } from './EnergyMomentumExperiment'
-import { PART_TWO_REFERENCE_ENTRIES as EXPERIMENT_FIVE_PART_TWO_ENTRIES } from './EnergyMomentumCollision'
+import { ReferencePanel } from './EnergyMomentumExperiment'
 import { MakingNewParticlesDecay, PART_TWO_REFERENCE_ENTRIES } from './MakingNewParticlesDecay'
-import { PART_THREE_REFERENCE_ENTRIES } from './EnergyMomentumReactions'
+import { PartHeader } from './GravitationalWaveExperiment'
+import { LookForList } from './WideBinariesExperiment'
+import { WhereFrom } from './TidalEffectExperiment'
+import { MakingNewParticlesLinks, SECTION_A_REFERENCE_ENTRIES, SectionAIntroduction } from './MakingNewParticlesIntro'
+import { MakingResults } from './MakingNewParticlesResults'
 
-// Step 4 of docs/experiments/spacetime-geometry/06-making-new-particles.md (the basic interface), Part 1 only: the two controls
-// (the energy of motion supplied, K, and the new particle's mass, X), a labeled diagram of the stationary-target setup, the
-// head-on setup and the stationary-target setup as the system's own observer sees it, bars for the usable and locked-in energy
-// and for the system's mass, a verdict for each setup, and the "How to read this diagram" caption (CLAUDE.md §14).
-// Step 5 connects the diagram to the physics model through a Run: the particles approach and collide in the lab's two pictures,
-// then the system's own observer's picture of Setup A appears, then the bars fill and the verdicts and numbers appear. Before Run,
-// only the setups are shown, so nothing is revealed early (§12). Every number comes from `runMakingExperiment` (CLAUDE.md §9).
-// Step 6 adds Part 1's prediction, which gates Run (spec, "Prediction Activity"). It is not scored, and the learner is not told which
-// answer is right (§12). Step 7 adds the results, shown when the run ends: values only, with plain labels (the explanation is the
-// tutor's, §12). There is deliberately no introduction or tutor yet, and no Part 2: those are later steps.
-// The introduction (stage A) and the "Words and formulas" panel were added after Step 7, at the owner's request. Wording here is draft for the owner's review (CLAUDE.md §28.1).
+// Spacetime Geometry 6, Section A (making a new particle; the experiment's "Part 1" until the audit of 2026-11-22). Audit update of 2026-11-22 (wording in
+// docs/audit/spacetime-geometry/06-draft-wording.md, approved by the owner on 2026-11-22; the owner answered "all defaults" to the twelve questions of the gap report):
+// Section A is in four Parts. Part 1 is one fixed run (K = 5 and X = 2) with two guesses, required before Run: which setup leaves more usable energy (a white outline on the
+// bars) and whether the system's own observer finds the same system's mass as the lab (a white tick in a lower panel of Picture 2). Part 2 lets the learner choose K and X;
+// Part 3 has the results of Part 1's run; Part 4 the tutor. Parts 2 to 4 appear after the first Run, the guesses lock at Run, and Start over clears Section A. Section B (decay,
+// the experiment's "Part 2") is unchanged in this step apart from its names. Every number comes from `makingNewParticles.ts` (CLAUDE.md §9). Wording here is draft for the
+// owner's review (CLAUDE.md §28.1).
 
-// The terms and formulas that stage A's introduction defines, added to the "Words and formulas" panel after Experiment 5's entries
-// (spec, Introduction, rule 5). They repeat the introduction's wording, with no new claims.
-const PART_ONE_REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
-  {
-    term: 'Beam, target, stationary target',
-    meaning: 'a beam is a stream of particles moving the same way. The target is what it hits. A stationary target is at rest in the lab.',
-  },
-  { term: 'Collider', meaning: 'a machine in which two beams are sent toward each other and meet head-on.' },
-  {
-    term: 'Energy of motion supplied, K',
-    meaning:
-      'the total kinetic energy of all the moving particles in the lab, in rest energies of one colliding particle. K = 3 is three times that rest energy.',
-  },
-  {
-    term: 'New particle, mass X',
-    meaning:
-      'a particle that was not there before the collision. Here it is made up and neutral, and X is its mass in masses of one colliding particle.',
-  },
-  {
-    term: 'The system’s own observer',
-    meaning: 'an observer for whom the total momentum of the system is zero. They travel along with the system as a whole.',
-  },
-  {
-    term: 'Usable energy, U = M − 2',
-    meaning:
-      'the system’s mass minus the rest masses of the two colliding particles. It is the part of the energy of motion that can become the mass of new particles.',
-  },
-  {
-    term: 'Locked-in energy, L = K − U',
-    meaning: 'the part of the energy of motion tied up in the motion of the whole system, which cannot become mass.',
-  },
-  {
-    term: 'Threshold for a new particle: M ≥ 2 + X',
-    meaning: 'a new particle of mass X can be made only if the system’s mass is at least the two colliding particles’ masses plus X.',
-  },
-]
+type PlayStatus = 'idle' | 'running' | 'complete'
 
-type Prediction = 'setup-a' | 'same' | 'setup-b'
-
-// The three answers of Part 1's prediction in the specification's "Prediction Activity" section (wording is a draft, §28.1).
-const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
+// The three answers of Part 1's first prediction and the two answers of its second (wording approved by the owner on 2026-11-22). Not scored, and the learner is not told which is right (§12).
+const GUESS1_CHOICES: { value: UsableEnergyGuess; label: string }[] = [
   { value: 'setup-a', label: '(a) Setup A, the stationary target.' },
   { value: 'same', label: '(b) The same for both.' },
   { value: 'setup-b', label: '(c) Setup B, the head-on beams.' },
 ]
+const GUESS2_CHOICES: { value: OwnObserverMassGuess; label: string }[] = [
+  { value: 'same', label: "(a) The same as the lab's." },
+  { value: 'different', label: "(b) Not the same as the lab's." },
+]
 
 const PART_ONE_ID = 'making-new-particles-part-1'
 const PART_TWO_ID = 'making-new-particles-part-2'
+const PART_ONE_COLOR = '#d97706'
+const PART_TWO_COLOR = '#be185d'
+const PART_THREE_COLOR = '#0f766e'
+const PART_FOUR_COLOR = '#0066cc'
+const GUESS_COLOR = '#ffffff'
 
 const ENERGY_PRESETS = [1, 2, 5, 10, 100]
 const MASS_PRESETS = [0.5, 1, 2, 4]
@@ -261,34 +238,69 @@ function ownParticles(result: SetupResult): PanelProps['particles'] {
   ]
 }
 
-// `progress` is null while idle (only the setups are shown), otherwise how far the playback has got, from 0 to 1.
-function MakingDiagram({ result, progress }: { result: MakingExperimentResult; progress: number | null }) {
+// How far the playback has got in each stage, shared by the drawing and the caption so that a feature is explained only once it is drawn (§12).
+export function makingMilestones(progress: number | null) {
+  const playing = progress !== null
+  const labQ = playing ? clamp01(progress / LAB_END) : 0
+  const ownQ = playing ? clamp01((progress - LAB_END) / (OWN_END - LAB_END)) : 0
+  return {
+    playing,
+    // the dashed circle for the whole system, after the collision, is drawn in the lab's pictures
+    afterDrawn: playing && panelStory(labQ).collided,
+    // Picture 2, the system's own observer's picture, is drawn
+    ownDrawn: playing && progress > LAB_END,
+    // that observer's collision has happened, so the lower panel's two masses can be drawn
+    ownMassDrawn: playing && panelStory(ownQ).collided,
+    // the bars have started to fill, and have finished
+    barsDrawn: playing && progress > OWN_END,
+    barsFilled: playing && progress >= 1,
+  }
+}
+
+// Part 1 only: a third band under Picture 2 for the system's own observer's mass of the whole system (its own scale), which makes the picture taller.
+const SYSTEM_TOP_Y = 3 * PANEL_HEIGHT + 70
+const SYSTEM_BAR_X = 40
+const SYSTEM_BAR_MAX = 300
+const VIEW_HEIGHT_WITH_SYSTEM = SYSTEM_TOP_Y + 200
+
+interface DiagramProps {
+  result: MakingExperimentResult
+  // null while idle (only the setups are shown); otherwise how far the playback has got, from 0 to 1.
+  progress: number | null
+  // True for Part 2's drawings (Drawing A and B), which follow the learner's settings and carry no guess.
+  own?: boolean
+  // The second guess, drawn as a white tick on the outlined bar of the lower panel (Part 1 only).
+  ownGuess?: OwnObserverMassGuess | null
+}
+
+// While idle it draws the setups just before the collisions. While the run plays it shows the lab's collisions first, then Setup A as the system's own observer sees it,
+// and then (Part 1 only) a lower panel with the system's own observer's mass of the whole system beside the lab's.
+export function MakingDiagram({ result, progress, own = false, ownGuess = null }: DiagramProps) {
   const playing = progress !== null
   const labQ = playing ? clamp01(progress / LAB_END) : 0
   const ownQ = playing ? clamp01((progress - LAB_END) / (OWN_END - LAB_END)) : 0
   const showOwn = playing && progress > LAB_END
+  const { ownMassDrawn } = makingMilestones(progress)
   const A = result.stationaryTarget
   const B = result.headOn
-  const total = 3 * PANEL_HEIGHT + 60
+  const picture1 = own ? 'Drawing A' : 'Picture 1'
+  const picture2 = own ? 'Drawing B' : 'Picture 2'
+  const total = own ? 3 * PANEL_HEIGHT + 60 : VIEW_HEIGHT_WITH_SYSTEM
+  const masses = ownObserverSystemMassOf(A)
+  const marker = ownGuess === null ? null : ownObserverMassGuessMarker(ownGuess, result)
+  const sysScale = SYSTEM_BAR_MAX / Math.max(masses.lab, masses.own, 1e-9)
+  const tickX = marker === null ? 0 : SYSTEM_BAR_X + marker.afterPosition * sysScale
+  const boxX = Math.min(Math.max(tickX - 115, 10), VIEW_WIDTH - 240)
   return (
     <svg
       viewBox={`0 0 ${VIEW_WIDTH} ${total}`}
       role="img"
-      aria-label={`${playing ? 'Playback' : 'Setup'}. Setup A, the lab's view: a beam particle moving right at ${A.labPieces[0].speed.toFixed(2)}c hits a target at rest. Afterward the whole system keeps moving right at ${A.ownObserverSpeed.toFixed(2)}c. Setup B, the lab's view: two particles meet head-on, each at ${B.labPieces[0].speed.toFixed(2)}c. Afterward the whole system is at rest. Setup A as the system's own observer sees it: the two particles approach each other at ${Math.abs(A.ownPieces[0].speed).toFixed(2)}c each, and the system is at rest. The energy of motion supplied is ${result.energyOfMotion} rest energies of one particle in both setups.`}
+      aria-label={`${playing ? 'Playback' : 'Setup'}. ${picture1}, Setup A, the lab's view: a beam particle moving right at ${A.labPieces[0].speed.toFixed(2)}c hits a target at rest. Afterward the whole system keeps moving at ${A.ownObserverSpeed.toFixed(2)}c. ${picture1}, Setup B, the lab's view: two particles of the same kind meet head-on at ${Math.abs(B.labPieces[0].speed).toFixed(2)}c each, and the whole system is at rest afterward.${showOwn ? ` ${picture2}: Setup A again, as the system's own observer sees it, who moves at ${A.ownObserverSpeed.toFixed(2)}c: the two particles approach each other at ${Math.abs(A.ownPieces[0].speed).toFixed(2)}c each and the system is at rest.` : ''}${showOwn && ownMassDrawn && !own ? ` Lower panel: the lab finds a system's mass of ${masses.lab.toFixed(2)} for Setup A and the system's own observer finds ${masses.own.toFixed(2)}.` : ''}`}
       style={SVG_STYLE}
     >
       <defs>
         {[LAB_COLOR, OWN_COLOR].map((color) => (
-          <marker
-            key={color}
-            id={arrowId(color)}
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="7"
-            markerHeight="7"
-            orient="auto-start-reverse"
-          >
+          <marker key={color} id={arrowId(color)} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
           </marker>
         ))}
@@ -302,7 +314,7 @@ function MakingDiagram({ result, progress }: { result: MakingExperimentResult; p
       <g transform="translate(0 40)">
         <SetupPanel
           top={0}
-          title="Setup A, the lab's view: a stationary target"
+          title={`${picture1}, Setup A: the lab's view of a stationary target`}
           subtitle="One beam particle hits a particle that is at rest."
           color={LAB_COLOR}
           particles={labParticles(A)}
@@ -312,7 +324,7 @@ function MakingDiagram({ result, progress }: { result: MakingExperimentResult; p
         />
         <SetupPanel
           top={PANEL_HEIGHT}
-          title="Setup B, the lab's view: head-on beams"
+          title={`${picture1}, Setup B: the lab's view of head-on beams`}
           subtitle="Two particles of the same kind meet head-on."
           color={LAB_COLOR}
           particles={labParticles(B)}
@@ -323,7 +335,7 @@ function MakingDiagram({ result, progress }: { result: MakingExperimentResult; p
         {showOwn ? (
           <SetupPanel
             top={2 * PANEL_HEIGHT}
-            title="Setup A again, as the system's own observer sees it"
+            title={`${picture2}: Setup A again, as the system's own observer sees it`}
             subtitle="The same collision, seen by the observer for whom the total momentum is zero."
             color={OWN_COLOR}
             particles={ownParticles(A)}
@@ -335,10 +347,62 @@ function MakingDiagram({ result, progress }: { result: MakingExperimentResult; p
           <text x="12" y={2 * PANEL_HEIGHT + 16} fontSize="11" fill={MUTED_COLOR}>
             {playing
               ? "Next, Setup A as the system's own observer sees it."
-              : "Press Run to see the collisions, and then Setup A as the system's own observer sees it."}
+              : `Press ${own ? 'Run these settings' : 'Run'} to see the collisions, and then Setup A as the system's own observer sees it.`}
           </text>
         )}
       </g>
+
+      {/* Part 1 only: the system's own observer's mass of the whole system, on its own scale. Solid bar = the lab's, outlined bar = the observer's. The white tick is the second guess; it is only a marker. */}
+      {!own && showOwn && (
+        <g>
+          <text x="12" y={SYSTEM_TOP_Y} fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
+            Picture 2, lower panel: the system's own observer's mass of the whole system
+          </text>
+          <text x="12" y={SYSTEM_TOP_Y + 15} fontSize="11" fill={MUTED_COLOR}>
+            Their own scale (in rest energies). A longer bar is a bigger mass.
+          </text>
+          {!ownMassDrawn && (
+            <text x="12" y={SYSTEM_TOP_Y + 40} fontSize="11" fill={MUTED_COLOR}>
+              The two masses are drawn here once the observer's collision has happened.
+            </text>
+          )}
+          {ownMassDrawn && (
+            <g>
+              <line x1={SYSTEM_BAR_X} y1={SYSTEM_TOP_Y + 28} x2={SYSTEM_BAR_X} y2={SYSTEM_TOP_Y + 112} stroke={MUTED_COLOR} strokeWidth="1" strokeDasharray="3 4" />
+              <text x={SYSTEM_BAR_X} y={SYSTEM_TOP_Y + 124} fontSize="10" textAnchor="middle" fill={MUTED_COLOR} style={HALO}>
+                zero
+              </text>
+              {[
+                { key: 'lab', value: masses.lab, y: SYSTEM_TOP_Y + 50, text: "The lab's system mass, Setup A", fill: true, color: LAB_COLOR },
+                { key: 'own', value: masses.own, y: SYSTEM_TOP_Y + 90, text: "The system's own observer's system mass, Setup A", fill: false, color: OWN_COLOR },
+              ].map((bar) => (
+                <g key={bar.key}>
+                  <text x="12" y={bar.y - 6} fontSize="10" fill={bar.color} style={HALO}>
+                    {bar.text}
+                  </text>
+                  <rect x={SYSTEM_BAR_X} y={bar.y} width={Math.max(bar.value * sysScale, 2)} height="14" rx="2" fill={bar.fill ? bar.color : 'none'} stroke={bar.color} strokeWidth="2" />
+                  <text x={SYSTEM_BAR_X + Math.max(bar.value * sysScale, 2) + 6} y={bar.y + 11} fontSize="10" fontWeight="bold" fill={bar.color} style={HALO}>
+                    {bar.value.toFixed(2)}
+                  </text>
+                </g>
+              ))}
+              {marker !== null && (
+                <g>
+                  <line x1={tickX} y1={SYSTEM_TOP_Y + 90} x2={tickX} y2={SYSTEM_TOP_Y + 114} stroke={GUESS_COLOR} strokeWidth="4" />
+                  <line x1={tickX} y1={SYSTEM_TOP_Y + 114} x2={boxX + 115} y2={SYSTEM_TOP_Y + 134} stroke={GUESS_COLOR} strokeWidth="2" />
+                  <rect x={boxX} y={SYSTEM_TOP_Y + 134} width="230" height="54" rx="6" fill="#0b1020" stroke={GUESS_COLOR} strokeWidth="3" />
+                  <text x={boxX + 115} y={SYSTEM_TOP_Y + 156} textAnchor="middle" fontSize="16" fontWeight="bold" fill={GUESS_COLOR}>
+                    YOUR GUESS
+                  </text>
+                  <text x={boxX + 115} y={SYSTEM_TOP_Y + 172} textAnchor="middle" fontSize="12" fill={GUESS_COLOR}>
+                    {marker.label.replace('YOUR GUESS: ', '')}
+                  </text>
+                </g>
+              )}
+            </g>
+          )}
+        </g>
+      )}
     </svg>
   )
 }
@@ -350,12 +414,16 @@ interface BarsProps {
   result: MakingExperimentResult
   // How much of each bar is drawn, from 0 to 1; the numbers and markers appear when it reaches 1.
   fill: number
+  // True for Part 2's drawings, which follow the learner's settings and carry no guess.
+  own?: boolean
+  // The first guess, drawn as a white outline round the chosen setup's bar once the bars are drawn (Part 1 only).
+  guess?: UsableEnergyGuess | null
 }
 
 // Two groups of bars. First, for each setup, the energy of motion supplied, split into its usable and locked-in parts, with a
 // marker at the energy of motion needed to make the chosen new particle. Second, the system's mass of each setup, with a line at
 // 2 + X, the mass needed to make the new particle.
-function MakingBars({ result, fill }: BarsProps) {
+export function MakingBars({ result, fill, own = false, guess = null }: BarsProps) {
   const full = fill >= 1
   const A = result.stationaryTarget
   const B = result.headOn
@@ -372,13 +440,18 @@ function MakingBars({ result, fill }: BarsProps) {
     ['B: head-on beams', B],
   ]
   const energyTop = 56
-  const massTop = energyTop + 2 * (rowHeight + 18) + 70
+  // The two energy rows are spaced wider than the mass rows, so that the white outline of the first guess never touches the numbers under the bars.
+  const energyStep = rowHeight + 30
+  const massTop = energyTop + 2 * energyStep + 70
   const height = massTop + 2 * (rowHeight + 18) + 64
+  const marker = !own && full && guess !== null ? usableEnergyGuessMarker(guess) : null
+  const rowCenterY = (i: number) => energyTop + i * energyStep + 10 + rowHeight / 2
+  const outlinedRows = marker === null ? [] : energyRows.map(([, s], i) => (marker.outlinedSetups.includes(s.setup) ? i : -1)).filter((i) => i >= 0)
   return (
     <svg
       viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
       role="img"
-      aria-label={`Bars. Energy of motion supplied, K = ${result.energyOfMotion}. Setup A: ${A.usable.toFixed(2)} usable and ${A.lockedIn.toFixed(2)} locked in. Setup B: ${B.usable.toFixed(2)} usable and ${B.lockedIn.toFixed(2)} locked in. System's mass: Setup A ${A.systemMass.toFixed(2)}, Setup B ${B.systemMass.toFixed(2)}, compared with ${massNeeded.toFixed(2)} needed to make a new particle of mass ${result.newMass}.`}
+      aria-label={`Bars. Energy of motion supplied, K = ${result.energyOfMotion}. Setup A: ${A.usable.toFixed(2)} usable and ${A.lockedIn.toFixed(2)} locked in. Setup B: ${B.usable.toFixed(2)} usable and ${B.lockedIn.toFixed(2)} locked in. The system's mass: Setup A ${A.systemMass.toFixed(2)}, Setup B ${B.systemMass.toFixed(2)}, against ${massNeeded.toFixed(2)} needed to make a new particle of mass ${result.newMass}.`}
       style={SVG_STYLE}
     >
       <text x="12" y="20" fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
@@ -397,7 +470,7 @@ function MakingBars({ result, fill }: BarsProps) {
         </pattern>
       </defs>
       {energyRows.map(([name, s, threshold], i) => {
-        const y = energyTop + i * (rowHeight + 18) + 10
+        const y = energyTop + i * energyStep + 10
         const needX = BAR_LEFT + threshold * energyScale
         return (
           <g key={name}>
@@ -416,16 +489,49 @@ function MakingBars({ result, fill }: BarsProps) {
             />
             <line x1={needX} y1={y - 6} x2={needX} y2={y + rowHeight + 6} stroke={NEEDED_COLOR} strokeWidth="2.5" />
             {full && (
-              <text x={BAR_LEFT} y={y + rowHeight + 13} fontSize="10" fill={MUTED_COLOR}>
+              <text x={BAR_LEFT} y={y + rowHeight + 17} fontSize="10" fill={MUTED_COLOR}>
                 usable {formatNumber(s.usable)} · locked in {formatNumber(s.lockedIn)}
               </text>
             )}
           </g>
         )
       })}
-      <text x="12" y={energyTop + 2 * (rowHeight + 18) + 18} fontSize="10" fill={NEEDED_COLOR}>
+      <text x="12" y={energyTop + 2 * energyStep + 18} fontSize="10" fill={NEEDED_COLOR}>
         Yellow marker: the K needed to make a new particle of mass {result.newMass}.
       </text>
+
+      {/* The first guess: a thick white outline round the chosen setup's bar (both bars, with an "=" between them, for "the same"), joined by a line to a large YOUR GUESS box. It is only a marker. */}
+      {marker !== null && (
+        <g>
+          {outlinedRows.map((i) => (
+            <rect
+              key={i}
+              x={BAR_LEFT - 4}
+              y={energyTop + i * energyStep + 10 - 4}
+              width={BAR_WIDTH + 8}
+              height={rowHeight + 8}
+              rx="4"
+              fill="none"
+              stroke={GUESS_COLOR}
+              strokeWidth="4"
+            />
+          ))}
+          {marker.equalsSign && (
+            <text x={BAR_LEFT - 12} y={(rowCenterY(0) + rowCenterY(1)) / 2 + 6} fontSize="18" fontWeight="bold" textAnchor="middle" fill={GUESS_COLOR}>
+              =
+            </text>
+          )}
+          <line x1={BAR_LEFT + BAR_WIDTH + 4} y1={rowCenterY(outlinedRows[0])} x2={504} y2={rowCenterY(outlinedRows[0])} stroke={GUESS_COLOR} strokeWidth="2" />
+          <line x1={504} y1={54} x2={504} y2={rowCenterY(outlinedRows[0])} stroke={GUESS_COLOR} strokeWidth="2" />
+          <rect x={354} y={4} width={158} height={50} rx="6" fill="#0b1020" stroke={GUESS_COLOR} strokeWidth="3" />
+          <text x={433} y={25} textAnchor="middle" fontSize="15" fontWeight="bold" fill={GUESS_COLOR}>
+            YOUR GUESS
+          </text>
+          <text x={433} y={44} textAnchor="middle" fontSize="11" fill={GUESS_COLOR}>
+            {marker.label.replace('YOUR GUESS: ', '')}
+          </text>
+        </g>
+      )}
 
       <text x="12" y={massTop} fontSize="12" fontWeight="bold" fill={TEXT_COLOR}>
         The system's mass, M
@@ -464,12 +570,261 @@ function MakingBars({ result, fill }: BarsProps) {
   )
 }
 
-const CELL: CSSProperties = { padding: '0.3rem 1rem 0.3rem 0' }
+const captionStyle: CSSProperties = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' }
+const smallNote: CSSProperties = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }
+const pictureTitle: CSSProperties = { fontWeight: 'bold', fontSize: '0.875rem', marginTop: '1.5rem', marginBottom: '0.5rem' }
+const linkButton: CSSProperties = { background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }
+const toggleStyle: CSSProperties = { marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }
+const answerStyle: CSSProperties = { display: 'block', textAlign: 'left', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }
+const hint: CSSProperties = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }
 
-function verdict(canMake: boolean, newMass: number, threshold: number, energy: number): string {
-  return canMake
-    ? `A new particle of mass ${newMass} can be made. It needs K ≥ ${formatNumber(threshold)}, and K = ${energy} is supplied.`
-    : `A new particle of mass ${newMass} cannot be made. It needs K ≥ ${formatNumber(threshold)}, and only K = ${energy} is supplied.`
+// ---- The captions (CLAUDE.md §14, "Animated Diagrams"; wording: docs/audit/spacetime-geometry/06-draft-wording.md, section 4) ----
+// A feature is explained only once it is drawn (§12). Nothing here says which setup leaves more usable energy, or whether the two observers agree: that is the learner's to
+// observe and the tutor's to explain (§12, §13).
+
+interface DiagramCaptionProps {
+  result: MakingExperimentResult
+  progress: number | null
+  own?: boolean
+  ownGuess?: OwnObserverMassGuess | null
+}
+
+export function DiagramCaption({ result, progress, own = false, ownGuess = null }: DiagramCaptionProps) {
+  const { playing, afterDrawn, ownDrawn, ownMassDrawn } = makingMilestones(progress)
+  const A = result.stationaryTarget
+  const B = result.headOn
+  const masses = ownObserverSystemMassOf(A)
+  const picture1 = own ? 'Drawing A' : 'Picture 1'
+  const picture2 = own ? 'Drawing B' : 'Picture 2'
+  const f2 = (v: number) => formatNumber(v, 2)
+  const items = [
+    ...(afterDrawn
+      ? [
+          {
+            look: `the dashed circle for the whole system after each collision in ${picture1}, with or without an arrow`,
+            means: `in Setup A the system as a whole is still moving after the collision, at ${f2(A.ownObserverSpeed)}c (it has an arrow). In Setup B it is at rest (no arrow)`,
+            matters: 'motion of the whole system is energy of motion that is still there afterward. The tutor explains why that matters for making a new particle',
+          },
+        ]
+      : []),
+    ...(ownDrawn
+      ? [
+          {
+            look: `the purple picture of Setup A (${picture2}), and the sky-blue picture of Setup B`,
+            means: `for the system's own observer, Setup A's particles approach each other at ${f2(Math.abs(A.ownPieces[0].speed))}c and ${f2(Math.abs(A.ownPieces[1].speed))}c, with the system at rest. In the lab's picture of Setup B the particles approach at ${f2(Math.abs(B.labPieces[0].speed))}c each, with the system at rest`,
+            matters: 'the observer for whom the total momentum is zero is the one who can say how much energy of motion is left over for making mass',
+          },
+        ]
+      : []),
+    ...(ownMassDrawn && !own
+      ? [
+          {
+            look: 'the solid sky-blue bar and the outlined purple bar in the lower panel',
+            means: `the lab and the system's own observer each work out the system's mass of Setup A from their own numbers: ${f2(masses.lab)} and ${f2(masses.own)}`,
+            matters: "it is the mass of the whole system, and whether two observers agree on it is the question of your second prediction (the page does not say whether the bars are equal, so read it from them)",
+          },
+        ]
+      : []),
+  ]
+  return (
+    <div style={captionStyle}>
+      <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+        <strong>{own ? `How to read ${picture1} and ${picture2}.` : 'How to read this diagram.'}</strong>{' '}
+        {own ? "These are Part 1's pictures again, drawn for your settings, with a pink line beside them because they follow your settings. Everything in them means what it meant in Part 1. " : ''}
+        The diagram shows two ways of arranging a collision, and both are given the same energy of motion, K = {result.energyOfMotion}. Each way gets its own picture, and the pictures are stacked
+        one above the other. They are all drawn on the same scale, so you can compare them directly. The new particle {own ? 'you chose' : 'we hope to make'} has a mass of X = {result.newMass}.
+      </p>
+      <p style={{ margin: '0 0 0.25rem' }}>
+        <strong>The pictures</strong>
+      </p>
+      <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+        <li>
+          <strong>{picture1}, Setup A: the lab's view (sky blue).</strong> A beam particle moves toward a target particle that is sitting still, and hits it.
+        </li>
+        <li>
+          <strong>{picture1}, Setup B: the lab's view (sky blue).</strong> Two particles of the same kind move toward each other and meet head-on.
+        </li>
+        {ownDrawn && (
+          <li>
+            <strong>{picture2}: Setup A again, as the system's own observer sees it (purple).</strong> This is the same collision as the first picture, but watched by someone who travels along with
+            the system as a whole. For that observer the total momentum is zero. It appears during the run, after the lab's pictures have played.
+          </li>
+        )}
+        {ownMassDrawn && !own && (
+          <li>
+            <strong>{picture2}, lower panel (solid sky blue and outlined purple).</strong> The system's mass of Setup A, as the lab works it out (solid) and as the system's own observer works it out
+            (outlined), on a scale of their own.
+          </li>
+        )}
+      </ul>
+      <p style={{ margin: '0 0 0.25rem' }}>
+        <strong>What is drawn in each picture</strong>
+      </p>
+      <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+        <li>
+          <strong>The filled circles</strong> are the particles. Under each one is its name and its speed. Speeds are given as a fraction of <em>c</em>, the speed of light, so 0.5c is half the speed
+          of light.
+        </li>
+        <li>
+          <strong>The arrow</strong> on a circle shows which way that particle is moving. A longer arrow means a faster particle. A particle with no arrow is not moving.
+        </li>
+        <li>
+          <strong>The dashed vertical line</strong> marks the place where the particles meet.
+        </li>
+        <li>
+          <strong>The top row</strong>, "Before the collision", shows the particles on their way to the dashed line. {playing ? 'When you press Run, they move along to it, and a yellow ring flashes at the moment they collide.' : ''}
+        </li>
+        {afterDrawn && (
+          <li>
+            <strong>The bottom row</strong>, "The whole system, after", appears at the collision. The system means all the particles taken together, and here it is drawn as one dashed circle. If the
+            system as a whole is moving, the circle has an arrow. If it is not moving, there is no arrow. The words under the circle say which it is.
+          </li>
+        )}
+        {ownMassDrawn && !own && (
+          <li>
+            <strong>The numbers beside the lower panel's bars</strong> are each mass in rest energies, one rest energy being the rest energy of one colliding particle.{' '}
+            {ownGuess !== null && (
+              <>
+                <strong>The white tick and the YOUR GUESS box</strong> are the answer you chose to the second prediction, drawn across the outlined bar. They are <strong>only a marker</strong>: the answer
+                has no size of its own. If you chose "the same as the lab's", the tick sits where the solid bar ends. If you chose "not the same", it sits at half that length. It does not change either bar.
+              </>
+            )}
+          </li>
+        )}
+      </ul>
+      {items.length > 0 && (
+        <>
+          <p style={{ margin: '0 0 0.5rem' }}>
+            <strong>What to look for.</strong>
+          </p>
+          <LookForList items={items} />
+        </>
+      )}
+      <p style={{ margin: '0.75rem 0 0' }}>
+        Not shown: how the leftover energy is shared among the particles after a reaction. Only energy and momentum are tracked, and whether a possible reaction actually happens is not modeled.
+      </p>
+      {!own && (
+        <WhereFrom>
+          <strong>Calculated here:</strong> every number and bar, from the rules of special relativity of Experiment 5. <strong>Measured:</strong> nothing on this page (the tutor's real-world figures are
+          the exception, and are linked). <strong>Imagined for the question:</strong> the colliding particles, the made-up neutral particle X and the observers.
+        </WhereFrom>
+      )}
+    </div>
+  )
+}
+
+interface BarsCaptionProps {
+  result: MakingExperimentResult
+  progress: number | null
+  own?: boolean
+  guess?: UsableEnergyGuess | null
+}
+
+export function BarsCaption({ result, progress, own = false, guess = null }: BarsCaptionProps) {
+  const { barsFilled } = makingMilestones(progress)
+  const A = result.stationaryTarget
+  const B = result.headOn
+  const K = result.energyOfMotion
+  const massNeeded = 2 + result.newMass
+  const f2 = (v: number) => formatNumber(v, 2)
+  const items = [
+    {
+      look: 'the green part and the orange, striped part of each bar in the first set',
+      means: `Setup A: usable ${f2(A.usable)} and locked in ${f2(A.lockedIn)}. Setup B: usable ${f2(B.usable)} and locked in ${f2(B.lockedIn)}. Each pair adds up to K = ${K}`,
+      matters: 'the green part is the only part that can become the mass of a new particle. This is the question of your first prediction, and the page does not say which setup has more, so read it from the bars',
+    },
+    {
+      look: 'the yellow marker on each bar of the first set, and the yellow line across the second set',
+      means: `a new particle of mass X = ${result.newMass} needs a system's mass of 2 + X = ${f2(massNeeded)}. Setup A's blue bar reaches ${f2(A.systemMass)} and Setup B's reaches ${f2(B.systemMass)}. The marker shows the least K for each setup: ${f2(result.stationaryTargetThreshold)} for Setup A and ${f2(result.headOnThreshold)} for Setup B`,
+      matters: 'it is the test of whether the new particle can be made at all: a blue bar that reaches the yellow line can make it, and one that stops short cannot',
+    },
+  ]
+  return (
+    <div style={captionStyle}>
+      <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+        <strong>How to read these bars.</strong> This picture has two sets of bars. In each set there is one bar for Setup A (the stationary target) and one for Setup B (the head-on beams), so you can
+        compare them. The bars fill in from the left during the end of the run. Within a set, a longer bar means a bigger number, on one shared scale.
+      </p>
+      <p style={{ margin: '0 0 0.25rem' }}>
+        <strong>The first set: the energy of motion you supplied, K = {K}, split in two</strong>
+      </p>
+      <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+        <li>
+          <strong>The whole bar</strong> is K, the energy of motion given to the particles in the lab. Both setups were given the same K, so both whole bars are the same length.
+        </li>
+        <li>
+          <strong>The green, solid part</strong> is the <em>usable</em> energy: the part that can change form into the mass of a new particle.
+        </li>
+        <li>
+          <strong>The orange, striped part</strong> is the <em>locked-in</em> energy: the part tied up in the motion of the whole system, which cannot become mass. If a bar has no orange part,
+          nothing was locked in.
+        </li>
+        <li>
+          <strong>The numbers under each bar</strong> give the usable and locked-in amounts. They add up to K.
+        </li>
+        <li>
+          <strong>The yellow marker</strong> shows the amount of K that making a new particle of your chosen mass, X = {result.newMass}, would need in that setup. If the marker is inside the whole bar, the K you
+          supplied is enough. If it is beyond the end of the bar, it is not enough.
+        </li>
+        {barsFilled && guess !== null && !own && (
+          <li>
+            <strong>The white outline and the YOUR GUESS box.</strong> This is the answer you chose to the first prediction, drawn round the bar of the setup you chose (round both bars, with an "=" between
+            them, if you chose "the same for both"). It is <strong>only a marker</strong>: the answer has no size of its own, and it does not change either bar.
+          </li>
+        )}
+      </ul>
+      <p style={{ margin: '0 0 0.25rem' }}>
+        <strong>The second set: the system's mass, M</strong>
+      </p>
+      <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
+        <li>
+          <strong>The blue bar</strong> is the system's mass M for that setup: all the particles taken together, worked out from their total energy and total momentum. The number is written under the bar.
+        </li>
+        <li>
+          <strong>The yellow line</strong> marks 2 + X = {formatNumber(massNeeded)}. This is the smallest M at which a new particle of mass X can be made, because the two colliding particles each still have
+          a mass of 1 and the new particle adds X.
+        </li>
+        <li>
+          If a blue bar reaches or passes the yellow line, the new particle can be made in that setup. If it stops short of the line, it cannot.
+        </li>
+      </ul>
+      <p style={{ margin: '0 0 0.5rem' }}>
+        <strong>A worked moment (K = 3 and X = 1, not one of the buttons).</strong> In Setup A, the beam particle has energy 4 and momentum × c of √15 = 3.87, and the target has energy 1 and momentum 0. The total
+        energy is 5 and the total momentum × c is 3.87, so M = √(25 − 15) = √10 = 3.16. The usable energy is M − 2 = 1.16, and the locked-in energy is 3 − 1.16 = 1.84. In Setup B, each particle has energy 2.5 and the
+        momenta cancel, so M = 5, the usable energy is 3 and the locked-in energy is 0. The line for X = 1 is at 2 + 1 = 3: a system whose M is 3.16 passes it, and one whose M is 2.5 would stop short.
+      </p>
+      <p style={{ margin: '0 0 0.5rem' }}>
+        <strong>What to look for.</strong>
+      </p>
+      <LookForList items={items} />
+      {!own && (
+        <WhereFrom>
+          <strong>Calculated here:</strong> every number and bar, from the rules of special relativity of Experiment 5. <strong>Measured:</strong> nothing on this page. <strong>Imagined for the question:</strong>{' '}
+          the colliding particles and the made-up neutral particle X.
+        </WhereFrom>
+      )}
+    </div>
+  )
+}
+
+// Plays a run: progress goes from 0 to 1 over ANIMATION_DURATION_MS, then the status becomes 'complete'. The length only sets how fast the result is shown (§11).
+function usePlayback(status: PlayStatus, setStatus: (status: PlayStatus) => void, setProgress: (progress: number) => void) {
+  useEffect(() => {
+    if (status !== 'running') return
+    const startTime = performance.now()
+    let frameId: number
+    const animate = (currentTime: number) => {
+      const fraction = clamp01((currentTime - startTime) / ANIMATION_DURATION_MS)
+      setProgress(fraction)
+      if (fraction >= 1) {
+        setStatus('complete')
+        return
+      }
+      frameId = requestAnimationFrame(animate)
+    }
+    frameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frameId)
+  }, [status, setStatus, setProgress])
 }
 
 interface MakingNewParticlesExperimentProps {
@@ -477,533 +832,306 @@ interface MakingNewParticlesExperimentProps {
   onTutorComplete?: () => void
 }
 
-// The completion mark is saved when Part 2's playback ends, and the explained mark, which shows the chapter summary, when Part 2's
-// tutor reaches its explanation (spec, Decision 14). Part 1 calls neither.
+// The completion mark is saved when Section B's playback ends, and the explained mark, which shows the chapter summary, when Section B's tutor reaches its
+// explanation (spec, Decision 14). Section A calls neither.
 export function MakingNewParticlesExperiment({ onComplete, onTutorComplete }: MakingNewParticlesExperimentProps) {
-  const [energyOfMotion, setEnergyOfMotion] = useState(ENERGY_PRESETS[2])
-  const [newMass, setNewMass] = useState(MASS_PRESETS[2])
-  const [prediction, setPrediction] = useState<Prediction | null>(null)
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
+  // ---- Part 1: two guesses, one fixed run (K = 5 and X = 2) ----
+  const [guess1, setGuess1] = useState<UsableEnergyGuess | null>(null)
+  const [guess2, setGuess2] = useState<OwnObserverMassGuess | null>(null)
+  const [locked, setLocked] = useState(false)
+  const [status, setStatus] = useState<PlayStatus>('idle')
   const [progress, setProgress] = useState(0)
-  const [runCount, setRunCount] = useState(0)
-  // Part 2 is shown after the learner reaches Part 1's tutor explanation, or by a skip link under Part 1's heading. Skipping does not
-  // count as having reached the explanation (spec, Decision 14).
+  // Counts the Start overs, so the tutor starts again at its first question.
+  const [resetCount, setResetCount] = useState(0)
+  // ---- Part 2: the learner's own K and X ----
+  const [ownK, setOwnK] = useState(SECTION_A_ENERGY_OF_MOTION)
+  const [ownX, setOwnX] = useState(SECTION_A_NEW_MASS)
+  const [shown, setShown] = useState<{ K: number; X: number } | null>(null)
+  const [ownStatus, setOwnStatus] = useState<PlayStatus>('idle')
+  const [ownProgress, setOwnProgress] = useState(0)
+  // Section B (decay) is shown after the learner reaches Section A's tutor explanation, or by a skip link under Section A's heading. Skipping does not count as having
+  // reached the explanation (spec, Decision 14).
   const [partOneExplained, setPartOneExplained] = useState(false)
-  const [skippedToPartTwo, setSkippedToPartTwo] = useState(false)
-  const partTwoShown = partOneExplained || skippedToPartTwo
+  const [skippedToSectionB, setSkippedToSectionB] = useState(false)
+  const sectionBShown = partOneExplained || skippedToSectionB
   useEffect(() => {
-    if (skippedToPartTwo) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [skippedToPartTwo])
-  const returnToIdle = () => {
+    if (skippedToSectionB) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [skippedToSectionB])
+
+  const partOneDone = status === 'complete'
+  const playing = status === 'running' || ownStatus === 'running'
+  const startOverDisabled = (guess1 === null && guess2 === null && status === 'idle' && ownStatus === 'idle') || playing
+  usePlayback(status, setStatus, setProgress)
+  usePlayback(ownStatus, setOwnStatus, setOwnProgress)
+
+  const K1 = SECTION_A_ENERGY_OF_MOTION
+  const X1 = SECTION_A_NEW_MASS
+  const result = runMakingExperiment(K1, X1)
+  const ownResult = shown === null ? null : runMakingExperiment(shown.K, shown.X)
+
+  const handleRun = () => {
+    if (guess1 === null || guess2 === null || locked) return
+    setLocked(true)
+    setProgress(0)
+    setStatus('running')
+  }
+  // Start over: clears the guesses, the runs, the results and the tutor of Section A, and returns Section A to its first state.
+  const handleStartOver = () => {
+    if (playing) return
+    setGuess1(null)
+    setGuess2(null)
+    setLocked(false)
     setStatus('idle')
     setProgress(0)
+    setOwnK(SECTION_A_ENERGY_OF_MOTION)
+    setOwnX(SECTION_A_NEW_MASS)
+    setShown(null)
+    setOwnStatus('idle')
+    setOwnProgress(0)
+    setResetCount((n) => n + 1)
   }
-
-  useEffect(() => {
-    if (status !== 'running') return
-
-    const startTime = performance.now()
-    let frameId: number
-
-    const animate = (currentTime: number) => {
-      const fraction = clamp01((currentTime - startTime) / ANIMATION_DURATION_MS)
-      setProgress(fraction)
-
-      if (fraction >= 1) {
-        setStatus('complete')
-        return
-      }
-
-      frameId = requestAnimationFrame(animate)
-    }
-
-    frameId = requestAnimationFrame(animate)
-
-    return () => cancelAnimationFrame(frameId)
-  }, [status])
-
-  const result = runMakingExperiment(energyOfMotion, newMass)
-  const complete = status === 'complete'
-  const A = result.stationaryTarget
-  const B = result.headOn
+  const chooseOwn = (change: () => void) => {
+    change()
+    setOwnStatus('idle')
+    setOwnProgress(0)
+  }
+  const handleRunOwn = () => {
+    setShown({ K: ownK, X: ownX })
+    setOwnProgress(0)
+    setOwnStatus('running')
+  }
+  const pinkFrame = { borderLeft: `4px solid ${PART_TWO_COLOR}`, paddingLeft: '0.75rem' } as const
+  const guess1Label = GUESS1_CHOICES.find((c) => c.value === guess1)?.label ?? ''
+  const guess2Label = GUESS2_CHOICES.find((c) => c.value === guess2)?.label ?? ''
+  const bothChosen = guess1 !== null && guess2 !== null
 
   return (
     <div>
       <h2>Experiment 6 — Making New Particles: How Much Energy Does It Take?</h2>
       <div id={PART_ONE_ID} className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        <h3 style={{ marginTop: 0 }}>Part 1 — Making a new particle</h3>
+        <h3 style={{ marginTop: 0 }}>Section A: Making a new particle, how much energy does it take?</h3>
         <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
-          {!partTwoShown && <span style={{ color: 'var(--text-muted)' }}>Already know this? </span>}
+          {!sectionBShown && <span style={{ color: 'var(--text-muted)' }}>Already know this? </span>}
           <button
             type="button"
             onClick={() => {
-              if (partTwoShown) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              else setSkippedToPartTwo(true)
+              if (sectionBShown) document.getElementById(PART_TWO_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              else setSkippedToSectionB(true)
             }}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              font: 'inherit',
-              color: '#0066cc',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-            }}
+            style={linkButton}
           >
-            {partTwoShown ? 'Go to Part 2 - Decay ↓' : 'Skip to Part 2 - Decay'}
+            {sectionBShown ? 'Go to Section B - Decay ↓' : 'Skip to Section B - Decay'}
           </button>
         </p>
 
-        {/* Introduction, stage A (needed by Part 1): draft wording for the owner's review (CLAUDE.md §28.1), from the specification's
-            "Introduction: two stages". It does not say which setup leaves more usable energy (that is the prediction, §12). */}
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> In Experiment 5 we found that when you take several particles together, such as two lumps of clay
-            about to collide, the whole set has a mass of its own. It is called the system's mass. You work it out from the total energy and
-            total momentum of all the particles, and every observer agrees on it. It is not simply the particles' separate masses added up.
-            We also saw that energy of motion can change form. When two lumps of clay hit and stick, their energy of motion became internal
-            energy, and that made the lump heavier. Particle physicists use this idea on purpose. They smash particles together to make a
-            particle that was not there before, and the mass of the new particle has to come from the energy of the collision.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            Here is the practical question. You choose how much energy of motion to give the colliding particles. That amount is K. Some of
-            it may be able to change form into the mass of a new particle. How much? Is it all of K, or only part of it? And does it depend
-            on how you arrange the collision? You could fire one particle at another that is sitting still, or you could fire two particles
-            at each other. In both cases the particles are given the same K. This experiment lets you compare the two, and you will be asked
-            to predict which one lets more of K become the mass of a new particle.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>A few reminders from Experiment 5.</strong> A particle's rest energy, the energy it has when it is not moving, is our
-            unit, written as 1. The mass of a system is M = √(E_total² − (P_total c)²), worked out from its total energy and total momentum.
-            And a reaction can make new pieces only if the system's mass is at least the total rest mass of everything that comes out. That
-            least value is called the threshold. All three are also in the "Words and formulas" panel below.
-          </p>
+        <SectionAIntroduction partOneK={K1} partOneX={X1} />
 
-          <div style={{ marginBottom: '0.75rem' }}>
-            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-              <strong>Some new words.</strong> Here is each one in plain language.
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-              <li>
-                <strong>Beam:</strong> a stream of particles moving the same way. <strong>Target:</strong> what the beam hits.{' '}
-                <strong>Stationary target:</strong> a target that is at rest in the lab. For example, a billiard ball rolling along (the
-                beam) hits a ball that is sitting still (the target).
-              </li>
-              <li>
-                <strong>Collider:</strong> a machine in which two beams are sent toward each other and meet head-on.
-              </li>
-              <li>
-                <strong>The energy of motion supplied, K:</strong> the total kinetic energy of all the moving particles in the lab, in rest
-                energies of one colliding particle. For example, K = 3 means the energy of motion is three times the rest energy of one
-                particle.
-              </li>
-              <li>
-                <strong>New particle:</strong> a particle that was not there before the collision. Here we use a made-up neutral particle of
-                mass X, measured in masses of one colliding particle. The colliding particles survive unchanged.
-              </li>
-              <li>
-                <strong>The system's own observer:</strong> an observer for whom the total momentum of the system is zero. They travel along
-                with the system as a whole, as the particle's own observer in Experiment 5 travelled along with a particle.
-              </li>
-              <li>
-                <strong>Usable energy:</strong> the part of the energy of motion that can become the mass of new particles.{' '}
-                <strong>Locked-in energy:</strong> the part tied up in the motion of the whole system, which cannot.
-              </li>
-            </ul>
-          </div>
+        <MakingNewParticlesLinks />
 
-          <div style={{ marginBottom: '0.75rem' }}>
-            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-              <strong>The formulas we need.</strong> Each comes in words, with a worked example.
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-              <li>
-                <strong>The system's mass again.</strong> A particle at rest has energy 1. If it also has an energy of motion K, its total
-                energy is 1 + K, and its momentum × c is √((1 + K)² − 1), because for one particle E² − (pc)² is its mass squared, which is
-                1. For example, take K = 3 with one moving particle hitting one at rest. The moving one has energy 4 and momentum × c of √15
-                = 3.873, and the one at rest has energy 1 and momentum 0. So E_total = 5, P_total c = 3.873, and M = √(25 − 15) = √10 =
-                3.162. Now take the same K = 3 shared between two particles meeting head-on. Each gets an energy of motion of 1.5, so each
-                has energy 2.5. Their momenta are equal and opposite, so E_total = 5, P_total c = 0, and M = √(25 − 0) = 5.{' '}
-                <em>What it does not mean:</em> M is not the sum of the particles' masses, and each example shows only one setup.
-              </li>
-              <li>
-                <strong>Usable energy:</strong> U = M − 2. In words: "the system's mass, minus the rest masses of the two colliding
-                particles." For example, M = 3.162 gives U = 1.162. <em>What it does not mean:</em> it is not the energy of motion measured
-                in the lab.
-              </li>
-              <li>
-                <strong>Locked-in energy:</strong> L = K − U. In words: "what is left of the energy supplied." For example, K = 3 and U =
-                1.162 give L = 1.838.
-              </li>
-              <li>
-                <strong>The threshold:</strong> a new particle of mass X can be made only if M ≥ 2 + X. For example, a new particle of mass
-                X = 1 needs M ≥ 3.
-              </li>
-            </ul>
-          </div>
+        <ReferencePanel entries={[...SECTION_A_REFERENCE_ENTRIES, ...(sectionBShown ? PART_TWO_REFERENCE_ENTRIES : [])]} />
 
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> Two collisions are set up with the same energy of motion, K. In Setup A, a beam particle hits a
-            particle that is at rest in the lab. In Setup B, two particles of the same kind move toward each other and meet head-on. When
-            you press Run, the picture plays in stages:
+        {/* ===== Part 1: predict, then watch ===== */}
+        <PartHeader color={PART_ONE_COLOR} title="Part 1: Predict, then watch">
+          You will predict which of two ways of arranging a collision leaves more energy usable for making a new particle, then guess what an observer who rides along with the system finds, press Run
+          and watch both collisions. Your guesses are drawn on the real bars in white. They never change them.
+        </PartHeader>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make a prediction (1 of 2): which setup leaves more usable energy</p>
+          <p style={hint}>
+            You supply the same total energy of motion either way, K = {K1}, and the new particle you hope to make has a mass of X = {X1}. In Setup A, one beam particle hits a particle that is at rest.
+            In Setup B, two particles of the same kind meet head-on. Which setup leaves more energy usable for making new particles?
           </p>
-          <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
-            <li>
-              The lab's two pictures play together. The particles move toward the dashed line where they meet, and a ring flashes at the
-              moment of the collision.
-            </li>
-            <li>
-              Under each picture, the whole system (all the pieces taken together) is shown afterward as one dashed circle. If the system as
-              a whole is moving, it has an arrow, and if it is not moving, it does not.
-            </li>
-            <li>
-              Setup A is replayed, in purple, as the system's own observer sees it. That observer travels along with the system, so for them
-              the total momentum is zero.
-            </li>
-            <li>
-              Bars then fill in. The first pair splits the energy of motion you supplied into a usable part and a locked-in part. The second
-              pair shows each setup's system's mass next to the mass that a new particle of your chosen X would need.
-            </li>
-            <li>
-              Finally, a table of the numbers appears, with a line for each setup saying whether the new particle can be made. After that
-              come a few questions for you to think about.
-            </li>
-          </ol>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Choose the energy of motion K and the mass X of the new particle. Predict which setup leaves more
-            usable energy, and press Run. You are not graded. The Run button stays off until you choose a prediction.
-          </p>
-          <p style={{ margin: 0 }}>
-            <strong>What we assume.</strong> Everything moves along one line. The two colliding particles are identical and survive
-            unchanged. The new particle is neutral. Only energy and momentum are tracked, and whether a possible reaction actually happens
-            is not modeled.
-          </p>
-        </div>
-
-        <ReferencePanel
-          entries={[
-            ...REFERENCE_ENTRIES,
-            ...EXPERIMENT_FIVE_PART_TWO_ENTRIES,
-            ...PART_THREE_REFERENCE_ENTRIES,
-            ...PART_ONE_REFERENCE_ENTRIES,
-            ...(partTwoShown ? PART_TWO_REFERENCE_ENTRIES : []),
-          ]}
-        />
-
-        <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The energy of motion supplied, K</label>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
-            The total energy of motion (kinetic energy) of all the moving particles in the lab, in rest energies of one colliding particle.
-            For example, K = 3 means the energy of motion is three times the rest energy of one particle.
-          </p>
-          <div style={{ marginBottom: '1rem' }}>
-            {ENERGY_PRESETS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setEnergyOfMotion(value)
-                  setPrediction(null)
-                  returnToIdle()
-                }}
-                className={`toggle-button${energyOfMotion === value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
-
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The mass of the new particle, X</label>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
-            In masses of one colliding particle. The new particle is a made-up neutral particle that was not there before the collision. The
-            colliding particles survive unchanged.
+          <p style={hint}>
+            <strong>What Run will show.</strong> Pressing Run plays two collisions. <strong>Picture 1</strong> is the lab's view of both setups. <strong>Picture 2</strong> is Setup A again, as the system's own
+            observer sees it: someone who moves along with the whole system, so that for them its total momentum is zero (think of a person on a train that keeps pace with the system). You make two
+            predictions before you press Run: the first is about which setup leaves more usable energy, and the second is about what that observer finds for the system's mass. You will see both pictures.
           </p>
           <div>
-            {MASS_PRESETS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setNewMass(value)
-                  setPrediction(null)
-                  returnToIdle()
-                }}
-                className={`toggle-button${newMass === value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-            You supply the same total energy of motion either way, K = {energyOfMotion}. In setup A, one beam particle hits a particle that
-            is at rest. In setup B, two particles of the same kind meet head-on. Which setup leaves more energy usable for making new
-            particles?
-          </p>
-          <div>
-            {PREDICTION_CHOICES.map((choice) => (
+            {GUESS1_CHOICES.map((choice) => (
               <button
                 key={choice.value}
                 type="button"
-                onClick={() => {
-                  setPrediction(choice.value)
-                  returnToIdle()
-                }}
-                className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
-                style={{ display: 'block', textAlign: 'left', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                disabled={locked}
+                onClick={() => setGuess1(choice.value)}
+                className={`toggle-button${guess1 === choice.value ? ' is-selected' : ''}`}
+                style={answerStyle}
               >
                 {choice.label}
               </button>
             ))}
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
-            {prediction !== null
-              ? `Your prediction: ${PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.slice(0, 3)}. This is not graded.`
-              : 'Choose an option to continue'}
+          <p style={{ ...smallNote, marginBottom: 0 }}>
+            {guess1 === null
+              ? 'Choose an option to continue'
+              : locked
+                ? 'Your prediction is locked while you try other settings. To change it, press Start over.'
+                : `Your prediction: ${guess1Label.slice(0, 3)}. You can still change it until you press Run.`}
           </p>
         </div>
 
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make a prediction (2 of 2): the system's own observer</p>
+          <p style={hint}>
+            Now think about the purple picture, where the system's own observer watches Setup A. This observer rides along with the system, so for them the total momentum is zero. They work out the
+            system's mass from their own total energy and total momentum, with the same formula, M = √(E_total² − (P_total c)²). The lab did the same with its own numbers. Is the system's mass this
+            observer finds the same as the lab found for Setup A?
+          </p>
+          <div>
+            {GUESS2_CHOICES.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                disabled={locked}
+                onClick={() => setGuess2(choice.value)}
+                className={`toggle-button${guess2 === choice.value ? ' is-selected' : ''}`}
+                style={answerStyle}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+          <p style={{ ...smallNote, marginBottom: 0 }}>
+            {guess2 === null
+              ? 'Choose an option to continue'
+              : locked
+                ? 'Your prediction is locked while you try other settings. To change it, press Start over.'
+                : `Your prediction: ${guess2Label.slice(0, 3)}. You can still change it until you press Run.`}
+          </p>
+        </div>
+
+        <button type="button" className="action-button" onClick={handleRun} disabled={!bothChosen || locked} style={{ padding: '0.6rem 1.5rem' }}>
+          {status === 'running' ? 'Running...' : locked ? 'Run (done)' : 'Run (the lab, then the system\'s own observer)'}
+        </button>
         <button
           type="button"
-          className="action-button"
-          onClick={() => {
-            setProgress(0)
-            setRunCount((n) => n + 1)
-            setStatus('running')
-          }}
-          disabled={prediction === null || status === 'running'}
-          style={{ padding: '0.6rem 1.5rem', marginBottom: '1.5rem' }}
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{ marginLeft: '0.75rem', padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: startOverDisabled ? 'not-allowed' : 'pointer', opacity: startOverDisabled ? 0.5 : 1 }}
         >
-          {status === 'running' ? 'Running...' : complete ? 'Run again' : 'Run'}
+          Start over
         </button>
-        {prediction === null && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '-1rem', marginBottom: '1.5rem' }}>
-            Choose a prediction above to run the experiment.
+        {!bothChosen && <p style={smallNote}>Choose both predictions above to run the experiment.</p>}
+
+        <p style={pictureTitle}>Pictures 1 and 2: the collisions, as the lab sees them and as the system's own observer sees Setup A</p>
+        <MakingDiagram result={result} progress={status === 'idle' ? null : progress} ownGuess={guess2} />
+        {status === 'idle' && (
+          <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '0.75rem' }}>
+            Picture 2, its lower panel, the bars and your two white guesses (one on the bars, one on the system's own observer's mass) appear in these pictures when you press Run.
           </p>
         )}
+        <DiagramCaption result={result} progress={status === 'idle' ? null : progress} ownGuess={guess2} />
 
-        <MakingDiagram result={result} progress={status === 'idle' ? null : progress} />
-
-        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>How to read this diagram.</strong> The diagram shows two ways of arranging a collision, and both are given the same
-            energy of motion, K = {energyOfMotion}. Each way gets its own picture, and the pictures are stacked one above the other. They
-            are all drawn on the same scale, so you can compare them directly.
-          </p>
-          <p style={{ margin: '0 0 0.25rem' }}>
-            <strong>The pictures</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
-            <li>
-              <strong>Setup A, the lab's view (sky blue).</strong> A beam particle moves toward a target particle that is sitting still, and
-              hits it.
-            </li>
-            <li>
-              <strong>Setup B, the lab's view (sky blue).</strong> Two particles of the same kind move toward each other and meet head-on.
-            </li>
-            <li>
-              <strong>Setup A again, as the system's own observer sees it (purple).</strong> This is the same collision as the first
-              picture, but watched by someone who travels along with the system as a whole. For that observer the total momentum is zero.
-              This picture appears during the run, after the lab's pictures have played.
-            </li>
-          </ul>
-          <p style={{ margin: '0 0 0.25rem' }}>
-            <strong>What is drawn in each picture</strong>
-          </p>
-          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
-            <li>
-              <strong>The filled circles</strong> are the particles. Under each one is its name and its speed. Speeds are given as a
-              fraction of <em>c</em>, the speed of light, so 0.5c is half the speed of light.
-            </li>
-            <li>
-              <strong>The arrow</strong> on a circle shows which way that particle is moving. A longer arrow means a faster particle. A
-              particle with no arrow is not moving.
-            </li>
-            <li>
-              <strong>The dashed vertical line</strong> marks the place where the particles meet.
-            </li>
-            <li>
-              <strong>The top row</strong>, "Before the collision", shows the particles on their way to the dashed line. When you press Run,
-              they move along to it, and a yellow ring flashes at the moment they collide.
-            </li>
-            <li>
-              <strong>The bottom row</strong>, "The whole system, after", appears at the collision. The system means all the particles taken
-              together, and here it is drawn as one dashed circle. If the system as a whole is moving, the circle has an arrow. If it is not
-              moving, there is no arrow. The words under the circle say which it is.
-            </li>
-          </ul>
-          <p style={{ margin: '0 0 0.5rem' }}>
-            <strong>The bars.</strong> At the end of the run, a second picture, made of bars, appears below this one. It has its own
-            explanation under it.
-          </p>
-          <p style={{ margin: '0 0 0.5rem' }}>
-            <strong>A worked moment (K = 3, not one of the buttons).</strong> In Setup A, the beam particle has energy 4 and momentum × c of
-            √15 = 3.87, and the target has energy 1 and momentum 0. The total energy is 5 and the total momentum × c is 3.87, so M = √(25 −
-            15) = √10 = 3.16. The usable energy is M − 2 = 1.16, and the locked-in energy is 3 − 1.16 = 1.84. In Setup B, each particle has
-            energy 2.5 and the momenta cancel, so M = 5, the usable energy is 3 and the locked-in energy is 0.
-          </p>
-          <p style={{ margin: '0 0 0.25rem' }}>
-            <em>What to look for:</em>
-          </p>
-          <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.25rem' }}>
-            <li>After the collision, is the whole system moving or at rest, in each setup?</li>
-            <li>In the purple picture, how does the observer see the collision in Setup A, compared with the lab's picture of Setup B?</li>
-          </ul>
-          <p style={{ margin: 0 }}>
-            Not shown: how the leftover energy is shared among the particles after a reaction. Only energy and momentum are tracked, and
-            whether a possible reaction actually happens is not modeled.
-          </p>
-        </div>
-
-        {progress > OWN_END && (
+        {status !== 'idle' && progress > OWN_END && (
           <div style={{ marginTop: '1.5rem' }}>
-            <MakingBars result={result} fill={clamp01((progress - OWN_END) / (1 - OWN_END))} />
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
-              <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-                <strong>How to read these bars.</strong> This picture has two sets of bars. In each set there is one bar for Setup A (the
-                stationary target) and one for Setup B (the head-on beams), so you can compare them. The bars fill in from the left during
-                the end of the run. Within a set, a longer bar means a bigger number, on one shared scale.
-              </p>
-              <p style={{ margin: '0 0 0.25rem' }}>
-                <strong>The first set: the energy of motion you supplied, K = {energyOfMotion}, split in two</strong>
-              </p>
-              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
-                <li>
-                  <strong>The whole bar</strong> is K, the energy of motion given to the particles in the lab. Both setups were given the
-                  same K, so both whole bars are the same length.
-                </li>
-                <li>
-                  <strong>The green, solid part</strong> is the <em>usable</em> energy: the part that can change form into the mass of a new
-                  particle.
-                </li>
-                <li>
-                  <strong>The orange, striped part</strong> is the <em>locked-in</em> energy: the part tied up in the motion of the whole
-                  system, which cannot become mass. If a bar has no orange part, nothing was locked in.
-                </li>
-                <li>
-                  <strong>The numbers under each bar</strong> give the usable and locked-in amounts. They add up to K.
-                </li>
-                <li>
-                  <strong>The yellow marker</strong> shows the amount of K that making a new particle of your chosen mass, X = {newMass},
-                  would need in that setup. If the marker is inside the whole bar, the K you supplied is enough. If it is beyond the end of
-                  the bar, it is not enough.
-                </li>
-              </ul>
-              <p style={{ margin: '0 0 0.25rem' }}>
-                <strong>The second set: the system's mass, M</strong>
-              </p>
-              <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem' }}>
-                <li>
-                  <strong>The blue bar</strong> is the system's mass M for that setup: all the particles taken together, worked out from
-                  their total energy and total momentum. The number is written under the bar.
-                </li>
-                <li>
-                  <strong>The yellow line</strong> marks 2 + X = {formatNumber(2 + newMass)}. This is the smallest M at which a new particle
-                  of mass X can be made, because the two colliding particles each still have a mass of 1 and the new particle adds X.
-                </li>
-                <li>
-                  If a blue bar reaches or passes the yellow line, the new particle can be made in that setup. If it stops short of the
-                  line, it cannot. As an example, with K = 3 and X = 1, the line is at 3. A system whose M is 3.16 passes it, and a system
-                  whose M is 2.5 stops short.
-                </li>
-              </ul>
-              <p style={{ margin: '0 0 0.25rem' }}>
-                <em>What to look for:</em>
-              </p>
-              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-                <li>In the first set, how much of each bar is green and how much is orange.</li>
-                <li>Where the yellow marker falls compared with the end of each bar.</li>
-                <li>In the second set, which setup's blue bar is longer, and which one reaches the yellow line.</li>
-              </ul>
-            </div>
+            <MakingBars result={result} fill={clamp01((progress - OWN_END) / (1 - OWN_END))} guess={guess1} />
+            <BarsCaption result={result} progress={progress} guess={guess1} />
           </div>
         )}
 
-        {complete && prediction !== null && (
-          <div style={{ marginTop: '1.5rem', overflowX: 'auto', maxWidth: '100%' }}>
-            <h3 style={{ marginBottom: '0.5rem' }}>Results</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
-              The energy of motion supplied was K = {energyOfMotion}, and the new particle's mass was X = {newMass}. Energies are in rest
-              energies of one colliding particle. <strong>Your prediction was:</strong>{' '}
-              {PREDICTION_CHOICES.find((c) => c.value === prediction)?.label} It is only recorded here, not marked right or wrong.
+        {/* ===== Part 2: appears when the first Run has finished ===== */}
+        {partOneDone && (
+          <>
+            <PartHeader color={PART_TWO_COLOR} title="Part 2: Now try it yourself">
+              You choose how much energy of motion to supply (K) and how heavy the new particle is (X), and press Run these settings. These choices change the drawings. Your predictions do not. They are trial
+              values for an imagined particle, and they do not say that a real machine is like that.
+            </PartHeader>
+            <p style={{ ...smallNote, marginTop: 0, marginBottom: '0.75rem' }}>
+              Your predictions do not change the drawings or the tables. These settings change Drawing A, Drawing B and the bars below, and they do not change Part 3's tables, which are for Part 1's run.
             </p>
-            <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ ...CELL, textAlign: 'left' }}></th>
-                  <th style={{ ...CELL, textAlign: 'left' }}>Setup A (stationary target)</th>
-                  <th style={{ ...CELL, textAlign: 'left' }}>Setup B (head-on beams)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ['Total energy in the lab', formatNumber(A.totalEnergy), formatNumber(B.totalEnergy)],
-                  ['Total momentum × c in the lab', formatNumber(A.totalMomentumTimesC), formatNumber(B.totalMomentumTimesC)],
-                  ["The system's mass, M, found by the lab", formatNumber(A.systemMass), formatNumber(B.systemMass)],
-                  [
-                    "Total energy, as the system's own observer finds it",
-                    formatNumber(totalsOf(A.ownPieces).energy),
-                    formatNumber(totalsOf(B.ownPieces).energy),
-                  ],
-                  [
-                    "Total momentum × c, as the system's own observer finds it",
-                    formatNumber(totalsOf(A.ownPieces).momentumTimesC),
-                    formatNumber(totalsOf(B.ownPieces).momentumTimesC),
-                  ],
-                  [
-                    "The system's mass, M, found by the system's own observer",
-                    formatNumber(systemMassOf(A.ownPieces)),
-                    formatNumber(systemMassOf(B.ownPieces)),
-                  ],
-                  [
-                    "Speed of the system's own observer",
-                    `${formatNumber(Math.abs(A.ownObserverSpeed))}c`,
-                    `${formatNumber(Math.abs(B.ownObserverSpeed))}c`,
-                  ],
-                  ['Usable energy, M − 2', formatNumber(A.usable), formatNumber(B.usable)],
-                  ['Locked-in energy, K − usable', formatNumber(A.lockedIn), formatNumber(B.lockedIn)],
-                  ['Share of K locked in', `${formatNumber(A.lockedShare * 100, 1)}%`, `${formatNumber(B.lockedShare * 100, 1)}%`],
-                  [`Least K to make X = ${newMass}`, formatNumber(result.stationaryTargetThreshold), formatNumber(result.headOnThreshold)],
-                ].map((row) => (
-                  <tr key={row[0]}>
-                    {row.map((cell, i) => (
-                      <td key={i} style={CELL}>
-                        {cell}
-                      </td>
-                    ))}
-                  </tr>
+            <div style={{ ...pinkFrame, marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The energy of motion supplied, K</label>
+              <p style={hint}>
+                The total energy of motion (kinetic energy) of all the moving particles in the lab, in rest energies of one colliding particle. For example, K = 3 means the energy of motion is three times the
+                rest energy of one particle.
+              </p>
+              <div style={{ marginBottom: '1rem' }}>
+                {ENERGY_PRESETS.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={ownStatus === 'running'}
+                    onClick={() => chooseOwn(() => setOwnK(value))}
+                    className={`toggle-button${ownK === value ? ' is-selected' : ''}`}
+                    style={toggleStyle}
+                  >
+                    {value}
+                  </button>
                 ))}
-              </tbody>
-            </table>
-            <p style={{ fontSize: '0.875rem', marginTop: '0.75rem', marginBottom: '0.25rem' }}>
-              <strong>Setup A:</strong> {verdict(result.stationaryTargetCanMake, newMass, result.stationaryTargetThreshold, energyOfMotion)}
-            </p>
-            <p style={{ fontSize: '0.875rem', margin: 0 }}>
-              <strong>Setup B:</strong> {verdict(result.headOnCanMake, newMass, result.headOnThreshold, energyOfMotion)}
-            </p>
-          </div>
-        )}
+              </div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The mass of the new particle, X</label>
+              <p style={hint}>
+                In masses of one colliding particle. The new particle is a made-up neutral particle that was not there before the collision. The colliding particles survive unchanged.
+              </p>
+              <div>
+                {MASS_PRESETS.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={ownStatus === 'running'}
+                    onClick={() => chooseOwn(() => setOwnX(value))}
+                    className={`toggle-button${ownX === value ? ' is-selected' : ''}`}
+                    style={toggleStyle}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button type="button" className="action-button" onClick={handleRunOwn} disabled={ownStatus === 'running'} style={{ padding: '0.6rem 1.5rem' }}>
+              {ownStatus === 'running' ? 'Running...' : 'Run these settings'}
+            </button>
+            {ownStatus === 'idle' && (
+              <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '0.75rem' }}>
+                Choose K and X, then press Run these settings. Drawing A (the lab's view), Drawing B (the system's own observer's view) and the bars appear here.
+              </p>
+            )}
+            {ownResult !== null && ownStatus !== 'idle' && (
+              <div style={{ ...pinkFrame, marginTop: '1rem' }}>
+                <p style={pictureTitle}>
+                  Drawings A and B: the collisions for your settings (K = {ownResult.energyOfMotion}, X = {ownResult.newMass})
+                </p>
+                <MakingDiagram result={ownResult} progress={ownProgress} own />
+                <DiagramCaption result={ownResult} progress={ownProgress} own />
+                {ownProgress > OWN_END && (
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <MakingBars result={ownResult} fill={clamp01((ownProgress - OWN_END) / (1 - OWN_END))} own />
+                    <BarsCaption result={ownResult} progress={ownProgress} own />
+                  </div>
+                )}
+              </div>
+            )}
 
-        {complete && prediction !== null && (
-          <MakingNewParticlesTutor
-            key={runCount}
-            energyOfMotion={energyOfMotion}
-            newMass={newMass}
-            predicted={prediction}
-            onExplained={() => setPartOneExplained(true)}
-          />
+            {/* ===== Part 3: the results of Part 1's run ===== */}
+            <PartHeader color={PART_THREE_COLOR} title="Part 3: The results">
+              Here are the numbers behind Part 1's pictures, a check-up of this page against its own physics, and your two guesses beside the real results. The tables never change with your predictions or
+              with the settings you tried in Part 2.
+            </PartHeader>
+            {bothChosen && <MakingResults energyOfMotion={K1} newMass={X1} guess1Label={guess1Label} guess2Label={guess2Label} />}
+
+            {/* ===== Part 4: the tutor ===== */}
+            <PartHeader color={PART_FOUR_COLOR} title="Part 4: The tutor">
+              The tutor asks you three questions, one at a time, about what you saw and how your guesses compare with the pictures, then goes through the explanation. The tutor's questions are not marked.
+            </PartHeader>
+            {bothChosen && (
+              <MakingNewParticlesTutor
+                key={resetCount}
+                energyOfMotion={K1}
+                newMass={X1}
+                predicted={guess1}
+                ownObserverPredicted={guess2}
+                onExplained={() => setPartOneExplained(true)}
+              />
+            )}
+          </>
         )}
       </div>
 
-      {partTwoShown && (
+      {sectionBShown && (
         <div id={PART_TWO_ID}>
           <MakingNewParticlesDecay
-            skippedPartOne={skippedToPartTwo && !partOneExplained}
+            skippedPartOne={skippedToSectionB && !partOneExplained}
             onBackToPartOne={() => document.getElementById(PART_ONE_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             onComplete={onComplete}
             onExplained={onTutorComplete}

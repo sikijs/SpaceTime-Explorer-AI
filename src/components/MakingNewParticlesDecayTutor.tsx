@@ -122,7 +122,7 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
       {result.allowed
         ? 'So the pieces’ masses can never add up to more than the parent’s.'
         : `With r = ${f(r)}, the pieces would weigh ${f(result.sumOfRestMasses)}, more than the parent's 1, so nothing happens.`}{' '}
-      That is a threshold again, like the one in Part 1.{result.allowed ? ' Try r = 0.6 to see it.' : ''}
+      That is a threshold again, like the one in Section A.{result.allowed ? ' Try r = 0.6 to see it.' : ''}
     </>,
   )
 
@@ -130,7 +130,7 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
   paragraphs.push(
     <>
       <strong>Decay is making a particle backward.</strong> At r = 0.5 the pieces just sit at rest. That is exactly the threshold case of
-      Part 1, played in reverse: the least energy that could make two pieces of that mass is the energy of a parent of that mass at rest.
+      Section A, played in reverse: the least energy that could make two pieces of that mass is the energy of a parent of that mass at rest.
       The pair creation and annihilation in Experiment 5 are the same idea.
     </>,
   )

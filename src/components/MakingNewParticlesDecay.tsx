@@ -641,11 +641,11 @@ export function MakingNewParticlesDecay({
 
   return (
     <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-      <h3 style={{ marginTop: 0 }}>Part 2 — Decay</h3>
+      <h3 style={{ marginTop: 0 }}>Section B: Decay</h3>
       {onBackToPartOne && (
         <p style={{ fontSize: '0.875rem', marginTop: 0, marginBottom: '1rem' }}>
           <button type="button" onClick={onBackToPartOne} style={LINK_BUTTON}>
-            ← Back to Part 1 - Making a new particle
+            ← Back to Section A - Making a new particle
           </button>
         </p>
       )}
@@ -655,14 +655,14 @@ export function MakingNewParticlesDecay({
       <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
         {skippedPartOne && (
           <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>If you skipped Part 1.</strong> This part uses the system's mass, M = √(E_total² − (P_total c)²), worked out from the
+            <strong>If you skipped Section A.</strong> This section uses the system's mass, M = √(E_total² − (P_total c)²), worked out from the
             total energy and total momentum of all the particles taken together, and the idea of a threshold: a reaction can happen only if
             the system's mass is at least the total rest mass of everything that comes out. For example, a system with a total energy of 5
-            and a total momentum × c of 3 has M = √(25 − 9) = 4. Open the "Words and formulas" panel at the top of Part 1 for more.
+            and a total momentum × c of 3 has M = √(25 − 9) = 4. Open the "Words and formulas" panel at the top of Section A for more.
           </p>
         )}
         <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-          <strong>The question.</strong> In Part 1, we made a new particle by smashing particles together, and the energy of motion of the
+          <strong>The question.</strong> In Section A, we made a new particle by smashing particles together, and the energy of motion of the
           collision changed form into the mass of the new particle. Now we run the idea backward. Can a particle turn into other
           particles on its own, with nothing hitting it? If it can, what happens to the energy and the mass, and what must the pieces be like?
         </p>
@@ -682,7 +682,7 @@ export function MakingNewParticlesDecay({
             </li>
             <li>
               <strong>Mass given up:</strong> the parent's mass minus the sum of the pieces' rest masses. (A piece's rest mass is its mass
-              when it sits still, as in Part 1. A pulse of light counts as zero.)
+              when it sits still, as in Section A. A pulse of light counts as zero.)
             </li>
           </ul>
         </div>
@@ -924,7 +924,7 @@ export function MakingNewParticlesDecay({
               </li>
               <li>
                 <strong>The system's mass of the pieces</strong> is worked out from the pieces' total energy and total momentum, the same
-                way as in Part 1. It is shown once as the lab finds it (sky blue) and once as the passing observer finds it (purple). These
+                way as in Section A. It is shown once as the lab finds it (sky blue) and once as the passing observer finds it (purple). These
                 two bars are left out if no decay can happen, because then there are no pieces.
               </li>
               <li>

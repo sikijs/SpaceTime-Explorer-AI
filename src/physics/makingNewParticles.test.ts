@@ -4,14 +4,22 @@ import {
   LHC_BEAM_ENERGY_GEV,
   NEUTRAL_PION_REST_ENERGY_MEV,
   PROTON_REST_ENERGY_MEV,
+  SECTION_A_ENERGY_OF_MOTION,
+  SECTION_A_NEW_MASS,
   canMake,
   largestMakeableMass,
+  makingCheckUpRows,
+  ownObserverMassGuessMarker,
+  ownObserverSystemMassOf,
+  realOwnObserverMassAnswerFor,
+  realUsableEnergyAnswerFor,
   runDecay,
   runMakingExperiment,
   runSetup,
   stationaryTargetBeamEnergyFor,
   stationaryTargetSystemMass,
   thresholdKineticEnergy,
+  usableEnergyGuessMarker,
 } from './makingNewParticles'
 
 // Tests for Experiment 6 (docs/experiments/spacetime-geometry/06-making-new-particles.md, "Required Physics Tests"). The numbers
@@ -390,3 +398,123 @@ describe('input checks and purity (tests 15 and 16)', () => {
     expect(runDecay(0.25, 0.3)).toEqual(runDecay(0.25, 0.3))
   })
 })
+
+describe('Section A audit additions: the guess marks and the check-up (docs/audit/spacetime-geometry/06-draft-wording.md)', () => {
+  it('M1. the fixed case K = 5, X = 2 matches the hand-written numbers of the draft', () => {
+    const r = runMakingExperiment(5, 2)
+    expect(r.stationaryTarget.systemMass).toBeCloseTo(Math.sqrt(14), 9)
+    expect(r.stationaryTarget.usable).toBeCloseTo(1.7417, 4)
+    expect(r.stationaryTarget.lockedIn).toBeCloseTo(3.2583, 4)
+    expect(r.stationaryTarget.lockedShare).toBeCloseTo(0.6517, 4)
+    expect(r.stationaryTarget.ownObserverSpeed).toBeCloseTo(0.8452, 4)
+    expect(r.headOn.systemMass).toBeCloseTo(7, 9)
+    expect(r.headOn.usable).toBeCloseTo(5, 9)
+    expect(r.headOn.lockedIn).toBeCloseTo(0, 9)
+    expect(r.stationaryTargetThreshold).toBe(6)
+    expect(r.headOnThreshold).toBe(2)
+    expect(r.stationaryTargetCanMake).toBe(false)
+    expect(r.headOnCanMake).toBe(true)
+  })
+
+  it('M1b. the fixed case constants are K = 5 and X = 2, and at them Setup A cannot make the new particle while Setup B can', () => {
+    expect(SECTION_A_ENERGY_OF_MOTION).toBe(5)
+    expect(SECTION_A_NEW_MASS).toBe(2)
+    const r = runMakingExperiment(SECTION_A_ENERGY_OF_MOTION, SECTION_A_NEW_MASS)
+    expect(r.stationaryTargetCanMake).toBe(false)
+    expect(r.headOnCanMake).toBe(true)
+  })
+
+  it('M2. guess 1: the real answer is "setup-b" for every K (head-on always leaves more usable energy), never "same" or "setup-a"', () => {
+    for (const K of ENERGIES) {
+      for (const X of NEW_MASSES) expect(realUsableEnergyAnswerFor(runMakingExperiment(K, X))).toBe('setup-b')
+    }
+  })
+
+  it('M3. guess 1: each answer outlines its own bar or bars, the "same" answer also draws an "=", and no label says right, wrong or match', () => {
+    expect(usableEnergyGuessMarker('setup-a')).toMatchObject({ outlinedSetups: ['stationary-target'], equalsSign: false })
+    expect(usableEnergyGuessMarker('same')).toMatchObject({ outlinedSetups: ['stationary-target', 'head-on'], equalsSign: true })
+    expect(usableEnergyGuessMarker('setup-b')).toMatchObject({ outlinedSetups: ['head-on'], equalsSign: false })
+    for (const guess of ['setup-a', 'same', 'setup-b'] as const) {
+      const label = usableEnergyGuessMarker(guess).label
+      expect(label.startsWith('YOUR GUESS')).toBe(true)
+      expect(label).not.toMatch(/right|wrong|match/i)
+    }
+    // the marker takes no result as input, so it cannot depend on one
+    expect(usableEnergyGuessMarker.length).toBe(1)
+  })
+
+  it('M4. guess 2: the system\'s own observer finds the same system mass as the lab, for both setups, every K and every X (3.7417 in the fixed case)', () => {
+    for (const K of ENERGIES) {
+      for (const X of NEW_MASSES) {
+        const r = runMakingExperiment(K, X)
+        expect(realOwnObserverMassAnswerFor(r)).toBe('same')
+        for (const setup of [r.stationaryTarget, r.headOn]) {
+          const { lab, own } = ownObserverSystemMassOf(setup)
+          expect(own).toBeCloseTo(lab, 6)
+        }
+      }
+    }
+    expect(ownObserverSystemMassOf(runMakingExperiment(5, 2).stationaryTarget).own).toBeCloseTo(3.7417, 4)
+  })
+
+  it('M5. guess 2 is read from the real numbers: an own-observer mass that differed would read "different"', () => {
+    const r = runMakingExperiment(5, 2)
+    const broken = {
+      ...r,
+      stationaryTarget: { ...r.stationaryTarget, ownPieces: r.stationaryTarget.ownPieces.map((p) => makeReading(p.energy + 0.5, p.momentumTimesC)) },
+    }
+    expect(realOwnObserverMassAnswerFor(broken)).toBe('different')
+  })
+
+  it('M6. guess 2\'s tick: "the same" sits on the lab\'s mass, "different" at half of it, never on the own-observer mass; labels never say right, wrong or match', () => {
+    for (const K of ENERGIES) {
+      const r = runMakingExperiment(K, 2)
+      const { lab, own } = ownObserverSystemMassOf(r.stationaryTarget)
+      const same = ownObserverMassGuessMarker('same', r)
+      const different = ownObserverMassGuessMarker('different', r)
+      expect(same.afterPosition).toBe(lab)
+      expect(different.afterPosition).toBeCloseTo(0.5 * lab, 12)
+      expect(Math.abs(different.afterPosition - own)).toBeGreaterThan(0.05)
+      for (const marker of [same, different]) {
+        expect(marker.label.startsWith('YOUR GUESS')).toBe(true)
+        expect(marker.label).not.toMatch(/right|wrong|match/i)
+      }
+    }
+  })
+
+  it('M7. the check-up has six rows and reads "the same" for every K and X, with the expected values of the fixed case', () => {
+    for (const K of ENERGIES) {
+      for (const X of NEW_MASSES) {
+        const rows = makingCheckUpRows(runMakingExperiment(K, X))
+        expect(rows).toHaveLength(6)
+        for (const row of rows) expect(row.reading).toBe('the same')
+      }
+    }
+    const rows = makingCheckUpRows(runMakingExperiment(5, 2))
+    expect(rows[0].expected).toBe(5)
+    expect(rows[0].found[0]).toBeCloseTo(5, 9)
+    expect(rows[4].expected).toBe(0)
+    expect(rows[5].expected).toBeCloseTo(Math.sqrt(14), 12)
+    expect(rows[5].found[0]).toBeCloseTo(3.7417, 4)
+    expect(rows[2].found[0]).toBeCloseTo(rows[2].found[1], 9)
+  })
+
+  it('M8. the check-up compares the real numbers: a broken value reads "different", and the rows never say which setup leaves more', () => {
+    const r = runMakingExperiment(5, 2)
+    const broken = { ...r, stationaryTarget: { ...r.stationaryTarget, usable: r.stationaryTarget.usable + 0.1 } }
+    expect(makingCheckUpRows(broken)[0].reading).toBe('different')
+    for (const row of makingCheckUpRows(r)) expect(row.check).not.toMatch(/leaves more|larger|bigger|greater/i)
+  })
+
+  it('M9. asking for an answer, a marker or a check-up changes no real value of the run', () => {
+    const r = runMakingExperiment(5, 2)
+    const snapshot = JSON.stringify(r)
+    realUsableEnergyAnswerFor(r)
+    realOwnObserverMassAnswerFor(r)
+    ownObserverMassGuessMarker('same', r)
+    ownObserverMassGuessMarker('different', r)
+    makingCheckUpRows(r)
+    expect(JSON.stringify(r)).toBe(snapshot)
+  })
+})
+
