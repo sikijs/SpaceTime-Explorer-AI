@@ -6,7 +6,14 @@ import {
   PROTON_REST_ENERGY_MEV,
   SECTION_A_ENERGY_OF_MOTION,
   SECTION_A_NEW_MASS,
+  SECTION_B_PASSING_SPEED,
+  SECTION_B_PIECE_MASS,
   canMake,
+  decayCheckUpRows,
+  decayMassGuessMarker,
+  passingObserverMassGuessMarker,
+  realDecayMassAnswerFor,
+  realPassingObserverMassAnswerFor,
   largestMakeableMass,
   makingCheckUpRows,
   ownObserverMassGuessMarker,
@@ -518,3 +525,77 @@ describe('Section A audit additions: the guess marks and the check-up (docs/audi
   })
 })
 
+
+// Section B audit additions (2026-11-23). The numbers are worked by hand for r = 0.25 and a passing observer at +0.3c:
+// each piece E = 0.5, pc = ±√0.1875 = ±0.43301, speed 0.86603c; γ = 1.04828; the passing observer finds energies 0.38797 and 0.66032, momenta +0.29667 and −0.61115.
+describe('Section B: the fixed case, the guess markers and the check-up', () => {
+  const r = runDecay(SECTION_B_PIECE_MASS, SECTION_B_PASSING_SPEED)
+
+  it('B1. the fixed case has the hand-worked numbers', () => {
+    expect(SECTION_B_PIECE_MASS).toBe(0.25)
+    expect(SECTION_B_PASSING_SPEED).toBe(0.3)
+    expect(r.allowed).toBe(true)
+    expect(r.sumOfRestMasses).toBeCloseTo(0.5, 12)
+    expect(r.massGivenUp).toBeCloseTo(0.5, 12)
+    expect(r.labPieces[0].reading.energy).toBeCloseTo(0.5, 12)
+    expect(r.labPieces[0].reading.momentumTimesC).toBeCloseTo(0.43301, 5)
+    expect(r.labPieces[0].reading.speed).toBeCloseTo(0.86603, 5)
+    expect(r.passingPieces[0].reading.energy).toBeCloseTo(0.38797, 4)
+    expect(r.passingPieces[1].reading.energy).toBeCloseTo(0.66032, 4)
+    expect(r.passingPieces[0].reading.momentumTimesC).toBeCloseTo(0.29667, 4)
+    expect(r.passingPieces[1].reading.momentumTimesC).toBeCloseTo(-0.61115, 4)
+    expect(r.systemMassLab).toBeCloseTo(1, 9)
+    expect(r.systemMassPassing).toBeCloseTo(1, 9)
+  })
+
+  it('B2. guess 1 is a marker at a place fixed by the answer alone, and never at the real value of the fixed case', () => {
+    expect(decayMassGuessMarker('less').tickPosition).toBe(0.75)
+    expect(decayMassGuessMarker('same').tickPosition).toBe(1)
+    expect(decayMassGuessMarker('more').tickPosition).toBe(1.25)
+    expect(decayMassGuessMarker('less').tickPosition).not.toBeCloseTo(r.sumOfRestMasses, 3)
+    for (const g of ['less', 'same', 'more'] as const) expect(decayMassGuessMarker(g).label).toMatch(/^YOUR GUESS: /)
+  })
+
+  it('B3. the real answer to guess 1 is read from the run: less below 1, the same at 0.5, more above', () => {
+    expect(realDecayMassAnswerFor(runDecay(0.25, 0.3))).toBe('less')
+    expect(realDecayMassAnswerFor(runDecay(0, 0.3))).toBe('less')
+    expect(realDecayMassAnswerFor(runDecay(0.5, 0.3))).toBe('same')
+    expect(realDecayMassAnswerFor(runDecay(0.6, 0.3))).toBe('more')
+  })
+
+  it('B4. guess 2 is a marker at the lab\'s mass ("same") or at half of it, and the real answer is "same" for every observer speed', () => {
+    expect(passingObserverMassGuessMarker('same', r).tickPosition).toBeCloseTo(1, 9)
+    expect(passingObserverMassGuessMarker('different', r).tickPosition).toBeCloseTo(0.5, 9)
+    for (const speed of OBSERVER_SPEEDS) expect(realPassingObserverMassAnswerFor(runDecay(0.25, speed))).toBe('same')
+    const broken = { ...r, systemMassPassing: r.systemMassPassing + 0.1 }
+    expect(realPassingObserverMassAnswerFor(broken)).toBe('different')
+  })
+
+  it('B5. the check-up has seven rows, all "the same" for the fixed case, with the hand-worked numbers', () => {
+    const rows = decayCheckUpRows(r)
+    expect(rows).toHaveLength(7)
+    for (const row of rows) expect(row.reading).toBe('the same')
+    expect(rows[0].found[0]).toBeCloseTo(1, 9)
+    expect(rows[1].found[1]).toBeCloseTo(0, 9)
+    expect(rows[2].found[0]).toBeCloseTo(1.04828, 4)
+    expect(rows[3].found[0]).toBeCloseTo(-0.31449, 4)
+    expect(rows[6].found[0]).toBeCloseTo(0.5, 9)
+  })
+
+  it('B6. the check-up reads "different" for a broken value, is empty where no decay can happen, and never says which way the masses compare', () => {
+    expect(decayCheckUpRows(runDecay(0.6, 0.3))).toEqual([])
+    const broken = { ...r, systemMassPassing: 1.2 }
+    expect(decayCheckUpRows(broken)[4].reading).toBe('different')
+    for (const row of decayCheckUpRows(r)) expect(row.check).not.toMatch(/less than|more than|heavier|lighter/i)
+  })
+
+  it('B7. asking for an answer, a marker or a check-up changes no real value of the run', () => {
+    const snapshot = JSON.stringify(r)
+    realDecayMassAnswerFor(r)
+    realPassingObserverMassAnswerFor(r)
+    decayMassGuessMarker('more')
+    passingObserverMassGuessMarker('different', r)
+    decayCheckUpRows(r)
+    expect(JSON.stringify(r)).toBe(snapshot)
+  })
+})

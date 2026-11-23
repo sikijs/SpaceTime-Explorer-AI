@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { NEUTRAL_PION_REST_ENERGY_MEV, runDecay } from '../physics/makingNewParticles'
+import {
+  NEUTRAL_PION_REST_ENERGY_MEV,
+  realDecayMassAnswerFor,
+  realPassingObserverMassAnswerFor,
+  runDecay,
+} from '../physics/makingNewParticles'
+import type { PassingObserverMassGuess } from '../physics/makingNewParticles'
+import { MakingNewParticlesDecayTutorLinks } from './MakingNewParticlesDecayIntro'
 
 type Prediction = 'less' | 'same' | 'more'
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
@@ -9,6 +16,8 @@ interface MakingNewParticlesDecayTutorProps {
   pieceMass: number
   passingSpeed: number
   predicted: Prediction
+  // The second guess: is the system's mass the passing observer finds the same as the lab's?
+  passingPredicted: PassingObserverMassGuess
   // Called once, when the learner reaches the explanation (the last step), so the chapter summary can be shown.
   onExplained?: () => void
 }
@@ -21,18 +30,20 @@ const predictionClauses: Record<Prediction, string> = {
 
 const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333', lineHeight: '1.6' } as const
 
-// Real-world figures for the radioactive-decay paragraph (spec, "Real-World Facts Used, and Source Status"; the Q value was confirmed
-// by search on 2026-10-15). The shares below are computed from the mass numbers, not typed in.
-const URANIUM_238_ALPHA_Q_MEV = 4.27
-const DAUGHTER_MASS_NUMBER = 234 // thorium-234
-const ALPHA_MASS_NUMBER = 4 // helium-4
+// Real-world figures, from pages read on 2026-11-23 (docs/audit/spacetime-geometry/06-draft-wording-section-b.md, section 7). The pion's figures are from the Particle Data Group
+// listing (read through a summary; to be checked by eye). Uranium-238's are from the NNDC evaluation of Browne and Tuli (2007). The shares below are computed here, not typed in.
+const PION_MEAN_LIFE_SECONDS_TEXT = '8.43 × 10⁻¹⁷'
+const PION_TWO_PHOTON_PERCENT = 98.823
+const URANIUM_238_ALPHA_Q_MEV = 4.2697
+const URANIUM_238_MAIN_ALPHA_MEV = 4.198 // 79 percent of the decays; a second group has 4.151 MeV (21 percent)
+const URANIUM_238_HALF_LIFE_YEARS_TEXT = '4.468 billion'
 const PARENT_MASS_NUMBER = 238 // uranium-238
 const ATOMIC_MASS_UNIT_MEV = 931.494
 
 // Draft wording for the owner's review (CLAUDE.md §28.1). Follows the Part 2 tutor sequence in the specification: observe, compare
 // with the prediction, one conceptual question, then the explanation and the limits. Every number below comes from the physics
 // model (`makingNewParticles.ts`), never typed in by hand, except the real-world figures named above.
-export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicted, onExplained }: MakingNewParticlesDecayTutorProps) {
+export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicted, passingPredicted, onExplained }: MakingNewParticlesDecayTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
 
@@ -56,8 +67,28 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
   const pieces = isLight ? 'pulses of light' : 'pieces'
   const [lab1] = result.labPieces
   const [pass1, pass2] = result.passingPieces
-  const alphaShare = DAUGHTER_MASS_NUMBER / (DAUGHTER_MASS_NUMBER + ALPHA_MASS_NUMBER)
+  const alphaShare = URANIUM_238_MAIN_ALPHA_MEV / URANIUM_238_ALPHA_Q_MEV
   const massFraction = URANIUM_238_ALPHA_Q_MEV / (PARENT_MASS_NUMBER * ATOMIC_MASS_UNIT_MEV)
+
+
+  // The tutor marks both guesses here, in the explanation, and nowhere earlier (the pictures only show them). The real answers are read from the physics module.
+  const realMass = realDecayMassAnswerFor(result)
+  const guess1Letter = { less: '(a)', same: '(b)', more: '(c)' }[predicted]
+  const guess1Reason = `the parent's mass was 1 and the pieces' rest masses added up to ${f(result.sumOfRestMasses)}`
+  const guess1Mark =
+    predicted === realMass
+      ? `Your first guess was ${guess1Letter}, and it was right: ${guess1Reason}.`
+      : `Your first guess was ${guess1Letter}, and it was not this time: ${guess1Reason}.`
+  const realPassing = realPassingObserverMassAnswerFor(result)
+  const guess2Letter = { same: '(a)', different: '(b)' }[passingPredicted]
+  const guess2Reason =
+    realPassing === 'same'
+      ? `the passing observer found a system's mass of ${f(result.systemMassPassing, 3)}, the same as the ${f(result.systemMassLab, 3)} the lab found`
+      : `the passing observer found ${f(result.systemMassPassing, 3)}, not the same as the ${f(result.systemMassLab, 3)} the lab found`
+  const guess2Mark =
+    passingPredicted === realPassing
+      ? `Your second guess was ${guess2Letter}, and it was right: ${guess2Reason}.`
+      : `Your second guess was ${guess2Letter}, and it was not this time: ${guess2Reason}.`
 
   const paragraphs: ReactNode[] = []
 
@@ -65,15 +96,15 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
   paragraphs.push(
     result.allowed ? (
       <>
-        <strong>What the ledger shows.</strong> The parent's mass was 1. The two {pieces} had rest masses of {f(r)} each, so the sum of
+        <strong>What the ledger shows.</strong> {guess1Mark} The white tick on the grey bar showed the answer you chose. The parent's mass was 1. The two {pieces} had rest masses of {f(r)} each, so the sum of
         their rest masses was 2 × {f(r)} = {f(result.sumOfRestMasses)}, and the mass given up was 1 − {f(result.sumOfRestMasses)} ={' '}
         {f(result.massGivenUp)}. Each piece had an energy of {f(lab1.reading.energy)} and moved at {f(Math.abs(lab1.reading.speed))}c
         {isLight ? ', the speed of light' : ''}. The system's mass of the {pieces} was {f(result.systemMassLab)} for the lab and{' '}
-        {f(result.systemMassPassing)} for the passing observer, the same as the parent's mass.
+        {f(result.systemMassPassing)} for the passing observer, the same as the parent's mass. {guess2Mark} The white tick on the purple bar showed the answer you chose.
       </>
     ) : (
       <>
-        <strong>What the ledger shows.</strong> The parent's mass was 1. Two pieces with rest masses of {f(r)} each would have a sum of rest
+        <strong>What the ledger shows.</strong> {guess1Mark} The parent's mass was 1. Two pieces with rest masses of {f(r)} each would have a sum of rest
         masses of 2 × {f(r)} = {f(result.sumOfRestMasses)}, more than the parent's 1. So no decay could happen, and the parent stayed as it
         was.
       </>
@@ -151,25 +182,35 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
   // 7. A real example: the neutral pion.
   paragraphs.push(
     <>
-      <strong>A real example.</strong> A neutral pion at rest, which has a mass of {f(NEUTRAL_PION_REST_ENERGY_MEV, 1)} MeV, decays most
-      often into two pulses of light. In the pion's own frame, each carries {f(NEUTRAL_PION_REST_ENERGY_MEV / 2, 1)} MeV. That is the case r
-      = 0 in this experiment.
+      <strong>A real example: the neutral pion.</strong> The Particle Data Group lists the neutral pion's mass as {f(NEUTRAL_PION_REST_ENERGY_MEV, 4)} MeV and its mean life as about{' '}
+      {PION_MEAN_LIFE_SECONDS_TEXT} seconds, and says it decays into two photons (pulses of light) {PION_TWO_PHOTON_PERCENT} percent of the time. In the pion's own frame, each photon carries half
+      the pion's rest energy, {f(NEUTRAL_PION_REST_ENERGY_MEV / 2)} MeV (computed here). That is the case r = 0 in this experiment: no rest mass in the pieces, and all the mass given up. (The
+      Particle Data Group listing was read through a summary on 23 November 2026.)
     </>,
   )
 
   // 8. A second real example: radioactive decay.
   paragraphs.push(
     <>
-      <strong>A second real example: radioactive decay.</strong> When a nucleus of uranium-238 decays, it turns into a nucleus of
-      thorium-234 and an alpha particle, which is a helium nucleus. The two pieces weigh slightly less than the uranium nucleus did: about{' '}
-      {f(massFraction * 100000, 0)} parts in 100,000 less. The energy that went with that small mass difference now shows up as the pieces' energy of motion, about{' '}
-      {f(URANIUM_238_ALPHA_Q_MEV)} million electron-volts (MeV). This is the same idea as the mass given up in this experiment. As the
-      pieces slow down in the rock around them, their energy of motion becomes heat. Heat from the decay of uranium, thorium and potassium
-      inside the Earth supplies about half of the heat the Earth gives off. <em>A difference from our model:</em> here the two pieces are
-      not equal. The alpha particle is much lighter than the thorium nucleus, so it gets about {f(alphaShare * 100, 0)} percent of the
-      energy of motion ({f(alphaShare * URANIUM_238_ALPHA_Q_MEV)} of the {f(URANIUM_238_ALPHA_Q_MEV)} MeV), and the thorium nucleus drifts
-      away slowly. Our experiment used two equal pieces, which is the simplest case that conservation of energy and momentum settles
-      completely. Some radioactive decays, such as beta decay, produce three pieces, which the experiment did not show.
+      <strong>A second real example: uranium-238.</strong> A nucleus of uranium-238 decays into a nucleus of thorium-234 and an alpha particle, which is two protons and two neutrons (a helium
+      nucleus is the same thing; that line is general physics, not a line on the pages read). The evaluated nuclear data (Browne and Tuli, 2007, on the NNDC site) give a decay energy of{' '}
+      {f(URANIUM_238_ALPHA_Q_MEV, 4)} MeV and a half-life of {URANIUM_238_HALF_LIFE_YEARS_TEXT} years. In 79 percent of the decays the alpha particle has {f(URANIUM_238_MAIN_ALPHA_MEV, 3)} MeV of energy of
+      motion, and in 21 percent it has 4.151 MeV. {f(URANIUM_238_MAIN_ALPHA_MEV, 3)} ÷ {f(URANIUM_238_ALPHA_Q_MEV, 4)} is about {f(alphaShare * 100, 0)} percent (computed here): the alpha particle
+      carries almost all the energy of motion because it is far lighter than the thorium nucleus, which drifts away slowly. The mass given up is about {f(massFraction * 100000, 0)} parts in 100,000 of
+      the uranium nucleus's rest energy (computed here: {f(URANIUM_238_ALPHA_Q_MEV)} ÷ ({PARENT_MASS_NUMBER} × {f(ATOMIC_MASS_UNIT_MEV, 1)})). <em>A difference from our model:</em> here the two
+      pieces are not equal, and our experiment used two equal pieces, which is the simplest case that conservation of energy and momentum settles completely. Some radioactive decays, such as beta
+      decay, produce three pieces, which the experiment did not show.
+    </>,
+  )
+
+  // 8b. The Earth's heat.
+  paragraphs.push(
+    <>
+      <strong>Where the energy goes: heat inside the Earth.</strong> As the pieces slow down in the rock around them, their energy of motion becomes heat (general physics; no plain official page on
+      this was found and read). The Earth gives off about 47 trillion watts in total (47 ± 2 TW; Davies and Davies, 2010). How much of that comes from the radioactive decay of uranium, thorium and
+      potassium is estimated, not measured directly, and the estimates differ. The Borexino experiment, which measures the neutrinos these decays give off, gives about 38 TW (+14, −13), with an
+      assumption for the potassium part and a tension of about 2.4 standard deviations with the lowest of the Earth models. The paper says its estimate depends on the models used. So the share is large, but how large is still
+      being worked out.
     </>,
   )
 
@@ -177,7 +218,7 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
   paragraphs.push(
     <>
       <strong>A remark on "will".</strong> The experiment shows only what is allowed. When a particle decays, and how often, is a matter of
-      probability and is not modeled.
+      probability and is not modeled. Each particle decays at a random moment, and only a half-life, the time for about half of a large number of identical particles to decay, can be given.
     </>,
   )
 
@@ -205,9 +246,9 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at the ledger. What happened to the sum of the masses of the pieces, and to the mass of the whole system? What do you notice?'}
+              'Look at the mass ledger. How long is the grey bar compared with the parent’s bar? And what do the sky-blue and purple bars show? What do you notice?'}
             {tutorStep === 'compare' &&
-              `You predicted that ${predictionClauses[predicted]}. In this run, the parent's mass was 1 and the pieces' rest masses added up to ${f(result.sumOfRestMasses)}. Comparing your prediction with the results, what do you notice?`}
+              `You predicted that ${predictionClauses[predicted]}. Look at the white tick on the grey bar. In this run, the parent's mass was 1 and the pieces' rest masses added up to ${f(result.sumOfRestMasses)}. How does your guess compare? Then look at the white tick on the purple bar. You predicted that the passing observer would find ${passingPredicted === 'same' ? 'the same' : 'a different'} system's mass from the lab. How does that compare with the sky-blue and purple bars?`}
             {tutorStep === 'conceptual' &&
               (result.allowed && !atThreshold
                 ? 'The pieces weigh less than the parent in total. Where did the missing mass go, and why do the pieces fly apart?'
@@ -260,6 +301,7 @@ export function MakingNewParticlesDecayTutor({ pieceMass, passingSpeed, predicte
               <strong>{index + 1}.</strong> {content}
             </p>
           ))}
+          <MakingNewParticlesDecayTutorLinks />
         </div>
       )}
     </div>

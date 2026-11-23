@@ -322,3 +322,125 @@ export function makingCheckUpRows(result: MakingExperimentResult): CheckUpRow[] 
   ]
 }
 
+
+// ---- Section B audit additions (2026-11-23; docs/audit/spacetime-geometry/06-draft-wording-section-b.md, sections 3, 5 and 8). None changes the physics above.
+
+// Section B's fixed Part 1 case: pieces of 0.25 of the parent's mass and a passing observer at +0.3c.
+export const SECTION_B_PIECE_MASS = 0.25
+export const SECTION_B_PASSING_SPEED = 0.3
+
+// Guess 1: how the pieces' rest masses added up compare with the parent's mass.
+export type DecayMassGuess = 'less' | 'same' | 'more'
+
+export interface DecayMassGuessMarker {
+  tickPosition: number // where the white tick sits on the grey bar's row, in the parent's masses (the parent's bar is 1)
+  label: string // the words in its YOUR GUESS box
+}
+
+// The white tick of guess 1. The answers have no size of their own, so each is only a marker at a fixed place that depends on the answer alone, never on the result.
+// 0.75 is used for "less" so that it never lands where the real bar ends at the fixed case (2r = 0.5).
+export function decayMassGuessMarker(guess: DecayMassGuess): DecayMassGuessMarker {
+  switch (guess) {
+    case 'less':
+      return { tickPosition: 0.75, label: "YOUR GUESS: less than the parent's" }
+    case 'same':
+      return { tickPosition: 1, label: "YOUR GUESS: the same as the parent's" }
+    case 'more':
+      return { tickPosition: 1.25, label: "YOUR GUESS: more than the parent's" }
+  }
+}
+
+// What the run actually shows for guess 1: the tutor uses it to mark the guess; the page never compares a guess with it earlier.
+export function realDecayMassAnswerFor(result: DecayResult): DecayMassGuess {
+  if (near(result.sumOfRestMasses, 1)) return 'same'
+  return result.sumOfRestMasses < 1 ? 'less' : 'more'
+}
+
+// Guess 2: is the system's mass of the pieces that the passing observer finds the same as the lab's?
+export type PassingObserverMassGuess = 'same' | 'different'
+
+export interface PassingObserverMassGuessMarker {
+  tickPosition: number // where the white tick sits on the passing observer's bar, in the parent's masses
+  label: string
+}
+
+// "The same" sits at the lab's system mass (the end of the lab's bar), "not the same" at half of it. The tick depends on the answer and on the lab's mass, which a guess cannot change.
+export function passingObserverMassGuessMarker(guess: PassingObserverMassGuess, result: DecayResult): PassingObserverMassGuessMarker {
+  switch (guess) {
+    case 'same':
+      return { tickPosition: result.systemMassLab, label: "YOUR GUESS: the same as the lab's" }
+    case 'different':
+      return { tickPosition: 0.5 * result.systemMassLab, label: "YOUR GUESS: not the same as the lab's" }
+  }
+}
+
+// What the run actually shows for guess 2.
+export function realPassingObserverMassAnswerFor(result: DecayResult): PassingObserverMassGuess {
+  return near(result.systemMassLab, result.systemMassPassing) ? 'same' : 'different'
+}
+
+// The check-up of Part 3 (draft section 5b): expected against found, from this experiment's own physics, with no outside number. Empty where no decay can happen
+// (there are no pieces to check).
+export function decayCheckUpRows(result: DecayResult): CheckUpRow[] {
+  if (!result.allowed) return []
+  const LAB = 'the lab'
+  const PASSING = 'the passing observer'
+  const before = (reading: EnergyMomentumReading[]) => totalsOf(reading)
+  const labBefore = before([result.labParent])
+  const labAfter = before(result.labPieces.map((p) => p.reading))
+  const passBefore = before([result.passingParent])
+  const passAfter = before(result.passingPieces.map((p) => p.reading))
+  const zero = (value: number) => Math.abs(value) < AGREEMENT_TOLERANCE
+  const energyOfMotion = result.labPieces.reduce((sum, p) => sum + (p.reading.energy - p.restMass), 0)
+  return [
+    {
+      check: 'Lab: total energy, before and after',
+      expected: 1,
+      found: [labBefore.energy, labAfter.energy],
+      observers: [LAB, LAB],
+      reading: near(labBefore.energy, 1) && near(labAfter.energy, 1) ? 'the same' : 'different',
+    },
+    {
+      check: 'Lab: total momentum × c, before and after',
+      expected: 0,
+      found: [labBefore.momentumTimesC, labAfter.momentumTimesC],
+      observers: [LAB, LAB],
+      reading: zero(labBefore.momentumTimesC) && zero(labAfter.momentumTimesC) ? 'the same' : 'different',
+    },
+    {
+      check: 'Passing observer: total energy, before and after',
+      expected: null,
+      found: [passBefore.energy, passAfter.energy],
+      observers: [PASSING, PASSING],
+      reading: near(passBefore.energy, passAfter.energy) ? 'the same' : 'different',
+    },
+    {
+      check: 'Passing observer: total momentum × c, before and after',
+      expected: null,
+      found: [passBefore.momentumTimesC, passAfter.momentumTimesC],
+      observers: [PASSING, PASSING],
+      reading: near(passBefore.momentumTimesC, passAfter.momentumTimesC) ? 'the same' : 'different',
+    },
+    {
+      check: "The system's mass of the pieces, the lab and the passing observer",
+      expected: null,
+      found: [result.systemMassLab, result.systemMassPassing],
+      observers: [LAB, PASSING],
+      reading: near(result.systemMassLab, result.systemMassPassing) ? 'the same' : 'different',
+    },
+    {
+      check: "The system's mass of the pieces against the parent's mass",
+      expected: 1,
+      found: [result.systemMassLab],
+      observers: [LAB],
+      reading: near(result.systemMassLab, 1) ? 'the same' : 'different',
+    },
+    {
+      check: "The pieces' energies of motion added up against the mass given up",
+      expected: result.massGivenUp,
+      found: [energyOfMotion],
+      observers: [LAB],
+      reading: near(energyOfMotion, result.massGivenUp) ? 'the same' : 'different',
+    },
+  ]
+}

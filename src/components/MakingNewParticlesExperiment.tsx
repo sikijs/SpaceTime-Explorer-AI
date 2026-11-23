@@ -11,7 +11,7 @@ import {
 import type { MakingExperimentResult, OwnObserverMassGuess, SetupResult, UsableEnergyGuess } from '../physics/makingNewParticles'
 import { MakingNewParticlesTutor } from './MakingNewParticlesTutor'
 import { ReferencePanel } from './EnergyMomentumExperiment'
-import { MakingNewParticlesDecay, PART_TWO_REFERENCE_ENTRIES } from './MakingNewParticlesDecay'
+import { MakingNewParticlesDecay } from './MakingNewParticlesDecay'
 import { PartHeader } from './GravitationalWaveExperiment'
 import { LookForList } from './WideBinariesExperiment'
 import { WhereFrom } from './TidalEffectExperiment'
@@ -928,7 +928,7 @@ export function MakingNewParticlesExperiment({ onComplete, onTutorComplete }: Ma
 
         <MakingNewParticlesLinks />
 
-        <ReferencePanel entries={[...SECTION_A_REFERENCE_ENTRIES, ...(sectionBShown ? PART_TWO_REFERENCE_ENTRIES : [])]} />
+        <ReferencePanel entries={SECTION_A_REFERENCE_ENTRIES} />
 
         {/* ===== Part 1: predict, then watch ===== */}
         <PartHeader color={PART_ONE_COLOR} title="Part 1: Predict, then watch">

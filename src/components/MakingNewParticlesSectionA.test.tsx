@@ -390,6 +390,8 @@ describe('Section B keeps working, under its new names', () => {
     expect(html).not.toContain('Part 2 — Decay')
     expect(html).toContain('Back to Section A - Making a new particle')
     expect(html).toContain('If you skipped Section A.')
-    expect(html).not.toMatch(/\bPart 1\b/)
+    // Section B now has its own four Parts (audit of 2026-11-23); the old "Part 1 / Part 2" names for the two halves of the experiment are gone.
+    expect(html).toContain('Part 1: Predict, then watch')
+    expect(html).not.toContain('Part 1 — ')
   })
 })
