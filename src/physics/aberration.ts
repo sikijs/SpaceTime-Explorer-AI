@@ -153,3 +153,116 @@ export function rainRuleSidewaysAngle(speed: number): number {
   assertTravelerSpeed(speed)
   return 90 - toDegrees(Math.atan(speed))
 }
+
+// ---- The prediction, its white mark and the check-up (audit of 2026-11-23; docs/audit/spacetime-geometry/07-draft-wording.md, sections 2, 5 and 8)
+// None of this changes a function above; Experiments 8 and 9 import from this module.
+
+// The learner's guess about the star the lab sees exactly sideways: seen sideways again, ahead of sideways (nearer the direction of travel) or behind.
+export type SidewaysGuess = 'same' | 'ahead' | 'behind'
+
+export const SIDEWAYS_ANGLE = 90
+// How far a guess arrow is drawn from the sideways position. It is a fixed illustration of a direction: the guess has no angle of its own.
+export const GUESS_ARROW_DEGREES = 30
+
+export interface GuessMark {
+  startAngle: number // where the white mark starts on the ring: the sideways position, as the lab sees the star
+  endAngle: number // where the arrow ends; equal to startAngle for "same", which has no arrow
+  hasArrow: boolean
+}
+
+// The white mark for a guess. It depends on the guess only, never on the speed.
+export function guessMarkFor(guess: SidewaysGuess): GuessMark {
+  if (guess === 'ahead') return { startAngle: SIDEWAYS_ANGLE, endAngle: SIDEWAYS_ANGLE - GUESS_ARROW_DEGREES, hasArrow: true }
+  if (guess === 'behind') return { startAngle: SIDEWAYS_ANGLE, endAngle: SIDEWAYS_ANGLE + GUESS_ARROW_DEGREES, hasArrow: true }
+  return { startAngle: SIDEWAYS_ANGLE, endAngle: SIDEWAYS_ANGLE, hasArrow: false }
+}
+
+// Which side of sideways the traveler really sees the star the lab sees sideways, from the traveler's angle for it.
+export function realSidewaysSide(speed: number): SidewaysGuess {
+  const angle = travelerAngleOf(SIDEWAYS_ANGLE, speed)
+  if (Math.abs(angle - SIDEWAYS_ANGLE) <= TOLERANCE) return 'same'
+  return angle < SIDEWAYS_ANGLE ? 'ahead' : 'behind'
+}
+
+// Used only by the tutor, after the learner has predicted and watched.
+export function predictionMatches(guess: SidewaysGuess, speed: number): boolean {
+  return guess === realSidewaysSide(speed)
+}
+
+export const CHECK_UP_LAB_ANGLES = [0, 30, 60, 90, 120, 150, 180]
+
+export interface AberrationCheckUp {
+  largestRouteDifference: number // degrees; the formula against the energy-and-momentum route, over CHECK_UP_LAB_ANGLES
+  aheadStarTravelerAngle: number // the traveler's angle for the star the lab sees at 0
+  behindStarTravelerAngle: number // the traveler's angle for the star the lab sees at 180
+  labStarCount: number
+  travelerStarCount: number
+  orderUnchanged: boolean // going round the ring, the traveler's angles still increase from star to star
+}
+
+// The check-up of Part 3: the page's numbers checked against its own physics. No published range exists for any row, so each is read as "the same".
+export function aberrationCheckUp(speed: number, starCount = 24): AberrationCheckUp {
+  assertTravelerSpeed(speed)
+  const sky = runSky(speed, starCount)
+  let largest = 0
+  for (const labAngle of CHECK_UP_LAB_ANGLES) {
+    const formula = travelerAngleOf(labAngle, speed)
+    const route = rayAsMeasuredByTraveler(labAngle, speed).starAngle
+    const gap = Math.abs(formula - route)
+    largest = Math.max(largest, Math.min(gap, TWO_PI_DEGREES - gap))
+  }
+  const angles = sky.stars.map((star) => star.travelerAngle)
+  let orderUnchanged = true
+  for (let i = 1; i < angles.length; i += 1) if (!(angles[i] > angles[i - 1])) orderUnchanged = false
+  return {
+    largestRouteDifference: largest,
+    aheadStarTravelerAngle: travelerAngleOf(0, speed),
+    behindStarTravelerAngle: travelerAngleOf(180, speed),
+    labStarCount: sky.stars.length,
+    travelerStarCount: sky.stars.length,
+    orderUnchanged,
+  }
+}
+
+// The tutor's real example: for a speed far below c, the shift of a star seen at right angles to the motion is about speed ÷ c, as an angle in radians.
+// Computed here, not a published value (the published constant of aberration is not used until its source has been read).
+export const SPEED_OF_LIGHT_KM_PER_S = 299792.458
+export function smallSpeedShiftArcseconds(speedKmPerS: number): number {
+  if (!(Number.isFinite(speedKmPerS) && speedKmPerS >= 0 && speedKmPerS < SPEED_OF_LIGHT_KM_PER_S)) {
+    throw new RangeError(`the speed must be from 0 up to, but not including, c, got ${speedKmPerS} km/s`)
+  }
+  return toDegrees(Math.atan(speedKmPerS / SPEED_OF_LIGHT_KM_PER_S)) * 3600
+}
+
+// ---- The cause, for the tutor's explanation and its drawing (audit of 2026-11-23; docs/audit/spacetime-geometry/07-draft-wording-cause.md)
+// The ray from the star the lab sees exactly sideways, as the traveler measures it, in the units of the specification's "Physics Model" (the ray's energy for the lab is 1).
+// It uses the energy-and-momentum route that already exists (`rayAsMeasuredByTraveler`); no new physics.
+export interface SidewaysRayPush {
+  labPushAcross: number // the lab's push across the line of travel: 1
+  labPushAlong: number // the lab's push along the line of travel: 0
+  travelerPushAcross: number // unchanged by the traveler's motion: 1
+  travelerPushBackward: number // the new push toward the back of the traveler: speed ÷ D
+  travelerEnergy: number // 1 ÷ D
+  travelerPushSize: number // √(across² + backward²), equal to the energy for light
+  starAngle: number // the angle from straight ahead at which the traveler sees the star, from the direction opposite to the push
+  rainRulePushBackward: number // what the rain rule would give for the push toward the back: the speed itself
+  rainRuleAngle: number // the rain rule's angle for the sideways star
+}
+
+export function sidewaysRayPush(speed: number): SidewaysRayPush {
+  assertTravelerSpeed(speed)
+  const ray = rayAsMeasuredByTraveler(SIDEWAYS_ANGLE, speed)
+  const across = Math.abs(ray.momentumAcrossTravelTimesC)
+  const backward = -ray.momentumAlongTravelTimesC
+  return {
+    labPushAcross: 1,
+    labPushAlong: 0,
+    travelerPushAcross: across,
+    travelerPushBackward: backward,
+    travelerEnergy: ray.energy,
+    travelerPushSize: Math.hypot(across, backward),
+    starAngle: ray.starAngle,
+    rainRulePushBackward: speed,
+    rainRuleAngle: rainRuleSidewaysAngle(speed),
+  }
+}

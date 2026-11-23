@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest'
-import { angleFromAhead, labAngleOf, rainRuleSidewaysAngle, rayAsMeasuredByTraveler, runSky, travelerAngleOf, wedgeCounts } from './aberration'
+import {
+  aberrationCheckUp,
+  angleFromAhead,
+  guessMarkFor,
+  labAngleOf,
+  predictionMatches,
+  rainRuleSidewaysAngle,
+  rayAsMeasuredByTraveler,
+  realSidewaysSide,
+  runSky,
+  sidewaysRayPush,
+  smallSpeedShiftArcseconds,
+  travelerAngleOf,
+  wedgeCounts,
+} from './aberration'
+import type { SidewaysGuess } from './aberration'
 
 // Tests for Experiment 7 (docs/experiments/spacetime-geometry/07-aberration.md, "Required Physics Tests"). The numbers in the tables
 // of the specification are written out here by hand, so a wrong formula in the module cannot make a test pass.
@@ -241,5 +256,145 @@ describe('the everyday rain comparison (test 13)', () => {
   it('agrees with the real answer within a degree at 0.3c and not at 0.9c', () => {
     expect(Math.abs(rainRuleSidewaysAngle(0.3) - travelerAngleOf(90, 0.3))).toBeLessThan(1)
     expect(Math.abs(rainRuleSidewaysAngle(0.9) - travelerAngleOf(90, 0.9))).toBeGreaterThan(20)
+  })
+})
+
+// ---- The audit of 2026-11-23: the guess mark and the check-up (docs/audit/spacetime-geometry/07-draft-wording.md, section 8)
+const GUESSES: SidewaysGuess[] = ['same', 'ahead', 'behind']
+
+describe('the real side of sideways (audit test a)', () => {
+  it('is "ahead" at every speed offered and "same" at speed 0', () => {
+    for (const speed of SPEEDS) expect(realSidewaysSide(speed)).toBe('ahead')
+    expect(realSidewaysSide(0)).toBe('same')
+  })
+})
+
+describe('the white guess mark (audit test b)', () => {
+  it('starts at the sideways position for every guess', () => {
+    for (const guess of GUESSES) expect(guessMarkFor(guess).startAngle).toBe(90)
+  })
+
+  it('has no arrow for "same", and an arrow toward straight ahead (smaller angle) or straight behind (larger angle)', () => {
+    expect(guessMarkFor('same')).toEqual({ startAngle: 90, endAngle: 90, hasArrow: false })
+    const ahead = guessMarkFor('ahead')
+    const behind = guessMarkFor('behind')
+    expect(ahead.hasArrow).toBe(true)
+    expect(ahead.endAngle).toBeLessThan(90)
+    expect(behind.hasArrow).toBe(true)
+    expect(behind.endAngle).toBeGreaterThan(90)
+  })
+
+  it('is the same object for the same guess whatever the speed (it takes no speed)', () => {
+    expect(guessMarkFor.length).toBe(1)
+    expect(guessMarkFor('ahead')).toEqual(guessMarkFor('ahead'))
+  })
+})
+
+describe('whether a guess matched, for the tutor (audit test c)', () => {
+  it('is true only for "ahead" at 0.3c, 0.6c, 0.9c and 0.99c', () => {
+    for (const speed of SPEEDS) {
+      expect(predictionMatches('ahead', speed)).toBe(true)
+      expect(predictionMatches('same', speed)).toBe(false)
+      expect(predictionMatches('behind', speed)).toBe(false)
+    }
+  })
+
+  it('is true only for "same" at speed 0', () => {
+    expect(predictionMatches('same', 0)).toBe(true)
+    expect(predictionMatches('ahead', 0)).toBe(false)
+  })
+})
+
+describe('the check-up (audit test d)', () => {
+  it('agrees between the formula and the energy-and-momentum route, at every speed offered', () => {
+    for (const speed of SPEEDS) expect(aberrationCheckUp(speed).largestRouteDifference).toBeLessThan(1e-9)
+  })
+
+  it('leaves the star straight ahead at 0 and the star straight behind at 180', () => {
+    for (const speed of SPEEDS) {
+      const check = aberrationCheckUp(speed)
+      expect(check.aheadStarTravelerAngle).toBe(0)
+      expect(check.behindStarTravelerAngle).toBe(180)
+    }
+  })
+
+  it('keeps all 24 stars and their order round the ring', () => {
+    for (const speed of SPEEDS) {
+      const check = aberrationCheckUp(speed)
+      expect(check.labStarCount).toBe(24)
+      expect(check.travelerStarCount).toBe(24)
+      expect(check.orderUnchanged).toBe(true)
+    }
+  })
+
+  it('rejects a speed that is not allowed', () => {
+    expect(() => aberrationCheckUp(1)).toThrow(RangeError)
+    expect(() => aberrationCheckUp(-0.1)).toThrow(RangeError)
+  })
+})
+
+describe('the tutor’s Earth example (audit test e)', () => {
+  it('gives about 20.5 arcseconds for Earth’s mean orbital speed of 29.78 km/s, computed from speed ÷ c', () => {
+    expect(smallSpeedShiftArcseconds(29.78)).toBeCloseTo((29.78 / 299792.458) * (180 / Math.PI) * 3600, 3)
+    expect(smallSpeedShiftArcseconds(29.78)).toBeGreaterThan(20.4)
+    expect(smallSpeedShiftArcseconds(29.78)).toBeLessThan(20.6)
+    expect(smallSpeedShiftArcseconds(0)).toBe(0)
+  })
+
+  it('throws a RangeError for a negative speed or one at or above c', () => {
+    expect(() => smallSpeedShiftArcseconds(-1)).toThrow(RangeError)
+    expect(() => smallSpeedShiftArcseconds(299792.458)).toThrow(RangeError)
+  })
+})
+
+describe('the push of the sideways star\u2019s ray, for the tutor\u2019s explanation (audit test f)', () => {
+  // [speed, D, push toward the back = speed / D, energy = 1 / D, angle, rain-rule angle], written out by hand from the draft wording's table.
+  const TABLE: [number, number, number, number, number, number][] = [
+    [0.3, 0.954, 0.314, 1.048, 72.5, 73.3],
+    [0.6, 0.8, 0.75, 1.25, 53.1, 59.0],
+    [0.9, 0.436, 2.065, 2.294, 25.8, 48.0],
+    [0.99, 0.141, 7.018, 7.089, 8.1, 45.3],
+  ]
+
+  it('matches the table: the push across is 1, the push toward the back is speed / D, the energy is 1 / D', () => {
+    for (const [speed, , backward, energy, angle, rain] of TABLE) {
+      const push = sidewaysRayPush(speed)
+      expect(push.labPushAcross).toBe(1)
+      expect(push.labPushAlong).toBe(0)
+      expect(push.travelerPushAcross).toBeCloseTo(1, 9)
+      expect(push.travelerPushBackward).toBeCloseTo(backward, 2)
+      expect(push.travelerEnergy).toBeCloseTo(energy, 2)
+      expect(push.starAngle).toBeCloseTo(angle, 1)
+      expect(push.rainRuleAngle).toBeCloseTo(rain, 1)
+    }
+  })
+
+  it('has an energy equal to the size of the push, as it must for light', () => {
+    for (const speed of [0.1, ...SPEEDS]) {
+      const push = sidewaysRayPush(speed)
+      expect(push.travelerPushSize).toBeCloseTo(push.travelerEnergy, 9)
+    }
+  })
+
+  it('turns the push round to the same angle as the formula: atan2(across, backward) is the traveler\u2019s angle for the sideways star', () => {
+    for (const speed of SPEEDS) {
+      const push = sidewaysRayPush(speed)
+      const angle = degrees(Math.atan2(push.travelerPushAcross, push.travelerPushBackward))
+      expect(angle).toBeCloseTo(travelerAngleOf(90, speed), 9)
+      expect(push.starAngle).toBeCloseTo(travelerAngleOf(90, speed), 9)
+    }
+  })
+
+  it('gives the rain rule a push toward the back equal to the speed itself, smaller than the real one', () => {
+    for (const speed of SPEEDS) {
+      const push = sidewaysRayPush(speed)
+      expect(push.rainRulePushBackward).toBe(speed)
+      expect(push.travelerPushBackward).toBeGreaterThan(push.rainRulePushBackward)
+    }
+  })
+
+  it('throws a RangeError for a speed that is not allowed', () => {
+    expect(() => sidewaysRayPush(1)).toThrow(RangeError)
+    expect(() => sidewaysRayPush(-0.5)).toThrow(RangeError)
   })
 })

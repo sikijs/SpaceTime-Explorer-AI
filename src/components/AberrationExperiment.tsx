@@ -1,54 +1,29 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { runSky, travelerAngleOf } from '../physics/aberration'
+import { guessMarkFor, runSky } from '../physics/aberration'
+import type { SidewaysGuess } from '../physics/aberration'
 import { AberrationTutor } from './AberrationTutor'
+import { AberrationIntroduction, AberrationLinks, FORMULA_ENTRIES, PART_ONE_SPEED, REFERENCE_ENTRIES } from './AberrationIntro'
+import { AberrationResults, AngleTable, CountTable } from './AberrationResults'
 import { ReferencePanel } from './EnergyMomentumExperiment'
+import { PartHeader } from './GravitationalWaveExperiment'
+import { LookForList } from './WideBinariesExperiment'
+import { WhereFrom } from './TidalEffectExperiment'
 
-// Steps 4 to 6 of docs/experiments/spacetime-geometry/07-aberration.md: the introduction, the "Words and formulas" panel, the speed
-// control, the lab's sky and the traveler's sky as labeled pictures (24 stars, the direction of travel, the wedges and their counts),
-// the "How to read this diagram" caption (CLAUDE.md §14), the prediction that gates Run, and the staged run that builds the
-// traveler's sky star by star, drawing the same ray at its two angles.
-// The results, the tutor and the formula with its worked example are later steps. They are left out here on purpose: the formula and any worked example of it show which way a star's direction changes, which is what the
-// prediction asks (§12), so they appear only after the learner has predicted and run. Every number shown comes from `runSky`
-// (CLAUDE.md §9). Wording approved by the owner on 2026-10-16 (CLAUDE.md §28.1).
-
-// Terms the introduction defines, repeated in the "Words and formulas" panel with no new claims. The formula for the traveler's angle
-// is added to this panel after the run (a later step).
-const REFERENCE_ENTRIES: { term: string; meaning: string }[] = [
-  { term: 'Lab observer and traveler', meaning: 'the lab observer is at rest relative to the stars. The traveler flies through the middle of the ring of stars at a steady speed.' },
-  { term: 'Direction of travel', meaning: 'the way the traveler is moving, drawn as an arrow. Angles are measured from it.' },
-  {
-    term: 'The angle θ (the Greek letter "theta")',
-    meaning:
-      'how far a star is from straight ahead, measured around from the direction of travel, in degrees. 0° is straight ahead, 90° is exactly sideways (like 3 o’clock on a clock when you face 12), and 180° is straight behind. A full turn is 360°.',
-  },
-  { term: 'Speed written as 0.6c', meaning: 'a fraction of the speed of light, c. 0.6c is six tenths of the speed of light.' },
-  {
-    term: 'Aberration',
-    meaning: 'the change, if there is one, in the direction in which a star is seen when the observer moves. This experiment shows how big it is and which way it goes.',
-  },
-]
-
-// Added to the panel only once a run has ended, because the formula shows which way a star's direction changes (§12).
-const FORMULA_ENTRIES: { term: string; meaning: string }[] = [
-  {
-    term: 'The traveler’s angle θ′ (“theta prime”)',
-    meaning:
-      'cos θ′ = (cos θ + β) ÷ (1 + β cos θ), where θ is the lab’s angle, β is the traveler’s speed as a fraction of c, and cos is a number between −1 and 1 that tells you how far ahead (1) or behind (−1) a direction is. Example: β = 0.6 and θ = 90° give cos θ′ = 0.6, so θ′ = 53.1°. The star has not moved; only the traveler’s measurement of its direction is different.',
-  },
-]
+// Spacetime Geometry 7, rebuilt on 2026-11-23 in the four Parts (CLAUDE.md §14 "The Page in Four Parts"), from the audit wording in
+// docs/audit/spacetime-geometry/07-draft-wording.md (approved by the owner on 2026-11-23, §28.1). Part 1 is fixed on 0.6c: the learner's guess about the star the lab sees
+// sideways is drawn in white on the traveler's sky, beside the real star (a yellow ring). The guess locks at Run; Start over clears it. Parts 2 to 4 appear when the first run
+// has finished: Part 2 holds the speed buttons (they change the drawings, not the guess), Part 3 the results and Part 4 the tutor. Every number shown comes from the physics
+// module (`runSky`, `guessMarkFor`, `aberrationCheckUp`, CLAUDE.md §9); the pictures are built in stages and the playback speed does not change any result (§11).
 
 const SPEED_PRESETS = [0.3, 0.6, 0.9, 0.99]
 
-type Prediction = 'same' | 'ahead' | 'behind'
-
-// The three answers of the prediction in the specification's "Prediction Activity" section (wording approved 2026-10-16, §28.1). Only the
-// direction is asked, not an angle.
-const PREDICTION_CHOICES: { value: Prediction; label: string }[] = [
+const GUESS_CHOICES: { value: SidewaysGuess; label: string }[] = [
   { value: 'same', label: 'Exactly sideways, the same as the lab' },
   { value: 'ahead', label: 'Ahead of sideways, nearer the direction of travel' },
   { value: 'behind', label: 'Behind sideways, further from the direction of travel' },
 ]
+const GUESS_BOX_TEXT: Record<SidewaysGuess, string> = { same: 'exactly sideways', ahead: 'ahead of sideways', behind: 'behind sideways' }
 
 // The run's stages as fractions of its length (the physics result does not depend on them, CLAUDE.md §11): the traveler flies in to
 // the centre, then the traveler's sky is built from straight ahead around to straight behind, then the wedge counts appear.
@@ -59,6 +34,9 @@ const STARS_DONE_AT = 0.85
 const STEP_COUNT = 13
 const STARS_ON_RING = 24
 const SHIP_START_OFFSET = -110
+// The star the lab sees exactly sideways is the 7th star of the ring (index 6), drawn at step 7.
+const FOLLOW_INDEX = 6
+const FOLLOW_STEP = 7
 
 const SVG_STYLE: CSSProperties = {
   display: 'block',
@@ -74,16 +52,28 @@ const MUTED_COLOR = '#94a3b8'
 const LAB_COLOR = '#38bdf8'
 const TRAVELER_COLOR = '#c4b5fd'
 const FOLLOW_COLOR = '#facc15'
+const GUESS_COLOR = '#ffffff'
 const HALO: CSSProperties = { paintOrder: 'stroke', stroke: '#0b1020', strokeWidth: 3 }
+
+const PART_ONE_COLOR = '#d97706'
+const PART_TWO_COLOR = '#be185d'
+const PART_THREE_COLOR = '#0f766e'
+const PART_FOUR_COLOR = '#0066cc'
 
 const VIEW_WIDTH = 650
 const VIEW_HEIGHT = 480
 const CENTER_X = 325
 const CENTER_Y = 250
 const RADIUS = 150
+const GUESS_ARROW_RADIUS = 170
 const STAR_RADIUS = 6
 const KEY_STAR_RADIUS = 8
 const WEDGE_HALF_ANGLE = 30
+
+const smallNote: CSSProperties = { fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }
+const hint: CSSProperties = { fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }
+const buttonStyle: CSSProperties = { marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }
+const pictureTitle: CSSProperties = { fontSize: '0.875rem', color: 'var(--text-muted)', margin: '1.5rem 0 0.75rem' }
 
 // Where a star at `angle` degrees from straight ahead is drawn. Straight ahead is to the right; angles above the line of travel go up.
 function pointAt(angle: number, radius: number): { x: number; y: number } {
@@ -103,7 +93,7 @@ function wedgePath(front: boolean): string {
     : `M ${CENTER_X} ${CENTER_Y} L ${x} ${bottom} A ${RADIUS} ${RADIUS} 0 0 1 ${x} ${top} Z`
 }
 
-interface SkyPictureProps {
+export interface SkyPictureProps {
   title: string
   color: string
   stars: (number | null)[] | null // each star's angle to draw (null: not drawn yet), or null while the picture waits for the run
@@ -114,6 +104,8 @@ interface SkyPictureProps {
   rays: { angle: number; follow: boolean }[] // short rays from stars to the centre, drawn during the run
   shipOffset: number // how far left of the centre the traveler's icon is (0 once it is at the centre)
   idSuffix: string
+  guess?: SidewaysGuess | null // the learner's guess, drawn in white once the star we follow is drawn (the traveler's sky of Part 1 only)
+  labObserver?: boolean // the lab's sky only: draws the lab observer, at rest at the centre, so the traveler's icon and arrow are not mistaken for the lab's motion
 }
 
 // A short ray from a star in towards the observer at the centre, with an arrowhead at the centre end: the starlight, travelling
@@ -124,28 +116,64 @@ function Ray({ angle, color, markerId }: { angle: number; color: string; markerI
   return <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={color} strokeWidth="2.5" markerEnd={`url(#${markerId})`} />
 }
 
+// The learner's guess in white: a box labelled YOUR GUESS joined by a line to a white ring at the sideways position ("same") or a white arrow along the ring from the sideways
+// position toward straight ahead or straight behind. It shows a direction only; its length means nothing. The angles come from `guessMarkFor` in the physics module.
+function GuessMark({ guess, headId }: { guess: SidewaysGuess; headId: string }) {
+  const mark = guessMarkFor(guess)
+  const start = pointAt(mark.startAngle, GUESS_ARROW_RADIUS)
+  const end = pointAt(mark.endAngle, GUESS_ARROW_RADIUS)
+  const attach = mark.hasArrow ? start : pointAt(mark.startAngle, RADIUS + 24)
+  return (
+    <g>
+      {mark.hasArrow ? (
+        <path
+          d={`M ${start.x} ${start.y} A ${GUESS_ARROW_RADIUS} ${GUESS_ARROW_RADIUS} 0 0 ${mark.endAngle < mark.startAngle ? 1 : 0} ${end.x} ${end.y}`}
+          fill="none"
+          stroke={GUESS_COLOR}
+          strokeWidth="5"
+          markerEnd={`url(#${headId})`}
+        />
+      ) : (
+        <circle cx={pointAt(mark.startAngle, RADIUS).x} cy={pointAt(mark.startAngle, RADIUS).y} r="24" fill="none" stroke={GUESS_COLOR} strokeWidth="4" />
+      )}
+      <line x1="214" y1="68" x2={attach.x} y2={attach.y} stroke={GUESS_COLOR} strokeWidth="2" />
+      <rect x="14" y="44" width="200" height="48" rx="6" fill="#0b1020" stroke={GUESS_COLOR} strokeWidth="3" />
+      <text x="114" y="64" textAnchor="middle" fontSize="16" fontWeight="bold" fill={GUESS_COLOR}>
+        YOUR GUESS
+      </text>
+      <text x="114" y="83" textAnchor="middle" fontSize="13" fill={GUESS_COLOR}>
+        {GUESS_BOX_TEXT[guess]}
+      </text>
+    </g>
+  )
+}
+
 // One picture of the sky: the ring, the traveler at the centre with the direction of travel, and (once there are stars to draw) the
-// stars, the labeled ones, the star we follow, any rays, and the two shaded wedges with their counts.
-function SkyPicture({ title, color, stars, showWedges, frontCount, backCount, followAngle, rays, shipOffset, idSuffix }: SkyPictureProps) {
+// stars, the labeled ones, the star we follow (once it is drawn), any rays, and the two shaded wedges with their counts.
+export function SkyPicture({ title, color, stars, showWedges, frontCount, backCount, followAngle, rays, shipOffset, idSuffix, guess = null, labObserver = false }: SkyPictureProps) {
   const frontPattern = `aberration-front-${idSuffix}`
   const backPattern = `aberration-back-${idSuffix}`
   const arrowHead = `aberration-arrow-${idSuffix}`
   const rayHead = `aberration-ray-${idSuffix}`
   const followHead = `aberration-follow-${idSuffix}`
+  const guessHead = `aberration-guess-${idSuffix}`
   const filled = stars !== null
+  // The star we follow, and the ring, label and white mark beside it, appear when the star itself is drawn.
+  const followDrawn = stars !== null && stars[FOLLOW_INDEX] !== null
   const follow = pointAt(followAngle, RADIUS)
   const other = pointAt(360 - followAngle, RADIUS)
   const shipX = CENTER_X + shipOffset
+  const guessShown = guess !== null && followDrawn
   return (
     <svg
       viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
       style={SVG_STYLE}
       role="img"
-      aria-label={`${title}. A ring of stars around a traveler at the centre, with the direction of travel pointing right. ${
+      aria-label={`${title}. A ring of stars around ${labObserver ? 'the lab observer, at rest at the centre, with the traveler passing through' : 'a traveler at the centre'}, with the direction of travel pointing right. ${
         filled
           ? `${stars.filter((angle) => angle !== null).length} of ${STARS_ON_RING} stars are drawn.${showWedges ? ` ${frontCount} are within 30 degrees of straight ahead and ${backCount} within 30 degrees of straight behind.` : ''}`
           : 'The stars appear here after the run.'
-      }`}
+      }${guessShown ? ` A white box marked YOUR GUESS shows your guess: ${GUESS_BOX_TEXT[guess]}. It shows a direction only.` : ''}`}
     >
       <defs>
         <marker id={arrowHead} markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
@@ -156,6 +184,9 @@ function SkyPicture({ title, color, stars, showWedges, frontCount, backCount, fo
         </marker>
         <marker id={followHead} markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
           <path d="M 0 0 L 8 4 L 0 8 Z" fill={FOLLOW_COLOR} />
+        </marker>
+        <marker id={guessHead} markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="16" refX="12" refY="8" orient="auto">
+          <path d="M 0 0 L 16 8 L 0 16 Z" fill={GUESS_COLOR} />
         </marker>
         {/* Forward wedge: diagonal stripes. Backward wedge: dots. Two different fill patterns, so the wedges do not rely on colour alone. */}
         <pattern id={frontPattern} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -176,14 +207,25 @@ function SkyPicture({ title, color, stars, showWedges, frontCount, backCount, fo
       {showWedges && <path d={wedgePath(false)} fill={`url(#${backPattern})`} stroke={color} strokeOpacity="0.5" strokeDasharray="4 3" />}
       <circle cx={CENTER_X} cy={CENTER_Y} r={RADIUS} fill="none" stroke={MUTED_COLOR} strokeWidth="1.5" strokeDasharray={filled ? undefined : '6 5'} />
 
+      {/* The lab's sky only: the lab observer, at rest at the centre of the ring (a ring with a dot), labelled, so that the traveler's icon and arrow are not mistaken for the lab's own motion. */}
+      {labObserver && (
+        <>
+          <circle cx={CENTER_X} cy={CENTER_Y} r="11" fill="none" stroke={color} strokeWidth="3" />
+          <circle cx={CENTER_X} cy={CENTER_Y} r="3.5" fill={color} />
+          <text x={CENTER_X} y={CENTER_Y + 66} fill={color} fontSize="17" fontWeight="bold" textAnchor="middle" style={HALO}>
+            lab observer (at rest)
+          </text>
+        </>
+      )}
+
       {/* The traveler at the centre, drawn as a small spaceship pointing along the direction of travel, and the arrow. */}
       <polygon points={`${shipX + 14},${CENTER_Y} ${shipX - 9},${CENTER_Y - 8} ${shipX - 9},${CENTER_Y + 8}`} fill={TEXT_COLOR} />
-      <text x={shipX} y={CENTER_Y + 34} fill={TEXT_COLOR} fontSize="20" textAnchor="middle" style={HALO}>
-        traveler
+      <text x={shipX} y={CENTER_Y + 34} fill={TEXT_COLOR} fontSize={labObserver ? 18 : 20} textAnchor="middle" style={HALO}>
+        {labObserver ? (shipOffset < 0 ? 'traveler (flying in)' : 'traveler (passing)') : 'traveler'}
       </text>
       <line x1={shipX + 22} y1={CENTER_Y} x2={shipX + 82} y2={CENTER_Y} stroke={TEXT_COLOR} strokeWidth="2.5" markerEnd={`url(#${arrowHead})`} />
-      <text x={shipX + 56} y={CENTER_Y - 12} fill={TEXT_COLOR} fontSize="18" textAnchor="middle" style={HALO}>
-        direction of travel
+      <text x={shipX + 56} y={CENTER_Y - 12} fill={TEXT_COLOR} fontSize={labObserver ? 15 : 18} textAnchor="middle" style={HALO}>
+        {labObserver ? 'traveler’s direction of travel' : 'direction of travel'}
       </text>
 
       {rays.map((ray, index) => (
@@ -199,7 +241,7 @@ function SkyPicture({ title, color, stars, showWedges, frontCount, backCount, fo
           return <circle key={index} cx={x} cy={y} r={isKey ? KEY_STAR_RADIUS : STAR_RADIUS} fill={color} stroke="#0b1020" strokeWidth="1.5" />
         })}
 
-      {filled && (
+      {followDrawn && (
         <>
           {/* The star we follow in both pictures: the one the lab sees exactly sideways, drawn with a yellow ring. Its label sits in the
               top right corner with a line to the star, so it can be found wherever the star is. */}
@@ -216,7 +258,11 @@ function SkyPicture({ title, color, stars, showWedges, frontCount, backCount, fo
           <text x={VIEW_WIDTH - 12} y={VIEW_HEIGHT - 14} fill={TEXT_COLOR} fontSize="18" textAnchor="end" style={HALO}>
             sideways, other side (270° in the lab’s sky)
           </text>
+        </>
+      )}
 
+      {filled && (
+        <>
           <text x={CENTER_X + RADIUS + 22} y={CENTER_Y - 8} fill={TEXT_COLOR} fontSize="20" style={HALO}>
             straight ahead
           </text>
@@ -231,6 +277,8 @@ function SkyPicture({ title, color, stars, showWedges, frontCount, backCount, fo
           </text>
         </>
       )}
+
+      {guessShown && <GuessMark guess={guess} headId={guessHead} />}
 
       {rays.length > 0 && (
         <text x="14" y={VIEW_HEIGHT - 40} fill={MUTED_COLOR} fontSize="16" style={HALO}>
@@ -264,13 +312,6 @@ function SkyPicture({ title, color, stars, showWedges, frontCount, backCount, fo
   )
 }
 
-interface AberrationExperimentProps {
-  onComplete?: () => void
-  onTutorComplete?: () => void
-}
-
-const RESULT_LAB_ANGLES = [0, 30, 60, 90, 120, 150, 180]
-
 const COUNT_ROWS: { key: 'aheadOfSideways' | 'within30OfAhead' | 'within30OfBehind'; label: string; short: string; detail: string }[] = [
   { key: 'aheadOfSideways', label: 'Stars seen less than 90° from straight ahead', short: 'Stars less than 90°', detail: 'from straight ahead' },
   { key: 'within30OfAhead', label: 'Stars in the striped wedge (within 30° of straight ahead)', short: 'Stars in the striped wedge', detail: '(within 30° of straight ahead)' },
@@ -279,7 +320,7 @@ const COUNT_ROWS: { key: 'aheadOfSideways' | 'within30OfAhead' | 'within30OfBehi
 
 // A pair of bars for each count, lab against traveler, on one scale from 0 to 24 stars. The lab's bars are solid and the traveler's are
 // outlined with a diagonal fill, so they differ by more than colour. Every number comes from `runSky` (CLAUDE.md §9).
-function CountBars({ lab, traveler }: { lab: Record<string, number>; traveler: Record<string, number> }) {
+export function CountBars({ lab, traveler }: { lab: Record<string, number>; traveler: Record<string, number> }) {
   const left = 330
   const scale = 210 / STARS_ON_RING
   const rowHeight = 92
@@ -323,424 +364,481 @@ function CountBars({ lab, traveler }: { lab: Record<string, number>; traveler: R
   )
 }
 
-export function AberrationExperiment({ onComplete, onTutorComplete }: AberrationExperimentProps) {
-  // Counts the runs so the tutor starts again at its first question after each run.
-  const [runCount, setRunCount] = useState(0)
-  const [speed, setSpeed] = useState(SPEED_PRESETS[1])
-  const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
-  const [progress, setProgress] = useState(0)
-  // The question names the speed, so changing the speed clears the prediction.
-  const [prediction, setPrediction] = useState<Prediction | null>(null)
-  const sky = runSky(speed)
-  const labAngles = sky.stars.map((star) => star.labAngle)
-  const travelerAngles = sky.stars.map((star) => star.travelerAngle)
-  const returnToIdle = () => {
-    setStatus('idle')
-    setProgress(0)
-  }
+type PlayStatus = 'idle' | 'running' | 'complete'
 
+// Runs one playback of the staged pictures: progress goes from 0 to 1 over a fixed real time (the physics does not depend on it). `onFinish` is called once at the end.
+function usePlayback(status: PlayStatus, setStatus: (s: PlayStatus) => void, setProgress: (p: number) => void, onFinish?: () => void) {
   useEffect(() => {
     if (status !== 'running') return
-
     const startTime = performance.now()
-    let frameId: number
-
+    let frameId = 0
     const animate = (currentTime: number) => {
       const fraction = Math.min(Math.max((currentTime - startTime) / ANIMATION_DURATION_MS, 0), 1)
       setProgress(fraction)
-
       if (fraction >= 1) {
         setStatus('complete')
-        onComplete?.()
+        onFinish?.()
         return
       }
-
       frameId = requestAnimationFrame(animate)
     }
-
     frameId = requestAnimationFrame(animate)
-
     return () => cancelAnimationFrame(frameId)
-  }, [status, onComplete])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
+}
 
-  // Stage 2: the traveler's icon flies in to the centre of the lab's picture. Stage 3: the traveler's sky is built one step at a time
-  // (step k is the star the lab sees at 15k degrees and its mirror image below the line of travel). Stage 4: the counts appear.
+// What the pictures show at one moment of a run: where the ship is, how many of the 13 build-up steps are drawn, and whether the wedge counts are shown.
+export function stageOf(status: PlayStatus, progress: number) {
   const idle = status === 'idle'
   const shipOffset = idle || progress >= SHIP_ARRIVES_AT ? 0 : SHIP_START_OFFSET * (1 - progress / SHIP_ARRIVES_AT)
   const stepsShown =
     idle || progress < SHIP_ARRIVES_AT
       ? 0
       : Math.min(STEP_COUNT, Math.floor(((progress - SHIP_ARRIVES_AT) / (STARS_DONE_AT - SHIP_ARRIVES_AT)) * STEP_COUNT) + 1)
-  const stepOf = (index: number) => Math.min(index, STARS_ON_RING - index)
   const showCounts = status === 'complete' || progress >= STARS_DONE_AT
+  return { idle, shipOffset, stepsShown, showCounts }
+}
+
+// "How to read this diagram" (CLAUDE.md §14), approved wording of 2026-10-16 with the audit changes of 2026-11-23: the white mark bullet, the three-part look-for items (each shown
+// only once its feature is drawn) and a worked moment once the star we follow is drawn. Nothing here says which way the stars shift before the learner has seen them (§12).
+export function SkyCaption({ speed, stepsShown, showCounts, guess, own = false }: { speed: number; stepsShown: number; showCounts: boolean; guess: SidewaysGuess | null; own?: boolean }) {
+  const sky = runSky(speed)
+  const followed = sky.sidewaysStarTravelerAngle
+  const starDrawn = stepsShown >= FOLLOW_STEP
+  const markDrawn = !own && guess !== null && starDrawn
+  const lookFor: { look: string; means: string; matters: string }[] = []
+  if (stepsShown >= 1) {
+    lookFor.push({
+      look: 'the dots in the two pictures.',
+      means: 'both rings hold the same 24 stars, 15° apart in the lab’s sky.',
+      matters: 'it is the same stars and the same starlight in both pictures, so any difference comes from who is looking.',
+    })
+  }
+  if (starDrawn) {
+    lookFor.push({
+      look: 'the yellow ring in each picture.',
+      means: `in the lab’s sky it sits at the top, at 90°. In the traveler’s sky it is drawn at the angle the traveler measures: ${followed.toFixed(1)}° from straight ahead at ${speed}c.`,
+      matters: 'this is the one number the question was about.',
+    })
+    if (markDrawn) {
+      lookFor.push({
+        look: 'your white mark and the yellow ring in the traveler’s sky.',
+        means: 'the mark shows which side of sideways you guessed; the ring shows where the star is. The mark is only a marker, with no angle.',
+        matters: 'the two can be compared at a glance.',
+      })
+    }
+  }
+  if (stepsShown >= STEP_COUNT) {
+    lookFor.push({
+      look: 'the two stars straight ahead (0°) and straight behind (180°).',
+      means: 'compare each with its partner in the other picture.',
+      matters: 'these two lie on the line of travel, so they show whether a star on that line behaves like the others.',
+    })
+  }
+  if (showCounts) {
+    lookFor.push({
+      look: 'the numbers beside the striped and dotted wedges, in each picture.',
+      means: `at ${speed}c the lab counts ${sky.countsLab.within30OfAhead} and ${sky.countsLab.within30OfBehind}, and the traveler counts ${sky.countsTraveler.within30OfAhead} and ${sky.countsTraveler.within30OfBehind}.`,
+      matters: 'the counts say how the 24 stars are spread around each observer’s sky, in numbers instead of dots.',
+    })
+  }
+  return (
+    <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+      <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+        <strong>How to read this diagram.</strong> The diagram shows the sky around an observer. You can imagine the observer at the centre of the ring, looking outward at the stars. It is a
+        flat slice of the sky: the ring is the sky cut along the line the traveler is flying along. There are two pictures, drawn on the same scale.
+      </p>
+
+      <p style={{ margin: '0.75rem 0 0.25rem' }}>
+        <strong>The two pictures</strong>
+      </p>
+      <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+        <li>
+          <strong>The lab’s sky (sky blue).</strong> The 24 stars as the lab observer sees them. The lab observer is at rest relative to the stars. This picture is shown from the start.
+        </li>
+        <li>
+          <strong>The traveler’s sky (purple).</strong> The same 24 stars as the traveler sees them at the moment the traveler flies through the centre of the ring. It is empty until you press
+          Run. Then its stars are drawn a pair at a time, from straight ahead around to straight behind.
+        </li>
+      </ul>
+
+      <p style={{ margin: '0.75rem 0 0.25rem' }}>
+        <strong>What is drawn in each picture</strong>
+      </p>
+      <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+        <li>The ring is the sky around the observer. Each dot on it is one star. There are 24 stars, and each is 15 degrees from the next one.</li>
+        <li>
+          The small spaceship at the centre is the traveler. The arrow from it, “direction of travel”, points the way the traveler is moving. It points to the right in both pictures, and every
+          angle in both pictures is measured from it.
+        </li>
+        <li>
+          In the lab’s sky (blue), the <strong>lab observer is at rest</strong>. The lab observer is the small ring at the centre, marked “lab observer (at rest)”. The spaceship and the arrow in
+          that picture are <strong>not</strong> the lab observer: they show the traveler, who flies in during the run, and the way the traveler flies. The arrow is there because the angles are
+          measured from the direction the traveler flies. In the traveler’s sky (purple), the observer at the centre is the traveler.
+        </li>
+        <li>
+          Four stars are labeled: “straight ahead” (0 degrees), the two sideways stars (90 degrees, one on each side of the line of travel), and “straight behind” (180 degrees). The larger dots
+          are these four. “Sideways” always means sideways in the lab’s sky, so in the traveler’s sky the labels follow the same stars to wherever they are drawn.
+        </li>
+        <li>
+          The yellow ring marks “the star we follow”. Both pictures show the same 24 stars, so a star in one picture has a partner in the other. “Following” a star means picking one star and
+          looking for it in both pictures, to see whether it is drawn in the same place. We follow the star that the lab sees exactly sideways (90 degrees), because it is the star your
+          prediction is about. It carries the yellow ring in both pictures, so you can find it in each without guessing which dot is which. The other stars are the same stars in both pictures
+          too; this one is just marked so you can track it.
+        </li>
+        <li>
+          The short arrows pointing in towards the centre are rays of starlight, travelling from a star to the observer. During the run, the ray from each star appears in both pictures at the
+          same time, so you can compare the angle in the two. The ray from the star we follow is yellow, and it stays on after the run.
+        </li>
+        <li>
+          The shaded wedges are two slices of the sky. The striped wedge is every direction within 30 degrees of straight ahead. The dotted wedge is every direction within 30 degrees of
+          straight behind. The number beside each wedge is how many stars fall inside it. The two wedges use different fill patterns, so you can tell them apart without relying on colour.
+        </li>
+        {markDrawn && (
+          <li>
+            <strong>The white mark and the YOUR GUESS box</strong> in the traveler’s sky are your guess. The line joins the box to the place the guess is about: the sideways (90°) position, which
+            is where the lab sees the star we follow. A white ring means you guessed “exactly sideways”. A white arrow means you guessed ahead of sideways (the arrow points toward straight ahead)
+            or behind sideways (it points toward straight behind).{' '}
+            <strong>The arrow only shows a direction. Your guess had no angle, so the arrow’s length means nothing.</strong> It does not change any star.
+          </li>
+        )}
+      </ul>
+
+      <p style={{ margin: '0.75rem 0 0.25rem' }}>
+        <strong>What appears when you press Run</strong>
+      </p>
+      <ol style={{ margin: 0, paddingLeft: '1.25rem' }}>
+        <li>The traveler’s icon flies in from the left of the lab’s picture and stops at the centre of the ring.</li>
+        <li>
+          The traveler’s sky is built, a pair of stars at a time, with the ray from each star drawn in both pictures. The yellow ring appears when its star is drawn
+          {own ? '.' : ', and your white mark appears with it.'}
+        </li>
+        <li>The shaded wedges and their counts appear in the traveler’s sky, so the two pictures can be compared.</li>
+      </ol>
+
+      <p style={{ margin: '0.75rem 0 0.25rem' }}>
+        <strong>Words used in the drawing</strong>
+      </p>
+      <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+        <li>
+          A <em>degree</em> is a unit of angle. A full circle is 360 degrees, and a quarter of a circle, from straight ahead to sideways, is 90 degrees.
+        </li>
+        <li>
+          <em>θ</em> is a star’s angle from straight ahead, measured from the direction of travel. <em>c</em> is the speed of light, so 0.6c is six tenths of the speed of light.
+        </li>
+      </ul>
+
+      <p style={{ margin: '0.75rem 0 0.25rem' }}>
+        <strong>A worked moment</strong> (reading an angle). In the lab’s sky, the star at 45 degrees lies halfway between the star straight ahead (0 degrees) and the star sideways (90 degrees).
+        The stars are 15 degrees apart, so it is the third star counting around from straight ahead: 0, 15, 30, 45.
+      </p>
+      {starDrawn && (
+        <p style={{ margin: '0.75rem 0 0.25rem' }}>
+          <strong>A worked moment with the star we follow.</strong> At {speed}c the traveler’s angle for the star we follow is {followed.toFixed(1)}°. In the lab’s sky the same star is at 90°.{' '}
+          {followed.toFixed(1)}° is {(90 - followed).toFixed(1)}° less than 90°. The yellow ring in the traveler’s sky is drawn at {followed.toFixed(1)}° from straight ahead.
+        </p>
+      )}
+
+      {lookFor.length > 0 && (
+        <>
+          <p style={{ margin: '0.75rem 0 0.25rem' }}>
+            <em>What to look for</em> (each item appears once the thing it names is drawn):
+          </p>
+          <LookForList items={lookFor} />
+        </>
+      )}
+      {lookFor.length === 0 && (
+        <p style={{ margin: '0.75rem 0 0.25rem', fontWeight: 'bold' }}>The “what to look for” items appear here as the traveler’s sky is drawn.</p>
+      )}
+
+      <WhereFrom>
+        <strong>Measured:</strong> nothing in these pictures. No one has measured a traveler at {speed}c. <strong>Calculated here:</strong> every angle in the traveler’s sky, and the wedge counts,
+        are worked out by the page from the lab’s angles and the speed, using the aberration formula. The page checks it a second way, from the energy and momentum of each ray of light
+        (Experiment 5), and both give the same angle. <strong>Imagined for the question:</strong> the ring of 24 evenly spaced, very distant stars, the lab observer, and a traveler flying at
+        exactly {speed}c.{!own && ' Your white mark is your guess, not a calculation.'}
+      </WhereFrom>
+    </div>
+  )
+}
+
+interface SkyPairProps {
+  speed: number
+  status: PlayStatus
+  progress: number
+  guess: SidewaysGuess | null
+  own?: boolean
+}
+
+// The lab's sky and the traveler's sky for one run, built in stages, with the rays, and the caption under them.
+export function SkyPair({ speed, status, progress, guess, own = false }: SkyPairProps) {
+  const sky = runSky(speed)
+  const labAngles = sky.stars.map((star) => star.labAngle)
+  const travelerAngles = sky.stars.map((star) => star.travelerAngle)
+  const { idle, shipOffset, stepsShown, showCounts } = stageOf(status, progress)
+  const stepOf = (index: number) => Math.min(index, STARS_ON_RING - index)
   const travelerStars = idle ? null : travelerAngles.map((angle, index) => (stepOf(index) < stepsShown ? angle : null))
   // The ray being drawn now (while the traveler's sky is being built) is the newest step's two stars; once the run has ended, only the
   // star we follow keeps its ray, so the same ray can be found at its two angles.
   const currentStep = stepsShown - 1
   const raysFor = (angles: number[]) => {
     if (idle || stepsShown === 0) return []
-    if (status === 'complete' || progress >= STARS_DONE_AT) return [{ angle: angles[6], follow: true }]
-    return angles
-      .map((angle, index) => ({ angle, follow: index === 6, index }))
-      .filter((ray) => stepOf(ray.index) === currentStep)
+    if (status === 'complete' || progress >= STARS_DONE_AT) return [{ angle: angles[FOLLOW_INDEX], follow: true }]
+    return angles.map((angle, index) => ({ angle, follow: index === FOLLOW_INDEX, index })).filter((ray) => stepOf(ray.index) === currentStep)
   }
-  const followTravelerAngle = sky.sidewaysStarTravelerAngle
+  const prefix = own ? 'own-' : ''
+  const speedWords = own ? ` at ${speed}c` : ''
+  return (
+    <>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>The traveler’s speed is {speed}c. Both pictures are drawn on the same scale.</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+        <div style={{ flex: '1 1 340px', minWidth: 0 }}>
+          <SkyPicture
+            title="The lab’s sky"
+            color={LAB_COLOR}
+            stars={labAngles}
+            showWedges
+            frontCount={sky.countsLab.within30OfAhead}
+            backCount={sky.countsLab.within30OfBehind}
+            followAngle={90}
+            rays={raysFor(labAngles)}
+            shipOffset={shipOffset}
+            idSuffix={`${prefix}lab`}
+            labObserver
+          />
+        </div>
+        <div style={{ flex: '1 1 340px', minWidth: 0 }}>
+          <SkyPicture
+            title={`The traveler’s sky${speedWords}`}
+            color={TRAVELER_COLOR}
+            stars={travelerStars}
+            showWedges={showCounts}
+            frontCount={sky.countsTraveler.within30OfAhead}
+            backCount={sky.countsTraveler.within30OfBehind}
+            followAngle={sky.sidewaysStarTravelerAngle}
+            rays={raysFor(travelerAngles)}
+            shipOffset={0}
+            idSuffix={`${prefix}traveler`}
+            guess={own ? null : guess}
+          />
+        </div>
+      </div>
+      <SkyCaption speed={speed} stepsShown={stepsShown} showCounts={showCounts} guess={guess} own={own} />
+    </>
+  )
+}
+
+function BarsWithCaption({ speed }: { speed: number }) {
+  const sky = runSky(speed)
+  return (
+    <div style={{ margin: '1rem 0' }}>
+      <CountBars lab={sky.countsLab} traveler={sky.countsTraveler} />
+      <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+        <p style={{ margin: 0 }}>
+          <strong>How to read these bars.</strong> Each group of two bars is one count from the table. The solid sky-blue bar is the lab’s count. The purple bar with diagonal stripes is the
+          traveler’s count. A longer bar means more of the 24 stars. All the bars use the same scale, so you can compare any two of them. The number beside each bar says the same thing. At{' '}
+          {speed}c the lab’s striped-wedge bar is {sky.countsLab.within30OfAhead} and the traveler’s is {sky.countsTraveler.within30OfAhead}: that is the second pair of bars.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+interface AberrationExperimentProps {
+  onComplete?: () => void
+  onTutorComplete?: () => void
+}
+
+export function AberrationExperiment({ onComplete, onTutorComplete }: AberrationExperimentProps) {
+  // ---- Part 1: one guess, one fixed run (0.6c) ----
+  const [guess, setGuess] = useState<SidewaysGuess | null>(null)
+  const [locked, setLocked] = useState(false)
+  const [status, setStatus] = useState<PlayStatus>('idle')
+  const [progress, setProgress] = useState(0)
+  // Counts the Start overs, so the tutor starts again at its first question.
+  const [resetCount, setResetCount] = useState(0)
+  // ---- Part 2: the learner's own speed ----
+  const [ownSpeed, setOwnSpeed] = useState(PART_ONE_SPEED)
+  const [shownSpeed, setShownSpeed] = useState<number | null>(null)
+  const [ownStatus, setOwnStatus] = useState<PlayStatus>('idle')
+  const [ownProgress, setOwnProgress] = useState(0)
+
+  usePlayback(status, setStatus, setProgress, onComplete)
+  usePlayback(ownStatus, setOwnStatus, setOwnProgress)
+
+  const partOneDone = status === 'complete'
+  const playing = status === 'running' || ownStatus === 'running'
+  const startOverDisabled = (guess === null && status === 'idle' && shownSpeed === null) || playing
+
+  const handleRun = () => {
+    if (guess === null || locked) return
+    setLocked(true)
+    setProgress(0)
+    setStatus('running')
+  }
+  // Start over: clears the guess, the runs, the results and the tutor, and returns the page to its first state.
+  const handleStartOver = () => {
+    if (playing) return
+    setGuess(null)
+    setLocked(false)
+    setStatus('idle')
+    setProgress(0)
+    setOwnSpeed(PART_ONE_SPEED)
+    setShownSpeed(null)
+    setOwnStatus('idle')
+    setOwnProgress(0)
+    setResetCount((n) => n + 1)
+  }
+  const chooseOwnSpeed = (value: number) => {
+    setOwnSpeed(value)
+    setOwnStatus('idle')
+    setOwnProgress(0)
+  }
+  const handleRunOwn = () => {
+    setShownSpeed(ownSpeed)
+    setOwnProgress(0)
+    setOwnStatus('running')
+  }
+  const pinkFrame = { borderLeft: `4px solid ${PART_TWO_COLOR}`, paddingLeft: '0.75rem' } as const
+  const guessLabel = GUESS_CHOICES.find((c) => c.value === guess)?.label ?? ''
 
   return (
     <div>
-      <h2>Experiment 7 — Aberration: Why the Sky Bunches Up Ahead of a Fast Traveler</h2>
+      <h2>Experiment 7 — Does Your Motion Change Where a Star Appears?</h2>
       <div className="exp-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
-        {/* Introduction: wording approved by the owner on 2026-10-16 (CLAUDE.md §28.1), from the specification's "Introduction". It does not say
-            whether, or which way, a star's direction changes (that is the prediction, §12), so the formula and its worked example are
-            left for after the run. */}
-        <div style={{ marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>The question.</strong> In Experiment 4 we saw that what you see is not the same as what you measure, because light takes
-            time to arrive. Here is a different question about seeing. A star is so far away that its light reaches us travelling along an
-            almost perfectly straight line. Now imagine two observers who are moving relative to each other. Both look at the same star at
-            the same moment. Do they see it in the same direction? Or does an observer’s own motion change the direction in which they see
-            it, and if it does, which way?
-          </p>
+        <AberrationIntroduction />
 
-          <div style={{ marginBottom: '0.75rem' }}>
-            <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-              <strong>Some new words.</strong> Here is each one in plain language.
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-              <li>
-                <strong>Direction of travel:</strong> the way the traveler is moving. It is drawn as an arrow, and every angle in this
-                experiment is measured from it.
-              </li>
-              <li>
-                <strong>The angle θ</strong> (the Greek letter “theta”)<strong>:</strong> how far a star is from straight ahead, measured
-                around from the direction of travel, in degrees. 0 degrees is straight ahead. 90 degrees is exactly sideways, like 3
-                o’clock on a clock when you face 12. 180 degrees is straight behind. A full turn all the way around is 360 degrees. For
-                example, a star at 45 degrees is halfway between straight ahead and sideways.
-              </li>
-              <li>
-                <strong>Speed written as 0.6c:</strong> a fraction of the speed of light, <em>c</em>. So 0.6c is six tenths of the speed
-                of light, and 0.9c is nine tenths. (As in the earlier experiments.)
-              </li>
-              <li>
-                <strong>Aberration:</strong> the change, if there is one, in the direction in which a star is seen when the observer
-                moves. This experiment shows how big the change is, and which way it goes.
-              </li>
-            </ul>
-          </div>
+        <ReferencePanel entries={partOneDone ? [...REFERENCE_ENTRIES, ...FORMULA_ENTRIES] : REFERENCE_ENTRIES} />
 
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>What happens.</strong> A ring of 24 stars surrounds the lab. They are all very far away and at rest relative to the lab,
-            and they are spaced evenly, one every 15 degrees. A traveler flies through the middle of the ring at a steady speed that you
-            choose. When you press Run, the picture plays in stages: first the sky as the lab observer sees it, then the same stars as
-            the traveler sees them, one at a time.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: '0.75rem' }}>
-            <strong>Your job.</strong> Choose the traveler’s speed. Then predict where the traveler will see one particular star: the one
-            the lab observer sees exactly sideways. Press Run. You are not graded. The Run button stays off until you choose a prediction.
-          </p>
-          <p style={{ marginTop: 0, marginBottom: 0 }}>
-            <strong>What we assume.</strong> The stars are very far away and at rest in the lab. The traveler moves at a steady speed, and we
-            look only at the moment the traveler is at the middle of the ring. We show a flat slice of the sky, the ring along the line of
-            travel, and we show only the direction of each star, not its brightness or color.
-          </p>
-        </div>
+        <AberrationLinks />
 
-        <ReferencePanel entries={status === 'complete' ? [...REFERENCE_ENTRIES, ...FORMULA_ENTRIES] : REFERENCE_ENTRIES} />
+        {/* ===== Part 1: predict, then watch ===== */}
+        <PartHeader color={PART_ONE_COLOR} title="Part 1: Predict, then watch">
+          You will predict where a traveler flying at 0.6c sees one particular star, press Run, and watch two pictures of the sky being drawn. Your guess is drawn on the real picture in white. It
+          never changes the picture.
+        </PartHeader>
 
-        <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The traveler’s speed</label>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.5rem' }}>
-            As a fraction of the speed of light, c. For example, 0.9c is nine tenths of the speed of light.
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Make a prediction</p>
+          <p style={hint}>
+            One star lies exactly sideways from the lab observer’s point of view: neither ahead of the traveler’s path nor behind it. The traveler flies through the middle of the ring at{' '}
+            <strong>{PART_ONE_SPEED}c</strong>. Where does the traveler see that star? You are not graded, and a guess is fine.
           </p>
           <div>
-            {SPEED_PRESETS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setSpeed(value)
-                  setPrediction(null)
-                  returnToIdle()
-                }}
-                className={`toggle-button${speed === value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-              >
-                {value}c
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Make a prediction</label>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: '0.75rem' }}>
-            One star lies exactly sideways from the lab observer’s point of view: neither ahead of the traveler’s path nor behind it. The
-            traveler flies through the middle of the ring at <strong>{speed}c</strong>. Where does the traveler see that star? You are not
-            graded, and a guess is fine.
-          </p>
-          <div>
-            {PREDICTION_CHOICES.map((choice) => (
+            {GUESS_CHOICES.map((choice) => (
               <button
                 key={choice.value}
                 type="button"
-                onClick={() => {
-                  setPrediction(choice.value)
-                  returnToIdle()
-                }}
-                className={`toggle-button${prediction === choice.value ? ' is-selected' : ''}`}
-                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                disabled={locked}
+                onClick={() => setGuess(choice.value)}
+                className={`toggle-button${guess === choice.value ? ' is-selected' : ''}`}
+                style={buttonStyle}
               >
                 {choice.label}
               </button>
             ))}
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
-            {prediction !== null
-              ? `Your prediction: ${PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.toLowerCase()}.`
-              : 'Choose an option to continue'}
+          <p style={smallNote}>
+            {guess === null
+              ? 'Choose an option to continue'
+              : locked
+                ? 'Your prediction is locked while you try other settings. To change it, press Start over.'
+                : `Your prediction: ${guessLabel.toLowerCase()}. You can still change it until you press Run.`}
           </p>
         </div>
 
+        <button type="button" className="action-button" onClick={handleRun} disabled={guess === null || locked} style={{ padding: '0.6rem 1.5rem' }}>
+          {status === 'running' ? 'Running...' : locked ? 'Run (done)' : 'Run'}
+        </button>
         <button
           type="button"
-          className="action-button"
-          onClick={() => {
-            setProgress(0)
-            setRunCount((n) => n + 1)
-            setStatus('running')
-          }}
-          disabled={prediction === null || status === 'running'}
-          style={{ padding: '0.6rem 1.5rem' }}
+          onClick={handleStartOver}
+          disabled={startOverDisabled}
+          className="secondary-button"
+          style={{ marginLeft: '0.75rem', padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: startOverDisabled ? 'not-allowed' : 'pointer', opacity: startOverDisabled ? 0.5 : 1 }}
         >
-          {status === 'running' ? 'Running...' : 'Run'}
+          Start over
         </button>
-        {prediction === null && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 0 }}>Choose a prediction above to run the experiment.</p>
+        {guess === null && <p style={smallNote}>Choose a prediction above to run the experiment.</p>}
+
+        <p style={pictureTitle}>The lab’s sky and the traveler’s sky, for a traveler flying at {PART_ONE_SPEED}c</p>
+        <SkyPair speed={PART_ONE_SPEED} status={status} progress={progress} guess={guess} />
+        {status === 'idle' && (
+          <p style={{ ...smallNote, fontWeight: 'bold' }}>Your white guess mark appears in the traveler’s sky, beside the star we follow, when that star is drawn.</p>
         )}
 
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '1.5rem 0 0.75rem' }}>
-          The traveler’s speed is {speed}c. Both pictures are drawn on the same scale.
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-          <div style={{ flex: '1 1 340px', minWidth: 0 }}>
-            <SkyPicture
-              title="The lab’s sky"
-              color={LAB_COLOR}
-              stars={labAngles}
-              showWedges
-              frontCount={sky.countsLab.within30OfAhead}
-              backCount={sky.countsLab.within30OfBehind}
-              followAngle={90}
-              rays={raysFor(labAngles)}
-              shipOffset={shipOffset}
-              idSuffix="lab"
-            />
-          </div>
-          <div style={{ flex: '1 1 340px', minWidth: 0 }}>
-            <SkyPicture
-              title="The traveler’s sky"
-              color={TRAVELER_COLOR}
-              stars={travelerStars}
-              showWedges={showCounts}
-              frontCount={sky.countsTraveler.within30OfAhead}
-              backCount={sky.countsTraveler.within30OfBehind}
-              followAngle={followTravelerAngle}
-              rays={raysFor(travelerAngles)}
-              shipOffset={0}
-              idSuffix="traveler"
-            />
-          </div>
-        </div>
-
-        {/* "How to read this diagram" (CLAUDE.md §14): wording approved by the owner on 2026-10-16 (§28.1). Before the run it names every picture
-            and element, defines the terms, and gives a worked moment and questions that do not say which way the stars shift (§12). */}
-        <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-            <strong>How to read this diagram.</strong> The diagram shows the sky around an observer. You can imagine the observer at the
-            centre of the ring, looking outward at the stars. It is a flat slice of the sky: the ring is the sky cut along the line the
-            traveler is flying along. There are two pictures, drawn on the same scale.
-          </p>
-
-          <p style={{ margin: '0.75rem 0 0.25rem' }}>
-            <strong>The two pictures</strong>
-          </p>
-          <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              <strong>The lab’s sky (sky blue).</strong> The 24 stars as the lab observer sees them. The lab observer is at rest relative to the
-              stars. This picture is shown from the start.
-            </li>
-            <li>
-              <strong>The traveler’s sky (purple).</strong> The same 24 stars as the traveler sees them at the moment the traveler flies through
-              the centre of the ring. It is empty until you press Run. Then its stars are drawn a pair at a time, from straight ahead
-              around to straight behind.
-            </li>
-          </ul>
-
-          <p style={{ margin: '0.75rem 0 0.25rem' }}>
-            <strong>What is drawn in each picture</strong>
-          </p>
-          <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-            <li>The ring is the sky around the observer. Each dot on it is one star. There are 24 stars, and each is 15 degrees from the next one.</li>
-            <li>
-              The small spaceship at the centre is the traveler. The arrow from it, “direction of travel”, points the way the traveler is
-              moving. It points to the right in both pictures.
-            </li>
-            <li>
-              Four stars are labeled: “straight ahead” (0 degrees), the two sideways stars (90 degrees, one on each side of the line of
-              travel), and “straight behind” (180 degrees). The larger dots are these four. “Sideways” always means sideways in the
-              lab’s sky, so in the traveler’s sky the labels follow the same stars to wherever they are drawn.
-            </li>
-            <li>
-              The yellow ring marks “the star we follow”. Both pictures show the same 24 stars, so a star in one picture has a partner in the
-              other. “Following” a star means picking one star and looking for it in both pictures, to see whether it is drawn in the same
-              place. We follow the star that the lab sees exactly sideways (90 degrees), because it is the star your prediction is about. It
-              carries the yellow ring in both pictures, so you can find it in each without guessing which dot is which. The other stars are
-              the same stars in both pictures too; this one is just marked so you can track it.
-            </li>
-            <li>
-              The short arrows pointing in towards the centre are rays of starlight, travelling from a star to the observer. During the run,
-              the ray from each star appears in both pictures at the same time, so you can compare the angle in the two. The ray from the
-              star we follow is yellow, and it stays on after the run.
-            </li>
-            <li>
-              The shaded wedges are two slices of the sky. The striped wedge is every direction within 30 degrees of straight ahead. The
-              dotted wedge is every direction within 30 degrees of straight behind. The number beside each wedge is how many stars fall
-              inside it. The two wedges use different fill patterns, so you can tell them apart without relying on colour.
-            </li>
-          </ul>
-
-          <p style={{ margin: '0.75rem 0 0.25rem' }}>
-            <strong>What appears when you press Run</strong>
-          </p>
-          <ol style={{ margin: 0, paddingLeft: '1.25rem' }}>
-            <li>The traveler’s icon flies in from the left of the lab’s picture and stops at the centre of the ring.</li>
-            <li>The traveler’s sky is built, a pair of stars at a time, with the ray from each star drawn in both pictures.</li>
-            <li>The shaded wedges and their counts appear in the traveler’s sky, so the two pictures can be compared.</li>
-          </ol>
-
-          <p style={{ margin: '0.75rem 0 0.25rem' }}>
-            <strong>Words used in the drawing</strong>
-          </p>
-          <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-            <li>
-              A <em>degree</em> is a unit of angle. A full circle is 360 degrees, and a quarter of a circle, from straight ahead to
-              sideways, is 90 degrees.
-            </li>
-            <li>
-              <em>θ</em> is a star’s angle from straight ahead, measured from the direction of travel. <em>c</em> is the speed of light, so 0.6c
-              is six tenths of the speed of light.
-            </li>
-          </ul>
-
-          <p style={{ margin: '0.75rem 0 0.25rem' }}>
-            <strong>A worked moment</strong> (reading an angle, not one of the buttons). In the lab’s sky, the star at 45 degrees lies
-            halfway between the star straight ahead (0 degrees) and the star sideways (90 degrees). The stars are 15 degrees apart, so it is
-            the third star counting around from straight ahead: 0, 15, 30, 45.
-          </p>
-
-          <p style={{ margin: '0.75rem 0 0.25rem' }}>
-            <em>What to look for</em> (once the traveler’s sky is drawn):
-          </p>
-          <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-            <li>Is the pattern of dots the same in the two pictures, or different?</li>
-            <li>Where is the star we follow, in each picture?</li>
-            <li>Do any stars stay in the same place in both pictures?</li>
-            <li>How many stars fall inside each shaded wedge, in each picture?</li>
-          </ul>
-        </div>
-
-        {status === 'complete' && prediction !== null && (
-          <div style={{ marginTop: '2rem' }}>
-            <h3 style={{ marginTop: 0 }}>Results</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
-              <strong>What you ran.</strong> A traveler flew through the middle of the ring of 24 stars at {speed}c. The same rays of
-              starlight were measured by the lab and by the traveler. <strong>Your prediction was:</strong>{' '}
-              {PREDICTION_CHOICES.find((c) => c.value === prediction)?.label.toLowerCase()}. It is only recorded here, not marked right
-              or wrong.
-            </p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
-              <strong>The star we follow.</strong> The lab sees it at 90°. The traveler sees it at {sky.sidewaysStarTravelerAngle.toFixed(1)}°.
-            </p>
-
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
-              <strong>The angles.</strong> Seven stars from the upper half of the ring. “Change” is the traveler’s angle minus the lab’s
-              angle, in degrees.
-            </p>
-            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                <thead>
-                  <tr>
-                    {['Lab’s angle θ', 'Traveler’s angle θ′', 'Change'].map((h) => (
-                      <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {RESULT_LAB_ANGLES.map((labAngle) => {
-                    const travelerAngle = travelerAngleOf(labAngle, speed)
-                    return (
-                      <tr key={labAngle}>
-                        <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{labAngle}°</td>
-                        <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{travelerAngle.toFixed(1)}°</td>
-                        <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{(travelerAngle - labAngle).toFixed(1)}°</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
-              <strong>The counts.</strong> How many of the 24 stars fall in each part of the sky, in each picture.
-            </p>
-            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-              <table style={{ fontSize: '0.875rem', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                <thead>
-                  <tr>
-                    {['', 'Lab', 'Traveler'].map((h) => (
-                      <th key={h} style={{ textAlign: 'left', padding: '0.3rem 1rem 0.3rem 0' }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {COUNT_ROWS.map((row) => (
-                    <tr key={row.key}>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{row.label}</td>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{sky.countsLab[row.key]}</td>
-                      <td style={{ padding: '0.3rem 1rem 0.3rem 0' }}>{sky.countsTraveler[row.key]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <CountBars lab={sky.countsLab} traveler={sky.countsTraveler} />
-            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-              <p style={{ margin: '0 0 0.5rem' }}>
-                <strong>How to read these bars.</strong> Each group of two bars is one count from the table. The solid sky-blue bar is the
-                lab’s count. The purple bar with diagonal stripes is the traveler’s count. A longer bar means more of the 24 stars. All the
-                bars use the same scale, so you can compare any two of them. The
-                number beside each bar says the same thing.
+        {/* ===== Parts 2 to 4: appear when the first Run has finished ===== */}
+        {partOneDone && (
+          <>
+            <PartHeader color={PART_TWO_COLOR} title="Part 2: Now try it yourself">
+              You choose how fast the traveler flies and press Run these settings. These choices change the drawings. Your guess does not, and it stays locked while you try other speeds. They are
+              trial values for an imagined traveler. They do not say that any real spaceship can fly like that.
+            </PartHeader>
+            <div style={{ ...pinkFrame, marginBottom: '1rem' }}>
+              <p style={{ ...hint, marginBottom: '0.5rem' }}>
+                These buttons change the drawings and the tables below. Your guess does not. It is locked, and it is drawn on Part 1’s picture only. These speeds are trial values for an imagined
+                traveler, and they do not say that a real spaceship can fly like that.
               </p>
-              <p style={{ margin: 0 }}>
-                <strong>The number D.</strong> At {speed}c, D = √(1 − {speed}²) = {sky.timeDilationFactor.toFixed(3)}. It is the same
-                factor that the moving clock of Experiment 3 used. It is listed here because the traveler’s angles are worked out with it.
-              </p>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>The traveler’s speed</label>
+              <p style={hint}>As a fraction of the speed of light, c. For example, 0.9c is nine tenths of the speed of light.</p>
+              <div>
+                {SPEED_PRESETS.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={ownStatus === 'running'}
+                    onClick={() => chooseOwnSpeed(value)}
+                    className={`toggle-button${ownSpeed === value ? ' is-selected' : ''}`}
+                    style={buttonStyle}
+                  >
+                    {value}c
+                  </button>
+                ))}
+              </div>
             </div>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '1rem', marginBottom: 0 }}>
-              Choose another speed, make a prediction and run it again to see which numbers change.
-            </p>
-          </div>
+            <button type="button" className="action-button" onClick={handleRunOwn} disabled={ownStatus === 'running'} style={{ padding: '0.6rem 1.5rem' }}>
+              {ownStatus === 'running' ? 'Running...' : 'Run these settings'}
+            </button>
+            {(ownStatus === 'idle' || shownSpeed === null) && (
+              <p style={{ ...smallNote, fontWeight: 'bold', marginTop: '0.75rem' }}>
+                Choose a speed, then press Run these settings. The two pictures and the tables for your speed appear here.
+              </p>
+            )}
+            {shownSpeed !== null && ownStatus !== 'idle' && (
+              <div style={{ ...pinkFrame, marginTop: '1rem' }}>
+                <p style={pictureTitle}>Your own speed: the lab’s sky and the traveler’s sky at {shownSpeed}c</p>
+                <SkyPair speed={shownSpeed} status={ownStatus} progress={ownProgress} guess={null} own />
+                {ownStatus === 'complete' && (
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                    <p style={{ margin: '0 0 0.25rem', fontWeight: 'bold' }}>The angles at {shownSpeed}c</p>
+                    <AngleTable speed={shownSpeed} />
+                    <p style={{ margin: '0.5rem 0 0.25rem', fontWeight: 'bold' }}>The counts at {shownSpeed}c</p>
+                    <CountTable speed={shownSpeed} />
+                    <p style={smallNote}>
+                      These numbers are for your own speed. They are trial values for an imagined traveler, and they do not say that a real spaceship can fly like that. They do not change Part 3’s
+                      tables, which are for Part 1’s run at {PART_ONE_SPEED}c.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ===== Part 3: the results of Part 1's run ===== */}
+            <PartHeader color={PART_THREE_COLOR} title="Part 3: The results">
+              Here are the numbers behind Part 1’s pictures, a check-up of this page against its own physics, and your guess beside the real results. The tables never change with your guess or with
+              the speeds you tried in Part 2.
+            </PartHeader>
+            {guess !== null && <AberrationResults speed={PART_ONE_SPEED} guess={guess} bars={<BarsWithCaption speed={PART_ONE_SPEED} />} />}
+
+            {/* ===== Part 4: the tutor ===== */}
+            <PartHeader color={PART_FOUR_COLOR} title="Part 4: The tutor">
+              The tutor asks you three questions, one at a time, about what you saw and how your guess compares with the pictures, then goes through the explanation. The tutor’s questions are not
+              marked.
+            </PartHeader>
+            {guess !== null && <AberrationTutor key={resetCount} speed={PART_ONE_SPEED} predicted={guess} onExplained={() => onTutorComplete?.()} />}
+          </>
         )}
       </div>
-
-      {status === 'complete' && prediction !== null && (
-        <AberrationTutor key={runCount} speed={speed} predicted={prediction} onExplained={() => onTutorComplete?.()} />
-      )}
     </div>
   )
 }
