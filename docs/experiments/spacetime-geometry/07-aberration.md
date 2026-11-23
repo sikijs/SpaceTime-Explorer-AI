@@ -374,3 +374,44 @@ Each has a default; the owner may change any of them.
 **Wording approved (2026-10-16):** the owner replied "wordings approved" after the final review. The owner has not yet approved the differences from the specification (differences 1 to 4 under Step 4 and 5 to 8 under Steps 5 to 8), which remain open.
 
 **Differences approved (2026-10-16):** the owner replied "differences approved". All eight differences from the specification (1 to 4 under Step 4, 5 to 8 under Steps 5 to 8) are approved.
+
+---
+
+## Audit Update (2026-11-23)
+
+The owner chose the new title on 2026-11-23 (option 1), answered "all defaults" to the eleven questions of `docs/audit/spacetime-geometry/07-gap-report.md`, and said "approved" to the draft wording (`docs/audit/spacetime-geometry/07-draft-wording.md`) and to the second draft on the cause of the change (`07-draft-wording-cause.md`). Those drafts are the record of the learner-facing wording; where they differ from the text above, **the drafts govern**. Code commit: `262cf88`.
+
+**What changed (the approved physics is unchanged; no existing function of `aberration.ts` changed, because Experiments 8 and 9 import from it):**
+1. **Title:** "Does Your Motion Change Where a Star Appears?" (sidebar "Where is the star?"). The old title gave the answer away (§12). The word "aberration" first appears in the introduction's list of new words.
+2. **Layout:** the introduction, a "Words and formulas" box and the "Want to know more?" links sit above Part 1; then the four Parts. Part 1 is fixed on **0.6c**; the speed buttons (0.3c, 0.6c, 0.9c, 0.99c) and a "Run these settings" button moved to Part 2; Parts 2 to 4 appear after the first Run. This replaces "Learner Controls" and the last paragraph of "Prediction Activity" above (changing the speed no longer clears the prediction, because there is one prediction, locked at Run).
+3. **Start over and locking:** an always-visible Start over (greyed out until there is something to clear and while a run plays); the guess locks at Run with the note "Your prediction is locked while you try other settings. To change it, press Start over."; no "Change prediction".
+4. **The guess mark (Experiment-wide rule, CLAUDE.md §14):** a white YOUR GUESS box on "The traveler's sky", joined to a white ring at the sideways position ("same") or a white arrow along the ring toward straight ahead ("ahead") or straight behind ("behind"). It shows a direction only; the arrow's fixed length (30 degrees) means nothing. It is drawn when the star we follow is drawn (step 7 of 13), and the yellow ring now appears at the same moment (it used to appear one step early, before its star).
+5. **The introduction** was expanded at the owner's request: "The question" (what "the direction of a star" means, a distant mountain pointed at by two friends, the lab observer and the traveler, the shared moment at the centre) and "What happens" (five labelled steps), with "Some new words" moved after "What happens" and a "wedge" entry added. The old sentence "a speed that you choose" now reads "0.6c in Part 1, and a speed you choose in Part 2".
+6. **The lab observer** is drawn at rest at the centre of the lab's sky (a ring marked "lab observer (at rest)"), the spaceship is labelled "traveler (flying in)" and then "traveler (passing)", and the arrow "traveler's direction of travel"; the caption says the spaceship and arrow are not the lab observer (owner's option 2, 2026-11-23).
+7. **Captions:** each "What to look for" item is in three parts and appears only once its feature is drawn; a worked moment with the star we follow appears once it is drawn; each sky picture has a "Where the real picture comes from" line (nothing measured; calculated here; imagined).
+8. **Results (Part 3):** a check-up of five rows ("the same" each), a "What this table tells us" note under the check-up, the angles, the counts and the bars, and the guess beside the results with one tag on the 90 degree row. The bars caption now names the second pair of bars as the striped wedge (the draft said "first"; fixed).
+9. **Tutor (Part 4):** the observe and compare prompts name the white mark and the yellow ring; the explanation marks the guess ("right" / "not right this time", item 0) and **shows the cause step by step** (items 2 to 5: the ray's push, the lab's numbers, what the traveler's motion does with the car-and-rain example, the push toward the back of speed ÷ D, turning the push round to 53.1 degrees at 0.6c), with a two-panel drawing of the push as the lab and the traveler measure it and a paragraph on why the rain rule leaves out D. Old items 5 to 8 are now 6 to 9. Item 8 (Earth) uses Earth's mean orbital speed 29.78 km/s (NASA's Earth Fact Sheet) and an angle computed on the page (about 20.5 arcseconds); the published constant of aberration is not used.
+10. **Words box:** new entries (ray of starlight, the star we follow, wedge, arcsecond, the number D) and, after the run, the push of a ray of light (momentum), the formula and the rain rule.
+11. **Chapter summary:** one sentence added: "The cause is that a moving observer finds a different push from the light along the line of travel, while the push across it stays the same, and that changes the direction the light seems to come from."
+12. **New tested physics functions** in `src/physics/aberration.ts`: `guessMarkFor`, `realSidewaysSide`, `predictionMatches`, `aberrationCheckUp`, `smallSpeedShiftArcseconds`, `sidewaysRayPush` (tests a to f in `aberration.test.ts`: 43 cases). New files: `AberrationIntro.tsx`, `AberrationResults.tsx`, `AberrationPushDrawing.tsx`; render tests `AberrationExperiment.test.tsx` (36 cases). Suite on 2026-11-23: 152 files, 4,573 tests; `tsc -p tsconfig.app.json` and `npm run build` pass.
+
+**Links (read 2026-11-23, through summaries of the pages):** NASA Goddard, "The Aberration of Starlight" (an archival page, last updated 2016; it gives 1729 for Bradley's boat trip, where ESA gives 1727 for the discovery); ESA Gaia, "Measuring the acceleration of the Solar System with Gaia" (3 December 2020; the site says it is under review and not updated); NASA's Earth Fact Sheet (last updated 15 November 2024).
+
+**Source-status rows added:**
+
+| Statement | Source | Status |
+|---|---|---|
+| Earth's mean orbital speed is 29.78 km/s (max 30.29, min 29.29) | NASA NSSDC Earth Fact Sheet, updated 15 November 2024 | Read 2026-11-23 |
+| Stellar aberration was discovered by James Bradley in 1727 | ESA Gaia news item, 3 December 2020 | Read 2026-11-23 (MacTutor, a secondary source, says he observed from August 1727 and the letter was read to the Royal Society in January 1729) |
+| The constant of aberration is 20.49552 arcseconds (IAU 1976 system) | Wikipedia's table of astronomical constants, which cites the IAU 1976 resolution | Read through a secondary source only; **not used on the page** |
+| Bradley's paper, *Phil. Trans.* vol. 35 | The Royal Society's site returned 403 | **Not read**; not linked |
+| Einstein 1905, section 7, the aberration formula | fourmilab.ch copy truncated before section 7; the Pitt copy stops at section 2 | **Not read**; not linked |
+| Britannica, "constant of aberration" | 403 | **Not read** |
+| "For light the energy equals the size of the push" | Standard physics; checked numerically by the module's tests | No external source read |
+
+**Open (CLAUDE.md §29 rule 3(c) and §28.6):**
+* **Not checked:** narrow widths, keyboard use, other browsers, a real learner; the links were not opened in a browser; the chapter summary and the Part 4 tutor's first three steps were not viewed after the last change (the explanation, its drawing and the lab observer's picture were viewed in Chrome at about 1,295 px on 2026-11-23, with no console errors from the page).
+* **No plain official page** was found and read for Bradley's original paper or Einstein's section 7; both are recorded as gaps. The pages read are plain but archival (NASA) or give only a definition (ESA).
+* **Not rechecked:** Experiment 6's "What's next" line and the group recap against the new title.
+* **Wording approval:** the owner approved the two drafts ("approved"). The expanded "The question" and "What happens", the new order of "Some new words", the lab-observer labels and caption sentence were written directly from the owner's instructions of 2026-11-23 and shown in chat, with no separate draft file, and the owner has not yet read the finished page line by line (§28.1). The differences from the drafts are: the bars caption says "second pair"; "What happens" says "0.6c in Part 1, and a speed you choose in Part 2"; Part 2's default speed is 0.6c as drafted; Part 2 replays the full nine-second run at the chosen speed.
+
