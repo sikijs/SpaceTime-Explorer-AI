@@ -926,9 +926,9 @@ export function MakingNewParticlesExperiment({ onComplete, onTutorComplete }: Ma
 
         <SectionAIntroduction partOneK={K1} partOneX={X1} />
 
-        <MakingNewParticlesLinks />
-
         <ReferencePanel entries={SECTION_A_REFERENCE_ENTRIES} />
+
+        <MakingNewParticlesLinks />
 
         {/* ===== Part 1: predict, then watch ===== */}
         <PartHeader color={PART_ONE_COLOR} title="Part 1: Predict, then watch">
