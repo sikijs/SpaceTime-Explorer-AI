@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { DEFAULT_SOURCE_NM, everydayFrequencyFactorOf, frequencyFactorFromTravelerAngle, runDoppler } from '../physics/dopplerShift'
-import type { DopplerStar } from '../physics/dopplerShift'
+import { DEFAULT_SOURCE_NM, colorSideOf, everydayFrequencyFactorOf, frequencyFactorFromTravelerAngle, predictionMatches, runDoppler } from '../physics/dopplerShift'
+import type { ColorSide, DopplerStar } from '../physics/dopplerShift'
+import { ClockBarsDrawing, CrossingDrawing, SirenDrawing } from './DopplerShiftTutorDrawings'
 
-type Prediction = 'bluer' | 'same' | 'redder'
+type Prediction = ColorSide
 type TutorStep = 'observe' | 'compare' | 'conceptual' | 'explained'
 
 interface DopplerShiftTutorProps {
@@ -20,7 +21,8 @@ const paragraphStyle = { marginBottom: '1rem', fontSize: '0.95rem', color: '#333
 // predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics module
 // (`runDoppler`, `everydayFrequencyFactorOf`, `frequencyFactorFromTravelerAngle`), never typed in by hand (CLAUDE.md §9). The cosmic
 // microwave background example is left out because it has no source check (the specification's Decision 5). The predictions are marked
-// only in the explanation (the owner's choice, 2026-10-16), never before it.
+// only in the explanation (the owner's choice, 2026-10-16), never before it. Audit update of 2026-11-23 (docs/audit/spacetime-geometry/08-draft-wording.md, section 6, approved the same day):
+// prompts point to the white, orange and yellow marks by name, and three drawings (the siren, the clock, where blue turns to red) are shown in the explanation only.
 export function DopplerShiftTutor({ speed, predictedAhead, predictedSideways, onExplained }: DopplerShiftTutorProps) {
   const [tutorStep, setTutorStep] = useState<TutorStep>('observe')
   const [responseInput, setResponseInput] = useState('')
@@ -52,7 +54,7 @@ export function DopplerShiftTutor({ speed, predictedAhead, predictedSideways, on
   const everyday = (labAngle: number) => everydayFrequencyFactorOf(labAngle, speed)
   const sidewaysAtNinetyInTravelerSky = frequencyFactorFromTravelerAngle(90, speed)
   // A factor above 1 is a higher frequency than the lab's (bluer), below 1 a lower one (redder), and exactly 1 the same color.
-  const outcomeOf = (star: DopplerStar): Prediction => (Math.abs(star.factor - 1) < 1e-9 ? 'same' : star.factor > 1 ? 'bluer' : 'redder')
+  const outcomeOf = (star: DopplerStar): Prediction => colorSideOf(star.factor)
   const rangeWords = (star: DopplerStar) => (star.range === 'visible' ? 'visible' : star.range)
 
   return (
@@ -71,9 +73,9 @@ export function DopplerShiftTutor({ speed, predictedAhead, predictedSideways, on
         <div>
           <p style={paragraphStyle}>
             {tutorStep === 'observe' &&
-              'Look at the two pictures, the bar and the table. What do you notice about the color of the stars in the lab’s sky and in the traveler’s sky?'}
+              'Look at the three pictures, the white YOUR GUESS marks on the spectrum bar, the graph and the tables. What do you notice about the color of the stars in the lab’s sky and in the traveler’s sky?'}
             {tutorStep === 'compare' &&
-              `You predicted that the star straight ahead would look ${predictionWords[predictedAhead]} and the sideways star ${predictionWords[predictedSideways]}. In this run, the straight-ahead star’s light was measured at ${two(ahead.factor)} times the lab’s frequency, and the sideways star’s at ${two(sideways.factor)} times. Comparing that with your predictions, what do you notice?`}
+              `You predicted that the star straight ahead would look ${predictionWords[predictedAhead]} and the sideways star ${predictionWords[predictedSideways]}. Those are the two white marks on the bar. In this run, the straight-ahead star’s light was measured at ${two(ahead.factor)} times the lab’s frequency (the orange mark), and the sideways star’s at ${two(sideways.factor)} times (the yellow mark). Comparing the white marks with the orange and yellow marks, what do you notice?`}
             {tutorStep === 'conceptual' &&
               'The stars have not changed color. So what is different for the traveler? And why would a star that is neither ahead nor behind change color?'}
           </p>
@@ -119,11 +121,11 @@ export function DopplerShiftTutor({ speed, predictedAhead, predictedSideways, on
         <div>
           {/* The predictions are marked here, in the explanation, and nowhere earlier, so the learner reasons first (CLAUDE.md §12). */}
           <p style={paragraphStyle}>
-            <strong>Your predictions.</strong> Now that you have thought about it, here is how each one compared with the result.
+            <strong>Your predictions.</strong> Now that you have thought about it, here is how each one compared with the result. Your guesses are the two white marks on the bar.
             For the star straight ahead you predicted <em>{predictionWords[predictedAhead]}</em>, and the traveler measured a shift factor of{' '}
-            {two(ahead.factor)}, which is <em>{predictionWords[outcomeOf(ahead)]}</em>. {predictedAhead === outcomeOf(ahead) ? 'Your prediction matched.' : 'Your prediction did not match.'}{' '}
+            {two(ahead.factor)}, which is <em>{predictionWords[outcomeOf(ahead)]}</em>. {predictionMatches(predictedAhead, ahead.factor) ? 'Your prediction matched.' : 'Your prediction did not match.'}{' '}
             For the star the lab sees sideways you predicted <em>{predictionWords[predictedSideways]}</em>, and the factor was{' '}
-            {two(sideways.factor)}, which is <em>{predictionWords[outcomeOf(sideways)]}</em>. {predictedSideways === outcomeOf(sideways) ? 'Your prediction matched.' : 'Your prediction did not match.'}{' '}
+            {two(sideways.factor)}, which is <em>{predictionWords[outcomeOf(sideways)]}</em>. {predictionMatches(predictedSideways, sideways.factor) ? 'Your prediction matched.' : 'Your prediction did not match.'}{' '}
             Either way, the parts below explain why.
           </p>
           <p style={paragraphStyle}>
@@ -140,13 +142,20 @@ export function DopplerShiftTutor({ speed, predictedAhead, predictedSideways, on
             apart when you are getting farther apart. The crests of a light wave work the same way: for a traveler flying toward a star, the
             crests arrive more often, so the light looks bluer. For a traveler flying away from a star, they arrive less often, so it looks
             redder. The stars have not changed color. Each observer measures the light that reaches them, and the two observers measure
-            different frequencies for the same light. Neither measurement is “the real color”.
+            different frequencies for the same light. Neither measurement is “the real color”. NASA’s “Doppler Shift” page (see the links) describes the same pictures.
+          </p>
+          <SirenDrawing />
+          <p style={{ ...paragraphStyle, fontSize: '0.8125rem' }}>
+            Drawing T1: each ring is a crest sent out earlier. In front of the moving ambulance the rings are bunched, so the crests reach a listener there more often. Behind it they are spread
+            out, so they reach a listener there less often. A person inside the ambulance moves with the siren and hears it unchanged.
           </p>
           <p style={paragraphStyle}>
             <strong>3. The everyday rule, with simple math.</strong> Count the crests. If the traveler flies toward a star, the crests
             arrive more often by the factor 1 + β cos θ, where β is the speed ({speed}) and cos θ is 1 straight ahead, 0 exactly sideways and
             −1 straight behind. At {speed}c that is {two(everyday(0))} times for the star straight ahead and {two(everyday(180))} times for the star
-            straight behind. For the star the lab sees exactly sideways, the everyday rule gives {two(everyday(90))}: no change at all.
+            straight behind. For the star the lab sees exactly sideways, the everyday rule gives {two(everyday(90))}: no change at all. In crests: if 100 crests per second reach someone
+            standing still, a traveler at {speed}c heading toward the star meets 100 + {Math.round(speed * 100)} = {100 + Math.round(speed * 100)} per second, and one heading away meets 100 −{' '}
+            {Math.round(speed * 100)} = {100 - Math.round(speed * 100)} per second. That is {two(everyday(0))} times and {two(everyday(180))} times.
           </p>
           <p style={paragraphStyle}>
             <strong>4. Why the real answer is different: time dilation.</strong> The traveler’s clock runs slow by the factor D from
@@ -156,10 +165,16 @@ export function DopplerShiftTutor({ speed, predictedAhead, predictedSideways, on
             {two(everyday(90))} ÷ {two(D)} = {two(sideways.factor)}, and the star straight behind is {two(everyday(180))} ÷ {two(D)} ={' '}
             {two(behind.factor)}. These are the numbers in your table.
           </p>
+          <ClockBarsDrawing speed={speed} />
+          <p style={{ ...paragraphStyle, fontSize: '0.8125rem' }}>
+            Drawing T2: for each star, the grey bar is the everyday factor and the green piece is what dividing by D adds. The finished length is the factor in your table. The same extra
+            factor, 1 ÷ {two(D)} = {two(1 / D)}, is added to every star.
+          </p>
           <p style={paragraphStyle}>
             <strong>5. The worked formula.</strong> f′ ÷ f = (1 + β cos θ) ÷ D. For the star the lab sees sideways, cos 90° = 0, so f′ ÷ f
             = (1 + 0) ÷ {two(D)} = {two(sideways.factor)}. This is the same change of a ray’s energy that gave the angle in Experiment 7, and
-            the energy of light is proportional to its frequency. The number for the star straight behind, {two(behind.factor)}, is the factor
+            the energy of light is proportional to its frequency. It is also the formula that Einstein printed in 1905, in section 7 of his paper, written with the angle φ between the line from the
+            source to the observer and the observer’s motion (φ = 180° − θ); see the links. The number for the star straight behind, {two(behind.factor)}, is the factor
             of Experiment 5 of Gravitational Waves at the same speed.
           </p>
           <p style={paragraphStyle}>
@@ -168,9 +183,16 @@ export function DopplerShiftTutor({ speed, predictedAhead, predictedSideways, on
             toward red. The dividing line lies ahead of the 90° line, at {one(doppler.travelerCrossingAngle ?? 0)}° (the dashed yellow line in the
             picture).
           </p>
+          <CrossingDrawing speed={speed} />
+          <p style={{ ...paragraphStyle, fontSize: '0.8125rem' }}>
+            Drawing T3: the traveler’s sky with three rays. The dashed yellow ray is where the factor is exactly 1. The ray at exactly 90° is already past it, on the red side, and the star we
+            follow is ahead of it, on the blue side.
+          </p>
           <p style={paragraphStyle}>
-            <strong>7. A real example.</strong> The light of a galaxy that is moving away from us is redshifted, which is how astronomers
-            measured the expansion of the universe (Experiment 1 of Cosmology).
+            <strong>7. A real example.</strong> NASA’s “Doppler Shift” page (see the links) describes the siren in the same way: the waves in front of a moving source bunch up, and the waves
+            behind it spread out. For light from a galaxy moving away from us, astronomers measure a lower frequency, a redshift, and that is how the expansion of the universe was measured
+            (Experiment 1 of Cosmology). The effect on this page is the same effect for light, with the extra factor D that appears when the speed is close to the speed of light: NASA’s page says
+            its own formulas are approximations that hold when the speed is much less than the speed of light.
           </p>
           <p style={paragraphStyle}>
             <strong>8. What was shown, and what was not.</strong> You saw colors only, on a flat slice of the sky, with every star sending out one

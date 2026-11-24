@@ -1,9 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import {
+  colorSideOf,
+  dopplerCheckUpRows,
+  einsteinFrequencyFactor,
   everydayFrequencyFactorOf,
+  factorCurve,
   frequencyFactorFromTravelerAngle,
   frequencyFactorOf,
+  guessMarkWavelength,
   labCrossingAngle,
+  predictionMatches,
   rangeOf,
   runDoppler,
   travelerCrossingAngle,
@@ -237,5 +243,102 @@ describe('every star has a positive factor', () => {
     for (const speed of SPEEDS) {
       runDoppler(speed).stars.forEach((star) => expect(star.factor).toBeGreaterThan(0))
     }
+  })
+})
+
+// Added for the audit (docs/audit/spacetime-geometry/08-draft-wording.md, section 8).
+
+describe('colorSideOf and predictionMatches', () => {
+  it('is bluer straight ahead and sideways, and redder straight behind, at every speed offered', () => {
+    for (const speed of SPEEDS) {
+      expect(colorSideOf(frequencyFactorOf(0, speed))).toBe('bluer')
+      expect(colorSideOf(frequencyFactorOf(90, speed))).toBe('bluer')
+      expect(colorSideOf(frequencyFactorOf(180, speed))).toBe('redder')
+    }
+  })
+  it('says same only for a factor of 1, and rejects a non-positive factor', () => {
+    expect(colorSideOf(1)).toBe('same')
+    expect(colorSideOf(1.000001)).toBe('bluer')
+    expect(colorSideOf(0.999999)).toBe('redder')
+    expect(() => colorSideOf(0)).toThrow(RangeError)
+  })
+  it('matches a guess only when it is on the real side, for all nine combinations at 0.6c', () => {
+    const sides = ['bluer', 'same', 'redder'] as const
+    for (const guess of sides) {
+      expect(predictionMatches(guess, frequencyFactorOf(0, 0.6))).toBe(guess === 'bluer')
+      expect(predictionMatches(guess, frequencyFactorOf(90, 0.6))).toBe(guess === 'bluer')
+      expect(predictionMatches(guess, frequencyFactorOf(180, 0.6))).toBe(guess === 'redder')
+    }
+  })
+})
+
+describe('guessMarkWavelength', () => {
+  it('puts bluer on the short side, same on the lab line and redder on the long side', () => {
+    expect(guessMarkWavelength('bluer')).toBe(480)
+    expect(guessMarkWavelength('same')).toBe(550)
+    expect(guessMarkWavelength('redder')).toBe(620)
+    expect(guessMarkWavelength('bluer', 600)).toBe(530)
+  })
+  it('rejects a non-positive source wavelength', () => {
+    expect(() => guessMarkWavelength('same', 0)).toThrow(RangeError)
+  })
+})
+
+describe('einsteinFrequencyFactor (1905, section 7)', () => {
+  it('gives 2.0 for an observer moving straight toward the source and 0.5 straight away, at 0.6c', () => {
+    expect(einsteinFrequencyFactor(180, 0.6)).toBeCloseTo(2, 12)
+    expect(einsteinFrequencyFactor(0, 0.6)).toBeCloseTo(0.5, 12)
+    expect(einsteinFrequencyFactor(90, 0.6)).toBeCloseTo(1.25, 12)
+  })
+  it('equals the module’s factor for the star at lab angle θ when φ = 180° − θ', () => {
+    for (const speed of SPEEDS) {
+      for (const angle of LAB_ANGLES) expect(einsteinFrequencyFactor(180 - angle, speed)).toBeCloseTo(frequencyFactorOf(angle, speed), 10)
+    }
+  })
+  it('rejects a speed of c or more', () => {
+    expect(() => einsteinFrequencyFactor(0, 1)).toThrow(RangeError)
+  })
+})
+
+describe('dopplerCheckUpRows', () => {
+  it('has six rows, all agreeing, at every speed offered', () => {
+    for (const speed of SPEEDS) {
+      const rows = dopplerCheckUpRows(speed)
+      expect(rows).toHaveLength(6)
+      for (const row of rows) {
+        expect(row.agrees).toBe(true)
+        expect(row.reading).toBe('the same')
+      }
+    }
+  })
+  it('gives the 0.6c numbers: straight behind 0.5, sideways 1.25, crossing factor 1', () => {
+    const rows = dopplerCheckUpRows(0.6)
+    expect(rows[3].expected).toBeCloseTo(0.5, 12)
+    expect(rows[3].found).toBeCloseTo(0.5, 12)
+    expect(rows[4].expected).toBeCloseTo(1.25, 12)
+    expect(rows[5].found).toBeCloseTo(1, 12)
+  })
+})
+
+describe('factorCurve', () => {
+  it('starts at (1 + β) ÷ D, ends at (1 − β) ÷ D, falls steadily, and crosses 1 at the lab crossing angle', () => {
+    for (const speed of SPEEDS) {
+      const curve = factorCurve(speed, 180)
+      expect(curve[0].factor).toBeCloseTo((1 + speed) / dilation(speed), 10)
+      expect(curve[180].factor).toBeCloseTo((1 - speed) / dilation(speed), 10)
+      for (let i = 1; i < curve.length; i++) expect(curve[i].factor).toBeLessThan(curve[i - 1].factor)
+      const cross = labCrossingAngle(speed) as number
+      expect(frequencyFactorOf(cross, speed)).toBeCloseTo(1, 10)
+    }
+  })
+  it('has the everyday factor equal to the real factor times D, and 1 at sideways', () => {
+    const curve = factorCurve(0.6, 90)
+    for (const point of curve) expect(point.everydayFactor).toBeCloseTo(point.factor * 0.8, 10)
+    expect(curve[45].labAngle).toBe(90)
+    expect(curve[45].everydayFactor).toBe(1)
+  })
+  it('rejects bad steps', () => {
+    expect(() => factorCurve(0.6, 0)).toThrow(RangeError)
+    expect(() => factorCurve(0.6, 2.5)).toThrow(RangeError)
   })
 })

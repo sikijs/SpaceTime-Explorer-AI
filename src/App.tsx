@@ -958,14 +958,14 @@ const chapters: Chapter[] = [
     next: "You saw only the direction of the light. Its colour changes too, which the next experiment shows.",
   },
   {
-    title: 'The Doppler effect',
+    title: 'Does the color change?',
     group: 'Spacetime Geometry: What Is Real, What Is Seen',
     Component: DopplerShiftExperiment,
     // Draft wording for the owner's review (CLAUDE.md §28.1), from the specification's chapter summary. Shown only after the tutor's
     // explanation. The "What's next" pointer follows Decision 9 of the specification (a pointer to Experiment 9 only if the owner
     // approves that experiment's direction). The owner approved Experiment 9 on 2026-10-16, so it now points to it.
     learned:
-      "Two observers who move relative to each other measure different frequencies, and so different colors, for the same ray of light. A traveler sees starlight shifted toward blue ahead and toward red behind, by (1 + β cos θ) ÷ D: at 0.6c, 2.00 times the frequency straight ahead and 0.50 times straight behind. Even the star the lab sees sideways is shifted toward blue, by 1 ÷ D (1.25 at 0.6c), because the traveler's clock runs slow. The stars have not changed color.",
+      "Yes: two observers who move relative to each other measure different frequencies, and so different colors, for the same ray of light. A traveler sees starlight shifted toward blue ahead and toward red behind, by (1 + β cos θ) ÷ D: at 0.6c, 2.00 times the frequency straight ahead and 0.50 times straight behind. Even the star the lab sees sideways is shifted toward blue, by 1 ÷ D (1.25 at 0.6c), because the traveler's clock runs slow. The stars have not changed color.",
     next: "You saw only the colors. The stars' brightness changes too, which the next experiment shows, together with the direction and the color.",
   },
   {

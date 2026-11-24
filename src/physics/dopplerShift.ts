@@ -1,4 +1,5 @@
-import { runSky, travelerAngleOf } from './aberration'
+import { rayAsMeasuredByTraveler, runSky, travelerAngleOf } from './aberration'
+import { dopplerFactorFor } from './gravitationalWaveRedshiftExperiment'
 import { timeDilationFactorFor } from './movingClockExperiment'
 
 // Spacetime Geometry, Experiment 8: the Doppler effect (docs/experiments/spacetime-geometry/08-doppler-shift.md).
@@ -129,4 +130,92 @@ export function runDoppler(speed: number, sourceNm = DEFAULT_SOURCE_NM, starCoun
     labCrossingAngle: labCrossingAngle(speed),
     travelerCrossingAngle: travelerCrossingAngle(speed),
   }
+}
+
+// ---- Added for the audit (docs/audit/spacetime-geometry/08-draft-wording.md, section 8). Nothing above changes.
+
+export type ColorSide = 'bluer' | 'same' | 'redder'
+
+// Which side of the lab's color a shift factor falls on: above 1 is bluer, within a tiny tolerance of 1 is the same, below 1 is redder.
+export function colorSideOf(factor: number): ColorSide {
+  assertWavelength(factor)
+  if (Math.abs(factor - 1) < TOLERANCE) return 'same'
+  return factor > 1 ? 'bluer' : 'redder'
+}
+
+// True when the learner's guess is on the same side as the real factor. Used only by the tutor, never by a picture.
+export function predictionMatches(prediction: ColorSide, factor: number): boolean {
+  return prediction === colorSideOf(factor)
+}
+
+export const GUESS_ARROW_NM = 70
+
+// Where the end of the learner's white arrow sits on the spectrum bar. A fixed illustration of a direction (shorter, none, longer),
+// not a size: the guess had no number, and the speed does not move it.
+export function guessMarkWavelength(prediction: ColorSide, sourceNm = DEFAULT_SOURCE_NM): number {
+  assertWavelength(sourceNm)
+  if (prediction === 'bluer') return sourceNm - GUESS_ARROW_NM
+  if (prediction === 'redder') return sourceNm + GUESS_ARROW_NM
+  return sourceNm
+}
+
+// Einstein 1905, section 7: an observer moving at speed v (here β) measures a source's frequency as
+// ν' = ν (1 − cos φ · β) ÷ √(1 − β²), where φ is the angle between the line source-observer and the observer's velocity.
+// For a star at lab angle θ from the direction of travel, φ = 180° − θ. Used only for the check-up.
+export function einsteinFrequencyFactor(phiDegrees: number, speed: number): number {
+  assertAngle(phiDegrees)
+  assertTravelerSpeed(speed)
+  return (1 - speed * cosOf(phiDegrees)) / timeDilationFactorFor(speed)
+}
+
+export interface DopplerCheckUpRow {
+  check: string
+  expected: number
+  found: number // for a "largest difference" check, expected is 0 and found is the largest difference
+  reading: 'the same'
+  agrees: boolean
+}
+
+const CHECK_UP_ANGLES = [0, 30, 60, 90, 120, 150, 180]
+const CHECK_UP_TOLERANCE = 1e-9
+
+// The six checks of the Results panel. Five compare one route with another inside the module; one compares with Einstein's printed
+// formula. Every "found" is computed here, never typed in. A row "agrees" when found is within 1e-9 of expected.
+export function dopplerCheckUpRows(speed: number): DopplerCheckUpRow[] {
+  assertTravelerSpeed(speed)
+  const D = timeDilationFactorFor(speed)
+  const largest = (other: (labAngle: number) => number) =>
+    Math.max(...CHECK_UP_ANGLES.map((angle) => Math.abs(frequencyFactorOf(angle, speed) - other(angle))))
+  const crossing = travelerCrossingAngle(speed)
+  const row = (check: string, expected: number, found: number): DopplerCheckUpRow => ({
+    check,
+    expected,
+    found,
+    reading: 'the same',
+    agrees: Math.abs(found - expected) < CHECK_UP_TOLERANCE,
+  })
+  return [
+    row('the two forms of the formula (the lab’s angle and the traveler’s angle): largest difference over the seven stars', 0, largest((a) => frequencyFactorFromTravelerAngle(travelerAngleOf(a, speed), speed))),
+    row('the energy route (Experiment 5’s energy of a ray): largest difference over the seven stars', 0, largest((a) => rayAsMeasuredByTraveler(a, speed).energy)),
+    row('Einstein’s 1905 formula with φ = 180° − θ: largest difference over the seven stars', 0, largest((a) => einsteinFrequencyFactor(180 - a, speed))),
+    row('the star straight behind, against Experiment 5 of Gravitational Waves', dopplerFactorFor(speed), frequencyFactorOf(180, speed)),
+    row('the everyday factor ÷ D for the sideways star, against the module’s factor', everydayFrequencyFactorOf(90, speed) / D, frequencyFactorOf(90, speed)),
+    row('the factor at the traveler’s crossing angle, against 1', 1, crossing === null ? 1 : frequencyFactorFromTravelerAngle(crossing, speed)),
+  ]
+}
+
+export interface FactorCurvePoint {
+  labAngle: number
+  factor: number // the real factor
+  everydayFactor: number // the everyday factor, for comparison
+}
+
+// Points for the graph of the factor around the ring: lab angle 0 to 180 degrees in `steps` equal steps.
+export function factorCurve(speed: number, steps = 90): FactorCurvePoint[] {
+  assertTravelerSpeed(speed)
+  if (!(Number.isInteger(steps) && steps >= 1)) throw new RangeError(`steps must be a whole number of at least 1, got ${steps}`)
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const labAngle = (180 * i) / steps
+    return { labAngle, factor: frequencyFactorOf(labAngle, speed), everydayFactor: everydayFrequencyFactorOf(labAngle, speed) }
+  })
 }
