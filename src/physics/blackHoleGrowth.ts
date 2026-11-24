@@ -90,24 +90,40 @@ export const CAPERS_LRD_Z9 = {
   maxMassSolar: 3.16e8,
 } as const
 
-export function objectMassSolar(): number {
-  return 10 ** CAPERS_LRD_Z9.logMass
+// ---- The second published object: J1504+6252, "Dun Aonghasa" (Addendum of 2026-11-24) ----
+// ESA, "Euclid breaks own quasar record by 40 million years" (24 Nov 2026, read 2026-11-24): the most distant QUASAR found so far (CAPERS-LRD-z9
+// is farther), redshift 8.13, "just 630 million years after the Big Bang", a black hole of "approximately 360 million Suns" (from Webb). ESA gives
+// no range for the mass; the paper (Wolf et al., A&A, DOI 10.1051/0004-6361/202662243) was not read (HTTP 403), so none is held here.
+export const DUN_AONGHASA = {
+  name: 'J1504+6252',
+  nickname: 'Dún Aonghasa',
+  redshift: 8.13,
+  massSolar: 360e6,
+  esaAgeYears: 630e6,
+} as const
+
+// Which published object a function is about. The default everywhere is CAPERS-LRD-z9, so every earlier call and result is unchanged.
+export type ObjectId = 'capers' | 'dun-aonghasa'
+export const OBJECT_IDS: readonly ObjectId[] = ['capers', 'dun-aonghasa']
+
+export function objectMassSolar(object: ObjectId = 'capers'): number {
+  return object === 'capers' ? 10 ** CAPERS_LRD_Z9.logMass : DUN_AONGHASA.massSolar
 }
 
 // The universe's age when the light left the object, in years (Experiment 5's function, Planck's values).
-export function objectAgeYears(): number {
-  return ageAfterBigBangYears(CAPERS_LRD_Z9.redshift)
+export function objectAgeYears(object: ObjectId = 'capers'): number {
+  return ageAfterBigBangYears(object === 'capers' ? CAPERS_LRD_Z9.redshift : DUN_AONGHASA.redshift)
 }
 
 // The age at which a trial seed begins to feed: a choice for the page, not a measurement (Decision 8).
 export const SEED_START_AGE_YEARS = 100e6
 
 // The time available to a seed that starts feeding at the start age.
-export function timeAvailableYears(startAgeYears: number = SEED_START_AGE_YEARS): number {
-  if (!Number.isFinite(startAgeYears) || startAgeYears < 0 || startAgeYears >= objectAgeYears()) {
+export function timeAvailableYears(startAgeYears: number = SEED_START_AGE_YEARS, object: ObjectId = 'capers'): number {
+  if (!Number.isFinite(startAgeYears) || startAgeYears < 0 || startAgeYears >= objectAgeYears(object)) {
     throw new RangeError('The start age must be between zero and the age of the universe at the object.')
   }
-  return objectAgeYears() - startAgeYears
+  return objectAgeYears(object) - startAgeYears
 }
 
 // ---- Rulers (log scales, each position from 0 to 1) ----
@@ -213,6 +229,7 @@ export function seedGuessMarker(id: SeedChoiceId): { solar: number; position: nu
 export const TRIAL_SEED_CHOICES_SOLAR = [10, 1e3, 1e5, 1e6] as const
 
 export interface TrialPicture {
+  object: ObjectId
   seedSolar: number
   efficiency: number
   targetSolar: number
@@ -240,12 +257,13 @@ export interface TrialPicture {
   lateByYears: number
 }
 
-export function trialPicture(seedSolar: number, efficiency: number): TrialPicture {
-  const target = objectMassSolar()
+export function trialPicture(seedSolar: number, efficiency: number, object: ObjectId = 'capers'): TrialPicture {
+  const target = objectMassSolar(object)
   const needed = yearsToGrow(seedSolar, target, efficiency)
-  const available = timeAvailableYears()
+  const available = timeAvailableYears(SEED_START_AGE_YEARS, object)
   const times = growthTimesNeeded(seedSolar, target)
   return {
+    object,
     seedSolar,
     efficiency,
     targetSolar: target,
@@ -262,11 +280,11 @@ export function trialPicture(seedSolar: number, efficiency: number): TrialPictur
     reachesAtAgeYears: SEED_START_AGE_YEARS + needed,
     reachesAtAgePosition: timeRulerPosition(SEED_START_AGE_YEARS + needed),
     startAgePosition: timeRulerPosition(SEED_START_AGE_YEARS),
-    objectAgeYears: objectAgeYears(),
-    objectAgePosition: timeRulerPosition(objectAgeYears()),
+    objectAgeYears: objectAgeYears(object),
+    objectAgePosition: timeRulerPosition(objectAgeYears(object)),
     pictureOneReachesAtAgeYears: SEED_START_AGE_YEARS + predictionTimeYears(),
     pictureOneReachesAtAgePosition: timeRulerPosition(SEED_START_AGE_YEARS + predictionTimeYears()),
-    lateByYears: SEED_START_AGE_YEARS + needed - objectAgeYears(),
+    lateByYears: SEED_START_AGE_YEARS + needed - objectAgeYears(object),
   }
 }
 

@@ -29,6 +29,8 @@ import {
   trialPicture,
   TRIAL_SEED_CHOICES_SOLAR,
   nearestOnLogScale,
+  DUN_AONGHASA,
+  OBJECT_IDS,
 } from './blackHoleGrowth'
 import { ageAfterBigBangYears } from './earliestGalaxies'
 
@@ -408,5 +410,96 @@ describe('the results (Step 6)', () => {
     const before = JSON.stringify([resultsCheckUp(), exampleSteps(), settingsGrid()])
     TIME_CHOICES.forEach((c) => timeGuessMarker(c.id))
     expect(JSON.stringify([resultsCheckUp(), exampleSteps(), settingsGrid()])).toBe(before)
+  })
+})
+
+// ---- Addendum of 2026-11-24, Step 1: a second published object, Dun Aonghasa (J1504+6252) ----
+describe('the second published object, Dún Aonghasa (addendum, Step 1)', () => {
+  it('leaves every CAPERS-LRD-z9 result unchanged: the default object is CAPERS-LRD-z9 (addendum test 1)', () => {
+    expect(OBJECT_IDS).toEqual(['capers', 'dun-aonghasa'])
+    expect(objectMassSolar()).toBe(10 ** CAPERS_LRD_Z9.logMass)
+    expect(objectMassSolar('capers')).toBe(objectMassSolar())
+    expect(objectAgeYears()).toBe(ageAfterBigBangYears(9.288))
+    expect(objectAgeYears('capers')).toBe(objectAgeYears())
+    expect(timeAvailableYears()).toBe(timeAvailableYears(SEED_START_AGE_YEARS, 'capers'))
+    for (const seed of TRIAL_SEED_CHOICES_SOLAR) {
+      expect(trialPicture(seed, 0.1)).toEqual(trialPicture(seed, 0.1, 'capers'))
+      expect(trialPicture(seed, 0.1).object).toBe('capers')
+    }
+    expect(predictionTimeYears() / GYR).toBeCloseTo(0.76, 2)
+    expect(predictionSeedSolar()).toBeCloseTo(8284, -2)
+  })
+
+  it('holds the published values as ESA states them, with no mass range (addendum test 1)', () => {
+    expect(DUN_AONGHASA.redshift).toBe(8.13)
+    expect(DUN_AONGHASA.massSolar).toBe(360e6)
+    expect(DUN_AONGHASA.esaAgeYears).toBe(630e6)
+    expect(DUN_AONGHASA).not.toHaveProperty('minMassSolar')
+    expect(DUN_AONGHASA).not.toHaveProperty('maxMassSolar')
+    expect(objectMassSolar('dun-aonghasa')).toBe(360e6)
+  })
+
+  it("is born 630 million years after the Big Bang, as Experiment 5's function gives at z = 8.13 (addendum test 2)", () => {
+    const age = objectAgeYears('dun-aonghasa')
+    expect(age).toBe(ageAfterBigBangYears(8.13))
+    // ESA says "630 million years"; the module uses Planck's values, so allow the rounding of ESA's figure (about 1 percent).
+    expect(Math.abs(age - DUN_AONGHASA.esaAgeYears) / DUN_AONGHASA.esaAgeYears).toBeLessThan(0.01)
+    // It is younger than CAPERS-LRD-z9's light: the quasar is NOT the farthest object (addendum test 6, the numbers behind the wording).
+    expect(DUN_AONGHASA.redshift).toBeLessThan(CAPERS_LRD_Z9.redshift)
+    expect(objectAgeYears('dun-aonghasa')).toBeGreaterThan(objectAgeYears('capers'))
+  })
+
+  it('takes the times of the specification table to reach 360 million Suns at 10 percent (addendum test 3)', () => {
+    const expected: [number, number][] = [
+      [10, 870],
+      [1e3, 640],
+      [1e5, 410],
+      [1e6, 295],
+    ]
+    for (const [seed, myr] of expected) {
+      const t = trialPicture(seed, 0.1, 'dun-aonghasa')
+      expect(t.targetSolar).toBe(360e6)
+      expect(t.yearsNeeded / MYR).toBeCloseTo(myr, -1) // within about 5 million years, as the table rounds
+      expect(t.yearsNeeded).toBeCloseTo(yearsToGrow(seed, 360e6, 0.1), 0)
+    }
+    // The specification's hand value was about 530 (from ESA's rounded 630 million years); the module's own age at z = 8.13 gives about 524.
+    expect(timeAvailableYears(SEED_START_AGE_YEARS, 'dun-aonghasa') / MYR).toBeCloseTo(524, 0)
+    // The fits column of the table.
+    expect(TRIAL_SEED_CHOICES_SOLAR.map((s) => trialPicture(s, 0.1, 'dun-aonghasa').fits)).toEqual([false, false, true, true])
+  })
+
+  it('takes longer from the same seed to reach a larger mass, and the other object needs less (addendum test 4)', () => {
+    for (const seed of TRIAL_SEED_CHOICES_SOLAR) {
+      for (const e of [nonSpinningEfficiency(), 0.1, 0.4]) {
+        const small = trialPicture(seed, e, 'capers')
+        const large = trialPicture(seed, e, 'dun-aonghasa')
+        expect(large.targetSolar).toBeGreaterThan(small.targetSolar)
+        expect(large.yearsNeeded).toBeGreaterThan(small.yearsNeeded)
+      }
+    }
+  })
+
+  it('flips from not fitting to fitting at the smallest seed for 360 million Suns, and not before (addendum test 5)', () => {
+    const available = timeAvailableYears(SEED_START_AGE_YEARS, 'dun-aonghasa')
+    const boundary = smallestSeedSolar(360e6, available, 0.1)
+    expect(trialPicture(boundary * 0.99, 0.1, 'dun-aonghasa').fits).toBe(false)
+    expect(trialPicture(boundary * 1.01, 0.1, 'dun-aonghasa').fits).toBe(true)
+    // The boundary is between the 1,000 and 100,000 Sun buttons, as the table shows.
+    expect(boundary).toBeGreaterThan(1e3)
+    expect(boundary).toBeLessThan(1e5)
+    // Reaching the mass exactly at the object's age: late by zero.
+    expect(trialPicture(boundary, 0.1, 'dun-aonghasa').lateByYears).toBeCloseTo(0, 0)
+  })
+
+  it('a lower efficiency fits more seeds and a higher one fewer, for the second object too', () => {
+    const fitting = (e: number) => TRIAL_SEED_CHOICES_SOLAR.filter((s) => trialPicture(s, e, 'dun-aonghasa').fits).length
+    expect(fitting(nonSpinningEfficiency())).toBeGreaterThanOrEqual(fitting(0.1))
+    expect(fitting(0.1)).toBeGreaterThan(fitting(0.4))
+  })
+
+  it('rejects a start age at or after the age of the second object', () => {
+    expect(() => timeAvailableYears(objectAgeYears('dun-aonghasa'), 'dun-aonghasa')).toThrow(RangeError)
+    // The same start age is allowed for Dún Aonghasa but not for CAPERS-LRD-z9 once it is past that object's age.
+    expect(() => timeAvailableYears(objectAgeYears('capers') + 1)).toThrow(RangeError)
   })
 })
