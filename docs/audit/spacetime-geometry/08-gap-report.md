@@ -53,3 +53,26 @@ Files: DopplerShiftExperiment.tsx (picture marks, results, wording), DopplerShif
 
 ## Not checked
 SVG internals of the three pictures, REFERENCE_ENTRIES and FORMULA_ENTRIES text, the middle of the Picture 2 caption (:760-840), the tutor explanation paragraphs, no browser run, tests not re-run.
+
+## Re-read, 2026-11-23 (against Rule E and the 2026-11-07 rules; read-only)
+Read in full: `DopplerShiftExperiment.tsx` (960 lines), `DopplerShiftTutor.tsx`, `dopplerShift.ts`. Tests not re-run; no browser run.
+
+| Item | Result | Evidence |
+|---|---|---|
+| E1/E2 four Parts, coloured leads | Not met | one `exp-card` holds controls, predictions, Run, pictures, caption and results (`:492-947`); the tutor is a separate block (`:949`) |
+| Parts 2 to 4 after the first Run | Partly met | results and tutor appear after the first Run (`:884`, `:949`), but there are no Parts and the controls sit above the predictions |
+| Start over, no "Change prediction" | Not met | no Start over; clicking an answer sends the page back to idle (`:631`); **changing the speed clears both guesses** (`:577-580`), against the lock rule |
+| Words box above Part 1 | Met | `ReferencePanel` `:564` (the formula entry is added after the run) |
+| "Want to know more?" links | **Not met** | no link list on the page |
+| Title gives the answer away (§12) | **New finding** | heading "Why a Fast Traveler Sees the Colors of the Sky Shift" (`:491`) says the colours shift; "the same colour" is one of the three choices |
+| White clash (O1) | Confirmed | dashed white ring `:258`, white bar mark `:482` |
+| Intro says predictions never change the pictures | Not met | "You are not graded" `:553` only |
+| "Doppler" used before it is defined | **New finding** | the word is in the heading, but is not among the six "Some new words" (`:505-538`) |
+| Introduction depth for a basic topic | Partly met | frequency, wavelength, nm, UV, IR defined in words (`:509-517`), but no drawing of a wave, of counting crests, or of the setup |
+| Visible range 400 to 700 nm | **New finding** | NASA's "Visible Light" page (read 2026-11-23) says 380 to 700 nm; the page and module use 400 (`dopplerShift.ts:14`) |
+| Source check of the formula | Improved | Einstein 1905 §7 was read on 2026-11-23: ν′ = ν(1 − cos φ · v/c) ÷ √(1 − v²/c²), φ the angle between the line source–observer and the observer's motion; with φ = 180° − θ it is the module's formula |
+
+Fix list, drawings, wording and eleven questions: `08-draft-wording.md`. Size after the re-read: **L** (eight drawings, new marks on the bar, one new graph, Parts restructure).
+
+## Progress log, 2026-11-23
+The owner answered "all defaults" to the eleven questions of `08-draft-wording.md` and approved the draft wording ("approved"). Physics first (six new tested functions, none of the existing ones changed), then the build (code `8dd399c`). Every Rule A to E finding above is addressed, with these differences from the draft, all small: (1) the formula in the picture caption's "Where the real picture comes from" line appears only after the run (it would reveal the direction before the prediction); (2) the caption's look-for items 2 to 5 appear when the bar's marks do, since they refer to the bar; (3) drawing T3 shows the star we follow, the factor-1 line and 90° (the draft's third ray was the lab's 109.5° line). Added at the owner's requests the same day, and approved: a numbered "What happens"; three paragraphs on what a light wave is made of, why the fields are at right angles (with the condition "in empty space, far from where the light was made") and what travels; drawings A2 (the two fields) and A3 (a stadium wave); two NASA links. Question 6 was kept at its default: the visible range stays at 400 to 700 nm in the module, and the links list says that NASA gives 380 as the violet end. Question 8: no real measurement was searched for; the check-up's real reference is Einstein's printed formula. Open items: see "Audit Update (2026-11-23)" in the specification.
