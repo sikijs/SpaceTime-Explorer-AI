@@ -150,6 +150,7 @@ All image URLs were opened and returned HTTP 200 on 2026-11-20. **Not yet done:*
 |---|---|---|
 | NASA, "Black Hole Anatomy" `science.nasa.gov/universe/black-holes/anatomy/` | updated 12 Aug 2026 | "main light source ... accretion disk" and "settles into a hot, bright, rapidly spinning disk": verbatim |
 | NASA, "Black Hole Types" `.../black-holes/types/` | updated 12 Aug 2026 | supermassive black holes at the centres of large galaxies; "they can also merge ... when galaxies collide" is one sentence. The link line was changed to say so |
+| ESA, "Euclid breaks own quasar record by 40 million years" `esa.int/articles/about-us/directorates/science/euclid/euclid-breaks-own-quasar-record-by-40-million-years` | 24 Nov 2026 | Read 2026-11-24 through a fetch tool (HTTP 200; quotes limited to 125 characters, so the page uses short quotes). J1504+6252 "Dún Aonghasa", redshift 8.13, "just 630 million years after the Big Bang", about 13.1 billion years ago, black hole "approximately 360 million Suns" (from Webb), "consuming material at a relatively slow rate" (no number), "puts pressure on models of early black hole formation and growth". No Eddington ratio, no formation scenario named |
 | Chandra, "Black Holes" illustrations `chandra.harvard.edu/resources/illustrations/blackholes3.html` | revised 1 Oct 2026 | "temperatures reach millions of degrees" verbatim; about black holes in general |
 | ESA XMM-Newton, "Black hole at the centre of a quasar" | 2 Dec 2015; a banner says the site is "under review and not being updated" | "is heated by friction and shines brightly": verbatim |
 | ESA, "Integral rolls back history of the Milky Way's super-massive black hole" | archive, 28 Jan 2005 | "quiet and harmless black hole": verbatim; about 350 years ago it was much more active (gamma-ray echo off the cloud Sgr B2) |
@@ -171,6 +172,8 @@ Two NASA pages differ (the 2012 "snacks" page says most massive black holes grew
 - **The Milky Way's luminosity from NASA, ESA or OpenStax:** not found. The Caltech course slide and Scientific American are the two sources read, and they differ by 50 percent. The page says "about 2 to 3 × 10¹⁰".
 - **NOIRLab** releases on quasars were found in a search but their pages came back empty and could not be read; none is linked.
 - **Wikipedia** gave 3C 273 values in a search summary only; it is not an official source and is not used.
+- **Wolf et al., *Astronomy & Astrophysics*, 24 Nov 2026, "Euclid: Discovery of a quasar at z = 8.13 hosting a 360-million solar-mass black hole"** (DOI 10.1051/0004-6361/202662243), the paper behind the ESA release below: the page returned HTTP 403 on 2026-11-24 and no arXiv page was found. **Not read, not linked.** Its mass uncertainty, feeding rate and emission line are unknown to this page.
+- **A plain official page on how early supermassive black holes form (seeds, direct collapse):** searched 2026-11-24. The ESA/Euclid release names no formation scenario. Reuters (not an official source) quotes the lead author on direct collapse; the page does not use it. No page is linked.
 
 ---
 
@@ -278,6 +281,7 @@ The page has the four Parts (amber, pink, teal, blue). The module and component 
 *Results and links*
 13. **Check-up.** Built: six rows (J0529 rate, no-spin share, ceiling against Begelman, ceiling against OpenStax, fusion share, light-day). Decision 10 also named the luminosity ratio as a range. The build puts that range in Table 2.
 14. **Links.** About 14 beyond the specification's list (checked and recorded 2026-11-21). All 16 of the specification's links are present.
+    *Added 2026-11-24 (owner-approved wording, "approve as written"):* one more link and one more "Other recent results" bullet, the ESA/Euclid release of 24 Nov 2026 on the most distant quasar. The bullet (after the first Run, in the section "The energy, in numbers") quotes ESA, names no formation scenario, gives no feeding rate, and points to Cosmic Horizons 22, "How fast can a black hole grow?", for the growth question. The link is in both lists: "Want to know more?" before the run (ESA's page carries no answer to the three predictions) and "More to read, now that you have run it". The Eddington limit and a growth calculation were considered and **not** added, because Decision 3 leaves the Eddington limit to Cosmic Horizons 23; adding Dún Aonghasa to Cosmic Horizons 23 is a possible later step, not started. The links test now expects 22 links before the run.
 
 *Tutor and tests*
 15. **Tutor.** The specification names it only in the step list: observe, compare, one "why" question, then a seven-part explanation that marks each guess. The wording was approved 2026-11-21.

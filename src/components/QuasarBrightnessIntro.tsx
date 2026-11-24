@@ -530,6 +530,10 @@ export function QuasarBrightnessLinks() {
           black holes grew.
         </li>
         <li style={linkItem}>
+          <Ext href="https://www.esa.int/articles/about-us/directorates/science/euclid/euclid-breaks-own-quasar-record-by-40-million-years">ESA, “Euclid breaks own quasar record by 40 million years”</Ext>{' '}
+          (24 November 2026): the most distant quasar found so far, seen 630 million years after the Big Bang, and why such an early, massive black hole is a puzzle.
+        </li>
+        <li style={linkItem}>
           <Ext href="https://starchild.gsfc.nasa.gov/docs/StarChild/universe_level1/quasars.html">NASA StarChild, “Quasars”</Ext>: a very plain page, including why looking far away is looking
           back in time.
         </li>
@@ -651,6 +655,14 @@ export function QuasarBrightnessHeldBack() {
           12 trillion Suns, and it rose and fell by about 20 percent (about 2 trillion Suns) over 14 years, “much like a candle’s flame flickers” (
           <Ext href="https://news.mit.edu/2026/mit-astronomers-discover-earliest-known-flickering-quasar-0608">MIT News</Ext>, a university report of the work).
         </li>
+        <li>
+          <strong>24 November 2026, ESA/Euclid.</strong> The most distant quasar found so far, J1504+6252, nicknamed Dún Aonghasa, after an ancient stone fort in Ireland. Its
+          redshift is 8.13, so its light left about 630 million years after the Big Bang and has travelled about 13.1 billion years to reach us. Webb showed that its black hole has a
+          mass of “approximately 360 million Suns”. ESA says it is “consuming material at a relatively slow rate” and gives no number. It adds that the black hole “must have
+          reached its current vast mass in extremely rapid growth episodes very early in time”, which “puts pressure on models of early black hole formation and growth”. How a
+          black hole could grow so fast is an open question, and Cosmic Horizons 22 (“How fast can a black hole grow?”) takes it up (
+          <Ext href="https://www.esa.int/articles/about-us/directorates/science/euclid/euclid-breaks-own-quasar-record-by-40-million-years">ESA, “Euclid breaks own quasar record by 40 million years”</Ext>).
+        </li>
       </ul>
     </div>
   )
@@ -689,6 +701,10 @@ export function QuasarBrightnessHeldBackLinks() {
         <li style={linkItem}>
           <Ext href="https://news.mit.edu/2026/mit-astronomers-discover-earliest-known-flickering-quasar-0608">MIT News, “MIT astronomers discover the earliest known flickering quasar”</Ext>{' '}
           (8 June 2026).
+        </li>
+        <li style={linkItem}>
+          <Ext href="https://www.esa.int/articles/about-us/directorates/science/euclid/euclid-breaks-own-quasar-record-by-40-million-years">ESA, “Euclid breaks own quasar record by 40 million years”</Ext>{' '}
+          (24 November 2026): the discovery of the most distant quasar found so far, with the Euclid image and how it was confirmed.
         </li>
       </ul>
     </div>

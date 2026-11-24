@@ -72,8 +72,8 @@ describe('the links', () => {
         expect(a).toMatch(/href="https:\/\//)
       }
     }
-    expect((links.match(/<li/g) ?? []).length).toBe(21)
-    for (const url of ["black-holes/types", "hubble-spots-double-quasars", "news-2024-022", "svs.gsfc.nasa.gov/12539", "frequently-roam-galaxy-centers", "black-holes/anatomy", "56984-black-hole-at-the-centre", "blackholes3.html", "ask_astro/quasar", "teenage-years-of-quasars", "most-quasars-live-on-snacks", "StarChild/universe_level1/quasars", "Integral_rolls_back_history"]) expect(links).toContain(url)
+    expect((links.match(/<li/g) ?? []).length).toBe(22)
+    for (const url of ["euclid-breaks-own-quasar-record-by-40-million-years", "black-holes/types", "hubble-spots-double-quasars", "news-2024-022", "svs.gsfc.nasa.gov/12539", "frequently-roam-galaxy-centers", "black-holes/anatomy", "56984-black-hole-at-the-centre", "blackholes3.html", "ask_astro/quasar", "teenage-years-of-quasars", "most-quasars-live-on-snacks", "StarChild/universe_level1/quasars", "Integral_rolls_back_history"]) expect(links).toContain(url)
     expect(links).toContain('Want to know more?')
     expect(links).toContain('science.nasa.gov/mission/hubble')
     expect(links).toContain('chandra.harvard.edu')
