@@ -37,6 +37,16 @@ function suns(x: number): string {
   return x >= 1e6 ? `${x < 1e7 ? n1(x / 1e6) : commas(x / 1e6)} million Suns` : `${commas(x)} Suns`
 }
 
+// The one question added after the explanation (addendum of 2026-11-24, Step 4, wording approved). It gives no verdict on seeds: it asks the learner to think, and the page
+// does not answer it. The model feeds at the limit all the time, so for an object that feeds more slowly its time is the shortest it could have been (Part 3's Open line).
+export function BlackHoleGrowthClosingQuestion() {
+  return (
+    <p style={{ ...paragraphStyle, marginTop: '1rem', marginBottom: 0 }}>
+      <strong>One more question to think about.</strong> Dún Aonghasa feeds slowly today. What does that do to the number of years the growth needed?
+    </p>
+  )
+}
+
 // The tutor of Cosmic Horizons Experiment 23. DRAFT wording for the owner's line-by-line approval (CLAUDE.md §28.1), from the specification's "Tutor (Part 4)" and the group's
 // tutor pattern: observe, compare with the predictions, one conceptual question, then the explanation after the learner has responded. Every number comes from the physics module
 // (blackHoleGrowth.ts), never typed in by hand (CLAUDE.md §9), except the bacterium (a doubling every hour) and the doorway, which are everyday illustrations. The predictions are marked
@@ -198,6 +208,7 @@ export function BlackHoleGrowthTutor({ timePrediction, seedPrediction, onExplain
             <strong>7. What was shown, and what was not.</strong> You saw that a black hole feeding at the limit multiplies its mass by {Math.E.toFixed(2)} every {myr(p1.growthTimeYears)} at {efficiencyPercent(e)} percent efficiency; that a seed of 10 Suns would need {myr(c.neededYears)} to reach {suns(objectMassSolar())}, against {myr(available)} available; and that the smallest seed that fits is
             {' '}{suns(c.smallestSeedSolar)}. You did not see how any real black hole grew, a measurement of how fast one fed, or the answer to what the little red dots are. Try the settings in Part 2 again if you like: they show how other seeds and efficiencies would do, and the real pictures and tables will not change.
           </p>
+          <BlackHoleGrowthClosingQuestion />
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { trialPicture } from '../physics/blackHoleGrowth'
 import { OBJECT_BUTTON_LABELS, OBJECT_NAMES, TrialDrawing, trialCaption, trialVerdict } from './BlackHoleGrowthPictures'
 import { BlackHoleGrowthResults } from './BlackHoleGrowthResults'
+import { BlackHoleGrowthClosingQuestion } from './BlackHoleGrowthTutor'
 
 // Cosmic Horizons 23 addendum (2026-11-24), Step 2: Drawing A for a second published object.
 const html = (el: ReturnType<typeof createElement>) => renderToStaticMarkup(el).replace(/<!-- -->/g, '')
@@ -89,5 +90,13 @@ describe('the approved wording of Step 3', () => {
     const r = html(createElement(BlackHoleGrowthResults, { timeGuess: null, seedGuess: null }))
     expect(r).toContain('ESA says Dún Aonghasa feeds at a relatively slow rate')
     expect(r).toContain('gives the <em>shortest</em> time it could have taken. How it grew so fast is not settled.')
+  })
+})
+
+describe('the tutor question added in Step 4', () => {
+  it('asks the approved question once and gives no verdict', () => {
+    const q = html(createElement(BlackHoleGrowthClosingQuestion))
+    expect(q).toContain('Dún Aonghasa feeds slowly today. What does that do to the number of years the growth needed?')
+    for (const word of ['right', 'wrong', 'correct', 'matched', 'shorter', 'longer', 'more years', 'fewer years']) expect(q).not.toContain(word)
   })
 })
