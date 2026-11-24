@@ -14,12 +14,13 @@ import {
   TRIAL_DEFAULT_SEED_SOLAR,
   TRIAL_SEED_CHOICES_SOLAR,
   trialPicture,
+  OBJECT_IDS,
 } from '../physics/blackHoleGrowth'
-import type { SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
+import type { ObjectId, SeedChoiceId, TimeChoiceId } from '../physics/blackHoleGrowth'
 import { ReferencePanel } from './EnergyMomentumExperiment'
 import { BlackHoleGrowthResults } from './BlackHoleGrowthResults'
 import { BlackHoleGrowthTutor } from './BlackHoleGrowthTutor'
-import { PictureOne, PictureTwo, TRIAL_SEED_LABELS, TrialDrawing, efficiencyPercent, pictureOneCaption, pictureTwoCaption, trialCaption } from './BlackHoleGrowthPictures'
+import { OBJECT_BUTTON_LABELS, PictureOne, PictureTwo, TRIAL_SEED_LABELS, TrialDrawing, efficiencyPercent, pictureOneCaption, pictureTwoCaption, trialCaption, trialVerdict } from './BlackHoleGrowthPictures'
 
 // Cosmic Horizons, Experiment 23 (docs/experiments/cosmic-horizons/23-how-fast-can-a-black-hole-grow.md).
 // STEPS 2 to 4 (the interface skeleton and the introduction, the two predictions, then the run and Pictures 1 and 2 with the guesses): this file has the title, the status line, the introduction, the collapsed "Words and formulas" panel and the "Want to know more?"
@@ -83,6 +84,8 @@ export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: Black
   const [seedGuess, setSeedGuess] = useState<SeedChoiceId | null>(null)
   const [trialSeed, setTrialSeed] = useState<number>(TRIAL_DEFAULT_SEED_SOLAR)
   const [trialEfficiency, setTrialEfficiency] = useState<number>(TRIAL_DEFAULT_EFFICIENCY)
+  // Which published black hole Drawing A is about; the default is the object of the rest of the page (CAPERS-LRD-z9).
+  const [trialObject, setTrialObject] = useState<ObjectId>('capers')
   const [status, setStatus] = useState<'idle' | 'running' | 'complete'>('idle')
   const [stage, setStage] = useState(0)
   const recorded = status !== 'idle'
@@ -105,6 +108,7 @@ export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: Black
     setSeedGuess(null)
     setTrialSeed(TRIAL_DEFAULT_SEED_SOLAR)
     setTrialEfficiency(TRIAL_DEFAULT_EFFICIENCY)
+    setTrialObject('capers')
     setStatus('idle')
     setStage(0)
   }
@@ -112,7 +116,7 @@ export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: Black
     setStage(1)
     setStatus('running')
   }
-  const trial = trialPicture(trialSeed, trialEfficiency)
+  const trial = trialPicture(trialSeed, trialEfficiency, trialObject)
   const efficiencyLabels = ['(a black hole that is not spinning)', '(the value used above)', '(near the most that a spinning black hole can give)']
   const targetMillion = Math.round(10 ** CAPERS_LRD_Z9.logMass / 1e6)
   return (
@@ -355,6 +359,29 @@ export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: Black
                 {efficiencyPercent(trialEfficiency)} percent, the drawing works out how long such a black hole needs to grow, with the same formula as in Picture 1. Such a seed is imagined for the question, and it is drawn in pink. The
                 black hole is taken to feed at the limit, all the time, from the moment the universe is {millionYears(SEED_START_AGE_YEARS)} old.
               </p>
+              <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                The guesses do not change the drawings or tables. These settings change only Drawing A: the real pictures and the tables on this page stay on CAPERS-LRD-z9.
+              </p>
+
+              <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Which black hole?</label>
+                <p style={{ ...paragraph, fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0 }}>
+                  Choose the one in the drawing. Both are real objects, and the seed and efficiency below are trial values.
+                </p>
+                <div>
+                  {OBJECT_IDS.map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTrialObject(id)}
+                      className={`toggle-button${trialObject === id ? ' is-selected' : ''}`}
+                      style={{ marginRight: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                    >
+                      {OBJECT_BUTTON_LABELS[id]}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {(
                 [
@@ -391,6 +418,7 @@ export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: Black
               ))}
 
               <TrialDrawing trial={trial} />
+              {trialVerdict(trial)}
               {trialCaption(trial)}
             </div>
           )}

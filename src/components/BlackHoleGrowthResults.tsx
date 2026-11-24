@@ -87,6 +87,9 @@ export function BlackHoleGrowthResults({ timeGuess, seedGuess }: { timeGuess: Ti
           <li>
             <strong>Open:</strong> whether any of these black holes grew faster than the limit or started out heavy, and what the little red dots really are. Their black hole masses have a wide give-or-take and may be much smaller than first estimated.
           </li>
+          <li>
+            <strong>Open:</strong> ESA says Dún Aonghasa feeds at a relatively slow rate, so this page’s at-the-limit calculation gives the <em>shortest</em> time it could have taken. How it grew so fast is not settled.
+          </li>
           <li>The numbers come from abstracts and summaries. No paper was read in full for this page, so each published number should be checked against its paper.</li>
         </ul>
       </div>
