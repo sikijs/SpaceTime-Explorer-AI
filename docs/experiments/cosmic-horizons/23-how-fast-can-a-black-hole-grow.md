@@ -294,3 +294,68 @@ Compared against the specification, `CLAUDE.md` §12, §14 and §29, and the pag
 ## Update (2026-10-28): "What's next" now points to Experiment 24
 
 Experiment 24 ("A visitor from another star") was built after this experiment. Its Step 8 changed this experiment's "What's next" in `src/App.tsx` from "Experiment 24 is about something different, an orbit, and it has no approved specification yet." to: "Experiment 24 turns from black holes to our own neighbourhood. In 2025 a comet from another star, 3I/ATLAS, passed the Sun and left again. How did the Sun's gravity shape its path?" It does not give away either of Experiment 24's predictions. The owner approved the new wording and the update of this specification on 2026-10-28 ("approved, commit, update exp 23 spec"). Item 5 of the Step 10 notes above, which records the earlier sentence, is kept as a record of what was fixed then.
+
+## Addendum (2026-11-24): a second published object, Dún Aonghasa
+
+**Status: PROPOSED by Claude on 2026-11-24 at the owner's request ("add Dún Aonghasa to Cosmic Horizons 23", then "option 2"); APPROVED by the owner on 2026-11-24 ("all defaults, record it in the specification"), including the draft wording below (§28.1). NOT BUILT.** Built one step at a time (§6), starting with the physics model and its tests, each step reported before the next. The learner sees this chapter as **Cosmic Horizons 22** (`displayNumber`).
+
+**Purpose.** On 24 Nov 2026 ESA announced J1504+6252, nicknamed Dún Aonghasa, the most distant *quasar* found so far (z = 8.13; the black hole is about 360 million Suns). It gives the learner a second real black hole to test the same growth calculation against. It was first added to Black Holes 11 as a dated "recent result" (commit `bd3eb54`), which points here for the growth question. Black Holes 11's Decision 3 leaves the Eddington limit to this experiment.
+
+**Not changed:** the three predictions and their answers, Pictures 1 and 2, Tables 1 to 3, the "Where this stands" card's existing lines, and every existing result for CAPERS-LRD-z9. The guesses stay on CAPERS-LRD-z9, so the guess marks and the real results keep their meaning (§14, "Predictions and the Real Results").
+
+**Wording rule.** CAPERS-LRD-z9 (z = 9.288) is *farther* than Dún Aonghasa (z = 8.13). Dún Aonghasa is the most distant **quasar**, never "the most distant black hole". Every line about it says "quasar", and its caption says CAPERS-LRD-z9 is farther.
+
+### 1. Physics model (`src/physics/blackHoleGrowth.ts`)
+- **New data `DUN_AONGHASA`:** name J1504+6252, nickname Dún Aonghasa, redshift 8.13, mass "approximately 360 million Suns" (ESA, citing Webb), and ESA's age of 630 million years after the Big Bang. **No mass range** is held, because the paper (Wolf et al., *A&A*, 24 Nov 2026) was not read.
+- **Existing object functions** (`objectMassSolar`, `objectAgeYears`, `timeAvailableYears`) take an object argument that **defaults to CAPERS-LRD-z9**, so every existing call and result is unchanged.
+- **Reused as they are:** `yearsToGrow`, `growthTimeYears`, `smallestSeedSolar`, `growthTimesNeeded`.
+
+### 2. Part 2 control (Decisions 1 to 6 all at their defaults)
+- **"Which black hole?":** two buttons, "CAPERS-LRD-z9 (the object above)" and "Dún Aonghasa (a quasar, 2026)". **Default: CAPERS-LRD-z9.**
+- It changes Drawing A's target mass, the time the universe had, and the verdict. The seed buttons (10, 1,000, 100,000, 1 million Suns) and the efficiency buttons (5.7, 10, 40 percent) work as before. The seed starts feeding at **100 million years** (unchanged, `SEED_START_AGE_YEARS`).
+- **Note beside the controls (§14 rule 7):** the guesses do not change the drawings or tables, but these settings change Drawing A.
+- **Table 3 is not extended** to the second object. **The Words box is not extended** ("quasar" is defined in Black Holes 11 and the page already explains the growth terms).
+
+### 3. Hand values, to be tested (calculated here, 2026-11-24, not yet run in the module)
+At 10 percent efficiency (growth time about 50 million years), 100 million years start, time available about 630 − 100 = **about 530 million years** (to be checked against `ageAfterBigBangYears(8.13)`):
+
+| Seed | Time to reach 360 million Suns | Fits in about 530 million years? |
+|---|---|---|
+| 10 Suns | about 870 million years | no |
+| 1,000 Suns | about 640 million years | no |
+| 100,000 Suns | about 410 million years | yes |
+| 1 million Suns | about 295 million years | yes |
+
+### 4. Learner-facing wording (approved 2026-11-24)
+- **Control label:** "Which black hole? Choose the one in the drawing. Both are real objects, and the seed and efficiency below are trial values."
+- **Drawing A caption, extra line when Dún Aonghasa is chosen:** "Dún Aonghasa is the most distant *quasar* found so far (ESA, 24 November 2026). It is not the most distant black hole: CAPERS-LRD-z9 is farther. Its mass, about 360 million Suns, is ESA's figure from Webb. No range is given on the page read."
+- **Verdict line:** "At the limit, a seed of {seed} Suns takes about {time} million years to reach 360 million Suns. The universe had about {available} million years. {fits / does not fit}."
+- **Always shown with the object:** "These are trial values and do not say the real black hole started like this."
+- **"Where this stands" card, new Open line:** "ESA says Dún Aonghasa feeds at a relatively slow rate, so this page's at-the-limit calculation gives the *shortest* time it could have taken. How it grew so fast is not settled."
+- **Tutor (Part 4), one added question after the explanation:** "Dún Aonghasa feeds slowly today. What does that do to the number of years the growth needed?" The tutor gives no verdict on seeds.
+
+### 5. Sources, gaps and facts that may change
+| Source | Used for | Status |
+|---|---|---|
+| ESA, "Euclid breaks own quasar record by 40 million years" (24 Nov 2026), `esa.int/articles/about-us/directorates/science/euclid/euclid-breaks-own-quasar-record-by-40-million-years` | z = 8.13, 630 million years after the Big Bang, about 13.1 billion years ago, "approximately 360 million Suns", "relatively slow rate" | **read 2026-11-24** through a fetch tool (quotes limited to 125 characters); no Eddington ratio, no formation scenario named |
+| Wolf et al., *A&A*, 24 Nov 2026, DOI 10.1051/0004-6361/202662243 | the paper behind the release | **not read** (HTTP 403); not linked; no mass uncertainty known |
+| A plain official page on how early black holes form (seeds, direct collapse) | background for the Open line | **none found** (§29 rule 3(c)); not linked |
+
+**Facts that may change (§29):** Dún Aonghasa's mass and its uncertainty (the paper may give one); "the most distant quasar" (ESA says a farther one may be found; models suggest the first quasars could be 270 to 470 million years after the Big Bang).
+
+### 6. Required tests (each must fail if the module is deliberately broken)
+1. The default object is unchanged: every existing CAPERS-LRD-z9 result is identical.
+2. `objectAgeYears` for z = 8.13 is within a stated tolerance of ESA's 630 million years.
+3. The seed-to-360-million times match the table in section 3.
+4. A larger object mass takes longer from the same seed.
+5. The "fits / does not fit" verdict flips at the smallest seed from `smallestSeedSolar`.
+6. The page labels CAPERS-LRD-z9 as farther than Dún Aonghasa.
+
+### 7. Build steps (one at a time, each reported before the next)
+1. Physics model and its tests (sections 1, 3 and 6, tests 1 to 5).
+2. The Part 2 control and Drawing A (section 2), with the render tests.
+3. The caption, verdict and Open-line wording (section 4), with test 6.
+4. The tutor question (section 4).
+5. The ESA link in this page's lists, the status entry, and a check in a browser (§28.4).
+
+**Not checked (§28.6):** none of the above is built or viewed; the hand values in section 3 are not yet run in the module.
