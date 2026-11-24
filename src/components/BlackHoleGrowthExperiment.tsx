@@ -241,6 +241,12 @@ export function BlackHoleGrowthExperiment({ onComplete, onTutorComplete }: Black
               </ExternalLink>
               : NASA’s January 2025 account of the little red dots found by the James Webb Space Telescope, what they look like, and why astronomers are interested in them.
             </li>
+            <li>
+              <ExternalLink href="https://www.esa.int/articles/about-us/directorates/science/euclid/euclid-breaks-own-quasar-record-by-40-million-years">
+                ESA: Euclid breaks own quasar record by 40 million years
+              </ExternalLink>
+              : ESA’s 24 November 2026 account of Dún Aonghasa, the most distant quasar found so far, seen 630 million years after the Big Bang, and why such an early, massive black hole is a puzzle.
+            </li>
           </ul>
         </div>
 

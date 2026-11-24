@@ -280,6 +280,10 @@ export function BlackHoleGrowthResults({ timeGuess, seedGuess }: { timeGuess: Ti
             <ExternalLink href="https://arxiv.org/abs/2601.14368">The Little Red Dots Are Direct Collapse Black Holes</ExternalLink> (Pacucci, Ferrara and Kocevski, January 2026): one proposal that little red dots are black holes that began very heavy, which would save growth time, as in Table 3. Only its
             abstract was read for this page. Whether this is right is open.
           </li>
+          <li>
+            <ExternalLink href="https://www.esa.int/articles/about-us/directorates/science/euclid/euclid-breaks-own-quasar-record-by-40-million-years">ESA: Euclid breaks own quasar record by 40 million years</ExternalLink> (24 November 2026): the source of the redshift of 8.13, the age of 630 million years and
+            the black hole mass of about 360 million Suns used for Dún Aonghasa in Part 2. ESA says it feeds at a relatively slow rate and gives no number. The paper behind the release could not be read for this page.
+          </li>
         </ul>
       </div>
     </div>

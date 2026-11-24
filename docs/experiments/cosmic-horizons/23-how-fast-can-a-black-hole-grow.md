@@ -297,7 +297,7 @@ Experiment 24 ("A visitor from another star") was built after this experiment. I
 
 ## Addendum (2026-11-24): a second published object, Dún Aonghasa
 
-**Status: PROPOSED by Claude on 2026-11-24 at the owner's request ("add Dún Aonghasa to Cosmic Horizons 23", then "option 2"); APPROVED by the owner on 2026-11-24 ("all defaults, record it in the specification"), including the draft wording below (§28.1). NOT BUILT.** Built one step at a time (§6), starting with the physics model and its tests, each step reported before the next. The learner sees this chapter as **Cosmic Horizons 22** (`displayNumber`).
+**Status: PROPOSED by Claude on 2026-11-24 at the owner's request ("add Dún Aonghasa to Cosmic Horizons 23", then "option 2"); APPROVED by the owner on 2026-11-24 ("all defaults, record it in the specification"), including the draft wording below (§28.1). BUILT on 2026-11-24 in the five steps of section 7; see the implementation notes at the end of this addendum.** Built one step at a time (§6), starting with the physics model and its tests, each step reported before the next. The learner sees this chapter as **Cosmic Horizons 22** (`displayNumber`).
 
 **Purpose.** On 24 Nov 2026 ESA announced J1504+6252, nicknamed Dún Aonghasa, the most distant *quasar* found so far (z = 8.13; the black hole is about 360 million Suns). It gives the learner a second real black hole to test the same growth calculation against. It was first added to Black Holes 11 as a dated "recent result" (commit `bd3eb54`), which points here for the growth question. Black Holes 11's Decision 3 leaves the Eddington limit to this experiment.
 
@@ -317,9 +317,9 @@ Experiment 24 ("A visitor from another star") was built after this experiment. I
 - **Table 3 is not extended** to the second object. **The Words box is not extended** ("quasar" is defined in Black Holes 11 and the page already explains the growth terms).
 
 ### 3. Hand values, to be tested (calculated here, 2026-11-24, not yet run in the module)
-At 10 percent efficiency (growth time about 50 million years), 100 million years start, time available about 630 − 100 = **about 530 million years** (to be checked against `ageAfterBigBangYears(8.13)`):
+At 10 percent efficiency (growth time about 50 million years), 100 million years start, time available about 630 − 100 = about 530 million years from ESA's rounded age; **the module's own age at z = 8.13 is 624 million years, so the time available is about 524 million years, the value the page uses (checked in Step 1, 2026-11-24)**:
 
-| Seed | Time to reach 360 million Suns | Fits in about 530 million years? |
+| Seed | Time to reach 360 million Suns | Fits in about 524 million years? |
 |---|---|---|
 | 10 Suns | about 870 million years | no |
 | 1,000 Suns | about 640 million years | no |
@@ -345,7 +345,7 @@ At 10 percent efficiency (growth time about 50 million years), 100 million years
 
 ### 6. Required tests (each must fail if the module is deliberately broken)
 1. The default object is unchanged: every existing CAPERS-LRD-z9 result is identical.
-2. `objectAgeYears` for z = 8.13 is within a stated tolerance of ESA's 630 million years.
+2. `objectAgeYears` for z = 8.13 is within a stated tolerance of ESA's 630 million years (built: within 1 percent, 624 against 630).
 3. The seed-to-360-million times match the table in section 3.
 4. A larger object mass takes longer from the same seed.
 5. The "fits / does not fit" verdict flips at the smallest seed from `smallestSeedSolar`.
@@ -358,4 +358,16 @@ At 10 percent efficiency (growth time about 50 million years), 100 million years
 4. The tutor question (section 4).
 5. The ESA link in this page's lists, the status entry, and a check in a browser (§28.4).
 
-**Not checked (§28.6):** none of the above is built or viewed; the hand values in section 3 are not yet run in the module.
+**Not checked (§28.6):** see the implementation notes below (the hand values were run in Step 1; one was corrected).
+
+### Implementation notes (Steps 1 to 5, built 2026-11-24)
+All five steps are built, tested and viewed in Chrome. Nothing was committed by the build steps; the owner commits separately.
+1. **Step 1, physics** (`blackHoleGrowth.ts`): `DUN_AONGHASA` (no mass range), `ObjectId`, `OBJECT_IDS`; `objectMassSolar`, `objectAgeYears`, `timeAvailableYears` and `trialPicture` take an object that defaults to CAPERS-LRD-z9. Seven tests; four deliberate breaks were caught. **The hand value for the time available was 530 million years; the module gives 524** (its age at z = 8.13 is 624 million years, within 1 percent of ESA's 630). The four times in section 3 matched.
+2. **Step 2, control and Drawing A:** the "Which black hole?" control and note, Drawing A and its caption by object name; the dashed Picture 1 line, its legend entry and its caption items are left out for Dún Aonghasa (Picture 1's black hole reaches CAPERS-LRD-z9's mass, not this one's). "Start over" resets the object. A first version left an empty bullet in the caption; fixed and pinned by a test.
+3. **Step 3, wording:** the verdict sentence and the trial-values line under Drawing A (Dún Aonghasa only); the "About this object" caption bullet; the new Open line in Part 3's "Where this stands" card (shown for every learner, since Part 3 does not follow Part 2).
+4. **Step 4, tutor:** one closing question after the explanation, plain text with no answer box and no verdict (`BlackHoleGrowthClosingQuestion`).
+5. **Step 5, links and records:** the ESA release is in the "Want to know more?" list (before the run; it answers none of the predictions) and in "The papers and pages behind these numbers" (after the run). The Wolf et al. paper is not linked (not read).
+
+**Points for the owner, not changed:** (a) the trial-values line is shown under Dún Aonghasa's drawing only; CAPERS-LRD-z9's drawing already says "Trial values: imagined for the question". (b) The card is still headed "Where this stands (as of October 2026)" and the Introduction's links line says "written as of October 2026", though the new Open line and link are from 24 November 2026. (c) The closing tutor question has no answer box.
+
+**Not checked (§28.6):** narrow widths, other browsers, keyboard use, a real learner; the paper behind the ESA release (HTTP 403); the mass uncertainty of Dún Aonghasa (none held).

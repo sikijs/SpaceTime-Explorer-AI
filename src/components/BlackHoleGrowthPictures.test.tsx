@@ -100,3 +100,13 @@ describe('the tutor question added in Step 4', () => {
     for (const word of ['right', 'wrong', 'correct', 'matched', 'shorter', 'longer', 'more years', 'fewer years']) expect(q).not.toContain(word)
   })
 })
+
+describe('the ESA link of Step 5', () => {
+  it('is in the results list, opens in a new tab and says what the learner will find', () => {
+    const r = html(createElement(BlackHoleGrowthResults, { timeGuess: null, seedGuess: null }))
+    expect(r).toContain('href="https://www.esa.int/articles/about-us/directorates/science/euclid/euclid-breaks-own-quasar-record-by-40-million-years"')
+    expect(r).toContain('the source of the redshift of 8.13')
+    expect(r).toContain('The paper behind the release could not be read for this page.')
+    expect(r).not.toContain('aanda.org')
+  })
+})
